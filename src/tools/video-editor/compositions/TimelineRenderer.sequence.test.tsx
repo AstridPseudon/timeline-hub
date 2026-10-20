@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { compilePlayerTransitions } from './playerEvaluation.ts';
 import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
-import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
+import { DEFAULT_THEME } from '@banodoco/timeline-composition/theme-api';
+import { toRuntimeTheme } from '@banodoco/timeline-composition';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
 import type { ComponentProps, FC, PropsWithChildren } from 'react';
@@ -82,65 +84,6 @@ vi.mock('remotion', async () => {
     Video: ({ ...props }: Record<string, unknown>) => <video {...props} />,
     Audio: ({ ...props }: Record<string, unknown>) => <audio {...props} />,
     Easing: {},
-  };
-});
-
-vi.mock('@banodoco/timeline-composition/theme-api', async () => {
-  const reactModule = await import('react');
-  const actual = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
-    '@banodoco/timeline-composition/theme-api',
-  );
-  const { DEFAULT_THEME } = actual;
-  const runtimeThemeValue = {
-    ...DEFAULT_THEME,
-    color: DEFAULT_THEME.visual.color,
-    type: DEFAULT_THEME.visual.type,
-    motion: DEFAULT_THEME.visual.motion,
-  };
-
-  const toRuntimeTheme = (value: unknown) => {
-    if (
-      value
-      && typeof value === 'object'
-      && 'visual' in value
-      && value.visual
-      && typeof value.visual === 'object'
-    ) {
-      return {
-        ...runtimeThemeValue,
-        ...value.visual,
-        color: {
-          ...runtimeThemeValue.color,
-          ...(typeof value.visual.color === 'object' ? value.visual.color : {}),
-        },
-        type: {
-          ...runtimeThemeValue.type,
-          ...(typeof value.visual.type === 'object' ? value.visual.type : {}),
-          families: {
-            ...runtimeThemeValue.type.families,
-            ...(typeof value.visual.type === 'object' && typeof value.visual.type.families === 'object'
-              ? value.visual.type.families
-              : {}),
-          },
-        },
-      };
-    }
-    return runtimeThemeValue;
-  };
-
-  const ThemeContext = reactModule.createContext(runtimeThemeValue);
-
-  return {
-    ...actual,
-    DEFAULT_THEME,
-    ThemeProvider: ({
-      children,
-      value,
-    }: PropsWithChildren<{ value: typeof DEFAULT_THEME }>) => (
-      <ThemeContext.Provider value={toRuntimeTheme(value)}>{children}</ThemeContext.Provider>
-    ),
-    useTheme: () => reactModule.useContext(ThemeContext),
-    composeAnimations: () => ({}),
   };
 });
 
@@ -259,6 +202,7 @@ vi.mock('@banodoco/timeline-composition/registry.generated', async () => {
       data-accent={theme.color.accent}
       data-bg={theme.color.bg}
       data-heading={theme.type.families.heading}
+      data-theme={JSON.stringify(theme)}
       data-fps={fps}
       data-previews={JSON.stringify(params?.previews ?? [])}
       data-preview-asset-keys={JSON.stringify(params?.previewAssetKeys ?? [])}
@@ -335,6 +279,87 @@ beforeEach(() => {
 });
 
 describe('TimelineRenderer registered sequences', () => {
+  it('passes shared image crossfade plans through native media dispatch', () => {
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'crossfade', duration: 0.4 } },
+    ];
+    render(<TimelineRenderer config={config} />);
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'a' }),
+      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: null }),
+    }));
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b' }),
+      drawPlan: expect.objectContaining({ drawStart: 18, drawDuration: 42, ownOffset: 12 }),
+    }));
+  });
+
+  it('passes the compiled incoming fade and occurrence cap through the actual renderer without host reclamping', () => {
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'fade', duration: 2 },
+        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
+    ];
+    const compiled = compilePlayerTransitions(config)!;
+    expect(compiled).toBeDefined();
+    visualClipMock.mockClear();
+    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 2 } }),
+      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 60, incomingPolicy: 'preroll-crossfade',
+        fadeIn: { from: 0, to: 60, kind: 'dissolve' } }),
+    }));
+  });
+
+  it('preserves a host component overriding a native name and keeps its neighboring transition host-timed', () => {
+    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
+      ? () => <div data-testid="host-picture" /> : undefined);
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'fade', duration: 0.4 } },
+    ];
+    render(<TimelineRenderer config={config} />);
+    expect(screen.getByTestId('host-picture')).toBeInTheDocument();
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b' }), drawPlan: null,
+    }));
+  });
+
+  it('retains host bounds and neighboring timing when an injected component overrides a compiled media name', () => {
+    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
+      ? () => <div data-testid="compiled-host-picture" /> : undefined);
+    const config = buildConfig();
+    config.clips = [
+      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
+        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+        transition: { type: 'fade', duration: 2 },
+        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
+    ];
+    const compiled = compilePlayerTransitions(config)!;
+    expect(compiled).toBeDefined();
+    visualClipMock.mockClear();
+    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
+    expect(screen.getByTestId('compiled-host-picture')).toBeInTheDocument();
+    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 1 } }), drawPlan: null,
+    }));
+  });
+
   it('keeps a canonical visual image absent at the half-open end after transition expansion', async () => {
     const { VisualClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/VisualClip.tsx')>(
       '@/tools/video-editor/compositions/VisualClip.tsx',
@@ -591,19 +616,17 @@ describe('TimelineRenderer registered sequences', () => {
     expect(sequence).toHaveAttribute('data-heading', "'Sixtyfour', 'Sixtyfour Variable', monospace");
   });
 
-  it('uses the DEFAULT_THEME fallback when the timeline has no theme', async () => {
-    const { DEFAULT_THEME: publicDefaultTheme } = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
-      '@banodoco/timeline-composition/theme-api',
-    );
+  // Owner policy: implicit preview uses the public navy/Arial/cyan export default.
+  it('uses the complete public DEFAULT_THEME when the timeline has no theme', async () => {
     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
 
-    expect(resolveTimelineRenderTheme(buildConfig())).toEqual(publicDefaultTheme);
     const sequence = screen.getByTestId('registered-sequence');
-    expect(sequence).toHaveAttribute('data-accent', publicDefaultTheme.visual.color.accent);
-    expect(sequence).toHaveAttribute('data-bg', publicDefaultTheme.visual.color.bg);
-    expect(sequence).toHaveAttribute('data-heading', publicDefaultTheme.visual.type.families.heading);
+    expect(JSON.parse(sequence.getAttribute('data-theme') ?? 'null')).toEqual(toRuntimeTheme(DEFAULT_THEME));
+    expect(sequence).toHaveAttribute('data-accent', DEFAULT_THEME.visual.color.accent);
+    expect(sequence).toHaveAttribute('data-bg', DEFAULT_THEME.visual.color.bg);
+    expect(sequence).toHaveAttribute('data-heading', DEFAULT_THEME.visual.type.families.heading);
     expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({
-      backgroundColor: publicDefaultTheme.visual.color.bg,
+      backgroundColor: DEFAULT_THEME.visual.color.bg,
     });
   });
 

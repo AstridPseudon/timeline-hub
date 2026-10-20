@@ -32,6 +32,7 @@ interface TrackLabelProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemove: (trackId: string) => void;
 }
 
@@ -44,6 +45,7 @@ interface TrackLabelContentProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemove: (trackId: string) => void;
   readOnly?: boolean;
   rowDragging?: boolean;
@@ -320,6 +322,8 @@ function TrackSheet({
   onChange,
   onRemoveClick,
   onAddTrack,
+  nameInputProps,
+  nameError,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -329,6 +333,8 @@ function TrackSheet({
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemoveClick: (event: React.MouseEvent) => void;
   onAddTrack?: (kind: 'visual' | 'audio') => void;
+  nameInputProps: React.InputHTMLAttributes<HTMLInputElement> & { ref: React.RefCallback<HTMLInputElement> };
+  nameError: string | null;
 }) {
   const sheetButton = 'h-11 flex-1 justify-center gap-1.5';
   return (
@@ -348,11 +354,10 @@ function TrackSheet({
             <FieldLabel>Name</FieldLabel>
             <input
               className="h-11 w-full rounded-md border border-border bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              value={track.label}
-              aria-label="Track name"
-              onChange={(event) => onChange(track.id, { label: event.target.value })}
+              {...nameInputProps}
             />
           </div>
+          {nameError && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
           <TrackSettingsFields track={track} onChange={onChange} />
           {onAddTrack && (
             <div className="flex gap-2">
@@ -390,6 +395,7 @@ export function TrackLabelContent({
   deviceClass = 'desktop',
   onSelect,
   onChange,
+  onLabelEditStart,
   onRemove,
   readOnly = false,
   rowDragging = false,
@@ -397,12 +403,103 @@ export function TrackLabelContent({
   dragListeners,
   dragAttributes,
 }: TrackLabelContentProps) {
+  const runtime = useContext(VideoEditorRuntimeContext);
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameEditRef = useRef<{
+    dirty: boolean;
+    finish?: (label: string) => void;
+    error?: string;
+  } | null>(null);
+  const nameValueRef = useRef(track.label);
+
+  useEffect(() => {
+    if (!nameEditRef.current) setNameDraft(null);
+  }, [track.label]);
+
+  const beginNameEdit = () => {
+    if (nameEditRef.current || rowDragging) return;
+    nameValueRef.current = nameDraft ?? track.label;
+    setNameDraft(nameValueRef.current);
+    try {
+      if (!onLabelEditStart && runtime) throw new Error('Track label command capture is unavailable.');
+      nameEditRef.current = {
+        dirty: false,
+        finish: onLabelEditStart?.(track.id),
+      };
+      setNameError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Track rename is unavailable.';
+      nameEditRef.current = { dirty: false, error: message };
+      setNameError(message);
+    }
+  };
+
+  const finishNameEdit = () => {
+    const edit = nameEditRef.current;
+    if (!edit) return;
+    if (edit.error) return;
+    if (edit.dirty) {
+      try {
+        edit.finish?.(nameValueRef.current);
+      } catch (error) {
+        setNameError(error instanceof Error ? error.message : 'Track rename was refused.');
+        return;
+      }
+    } else {
+      setNameDraft(null);
+    }
+    nameEditRef.current = null;
+    setNameError(null);
+  };
+
+  const nameInputFocusedRef = useRef(false);
+  const finishNameEditRef = useRef(finishNameEdit);
+  finishNameEditRef.current = finishNameEdit;
+  const nameInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (!node && nameInputFocusedRef.current) {
+      nameInputFocusedRef.current = false;
+      finishNameEditRef.current();
+    }
+  }, []);
+
+  const nameInputProps = {
+    ref: nameInputRef,
+    value: nameDraft ?? track.label,
+    'aria-label': 'Track name',
+    'aria-invalid': nameError ? true : undefined,
+    onFocus: () => {
+      nameInputFocusedRef.current = true;
+      beginNameEdit();
+    },
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (rowDragging) return;
+      beginNameEdit();
+      // Typing away and back still expresses an explicit choice of name.
+      if (nameEditRef.current) nameEditRef.current.dirty = true;
+      nameValueRef.current = event.target.value;
+      setNameDraft(event.target.value);
+      // Detached controlled presentations keep their existing callback contract.
+      if (!onLabelEditStart && !runtime) onChange(track.id, { label: event.target.value });
+    },
+    onBlur: () => {
+      nameInputFocusedRef.current = false;
+      finishNameEdit();
+    },
+    onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishNameEdit();
+      }
+    },
+  };
+
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [trackSheetOpen, setTrackSheetOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<TrackContextMenuState | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const runtime = useContext(VideoEditorRuntimeContext);
   const commandRegistry = runtime?.commandRegistry;
   const extensions = runtime?.extensionRuntime?.extensions ?? [];
 
@@ -506,10 +603,9 @@ export function TrackLabelContent({
             <span className={cn('shrink-0', isSource ? 'w-10' : 'w-[18px]')} />
             <input
               className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-              value={rowDragging ? displayLabel ?? track.label : track.label}
-              aria-label="Track name"
+              {...nameInputProps}
+              value={rowDragging ? displayLabel ?? track.label : nameInputProps.value}
               readOnly={rowDragging}
-              onChange={(event) => onChange(track.id, { label: event.target.value })}
               onClick={(event) => event.stopPropagation()}
             />
             <div className="flex shrink-0 items-center">
@@ -546,16 +642,25 @@ export function TrackLabelContent({
           </div>
         ) : null}
       </div>
+      {nameError && !trackSheetOpen && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
       {opensTrackSheet && (
         <TrackSheet
           open={trackSheetOpen}
-          onOpenChange={setTrackSheetOpen}
+          onOpenChange={(open) => {
+            if (!open && nameInputFocusedRef.current) {
+              nameInputFocusedRef.current = false;
+              finishNameEdit();
+            }
+            setTrackSheetOpen(open);
+          }}
           track={track}
           hasClips={hasClips}
           confirmingDelete={confirmingDelete}
           onChange={onChange}
           onRemoveClick={handleRemoveClick}
           onAddTrack={onAddTrack}
+          nameInputProps={nameInputProps}
+          nameError={nameError}
         />
       )}
       {contextMenu && (
@@ -578,6 +683,7 @@ export function TrackLabel({
   deviceClass,
   onSelect,
   onChange,
+  onLabelEditStart,
   onRemove,
 }: TrackLabelProps) {
   const {
@@ -603,6 +709,7 @@ export function TrackLabel({
         deviceClass={deviceClass}
         onSelect={onSelect}
         onChange={onChange}
+        onLabelEditStart={onLabelEditStart}
         onRemove={onRemove}
         rowDragging={isDragging}
         dragListeners={listeners}

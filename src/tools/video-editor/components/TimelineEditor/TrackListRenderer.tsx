@@ -124,6 +124,7 @@ interface SortableRowProps {
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
   onAddTrack?: (kind: 'visual' | 'audio') => void;
 }
@@ -163,6 +164,7 @@ interface TrackListRendererProps {
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
   onAddTrack?: (kind: 'visual' | 'audio') => void;
   onTrackDragEnd: (event: DragEndEvent) => void;
@@ -188,6 +190,7 @@ function SortableRow({
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
+  onTrackLabelEditStart,
   onRemoveTrack,
   onAddTrack,
 }: SortableRowProps) {
@@ -242,6 +245,7 @@ function SortableRow({
           deviceClass={deviceClass}
           onSelect={onSelectTrack}
           onChange={onTrackChange}
+          onLabelEditStart={onTrackLabelEditStart}
           onRemove={onRemoveTrack}
           onAddTrack={onAddTrack}
           readOnly={readOnly}
@@ -377,6 +381,7 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.shouldStackOverlappingActions === right.shouldStackOverlappingActions
     && left.onSelectTrack === right.onSelectTrack
     && left.readOnly === right.readOnly
+    && left.onTrackLabelEditStart === right.onTrackLabelEditStart
     && left.onTrackChange === right.onTrackChange
     && left.onRemoveTrack === right.onRemoveTrack
     && left.onAddTrack === right.onAddTrack
@@ -406,6 +411,7 @@ export function TrackListRenderer({
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
+  onTrackLabelEditStart,
   onRemoveTrack,
   onAddTrack,
   onTrackDragEnd,
@@ -445,6 +451,7 @@ export function TrackListRenderer({
         shouldStackOverlappingActions={shouldStackOverlappingActions}
         onSelectTrack={onSelectTrack}
         onTrackChange={onTrackChange}
+        onTrackLabelEditStart={onTrackLabelEditStart}
         onRemoveTrack={onRemoveTrack}
         onAddTrack={onAddTrack}
       />

@@ -3,7 +3,23 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { TimelineCommandSessionSurface } from '../hooks/useTimelineCommandSession.ts';
 
-export type TimelineCommandRecoverySession = TimelineCommandSessionSurface;
+type TimelineConflictLocation = {
+  ref: string;
+  path: readonly string[];
+};
+
+type TimelineCommandRecoveryState = TimelineCommandSessionSurface['state'] & {
+  canDiscardRejected?: boolean;
+  canReapplyLabel?: boolean;
+  conflicts?: readonly TimelineConflictLocation[];
+};
+
+/** The command core adds these capabilities when a rejection is definitively resolvable. */
+export type TimelineCommandRecoverySession = Omit<TimelineCommandSessionSurface, 'state'> & {
+  state: TimelineCommandRecoveryState;
+  useLatest?: () => Promise<void>;
+  keepLabelChanges?: () => Promise<void>;
+};
 
 export interface TimelineCommandRecoveryProps {
   commandSession?: TimelineCommandRecoverySession;
@@ -31,6 +47,28 @@ function actionErrorMessage(error: unknown): string {
   return readableError(message) ?? 'The recovery action could not finish. Your unsaved changes are still here.';
 }
 
+function readableRef(value: string): string | null {
+  const ref = value.trim();
+  if (ref.length === 0 || ref.length > 120 || !/^[A-Za-z0-9][A-Za-z0-9_./:-]*$/.test(ref)) return null;
+  const parts = ref.split(/[/:.]/);
+  return parts.every((part) => part.length > 0 && !part.startsWith('__')) ? ref : null;
+}
+
+function readablePath(path: readonly string[]): string | null {
+  const fields = path.map((field) => field.trim());
+  if (fields.length === 0 || fields.length > 12 || fields.some((field) => (
+    field.length === 0 || field.length > 64 || !/^[A-Za-z][A-Za-z0-9_-]*$/.test(field) || field.startsWith('__')
+  ))) return null;
+  return fields.join('.');
+}
+
+function readableConflictLocation(conflict: TimelineConflictLocation): string | null {
+  const ref = readableRef(conflict.ref);
+  if (!ref) return null;
+  const path = readablePath(conflict.path);
+  return `Changed target: ${ref}${path ? ` · Property: ${path}` : ' · Target itself changed'}`;
+}
+
 export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecoveryProps) {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -47,6 +85,20 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
   const hasRetainedWork = Boolean(state.ownerId || state.canUndo || hasRecoveryChoices);
   const isBusy = busyAction !== null;
   const stateError = readableError(state.error);
+  const canKeepLabelChanges = isConflict && state.canReapplyLabel === true && !!commandSession.keepLabelChanges;
+  const canUseLatest = isConflict && state.canDiscardRejected === true && !!commandSession.useLatest;
+  const conflictLocations = isConflict && !hasRecoveryChoices
+    ? (state.conflicts ?? []).map(readableConflictLocation).filter((location): location is string => location !== null)
+    : [];
+  const unavailableResolution = isConflict && !hasRecoveryChoices
+    ? !canKeepLabelChanges && !canUseLatest
+      ? 'No automatic resolution is available for this conflict yet. Your changes remain here.'
+      : !canKeepLabelChanges
+        ? 'Keeping these changes is not available for this conflict. Your changes remain here.'
+        : !canUseLatest
+          ? 'Using the latest version is not available for this conflict. Your changes remain here.'
+          : null
+    : null;
   const message = hasRecoveryChoices
     ? 'Saved edits from another editor session are available. Choose which session to recover.'
     : isConflict
@@ -88,6 +140,12 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
     >
       <div className="min-w-0">
         <p>{message}</p>
+        {conflictLocations.length > 0 && (
+          <ul className="mt-1 text-xs text-muted-foreground" aria-label="Changed timeline properties">
+            {conflictLocations.map((location) => <li key={location}>{location}</li>)}
+          </ul>
+        )}
+        {unavailableResolution && <p className="mt-1 text-xs text-muted-foreground">{unavailableResolution}</p>}
         {stateError && stateError !== message && hasRetainedWork && !hasRecoveryChoices && !isConflict && (
           <p className="mt-1 text-xs text-muted-foreground">{stateError}</p>
         )}
@@ -112,6 +170,35 @@ export function TimelineCommandRecovery({ commandSession }: TimelineCommandRecov
               </Button>
             );
           })}
+        </div>
+      ) : isConflict && (canKeepLabelChanges || canUseLatest) ? (
+        <div className="flex flex-wrap items-center gap-2" aria-label="Conflict resolution actions">
+          {canKeepLabelChanges && (
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              data-testid="timeline-command-keep"
+              disabled={isBusy}
+              aria-busy={busyAction === 'keep'}
+              onClick={() => void runAction('keep', commandSession.keepLabelChanges!)}
+            >
+              {busyAction === 'keep' ? 'Keeping my changes…' : 'Keep my changes'}
+            </Button>
+          )}
+          {canUseLatest && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              data-testid="timeline-command-use-latest"
+              disabled={isBusy}
+              aria-busy={busyAction === 'use-latest'}
+              onClick={() => void runAction('use-latest', commandSession.useLatest!)}
+            >
+              {busyAction === 'use-latest' ? 'Using latest version…' : 'Use latest version'}
+            </Button>
+          )}
         </div>
       ) : isRetry || state.status === 'error' ? (
         <Button
