@@ -40,11 +40,11 @@
     },
     "ScopedId": {
       "type": "string",
-      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+(?:/item:(?:(?!::)[^/])+)?|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
     },
     "EntityRef": {
       "type": "string",
-      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+(?:/item:(?:(?!::)[^/])+)?|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
     },
     "PropertyPath": {
       "type": "string",
@@ -53,12 +53,12 @@
     },
     "TargetKey": {
       "type": "string",
-      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+(?:/item:(?:(?!::)[^/])+)?|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
       "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
     },
     "AnchorIdentity": {
       "type": "string",
-      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
+      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+(?:/item:(?:(?!::)[^/])+)?|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
       "description": "R4 string binding values. Legacy word/beat indices are meaningful only against verified immutable source reads; not stable identities across republication. Exact source-word provenance is captured in reads/dependencies."
     },
     "AgentState": {
@@ -391,6 +391,11 @@
       ],
       "additionalProperties": false
     },
+    "ClipDeleteArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
     "ClipMoveArgs": {
       "type": "object",
       "properties": {
@@ -404,6 +409,132 @@
         "on"
       ],
       "additionalProperties": false
+    },
+    "TrackSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "const": "label"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+    },
+    "ClipSetParamsArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JSON"
+          }
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Patch raw clip.params by literal top-level JSON keys in stored units, never dotted paths or expressions. Null is a value; clear removes presence. Set/clear overlap is refused by the handler. Preserve unmentioned keys."
+    },
+    "ClipAddArgs": {
+      "type": "object",
+      "required": [
+        "row"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "type": "object",
+          "required": [
+            "id",
+            "clipType",
+            "track",
+            "at",
+            "hold"
+          ],
+          "description": "Complete literal parent clip row, preserved exactly, including unknown JSON. Preallocated ID; existing active output track. at and hold are seconds without creation-time rounding. Media, source windows and following anchors are unsupported in v1.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^(?!.*::)[^/]+$"
+            },
+            "clipType": {
+              "type": "string",
+              "minLength": 1
+            },
+            "track": {
+              "type": "string",
+              "pattern": "^(?!.*::)[^/]+$"
+            },
+            "at": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hold": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": true
+        }
+      }
     },
     "EditCommand": {
       "type": "object",
@@ -510,6 +641,79 @@
       "allOf": [
         {
           "if": {
+            "properties": {"op": {"const": "clip.delete"}},
+            "required": ["op"]
+          },
+          "then": {
+            "properties": {
+              "version": {"const": "1"},
+              "args": {"$ref": "#/$defs/ClipDeleteArgs"},
+              "intent": {"type": "object", "additionalProperties": false}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.set-params"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSetParamsArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "properties": {
               "op": {
                 "const": "timeline.inverse"
@@ -610,6 +814,35 @@
                   }
                 },
                 "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.add"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAddArgs"
+              },
+              "intent": {
+                "type": "object",
                 "additionalProperties": false
               }
             }

@@ -24,6 +24,15 @@ PYTHON_CLIENT_TEMPLATE = ROOT / "generators" / "python_client_template.py"
 PYTHON_CLIENT_OUTPUT = ROOT / "packages" / "python" / "astrid_runtime_client" / "generated.py"
 TYPESCRIPT_CLIENT_OUTPUT = ROOT / "packages" / "typescript" / "src" / "generated.ts"
 RELEASE_METADATA = ROOT / "generators" / "release.json"
+COMMIT_EXPORTS = (
+    "EditCommand", "ScopedId", "EntityRef", "TargetKey", "AnchorIdentity",
+    "AgentBinding", "AgentCreatedID", "ClipAddArgs", "ClipDeleteArgs",
+    "ClipMoveArgs", "ClipSetParamsArgs", "TrackSetArgs", "InverseArgs", "RestoreArgs",
+    "CommitRequest", "CommitAcceptedMutation", "CommitPreviewResponse",
+    "CanonicalDocument", "HeadPin", "Recorder", "PreparedCommit",
+    "CommitAccepted", "CommitPreview", "HistoryPage", "TimelineCommitPage",
+    "MediaSelection", "MediaSelectionQuery",
+)
 
 
 def _regular(path: Path, label: str) -> bytes:
@@ -72,6 +81,26 @@ def render_package_versions(version: str) -> dict[str, str]:
             package["packages"][""]["version"] = version
         outputs[relative] = json.dumps(package, indent=2) + "\n"
     return outputs
+
+
+def render_package_exports() -> dict[str, str]:
+    source = _regular(
+        ROOT / "generators/python_client_init_template.py", "Python package exports template"
+    ).decode("utf-8").replace(
+        "Authoritative Python package exports; rendered by generators/generate.py.",
+        "Generated, product-neutral client for the workspace.v1 protocol.",
+    )
+    source += "\nfrom .timeline_commit_types import (\n"
+    source += "".join(f"    {name},\n" for name in COMMIT_EXPORTS)
+    source += ")\n\n__all__ += " + repr(list(COMMIT_EXPORTS)) + "\n"
+    ts = ('export * from "./generated.js";\n'
+          'export { CONTRACT_VERSION } from "./contract-metadata.js";\n'
+          'export type { ' + ", ".join(COMMIT_EXPORTS) +
+          ' } from "./timeline-commit-types.js";\n')
+    return {
+        "packages/python/astrid_runtime_client/__init__.py": source,
+        "packages/typescript/src/index.ts": ts,
+    }
 
 
 def contract_digest(manifest_path: Path = MANIFEST) -> str:
@@ -236,6 +265,7 @@ def main() -> int:
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
+    generated.update(render_package_exports())
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
     from timeline_commit_resources import render as render_commit_resources

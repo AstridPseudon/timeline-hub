@@ -10,6 +10,21 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _refine(base: dict, branch: dict) -> dict:
+    """Retain object fields when an anyOf branch narrows their constraints."""
+    result = {**base, **branch}
+    properties = base.get("properties", {})
+    if properties or "properties" in branch:
+        result["properties"] = {
+            key: _refine(properties.get(key, {}), value)
+            for key, value in {**properties, **branch.get("properties", {})}.items()
+        }
+        result["required"] = list(
+            dict.fromkeys(base.get("required", []) + branch.get("required", []))
+        )
+    return result
+
+
 def render() -> dict[str, str]:
     runtime = json.loads((ROOT / "contract/schemas/timeline-commit.json").read_text())[
         "$defs"
@@ -27,14 +42,29 @@ def render() -> dict[str, str]:
     definitions["MutationReceipt"] = openapi["components"]["schemas"][
         "CommittedMutation"
     ]["properties"]["receipt"]
-    for name, schema in list(definitions.items()):
+    pending = list(definitions)
+    for name in pending:
+        schema = definitions[name]
         for keyword in ("oneOf", "anyOf"):
+            base = {key: value for key, value in schema.items() if key != keyword}
             for index, variant in enumerate(schema.get(keyword, [])):
                 if "properties" in variant:
-                    variant = {"type": "object", **variant}
+                    variant = _refine({"type": "object", **base}, variant)
                     variant_name = f"{name}Variant{index + 1}"
                     definitions[variant_name] = variant
+                    pending.append(variant_name)
                     schema[keyword][index] = {"$ref": "#/$defs/" + variant_name}
+            if keyword in schema:
+                definitions[name] = {keyword: schema[keyword]}
+        if "oneOf" in schema or "anyOf" in schema:
+            continue
+        properties = schema.get("properties", {})
+        for key, value in properties.items():
+            if value.get("type") == "object" and "properties" in value:
+                nested_name = f"{name}{key[0].upper()}{key[1:]}"
+                definitions[nested_name] = value
+                pending.append(nested_name)
+                properties[key] = {"$ref": "#/$defs/" + nested_name}
 
     def expression(schema: dict, language: str) -> str:
         py = language == "python"
@@ -94,6 +124,12 @@ def render() -> dict[str, str]:
                         fields.append(f"{key!r}: {item}")
                     else:
                         fields.append(f"{key}{'' if key in required else '?'}: {item}")
+                if not py and schema.get("additionalProperties", True) is not False:
+                    additional = schema.get("additionalProperties", {})
+                    item = expression(additional, language) if isinstance(additional, dict) else "unknown"
+                    fields.append(f"[key: string]: {item}")
+                elif not py and not fields:
+                    fields.append("[key: string]: never")
                 return (
                     "{ " + "; ".join(fields) + " }"
                     if not py
