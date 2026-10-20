@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T15:34:36Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 15m -->
+<!-- main | 2026-10-20T15:35:55Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 16m -->
 # agent — 2026-10-20 15:19:14 UTC
 Milestone: M1 RECORDED; M2 active, no exit; Gates1/6/7 OPEN.
 Integrated: Agent30fc8dd1. Since8e: Scene core/save separation(dab;83currentPASS), detachedCLI fixture(6a6;2PASS), service/Root extractions(725d/04c;31+40HTTP/WAV/lock/inventoryPASS), WC4 originalP1nativepublishercut(813;30native+2atomicF1PASS), Sprite(acc;33SSR/scenePASS), WC9docs+401wordarchitecture(130b;docrefs0/0), plate preservedfilltest/currentcatalog+manifest(30fc;17PASS). D05/D06/D07/WC4/WC9 DELETED; otherwriters remain held.
