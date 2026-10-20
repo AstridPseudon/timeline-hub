@@ -31,7 +31,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
+import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -1130,6 +1130,113 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     originalB: commandsOf(owner.intents[1].payload), exactRetry: { body: originalARequest.body, key: originalARequest.key },
     legacySaveCount: wire.legacy.length };
   await sniff.expectClean(reopened, seed3.timelineId);
+});
+
+test('M2 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo', async ({ page, context, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+
+  const runtimeRequests: Array<{ method: string; path: string; body?: string }> = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (!url.pathname.startsWith('/api/runtime/')) return;
+    runtimeRequests.push({
+      method: request.method(),
+      path: url.pathname.replace(/^\/api\/runtime/, ''),
+      body: request.postData() ?? undefined,
+    });
+  });
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  await page.getByRole('button', { name: 'New project' }).click();
+  const projectName = `Bootstrap actual ${Date.now()}`;
+  await page.locator('#project-name').fill(projectName);
+  await page.getByRole('button', { name: 'Create Project' }).click();
+  await expect(page).toHaveURL(/\/tools\/video-editor\?project=/, CEILING);
+
+  const projectId = new URL(page.url()).searchParams.get('project');
+  expect(projectId, 'the production project creator must return a Runtime project ID').toBeTruthy();
+  const list = await harness.runtimeJson<{ items: Array<{ timeline_id: string; is_shot?: boolean }> }>(
+    'GET',
+    `/v1/projects/${projectId}/timelines`,
+  );
+  expect(list.status, JSON.stringify(list.body)).toBe(200);
+  const timelineId = list.body.items.find((timeline) => timeline.is_shot !== true)?.timeline_id;
+  expect(timelineId, 'the production initializer must leave a canonical timeline').toBeTruthy();
+  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible(CEILING);
+  await expect(firstTrackName(page)).toBeVisible(CEILING);
+
+  // This is deliberately a positive native gate. On the source-refresh branch it fails here because
+  // createDefaultTimeline still calls publishParentComposition; the rest of the lifecycle remains real.
+  const createPath = `/v1/projects/${projectId}/timelines`;
+  const commitPath = `/v1/projects/${projectId}/timelines/${timelineId}/commit`;
+  const createRequest = runtimeRequests.find((request) => request.method === 'POST' && request.path === createPath);
+  expect(createRequest, 'production bootstrap must create the timeline through Runtime /v1').toBeDefined();
+  const initRequest = runtimeRequests.find((request) => request.method === 'POST' && request.path === commitPath);
+  expect(initRequest, 'production bootstrap must submit timeline.init through Runtime /v1 commit').toBeDefined();
+  const initBody = JSON.parse(initRequest?.body ?? '{}') as { commands?: Array<{ op?: string; version?: string }> };
+  expect(initBody.commands?.map((command) => [command.op, command.version])).toEqual([
+    ['timeline.init', '1'],
+    ['track.create', '1'],
+    ['track.create', '1'],
+  ]);
+  expect(runtimeRequests.filter((request) => SAVES.test(request.path)), 'bootstrap must emit zero legacy snapshot traffic').toEqual([]);
+
+  const bootstrapSeed = { ...seed3, timelineId: timelineId! };
+  const bootstrapHistory = await history(harness, bootstrapSeed);
+  expect(bootstrapHistory.items).toHaveLength(1);
+  expect(bootstrapHistory.items[0]).toMatchObject({ previous: null, revision_id: bootstrapHistory.head.revision_id });
+  expect(bootstrapHistory.items[0].records?.commands.map((record) => record.command.op)).toEqual([
+    'timeline.init', 'track.create', 'track.create',
+  ]);
+
+  const originalTrackName = await firstTrackName(page).inputValue();
+  const wire = await faultFirstCommit(page);
+  await editFirstTrackName(page, 'Bootstrap actual consumer edit');
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  accepted(wire.posts[0]);
+  expect(JSON.parse(wire.posts[0].body)).toMatchObject({
+    base_revision_id: bootstrapHistory.head.revision_id,
+    commands: [expect.objectContaining({ op: 'track.update' })],
+  });
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, timelineId!)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('retry');
+
+  const beforeRestart = await expectSameRealm(page, harness, astrid);
+  await page.reload();
+  await expectConnected(page);
+  await expect(firstTrackName(page)).toHaveValue('Bootstrap actual consumer edit', CEILING);
+  expect(wire.posts).toHaveLength(1);
+  await page.close();
+
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).toBe(beforeRestart.runtimeInstanceId);
+  const reopened = await context.newPage();
+  sniff.attach(reopened);
+  await wire.attach(reopened);
+  await reopened.goto(`${harness.origin}${APP_ENTRY_ROUTE}?project=${encodeURIComponent(projectId!)}&timeline=${encodeURIComponent(timelineId!)}`);
+  await expectConnected(reopened);
+  await expect(firstTrackName(reopened)).toBeVisible(CEILING);
+  expect(wire.posts).toHaveLength(1);
+  const persisted = (await commandOutboxes(reopened, timelineId!)).find((owner) => owner.pending);
+  expect(persisted, 'restart must preserve the exact in-flight bootstrap consumer edit').toBeTruthy();
+  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+    .and(reopened.locator(`[data-owner-id="${persisted!.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(2);
+  expect(wire.posts[1]).toEqual(wire.posts[0]);
+  await expect.poll(async () => (await commandOutboxes(reopened, timelineId!)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  const inverse = accepted(wire.posts[2]);
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual([expect.objectContaining({ op: 'timeline.inverse' })]);
+  expect(inverse.data.canonical_document.parent_revision.payload.config.tracks)
+    .toEqual(expect.arrayContaining([expect.objectContaining({ id: 'V1', label: originalTrackName })]));
+  expect(wire.legacy, 'retry and guarded undo must never use legacy snapshot traffic').toEqual([]);
+  await sniff.expectClean(reopened, timelineId);
+  await reopened.close();
 });
 
 test('M1 real dependency conflict retains B original guards and pending identity', async ({ page, harness, astrid, seed3 }) => {
