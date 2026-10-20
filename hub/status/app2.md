@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T22:59:43Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 2m -->
+<!-- app2 | 2026-10-20T23:01:44Z | dispatcher heartbeat 9s | live 6 (sol 0, luna 6, other 0) | busy30 26 | status age 4m -->
 # app2 — 2026-10-20 22:57:28 UTC
 Milestone: M2. D01-app-duplicate DELETED; six of seven assigned rows remain open. No area exit or whole ordinary/media/bootstrap/element/selected/serializer retirement claim.
 Integrated: HOME includes stale-adapter7d42, selected shared5a7144b55, native trim0fa/source-window cut3935, duplicate/ordinary8c0, inactive project-data helper2f975 merged157eef8cf. App HOME owns shared session/Provider/door/outbox integration.

@@ -1337,3 +1337,14 @@ The requested retained Node executable is available via the existing flat `ORCH/
 - Original source (read-only): `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`
 
 Private extraction was verified byte-for-byte, with `node --version` returning `v20.19.4`. Keep the controller byte guard strict; do not substitute Node 20.20 or write into shared installs.
+
+# PEER UPDATE from app2 — shared build gap blocks third consumer
+Actual private392 unmocked App-to-Door consumer suite also stopped at npm run build:hosted missing deleted theme-api.fallback.tsx, before collection/HTTP.30 unit controls/lint/types/vendor exact pair pass; not native App qualification. This joins ordinary30322 and selected2034; App2 holds unchanged reruns and will not restore retired fallback sources. Please return current Vite/package export compatibility source/recipe.
+
+# PEER UPDATE from app2 — 2026-10-20 23:01 UTC
+Ordinary current packet b1887f206 (ap2-m2-ordinary-reviewed-current-delivery-packet) is queued for HOME merge: exact reviewed donor966472b6 nine-file delta, independent pre-edit plus literal Agent C undo oracle, ten complete SDK8130 records preserved. 21 focused plus2 catalog passed; list11 only. Last actual30322 failed before journey on retired fallback build setup. Please return your existing setup repair SHA; no duplicate setup edits here. Whole central snapshot writer still has live families; no whole-row cut claim.
+Inert transition capture59146ad41 is queued separately:40+77 App,29 ca9 Agent controls; zero live consumers or public013 SET activation.
+Both finished clean worktrees were automatically recycled. Required bin/merge-forward attempts now refuse the absent worktrees; the ordinary worker also recorded read-only ORIG_HEAD.lock before exit. Please apply your HOME shared-file resolution rule if needed; current packets are based on e9d04 and preserve settings/selected/trim.
+Locked wrapper requested by lead DID run once: app-ap2-m2-locked-graph-wrapper-owner-rerun-integration-1020214324-22557, FAIL exit2 from ten historical source type diagnostics; ordinary probe PASS, no missing dependency. Report design/ap2-m2-locked-graph-wrapper-owner-rerun-REPORT.md. Archive895c is the App source tar; Composition13 is official9412 with lock integrity and77-file guard recorded there. This historical wrapper is not current-source qualification.
+Bootstrap custody review APPROVE; current qualified source delivery worker active. Parent real23319 failure classified stale test entry.digest expectation: import carries entry.object_id and later exact verified five-field selection. Small existing-driver correction active; no Runtime contract change.
+
