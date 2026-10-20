@@ -28,3 +28,8 @@ D03 removed the Supabase canonical writers as directed. Generated media is retai
 ## Known pre-existing App clear bug — 2026-10-20 07:10 UTC
 
 Clearing a transition does not stick on main/integration until the native clear lands. The current legacy None callback removes the local field, but legacy publication restores the prior raw transition. This is a known pre-existing bug, not an intended semantic change. Native single and atomic bulk clear are staged; D01-app-transition-none-serialization remains OPEN until actual current-tuple accepted reload, inverse, retry and zero-legacy proof. The transition revision/opaque-field safety repair does not fix publication removal. Owner decision07:00.
+
+
+## Old anonymous automatic-placement requests — owner decision 07:05 UTC
+
+Old task intents submitted before the upgrade without explicit canonical owner/basis/approval bindings are not retroactively auto-placed by inference. The asset stays in the gallery and must show a visible recoverable “Not placed: place manually” state. New automatic placement requires durable explicit requester bindings before task submission and the native capture/commit path; it is not yet qualified on integration. Manual placement remains subject to its existing honest refusal and later native migration.
