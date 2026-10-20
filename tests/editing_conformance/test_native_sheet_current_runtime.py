@@ -140,7 +140,7 @@ def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed
     assert runtime.history()['head'] == head and len(runtime.history()['items']) == count
 
 
-@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
+@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli', 'sheet-cli-default'])
 def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path, capsys, entry):
     seed(runtime)
     session, sheet, path = export(runtime, capsys, tmp_path)
@@ -158,8 +158,11 @@ def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path
         result = json.loads(capsys.readouterr().out)
     elif entry == 'sheet-python':
         result = sheet.apply(path.read_text(), session=session, dry_run=False)
-    else:
+    elif entry == 'sheet-cli':
         assert run(runtime, 'apply', 'film', str(path), '--native') == 0
+        result = json.loads(capsys.readouterr().out)
+    else:
+        assert run(runtime, 'apply', 'film', str(path)) == 0
         result = json.loads(capsys.readouterr().out)
     body = json.loads(runtime.calls[-1][0])
     assert body['base_revision_id'] == head['revision_id'] and body['base_publication_id'] == head['publication_id']
@@ -175,6 +178,20 @@ def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path
     assert State(bundle_from_document(undone['data']['canonical_document'])).entity(REF) == State(before).entity(REF)
     redone = reloaded.undo([undone['receipt']['receipt_id']])
     assert redone['data']['canonical_document'] == result['data']['canonical_document']
+
+
+def test_http_unbound_legacy_sheet_refuses_without_legacy_save(runtime, tmp_path, capsys):
+    path = tmp_path / 'legacy.sheet'
+    text = 'film "p" · "film"\nlines\n  s1  "draft"\n'
+    path.write_text(text)
+    before_calls = copy.deepcopy(runtime.calls)
+
+    assert run(runtime, 'apply', 'film', str(path)) == 1
+    output = json.loads(capsys.readouterr().out)
+    assert 'no original native sheet export' in output['error']['message']
+    assert 'edited sheet kept' in output['error']['message']
+    assert path.read_text() == text
+    assert runtime.calls == before_calls
 
 
 def test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba(runtime, tmp_path, capsys, monkeypatch):

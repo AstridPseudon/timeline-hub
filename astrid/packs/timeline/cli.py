@@ -3587,20 +3587,12 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_apply(parsed: argparse.Namespace) -> int:
-    if parsed.native:
-        return _cmd_commit_edit(parsed, sheet=True)
-    if parsed.dry_run or parsed.idempotency_key or parsed.json:
-        raise _VerbError("--native is required with commit apply options", 2)
-    from astrid.sdk.timeline_sheet import apply_sheet
-    tl = _edit_checkout(parsed)
-    before = tl.document()
-    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
-    if changes or before != tl.document():
-        tl.save(quiet=True)
-        print("applied sheet")
-        return 0
-    print("no change (the sheet matches the working copy)")
-    return 3
+    # Sheet acceptance is always native now. The old branch applied an
+    # unbound projection to a detached Checkout, merged it locally, and then
+    # saved the whole document. A sheet file without a retained NativeSheet
+    # export is deliberately refused by _cmd_commit_edit, with the edited
+    # text path included in the user-facing error.
+    return _cmd_commit_edit(parsed, sheet=True)
 
 
 def _cmd_undo(parsed: argparse.Namespace) -> int:
@@ -3878,11 +3870,11 @@ def _configure_log(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
-    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    subparser.add_argument("ref", help="Timeline id or slug with a retained native sheet export.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
+    subparser.add_argument("sheet_file", help="Path to the edited native sheet export.")
     subparser.add_argument("--native", action="store_true",
-                           help="Commit using the original sheet export retained in the scoped outbox.")
+                           help="Compatibility flag; sheet acceptance always uses the retained native export.")
     subparser.add_argument("--dry-run", action="store_true", help="Preview native commands locally without publishing.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
@@ -3914,6 +3906,9 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
             raise TimelineEditError("--publication cannot be combined with local draft/step undo")
         if sheet and parsed.draft:
             raise TimelineEditError("--native cannot be combined with a local draft")
+        if sheet and parsed.client is None:
+            raise TimelineEditError("native sheet apply requires a connected Runtime client; "
+                                    "legacy detached sheet save is not supported")
         batch = None
         base = {}
         if getattr(parsed, "commands_file", None) is not None:

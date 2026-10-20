@@ -72,6 +72,43 @@ def test_export_preview_apply_and_undo(native_cli, tmp_path, capsys):
     assert path.read_text() == edited
 
 
+def test_apply_without_compatibility_flag_uses_the_retained_native_export(native_cli, tmp_path, capsys):
+    run, _, generated = native_cli
+    text = export(native_cli, capsys)
+    edited = edit_cell(text, "parent/clip:a", "5")
+    path = tmp_path / "edited.txt"
+    path.write_text(edited)
+
+    assert run("apply", "t", str(path), "--json") == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["data"]["commands"]
+    assert json.loads(generated.calls[0][0])["source"] == {"via": "sheet"}
+    assert generated.bundles["r1"]["parent"]["clips"][0]["at"] == 5
+    assert path.read_text() == edited
+
+
+def test_unbound_legacy_sheet_refuses_and_keeps_text(native_cli, tmp_path, capsys):
+    run, _, generated = native_cli
+    path = tmp_path / "legacy.sheet"
+    text = 'film "p" · "t"\nlines\n  s1  "draft"\n'
+    path.write_text(text)
+    before = generated.path.read_bytes() if generated.path.exists() else None
+
+    assert run("apply", "t", str(path), "--json") == 1
+    output = json.loads(capsys.readouterr().out)
+    assert "no original native sheet export" in output["error"]["message"]
+    assert "edited sheet kept" in output["error"]["message"]
+    assert path.read_text() == text
+    after = generated.path.read_bytes() if generated.path.exists() else None
+    if before is None:
+        assert after is not None
+        state = json.loads(after)
+        assert state["pending"] == [] and state["flight"] is None and "sheet" not in state
+    else:
+        assert after == before
+    assert generated.calls == []
+
+
 @pytest.mark.parametrize("relevant", [False, True])
 def test_stale_export_refuses_without_recapturing(native_cli, tmp_path, capsys, relevant):
     run, client, generated = native_cli
