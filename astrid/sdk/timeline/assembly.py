@@ -8,6 +8,38 @@ import json
 from ._command_state import State, equal
 from ._common import TimelineEditError
 from .capture import number
+from .outbox import request_bytes
+
+
+def admission_body(arguments):
+    """The registered assembler's completed generated createTask wire body."""
+    return {key: arguments[source] for key, source in (
+        ('capability_id', 'capability_id'), ('capability_digest', 'capability_digest'),
+        ('schema_version', 'schema_version'), ('input_object_ids', 'input_object_ids'),
+        ('project', 'project_id'), ('spec', 'spec'), ('storage_estimate', 'storage_estimate'))}
+
+
+def retry_assembly(session, state, flight, children, replace_clips, digest, key, rationale):
+    """Compare only original caller intent; retry never reads mutable inputs."""
+    try:
+        body = json.loads(flight['body'])
+        capture = body['spec']['inputs']['resolved_children']
+        valid = (request_bytes(body).decode() == flight['body']
+                 and body['capability_id'] == 'rendering.assemble_timeline'
+                 and body['project'] == session.project_id
+                 and equal(capture['admitted_target'], {
+                     'project_id': session.project_id, 'timeline_id': session.timeline_id,
+                     'base_revision_id': state['base']['revision_id'],
+                     'base_publication_id': state['base']['publication_id']})
+                 and all(isinstance(child, dict) and type(child.get('version')) is int for child in children)
+                 and equal([child['association'] for child in capture['children']], children)
+                 and equal(capture['replace_clips'], replace_clips)
+                 and equal(capture['rationale'], rationale)
+                 and body['capability_digest'] == digest and flight['key'] == key)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise TimelineEditError('invalid assembly admission flight; original intent retained') from exc
+    if not valid:
+        raise TimelineEditError('assembly admission is immutable; retry its original inputs and key')
 
 
 def capture_assembly(session, state, child_outputs, *, replace_clips, rationale='Assemble ordered child visuals'):

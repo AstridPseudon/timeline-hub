@@ -40,11 +40,23 @@ def requester(tmp_path, *, duplicate_cas=False):
     generated.get_project_media_selection = lambda project, selector: copy.deepcopy(media[selector['association_id']])
     generated.get_project_verified_media = lambda project, selection: copy.deepcopy(verified[selection['variant_id']])
 
-    def create(**body):
+    def prepare(**body):
+        return DomainResult.success({
+            'capability_id': body['capability'], 'capability_digest': body['capability_digest'],
+            'project_id': body['project_id'], 'schema_version': '1', 'spec': body['spec'],
+            'input_object_ids': body['input_manifest'], 'storage_estimate': body['storage_estimate'],
+            'idempotency_key': body['idempotency_key']})
+
+    def dispatch(arguments):
+        body = {'capability': arguments['capability_id'], 'input_manifest': arguments['input_object_ids'],
+                **{key: arguments[key] for key in ('project_id', 'capability_digest', 'spec',
+                                                  'storage_estimate', 'idempotency_key')}}
+        flight = json.loads(generated.path.read_bytes())['flight']
+        assert flight['kind'] == 'assembly-admission' and flight['key'] == body['idempotency_key']
         calls.append(copy.deepcopy(body))
         return DomainResult.success({'task_id': 'assembler'})
 
-    client.tasks = SimpleNamespace(create=create)
+    client.tasks = SimpleNamespace(prepare_admission=prepare, dispatch_admission=dispatch)
     session = TimelineSession.open('p', 't', client=client, outbox_path=generated.path)
     return session, generated, outputs, associations, calls
 
@@ -236,20 +248,17 @@ def test_native_host_owns_attempt_identity_and_reads_exact_associations(tmp_path
         host.shutdown()
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    'registered assembler admission ACK recovery requires the original create body/key '
-    'durably retained in the existing outbox before send'))
-def test_registered_admission_lost_ack_restart_retries_original_body_without_recapture(tmp_path):
+def test_registered_admission_lost_ack_restart_retries_original_body_without_recapture(tmp_path, monkeypatch):
     session, generated, outputs, _, calls = requester(tmp_path)
-    create = session.client.tasks.create
+    dispatch = session.client.tasks.dispatch_admission
 
-    def lose_ack(**body):
-        result = create(**body)
+    def lose_ack(arguments):
+        result = dispatch(arguments)
         if len(calls) == 1:
             raise WorkspaceClientError(0, 'transport_error', 'lost admission acknowledgement')
         return result
 
-    session.client.tasks.create = lose_ack
+    session.client.tasks.dispatch_admission = lose_ack
     with pytest.raises(WorkspaceClientError, match='lost admission'):
         admit(session, outputs)
     original = copy.deepcopy(calls[0])
@@ -257,7 +266,111 @@ def test_registered_admission_lost_ack_restart_retries_original_body_without_rec
     generated.bundles['peer']['base_parent']['revision_id'] = 'peer'
     generated.bundles['peer']['parent']['clips'][0]['params']['text'] = 'Peer edit'
     generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+
+    def no_recapture(*args, **kwargs):
+        raise AssertionError('admission recovery reread the head or child media')
+
+    monkeypatch.setattr(session.client.timelines, 'open_composition', no_recapture)
+    monkeypatch.setattr(session.client.timelines, 'history', no_recapture)
+    monkeypatch.setattr(session.client.tasks, 'prepare_admission', no_recapture)
+    for name in ('get_managed_output', 'get_project_media_selection', 'get_project_verified_media'):
+        monkeypatch.setattr(generated, name, no_recapture)
     restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
     assert admit(restarted, outputs)['data']['task_id'] == 'assembler'
     assert calls == [original, original]
     assert session.client.reads == ['r0']
+
+
+@pytest.mark.parametrize('change', ['key', 'digest', 'children', 'version_type', 'order', 'replacement', 'rationale'])
+def test_admission_retry_refuses_changed_intent_without_losing_flight(tmp_path, change):
+    session, generated, outputs, _, calls = requester(tmp_path)
+    dispatch = session.client.tasks.dispatch_admission
+
+    def lose_ack(arguments):
+        dispatch(arguments)
+        raise WorkspaceClientError(0, 'transport_error', 'lost admission acknowledgement')
+
+    session.client.tasks.dispatch_admission = lose_ack
+    with pytest.raises(WorkspaceClientError):
+        admit(session, outputs)
+    saved = generated.path.read_bytes()
+    args = {'replace_clips': ['parent/clip:a', 'parent/clip:b'],
+            'assembler_digest': DIGEST, 'idempotency_key': 'assembly'}
+    if change == 'key':
+        args['idempotency_key'] = 'other'
+    elif change == 'digest':
+        args['assembler_digest'] = 'sha256:' + 'b' * 64
+    elif change == 'children':
+        outputs[0]['version'] = 2
+    elif change == 'version_type':
+        outputs[0]['version'] = 1.0
+    elif change == 'order':
+        outputs.reverse()
+    elif change == 'replacement':
+        args['replace_clips'].reverse()
+    else:
+        args['rationale'] = 'Other intent'
+    restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
+    with pytest.raises(TimelineEditError, match='immutable'):
+        restarted.admit_assembly(outputs, **args)
+    assert generated.path.read_bytes() == saved and len(calls) == 1
+    assert session.client.reads == ['r0']
+
+
+def test_admission_fsync_failure_prevents_post(tmp_path, monkeypatch):
+    from astrid.sdk.timeline import outbox
+
+    session, generated, outputs, _, calls = requester(tmp_path)
+    before = generated.path.read_bytes()
+
+    def fail(descriptor):
+        raise OSError('fsync failed')
+
+    monkeypatch.setattr(outbox.os, 'fsync', fail)
+    with pytest.raises(OSError, match='fsync failed'):
+        admit(session, outputs)
+    assert not calls and generated.path.read_bytes() == before
+    assert not list(generated.path.parent.glob('.outbox-*'))
+
+
+def test_admission_ack_cleanup_failure_retains_original_flight_and_base(tmp_path, monkeypatch):
+    session, generated, outputs, _, calls = requester(tmp_path)
+    before = session.outbox.read()
+    write = session.outbox.write
+
+    def fail_cleanup(state):
+        if state['flight'] is None:
+            raise OSError('crash before cleanup')
+        write(state)
+
+    monkeypatch.setattr(session.outbox, 'write', fail_cleanup)
+    with pytest.raises(OSError, match='crash before cleanup'):
+        admit(session, outputs)
+    flight = session.outbox.read()['flight']
+    saved = generated.path.read_bytes()
+    for operation in (lambda: session.undo(['pub0']), lambda: session.flush()):
+        with pytest.raises(TimelineEditError, match='original assembly admission'):
+            operation()
+        assert generated.path.read_bytes() == saved
+    pending = session.queue_move('parent/clip:a', 5)
+    assert session.outbox.read()['flight'] == flight
+    assert session.outbox.read()['base'] == before['base']
+    # Neither changed credentials for the same actor nor an instance restart is
+    # local authority; only the authenticated realm/actor scope owns this file.
+    transport = session.client._remote._transport
+    handshake = transport._last_handshake
+    transport._last_handshake = {**handshake, 'actor_id': 'other'}
+    with pytest.raises(TimelineEditError):
+        TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
+    transport._last_handshake = handshake
+    restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
+
+    def no_recapture(*args, **kwargs):
+        raise AssertionError('retry rebuilt admission')
+
+    monkeypatch.setattr(restarted.client.tasks, 'prepare_admission', no_recapture)
+    monkeypatch.setattr(restarted, '_bundle', no_recapture)
+    assert admit(restarted, outputs)['data']['task_id'] == 'assembler'
+    assert calls[0] == calls[1]
+    assert restarted.outbox.read() == {**before, 'pending': [pending]}
+    assert flight['key'] == 'assembly'

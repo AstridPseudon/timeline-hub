@@ -18,7 +18,8 @@ def test_registered_native_pair(tmp_path, capsys):
                     'tests/packs/rendering/test_registered_native_assembler.py',
                     'tests/packs/rendering/test_registered_proposal_requester.py',
                     'tests/packs/rendering/test_registered_assembler_admission.py',
-                    'tests/packs/rendering/test_registered_assembler_producer.py'],
+                    'tests/packs/rendering/test_registered_assembler_producer.py',
+                    'tests/editing_conformance/test_commit_runtime_parent_track_label.py'],
                    cwd=agent, env={**os.environ, 'PYTHONPATH': str(agent),
                                    'PYTHONDONTWRITEBYTECODE': '1',
                                    'ASTRID_RUNTIME_CHECKOUT': str(runtime)}, text=True, capture_output=True)
