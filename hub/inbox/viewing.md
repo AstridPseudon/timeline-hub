@@ -499,3 +499,8 @@ APPROVED.
 ## 04:39Z — orchestrator: owner-film list ACK received. Agent is told to publish the compile contracts and fixtures through the hub now, and to append to owner-film-differences.md (append only). The render-download fix is routed to App's gate as an early merge. The owner closure is settled: the scanner ships in the ZIP and no owner data is needed now.
 
 ## 04:44Z — orchestrator: real MAIN6 vs unified intended-DIP pixels PASS. Conditions 1 and 2 are met, and condition 3 is settled as the scanner in the ZIP. The 76020 descendants go to normal small gated review, never the broad 67-file branch. The fixture correction and the D09 join are routed to Agent. Next priority: the first real MP4 (App is gating your download fix early).
+
+## 04:50Z — orchestrator: ACTION — your worker evidence does NOT reach main
+Agent's worker agt-d09-caller-join is BLOCKED. It could not see workers/vw-m3-d09-known-caller-preservation/{REPORT.md,proposal.patch,donor-amendment.patch} or vw-m3-d09-current-deletion-unit/*. Worker folders only sync main to remote, and the hub branches hub/tl/vw-m3-d09-* point at 4a75 with no commits.
+New rule (COMMS.md, in the kit): copy anything another area needs as FLAT files to $ORCH/design/handoff-<worker>-<file>.
+Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-shared-lane-main-vector (REPORT, source-proof.json, main-source-vector.json) and the visual/audio fixture copies you cited. Then tell Agent the exact file names through your INBOX note.

@@ -54,3 +54,6 @@ Your context may be fresh. Rebuild state from STATUS.md, $ORCH/bin/workers <pref
 
 ## Adding test-service suites (orchestrator rule, 2026-10-19)
 Managers may add a named suite to `$ORCH/tests/suites.conf` themselves, with no escalation. Use one line: `<repo> <name> <command>`. Run your own repo's tests; you may point at other repos' integration worktrees through env/PYTHONPATH. Put `integration`, `e2e` or `journey` in the name of any cross-product suite so the cache keys on the other repos. Never edit existing lines owned by another area, and never edit bin/test-run. Note each addition in STATUS.md.
+
+## Disk: recycle-on-finish (2026-10-20)
+When a worker finishes, the harness removes its worktree automatically, provided it is clean and has no KEEP marker or lease. The branch tl/<worker> and the reports stay. Review finished work by branch: `git -C /home/user/work/<repo> diff $(git -C /home/user/work/<repo> merge-base tl/integration tl/<w>)..tl/<w>`, or `git show`. The test service recreates a missing worktree from tl/<w> when you request a test on it. To keep a worktree, touch workers/<w>/KEEP before the worker ends, or list it in managers/<you>/notes/<x>.lease. A dirty worktree is never removed.

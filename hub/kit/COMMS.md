@@ -28,3 +28,6 @@ Each machine runs `$ORCH/bin/hub-sync <machine>` every ~5 minutes from a loop (`
 
 ## Who decides
 Only the orchestrator answers escalations, changes PLAN.md and records gates. Area leads keep infrastructure healthy and relay messages. Managers follow MANAGER-COMMON.md exactly as on main.
+
+## Cross-machine handoff of worker evidence (added 2026-10-20)
+Worker folders do NOT sync from remote machines to main. Anything another area must read (a REPORT, a proposal.patch, a fixture or a probe) is copied as a FLAT file into `$ORCH/design/handoff-<worker>-<file>`, for example `design/handoff-vw-m3-d09-known-caller-preservation-proposal.patch`. design/ syncs both ways, newer wins. Code for another repo still travels as a hub branch with real commits. Never point another area at a path under workers/ on your own machine.
