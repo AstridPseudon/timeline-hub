@@ -8,6 +8,8 @@ import wave
 
 import pytest
 
+from astrid_runtime_client import WorkspaceClient
+from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, LeaseError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
@@ -619,3 +621,62 @@ def test_speech_settlement_preserves_explicit_duration_metadata(tmp_path):
         )["duration_seconds"] == explicit
     finally:
         service.close()
+
+
+def test_speech_settlement_verified_media_is_exact_over_authenticated_http(tmp_path):
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-http",
+        capability="generation.generate_speech",
+    )
+    daemon = None
+    try:
+        wav = _wav_bytes()
+        _settle(
+            service,
+            attempt,
+            [_output(
+                wav,
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+            )],
+            effect=effect,
+            key="speech-http-settle",
+        )
+        association = service.managed_outputs(task["task"]["id"])[0]
+        service.close()
+        service = None
+
+        daemon = RuntimeDaemon(
+            tmp_path / "speech-http", support_root=tmp_path / "speech-http-support"
+        ).start()
+        reader_token, _ = daemon.credentials.provision(
+            "speech-http-reader", ["projects:read"]
+        )
+        client = WorkspaceClient(daemon.endpoint, reader_token)
+        selector = {
+            "association_id": association["association_id"],
+            "object_id": association["object_id"],
+            "version": association["lifecycle"]["version"],
+        }
+        selection = client.get_project_media_selection(project["id"], selector)
+        assert selection["object_id"] == _digest(wav)
+        assert selection["object_id"] == "sha256:" + hashlib.sha256(wav).hexdigest()
+
+        verified = client.get_project_verified_media(project["id"], selection)
+        assert verified == {
+            "selection": selection,
+            "media_type": "audio/wav",
+            "size": len(wav),
+            "duration_seconds": 1.0,
+        }
+    finally:
+        if daemon is not None:
+            daemon.stop()
+        elif service is not None:
+            service.close()
