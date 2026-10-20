@@ -28,10 +28,11 @@ def wait_for_service(backend, version, data, expected, timeout=20):
     raise AssertionError(f"Runtime service did not reach {expected}: {latest}")
 
 
-@pytest.mark.parametrize(("fail_log_open", "port"), [(False, 17545), (True, 17546)])
+@pytest.mark.parametrize(("fail_log_open", "port_offset"), [(False, 0), (True, 1)])
 def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids(
-    tmp_path, monkeypatch, fail_log_open, port,
+    tmp_path, monkeypatch, fail_log_open, port_offset,
 ):
+    port = int(os.environ.get("ASTRID_TEST_INSTALLER_REPAIR_PORT", "17545")) + port_offset
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))

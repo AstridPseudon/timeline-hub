@@ -151,6 +151,8 @@ def test_doctor_returns_a_new_bundle_for_an_unhealthy_runtime(tmp_path, monkeypa
     version = Version(tmp_path / "version", tmp_path / "python", tmp_path / "profile", {})
     bundle = tmp_path / "doctor.zip"
     calls = []
+    reveal = Mock()
+    monkeypatch.setattr("astrid.installer.backend.reveal_bundle", reveal)
 
     def unhealthy(argv, *, extra_env):
         calls.append((argv, extra_env))
@@ -160,3 +162,4 @@ def test_doctor_returns_a_new_bundle_for_an_unhealthy_runtime(tmp_path, monkeypa
     monkeypatch.setattr(backend, "run", unhealthy)
     assert backend.doctor(version, tmp_path / "data", bundle) == bundle
     assert calls[0][1]["ASTRID_RUNTIME_DATA_ROOT"] == str(tmp_path / "data")
+    reveal.assert_called_once_with(bundle)

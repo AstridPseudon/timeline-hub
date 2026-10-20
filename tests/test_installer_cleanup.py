@@ -11,10 +11,11 @@ import pytest
 
 from astrid.installer.backend import Backend
 from astrid.installer.core import Installer, Version, write_json
-from astrid.installer.service import LABEL, default_program_root
+from astrid.installer.service import LABEL, bootstrap_root
 
 
-def installation(tmp_path, monkeypatch):
+def installation(tmp_path, monkeypatch, system=None):
+    system = system or sys.platform
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
@@ -22,22 +23,24 @@ def installation(tmp_path, monkeypatch):
     data.mkdir()
     (data / "sentinel").write_text("keep")
     write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
-    if os.name == "nt":
+    if system == "win32":
         monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
-    bootstrap = default_program_root(home, sys.platform) / "bootstrap"
+    bootstrap = bootstrap_root(home, system)
     bootstrap.mkdir(parents=True)
-    uv = bootstrap / ("uv.exe" if os.name == "nt" else "uv")
+    uv = bootstrap / ("uv.exe" if system == "win32" else "uv")
     uv.write_text("installer-owned bootstrap")
-    return Backend(root, tmp_path / "log", uv), root, data, bootstrap
+    backend = Backend(root, tmp_path / "log", uv)
+    backend.service.system = system
+    return backend, root, data, bootstrap
 
 
-def test_custom_root_uninstall_removes_default_bootstrap_and_keeps_data(tmp_path, monkeypatch):
+def test_custom_root_uninstall_removes_programs_and_keeps_data(tmp_path, monkeypatch):
     backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
 
     assert backend.remove(root, data, delete_data=False) == []
 
     assert not root.exists()
-    assert not bootstrap.exists()
+    assert bootstrap.exists() is (backend.service.system == "win32")
     assert (data / "sentinel").read_text() == "keep"
 
 
@@ -52,7 +55,7 @@ def test_custom_root_reports_locked_default_bootstrap(tmp_path, monkeypatch):
 
     monkeypatch.setattr(shutil, "rmtree", remove)
 
-    assert backend.remove(root, data, delete_data=False) == [bootstrap]
+    assert backend.remove(root, data, delete_data=False) == ([] if backend.service.system == "win32" else [bootstrap])
     assert not root.exists()
     assert bootstrap.is_dir()
     assert (data / "sentinel").read_text() == "keep"
@@ -237,9 +240,8 @@ def test_retained_selection_recovers_version_with_only_support_logs(tmp_path, mo
     assert (data / "sentinel").read_text() == "keep"
 
 
-def test_windows_cleanup_instructions_name_locked_bootstrap_outside_custom_root(tmp_path, monkeypatch):
-    backend, root, data, bootstrap = installation(tmp_path, monkeypatch)
-    backend.service.system = "win32"
+def test_windows_defers_running_bootstrap_to_parent_after_core_exit(tmp_path, monkeypatch):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch, system="win32")
     lines = []
     backend.service.say = lines.append
     remove_tree = shutil.rmtree
@@ -251,19 +253,40 @@ def test_windows_cleanup_instructions_name_locked_bootstrap_outside_custom_root(
 
     monkeypatch.setattr(shutil, "rmtree", remove)
 
-    assert backend.remove(root, data, delete_data=False) == [bootstrap]
+    assert backend.remove(root, data, delete_data=False) == []
 
-    quoted = str(bootstrap).replace("'", "''")
-    assert lines == [f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force"]
-    assert str(data) not in lines[0]
+    assert lines == []
+    assert bootstrap == tmp_path / "local-app-data/Astrid Installer/bootstrap"
     assert not root.exists()
     assert backend.uv.is_file()
 
 
 
+@pytest.mark.parametrize("workspace", ["support", "attached"])
+def test_windows_parent_cleanup_protects_workspace_beside_bootstrap(tmp_path, monkeypatch, workspace):
+    backend, root, data, bootstrap = installation(tmp_path, monkeypatch, system="win32")
+    protected = bootstrap.parent / "workspace"
+    protected.mkdir()
+    sentinel = protected / "film"
+    sentinel.write_bytes(b"keep")
+    if workspace == "support":
+        data = protected
+    else:
+        write_json(data / "runtime/catalog.json", {"selected": "realm"})
+        monkeypatch.setattr(backend, "workspace", lambda *_args: {"realm_root": str(protected)})
+    remove = Mock(side_effect=AssertionError("workspace must be protected before removal"))
+    monkeypatch.setattr(shutil, "rmtree", remove)
+
+    with pytest.raises(ValueError, match="workspace.*overlaps|support directory overlaps"):
+        backend.remove(root, data, delete_data=False)
+
+    remove.assert_not_called()
+    assert sentinel.read_bytes() == b"keep"
+    assert backend.uv.is_file()
+
+
 def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, monkeypatch):
-    backend, root, data, _ = installation(tmp_path, monkeypatch)
-    backend.service.system = "win32"
+    backend, root, data, _ = installation(tmp_path, monkeypatch, system="win32")
     lines = []
     backend.service.say = lines.append
     locked = root / "versions"
@@ -279,7 +302,6 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo
 
     assert backend.remove(root, data, delete_data=False) == [locked]
 
-    quoted = str(root).replace("'", "''")
-    assert lines == [f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force"]
+    assert lines == []
     assert (root / "install.json").is_file()
     assert (data / "sentinel").read_text() == "keep"

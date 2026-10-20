@@ -29,7 +29,8 @@ from .core import (
     read_json,
     write_json,
 )
-from .service import Service, platform_target, venv_python
+from .service import Service, bootstrap_root, platform_target, venv_python
+from .support import reveal_bundle
 from .tools import binary, install_tools, source
 
 
@@ -438,6 +439,7 @@ class Backend:
             if after is None or (before is not None and after.st_mtime_ns == before.st_mtime_ns
                                  and after.st_ino == before.st_ino):
                 raise
+        reveal_bundle(bundle)
         return bundle
 
     def upgrade(self, version: Version, data: Path) -> None:
@@ -531,9 +533,11 @@ class Backend:
         """Prove that removing programs cannot also remove a workspace."""
         root, data = absolute(root), absolute(data)
         trees = [root]
-        bootstrap = self.service.registry.parent / "bootstrap"
+        bootstrap = bootstrap_root(self.service.home, self.service.system)
         if root != bootstrap.parent and self.uv.parent == bootstrap and bootstrap.exists():
-            trees.append(absolute(bootstrap))
+            absolute(bootstrap)
+            # The Windows parent also removes the installer lock directory.
+            trees.append(absolute(bootstrap.parent if self.service.system == "win32" else bootstrap))
 
         def overlaps(first, second):
             return first == second or first in second.parents or second in first.parents
@@ -607,8 +611,11 @@ class Backend:
                 residue.append(data_path)
         # The thin line bootstraps under the default root even when the managed
         # program uses --root. Only remove that exact supplied bootstrap.
-        bootstrap = self.service.registry.parent / "bootstrap"
-        if root != bootstrap.parent and self.uv.parent == bootstrap and bootstrap.exists():
+        bootstrap = bootstrap_root(self.service.home, self.service.system)
+        # Windows' PowerShell parent removes its exact bootstrap and lock after
+        # uv and this Python process exit, releasing their executable handles.
+        if (self.service.system != "win32" and root != bootstrap.parent
+                and self.uv.parent == bootstrap and bootstrap.exists()):
             try:
                 absolute(bootstrap)
                 shutil.rmtree(bootstrap)
@@ -619,13 +626,6 @@ class Backend:
                     bootstrap.parent.rmdir()
                 except OSError:
                     pass  # Other files in the default root remain untouched.
-        if self.service.system == "win32":
-            # Include the retained ownership marker when the locked files are
-            # inside the program tree. Custom-root bootstrap residue is separate.
-            cleanup = dict.fromkeys(root if path == root or root in path.parents else path for path in residue)
-            for path in cleanup:
-                quoted = str(path).replace("'", "''")
-                self.service.say(f"After this line returns, run: Remove-Item -LiteralPath '{quoted}' -Recurse -Force")
         return residue
 
     def open(self) -> None:

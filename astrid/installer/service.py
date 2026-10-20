@@ -45,6 +45,11 @@ def install_selection(home: Path, system: str) -> Path:
     return default_program_root(home, system).parent / "astrid-install.json"
 
 
+def bootstrap_root(home: Path, system: str) -> Path:
+    root = default_program_root(home, system)
+    return (root.parent / "Astrid Installer" if system == "win32" else root) / "bootstrap"
+
+
 def legacy_roots(home: Path, default: Path) -> list[Path]:
     return list(dict.fromkeys([default.with_name("banodoco_local"),
                               home / "Library" / "Application Support" / "banodoco_local",
@@ -102,7 +107,7 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str = 
         executable = " ".join(systemd_quote(s).replace("$", "$$") for s in argv)
         environment = "".join("Environment=" + systemd_quote(k + "=" + v) + "\n" for k, v in sorted(version.env.items()))
         return ("[Unit]\nDescription=Astrid Runtime\n\n[Service]\n"
-                f"ExecStart={executable}\n{environment}Restart=on-failure\nRestartSec=5\n"
+                f"ExecStart={executable}\n{environment}Restart=always\nRestartSec=5\n"
                 "KillMode=mixed\nTimeoutStopSec=90\n"
                 f"StandardOutput={systemd_quote('append:' + str(log))}\n"
                 f"StandardError={systemd_quote('append:' + str(log))}\n"
@@ -113,7 +118,7 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str = 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo><Description>Astrid Runtime</Description></RegistrationInfo>
-  <Triggers><LogonTrigger><Enabled>true</Enabled><UserId>{escape(user)}</UserId></LogonTrigger></Triggers>
+  <Triggers><LogonTrigger><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><Enabled>true</Enabled><UserId>{escape(user)}</UserId></LogonTrigger></Triggers>
   <Principals><Principal id="Owner"><UserId>{escape(user)}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>

@@ -5,7 +5,7 @@ Description=Astrid Runtime
 ExecStart="/astrid/versions/v1/py/bin/python" "-I" "-m" "astrid_runtime" "run" "--profile" "astrid" "--data-root" "/astrid data" "--source-manifest" "/astrid/versions/v1/profile.json"
 Environment="PATH=/astrid/tools:/usr/bin:/bin"
 Environment="PYTHONUTF8=1"
-Restart=on-failure
+Restart=always
 RestartSec=5
 KillMode=mixed
 TimeoutStopSec=90

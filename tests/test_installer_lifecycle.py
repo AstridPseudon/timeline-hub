@@ -10,6 +10,7 @@ import pytest
 
 from astrid.installer.core import Installer, VerificationError, Version, switch, write_json
 from astrid.installer.service import LABEL, install_selection
+from astrid.installer.support import FAILURE_MESSAGE, HELP_MESSAGE
 from astrid.sdk import storage_root
 
 
@@ -171,7 +172,39 @@ def test_doctor_uses_installed_version_and_prints_bundle_path(tmp_path):
     Installer(root, data, backend, say=lines.append).run("doctor", {}, bundle=bundle)
 
     assert backend.calls == [("doctor", old, data, bundle)]
-    assert lines == [f"Astrid doctor bundle: {bundle}"]
+    assert lines == [f"Astrid doctor bundle: {bundle}", HELP_MESSAGE]
+
+
+def test_successful_update_prints_retained_backup_location(tmp_path):
+    root, data = tmp_path / "program", tmp_path / "workspace"
+    folder = root / "versions" / "installed"
+    old = Version(folder, folder / "py/bin/python", folder / "profile.json", {})
+    old.python.parent.mkdir(parents=True)
+    old.python.write_text("python")
+    write_json(folder / "version.json", old.document())
+    switch(root, old)
+    backup = root / "backups" / "kept-workspace"
+
+    class UpdatingBackend(LifecycleBackend):
+        def workspace(self, *_args):
+            return {"realm_id": "kept-realm", "realm_root": str(data / "realm")}
+
+        def backup(self, *_args):
+            backup.mkdir(parents=True)
+            return {"root": str(backup), "kind": "runtime"}
+
+        def upgrade(self, *_args):
+            pass
+
+    lines = []
+    backend = UpdatingBackend(root, data)
+
+    Installer(root, data, backend, say=lines.append).run("update", {})
+
+    assert backup.is_dir()
+    assert f"A backup of your workspace is kept at {backup}." in lines
+    assert lines.index(f"A backup of your workspace is kept at {backup}.") < lines.index("Open https://astrid.haus")
+    assert "Installing Astrid." in lines
 
 
 def test_storage_root_uses_install_selection_before_persisted_fallback(monkeypatch, tmp_path):
@@ -240,7 +273,7 @@ def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypat
     monkeypatch.setattr(cli, "Backend", no_space)
 
     assert cli.main(["--root", str(tmp_path / "program")]) == 1
-    assert capsys.readouterr().out.splitlines() == [message, f"Details: {tmp_path / 'logs/install.log'}"]
+    assert capsys.readouterr().out.splitlines() == [FAILURE_MESSAGE, f"Details: {tmp_path / 'logs/install.log'}"]
     assert message in (tmp_path / "logs/install.log").read_text()
 
 

@@ -127,9 +127,10 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path
         Path(path).mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(windows_security, "private_directory", private_directory)
-    backend = Backend(root, platform.log_dir() / "install.log", root / "bootstrap" / "uv.exe")
+    backend = Backend(root, platform.log_dir() / "install.log", local / "Astrid Installer/bootstrap/uv.exe")
     backend.service = SimpleNamespace(recorded=lambda: {}, registry=root / "service.json",
-                                     selection=local / "astrid-install.json", system="win32", say=print)
+                                     selection=local / "astrid-install.json", system="win32", say=print,
+                                     home=Path.home())
     monkeypatch.setattr(backend, "existing", Mock(return_value=None))
     monkeypatch.setattr(backend, "stop", Mock())
     monkeypatch.setattr(backend, "unregister", Mock())
@@ -166,11 +167,11 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path
 
 
 @pytest.mark.parametrize("selected", ["root", "data"])
-@pytest.mark.parametrize("directory", ["state", "parent"])
+@pytest.mark.parametrize("directory", ["state", "parent", "child", "bootstrap"])
 def test_windows_refuses_selected_roots_containing_installer_lock(tmp_path, monkeypatch, selected, directory):
     local = tmp_path / "local"
     state = local / "Astrid Installer"
-    chosen = state if directory == "state" else local
+    chosen = {"state": state, "parent": local, "child": state / "workspace", "bootstrap": state / "bootstrap"}[directory]
     root = chosen if selected == "root" else tmp_path / "program"
     data = chosen if selected == "data" else tmp_path / "workspace"
     monkeypatch.setenv("LOCALAPPDATA", str(local))

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import getpass
 import json
 import os
 import re
@@ -22,16 +23,42 @@ _PRIVATE_KEY_BEGIN = re.compile(r"^-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")
 _PRIVATE_KEY_END = re.compile(r"^-----END [A-Z0-9 ]*PRIVATE KEY-----")
 _URL_CREDENTIALS = re.compile(r"(?i)(https?://)[^/@\s:]+:[^/@\s]+@")
 _SECRET_KEY = re.compile(r"(?i)(?:credential|token|secret|password|api[_-]?key|authorization)")
+_USER_PATH = re.compile(r"(?i)(?:[a-z]:[\\/](?:users|documents and settings)[\\/]|/(?:users|home)/)[^\s\"'<>;,)]*")
+_CHAT_CONTENT_KEY = re.compile(r"(?i)^(?:chat|chats|conversation|conversations|transcript|transcripts|messages|prompt|prompts|completion|completions|content)$")
+
+
+def _redact_identity(text: str) -> str:
+    home = str(Path.home())
+    for spelling in {home, home.replace("\\", "/"), home.replace("/", "\\")}:
+        if spelling not in {"/", "\\", "."}:
+            text = re.sub(re.escape(spelling), "<redacted:home>", text, flags=re.IGNORECASE)
+    text = _USER_PATH.sub("<redacted:path>", text)
+    try:
+        users = {getpass.getuser(), Path.home().name}
+    except OSError:
+        users = {Path.home().name}
+    for user in users - {""}:
+        text = re.sub(r"(?<![\w-])" + re.escape(user) + r"(?![\w-])", "<redacted:user>", text, flags=re.IGNORECASE)
+    return text
+
+
+def _redact_identity_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {name: _redact_identity_value(item) for name, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_identity_value(item) for item in value]
+    return _redact_identity(value) if isinstance(value, str) else value
 
 
 def _redact_log_value(value: Any, key: str = "") -> Any:
-    if _SECRET_KEY.search(key):
+    if _SECRET_KEY.search(key) or _CHAT_CONTENT_KEY.fullmatch(key):
         return "<redacted>"
     if isinstance(value, dict):
         return {str(name): _redact_log_value(item, str(name)) for name, item in value.items()}
     if isinstance(value, list):
         return [_redact_log_value(item, key) for item in value]
-    return redact_for_shared(value)
+    value = redact_for_shared(value)
+    return _redact_identity(value) if isinstance(value, str) else value
 
 
 def _redact_private_key_blocks(text: str) -> str:
@@ -79,7 +106,7 @@ def redact_log(text: str) -> str:
             lines.append(json.dumps(_redact_log_value(value), sort_keys=True) + ("\n" if line.endswith("\n") else ""))
         else:
             lines.append(_SECRET_TEXT.sub(r"\1<redacted>", line))
-    return "".join(lines)
+    return _redact_identity("".join(lines))
 
 
 def _installed_record() -> tuple[Path | None, Path | None]:
@@ -172,10 +199,9 @@ def _logs(support_root: Path | None = None) -> list[Path]:
     for root in roots:
         try:
             for path in sorted(root.iterdir()):
-                managed_log = (path.name == "install.log" or path.name == "generic-host.log"
-                               or path.name.startswith("generic-host.log.")
-                               or (path.suffix == ".log" and path.is_file())
-                               or re.fullmatch(r".+\.log\.\d+", path.name) is not None)
+                # Service output can contain conversation text. Include only
+                # installer diagnostics, never chat or other service logs.
+                managed_log = re.fullmatch(r"install\.log(?:\.\d+)?", path.name) is not None
                 if managed_log and not path.is_symlink() and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode):
                     files.append(path)
         except OSError:
@@ -247,9 +273,10 @@ def write_bundle(destination: Path, report: dict, support_root: Path | None) -> 
             with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
                 archive.writestr("status.json", json.dumps(payload, indent=2, sort_keys=True) + "\n")
                 archive.writestr("versions.json", json.dumps(versions, indent=2, sort_keys=True) + "\n")
-                archive.writestr("install-manifest.json", json.dumps(_install_manifest(support_root) if support_root else {"available": False}, indent=2, sort_keys=True) + "\n")
+                manifest = _install_manifest(support_root) if support_root else {"available": False}
+                archive.writestr("install-manifest.json", json.dumps(_redact_identity_value(manifest), indent=2, sort_keys=True) + "\n")
                 included: set[str] = set()
-                for path in _logs(support_root):
+                for index, path in enumerate(_logs(support_root)):
                     try:
                         if used >= _MAX_TOTAL_LOG_BYTES:
                             continue
@@ -258,7 +285,7 @@ def write_bundle(destination: Path, report: dict, support_root: Path | None) -> 
                         text = raw.decode("utf-8", errors="replace")
                     except OSError:
                         continue
-                    relative = f"logs/{path.parent.name}-{path.name}"
+                    relative = f"logs/{index}-{path.name}"
                     if relative in included:
                         continue
                     archive.writestr(relative, redact_log(text))

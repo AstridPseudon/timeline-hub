@@ -110,6 +110,9 @@ def test_windows_task_settings_and_no_console_executable():
     assert field('t:Principals/t:Principal/t:LogonType') == 'InteractiveToken'
     assert field('t:Principals/t:Principal/t:RunLevel') == 'LeastPrivilege'
     assert field('t:Triggers/t:LogonTrigger/t:UserId') == 'S-1-5-21-1234'
+    assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:Interval') == 'PT1M'
+    assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:StopAtDurationEnd') == 'false'
+    assert root.find('t:Triggers/t:LogonTrigger/t:Repetition/t:Duration', ns) is None
     assert field('t:Actions/t:Exec/t:Command').endswith('pythonw.exe')
     arguments = field('t:Actions/t:Exec/t:Arguments')
     assert 'os.environ.update' in arguments and 'astrid_runtime.cli' in arguments
@@ -124,7 +127,7 @@ def test_systemd_quotes_spaces_percent_dollar_and_supply_tool_path():
     assert 'ExecStart="/astrid %%v $$x/py/bin/python"' in unit
     assert '"/astrid data"' in unit
     assert 'Environment="PATH=/astrid/tools:/usr/bin:/bin"' in unit
-    assert 'Restart=on-failure' in unit
+    assert 'Restart=always' in unit
     assert 'WantedBy=default.target' in unit
 
 

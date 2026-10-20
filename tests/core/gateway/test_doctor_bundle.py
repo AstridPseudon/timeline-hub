@@ -120,7 +120,7 @@ def test_install_manifest_uses_recorded_custom_program_root(tmp_path, monkeypatc
     }
 
 
-def test_bundle_keeps_bounded_log_tail_and_discovers_managed_logs(tmp_path, monkeypatch):
+def test_bundle_keeps_bounded_installer_log_tail_and_excludes_service_and_chat_logs(tmp_path, monkeypatch):
     import runtime_protocol.platform
 
     runtime_logs = tmp_path / "runtime-logs"
@@ -128,27 +128,59 @@ def test_bundle_keeps_bounded_log_tail_and_discovers_managed_logs(tmp_path, monk
     (runtime_logs / "astrid-runtime.log").write_text("runtime current\n")
     (runtime_logs / "astrid-runtime.log.1").write_text("runtime previous\n")
     (runtime_logs / "install.log").write_text("install current\n")
+    (runtime_logs / "install.log.1").write_text("install previous\n")
     (runtime_logs / "runtime-service.log").write_text("service current\n")
+    (runtime_logs / "chat.log").write_text("private conversation\n")
+    (runtime_logs / "chat.log.1").write_text("previous private conversation\n")
     (runtime_logs / "private.txt").write_text("must not include\n")
     monkeypatch.setattr(runtime_protocol.platform, "log_dir", lambda: runtime_logs)
     support = tmp_path / "support"
     support.mkdir()
-    host_log = support / "generic-host.log"
-    host_log.write_text("head-secret=" + "x" * (doctor_bundle._MAX_LOG_BYTES + 10) + "\ntail-visible\n")
+    install_log = support / "install.log"
+    install_log.write_text("head-secret=" + "x" * (doctor_bundle._MAX_LOG_BYTES + 10) + "\ntail-visible\n")
     (support / "generic-host.log.1").write_text("host previous\n")
 
     discovered = doctor_bundle._logs(support)
-    assert {"astrid-runtime.log", "astrid-runtime.log.1", "install.log", "runtime-service.log", "generic-host.log", "generic-host.log.1"} <= {
-        path.name for path in discovered
-    }
-    assert not any(path.name == "private.txt" for path in discovered)
-    monkeypatch.setattr(doctor_bundle, "_logs", lambda *_args: [host_log])
+    assert discovered == [runtime_logs / "install.log", runtime_logs / "install.log.1", install_log]
     archive_path = doctor_bundle.write_bundle(tmp_path / "tail.zip", {"ok": True}, support)
     with zipfile.ZipFile(archive_path) as archive:
-        text = archive.read(next(name for name in archive.namelist() if name.startswith("logs/"))).decode()
+        text = "\n".join(archive.read(name).decode() for name in archive.namelist())
     assert "tail-visible" in text and "head-secret" not in text
+    for excluded in ("runtime current", "runtime previous", "service current", "private conversation", "host previous"):
+        assert excluded not in text
     if os.name == "posix":
         assert (tmp_path / "tail.zip").stat().st_mode & 0o777 == 0o600
+
+
+def test_bundle_redacts_home_user_paths_and_chat_fields_in_every_payload(tmp_path, monkeypatch):
+    home = tmp_path / "Private User"
+    home.mkdir()
+    monkeypatch.setattr(doctor_bundle.Path, "home", lambda: home)
+    monkeypatch.setattr(doctor_bundle.getpass, "getuser", lambda: "Private User")
+    install_log = home / "install.log"
+    install_log.write_text(
+        f"Installing at {home}/Astrid for Private User\n"
+        r"Failed at C:\Users\OtherPerson\AppData\Local\Astrid" + "\n"
+        "/Users/AnotherPerson/Astrid /home/ThirdPerson/Astrid\n"
+        '{"messages":[{"role":"user","content":"private chat words"}]}\n'
+    )
+    monkeypatch.setattr(doctor_bundle, "_logs", lambda *_args: [install_log])
+    monkeypatch.setattr(doctor_bundle, "_install_manifest", lambda *_args: {
+        "selected_tools": {"ffmpeg": {"executable": str(home / "ffmpeg"), "version": "7.1"}}
+    })
+    bundle = doctor_bundle.write_bundle(tmp_path / "identity.zip", {
+        "reason": f"Couldn't read {home}/Astrid for Private User",
+        "conversations": [{"content": "private chat words"}],
+        "runtime_health": {"services": [{"name": "chat", "state": "failed"}]},
+    }, home)
+
+    with zipfile.ZipFile(bundle) as archive:
+        text = "\n".join(archive.read(name).decode() for name in archive.namelist())
+        text += "\n".join(archive.namelist())
+        status = json.loads(archive.read("status.json"))
+    for private in (str(home), "Private User", "OtherPerson", "AnotherPerson", "ThirdPerson", "private chat words"):
+        assert private not in text
+    assert status["runtime_health"]["services"][0] == {"name": "chat", "state": "failed"}
 
 
 def test_bounded_log_tail_redacts_private_key_with_truncated_begin(tmp_path):

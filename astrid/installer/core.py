@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .launcher import install as install_launcher
+from .support import HELP_MESSAGE
 
 
 class VerificationError(RuntimeError):
@@ -193,6 +194,7 @@ class Installer:
                 raise ValueError("No installed Astrid version is available for doctor.")
             destination = self.backend.doctor(old, self.data, bundle)
             self.say(f"Astrid doctor bundle: {destination}")
+            self.say(HELP_MESSAGE)
             return
         if mode == "uninstall":
             self.backend.preflight_remove(self.root, self.data, delete_data=delete_data)
@@ -255,7 +257,7 @@ class Installer:
                 self.say("Backing up your workspace.")
                 backup = self.backend.backup(old, self.data, realm)
                 self._save_update(transaction, "backed_up", backup=backup)
-            self.say("Installing the pinned Astrid version.")
+            self.say("Installing Astrid.")
             candidate = self.backend.stage(manifest, self.root, self.data)
             if old:
                 assert transaction is not None
@@ -308,6 +310,8 @@ class Installer:
             elif candidate is not None:
                 self.backend.stop(candidate, self.data)
             raise
+        if backup:
+            self.say(f"A backup of your workspace is kept at {backup['root']}.")
         self.backend.open()
         self.say("Open https://astrid.haus")
 
