@@ -4,7 +4,7 @@ import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/ge
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { createCommitOutbox } from './commitOutbox.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
-import { captureShotNameEdit, submitShotNameEdit } from './shotSetGesture.ts';
+import { captureShotNameEdit, captureShotPromptEdit, submitShotNameEdit, submitShotPromptEdit } from './shotSetGesture.ts';
 
 const scope = { projectId: 'project-1', timelineId: 'timeline-1', realmId: 'realm-1', actorId: 'actor-1' };
 const digest = (letter: string) => `sha256:${letter.repeat(64)}`;
@@ -23,7 +23,7 @@ function documentWithOpaque(opaque: unknown = { keep: true }): CanonicalDocument
       },
     },
     shot_revisions: [{ shot_id: 'shot-1', revision_id: 'shot-r1', content_digest: digest('b'),
-      internal_timeline_revision_id: 'internal-r1', payload: { name: 'Original', internal_timeline_revision_id: 'internal-r1', opaque: { sibling: true } } }],
+      internal_timeline_revision_id: 'internal-r1', payload: { name: 'Original', settings: { prompt: 'Original prompt', opaque: { keep: true } }, internal_timeline_revision_id: 'internal-r1', opaque: { sibling: true } } }],
     internal_timeline_revisions: [{ timeline_id: 'shot-1-timeline', revision_id: 'internal-r1', content_digest: digest('c'), payload: { tracks: [], clips: [] } }],
     dependency_manifest: {
       shots: [{ shot_id: 'shot-1', revision_id: 'shot-r1', content_digest: digest('b'), internal_timeline_revision_id: 'internal-r1' }],
@@ -93,6 +93,27 @@ describe('native shot name session lifecycle', () => {
     expect(captured.basis).toMatchObject({ command: { expect: { 'occurrence:occ-1/shot::payload.name': { value: 'Original' } } } });
     expect((await fixture.outboxes.list(scope))[0]?.intents).toHaveLength(0);
     expect(fixture.send).not.toHaveBeenCalled();
+    await fixture.session.dispose();
+  });
+});
+
+describe('native shot prompt session lifecycle', () => {
+  it('captures the raw prompt basis and accepts an empty prompt through the durable completion path', async () => {
+    const fixture = await sessionFixture();
+    const captured = captureShotPromptEdit(fixture.session.shotSetPort, {
+      projectId: scope.projectId, parentDocumentId: scope.timelineId, headRevisionId: 'r0',
+    }, 'occ-1', 'Original prompt');
+    const completion = submitShotPromptEdit(captured, '');
+    expect(completion).toBeInstanceOf(Promise);
+    await completion;
+    expect(fixture.commits).toHaveLength(1);
+    expect(fixture.commits[0]?.command).toMatchObject({
+      op: 'shot.set', select: 'occurrence:occ-1/shot', args: { values: { settings: { prompt: '' } }, clear: [] },
+      expect: { 'occurrence:occ-1/shot::payload.settings.prompt': { state: 'present', value: 'Original prompt' } },
+      authorship: { 'occurrence:occ-1/shot::payload.settings.prompt': 'direct' },
+    });
+    await fixture.session.flush();
+    expect(fixture.session.getState().status).toBe('saved');
     await fixture.session.dispose();
   });
 });

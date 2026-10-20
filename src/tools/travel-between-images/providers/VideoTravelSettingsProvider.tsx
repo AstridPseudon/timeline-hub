@@ -154,6 +154,8 @@ interface VideoTravelSettingsProviderProps {
   updateShotMode: (shotId: string, mode: 'batch' | 'timeline' | 'by-pair') => void;
   /** Optional document-native persistence used by embedded canonical shot editors. */
   shotSettingsPersistence?: ShotSettingsPersistenceOptions['customLoadSave'];
+  /** Captures a prompt edit at the existing native shot.set intent boundary. */
+  onPromptIntent?: () => void;
   children: React.ReactNode;
 }
 
@@ -164,6 +166,7 @@ export const VideoTravelSettingsProvider: React.FC<VideoTravelSettingsProviderPr
   availableLoras,
   updateShotMode,
   shotSettingsPersistence,
+  onPromptIntent,
   children,
 }) => {
   // Seed the useToolSettings React Query cache from the shot object that's already
@@ -192,6 +195,7 @@ export const VideoTravelSettingsProvider: React.FC<VideoTravelSettingsProviderPr
     currentShotId: shotId || null,
     selectedShot,
     updateShotMode,
+    onPromptIntent,
   });
 
   const setSelectedModel = useCallback((nextModel: SelectedModel) => {

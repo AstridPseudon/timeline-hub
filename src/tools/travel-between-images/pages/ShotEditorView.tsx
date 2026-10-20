@@ -45,7 +45,7 @@ import type {
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
 import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
-import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import { captureShotNameEdit, captureShotPromptEdit, submitShotNameEdit, submitShotPromptEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import {
   enqueueCanonicalShotPublish,
   updateCanonicalShotName,
@@ -125,6 +125,7 @@ export function ShotEditorView({
   const editorReadOnly = isLocalMode && !canEditCanonicalShot;
 
   const canonicalSettingsBase = useRef<{ scope: string; composition: PreparedShotComposition } | null>(null);
+  const capturedPromptEditRef = useRef<CapturedShotSetEdit | null>(null);
   const canonicalSettingsScope = canonicalComposition && canonicalOccurrence
     ? JSON.stringify([canonicalComposition.projectId, canonicalComposition.parentDocumentId, canonicalOccurrence.occurrenceId])
     : null;
@@ -176,6 +177,28 @@ export function ShotEditorView({
           const changes = Object.entries(settings as Record<string, unknown>).filter(([key]) => (
             !equal(submitted[key], normalized[key])
           ));
+          const promptIntent = Boolean(shotSetPort && capturedPromptEditRef.current && typeof submitted.prompt === 'string');
+          if (promptIntent) {
+            if (changes.some(([key]) => key !== 'prompt')) {
+              const error = new Error('Prompt edits must be saved separately from other shot settings. Your draft is kept.');
+              normalizeAndPresentError(error, { context: 'canonical-shot:prompt', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+            const captured = capturedPromptEditRef.current;
+            if (!captured) {
+              const error = new Error('The shot prompt was not captured at user intent. Your draft is kept.');
+              normalizeAndPresentError(error, { context: 'canonical-shot:prompt', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+            try {
+              await submitShotPromptEdit(captured, submitted.prompt as string);
+              capturedPromptEditRef.current = null;
+              return;
+            } catch (error) {
+              normalizeAndPresentError(error, { context: 'canonical-shot:prompt', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+          }
           if (changes.length === 0) return;
           if (raw !== undefined && raw !== null && (typeof raw !== 'object' || Array.isArray(raw))) {
             const error = new Error('Cannot safely replace shot settings: the form does not contain its complete authored root value. Your draft is kept.');
@@ -209,7 +232,7 @@ export function ShotEditorView({
         });
       },
     };
-  }, [canEditCanonicalShot, canonicalComposition, canonicalOccurrence, canonicalSettingsScope, canonicalShotComposition, onCanonicalCompositionPublished, shotToEdit.id]);
+  }, [canEditCanonicalShot, canonicalComposition, canonicalOccurrence, canonicalSettingsScope, canonicalShotComposition, onCanonicalCompositionPublished, shotSetPort, shotToEdit.id]);
 
   const { setCurrentShotId } = useCurrentShot();
   const { navigateToPreviousShot, navigateToNextShot } = useShotNavigation();
@@ -289,6 +312,7 @@ export function ShotEditorView({
   }, [pendingCanonicalName, shotToEdit.name]);
   useEffect(() => {
     capturedNameEditRef.current = null;
+    capturedPromptEditRef.current = null;
     setPendingCanonicalName(null);
   }, [shotToEdit.id]);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -305,6 +329,29 @@ export function ShotEditorView({
       normalizeAndPresentError(error, {
         context: 'canonical-shot:capture-name',
         toastTitle: 'Shot name draft kept',
+      });
+      throw error;
+    }
+  }, [canonicalComposition, canonicalOccurrence, shotSetPort]);
+
+  const handlePromptIntent = useCallback(() => {
+    if (!shotSetPort || !canonicalComposition || !canonicalOccurrence || capturedPromptEditRef.current) return;
+    const raw = canonicalOccurrence.revision.settings;
+    const prompt = raw && typeof raw === 'object' && !Array.isArray(raw)
+      && typeof (raw as Record<string, unknown>).prompt === 'string'
+      ? (raw as Record<string, unknown>).prompt as string
+      : '';
+    try {
+      capturedPromptEditRef.current = captureShotPromptEdit(
+        shotSetPort,
+        canonicalComposition,
+        canonicalOccurrence.occurrenceId,
+        prompt,
+      );
+    } catch (error) {
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:capture-prompt',
+        toastTitle: 'Shot settings draft kept',
       });
       throw error;
     }
@@ -477,6 +524,7 @@ export function ShotEditorView({
             availableLoras={availableLoras}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
+            onPromptIntent={editorReadOnly ? undefined : handlePromptIntent}
           >
             <SettingsAutoDisable shotId={shotToEdit.id} isCloudGenerationEnabled={isCloudGenerationEnabled} readOnly={editorReadOnly} />
             <ShotSettingsEditor

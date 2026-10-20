@@ -12,6 +12,7 @@ import {
   useFrameSettings,
   useModelSettings,
   useMotionSettings,
+  usePromptSettings,
   useVideoTravelSettingsStatus,
 } from './VideoTravelSettingsProvider';
 import {
@@ -58,17 +59,20 @@ vi.mock('../hooks/settings/useShotSettings', async () => {
 });
 
 vi.mock('../hooks/settings/useVideoTravelSettingsHandlers', () => ({
-  useVideoTravelSettingsHandlers: ({ shotSettingsRef }: { shotSettingsRef: React.MutableRefObject<{
+  useVideoTravelSettingsHandlers: ({ shotSettingsRef, onPromptIntent }: { shotSettingsRef: React.MutableRefObject<{
     updateField: (key: keyof VideoTravelSettings, value: VideoTravelSettings[keyof VideoTravelSettings]) => void;
     saveImmediate: () => Promise<void>;
-  }> }) => {
+  }>; onPromptIntent?: () => void }) => {
     const updateField = shotSettingsRef.current.updateField;
     const noOp = () => {};
 
     return {
       handleVideoControlModeChange: noOp,
       handlePairConfigChange: noOp,
-      handleBatchVideoPromptChange: noOp,
+      handleBatchVideoPromptChange: (prompt: string) => {
+        onPromptIntent?.();
+        updateField('prompt', prompt);
+      },
       handleNegativePromptChange: noOp,
       handleBatchVideoFramesChange: (frames: number) => updateField('batchVideoFrames', frames),
       handleBatchVideoStepsChange: (steps: number) => updateField('batchVideoSteps', steps),
@@ -96,6 +100,7 @@ vi.mock('../hooks/settings/useVideoTravelSettingsHandlers', () => ({
 }));
 
 function Consumer() {
+  const promptSettings = usePromptSettings();
   const frameSettings = useFrameSettings();
   const modelSettings = useModelSettings();
   const motionSettings = useMotionSettings();
@@ -109,6 +114,8 @@ function Consumer() {
       <div data-testid="guidance">{modelSettings.guidanceScale ?? 'none'}</div>
       <div data-testid="turbo">{String(motionSettings.turboMode)}</div>
       <div data-testid="canonical-persistence">{String(settingsStatus.canonicalPersistence)}</div>
+      <div data-testid="prompt">{promptSettings.prompt}</div>
+      <button type="button" onClick={() => promptSettings.setPrompt('typed prompt')}>set-prompt</button>
       <button type="button" onClick={() => frameSettings.setFrames(49)}>set-frames-49</button>
       <button type="button" onClick={() => frameSettings.setSteps(20)}>set-steps-20</button>
       <button type="button" onClick={() => modelSettings.setGuidanceScale(5)}>set-guidance-5</button>
@@ -154,6 +161,27 @@ describe('VideoTravelSettingsProvider', () => {
     expect(mockShotSettingsOptions?.customLoadSave).toBe(customPersistence);
     expect(mockShotSettingsOptions?.bootstrapData).toBeUndefined();
     expect(screen.getByTestId('canonical-persistence')).toHaveTextContent('true');
+  });
+
+  it('captures prompt intent before updating the settings draft', () => {
+    const onPromptIntent = vi.fn();
+    renderWithClient(
+      <VideoTravelSettingsProvider
+        projectId="project-1"
+        shotId="shot-1"
+        selectedShot={null}
+        availableLoras={[]}
+        updateShotMode={vi.fn()}
+        onPromptIntent={onPromptIntent}
+      >
+        <Consumer />
+      </VideoTravelSettingsProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-prompt' }));
+
+    expect(onPromptIntent).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('prompt')).toHaveTextContent('typed prompt');
   });
 
   it('does not normalize and publish canonical settings during popup mount', () => {

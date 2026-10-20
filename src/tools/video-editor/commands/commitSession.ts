@@ -550,14 +550,14 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   const shotSetPort: ShotSetCapturePort = {
-    capture({ occurrenceId, current }) {
+    capture({ occurrenceId, current, args }) {
       assertReady();
       if (current.projectId !== options.scope.projectId || current.parentDocumentId !== options.scope.timelineId
         || current.headRevisionId !== displayHead.revisionId || !displayHead.publicationId) {
         throw new Error('Displayed shot does not match the verified raw authoring basis');
       }
       const select = `occurrence:${occurrenceId}/shot`;
-      return json({ ...captureShotSet(bundle, select), localGeneration,
+      return json({ ...captureShotSet(bundle, select, args), localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } });
     },
     finish(basis, args) {

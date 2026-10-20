@@ -43,6 +43,7 @@ interface UseVideoTravelSettingsHandlersParams {
   selectedShot: Shot | null;
   /** Function to optimistically update the generation mode cache */
   updateShotMode: (shotId: string, mode: 'batch' | 'timeline' | 'by-pair') => void;
+  onPromptIntent?: () => void;
 }
 
 export interface VideoTravelSettingsHandlers {
@@ -105,6 +106,7 @@ export const useVideoTravelSettingsHandlers = ({
   currentShotId,
   selectedShot,
   updateShotMode,
+  onPromptIntent,
 }: UseVideoTravelSettingsHandlersParams): VideoTravelSettingsHandlers => {
   
   // Use refs to avoid recreating callbacks when these values change
@@ -112,6 +114,8 @@ export const useVideoTravelSettingsHandlers = ({
   selectedShotRef.current = selectedShot;
   const updateShotModeRef = useRef(updateShotMode);
   updateShotModeRef.current = updateShotMode;
+  const onPromptIntentRef = useRef(onPromptIntent);
+  onPromptIntentRef.current = onPromptIntent;
   
   // =============================================================================
   // NO-OP CALLBACK
@@ -147,6 +151,7 @@ export const useVideoTravelSettingsHandlers = ({
   // BATCH VIDEO SETTINGS
   // =============================================================================
   const handleBatchVideoPromptChange = useCallback((prompt: string) => {
+    onPromptIntentRef.current?.();
     shotSettingsRef.current.updateField('prompt', prompt);
   }, [shotSettingsRef]);
 

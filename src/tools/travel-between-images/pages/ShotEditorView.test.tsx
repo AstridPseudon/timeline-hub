@@ -14,10 +14,10 @@ import { toRuntimePublication } from '@/integrations/runtime/dataProvider.ts';
 import { createEntityStore } from '@/shared/state/createEntityStore';
 import { normalizeVideoTravelSettings } from '../settings';
 
-const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, errors: vi.fn() }));
+const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, onPromptIntent: null as any, errors: vi.fn() }));
 vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) => { capture.onName = props.onUpdateShotName; return null; } }));
 vi.mock('../providers', () => ({
-  VideoTravelSettingsProvider: (props: any) => { capture.persistence = props.shotSettingsPersistence; return props.children; },
+  VideoTravelSettingsProvider: (props: any) => { capture.persistence = props.shotSettingsPersistence; capture.onPromptIntent = props.onPromptIntent; return props.children; },
   useVideoTravelSettingsMutations: () => ({ settings: {}, status: 'loading' }),
 }));
 vi.mock('../components/ShotTimelinePreview.tsx', () => ({ ShotTimelinePreview: () => null }));
@@ -37,9 +37,9 @@ vi.mock('../hooks/useOperationTracking', () => ({ useOperationTracking: () => ({
 vi.mock('@/shared/state/panesStore', () => ({ usePanesStore: (select: any) => select({}) }));
 vi.mock('@/shared/lib/errorHandling/runtimeError.ts', () => ({ normalizeAndPresentError: capture.errors }));
 
-afterEach(() => { cleanup(); capture.errors.mockClear(); capture.persistence = null; capture.onName = null; });
+afterEach(() => { cleanup(); capture.errors.mockClear(); capture.persistence = null; capture.onName = null; capture.onPromptIntent = null; });
 
-async function setup(input = fixture) {
+async function setup(input = fixture, shotSetPort?: any) {
   let current = structuredClone(input);
   const publications: Record<string, any>[] = [];
   const publish = vi.fn(async (request: ShotCompositionPublishRequest) => {
@@ -55,7 +55,7 @@ async function setup(input = fixture) {
     <ShotEditorView shotToEdit={{ id: 'shot-alpha', name: 'Original', images: [] } as unknown as Shot}
       selectedProjectId="project-001" isNewlyCreatedShot={false} shotFromState={undefined} shots={[]}
       availableLoras={[]} canonicalComposition={base} canonicalShotComposition={adapter}
-      canonicalOccurrence={occurrence} />
+      canonicalOccurrence={occurrence} shotSetPort={shotSetPort} />
   </MemoryRouter>);
   return { base, publish, publications, read: () => current, compete: (graph: typeof current) => { current = graph; } };
 }
@@ -102,6 +102,51 @@ describe('current App shot editing base', () => {
     }
     expect(state.publish.mock.calls[0]?.[0].expectedHeadRevisionId).toBe(state.base.headRevisionId);
     expect(state.read().primary_timeline.head.revision_id).not.toBe(state.base.headRevisionId);
+  });
+
+  it('routes the existing prompt ingress through occurrence-owned shot.set when native authority is mounted', async () => {
+    const command = {
+      schema_version: 1, op: 'shot.set', version: '1', select: 'occurrence:occ-1/shot',
+      args: { values: { settings: { prompt: 'Native prompt' } }, clear: [] },
+    };
+    const port = {
+      capture: vi.fn(() => ({ bundle: {}, command })),
+      finish: vi.fn((_basis: unknown, args: unknown) => ({ command: { ...command, args }, bundle: {} })),
+      submit: vi.fn(async () => {}),
+    };
+    const state = await setup(fixture, port);
+    const loaded = await capture.persistence.load('shot-alpha');
+    capture.onPromptIntent();
+    await capture.persistence.save('shot-alpha', { ...loaded, prompt: 'Native prompt' });
+
+    expect(port.capture).toHaveBeenCalledWith(expect.objectContaining({ occurrenceId: 'occ-1' }));
+    expect(port.finish).toHaveBeenCalledWith(expect.anything(), { values: { settings: { prompt: 'Native prompt' } }, clear: [] });
+    expect(port.submit).toHaveBeenCalledWith({ command: expect.objectContaining({ args: { values: { settings: { prompt: 'Native prompt' } }, clear: [] } }) });
+    expect(state.publish).not.toHaveBeenCalled();
+  });
+
+  it.each(['absent', 'null'] as const)('records an explicit empty prompt over a %s raw settings root', async (shape) => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    const source = input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha');
+    if (shape === 'absent') delete source.settings;
+    else source.settings = null;
+    const port = {
+      capture: vi.fn(() => ({ bundle: {}, command: {} })),
+      finish: vi.fn((_basis: unknown, args: unknown) => ({
+        command: {
+          schema_version: 1, op: 'shot.set', version: '1', select: 'occurrence:occ-1/shot', args,
+        }, bundle: {},
+      })),
+      submit: vi.fn(async () => {}),
+    };
+    const state = await setup(input as typeof fixture, port);
+    const loaded = await capture.persistence.load('shot-alpha');
+    capture.onPromptIntent();
+    await capture.persistence.save('shot-alpha', loaded ?? normalizeVideoTravelSettings(null));
+
+    expect(port.finish).toHaveBeenCalledWith(expect.anything(), { values: { settings: { prompt: '' } }, clear: [] });
+    expect(port.submit).toHaveBeenCalledOnce();
+    expect(state.publish).not.toHaveBeenCalled();
   });
 
 });
