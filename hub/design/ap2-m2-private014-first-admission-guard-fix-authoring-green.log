@@ -1,0 +1,9 @@
+
+ RUN  v4.1.5 /home/user/work/wt/ap2-m2-private014-first-admission-guard-fix
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:43:39
+   Duration  2.55s (transform 235ms, setup 276ms, import 1.38s, tests 15ms, environment 698ms)
+

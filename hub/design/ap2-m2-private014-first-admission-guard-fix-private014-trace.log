@@ -1,0 +1,13 @@
+Private Runtime014 sources and manifest verified; public lock untouched.
+ok runtime.lock.json
+
+ RUN  v4.1.5 /home/user/work/wt/ap2-m2-private014-first-admission-guard-fix/.private014-admission
+
+ ✓ src/test/native014Admission.test.tsx > traces the first admission guard with native neutral responses 87ms
+ ✓ src/test/native014Admission.test.tsx > traces the first admission guard with native authoring responses 61ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  19:41:59
+   Duration  4.52s (transform 2.54s, setup 162ms, import 3.31s, tests 152ms, environment 717ms)
+

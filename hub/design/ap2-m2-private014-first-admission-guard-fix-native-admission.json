@@ -1,0 +1,238 @@
+{
+  "projectId": "509b007e81a04186bdccc8b44ca2c671",
+  "timelineId": "main",
+  "neutral": {
+    "label": "neutral",
+    "health": {
+      "status": "ok",
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59",
+      "runtime_epoch": 1,
+      "runtime_session_id": "574f8340ad0a4c02b663e60e38f0b4ef"
+    },
+    "handshake": {
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59",
+      "session_id": "359af712ef5c4993ba8026d0bcf81e75",
+      "actor_id": "astrid-browser",
+      "realm_id": "f43fb6ff923a4de691a4655fa762f3d6",
+      "scopes": [
+        "handshake",
+        "projects:read",
+        "projects:write",
+        "objects:read",
+        "objects:write",
+        "tasks:read",
+        "tasks:write"
+      ],
+      "capabilities": [
+        "execution_binding.targeted.v1",
+        "rendering.render.historical_revision.v1"
+      ]
+    },
+    "realm": {
+      "realm_id": "f43fb6ff923a4de691a4655fa762f3d6",
+      "display_name": "Workspace",
+      "version": 1,
+      "created_at": "2026-10-20T19:36:48.032+00:00",
+      "state": "active",
+      "tombstoned_at": null,
+      "lifecycle_version": 1
+    },
+    "head": {
+      "revision_id": "seed-r1",
+      "publication_id": null
+    },
+    "history": {
+      "status": 409,
+      "body": {
+        "code": "conflict",
+        "message": "history_unavailable",
+        "details": {
+          "status": "refused",
+          "reason": "history_unavailable",
+          "base": null,
+          "current": null,
+          "conflicts": []
+        }
+      }
+    }
+  },
+  "authoring": {
+    "label": "astrid",
+    "health": {
+      "status": "ok",
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59",
+      "runtime_epoch": 2,
+      "runtime_session_id": "f7b9650ef4e7455785c06e2c4f18b03c"
+    },
+    "handshake": {
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59",
+      "session_id": "2f8db20b91184088991a1da165d7fe09",
+      "actor_id": "astrid-browser",
+      "realm_id": "f43fb6ff923a4de691a4655fa762f3d6",
+      "scopes": [
+        "handshake",
+        "projects:read",
+        "projects:write",
+        "objects:read",
+        "objects:write",
+        "tasks:read",
+        "tasks:write"
+      ],
+      "capabilities": [
+        "execution_binding.targeted.v1",
+        "rendering.render.historical_revision.v1"
+      ]
+    },
+    "realm": {
+      "realm_id": "f43fb6ff923a4de691a4655fa762f3d6",
+      "display_name": "Workspace",
+      "version": 1,
+      "created_at": "2026-10-20T19:36:48.032+00:00",
+      "state": "active",
+      "tombstoned_at": null,
+      "lifecycle_version": 1
+    },
+    "head": {
+      "revision_id": "seed-r1",
+      "publication_id": "txn-1ec4b129ad9546c0aba1ee1e7b3c5c4f"
+    },
+    "history": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "publication_id": "txn-1ec4b129ad9546c0aba1ee1e7b3c5c4f",
+            "revision_id": "seed-r1",
+            "previous": null,
+            "receipt": {
+              "receipt_id": "txn-1ec4b129ad9546c0aba1ee1e7b3c5c4f",
+              "command_kind": "parent_composition.publish",
+              "idempotency_key": "seed",
+              "request_hash": "9a2c4c39cd6d48136f6b774ce32cb995a3858e24836d89b6dfa9136087943e1c",
+              "project_id": "509b007e81a04186bdccc8b44ca2c671",
+              "project_seq": [
+                3,
+                3
+              ],
+              "event_ids": [
+                "2"
+              ],
+              "result": {
+                "content_digest": "sha256:5505fdf4e8591392c58013904430baed862113c63bd2a1e86b9b172969b2a07b",
+                "content_digests": {
+                  "parent": "sha256:5505fdf4e8591392c58013904430baed862113c63bd2a1e86b9b172969b2a07b"
+                },
+                "created_at": "2026-10-20T19:36:48.071+00:00",
+                "dependency_manifest": {
+                  "internal_timelines": [],
+                  "media": [],
+                  "shots": []
+                },
+                "event_id": "2",
+                "new_head": "seed-r1",
+                "old_head": null,
+                "parent_revision_id": "seed-r1",
+                "payload": {
+                  "clips": [],
+                  "config": {
+                    "clips": [],
+                    "output": {
+                      "file": "out.mp4",
+                      "fps": 30,
+                      "resolution": "1280x720"
+                    },
+                    "tracks": [
+                      {
+                        "id": "V1",
+                        "kind": "visual",
+                        "label": "V1"
+                      }
+                    ]
+                  },
+                  "name": "Main",
+                  "occurrences": [],
+                  "registry": {
+                    "assets": {}
+                  },
+                  "slug": "main"
+                },
+                "project_id": "509b007e81a04186bdccc8b44ca2c671",
+                "revision_id": "seed-r1",
+                "timeline_id": "main",
+                "visual_seam_report": {
+                  "blocked": false,
+                  "boundaries": [],
+                  "cues": [],
+                  "disclosureVersion": "visual-seam/v1",
+                  "fps": 30,
+                  "guardFrames": 2,
+                  "opaqueElements": [],
+                  "spans": [],
+                  "structuralIssues": [],
+                  "version": 1,
+                  "warningCount": 0
+                }
+              },
+              "created_at": "2026-10-20T19:36:48.071+00:00"
+            },
+            "intent": "legacy_unknown",
+            "records": null,
+            "provider_version": null,
+            "compiler_version": null,
+            "publisher": null
+          }
+        ],
+        "next_cursor": null,
+        "head": {
+          "revision_id": "seed-r1",
+          "publication_id": "txn-1ec4b129ad9546c0aba1ee1e7b3c5c4f"
+        }
+      }
+    }
+  },
+  "parent": {
+    "revision_id": "seed-r1",
+    "project_id": "509b007e81a04186bdccc8b44ca2c671",
+    "timeline_id": "main",
+    "content_digest": "sha256:5505fdf4e8591392c58013904430baed862113c63bd2a1e86b9b172969b2a07b",
+    "payload": {
+      "clips": [],
+      "config": {
+        "clips": [],
+        "output": {
+          "file": "out.mp4",
+          "fps": 30,
+          "resolution": "1280x720"
+        },
+        "tracks": [
+          {
+            "id": "V1",
+            "kind": "visual",
+            "label": "V1"
+          }
+        ]
+      },
+      "name": "Main",
+      "occurrences": [],
+      "registry": {
+        "assets": {}
+      },
+      "slug": "main"
+    },
+    "created_at": "2026-10-20T19:36:48.071+00:00",
+    "dependency_manifest": {
+      "documents": [],
+      "internal_timelines": [],
+      "media": [],
+      "shots": []
+    }
+  },
+  "provider": {
+    "id": "astrid-v1",
+    "digest": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59"
+  }
+}

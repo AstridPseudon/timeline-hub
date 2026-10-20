@@ -1,0 +1,48 @@
+{
+  "mode": "neutral",
+  "contract": "0.2.14",
+  "schema": "sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59",
+  "health": "ok",
+  "handshake": {
+    "actorId": "astrid-browser",
+    "realmId": "f43fb6ff923a4de691a4655fa762f3d6"
+  },
+  "enabled": true,
+  "recoveryChecked": true,
+  "rawBundle": null,
+  "displayedHead": {
+    "projectId": "509b007e81a04186bdccc8b44ca2c671",
+    "timelineId": "main",
+    "headRevisionId": "seed-r1",
+    "headPublicationId": null
+  },
+  "history": {
+    "status": 409,
+    "body": {
+      "code": "conflict",
+      "message": "history_unavailable",
+      "details": {
+        "status": "refused",
+        "reason": "history_unavailable",
+        "base": null,
+        "current": null,
+        "conflicts": []
+      }
+    }
+  },
+  "commandState": {
+    "status": "error",
+    "error": "conflict: history_unavailable",
+    "ownerId": null,
+    "recoverableOwners": [],
+    "canUndo": false
+  },
+  "ownerCount": 0,
+  "leases": 0,
+  "calls": [
+    "GET /v1/health",
+    "POST /v1/handshake",
+    "GET /v1/realm",
+    "GET /v1/projects/509b007e81a04186bdccc8b44ca2c671/timelines/main/commits?limit=50"
+  ]
+}
