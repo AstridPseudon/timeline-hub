@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
+import type { ClipParamsArgs } from '@/tools/video-editor/commands/clipParamsCapture.ts';
+import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { AvailableSequenceMetadata } from '@/tools/video-editor/sequences/registry.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { SequenceParamEditor } from './SequenceParamEditor.tsx';
@@ -51,5 +55,115 @@ describe('SequenceParamEditor empty state', () => {
     expect(screen.getByText('Legacy Sequence')).toBeTruthy();
     expect(screen.getByText('Legacy title')).toBeTruthy();
     expect(screen.queryByText('This clip type does not expose editable sequence params in the current registry view.')).toBeNull();
+  });
+});
+
+const nativeCurrent = {
+  resolvedConfig: { clips: [{ id: 'clip-1' }] },
+} as unknown as TimelineData;
+
+function nativePort() {
+  return {
+    capture: vi.fn(() => ({ select: 'parent/clip:clip-1' })),
+    finish: vi.fn((_basis: unknown, args: ClipParamsArgs) => ({
+      command: {
+        schema_version: 1,
+        op: 'clip.set-params',
+        version: '1',
+        select: 'parent/clip:clip-1',
+        args,
+      } as unknown as EditCommand,
+      previewParams: args.clear.length ? {} : args.values,
+    })),
+    submit: vi.fn(),
+  } as unknown as ClipParamsCapturePort;
+}
+
+describe('SequenceParamEditor discrete native params controls', () => {
+  it('submits an asset-array leaf through the native port without whole-params onChange', () => {
+    const port = nativePort();
+    const onChange = vi.fn();
+    render(
+      <SequenceParamEditor
+        clipType="unregistered-test-sequence"
+        metadata={metadata([{ key: 'assets', label: 'Assets', kind: 'asset-list', description: 'Assets.' }])}
+        params={{ assets: [] }}
+        registry={{ 'asset-a': {} } as ResolvedTimelineConfig['registry']}
+        current={nativeCurrent}
+        clipId="clip-1"
+        clipParamsPort={port}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('asset-key-a, asset-key-b'), { target: { value: 'asset-a' } });
+
+    expect(port.capture).toHaveBeenCalledWith({ clipId: 'clip-1', current: nativeCurrent });
+    expect(port.finish).toHaveBeenCalledWith({ select: 'parent/clip:clip-1' }, {
+      values: { assets: ['asset-a'] },
+      clear: [],
+    });
+    expect(port.submit).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('submits an optional JSON clear through the native port', () => {
+    const port = nativePort();
+    const onChange = vi.fn();
+    render(
+      <SequenceParamEditor
+        clipType="unregistered-test-sequence"
+        metadata={metadata([{ key: 'keyframes', label: 'Keyframes', kind: 'json', description: 'Frames.' }])}
+        params={{ keyframes: [{ at: 0 }] }}
+        registry={{}}
+        current={nativeCurrent}
+        clipId="clip-1"
+        clipParamsPort={port}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+    expect(port.finish).toHaveBeenCalledWith({ select: 'parent/clip:clip-1' }, { values: {}, clear: ['keyframes'] });
+    expect(port.submit).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the detached presentation callback when no native editor context is supplied', () => {
+    const onChange = vi.fn();
+    render(
+      <SequenceParamEditor
+        clipType="unregistered-test-sequence"
+        metadata={metadata([{ key: 'assets', label: 'Assets', kind: 'asset-list', description: 'Assets.' }])}
+        params={{ assets: [] }}
+        registry={{ 'asset-a': {} } as ResolvedTimelineConfig['registry']}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('asset-key-a, asset-key-b'), { target: { value: 'asset-a' } });
+    expect(onChange).toHaveBeenCalledWith({ assets: ['asset-a'] });
+  });
+
+  it('disables discrete controls when mounted context has no native port', () => {
+    render(
+      <SequenceParamEditor
+        clipType="unregistered-test-sequence"
+        metadata={metadata([
+          { key: 'assets', label: 'Assets', kind: 'asset-list', description: 'Assets.' },
+          { key: 'keyframes', label: 'Keyframes', kind: 'json', description: 'Frames.' },
+        ])}
+        params={{ assets: [], keyframes: [{ at: 0 }] }}
+        registry={{ 'asset-a': {} } as ResolvedTimelineConfig['registry']}
+        current={nativeCurrent}
+        clipId="clip-1"
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('asset-key-a, asset-key-b')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
+    expect(screen.getByText(/Native clip parameter editing is unavailable/)).toBeInTheDocument();
   });
 });
