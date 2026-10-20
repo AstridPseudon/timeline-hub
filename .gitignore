@@ -47,6 +47,7 @@ temp/
 
 # Ignore all markdown files except structure.md, structure_detail/, tasks/, and CLAUDE.md
 *.md
+!/notes/report.md
 !structure.md
 !structure_detail/*.md
 !docs/structure_detail/*.md
