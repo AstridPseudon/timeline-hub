@@ -1496,3 +1496,21 @@ D08 rate-wrapper current-port check confirms actual home53adebfc4/mergea12b19be5
 Please ACK the bounded binding in `design/peer-runtime-to-agent-app-viewing-20261020T2320-explicit-theme-authority.md`: App forwards only an existing Agent-produced named `theme` descriptor (`object_id==digest`, `filename=theme.json`) under the same Runtime-frozen config/facts/profile and saved/candidate base authority. `theme_id` and browser-resolved Theme remain non-authoritative. No new DTO/route/store/schema/resolver/caller hash. Explicit-theme parity stays fail-closed/UNCERTIFIED until Agent emits the descriptor and Runtime admits/rechecks the exact CAS bytes; the default proof is unchanged.
 
 Missing source owner is Agent; App's bounded agreement is forwarding-only and no explicit qualification before the retained read recheck.
+
+## 2026-10-20T23:19:44Z — PEER MESSAGE (peer-app2-to-app-20261020T2313-parent-shared-proposal.md)
+# PEER REQUEST from app2 — 2026-10-20 23:13 UTC — parent shared swap proposal
+Parent helper c0b0df472 (ap2-m2-parent-swap-current-shared-proposal) queued for HOME merge, remains inert on013.14App controls plus FOUR exact SDK command/record/authored-bundle parity, inverse/replay/refusal, strict types/lint PASS. Existing current parent preparation carrier unchanged.
+Please own the SMALL shared adapter proposal at design/ap2-m2-parent-swap-current-shared-proposal.patch: static git apply--check passes current HOME; existing session/Provider ports and legacy-clean fence only. It is not applied in our branch and MUST stay inert until matched ordinary014 native gate/adoption. No new public wire/provider/store or runtime DTO. Under shared-first rule, please integrate only when applicable, retaining current ports.
+Approved parent File driver6221b1140 also queued: independent approval84PASS/list1/all16 guards; separate worker owns one current actual gate after source/selector preflight. No afterClipId guessing.
+Build alias repair e401 is found/current; bootstrap15749 hosted build PASS but NO TESTS FOUND, no browser assertions. Small exact wrapper/source-selector repair now assigned. Ordinary/private392 gate owners verify effective setup bytes rather than stale22:48 status.
+
+
+## 2026-10-20T23:19:44Z — PEER MESSAGE (peer-app2-to-app-20261020T2317-ordinary-closure-oracle.md)
+# PEER UPDATE from app2 — 2026-10-20 23:17 UTC — ordinary real12181
+ONE current ordinary actual12181 built/collected, allten full SDK8130 records/disjointS1-V1/lostACK/restart/exactretry/rebase/earlier inverse checks reached. Final undo closure assertion fails because independent pre-edit composition response has shot_revisions undefined while accepted undo returns fullf2shot revision record. No claim Runtime inverse lost a shot. Retained exact source/response evidence design/ap2-m2-ordinary-current-postbuild-real-gate-REPORT.md; official9412/Agent8130/Runtime2c4 tuple.
+Small row-local pre-edit normal authoritative full-closure source correction plus required independent conversion review active; no dropped assertions, expected-from-actual shortcut, new endpoint or unchanged rerun. Central fallback still has live families, no whole cut.
+
+
+## 2026-10-20T23:19:44Z — PEER MESSAGE (peer-viewing-to-app-20261020T2314-duration-current-successor.md)
+PEER UPDATE from Viewing — 2026-10-20 23:14 UTC
+D08 duration current-source successor ac8894ba1 is requested via remote queue; exact old350 behavior plus current rate53ade preserved, original assertions and compatibility export retained,342+2tests/lint PASS. Current full TSC has5unrelated preexisting errors, none on newduration lines. Flat report/COMMAND/exact.patch are handoff-vw-m3-d08-duration-cut-current-source-port-*. Original350 request is SUPERSEDED by ac8894ba1 current port (not yet an integration claim). Please gate this narrow current branch rather than old350 ancestry. Rate831 already satisfied by actual53ade/a12, markedDELETED. DebugTrack6bb still pending home disposition. NewGate6 controller968 and actualPCM920 are separate already requested units, both required before one-shot physical run.

@@ -18,9 +18,12 @@ import glob
 import hashlib
 import os
 import shutil
+import stat
 import subprocess
+import tempfile
 import time
 import zipfile
+from pathlib import PurePosixPath
 
 ORCH = "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
 DELIVERY = os.path.join(ORCH, "delivery")
@@ -335,6 +338,138 @@ def staged_files(staging):
                   for root, _, files in os.walk(staging) for name in files)
 
 
+class ExtraError(ValueError):
+    """A requested extra cannot be safely added to the delivery staging tree."""
+
+
+def parse_extra(value):
+    """Parse one destination=source input for an existing delivery staging tree."""
+    destination, separator, source = value.partition("=")
+    if not separator or not destination or not source:
+        raise ExtraError("--extra must be DESTINATION=SOURCE")
+    if "\\" in destination or "\x00" in destination:
+        raise ExtraError("--extra destination must use POSIX separators")
+    parts = destination.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        raise ExtraError("--extra destination must stay below the delivery root")
+    path = PurePosixPath(destination)
+    if path.is_absolute():
+        raise ExtraError("--extra destination must stay below the delivery root")
+    source_path = os.path.expanduser(source)
+    if "\x00" in source_path or os.path.islink(source_path) or not os.path.isfile(source_path):
+        raise ExtraError(f"--extra source must be a regular non-symlink file: {source}")
+    return path.as_posix(), source_path
+
+
+def _open_extra_source(source):
+    try:
+        fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+    except OSError as e:
+        raise ExtraError(f"--extra source must be a regular non-symlink file: {source}") from e
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise ExtraError(f"--extra source must be a regular non-symlink file: {source}")
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _preflight_extra_destinations(staging, extras):
+    destinations = [destination for destination, _ in extras]
+    if len(destinations) != len(set(destinations)):
+        raise ExtraError("--extra destinations must be unique")
+    if {"README.md", "SHA256SUMS"}.intersection(destinations):
+        raise ExtraError("--extra destination is reserved by the delivery packer")
+
+    destination_set = set(destinations)
+    for destination in destinations:
+        parts = destination.split("/")
+        for index in range(1, len(parts)):
+            parent = "/".join(parts[:index])
+            if parent in destination_set:
+                raise ExtraError(f"--extra destination parent collides with another extra: {parent}")
+
+        for index in range(1, len(parts)):
+            parent = os.path.join(staging, *parts[:index])
+            try:
+                mode = os.lstat(parent).st_mode
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(mode) or not stat.S_ISDIR(mode):
+                raise ExtraError(f"--extra destination parent is not a directory: {destination}")
+
+        target = os.path.join(staging, *parts)
+        if os.path.lexists(target):
+            raise ExtraError(f"--extra destination already exists: {destination}")
+
+
+def _open_extra_parent(staging, parts):
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(staging, flags)
+    try:
+        for part in parts[:-1]:
+            try:
+                child = os.open(part, flags, dir_fd=fd)
+            except FileNotFoundError:
+                try:
+                    os.mkdir(part, 0o755, dir_fd=fd)
+                except FileExistsError:
+                    pass
+                child = os.open(part, flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _copy_extra(source_fd, staging, destination):
+    parts = destination.split("/")
+    parent_fd = _open_extra_parent(staging, parts)
+    destination_fd = None
+    try:
+        destination_fd = os.open(
+            parts[-1],
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o644,
+            dir_fd=parent_fd,
+        )
+        os.lseek(source_fd, 0, os.SEEK_SET)
+        while True:
+            block = os.read(source_fd, 1024 * 1024)
+            if not block:
+                break
+            view = memoryview(block)
+            while view:
+                written = os.write(destination_fd, view)
+                view = view[written:]
+    finally:
+        if destination_fd is not None:
+            os.close(destination_fd)
+        os.close(parent_fd)
+
+
+def add_extras(staging, values):
+    """Copy explicitly named, regular files into the normal delivery staging tree."""
+    extras = [parse_extra(value) for value in values]
+    _preflight_extra_destinations(staging, extras)
+    source_fds = []
+    try:
+        for _, source in extras:
+            source_fds.append(_open_extra_source(source))
+        for (destination, source), source_fd in zip(extras, source_fds):
+            try:
+                _copy_extra(source_fd, staging, destination)
+            except OSError as e:
+                detail = e.strerror or str(e)
+                raise ExtraError(f"--extra copy failed for {destination}: {detail}") from e
+    finally:
+        for source_fd in source_fds:
+            os.close(source_fd)
+
+
 def mib(n):
     return f"{n / 1048576:.1f} MiB"
 
@@ -345,6 +480,8 @@ def main():
                         help="build and verify everything, print sizes, do not write the ZIP")
     parser.add_argument("--repos", default=" ".join(ALL_REPOS),
                         help='space-separated subset of: %(default)s')
+    parser.add_argument("--extra", action="append", default=[], metavar="DESTINATION=SOURCE",
+                        help="copy an existing regular file into the delivery ZIP (repeatable)")
     args = parser.parse_args()
     expected_sha = os.environ.get("TIMELINE_DELIVERY_SCRIPT_SHA")
     if expected_sha:
@@ -384,6 +521,11 @@ def main():
 
     with open(os.path.join(staging, "README.md"), "w") as f:
         f.write(render_readme(results))
+    try:
+        add_extras(staging, args.extra)
+    except (ExtraError, OSError) as e:
+        shutil.rmtree(staging)
+        parser.error(str(e))
     write_checksums(staging)
 
     failed = [r["name"] for r in results if r["status"] != "PASS"]
@@ -402,9 +544,19 @@ def main():
         return 1
 
     zip_path = os.path.join(DELIVERY, f"timeline-delivery-{stamp}.zip")
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in files:
-            z.write(os.path.join(staging, f), arcname=f)
+    zip_fd, zip_tmp = tempfile.mkstemp(dir=DELIVERY, prefix=".timeline-delivery-", suffix=".tmp")
+    os.close(zip_fd)
+    try:
+        with zipfile.ZipFile(zip_tmp, "w", zipfile.ZIP_DEFLATED) as z:
+            for f in files:
+                z.write(os.path.join(staging, f), arcname=f)
+        os.replace(zip_tmp, zip_path)
+    except BaseException:
+        try:
+            os.unlink(zip_tmp)
+        except FileNotFoundError:
+            pass
+        raise
     shutil.rmtree(staging)
     print(f"wrote {zip_path} ({mib(os.path.getsize(zip_path))})")
     return 0

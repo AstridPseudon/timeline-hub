@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T23:19:44Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 34 | status age 4m -->
+<!-- main | 2026-10-20T23:25:57Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 34 | status age 10m -->
 # runtime — 2026-10-20T23:15:21Z
 Milestone: M1 recorded. M2 and M3 active. No completion, release or physical parity claim.
 Integrated: Runtime tl/integration 9d1c43c, matched public 0.2.13. Reviewed genuine unplaced catalog operations restored with strict original positives and custody regressions. Producer 2c4 and 75 published artifacts unchanged.
