@@ -725,6 +725,65 @@ index 39db2c89b..c79eee2fe 100644
      trackLabelPort: sessionRef.current?.trackLabelPort,
      retry, undo, flush, recover, useLatest, keepLabelChanges };
  }
+diff --git a/src/tools/video-editor/hooks/useTimelineOps.test.ts b/src/tools/video-editor/hooks/useTimelineOps.test.ts
+index 5018dbc56..005938430 100644
+--- a/src/tools/video-editor/hooks/useTimelineOps.test.ts
++++ b/src/tools/video-editor/hooks/useTimelineOps.test.ts
+@@ -14,9 +14,11 @@ import type { TimelineConfig } from '../types';
+ import type { Checkpoint } from '../types/history';
+ import type {
+   TimelineDiff,
++  TimelinePatch,
+   TimelinePatchValidationResult,
+   TimelinePreviewResult,
+ } from '@/sdk/video/timeline/patch.ts';
++import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
+ 
+ // ---------------------------------------------------------------------------
+ // Fixture helpers
+@@ -74,6 +76,42 @@ function makeBaseTimelineData(overrides: Partial<TimelineConfig> = {}): Timeline
+ // ---------------------------------------------------------------------------
+ 
+ describe('useTimelineOps', () => {
++  it('routes a complete native patch through one command-session port', () => {
++    const dataRef = { current: makeBaseTimelineData() };
++    const commitData = vi.fn();
++    const preview: TimelinePatch = {
++      version: 1,
++      source: 'timeline.native-label-hold',
++      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Native label' } }],
++    };
++    const genericPatchPort = {
++      capture: vi.fn(() => ({})),
++      finish: vi.fn(() => ({ commands: [], preview })),
++      submit: vi.fn(),
++    } as unknown as GenericPatchCapturePort;
++    const { result } = renderHook(() => useTimelineOps({
++      dataRef,
++      commitData,
++      genericPatchPort,
++      createManualCheckpoint: vi.fn(),
++      jumpToCheckpoint: vi.fn(),
++      checkpoints: [],
++    }));
++
++    const diff = result.current.apply({
++      version: 1,
++      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Native label' } }],
++    });
++
++    expect(genericPatchPort.capture).toHaveBeenCalledOnce();
++    expect(genericPatchPort.finish).toHaveBeenCalledOnce();
++    expect(genericPatchPort.submit).toHaveBeenCalledWith({ commands: [], preview });
++    expect(commitData).not.toHaveBeenCalled();
++    expect(diff.entries).toEqual(expect.arrayContaining([
++      expect.objectContaining({ target: 'V1' }),
++    ]));
++  });
++
+   describe('flush — durable host acknowledgement', () => {
+     it('keeps apply synchronous and awaits exactly the host barrier receipt', async () => {
+       let acknowledge!: (version: number) => void;
 diff --git a/src/tools/video-editor/hooks/useTimelineOps.ts b/src/tools/video-editor/hooks/useTimelineOps.ts
 index a5d35b9fc..bbfaac580 100644
 --- a/src/tools/video-editor/hooks/useTimelineOps.ts
