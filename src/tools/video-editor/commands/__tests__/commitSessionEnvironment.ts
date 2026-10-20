@@ -4,6 +4,7 @@ import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, Transport } from '@/integrations/runtime/generated.ts';
+import type { EditCommand, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { buildTimelineData } from '../../lib/timeline-data.ts';
 import { compileTimelinePatch } from '../../lib/timeline-patch.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
@@ -15,6 +16,7 @@ import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 import { executeClipSetBatch } from '../clipScalarCapture.ts';
+import { executeParentClipAddMedia } from '../parentClipAddCapture.ts';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -108,6 +110,15 @@ export async function environment(initialDocument = document()) {
           return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
             details: { status: 'conflict', reason: error.kind } }) };
         }
+        const payload = { ...result.bundle.parent, occurrences: serverDocument.parent_revision.payload.occurrences };
+        const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
+        serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
+      } else if (request.commands[0].op === 'clip.add-media') {
+        const command = request.commands[0] as EditCommand;
+        const selection = command.args.media as MediaSelection;
+        const verified: VerifiedMedia = { selection, media_type: 'video/mp4', size: 1, duration_seconds: 1 };
+        const bundle = await authoringBundleFromDocument(serverDocument);
+        const result = executeParentClipAddMedia(bundle, command, [verified]);
         const payload = { ...result.bundle.parent, occurrences: serverDocument.parent_revision.payload.occurrences };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };

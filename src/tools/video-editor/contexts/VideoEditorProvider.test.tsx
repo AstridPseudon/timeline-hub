@@ -43,10 +43,13 @@ import {
   INTERNAL_GESTURE_TIMELINE_MUTATIONS,
   PUBLIC_TIMELINE_COMMAND_NAMES,
   PUBLIC_TIMELINE_COMMAND_SCOPE,
+  createTimelineCommands,
   isPublicTimelineCommandName,
   useTimelineCommandsService,
   useTimelineCommandsServiceSafe,
 } from '@/tools/video-editor/hooks/useTimelineCommandsService';
+import type { ParentClipAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession';
+import type { EditCommand, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types';
 import {
   createTimelineStore,
   TimelineStoreProvider,
@@ -626,6 +629,7 @@ function buildCommandTestStore(overrides?: {
   unpatchRegistry?: (...args: unknown[]) => void;
   data?: TimelineData;
   mounted?: boolean;
+  parentClipAddMedia?: ParentClipAddMediaCapturePort;
 }) {
   const baseStore = createTimelineStore();
   const current = overrides?.data ?? buildCommandTimelineData();
@@ -644,6 +648,7 @@ function buildCommandTestStore(overrides?: {
       registerAsset: overrides?.registerAsset ?? vi.fn(async () => undefined),
       patchRegistry: overrides?.patchRegistry ?? vi.fn(),
       unpatchRegistry: overrides?.unpatchRegistry ?? vi.fn(),
+      parentClipAddMedia: overrides?.parentClipAddMedia,
     },
   });
   if (overrides?.mounted === false) {
@@ -2300,6 +2305,65 @@ describe('VideoEditorProvider', () => {
       selectedTrackId: 'V1',
       semantic: true,
     });
+  });
+
+  it('verifies the detached captured selection and refuses a caller mutation during the await', async () => {
+    const selection: MediaSelection = {
+      asset: 'asset-dup',
+      generation_id: 'generation-dup',
+      variant_id: 'variant-dup',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const originalSelection = structuredClone(selection);
+    const preview = { version: 1, source: 'test.native-parent-media', operations: [] } as const;
+    const capture = vi.fn((input: { row: Record<string, unknown>; media: MediaSelection }) => ({
+      bundle: {}, row: structuredClone(input.row), media: structuredClone(input.media),
+      localGeneration: 0, localBasis: { head: { revisionId: 'r0', publicationId: 'p0' } },
+      displayHead: { revisionId: 'r0', publicationId: 'p0' },
+    } as never));
+    const finish = vi.fn((_basis: unknown, verified: VerifiedMedia) => {
+      if (JSON.stringify(verified.selection) !== JSON.stringify(originalSelection)) {
+        throw new Error('verified media used the mutable supplied selection');
+      }
+      return {
+        command: {
+          schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+          args: { row: { id: 'native-clip', track: 'V1', at: 5, clipType: 'media', asset: 'asset-dup' }, media: originalSelection },
+          intent: {}, resolved: [], bindings: [], created: [],
+        } as unknown as EditCommand,
+        preview,
+      };
+    });
+    const submit = vi.fn();
+    const parentClipAddMedia = { capture, finish, submit } as unknown as ParentClipAddMediaCapturePort;
+    const store = buildCommandTestStore({ parentClipAddMedia, applyEdit: vi.fn() });
+    let resolveVerified!: (value: VerifiedMedia) => void;
+    let verifierSelection: MediaSelection | undefined;
+    const getProjectVerifiedMedia = vi.fn((_projectId: string, received: MediaSelection) => {
+      verifierSelection = received;
+      return new Promise<VerifiedMedia>((resolve) => { resolveVerified = resolve; });
+    });
+    const commands = createTimelineCommands(store, {
+      parentMediaRuntime: { projectId: 'project-1', getProjectVerifiedMedia },
+    });
+    const pending = commands.addClip({
+      preparedAsset: {
+        assetKey: 'asset-dup', mediaType: 'video', durationSeconds: 2, source: 'registered',
+        entry: { file: 'https://example.com/dup.mp4', type: 'video/mp4', duration: 2, generationId: 'generation-dup' },
+        mediaSelection: selection,
+      },
+      time: 5,
+    });
+
+    expect(capture).toHaveBeenCalledOnce();
+    selection.catalog_digest = 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
+    expect(verifierSelection).toEqual(originalSelection);
+    resolveVerified({ selection: structuredClone(originalSelection), media_type: 'video/mp4', size: 123, duration_seconds: 2 });
+    await expect(pending).resolves.toEqual({ ok: true, data: { clipId: expect.any(String), trackId: 'V1' } });
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(store.getState().ops.applyEdit).not.toHaveBeenCalled();
   });
 
   it('omits absent selection and optional prepared-media payload fields', () => {

@@ -7,7 +7,7 @@ import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
 import type { OutboxRecord } from './commitOutbox.ts';
-import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { EditCommand, MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 
 async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
   await new Promise<void>((resolve, reject) => {
@@ -31,6 +31,37 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it('queues one native parent intent and retries its exact request after an unknown ACK', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    const media: MediaSelection = {
+      asset: 'reserved-media',
+      generation_id: 'generation-media',
+      variant_id: 'variant-media',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const row = { id: 'native-clip', track: 'V1', at: 2, clipType: 'video', asset: 'reserved-media', from: 0, to: 1, hold: 1, speed: 1 };
+    const basis = session.parentClipAddMediaPort.capture({ row, media, current: env.current() });
+    const captured = session.parentClipAddMediaPort.finish(basis, {
+      selection: { ...media }, media_type: 'video/mp4', size: 1, duration_seconds: 1,
+    });
+    env.setFault('lost');
+    session.parentClipAddMediaPort.submit(captured);
+
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const first = structuredClone(env.commits()[0]);
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(1);
+    expect(stored.intents[0].payload).toMatchObject({ commands: [{ op: 'clip.add-media', args: { row, media } }] });
+
+    await session.retry();
+    expect(env.commits()).toHaveLength(2);
+    expect(env.commits()[1]).toEqual(first);
+    expect(env.current().config.clips).toContainEqual(expect.objectContaining({ id: 'native-clip', asset: 'reserved-media' }));
+    await session.dispose();
+  });
+
   it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
     const env = await environment();
     const session = await env.mount();
