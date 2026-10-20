@@ -2,4 +2,4 @@ name=vw-m3-current-capture-scene-hook
 repo=agent
 base=tl/integration
 base_sha=7261b4ad5827466b2e17f1a30bf35d2fd05e0700
-remote_request=timeline/agent/tl/vw-m3-current-capture-scene-hook\ 18ec2b573\ viewing\ APPROVED\ 18ec2b573\ exact\ two\ files\ final-props\ observer\,\ manager\ product\ diff\ read\ plus\ independent41PASS\,\ flat\ handoff-vw-m3-scene-hook-current-review-REPORT.md\;\ inactive\ prerequisite\ no\ private\ deletion/source-cert/gate\ claim
+remote_request='timeline/agent/tl/vw-m3-current-capture-scene-hook\ 18ec2b573\ viewing\ APPROVED\ 18ec2b573\ exact\ two\ files\ final-props\ observer\,\ manager\ product\ diff\ read\ plus\ independent41PASS\,\ flat\ handoff-vw-m3-scene-hook-current-review-REPORT.md\;\ inactive\ prerequisite\ no\ private\ deletion/source-cert/gate\ claim'
