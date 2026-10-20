@@ -356,6 +356,36 @@ describe('useKeyboardShortcuts extension keybindings', () => {
 });
 
 describe('concurrent editor keyboard ownership', () => {
+  it('handles Delete from a focused role-button clip inside the owning editor shell', () => {
+    const root = document.createElement('section');
+    const clip = document.createElement('div');
+    clip.setAttribute('role', 'button');
+    clip.tabIndex = 0;
+    root.append(clip);
+    document.body.append(root);
+    const deleteSelectedClip = vi.fn();
+    const options = makeOptions({ hasSelectedClip: true, deleteSelectedClip });
+    const shellRootRef = { current: root };
+
+    const view = renderHook(() => useKeyboardShortcuts(options), {
+      wrapper: ({ children }) => (
+        <VideoEditorRuntimeContext.Provider value={{ shellRootRef } as VideoEditorRuntimeContextValue}>
+          {children}
+        </VideoEditorRuntimeContext.Provider>
+      ),
+    });
+
+    clip.focus();
+    const event = dispatchKey(clip, { key: 'Delete' });
+
+    expect(document.activeElement).toBe(clip);
+    expect(event.defaultPrevented).toBe(true);
+    expect(deleteSelectedClip).toHaveBeenCalledOnce();
+
+    view.unmount();
+    root.remove();
+  });
+
   it('executes built-in and extension commands only in the event target instance', async () => {
     const full = document.createElement('section');
     const dialog = document.createElement('section');

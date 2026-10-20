@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore';
 import {
@@ -10,6 +10,11 @@ import {
 import { getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils';
 import { EDIT_AREA_SELECTOR } from '@/tools/video-editor/lib/timeline-dom';
 import { computeTimelineExtent, maxClipEndSeconds } from '@/tools/video-editor/lib/timeline-scale';
+import {
+  __resetSelectionStoreForTests,
+  getTimelineItemSelection,
+} from '@/shared/state/selectionStore';
+import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter';
 import type { ShotGroup } from '@/tools/video-editor/hooks/useShotGroups';
 import type { TimelineInspectorTarget } from '@/tools/video-editor/lib/mobile-interaction-model';
@@ -230,6 +235,7 @@ function renderWithStore(ui: React.ReactElement, options: {
 describe('TimelineEditorCore', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    __resetSelectionStoreForTests();
   });
 
   describe('selection and playhead tracking', () => {
@@ -241,6 +247,28 @@ describe('TimelineEditorCore', () => {
     it('tracks selectedTrackId from the data store', () => {
       const { container } = renderWithStore(<TimelineEditorCore />);
       expect(container.querySelector('.timeline-wrapper')).toBeInTheDocument();
+    });
+
+    it('keeps a focused clip selection in the owning editor scope for keyboard actions', () => {
+      const owner = Symbol('timeline-editor');
+      const { container } = render(
+        <VideoEditorRuntimeContext.Provider value={{ agentSelectionOwner: owner } as any}>
+          <TimelineStoreProvider store={createOverlayTestStore()}>
+            <TimelineEditorCore />
+          </TimelineStoreProvider>
+        </VideoEditorRuntimeContext.Provider>,
+      );
+      const clip = container.querySelector<HTMLElement>('.clip-action[data-clip-id="clip-1"]');
+      expect(clip).toBeTruthy();
+
+      clip!.focus();
+
+      act(() => {
+        fireEvent.keyDown(clip!, { key: 'Enter', bubbles: true });
+      });
+
+      expect(document.activeElement).toBe(clip);
+      expect(getTimelineItemSelection(owner)).toEqual({ clipIds: ['clip-1'], dataItems: [] });
     });
 
     it('propagates the selected occurrence identity to its canonical overlay label', () => {

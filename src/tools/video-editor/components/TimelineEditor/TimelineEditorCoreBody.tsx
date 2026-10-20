@@ -499,9 +499,9 @@ function TimelineEditorCoreComponent({
   }, [resolvedConfig]);
 
   const handleClipSelect = useCallback((clipId: string, trackId: string) => {
-    userSelectTimelineClip(clipId, { additive: false });
+    userSelectTimelineClip(clipId, { additive: false }, marqueeOwner);
     setSelectedTrackId(trackId);
-  }, [setSelectedTrackId]);
+  }, [marqueeOwner, setSelectedTrackId]);
   const postprocessShader = resolvedConfig
     ? getTimelinePostprocessShader(resolvedConfig)
     : undefined;
