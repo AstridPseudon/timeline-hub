@@ -19,6 +19,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
+from baseline_fixture import load_baseline_fixture
 from restore_history_fixture import load_restore_history_fixture
 
 
@@ -55,24 +56,51 @@ def _restore_history_service(tmp_path):
     return RuntimeService(fixture.root), fixture
 
 
-def _accept_restore_media_source(service, project_id, body, *, idempotency_key):
-    """Accept this media-only source image through the real host store boundary.
+def _captured_media_service(tmp_path):
+    service, project_id, (publication,) = load_baseline_fixture(tmp_path, "explicit-media")
+    source = publication["data"]
+    scene = source["payload"]["config"]["clips"][0]["app"]["liveScene"]["revision"]
+    audio, = (pin["media_id"] for pin in source["dependency_manifest"]["media"] if pin["media_id"] != scene)
+    return service, project_id, scene, audio
 
-    Adapted from rt-m2-restore-fixtures; this seeds raw payload and declared
-    media, while every measured restore still uses the real Agent provider.
+
+def _accept_composition_source(service, project_id, body, *, idempotency_key):
+    """Seed source images through host acceptance, without a command provider.
+
+    This is setup for read/integrity tests, not an authoring or legacy API
+    success proof. The fixture view below contains normal source reads; the
+    accepted mutation and its public head pair remain available separately.
+    Every measured restore still selects the real Agent via ASTRID_CHECKOUT.
     """
     commits, _ = service._timeline_commits()
-    base = commits.install_verified_baseline(project_id, "main", authorize=lambda: None)
+    if service.get_project_timeline(project_id, "main")["head_revision_id"] is None:
+        base = commits.bootstrap(project_id, "main", authorize=lambda: None)
+    else:
+        base = commits.install_verified_baseline(project_id, "main", authorize=lambda: None)
     previous = commits.revision_closure(project_id, "main", base["revision_id"])
     payload = copy.deepcopy(body["parent_composition"])
+    shots = copy.deepcopy(body.get("shot_revisions", previous["shot_revisions"]))
+    internals = copy.deepcopy(body.get("internal_timeline_revisions", previous["internal_timeline_revisions"]))
+    for shot in shots:
+        shot["payload"]["internal_timeline_revision_id"] = shot["internal_timeline_revision_id"]
+        shot["content_digest"] = digest(shot["payload"])
+    for internal in internals:
+        internal["content_digest"] = digest(internal["payload"])
+    shots.sort(key=lambda image: (image["shot_id"], image["revision_id"]))
+    internals.sort(key=lambda image: (image["timeline_id"], image["revision_id"]))
     document = {"schema_version": 1, "project_id": project_id, "timeline_id": "main",
                 "parent_revision": {"revision_id": body["parent_revision_id"],
                                     "payload": payload, "content_digest": digest(payload)},
-                "shot_revisions": [], "internal_timeline_revisions": [],
-                "dependency_manifest": {"shots": [], "internal_timelines": [], "documents": [],
+                "shot_revisions": shots, "internal_timeline_revisions": internals,
+                "dependency_manifest": {
+                    "shots": [{k: image[k] for k in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
+                              for image in shots],
+                    "internal_timelines": [{k: image[k] for k in ("timeline_id", "revision_id", "content_digest")}
+                                           for image in internals],
+                    "documents": [],
                     "media": sorted(body.get("dependency_manifest", {}).get("media", []),
                                     key=lambda pin: pin["media_id"])}}
-    command = {"schema_version": 1, "op": "fixture.restore-source", "version": "1",
+    command = {"schema_version": 1, "op": "fixture.composition-source", "version": "1",
                "select": None, "args": {"document": copy.deepcopy(document)}}
     request = {"api_version": 1, "project_id": project_id, "timeline_id": "main",
                "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
@@ -95,7 +123,18 @@ def _accept_restore_media_source(service, project_id, body, *, idempotency_key):
     accepted = commits.accept(context, prepared, authorize=lambda: None)
     source = service.get_project_parent_composition_revision(
         project_id, "main", accepted["data"]["accepted_revision_id"])
-    return {"data": source}
+    assert commits.revision_closure(project_id, "main", source["revision_id"]) == document
+    head = {"revision_id": source["revision_id"], "publication_id": accepted["receipt"]["receipt_id"]}
+    public = service.get_project_timeline(project_id, "main")
+    assert public["head_revision_id"] == head["revision_id"]
+    assert public["head_publication_id"] == head["publication_id"]
+    content_digests = {
+        image["revision_id"]: service.get_project_shot_revision(
+            project_id, image["shot_id"], image["revision_id"])["content_digest"]
+        for image in shots
+    }
+    return {"data": {**source, "new_head": source["revision_id"], "content_digests": content_digests},
+            "accepted": accepted, "head": head}
 
 
 def _restore(service, project_id, revision, guards, *, idempotency_key):
@@ -147,7 +186,7 @@ def _publication(project_id, *, expected_head=None, parent_revision_id="parent-1
     }
 
 
-def _publish_with_explicit_media(service, project_id, *, parent_revision_id="parent-media"):
+def _publish_with_explicit_media(service, project_id, *, parent_revision_id="parent-media", accept_source=False):
     scene = service.ingest(
         project_id, b'{"schema":"live-scene-package/v1"}',
         media_type="application/json", original_name="scene.json",
@@ -158,9 +197,14 @@ def _publish_with_explicit_media(service, project_id, *, parent_revision_id="par
         original_name="tone.wav", idempotency_key="audio-object",
     )["data"]["object_id"]
     body = _explicit_media_publication(project_id, scene, audio, parent_revision_id=parent_revision_id)
-    result = service.publish_parent_composition(
-        project_id, "main", body, idempotency_key=f"publish-{parent_revision_id}"
-    )
+    if accept_source:
+        result = _accept_composition_source(
+            service, project_id, body, idempotency_key=f"publish-{parent_revision_id}"
+        )
+    else:
+        result = service.publish_parent_composition(
+            project_id, "main", body, idempotency_key=f"publish-{parent_revision_id}"
+        )
     return result, scene, audio
 
 
@@ -207,8 +251,11 @@ def _rehash_timeline_events(service, timeline_id, *, replacements=None):
 def test_historical_revision_is_exact_after_mutable_edits(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
-        updated = service.update_project_shot(project_id, "shot-1", {"expected_version": 1, "name": "edited"}, idempotency_key="edit-shot")
+        first = _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="publish-1")
+        edited = _publication(project_id, parent_revision_id="parent-2", shot_revision_id="shot-rev-2")
+        edited["shot_revisions"][0]["payload"]["name"] = "edited"
+        _accept_composition_source(service, project_id, edited, idempotency_key="edit-shot")
+        updated = {"data": service.get_project_shot_revision(project_id, "shot-1", "shot-rev-2")}
         assert updated["data"]["revision_id"] != first["data"]["revision_id"]
         assert service.store.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == updated["data"]["revision_id"]
         reread = service.get_project_shot_revision(project_id, "shot-1", "shot-rev-1")
@@ -222,13 +269,13 @@ def test_historical_revision_is_exact_after_mutable_edits(tmp_path):
 def test_parent_revision_and_head_reads_and_linked_reuse_do_not_regress_child_head(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
+        first = _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="publish-1")
         parent = service.get_project_parent_composition_revision(project_id, "main", "parent-1")
         assert parent["content_digest"] == first["data"]["content_digest"]
         assert service._timeline_resource("main")["head_revision_id"] == "parent-1"
 
         reused = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
-        second = service.publish_parent_composition(project_id, "main", reused, idempotency_key="publish-2")
+        second = _accept_composition_source(service, project_id, reused, idempotency_key="publish-2")
         assert second["data"]["new_head"] == "parent-2"
         assert service.store.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == "shot-rev-1"
     finally:
@@ -243,8 +290,8 @@ def test_parent_track_role_survives_immutable_publication_and_read(tmp_path):
             {"id": "output", "kind": "visual", "label": "Output", "role": "output"},
             {"id": "source", "kind": "visual", "label": "Source", "role": "source"},
         ]
-        published = service.publish_parent_composition(
-            project_id, "main", body, idempotency_key="publish-track-roles"
+        published = _accept_composition_source(
+            service, project_id, body, idempotency_key="publish-track-roles"
         )
 
         reread = service.get_project_parent_composition_revision(
@@ -281,11 +328,11 @@ def test_invalid_track_role_is_rejected_when_publishing_timeline_payload(tmp_pat
 def test_occurrence_only_linked_reuse_resolves_committed_child_closure(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
+        first = _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="publish-1")
         reused = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
         reused.pop("shot_revisions")
         reused.pop("internal_timeline_revisions")
-        second = service.publish_parent_composition(project_id, "main", reused, idempotency_key="publish-2")
+        second = _accept_composition_source(service, project_id, reused, idempotency_key="publish-2")
 
         assert second["data"]["dependency_manifest"] == first["data"]["dependency_manifest"]
         rows = service.store.conn.execute(
@@ -308,7 +355,7 @@ def test_integrity_report_detects_occurrence_order_tampering(tmp_path):
         second["occurrence_id"] = "occurrence-2"
         second["placement"] = {"start_ms": 1000}
         body["parent_composition"]["occurrences"].append(second)
-        service.publish_parent_composition(project_id, "main", body, idempotency_key="publish-1")
+        _accept_composition_source(service, project_id, body, idempotency_key="publish-1")
         service.store.conn.execute(
             "UPDATE composition_revision_occurrences SET ordinal=CASE occurrence_id WHEN 'occurrence-1' THEN 1 ELSE 0 END WHERE parent_revision_id='parent-1'"
         )
@@ -322,7 +369,7 @@ def test_integrity_report_detects_occurrence_order_tampering(tmp_path):
 def test_integrity_report_detects_occurrence_identity_tampering(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
+        _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="publish-1")
         service.store.conn.execute(
             "UPDATE composition_revision_occurrences SET occurrence_id='tampered' WHERE parent_revision_id='parent-1'"
         )
@@ -336,7 +383,7 @@ def test_integrity_report_detects_occurrence_identity_tampering(tmp_path):
 def test_integrity_report_detects_revision_digest_tampering(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
+        _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="publish-1")
         service.store.conn.execute("UPDATE parent_composition_revisions SET content_digest='sha256:' || printf('%064d', 0) WHERE id='parent-1'")
         report = service.store.integrity_report()
         assert report["ok"] is False
@@ -349,7 +396,7 @@ def test_integrity_report_detects_revision_digest_tampering(tmp_path):
 def test_integrity_report_accepts_media_pinned_by_publication_evidence(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        _publish_with_explicit_media(service, project_id)
+        _publish_with_explicit_media(service, project_id, accept_source=True)
         report = service.store.integrity_report()
         assert report["ok"] is True, report["checks"]["revisions"]["errors"]
         assert report["checks"]["event_chain"]["ok"] is True
@@ -362,7 +409,7 @@ def test_doctor_preserves_cas_missing_after_parent_dependency_check(tmp_path, fa
     service, project_id = _service(tmp_path)
     root = service.store.root
     try:
-        _, _, audio = _publish_with_explicit_media(service, project_id)
+        _, _, audio = _publish_with_explicit_media(service, project_id, accept_source=True)
         if fault == "missing_cas":
             digest = audio.removeprefix('sha256:')
             (service.store.cas_root / digest[:2] / digest[2:]).unlink()
@@ -397,7 +444,7 @@ def test_doctor_preserves_cas_missing_after_parent_dependency_check(tmp_path, fa
 def test_integrity_report_rejects_undeclared_media_dependency(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        _publish_with_explicit_media(service, project_id)
+        _publish_with_explicit_media(service, project_id, accept_source=True)
         extra = service.ingest(
             project_id, b"undeclared-object", media_type="application/octet-stream",
             idempotency_key="undeclared-object",
@@ -415,7 +462,7 @@ def test_integrity_report_rejects_undeclared_media_dependency(tmp_path):
 def test_integrity_report_rejects_missing_manifest_media_dependency(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        _, _, audio = _publish_with_explicit_media(service, project_id)
+        _, _, audio = _publish_with_explicit_media(service, project_id, accept_source=True)
         service.store.conn.execute(
             "DELETE FROM composition_revision_dependencies WHERE parent_revision_id=? AND dependency_id=?",
             ("parent-media", audio),
@@ -429,7 +476,7 @@ def test_integrity_report_rejects_missing_manifest_media_dependency(tmp_path):
 def test_integrity_report_rejects_wrong_project_media_dependency(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        _, _, audio = _publish_with_explicit_media(service, project_id)
+        _, _, audio = _publish_with_explicit_media(service, project_id, accept_source=True)
         other = service.create_project({"slug": "other", "name": "Other"}, idempotency_key="other-project")
         foreign = service.ingest(
             other["id"], b"foreign-object", media_type="application/octet-stream",
@@ -448,7 +495,7 @@ def test_integrity_report_rejects_wrong_project_media_dependency(tmp_path):
 def test_integrity_report_rejects_dependency_digest_mismatch(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        _, scene, _ = _publish_with_explicit_media(service, project_id)
+        _, scene, _ = _publish_with_explicit_media(service, project_id, accept_source=True)
         service.store.conn.execute(
             "UPDATE composition_revision_dependencies SET content_digest=? WHERE parent_revision_id=? AND dependency_id=?",
             ("sha256:" + "0" * 64, "parent-media", scene),
@@ -463,7 +510,7 @@ def test_integrity_report_rejects_dependency_digest_mismatch(tmp_path):
 def test_integrity_report_rejects_duplicate_or_noncontiguous_dependencies(tmp_path, tamper):
     service, project_id = _service(tmp_path)
     try:
-        _, scene, audio = _publish_with_explicit_media(service, project_id)
+        _, scene, audio = _publish_with_explicit_media(service, project_id, accept_source=True)
         if tamper == "duplicate":
             service.store.conn.execute(
                 "INSERT INTO composition_revision_dependencies(parent_revision_id, dependency_kind, dependency_id, content_digest, ordinal) VALUES (?, 'media', ?, ?, 2)",
@@ -481,9 +528,8 @@ def test_integrity_report_rejects_duplicate_or_noncontiguous_dependencies(tmp_pa
 
 
 def test_integrity_report_rejects_inconsistent_publication_evidence(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, scene, audio = _captured_media_service(tmp_path)
     try:
-        _publish_with_explicit_media(service, project_id)
         event = service.store.conn.execute(
             "SELECT id, payload_json FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -499,9 +545,8 @@ def test_integrity_report_rejects_inconsistent_publication_evidence(tmp_path):
 
 
 def test_integrity_report_rejects_manifest_receipt_paired_with_manifestless_event(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, scene, audio = _captured_media_service(tmp_path)
     try:
-        _publish_with_explicit_media(service, project_id)
         event = service.store.conn.execute(
             "SELECT id, payload_json FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -517,9 +562,8 @@ def test_integrity_report_rejects_manifest_receipt_paired_with_manifestless_even
 
 
 def test_integrity_report_does_not_trust_manifest_without_publication_event(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, scene, audio = _captured_media_service(tmp_path)
     try:
-        _publish_with_explicit_media(service, project_id)
         service.store.conn.execute(
             "DELETE FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -531,9 +575,8 @@ def test_integrity_report_does_not_trust_manifest_without_publication_event(tmp_
 
 
 def test_integrity_report_rejects_receipt_for_missing_event_even_without_manifest_rows(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, scene, audio = _captured_media_service(tmp_path)
     try:
-        _, scene, audio = _publish_with_explicit_media(service, project_id)
         service.store.conn.execute(
             "DELETE FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -550,9 +593,9 @@ def test_integrity_report_rejects_receipt_for_missing_event_even_without_manifes
 
 
 def test_integrity_report_keeps_payload_only_legacy_closure_without_event(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
-        service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-legacy")
         service.store.conn.execute(
             "DELETE FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -568,13 +611,16 @@ def test_integrity_report_keeps_payload_only_legacy_closure_without_event(tmp_pa
 
 
 def test_integrity_report_accepts_identical_parent_republished_with_new_key(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, scene, audio = _captured_media_service(tmp_path)
     try:
-        _, scene, audio = _publish_with_explicit_media(service, project_id)
         body = _explicit_media_publication(project_id, scene, audio)
         body["expected_head"] = "parent-media"
-        service.publish_parent_composition(
-            project_id, "main", body, idempotency_key="publish-parent-media-again"
+        body["parent_composition"] = service.get_project_parent_composition_revision(
+            project_id, "main", "parent-media")["payload"]
+        body.pop("shot_revisions")
+        body.pop("internal_timeline_revisions")
+        _accept_composition_source(
+            service, project_id, body, idempotency_key="publish-parent-media-again"
         )
         report = service.store.integrity_report()
         assert report["ok"] is True, report["checks"]["revisions"]["errors"]
@@ -616,9 +662,9 @@ def test_integrity_report_rejects_conflicting_repeat_publication_manifests(tmp_p
 
 
 def test_integrity_report_checks_timeline_event_hash_chain(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
-        service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-chain")
         event_id = service.store.conn.execute(
             "SELECT id FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published'",
             ("main",),
@@ -747,8 +793,8 @@ def test_publication_preserves_opaque_parent_and_occurrence_fields(tmp_path):
         occurrence["placement"]["opaque_geometry"] = {"anchor": "center"}
         occurrence["opaque_occurrence"] = {"future_schema": True}
 
-        published = service.publish_parent_composition(
-            project_id, "main", body, idempotency_key="opaque-publication"
+        published = _accept_composition_source(
+            service, project_id, body, idempotency_key="opaque-publication"
         )
         reread = service.get_project_parent_composition_revision(
             project_id, "main", published["data"]["new_head"]
@@ -772,8 +818,8 @@ def test_publication_preserves_open_shot_payload_without_manufacturing_legacy_au
         payload["future_sibling"] = {"mode": "opaque", "value": None}
         payload.pop("audio_bindings")
 
-        published = service.publish_parent_composition(
-            project_id, "main", body, idempotency_key="open-shot-payload"
+        published = _accept_composition_source(
+            service, project_id, body, idempotency_key="open-shot-payload"
         )
         reread = service.get_project_shot_revision(
             project_id, "shot-1", "shot-rev-1"
@@ -952,7 +998,7 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
             {"media_id": payload_media, "content_digest": payload_media},
             {"media_id": declared_extra, "content_digest": declared_extra},
         ]}
-        first = _accept_restore_media_source(
+        first = _accept_composition_source(
             service, project_id, first_body, idempotency_key="history-publish-media"
         )
         later = _publication(
@@ -961,7 +1007,7 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
         later["parent_composition"] = {"config": {"clips": []}, "registry": {}, "clips": [], "occurrences": []}
-        _accept_restore_media_source(
+        _accept_composition_source(
             service, project_id, later, idempotency_key="history-publish-after-media"
         )
 
