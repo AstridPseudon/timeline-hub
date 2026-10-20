@@ -15,6 +15,7 @@ import json
 import math
 import re
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
@@ -27,6 +28,8 @@ DOCUMENT_INPUT_SCHEMA_VERSION = 1
 TRANSCRIPT_KIND = "media.transcript"
 TRANSCRIPT_SCHEMA = "media.transcript/v1"
 TRANSCRIPT_PREFIX = "transcript:"
+PROJECT_PACK_KIND = "astrid.project-pack"
+PROJECT_PACK_SCHEMA = "astrid.project-pack/v1"
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _MEDIA_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -194,6 +197,8 @@ def _document_source(content: Any, *, project_id: str, document_id: str, kind: s
                      connection: sqlite3.Connection) -> tuple[str | None, str | None]:
     if expected_kind is not None and kind != expected_kind:
         raise ConflictError("document kind is not authorized for this input")
+    if kind == PROJECT_PACK_KIND:
+        _project_pack_source(connection, project_id, document_id, content)
     if kind == TRANSCRIPT_KIND:
         if not isinstance(content, dict) or content.get("schema") != TRANSCRIPT_SCHEMA:
             raise ConflictError("transcript document schema is not authorized")
@@ -221,6 +226,46 @@ def _document_source(content: Any, *, project_id: str, document_id: str, kind: s
         if not isinstance(content, dict) or content.get("schema") != expected_schema:
             raise ConflictError("document schema is not authorized for this input")
     return None, None
+
+
+def _project_pack_source(connection: sqlite3.Connection, project_id: str,
+                         document_id: str, content: Any) -> None:
+    if not isinstance(content, dict) or set(content) != {
+        "schema", "pack_id", "source_binding_key", "relative_manifest", "admissions",
+    } or content.get("schema") != PROJECT_PACK_SCHEMA or content.get("source_binding_key") != "project-packs":
+        raise ConflictError("project pack schema/source binding is not authorized")
+    owner = content["pack_id"]
+    if not isinstance(owner, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", owner):
+        raise ConflictError("project pack owner is invalid")
+    project = connection.execute("SELECT realm_id FROM projects WHERE id=?", (project_id,)).fetchone()
+    if project is None:
+        raise ConflictError("project pack project binding is missing")
+    default_owner = "project_" + hashlib.sha256(f"{project['realm_id']}:{project_id}:default".encode()).hexdigest()[:20]
+    collections = [owner, "default"] if owner == default_owner else [owner]
+    identities = {
+        "document:" + str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps([project_id, PROJECT_PACK_KIND, collection])))
+        for collection in collections
+    }
+    if document_id not in identities or content["relative_manifest"] != (
+        f"{project['realm_id']}/{project_id}/packs/{owner}/pack.yaml"
+    ):
+        raise ConflictError("project pack document identity is outside its project binding")
+    admissions = content["admissions"]
+    if not isinstance(admissions, list):
+        raise ConflictError("project pack admissions are invalid")
+    seen = set()
+    for admission in admissions:
+        if (not isinstance(admission, dict) or set(admission) != {"id", "kind", "revision", "snapshot_digest"}
+                or not isinstance(admission["id"], str) or not admission["id"]
+                or not isinstance(admission["kind"], str) or admission["kind"] not in {"effect", "animation", "transition"}
+                or not isinstance(admission["revision"], str) or not _DIGEST_RE.fullmatch(admission["revision"])
+                or not isinstance(admission["snapshot_digest"], str)
+                or not re.fullmatch(r"[0-9a-f]{64}", admission["snapshot_digest"])):
+            raise ConflictError("project pack admission identity/digest is invalid")
+        identity = admission["id"], admission["kind"], admission["revision"]
+        if identity in seen:
+            raise ConflictError("project pack admission identity is ambiguous")
+        seen.add(identity)
 
 
 def _reachable(pin: Mapping[str, Any], reachable_pins: Iterable[Any] | None) -> bool:
@@ -553,8 +598,9 @@ def _link_item(item: Any, index: int) -> DocumentInputLink:
     kind = capture.document.get("kind") if isinstance(capture.document, dict) else None
     if dependency_kind == "transcript" and kind != TRANSCRIPT_KIND:
         raise ValidationError("transcript links require a transcript document")
-    if dependency_kind == "source" and (not isinstance(kind, str) or not kind.endswith(".config")):
-        raise ValidationError("source links require a config document")
+    if dependency_kind == "source" and (not isinstance(kind, str) or not (
+            kind.endswith(".config") or kind == PROJECT_PACK_KIND)):
+        raise ValidationError("source links require a config or project pack document")
     return DocumentInputLink(capture, dependency_kind, ordinal)
 
 

@@ -280,7 +280,11 @@ class RequestCommitPort:
         return self._read(read)
 
     def _document(self, pin, transcript):
-        from .timeline_commit_inputs import capture_document_input
+        from .timeline_commit_inputs import (
+            PROJECT_PACK_KIND,
+            PROJECT_PACK_SCHEMA,
+            capture_document_input,
+        )
         def read():
             reachable = [item for closure in self.__closures.values()
                          for item in closure["dependency_manifest"]["documents"]]
@@ -303,9 +307,10 @@ class RequestCommitPort:
                         "SELECT kind FROM project_documents WHERE project_id=? AND id=?",
                         (self.__project, pin["document_id"]),
                     ).fetchone()
-                if row is None or not row["kind"].endswith(".config"):
-                    raise refused("dependency_unavailable", "config input requires a registered config kind")
-                kind, schema = row["kind"], None
+                if row is None or not (row["kind"].endswith(".config") or row["kind"] == PROJECT_PACK_KIND):
+                    raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
+                kind = row["kind"]
+                schema = PROJECT_PACK_SCHEMA if kind == PROJECT_PACK_KIND else None
             capture = capture_document_input(self.__service.store.conn, self.__project, pin,
                                              reachable_pins=reachable, expected_kind=kind, expected_schema=schema)
             self.__documents[canonical_json(pin)] = capture
