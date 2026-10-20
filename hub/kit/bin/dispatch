@@ -1,12 +1,13 @@
 #!/bin/bash
-# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] --brief FILE
+# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] [--merge-parent SHA] --brief FILE
 # Starts a Codex worker in its own worktree /home/user/work/wt/NAME on branch tl/NAME (from --base, default tl/integration).
 # Refuses if free disk < 5 GB, or if --heavy and >=2 heavy jobs (heavy workers + running full test suites) are already running.
 set -e
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=
+N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=; MPARENT=
 while [ $# -gt 0 ]; do case $1 in
  --repo) REPO=$2; shift 2;; --base) BASE=$2; shift 2;; --model) M=$2; shift 2;; --effort) E=$2; shift 2;;
+ --merge-parent) MPARENT=$2; shift 2;;
  --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
  *) echo "unknown arg $1"; exit 2;; esac; done
 . $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
@@ -15,7 +16,7 @@ D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
 FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 5 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }
 if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f ${r%running}heavy ] && kill -0 $(cat $r) 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
 WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
-mkdir -p $D; cp $BRIEF $D/brief.md
+mkdir -p $D; cp $BRIEF $D/brief.md; [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
 printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
 [ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
@@ -34,7 +35,10 @@ touch $D/running
   timeout $((TMO*60)) codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
    --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1; echo $? > $D/exit
   fi
-  if [ -n "$(git -C $WT status --porcelain)" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
+  # merge ancestry (2026-10-20): if the manager/worker wrote workers/<N>/merge-parent (a commit sha, e.g. origin/main's tip), the final
+  # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.
+  MP=$(tr -d ' \n' < $D/merge-parent 2>/dev/null); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
+  if [ -n "$(git -C $WT status --porcelain)" ] || [ -n "$MP" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } > $D/commit.log 2>&1; fi
   rm -f $D/running; date -u +%FT%TZ > $D/ended
   # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
   [ -f $D/KEEP ] || grep -lqsw -- "$N" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null || { [ -z "$(git -C $WT status --porcelain 2>/dev/null | head -1)" ] && git -C /home/user/work/$REPO worktree remove $WT 2>/dev/null && touch $D/recycled; } ) >/dev/null 2>&1 &

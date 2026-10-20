@@ -61,3 +61,10 @@ When a worker finishes, the harness removes its worktree automatically, provided
 ## HARD CAPACITY RULE (owner, 2026-10-20)
 Every manager keeps its area at the capacity target at ALL times: 5-7 running workers on Codex, 5 on the Claude fallback. Before ending ANY turn or round, and at least every 15 minutes, count your running workers. If you are below target, dispatch independent items from your Next 5, your INBOX or the PLAN milestone until you reach it.
 Reviews, integration and merges are NOT a substitute: delegate long reviews to read-only review workers instead of doing them yourself in-session. Only a stated blocker in STATUS.md (what blocks, who owns it, since when) excuses running below target.
+
+## Merging upstream main (or any branch) through a worker (2026-10-20)
+Sandboxed workers cannot write .git, so they cannot run `git merge`. To make a TRUE two-parent merge commit:
+1. Dispatch the worker with `--merge-parent <sha>` (for example origin/main's tip). You can also write the sha to workers/<w>/merge-parent before the worker ends.
+2. The worker produces the RESOLVED TREE in its worktree: main's changes plus ours, all conflicts resolved, no markers, targeted tests passing. It may apply main's diff with `git apply` (working tree only) or by editing.
+3. When the worker exits, the harness records MERGE_HEAD=<sha>, so its final commit has parents (the branch HEAD, sha) and the worker's tree.
+To turn an ALREADY-resolved branch into a merge, dispatch a tiny worker on that branch with `--merge-parent <sha>` and the brief "make no changes; create DONE". Verify with `git merge-base --is-ancestor <sha> tl/<w>`.
