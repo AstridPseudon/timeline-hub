@@ -1102,397 +1102,6 @@
             "ref": "occurrence:occ-a"
           }
         ],
-        "command": {
-          "args": {
-            "hold": 4,
-            "id": "placed",
-            "media": {
-              "asset": "reserved-new",
-              "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-              "generation_id": "generation-new",
-              "object_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-              "variant_id": "variant-new"
-            },
-            "on": 9.0
-          },
-          "authorship": {
-            "occurrence:occ-a/asset:reserved-new::": "direct",
-            "occurrence:occ-a/clip:placed::": "direct"
-          },
-          "bindings": {
-            "collection.owner:collection.clips": "occurrence:occ-a",
-            "collection.owner:collection.tracks": "occurrence:occ-a",
-            "create.owner": "occurrence:occ-a",
-            "media.owner": "occurrence:occ-a",
-            "media.track": "occurrence:occ-a/track:picture"
-          },
-          "created": [
-            "occurrence:occ-a/asset:reserved-new",
-            "occurrence:occ-a/clip:placed"
-          ],
-          "expect": {
-            "occurrence:occ-a/asset:reserved-new::": {
-              "state": "absent"
-            },
-            "occurrence:occ-a/clip:placed::": {
-              "state": "absent"
-            }
-          },
-          "intent": {
-            "ownership": "occurrence"
-          },
-          "op": "placement.create",
-          "reads": [
-            {
-              "path": [],
-              "ref": "parent/collection:occurrence",
-              "state": {
-                "state": "present",
-                "value": {
-                  "container": "array"
-                }
-              }
-            },
-            {
-              "path": [
-                "occurrence_id"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": "occ-a"
-              }
-            },
-            {
-              "path": [
-                "shot_id"
-              ],
-              "ref": "occurrence:occ-a/shot",
-              "state": {
-                "state": "present",
-                "value": "chapter-shot"
-              }
-            },
-            {
-              "path": [
-                "placement",
-                "start_ms"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": 8000
-              }
-            },
-            {
-              "path": [
-                "at_ms"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "duration_ms"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": 10000
-              }
-            },
-            {
-              "path": [
-                "source_offset"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": 0
-              }
-            },
-            {
-              "path": [
-                "speed"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": 1
-              }
-            },
-            {
-              "path": [
-                "track"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": "picture"
-              }
-            },
-            {
-              "path": [
-                "placement",
-                "track"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": "picture"
-              }
-            },
-            {
-              "path": [
-                "time_map"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "timeMap"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "enabled"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "active"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "disabled"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "hidden"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "deleted"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "config",
-                "output",
-                "fps"
-              ],
-              "ref": "parent",
-              "state": {
-                "state": "present",
-                "value": {
-                  "denominator": 1001,
-                  "numerator": 30000
-                }
-              }
-            },
-            {
-              "path": [
-                "output",
-                "fps"
-              ],
-              "ref": "occurrence:occ-a/source",
-              "state": {
-                "state": "present",
-                "value": {
-                  "denominator": 1001,
-                  "numerator": 30000
-                }
-              }
-            },
-            {
-              "path": [
-                "source_window"
-              ],
-              "ref": "occurrence:occ-a/source",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "pool"
-              ],
-              "ref": "occurrence:occ-a/source",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "config",
-                "pinnedShotGroups"
-              ],
-              "ref": "parent",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/collection:clip",
-              "state": {
-                "state": "present",
-                "value": {
-                  "members": {
-                    "state": "present",
-                    "value": []
-                  }
-                }
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/collection:track",
-              "state": {
-                "state": "present",
-                "value": {
-                  "members": {
-                    "state": "present",
-                    "value": []
-                  }
-                }
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/track:picture",
-              "state": {
-                "state": "present",
-                "value": {
-                  "id": "picture",
-                  "kind": "visual"
-                }
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/asset:reserved-new",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            }
-          ],
-          "resolved": [
-            "occurrence:occ-a"
-          ],
-          "schema_version": 1,
-          "select": "occurrence:occ-a",
-          "selections": [
-            {
-              "boundaries": [
-                "occurrence:occ-a",
-                "occurrence:occ-b"
-              ],
-              "key": "collection.occurrences",
-              "members": [
-                "occurrence:occ-a",
-                "occurrence:occ-b"
-              ],
-              "order": [
-                "occurrence:occ-a",
-                "occurrence:occ-b"
-              ],
-              "owner": "parent",
-              "policy": "guard-membership",
-              "query_version": 1
-            },
-            {
-              "boundaries": [
-                "shot:shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f"
-              ],
-              "key": "placement.owners",
-              "members": [
-                "occurrence:occ-a"
-              ],
-              "order": [
-                "occurrence:occ-a"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            },
-            {
-              "boundaries": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b"
-              ],
-              "key": "collection.clips",
-              "members": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b"
-              ],
-              "order": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            },
-            {
-              "boundaries": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "key": "collection.tracks",
-              "members": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "order": [
-                "occurrence:occ-a/track:picture"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            }
-          ],
-          "version": "1"
-        },
         "created": [
           {
             "kind": "asset",
@@ -1592,7 +1201,7 @@
           "occurrence:occ-a/clip:placed::": "direct"
         },
         "bindings": {
-          "collection.owner:collection.clips": "occurrence:occ-a"
+          "collection.owner:collection.clips": "occurrence:occ-b"
         },
         "created": [],
         "expect": {
@@ -1679,6 +1288,1061 @@
             }
           },
           {
+            "path": [],
+            "ref": "parent/collection:occurrence",
+            "state": {
+              "state": "present",
+              "value": {
+                "container": "array"
+              }
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "sequences"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "formulas"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "slots"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "sequences"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "formulas"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "slots"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "astrid",
+              "sequences"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "app",
+              "astrid",
+              "slots"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [],
+            "ref": "parent/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "config": {
+                  "state": "present",
+                  "value": {}
+                },
+                "members": {
+                  "state": "present",
+                  "value": []
+                },
+                "payload_members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [
+              "transition"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "on"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until_film_end"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "cut"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_index"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_fit"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_shape_from"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "segment"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "words"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "beats"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slot"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "replaces"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin_for"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "intended"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "group"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "duck"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "on"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until_film_end"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "cut"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_index"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_fit"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_shape_from"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "segment"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "words"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "beats"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slot"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "replaces"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin_for"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "intended"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "group"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "duck"
+            ],
+            "ref": "parent/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "transition"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "on"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until_film_end"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "cut"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_index"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_fit"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_shape_from"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "segment"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "words"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "beats"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slot"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "replaces"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin_for"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "intended"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "group"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "duck"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "on"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until_film_end"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "cut"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_index"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_fit"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_shape_from"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "segment"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "words"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "beats"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slot"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "replaces"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin_for"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "intended"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "group"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "duck"
+            ],
+            "ref": "parent/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "pinnedShotGroups"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "sequences"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "formulas"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "slots"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequences"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slots"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequences"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slots"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
             "path": [
               "transition"
             ],
@@ -2898,6 +3562,954 @@
               "duck"
             ],
             "ref": "occurrence:occ-a/clip:placed",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "pinnedShotGroups"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "sequences"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "slots"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequences"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slots"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequences"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slots"
+            ],
+            "ref": "occurrence:occ-b/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-b/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [
+              "occurrence_id"
+            ],
+            "ref": "occurrence:occ-b",
+            "state": {
+              "state": "present",
+              "value": "occ-b"
+            }
+          },
+          {
+            "path": [
+              "shot_id"
+            ],
+            "ref": "occurrence:occ-b/shot",
+            "state": {
+              "state": "present",
+              "value": "chapter-shot"
+            }
+          },
+          {
+            "path": [
+              "transition"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "on"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until_film_end"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "cut"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_index"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_fit"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_shape_from"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "segment"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "words"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "beats"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slot"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "replaces"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin_for"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "intended"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "group"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "duck"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "on"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until_film_end"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "cut"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_index"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_fit"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_shape_from"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "segment"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "words"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "beats"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slot"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "replaces"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin_for"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "intended"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "group"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "duck"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-a",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "transition"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "on"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "until_film_end"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "cut"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_index"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_fit"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "sequence_shape_from"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "segment"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "words"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "beats"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "slot"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "replaces"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "standin_for"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "intended"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "group"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "duck"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "on"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "until_film_end"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "cut"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "formulas"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_index"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_fit"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "sequence_shape_from"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "segment"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "words"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "beats"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "slot"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "replaces"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "standin_for"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "intended"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "group"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "duck"
+            ],
+            "ref": "occurrence:occ-b/clip:clip-b",
             "state": {
               "state": "absent"
             }
@@ -2942,6 +4554,60 @@
               "occurrence:occ-a/clip:placed"
             ],
             "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a",
+              "occurrence:occ-b"
+            ],
+            "key": "collection.occurrences",
+            "members": [
+              "occurrence:occ-a",
+              "occurrence:occ-b"
+            ],
+            "order": [
+              "occurrence:occ-a",
+              "occurrence:occ-b"
+            ],
+            "owner": "parent",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "parent/clip:clip-a",
+              "parent/clip:clip-b"
+            ],
+            "key": "collection.clips",
+            "members": [
+              "parent/clip:clip-a",
+              "parent/clip:clip-b"
+            ],
+            "order": [
+              "parent/clip:clip-a",
+              "parent/clip:clip-b"
+            ],
+            "owner": "parent",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-b/clip:clip-a",
+              "occurrence:occ-b/clip:clip-b"
+            ],
+            "key": "collection.clips",
+            "members": [
+              "occurrence:occ-b/clip:clip-a",
+              "occurrence:occ-b/clip:clip-b"
+            ],
+            "order": [
+              "occurrence:occ-b/clip:clip-a",
+              "occurrence:occ-b/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-b",
             "policy": "guard-membership",
             "query_version": 1
           }
@@ -3348,1370 +5014,14 @@
             "key": "collection.owner:collection.clips",
             "policy": "fixed",
             "ref": "occurrence:occ-a"
+          },
+          {
+            "dependencies": [],
+            "key": "collection.owner:collection.clips",
+            "policy": "fixed",
+            "ref": "occurrence:occ-b"
           }
         ],
-        "command": {
-          "args": {},
-          "authorship": {
-            "occurrence:occ-a/clip:placed::": "direct"
-          },
-          "bindings": {
-            "collection.owner:collection.clips": "occurrence:occ-a"
-          },
-          "created": [],
-          "expect": {
-            "occurrence:occ-a/clip:placed::": {
-              "state": "present",
-              "value": {
-                "asset": "reserved-new",
-                "at": 1.0090000000000003,
-                "clipType": "image",
-                "hold": 4,
-                "id": "placed",
-                "track": "picture"
-              }
-            }
-          },
-          "intent": {
-            "ownership": "occurrence"
-          },
-          "op": "placement.unplace",
-          "reads": [
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/collection:clip",
-              "state": {
-                "state": "present",
-                "value": {
-                  "members": {
-                    "state": "present",
-                    "value": []
-                  }
-                }
-              }
-            },
-            {
-              "path": [
-                "occurrence_id"
-              ],
-              "ref": "occurrence:occ-a",
-              "state": {
-                "state": "present",
-                "value": "occ-a"
-              }
-            },
-            {
-              "path": [
-                "shot_id"
-              ],
-              "ref": "occurrence:occ-a/shot",
-              "state": {
-                "state": "present",
-                "value": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f"
-              }
-            },
-            {
-              "path": [],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "present",
-                "value": {
-                  "asset": "reserved-new",
-                  "at": 1.0090000000000003,
-                  "clipType": "image",
-                  "hold": 4,
-                  "id": "placed",
-                  "track": "picture"
-                }
-              }
-            },
-            {
-              "path": [
-                "registry",
-                "assets",
-                "reserved-new"
-              ],
-              "ref": "occurrence:occ-a/source",
-              "state": {
-                "state": "present",
-                "value": {
-                  "generationId": "generation-new",
-                  "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-                  "type": "image",
-                  "variantId": "variant-new"
-                }
-              }
-            },
-            {
-              "path": [
-                "transition"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-a",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "transition"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:clip-b",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "transition"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "on"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "until_film_end"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "cut"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "formulas"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_index"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_fit"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "sequence_shape_from"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "segment"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "words"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "beats"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "slot"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "replaces"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "standin_for"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "intended"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "group"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            },
-            {
-              "path": [
-                "app",
-                "astrid",
-                "duck"
-              ],
-              "ref": "occurrence:occ-a/clip:placed",
-              "state": {
-                "state": "absent"
-              }
-            }
-          ],
-          "resolved": [
-            "occurrence:occ-a/clip:placed"
-          ],
-          "schema_version": 1,
-          "select": "occurrence:occ-a/clip:placed",
-          "selections": [
-            {
-              "boundaries": [
-                "shot:shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f"
-              ],
-              "key": "placement.owners",
-              "members": [
-                "occurrence:occ-a"
-              ],
-              "order": [
-                "occurrence:occ-a"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            },
-            {
-              "boundaries": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b",
-                "occurrence:occ-a/clip:placed"
-              ],
-              "key": "collection.clips",
-              "members": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b",
-                "occurrence:occ-a/clip:placed"
-              ],
-              "order": [
-                "occurrence:occ-a/clip:clip-a",
-                "occurrence:occ-a/clip:clip-b",
-                "occurrence:occ-a/clip:placed"
-              ],
-              "owner": "occurrence:occ-a",
-              "policy": "guard-membership",
-              "query_version": 1
-            }
-          ],
-          "version": "1"
-        },
         "dependencies": [],
         "derived_writes": [],
         "ordinal": 0,

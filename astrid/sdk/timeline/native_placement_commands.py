@@ -3,8 +3,8 @@
 This changes an existing clip's start, preserving its media and source window.
 It does not implement the App's legacy generation placement/pooling algorithm.
 
-placement.create and placement.unplace add and remove one occurrence-owned image
-expression. They reuse occurrence media birth and bounded clip removal; there is
+placement.create adds an image; placement.unplace removes an occurrence-owned
+image or video expression. They reuse media birth and bounded clip removal; there is
 no pooling, auto-position, collision shifting or registry removal.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ from fractions import Fraction
 from astrid.core.timeline.duration import clip_start_frame
 
 from ._command_state import CommandError
-from ._delete_commands import RELATIONS, _unrelated
+from ._delete_commands import _unreferenced
 from ._media_inputs import _verified
 from .capture import _duration, move, move_intent, number, occurrence_start, rate
 from .native_occurrence_media_commands import _exclusive, _owner, add_media
@@ -100,22 +100,21 @@ def placement_create(ctx, command):
 
 
 def placement_unplace(ctx, command):
-    """Remove one placed image expression; its registry binding is guarded and survives."""
+    """Remove one raw media expression; its exact row and registry binding survive undo."""
     ref = command['select']
     owner = ref.rsplit('/', 1)[0]
+    _explicit_occurrence(owner, command.get('intent', {}).get('ownership'))
     _exclusive(ctx, owner)
     if ref not in ctx.select('collection.clips', owner):
         raise CommandError('placement target disappeared', kind='identity_conflict', ref=ref)
     row = ctx.read(ref)
-    if row.get('clipType') not in ('media', 'image') or not isinstance(row.get('asset'), str):
+    if row.get('clipType') not in ('media', 'image', 'video') or not isinstance(row.get('asset'), str):
         raise CommandError('unplace requires one placed media clip', kind='unsupported_media', ref=ref)
     if any(row.get(key) is not None for key in ('clips', 'children', 'time_map', 'timeMap')):
         raise CommandError('unplace does not support nested or mapped clips', kind='unsupported_map', ref=ref)
     # Guard the whole binding the removed expression pointed at, including ABA.
     ctx.read(owner + '/source', ['registry', 'assets', str(row['asset'])])
-    for member in ctx.select('collection.clips', owner):
-        _unrelated(ctx, member, [[]], ('transition',))
-        _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
+    _unreferenced(ctx)
     ctx.clear(ref, [])
 
 

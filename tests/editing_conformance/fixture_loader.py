@@ -34,6 +34,10 @@ def load_fixture(path: str | Path) -> Any:
     """Load a compact fixture and restore only its known factored values."""
     path = Path(path)
     fixture = json.loads(path.read_text(encoding='utf-8'))
+    if path.name == 'recipe_m2_placement_create_unplace.json':
+        for operation in fixture.values():
+            for record, command in zip(operation['records'], operation['commands'], strict=True):
+                record.setdefault('command', copy.deepcopy(command))
     _restore_record_fields(fixture, _RECORD_PATHS.get(path.name, ()))
 
     if path.name == 'recipe_m2_placement.json':
