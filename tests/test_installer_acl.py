@@ -1,17 +1,22 @@
 """Installer admission and lock placement through the Windows permission seam."""
 
+import os
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from runtime_protocol import platform, windows_security
 
 from astrid.installer import cli
-from runtime_protocol import platform, windows_security
+from astrid.installer.backend import Backend
+from astrid.installer.core import write_json
+from astrid.installer.service import LABEL, default_program_root
 
 
 @pytest.mark.parametrize("custom_root", [False, True])
-def test_windows_installer_lock_stays_inside_private_logs(tmp_path, monkeypatch, custom_root):
+def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, monkeypatch, custom_root):
     local = tmp_path / "local"
     log_dir = local / "Astrid Runtime" / "logs"
     root = tmp_path / "custom" if custom_root else local / "Astrid"
@@ -31,7 +36,8 @@ def test_windows_installer_lock_stays_inside_private_logs(tmp_path, monkeypatch,
     backend = Mock()
     backend.service.recorded.return_value = {}
     monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
-    monkeypatch.setattr(cli, "find_data_root", lambda *_: (tmp_path / "workspace", False))
+    data = platform.data_root()
+    monkeypatch.setattr(cli, "find_data_root", lambda *_: (data, False))
     monkeypatch.setattr(cli, "current", lambda _: SimpleNamespace(python=Path(__file__)))
     installer = Mock()
     monkeypatch.setattr(cli, "Installer", Mock(return_value=installer))
@@ -42,26 +48,33 @@ def test_windows_installer_lock_stays_inside_private_logs(tmp_path, monkeypatch,
 
     args = ["--repair", "--root", str(root)] if custom_root else ["--repair"]
     assert cli.main(args) == 0
-    lock = log_dir / "installer" / "astrid-install.lock"
+    lock = local / "Astrid Installer" / "astrid-install.lock"
     assert admitted == [log_dir, lock.parent, root]
     assert lock.is_file()
     assert root not in lock.parents
+    assert data not in lock.parents
     assert not (local / "astrid-install.lock").exists()
     assert len(locks) == 1
     unlock.assert_called_once_with(locks[0])
     installer.run.assert_called_once()
 
 
-def test_windows_installer_does_not_bypass_existing_root_validation(tmp_path, monkeypatch):
+@pytest.mark.parametrize("directory", ["program", "state"])
+def test_windows_installer_does_not_bypass_existing_directory_validation(tmp_path, monkeypatch, directory):
     log_dir = tmp_path / "logs"
     root = tmp_path / "program"
     root.mkdir()
+    local = tmp_path / "local"
+    state = local / "Astrid Installer"
+    state.mkdir(parents=True)
+    unsafe = root if directory == "program" else state
+    monkeypatch.setenv("LOCALAPPDATA", str(local))
     monkeypatch.setattr(cli, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setattr(platform, "log_dir", lambda: log_dir)
 
     def private_directory(path):
-        if Path(path) == root:
+        if Path(path) == unsafe:
             raise PermissionError("unprotected existing DACL")
         Path(path).mkdir(parents=True, exist_ok=True)
 
@@ -78,3 +91,110 @@ def test_windows_installer_does_not_bypass_existing_root_validation(tmp_path, mo
     assert cli.main(["--repair", "--root", str(root)]) == 1
     installer.assert_not_called()
     assert not (root / "install.json").exists()
+
+
+def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path, monkeypatch, capsys):
+    local = tmp_path / "local"
+    monkeypatch.setenv("LOCALAPPDATA", str(local))
+    monkeypatch.setattr(cli, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    root, data = local / "Astrid", platform.data_root()
+    lock_path = local / "Astrid Installer" / "astrid-install.lock"
+    write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
+    (root / "owned").mkdir()
+    data.mkdir()
+    (data / "sentinel").write_text("workspace data")
+
+    def private_directory(path):
+        assert Path(path) != local
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(windows_security, "private_directory", private_directory)
+    backend = Backend(root, platform.log_dir() / "install.log", root / "bootstrap" / "uv.exe")
+    backend.service = SimpleNamespace(recorded=lambda: {}, registry=root / "service.json",
+                                     selection=local / "astrid-install.json", system="win32", say=print)
+    monkeypatch.setattr(backend, "existing", Mock(return_value=None))
+    monkeypatch.setattr(backend, "stop", Mock())
+    monkeypatch.setattr(backend, "unregister", Mock())
+    monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
+    held = set()
+    monkeypatch.setattr(platform, "lock_file", lambda fd, **_: held.add(fd))
+    monkeypatch.setattr(platform, "unlock_file", held.remove)
+    remove_tree = shutil.rmtree
+    deletions = []
+
+    def windows_remove(path, *args, **kwargs):
+        assert held, "uninstall must retain its installer lock throughout deletion"
+        path = Path(path)
+        # POSIX would unlink a live lock successfully. Simulate Windows CRT
+        # sharing instead so an incorrectly nested lock cannot mask residue.
+        if any(os.path.samestat(os.fstat(fd), entry.stat())
+               for entry in path.rglob("*") if entry.is_file() for fd in held):
+            raise PermissionError("the installer lock is still open")
+        deletions.append(path)
+        return remove_tree(path, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "rmtree", windows_remove)
+
+    assert cli.main(["--uninstall", "--delete-data"]) == 0
+    assert data in deletions
+    assert not data.exists()
+    assert not root.exists()
+    assert lock_path.is_file()
+    assert not held
+    output = capsys.readouterr().out
+    assert "Astrid was uninstalled." in output
+    assert "Remaining:" not in output
+
+
+@pytest.mark.parametrize("selected", ["root", "data"])
+@pytest.mark.parametrize("directory", ["state", "parent"])
+def test_windows_refuses_selected_roots_containing_installer_lock(tmp_path, monkeypatch, selected, directory):
+    local = tmp_path / "local"
+    state = local / "Astrid Installer"
+    chosen = state if directory == "state" else local
+    root = chosen if selected == "root" else tmp_path / "program"
+    data = chosen if selected == "data" else tmp_path / "workspace"
+    monkeypatch.setenv("LOCALAPPDATA", str(local))
+    monkeypatch.setattr(cli, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+
+    def private_directory(path):
+        assert Path(path) != local
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(windows_security, "private_directory", private_directory)
+    backend = Mock()
+    backend.service.recorded.return_value = {}
+    monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
+    monkeypatch.setattr(platform, "lock_file", Mock())
+    monkeypatch.setattr(platform, "unlock_file", Mock())
+    installer = Mock()
+    monkeypatch.setattr(cli, "Installer", installer)
+
+    assert cli.main(["--repair", "--root", str(root), "--data-root", str(data)]) == 1
+    installer.assert_not_called()
+    assert not (root / "install.json").exists()
+    assert f"contains protected installer state at {state}" in (platform.log_dir() / "install.log").read_text()
+
+
+@pytest.mark.parametrize("system", ["linux", "darwin"])
+def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, system):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
+    monkeypatch.setattr(cli, "sys", SimpleNamespace(platform=system))
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform=system))
+    monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
+    backend = Mock()
+    backend.service.recorded.return_value = {}
+    monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
+    monkeypatch.setattr(cli, "find_data_root", lambda *_: (tmp_path / "workspace", False))
+    monkeypatch.setattr(cli, "current", lambda _: SimpleNamespace(python=Path(__file__)))
+    monkeypatch.setattr(cli, "Installer", Mock())
+    monkeypatch.setattr(platform, "lock_file", Mock())
+    monkeypatch.setattr(platform, "unlock_file", Mock())
+
+    assert cli.main(["--repair", "--root", str(tmp_path / "program")]) == 0
+    original = default_program_root(Path.home(), system).parent / "astrid-install.lock"
+    assert original.is_file()
+    assert not (tmp_path / "logs" / "installer").exists()

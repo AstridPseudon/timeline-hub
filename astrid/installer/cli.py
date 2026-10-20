@@ -63,9 +63,12 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError(f"The login service already belongs to {recorded_root}.")
             root = recorded_root
             backend = Backend(root, log, uv)
-        # The lock lives outside the removable program directory (Windows keeps
-        # open files locked). One per user also serializes custom-root installs.
-        lock_path = log.parent / "installer" / "astrid-install.lock"
+        # Windows keeps open files locked, so its per-user lock must survive
+        # removal of both the program directory and the default workspace.
+        lock_parent = default_program_root(Path.home(), sys.platform).parent
+        if sys.platform == "win32":
+            lock_parent = lock_parent / "Astrid Installer"
+        lock_path = lock_parent / "astrid-install.lock"
         platform.private_directory(lock_path.parent)
         with lock_path.open("a+b") as lock:
             platform.lock_file(lock.fileno(), blocking=False)
@@ -73,6 +76,10 @@ def main(argv: list[str] | None = None) -> int:
                 data, relocate = find_data_root(
                     Path(recorded["data_root"]) if recorded.get("data_root") else None,
                     args.data_root, platform.data_root(), legacy_roots(Path.home(), platform.data_root()))
+                if sys.platform == "win32":
+                    for name, path in (("program directory", root), ("workspace", data)):
+                        if lock_path.resolve().is_relative_to(path.resolve()):
+                            raise ValueError(f"The {name} contains protected installer state at {lock_path.parent}; choose a separate directory.")
                 if root == data or root in data.parents or data in root.parents:
                     raise ValueError("Keep program files and the workspace in separate directories.")
                 if sys.platform == "win32" and len(str(root)) > 90:
