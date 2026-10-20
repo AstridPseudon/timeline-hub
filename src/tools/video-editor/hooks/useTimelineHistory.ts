@@ -401,11 +401,17 @@ export function useTimelineHistory({
    * result — silent multi-client data loss with both UIs reading "saved".
    * Rebasing snapshots over remote changes is a merge problem this history
    * model does not attempt, so the safe semantics is to invalidate the stacks
-   * at the boundary. Echoes (same stableSignature, e.g. a URL re-resolution
-   * refresh) keep the stacks.
+   * at the boundary. A verified accepted projection also ends local history,
+   * even if another editor published the displayed authored bytes. Same-head
+   * URL refreshes keep the stacks; a query head alone is not acceptance.
    */
   const onRemoteData = useCallback((currentData: TimelineData, nextData: TimelineData) => {
-    if (currentData.stableSignature === nextData.stableSignature) {
+    const currentAccepted = currentData.editProjection?.kind === 'accepted' ? currentData.editProjection.head : undefined;
+    const nextAccepted = nextData.editProjection?.kind === 'accepted' ? nextData.editProjection.head : undefined;
+    const acceptedBoundary = nextAccepted && (!currentAccepted
+      || currentAccepted.revisionId !== nextAccepted.revisionId
+      || currentAccepted.publicationId !== nextAccepted.publicationId);
+    if (currentData.stableSignature === nextData.stableSignature && !acceptedBoundary) {
       return;
     }
 
