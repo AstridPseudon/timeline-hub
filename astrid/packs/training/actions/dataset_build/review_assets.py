@@ -11,7 +11,6 @@ import copy
 import hashlib
 import io
 import json
-from runtime_protocol.dirfd import filesystem as os
 import re
 import stat
 import zipfile
@@ -20,8 +19,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import quote
 
-import astrid.sdk as sdk
+from runtime_protocol.dirfd import filesystem as os
 
+import astrid.sdk as sdk
 from astrid.core._shared.jsonio import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT
 

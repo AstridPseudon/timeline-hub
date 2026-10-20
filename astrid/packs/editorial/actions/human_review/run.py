@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-
 from astrid.core.contracts.errors import AstridError, render_astrid_error
 from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
@@ -15,8 +14,6 @@ import hashlib  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import mimetypes  # noqa: E402
-from runtime_protocol.dirfd import filesystem as os  # noqa: E402
-from runtime_protocol import platform  # noqa: E402
 import re  # noqa: E402
 import secrets  # noqa: E402
 import socket  # noqa: E402
@@ -31,6 +28,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer  # noqa: E40
 from pathlib import Path  # noqa: E402
 from typing import Any, Mapping  # noqa: E402
 from urllib.parse import parse_qs, unquote, urldefrag, urljoin, urlparse  # noqa: E402
+
+from runtime_protocol import platform  # noqa: E402
+from runtime_protocol.dirfd import filesystem as os  # noqa: E402
 
 from astrid.core.experiments.state import (  # noqa: E402
     StaleStateConflict,
