@@ -20,11 +20,14 @@ const compositionId = 'TimelineComposition';
 const EXPECTED_ALLOWED = {
   _ASSET_ENTRY_ALLOWED: [
     'content_sha256',
+    'derivedFrom',
     'duration',
     'etag',
     'file',
     'fps',
     'generationId',
+    'media_id',
+    'origin',
     'resolution',
     'thumbnailUrl',
     'type',

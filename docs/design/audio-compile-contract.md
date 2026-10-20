@@ -12,7 +12,7 @@ Reference for "audible today": `origin/main` e51595c6. The Python compiler is `a
 2. **Gain is multiplicative**: `child x occurrence`. Examples: 0.8 x 0.5 = 0.4; 1.5 x 2 = 3.
 3. **`source_offset` and occurrence `speed` follow main's audible playback**, not App's adapter. Main ignores both on the playback path, so the compiler keeps them as metadata. Metadata-only is acceptable here only because main does not change what is heard.
 4. **Fades use one continuous, source-time envelope** for App preview and Agent export. The public Composition `applyAudioEnvelope` is the policy (03:20). Until the prepared-source join exists, non-Player fades refuse `ENVELOPE_UNRENDERED`.
-5. **Fade `curve=` is HONOURED in the unified path** (orchestrator 04:24Z). The author's `curve=NAME` is kept as `params.fadeInCurve` / `params.fadeOutCurve` and the envelope applies it. Main's playback ignores it, so main's audible fades are always linear. This is a deliberate change for films that use `curve=`; they are listed in `design/owner-film-differences.md`.
+5. **Fade `curve=` is HONOURED in the unified path** (orchestrator 04:24Z). The author's `curve=NAME` is kept as `params.fadeInCurve` / `params.fadeOutCurve` and the envelope applies it. Main's playback ignores it, so main's audible fades are always linear. This is a deliberate change for films that use `curve=`; they are listed in `docs/design/owner-film-differences.md`.
 
 ## What main actually does (evidence)
 
@@ -113,6 +113,8 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 4. **Until then.** Vectors 10-11 stay xfail. Non-Player fades keep refusing `ENVELOPE_UNRENDERED`. Nothing falls back to the frame-step callback.
 5. **Ordering.** The 03:17 decision pairs this with the slice/layer P1 fix. Do not wire Viewing's helper before the Agent join is reviewed.
 
+**Join status (no producer landed).** Checked in this tree: the Composition package installed for hosts (`/home/user/work/app/node_modules/@banodoco/timeline-composition`) does not export `applyAudioEnvelope`, so there is no trusted public decode/apply to join to. The Remotion renderer (`remotion/run.py`) has no step that decodes a source, writes an `audioEnvelopeWav` file, or serves it at an `http(s)` URL, which `encodedEnvelopeSource` requires. The compiler cannot create `audio.render_source` either, because it has no file to name. A Python re-implementation of the envelope would duplicate the public policy, and a mock would be no authority, so nothing was added. Still strict xfail: audio vectors 10-11 and the four PCM tests in `test_normal_audio_source_phase.py`. Restored when a Composition build with the 0.0.10 audio-envelope exports is installed in the Remotion project and the render route gains the prepare step in the plan above.
+
 ## Ledger and owner items
 
 - VW-AUDIO-STEP: App `AudioTrack.tsx` per-frame callback and the old frame-table comparator are retired only after Agent's compiled clock is published, App's PCM adapter is live, both consumers use it, and Viewing's Player-vs-export PCM goldens pass with no threshold widening. The frame-step RED baseline stays as a record.
@@ -120,7 +122,7 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 
 ## Open items for the orchestrator (not decided here)
 
-1. **`curve=` on audio fades: RESOLVED, honoured** (decision 5, orchestrator 04:24Z). Owner visibility: the films that use `curve=` are listed in `design/owner-film-differences.md`. That scan found no owner film in reach, so the list is open.
+1. **`curve=` on audio fades: RESOLVED, honoured** (decision 5, orchestrator 04:24Z). Owner visibility: the films that use `curve=` are listed in `docs/design/owner-film-differences.md`. That scan found no owner film in reach, so the list is open.
 2. **Viewing's 11.** Reconciled above; the unit question is closed (milliseconds).
 
 ## Not verified
@@ -128,3 +130,9 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 - No PCM was rendered and no Player or export was compared. The vectors test the compiler's output fields only.
 - The pinned 0.0.8 artifact's `AudioTrack` was not read (see above).
 - App's tests were not run from this worktree.
+
+## Slice phase (PCM source-phase preservation)
+
+`RenderService._window_clip` rewrites `at`/`from`/`to`, so a fade restarts at the cut: a 0..2 s clip with `fadeIn` 0.5 sliced at 0.5 s has (.25, -.125) at source 0.5 in the original and (0, -0) in the slice. Two different originals can slice to the identical clip, so the phase cannot be recovered afterwards. The host slicer now records `app.astrid_slice_origin = {id, at, from, to}` on fade-bearing clips (host-owned; any authored value is dropped).
+
+The prepared-source producer (step 2 above) must: compile E0 once from the original clip, take `q0`/`q1` from the public rounded `computeMediaTrim` of original and sliced clip, `r` from the child speed, and translate every keyframe `at` of E0 by `-(q1-q0)/r` into the derived `audio.envelope`. Then source sample 15000 of the slice equals the original. The four PCM tests in `tests/packs/rendering/test_normal_audio_source_phase.py` stay strict xfail until that producer exists.

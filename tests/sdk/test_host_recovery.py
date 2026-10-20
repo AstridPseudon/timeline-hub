@@ -49,6 +49,9 @@ class Harness:
         }
         self.launches: list[dict] = []
         self.procs: list[subprocess.Popen] = []
+        # The fake host writes no Remotion launch marker, so ambient Remotion provisioning must not
+        # make the reuse path refuse it; the Remotion gate has its own test below.
+        monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
         inventory = SimpleNamespace(identity="", roots=(), sources=())
         monkeypatch.setattr("astrid.core.pack.source_setup.active_source_inventory", lambda: inventory)
 
