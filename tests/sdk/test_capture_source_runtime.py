@@ -195,8 +195,6 @@ def test_current_capture_reaches_claim_and_verified_host(runtime, tmp_path, work
             **expansion, "parent_content_digest": parent["content_digest"]}
 
 
-# Renderer request propagation is still separate from the now-restored host handoff.
-@pytest.mark.xfail(strict=True, reason="needs verified source propagation through RenderRequest")
 @pytest.mark.parametrize("working_copy", [False, True])
 @pytest.mark.parametrize("inline", [False, True])
 def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtime, tmp_path, monkeypatch, working_copy, inline):
