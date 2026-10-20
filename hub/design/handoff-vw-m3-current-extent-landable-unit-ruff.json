@@ -1,0 +1,12 @@
+{
+  "astrid/core/rendering/service.py": {
+    "baseline_diagnostics": 6,
+    "candidate_diagnostics": 6,
+    "same_codes_and_messages": true
+  },
+  "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+    "baseline_diagnostics": 7,
+    "candidate_diagnostics": 7,
+    "same_codes_and_messages": true
+  }
+}

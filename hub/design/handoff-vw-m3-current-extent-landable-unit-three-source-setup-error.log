@@ -1,0 +1,122 @@
+error: this pack (rendering.render) is not meant to be invoked directly; run `astrid --help`, `astrid doctor`, or use the SDK (astrid.sdk.invoke) instead.
+(direct `python -m astrid.packs.<...>.run` invocation is reserved
+for internal use by the astrid runner.)
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 318, in wrap_session
+INTERNALERROR>     session.exitstatus = doit(config, session) or 0
+INTERNALERROR>                          ^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 371, in _main
+INTERNALERROR>     config.hook.pytest_collection(session=session)
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_caller.py", line 197, in __call__
+INTERNALERROR>     return self._hookexec(
+INTERNALERROR>            ^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_manager.py", line 183, in _hookexec
+INTERNALERROR>     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+INTERNALERROR>            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 195, in _multicall
+INTERNALERROR>     raise exception
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 167, in _multicall
+INTERNALERROR>     teardown.throw(exception)
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/logging.py", line 788, in pytest_collection
+INTERNALERROR>     return (yield)
+INTERNALERROR>             ^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 167, in _multicall
+INTERNALERROR>     teardown.throw(exception)
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/warnings.py", line 98, in pytest_collection
+INTERNALERROR>     return (yield)
+INTERNALERROR>             ^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 167, in _multicall
+INTERNALERROR>     teardown.throw(exception)
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/config/__init__.py", line 1403, in pytest_collection
+INTERNALERROR>     return (yield)
+INTERNALERROR>             ^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 147, in _multicall
+INTERNALERROR>     res = hook_impl.function(*args)
+INTERNALERROR>           ^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 382, in pytest_collection
+INTERNALERROR>     session.perform_collect()
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 857, in perform_collect
+INTERNALERROR>     self.items.extend(self.genitems(node))
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 1020, in genitems
+INTERNALERROR>     rep, duplicate = self._collect_one_node(node, handle_dupes)
+INTERNALERROR>                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/main.py", line 883, in _collect_one_node
+INTERNALERROR>     rep = collect_one_node(node)
+INTERNALERROR>           ^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/runner.py", line 576, in collect_one_node
+INTERNALERROR>     rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
+INTERNALERROR>                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_caller.py", line 197, in __call__
+INTERNALERROR>     return self._hookexec(
+INTERNALERROR>            ^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_manager.py", line 183, in _hookexec
+INTERNALERROR>     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+INTERNALERROR>            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 195, in _multicall
+INTERNALERROR>     raise exception
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 167, in _multicall
+INTERNALERROR>     teardown.throw(exception)
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/capture.py", line 880, in pytest_make_collect_report
+INTERNALERROR>     rep = yield
+INTERNALERROR>           ^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/pluggy/_execution.py", line 147, in _multicall
+INTERNALERROR>     res = hook_impl.function(*args)
+INTERNALERROR>           ^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/runner.py", line 400, in pytest_make_collect_report
+INTERNALERROR>     call = CallInfo.from_call(
+INTERNALERROR>            ^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/runner.py", line 353, in from_call
+INTERNALERROR>     result: TResult | None = func()
+INTERNALERROR>                              ^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/runner.py", line 398, in collect
+INTERNALERROR>     return list(collector.collect())
+INTERNALERROR>                 ^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/python.py", line 563, in collect
+INTERNALERROR>     self._register_setup_module_fixture()
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/python.py", line 576, in _register_setup_module_fixture
+INTERNALERROR>     self.obj, ("setUpModule", "setup_module")
+INTERNALERROR>     ^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/python.py", line 289, in obj
+INTERNALERROR>     self._obj = obj = self._getobj()
+INTERNALERROR>                       ^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/python.py", line 560, in _getobj
+INTERNALERROR>     return importtestmodule(self.path, self.config)
+INTERNALERROR>            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/python.py", line 507, in importtestmodule
+INTERNALERROR>     mod = import_path(
+INTERNALERROR>           ^^^^^^^^^^^^
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/pathlib.py", line 587, in import_path
+INTERNALERROR>     importlib.import_module(module_name)
+INTERNALERROR>   File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+INTERNALERROR>     return _bootstrap._gcd_import(name[level:], package, level)
+INTERNALERROR>            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/assertion/rewrite.py", line 197, in exec_module
+INTERNALERROR>     exec(co, module.__dict__)
+INTERNALERROR>   File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-unit-three-source.py", line 12, in <module>
+INTERNALERROR>     from tests.packs.rendering.test_live_scene_composition import _composition, _request
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/assertion/rewrite.py", line 197, in exec_module
+INTERNALERROR>     exec(co, module.__dict__)
+INTERNALERROR>   File "/home/user/work/wt/vw-m3-current-extent-landable-unit/tests/packs/rendering/test_live_scene_composition.py", line 20, in <module>
+INTERNALERROR>     from tests.packs.rendering.test_threejs_backend import _require_threejs_environment
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+INTERNALERROR>   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+INTERNALERROR>   File "/home/user/work/venv-agent/lib/python3.11/site-packages/_pytest/assertion/rewrite.py", line 197, in exec_module
+INTERNALERROR>     exec(co, module.__dict__)
+INTERNALERROR>   File "/home/user/work/wt/vw-m3-current-extent-landable-unit/tests/packs/rendering/test_threejs_backend.py", line 48, in <module>
+INTERNALERROR>     from astrid.packs.rendering.actions.render.run import render
+INTERNALERROR>   File "/home/user/work/wt/vw-m3-current-extent-landable-unit/astrid/packs/rendering/actions/render/run.py", line 10, in <module>
+INTERNALERROR>     guard_canonical_entrypoint("rendering.render")
+INTERNALERROR>   File "/home/user/work/wt/vw-m3-current-extent-landable-unit/astrid/core/pack/entrypoint.py", line 58, in guard_canonical_entrypoint
+INTERNALERROR>     sys.exit(2)
+INTERNALERROR> SystemExit: 2
+mainloop: caught unexpected SystemExit!
+
+no tests ran in 0.53s

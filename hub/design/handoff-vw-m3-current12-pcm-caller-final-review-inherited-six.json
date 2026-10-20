@@ -1,0 +1,14 @@
+{
+  "baseline": "exact frozen public12 kernel+extent without caller",
+  "candidate": "b24a2acf565a3ab3ce23b35c6ea0a5196c6decd6",
+  "same_failure_nodes": [
+    "tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[0]",
+    "tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[1]",
+    "tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]",
+    "tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]",
+    "tests/packs/rendering/test_live_scene_composition.py::test_layer_materialization_retains_null_window_support_rejection",
+    "tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme"
+  ],
+  "both_results": "6 failed, 69 passed, 1 deselected",
+  "new_caller_failures": []
+}

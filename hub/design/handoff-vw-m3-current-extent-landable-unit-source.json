@@ -1,0 +1,45 @@
+{
+  "base_current_sha": "df2739f903edac02bd36b4446deeea847524c040",
+  "latest_integration_sha_at_audit": "df2739f903edac02bd36b4446deeea847524c040",
+  "scope_sha256": {
+    "astrid/core/rendering/service.py": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "5c3cd96bf8561eebc369090fe3c520fac40457802458959827c7903464837269",
+    "remotion/src/Root.tsx": "afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90",
+    "remotion/tests/root-metadata.test.cjs": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+    "tests/packs/rendering/test_native_layer_extent.py": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2",
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py": "e41b4dcb9c2f2e804a2bddc7960d24af2d6605d35e878f40c5828badb26cf73e",
+    "tests/packs/rendering/test_live_scene_composition.py": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5"
+  },
+  "delta_patch_sha256": "ae4695c47b3a2ee2a92da76cff774a7ec2ae9f1ebb134ac835580e58dd1ca77c",
+  "protected_tracked_file_count": 3002,
+  "all_protected_tracked_files_unchanged": true,
+  "protected_hashes_digest": "ac4cff3c195089fe30f155d217cd5aea5fda1bc9ba75ad02c7f7e9689c309e0d",
+  "latest_protected_sha256": {
+    "remotion/package.json": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a",
+    "remotion/package-lock.json": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597",
+    "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "astrid/core/timeline/banodoco_composer.py": "c18ae06fc3ae7bd660dd3001a388b89a886e1680f6f6c14fa6182c2dd74c4461",
+    "astrid/core/timeline/duration.py": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+    "astrid/packs/rendering/shared/rendering_backend/__init__.py": "671632535737ac1c6a22f869f20347de6c6005808a90243a4fea80ef6895a967",
+    "astrid/packs/rendering/rendering/renderers/threejs/run.py": "99331d5fd0044a49f0bd285bbe807ae19fc33ede68c3baf32c83ff9f4ddddd01",
+    "remotion/src/ThreeTimelineComposition.tsx": "67e3edfb944970460d455fb41bbb1e25ba43b5baed78fd5646880462f8fc1609",
+    "remotion/src/LiveSceneClip.tsx": "9e09d14557b5715b33bc9ae3e301d0e47066900eaa1085e582b45029d16d9d72",
+    "tests/packs/rendering/test_remotion_capture_scene_props.py": "683d7e26aad313b5712ae26966f30f220c46d5122c2e33cf3d54dddd3a024f9d",
+    "tests/packs/rendering/test_remotion_native_window.py": "a24318bffb5c2970d8517fea8bb748313b19bbb4c58195c92e3799d5945cf901"
+  },
+  "capture_remotion_frames_ast_identical": true,
+  "locked_on_scene_props_calls_ast_identical": true,
+  "RenderClockTail_byte_identical": true,
+  "permanent_tail_test_functions_ast_identical": [
+    "test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive",
+    "test_fully_covered_pre_tail_root_callback_accepts_native_extent",
+    "test_ordinary_full_tail_and_no_clock_controls_remain_distinct"
+  ],
+  "legacy_slicing_ast_identical": true,
+  "approved_migration_exact_sha256": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5",
+  "absent_held_paths": {
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": true,
+    "remotion/normal-audio-sources.mjs": true,
+    "remotion/attempt-envelope-pcm.mjs": true
+  }
+}

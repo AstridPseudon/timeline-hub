@@ -1,0 +1,63 @@
+{
+  "runner_before": [
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "F401",
+      "`select` imported but unused"
+    ],
+    [
+      "F401",
+      "`signal` imported but unused"
+    ],
+    [
+      "F401",
+      "`astrid.core.audit.AuditContext` imported but unused"
+    ],
+    [
+      "F401",
+      "`astrid.core.rendering.publication.publish_render_result` imported but unused"
+    ],
+    [
+      "F822",
+      "Undefined name `render` in `__all__`"
+    ]
+  ],
+  "runner_after": [
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "F401",
+      "`select` imported but unused"
+    ],
+    [
+      "F401",
+      "`signal` imported but unused"
+    ],
+    [
+      "F401",
+      "`astrid.core.audit.AuditContext` imported but unused"
+    ],
+    [
+      "F401",
+      "`astrid.core.rendering.publication.publish_render_result` imported but unused"
+    ],
+    [
+      "F822",
+      "Undefined name `render` in `__all__`"
+    ]
+  ],
+  "new_diagnostics": 0
+}

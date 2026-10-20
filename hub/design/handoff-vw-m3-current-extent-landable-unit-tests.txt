@@ -1,0 +1,53 @@
+All commands ran from /home/user/work/wt/vw-m3-current-extent-landable-unit.
+
+Test fixture setup (own real directories, read-only leaf links):
+mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-unit/root-modules/node_modules
+ln -s /home/user/work/app/node_modules/typescript /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-unit/root-modules/node_modules/typescript
+ln -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-native-extent-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz
+
+1. Extent/native/callback/tail:
+env -u NODE_OPTIONS -u NODE_PATH PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_native_window.py tests/packs/rendering/test_remotion_capture_scene_props.py tests/packs/rendering/test_remotion_layer_tail_compat.py
+PASS: 131 passed in 8.20s, exit 0.
+
+2. Current scene neighbors:
+env -u NODE_OPTIONS -u NODE_PATH PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_live_scene_composition.py -k 'not real_render'
+PASS: 17 passed, 1 deselected in 18.22s, exit 0. Unchanged real-render case excluded as instructed.
+
+3. Service neighbors:
+env -u NODE_OPTIONS -u NODE_PATH PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/core/rendering/test_service.py -k 'window_timeline or segment_request'
+PASS: 5 passed, 47 deselected in 0.69s, exit 0.
+
+4. Clock/storage neighbors:
+env -u NODE_OPTIONS -u NODE_PATH PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_managed_timeline_render.py tests/core/rendering/test_storage.py tests/core/rendering/test_service.py -k 'render_clock or declared_render_tail or window_timeline'
+PASS: 10 passed, 108 deselected in 3.58s, exit 0.
+
+5. Exact seven Root tests:
+env -u NODE_OPTIONS -u NODE_TEST_CONTEXT ROOT_SOURCE_DIR="$PWD/remotion/src" NODE_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-unit/root-modules/node_modules /tmp/vw-m3-agent-gate-node20.19.4/bin/node remotion/tests/root-metadata.test.cjs
+PASS: 7 tests, exit 0.
+
+6. Root rational-FPS / boolean supplement:
+env -u NODE_OPTIONS -u NODE_TEST_CONTEXT ROOT_SOURCE_DIR="$PWD/remotion/src" NODE_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-unit/root-modules/node_modules /tmp/vw-m3-agent-gate-node20.19.4/bin/node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-native-extent-unit-root-supplement.test.cjs
+PASS: 2 tests, exit 0.
+
+7. Actual Three component source props, native vs legacy:
+env -u NODE_OPTIONS -u NODE_PATH PYTHONPATH="$PWD" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m pytest -q -o addopts= -p no:cacheprovider -p tests.conftest --tb=short /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-unit-three-source.py
+PASS: 2 passed in 4.33s, exit 0. Runs actual TypeScript ThreeTimelineComposition with framework imports stubbed, no canvas/browser.
+
+8. Direct test lint:
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m ruff check --no-cache tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_remotion_layer_tail_compat.py tests/packs/rendering/test_live_scene_composition.py
+PASS: All checks passed, exit 0.
+
+9. Patch whitespace:
+git diff --check
+PASS: exit 0.
+
+Product Ruff comparison used the following command with current HEAD source and candidate bytes separately on stdin for each of service.py and remotion/run.py:
+/home/user/work/venv-agent/bin/python -B -m ruff check --no-cache --stdin-filename <path> --output-format=json -
+Identical inherited code/message multisets: service 6, runner 7. No new diagnostics.
+
+Initial setup attempts, not accepted as green evidence:
+- First lane 1 before fixture provisioning: 120 passed, 11 failed, all failures missing the frozen0.0.10 tarball. Preserved -direct-missing-fixture.log. Corrected lane 1 above passed unchanged source/tests.
+- First external lane 7 omitted -p tests.conftest, so collection hit the canonical-entrypoint guard (exit 3, no tests). Preserved -three-source-setup-error.log. Corrected lane 7 above passed unchanged source/tests.
+- Tail-only rerun after fixture provisioning: same Python prefix, tests/packs/rendering/test_remotion_layer_tail_compat.py; 22 passed in 11.76s, exit 0 (-tail.log).
+
+Cleanup: removed only this worker's temporary remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz leaf link after testing. No temp/build/cache artifacts remain in the source worktree. The TypeScript leaf lives in the worker evidence directory. No shared dependency/cache was changed.

@@ -15,7 +15,7 @@ E = dict(os.environ)
 for key in ['NODE_PATH', 'NODE_OPTIONS', 'PYTHONPYCACHEPREFIX']:
     E.pop(key, None)
 E.update(PYTHONPATH=str(copy), REVIEW_SOURCE_ROOT=str(copy), PYTHONDONTWRITEBYTECODE='1',
-         PATH=str(Path(NODE).parent) + ':' + E['PATH'])
+         ASTRID_INTERNAL_INVOCATION='1', PATH=str(Path(NODE).parent) + ':' + E['PATH'])
 args = [PY, '-B', '-m', 'pytest', '-q', '-o', 'addopts=', '-p', 'no:cacheprovider', '--tb=short']
 rows = []
 selected = set(sys.argv[2:])
@@ -30,9 +30,9 @@ def run(label, command, expected=0, node=False):
     with log.open('w') as out:
         result = subprocess.run(command, cwd=copy, env=env, stdout=out, stderr=subprocess.STDOUT)
     rows.append(dict(label=label, command=command, cwd=str(copy),
-                     environment={key: env[key] for key in ['PYTHONPATH', 'REVIEW_SOURCE_ROOT', 'PYTHONDONTWRITEBYTECODE', 'PATH', 'NODE_PATH', 'ROOT_SOURCE_DIR'] if key in env},
+                     environment={key: env[key] for key in ['PYTHONPATH', 'REVIEW_SOURCE_ROOT', 'PYTHONDONTWRITEBYTECODE', 'PATH', 'NODE_PATH', 'ROOT_SOURCE_DIR', 'ASTRID_INTERNAL_INVOCATION'] if key in env},
                      exit=result.returncode, expected_exit=expected, log=str(log)))
-    Path(str(P) + '-' + phase + ('-replay-results.json' if selected else '-results.json')).write_text(json.dumps(rows, indent=2) + '\n')
+    Path(str(P) + '-' + phase + ('-' + '-'.join(sorted(selected)) + '-results.json' if selected else '-results.json')).write_text(json.dumps(rows, indent=2) + '\n')
     print(label, result.returncode, '\n' + '\n'.join(log.read_text().splitlines()[-10:]), flush=True)
     assert result.returncode == expected, label
 
@@ -47,3 +47,5 @@ if phase == 'baseline':
     run('pre-tail-red', [PY, '-B', str(P) + '-tail-replay.py', 'pre-tail-red'], 1)
 else:
     run('extent-tail', args + ['tests/packs/rendering/test_native_layer_extent.py', 'tests/packs/rendering/test_remotion_layer_tail_compat.py'])
+
+run('three-source', args + [str(P) + '-three-source.py'])

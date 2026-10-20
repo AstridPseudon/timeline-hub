@@ -1,0 +1,14 @@
+{
+  "source": "5f6c81309d96e7cd7abc2f22b32a377621c29092",
+  "paths": {
+    "tests/core/timeline/test_clip_fields.py": "46690e0f0ecb84aa6e47a66fb7d68df954ff53e48b2c201964de1d32d78fdfc5",
+    "tests/journeys/test_journey_plumbing.py": "a55345d510b0a47bc2ea4c057993f66875af494810d6329485a1c09169d6298d",
+    "tests/packs/rendering/test_composition_package.py": "b623befbcfb717f395b3caf6b68786e61687abe2a6a97fef63bb9a3e842958c9",
+    "tests/packs/rendering/test_render_export_task_adapter.py": "bd4fd749668c0f935821746a6510120e77f7177e05bd2e90c6c52731d715e81d",
+    "tests/packs/rendering/test_scene_answers.py": "a2e845047192a82c84427ec968e772fce3f74dd9611abbfe839dc1ee342a10c4",
+    "tests/packs/rendering/test_scene_host.py": "6f04c7ea5778165ea1f6b2b66b1c2427b6f480e5efafbbfee498922996710bff",
+    "tests/packs/rendering/presenter_scene_capability.mjs": "267c504dbd8fccaf46ea1a33d45a6daa42bb99a5a7e0a3e91480eccd8c8216ef",
+    "tests/packs/rendering/test_presenter_scene_capability.py": "bbe8feb39d0580295af82582b94e2778063f207dc4ba106559dffef5789b5a43"
+  },
+  "whole_owner_commit_not_applied": true
+}

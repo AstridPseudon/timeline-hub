@@ -1,0 +1,732 @@
+[
+  {
+    "clips": [
+      {
+        "app": {
+          "liveScene": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "opaque": {
+            "keep": [
+              null,
+              false,
+              {
+                "raw": "unchanged"
+              }
+            ]
+          },
+          "sentinel": "retained"
+        },
+        "at": 0.0,
+        "clipType": "haus.astrid.liveScene",
+        "from": 63.0,
+        "hold": 2.0,
+        "id": "scene_180_210",
+        "speed": 2,
+        "to": 65.0,
+        "track": "scene"
+      }
+    ],
+    "metadata": {
+      "astrid_layer": {
+        "alpha": true,
+        "z": 1
+      },
+      "duration_seconds": 1.0,
+      "source_window_end_seconds": 7.0,
+      "source_window_start_seconds": 6.0
+    },
+    "theme": "banodoco-default",
+    "theme_overrides": {
+      "visual": {
+        "canvas": {
+          "fps": 30,
+          "height": 180,
+          "width": 320
+        }
+      }
+    },
+    "tracks": [
+      {
+        "id": "scene",
+        "kind": "visual",
+        "label": "Scene"
+      }
+    ]
+  },
+  [
+    {
+      "frame": 0,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 1,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.06666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 2,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.13333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 3,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.2,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 4,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.266666666666666,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 5,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.333333333333336,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 6,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.4,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 7,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.46666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 8,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.53333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 9,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.6,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 10,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.666666666666664,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 11,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.733333333333334,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 12,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.8,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 13,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.86666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 14,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 63.93333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 15,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 16,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.06666666666666,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 17,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.13333333333334,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 18,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.2,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 19,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.26666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 20,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.33333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 21,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.4,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 22,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.46666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 23,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.53333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 24,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.6,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 25,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.66666666666667,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 26,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.73333333333333,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 27,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.8,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 28,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.86666666666666,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 29,
+      "sources": [
+        {
+          "source": {
+            "html": "<html></html>",
+            "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+            "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+            "source": {
+              "objectId": "package-object",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+            }
+          },
+          "sourceTime": 64.93333333333334,
+          "width": 320,
+          "height": 180
+        }
+      ],
+      "backgrounds": [
+        "transparent"
+      ]
+    },
+    {
+      "frame": 30,
+      "sources": [],
+      "backgrounds": [
+        "transparent"
+      ]
+    }
+  ]
+]

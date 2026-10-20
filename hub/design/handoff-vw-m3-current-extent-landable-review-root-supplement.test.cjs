@@ -113,3 +113,23 @@ test('both callbacks retain 300/600 frames for identical empty/sparse layers at 
 test('boolean retained extents refuse', async () => {
  for(const value of [true,false]) await assert.rejects(()=>metadataFor(propsFor(timelineWithDuration(1),{astridCompositionDurationInFrames:value})));
 });
+
+const clockForBounded = () => ({
+  authored_duration_frames: 300, render_duration_frames: 330,
+  tail: {policy:'unmapped_excess_rendered_region',source_asset:'tail',start_frame:300,end_frame:330,source_start_frame:300,source_end_frame:330},
+});
+test('bounded original-clock metadata fact accepts covered clips on both actual callbacks', async () => {
+  const timeline=timelineWithDuration(30,{app:{astrid_render_clock:clockForBounded()}});
+  assertSameMetadata(await metadataFor(propsFor(timeline,{astridCompositionDurationInFrames:330})),{width:1920,height:1080,fps:30,durationInFrames:330});
+});
+test('bounded original-clock conflicts and invalid authored facts refuse on both actual callbacks', async () => {
+  const bad=[null, true, 300, 'clock', {...clockForBounded(),render_duration_frames:331}, {...clockForBounded(),render_duration_frames:'330'}];
+  for(const authored of [null,true,'300',29,330,1.5,Number.MAX_SAFE_INTEGER+1]) bad.push({...clockForBounded(),authored_duration_frames:authored});
+  for(const value of bad) {
+    const timeline=timelineWithDuration(30,{app:{astrid_render_clock:value}});
+    const registrations=compileRoot();
+    for(const registration of registrations) {
+      await assert.rejects(()=>registration.calculateMetadata({props:propsFor(timeline,{astridCompositionDurationInFrames:330})}),/conflicts with an existing render clock/);
+    }
+  }
+});

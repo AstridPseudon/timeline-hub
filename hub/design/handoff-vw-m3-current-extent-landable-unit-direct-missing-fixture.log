@@ -1,0 +1,114 @@
+........................................................................ [ 54%]
+.....................................FFFFFF...........FFFFF              [100%]
+=================================== FAILURES ===================================
+____ test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive _____
+tests/packs/rendering/test_remotion_layer_tail_compat.py:263: in test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive
+    legacy_tree = _root_probe(tmp_path, _props(legacy))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+_______ test_fully_covered_pre_tail_root_callback_accepts_native_extent ________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:287: in test_fully_covered_pre_tail_root_callback_accepts_native_extent
+    tree = _root_probe(
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+________ test_ordinary_full_tail_and_no_clock_controls_remain_distinct _________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:304: in test_ordinary_full_tail_and_no_clock_controls_remain_distinct
+    ordinary = _root_probe(tmp_path, _props(raw))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+___________ test_legacy_service_keeps_covered_pre_tail_output[0-30] ____________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:329: in test_legacy_service_keeps_covered_pre_tail_output
+    tree = _root_probe(tmp_path, _props(selected))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+__________ test_legacy_service_keeps_covered_pre_tail_output[150-165] __________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:329: in test_legacy_service_keeps_covered_pre_tail_output
+    tree = _root_probe(tmp_path, _props(selected))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+___ test_middle_pre_tail_window_keeps_absolute_clips_and_tail_outside_output ___
+tests/packs/rendering/test_remotion_layer_tail_compat.py:348: in test_middle_pre_tail_window_keeps_absolute_clips_and_tail_outside_output
+    tree = _root_probe(tmp_path, _props(selected, extent=330))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+_________ test_unlayered_original_clock_native_windows_unchanged[0-30] _________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:401: in test_unlayered_original_clock_native_windows_unchanged
+    assert _root_probe(tmp_path, _props(raw))["metadata"]["durationInFrames"] == 330
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+_______ test_unlayered_original_clock_native_windows_unchanged[150-165] ________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:401: in test_unlayered_original_clock_native_windows_unchanged
+    assert _root_probe(tmp_path, _props(raw))["metadata"]["durationInFrames"] == 330
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+_______ test_unlayered_original_clock_native_windows_unchanged[300-330] ________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:401: in test_unlayered_original_clock_native_windows_unchanged
+    assert _root_probe(tmp_path, _props(raw))["metadata"]["durationInFrames"] == 330
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+__________ test_support_and_locked_props_keep_pre_tail_positive[0-30] __________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:469: in test_support_and_locked_props_keep_pre_tail_positive
+    tree = _root_probe(tmp_path, captured)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+________ test_support_and_locked_props_keep_pre_tail_positive[150-165] _________
+tests/packs/rendering/test_remotion_layer_tail_compat.py:469: in test_support_and_locked_props_keep_pre_tail_positive
+    tree = _root_probe(tmp_path, captured)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_remotion_layer_tail_compat.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_root_callback_accepts_native_extent
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_ordinary_full_tail_and_no_clock_controls_remain_distinct
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_legacy_service_keeps_covered_pre_tail_output[0-30]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_legacy_service_keeps_covered_pre_tail_output[150-165]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_middle_pre_tail_window_keeps_absolute_clips_and_tail_outside_output
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[0-30]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[150-165]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[300-330]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[0-30]
+FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[150-165]
+11 failed, 120 passed in 4.70s

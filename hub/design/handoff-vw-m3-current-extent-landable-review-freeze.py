@@ -106,5 +106,4 @@ Path(str(P) + '-all-blobs.json').write_text(json.dumps(manifest, indent=2) + '\n
 Path(str(P) + '-scope.patch').write_bytes(git('diff', '--binary', BASE, TIP))
 subprocess.run(['git', 'diff', '--check', BASE, TIP], cwd=R, check=True)
 fixture = W / 'fixtures/banodoco-timeline-composition-0.0.10.tgz'
-(copy / 'remotion/artifacts' / fixture.name).symlink_to(fixture)
 print(json.dumps(state, indent=2))

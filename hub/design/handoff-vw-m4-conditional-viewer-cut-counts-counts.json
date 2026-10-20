@@ -1,0 +1,66 @@
+{
+  "task": "vw-m4-conditional-viewer-cut-counts",
+  "date": "2026-10-20",
+  "measurement": "nonblank physical UTF-8 lines unless explicitly marked executable body",
+  "frozen_viewing_total_nb": 48343,
+  "qualified_q1_nb": 6,
+  "honest_current_after_q1_nb": 48337,
+  "frozen_refs": {
+    "composition": "46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8",
+    "agent": "931d7ec56dadffc2efdc893fec80b4c4aadf8a8e",
+    "app": "18becfbede00038830b97e63345445eeef54fa42"
+  },
+  "live_heads_inspected": {
+    "agent": "df2739f903edac02bd36b4446deeea847524c040",
+    "composition": "e80c46baf5aa4b50a10b77a5ceadcb7ec4ab27ab",
+    "app": "18becfbede00038830b97e63345445eeef54fa42"
+  },
+  "frozen_rows": {
+    "composition": {"baseline_nb": 1398, "current_nb": 4097, "growth_nb": 2699},
+    "agent_visualize": {"baseline_nb": 24911, "current_nb": 25256, "growth_nb": 345},
+    "agent_adapters_elements": {"baseline_nb": 10993, "current_nb": 10744, "growth_nb": -249},
+    "agent_onscreen_scene_answers": {"baseline_nb": 375, "current_nb": 469, "growth_nb": 94},
+    "agent_remotion_host": {"baseline_nb": 573, "current_nb": 613, "growth_nb": 40},
+    "app_active": {"baseline_nb": 6932, "current_nb": 7164, "growth_nb": 232}
+  },
+  "conditional_units": {
+    "d09_core_onscreen_py": {
+      "whole_file_nb": 375,
+      "role_coverage_seam_nb": 69,
+      "conditional_net_range_nb": [306, 375],
+      "after_q1_range_nb": [47962, 48031]
+    },
+    "d09a_mouth_state": {
+      "direct_body_nb": 24,
+      "unique_helper_hash_unit_nb": 9,
+      "shared_presenter_words_nb": 7,
+      "conditional_extra_range_nb": [31, 40]
+    },
+    "d09b_mouth_box": {
+      "direct_body_nb": 7,
+      "shared_presenter_view_retained": true
+    },
+    "d09c_private_mouth_crop": {"credited_nb": 0, "classification": "pixel KEEP"},
+    "d08_audio_fade_ts": {
+      "module_nb": 60,
+      "executable_bodies_nb": 27,
+      "confirmed_viewing_credit_nb": 0,
+      "classification": "conditional App-local only"
+    }
+  },
+  "remaining_private_math": {
+    "motion_model_selected_union_nb": 261,
+    "motion_lint_selected_union_nb": 188,
+    "builtin_lipsync_nb": 75,
+    "builtin_overlay_bounds_nb": 31,
+    "fast_lane_selected_pixel_spans_nb": 61
+  },
+  "classifications": {
+    "adapters_keep_or_generic": ["rendering/elements/catalog.ts", "renderers/remotion/run.py", "frozen.py", "managed_timeline.py", "TimelineRenderer.tsx"],
+    "presentation": ["emit.py", "layout.py", "filmstrip_cards.py"],
+    "pixel_keep": ["fast_lane.py", "composed_frame.py", "private mouth crop", "statistics/crops"],
+    "unresolved": ["motion/model.py residual", "motion/lint.py", "VisualClip.tsx", "audio envelope parity"]
+  },
+  "excluded_from_credit": ["vendor", "archive", "fallback", "stale dist", "_timing_evaluators", "custom loaders", "unknown reports", "all fast_lane/sweep pixel behavior"],
+  "tests": "not run: brief explicitly required docs-only readonly measurement and prohibited tests/build/install/browser/network"
+}

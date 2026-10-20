@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T10:04:42Z | dispatcher heartbeat 4s -->
+<!-- viewing | 2026-10-20T10:09:59Z | dispatcher heartbeat 5s -->
 # viewing — 2026-10-20 09:40 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 active, M4 incomplete. Gate6/7 OPEN, no Player/export parity or foundation claim.
 Integrated: Compositione80c46baf (a62e code tree23a994, approvedhistoryjoin67b8aa3). Makefile024f +legacyAPI/runtimeexport smoke46bd +current-version default7301badb integrated. Central full1020091054-4980: npm test69PASS/0FAIL/0SKIP onexacttree. Standardbuild+pack+defaultconsumer PASS7s, ESM/SSR/scopedregistry/strictNodeNext/installimmutability, exactpublic12 77files/58444B SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3; old11immutable. FullnavyDEFAULT equality prior1020064710-23557 PASS. Rootjoin independentlychecked treeequal+mergebase67b8aa3d+cleanHEAD; leaddrymergeclean, no repeatfull.

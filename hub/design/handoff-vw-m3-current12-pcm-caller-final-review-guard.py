@@ -43,8 +43,10 @@ assert not git('diff', SOURCE['base'], 'HEAD', '--', 'astrid/sdk/timeline', 'ast
 run = 'astrid/packs/rendering/rendering/renderers/remotion/run.py'
 old = functions(git('show', SOURCE['base'] + ':' + run))
 new = functions((REPO / run).read_bytes())
-for name in ['capture_remotion_frames', '_serialize_timeline']:
+for name in ['capture_remotion_frames']:
     assert old[name] == new[name], name
+serializer = 'astrid/packs/rendering/shared/rendering_backend/__init__.py'
+assert (REPO / serializer).read_bytes() == git('show', SOURCE['base'] + ':' + serializer)
 assert 'on_scene_props(merged_props, frame_numbers)' in (REPO / run).read_text()
 extent = functions(git('show', SOURCE['extent'] + ':' + run))
 assert set(new) == set(extent)

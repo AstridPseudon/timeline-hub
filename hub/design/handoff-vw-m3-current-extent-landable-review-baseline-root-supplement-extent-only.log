@@ -1,0 +1,63 @@
+TAP version 13
+# Subtest: both callbacks retain 300/600 frames for identical empty/sparse layers at rational FPS
+not ok 1 - both callbacks retain 300/600 frames for identical empty/sparse layers at rational FPS
+  ---
+  duration_ms: 76.788336
+  location: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:106:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   durationInFrames: 1,
+    -   durationInFrames: 300,
+        fps: 29.97002997002997,
+        height: 180,
+        width: 320
+      }
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    width: 320
+    height: 180
+    fps: 29.97002997002997
+    durationInFrames: 300
+  actual:
+    width: 320
+    height: 180
+    fps: 29.97002997002997
+    durationInFrames: 1
+  operator: 'deepStrictEqual'
+  stack: |-
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:102:38
+    Array.forEach (<anonymous>)
+    assertSameMetadata (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:102:12)
+    TestContext.<anonymous> (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:110:3)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: boolean retained extents refuse
+not ok 2 - boolean retained extents refuse
+  ---
+  duration_ms: 38.69604
+  location: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:113:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-landable-review-root-supplement.test.cjs:114:35)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 121.717661

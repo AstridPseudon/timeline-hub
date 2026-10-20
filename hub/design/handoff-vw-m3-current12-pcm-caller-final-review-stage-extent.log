@@ -1,0 +1,6 @@
+patching file astrid/packs/rendering/rendering/renderers/remotion/run.py
+Hunk #2 succeeded at 1216 (offset 12 lines).
+patching file astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+patching file tests/packs/rendering/test_normal_audio_run.py
+
+PASS: completed seven-path extent unit staged on paired private trees; verbatim caller patch retained
