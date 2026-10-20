@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T17:29:24Z | dispatcher heartbeat 7s | live 4 (sol 0, luna 4, other 0) | busy30 29 | status age 19m -->
+<!-- app2 | 2026-10-20T17:33:52Z | dispatcher heartbeat 10s | live 6 (sol 0, luna 6, other 0) | busy30 32 | status age 23m -->
 # app2 — 2026-10-20 17:10 UTC
 Milestone: M2 — ordinary snapshot ingress TOP priority (orchestrator16:41). Helper/source waves integrated; no full row DELETED or exit.
 Integrated: HOME results48576cfa2 include original4helpers +literal-routing14ce +overlay6e592; ordinary052b REFUSED conflict. PCM/public13 and MAIN/TrackInspector preserved per HOME. Stale carrierb58f WITHDRAWN/URGENT HOLD; correct42e reviewed175PASS, no native consumer qualification.

@@ -1,0 +1,120 @@
+diff --git a/src/tools/video-editor/dev/scene-phase-markers/__tests__/patch-building.test.ts b/src/tools/video-editor/dev/scene-phase-markers/__tests__/patch-building.test.ts
+index 564cbd39c..98027d5a8 100644
+--- a/src/tools/video-editor/dev/scene-phase-markers/__tests__/patch-building.test.ts
++++ b/src/tools/video-editor/dev/scene-phase-markers/__tests__/patch-building.test.ts
+@@ -758,6 +758,29 @@ describe('buildAlignShotsPatch', () => {
+       { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 5 } },
+     ]);
+   });
++
++  it('normalizes same-track move and hold members for the ordinary native port', () => {
++    const snapshot = makeSnapshot({
++      clips: [
++        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
++      ],
++    });
++    const patch = buildAlignShotsPatch(snapshot, [
++      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
++    ], SCENE_PHASE_EXTENSION_ID);
++
++    expect(patch.operations).toEqual([
++      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
++      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
++    ]);
++  });
++
++  it('refuses duplicate target alignments before a patch can be applied', () => {
++    expect(() => buildAlignShotsPatch(makeSnapshot(), [
++      { clipId: 'clip-a', trackId: 'V1', time: 3 },
++      { clipId: 'clip-a', trackId: 'V1', time: 9 },
++    ], SCENE_PHASE_EXTENSION_ID)).toThrow('ambiguous alignment');
++  });
+ });
+ 
+ describe('alignShotsToTransitions (unified panel action)', () => {
+@@ -829,10 +852,10 @@ describe('alignShotsToTransitions (unified panel action)', () => {
+     expect(patch.meta.kind).toBe('scene-phase-markers/align-shots');
+     // clip-a -> marker 1 (3s), hold [3→9) = 6s; clip-b -> marker 2 (9s), tail = 2s default.
+     expect(patch.operations).toEqual([
+-      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 3 } },
+-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
+-      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 9 } },
+-      { op: 'clip.update', target: 'clip-b', payload: { hold: 2, mode: 'merge' } },
++      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
++      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
++      { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
++      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+     ]);
+   });
+ 
+@@ -857,7 +880,9 @@ describe('alignShotsToTransitions (unified panel action)', () => {
+     const patch = applied[0]!;
+     const updates = patch.operations.filter((op) => op.op === 'clip.update');
+     // Interval [3→9) = 6s; tail = 5s from the input.
+-    expect(updates.map((op) => (op.payload as Record<string, unknown>).hold)).toEqual([6, 5]);
++    expect(updates.map((op) => (
++      (op.payload as { values: { hold: number } }).values.hold
++    ))).toEqual([6, 5]);
+   });
+ 
+   it('is a no-op warning when there are no markers', () => {
+@@ -949,10 +974,10 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
+     expect(applied[0]!.meta.kind).toBe('scene-phase-markers/align-shots');
+     // clip-a -> m1 (0s) hold 5; clip-b -> m2 (5s) hold 3.
+     expect(applied[0]!.operations).toEqual([
+-      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 0 } },
+-      { op: 'clip.update', target: 'clip-a', payload: { hold: 5, mode: 'merge' } },
+-      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 5 } },
+-      { op: 'clip.update', target: 'clip-b', payload: { hold: 3, mode: 'merge' } },
++      { op: 'clip.move', target: 'clip-a', payload: { at: 0 } },
++      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 5 }, clear: [] } },
++      { op: 'clip.move', target: 'clip-b', payload: { at: 5 } },
++      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 3 }, clear: [] } },
+     ]);
+   });
+ });
+diff --git a/src/tools/video-editor/dev/scene-phase-markers/extension.ts b/src/tools/video-editor/dev/scene-phase-markers/extension.ts
+index 2d0363a9e..4b70074c2 100644
+--- a/src/tools/video-editor/dev/scene-phase-markers/extension.ts
++++ b/src/tools/video-editor/dev/scene-phase-markers/extension.ts
+@@ -676,18 +676,38 @@ export function buildAlignShotsPatch(
+   alignments: readonly ShotAlignment[],
+   extensionId: string,
+ ): TimelinePatch {
++  const seenTargets = new Set<string>();
+   const operations: TimelinePatchOperation[] = [];
+   alignments.forEach((alignment) => {
++    if (seenTargets.has(alignment.clipId)) {
++      throw new Error(`Scene Phase Markers: ambiguous alignment for clip ${alignment.clipId}.`);
++    }
++    seenTargets.add(alignment.clipId);
++    if (!Number.isFinite(alignment.time) || alignment.time < 0) {
++      throw new Error(`Scene Phase Markers: invalid alignment time for clip ${alignment.clipId}.`);
++    }
++    if (alignment.hold !== undefined && (!Number.isFinite(alignment.hold) || alignment.hold <= 0)) {
++      throw new Error(`Scene Phase Markers: invalid alignment hold for clip ${alignment.clipId}.`);
++    }
++    const currentClip = snapshot.clips.find((clip) => clip.id === alignment.clipId);
++    // A same-track absolute move is equivalent to the ordinary native member's
++    // `{ at }` shape. Keep the old `{ track, at }` shape for cross-track or
++    // unresolved targets; those families remain on their existing guarded path.
++    const movePayload = currentClip?.track === alignment.trackId
++      ? { at: alignment.time }
++      : { track: alignment.trackId, at: alignment.time };
+     operations.push({
+       op: 'clip.move',
+       target: alignment.clipId,
+-      payload: { track: alignment.trackId, at: alignment.time },
++      payload: movePayload,
+     });
+     if (alignment.hold !== undefined) {
+       operations.push({
+         op: 'clip.update',
+         target: alignment.clipId,
+-        payload: { hold: alignment.hold, mode: 'merge' },
++        // The explicit values/clear envelope is the generic scalar member
++        // shape. It preserves a positive hold SET without inventing clears.
++        payload: { values: { hold: alignment.hold }, clear: [] },
+       });
+     }
+   });
