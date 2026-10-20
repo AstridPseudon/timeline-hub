@@ -868,7 +868,7 @@ function TimelineEditorShellCoreComponent({
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
       }} className={cn(
-        'flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
+        'relative flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
         // The page draws edge to edge (viewport-fit=cover): keep touch chrome clear of the notch and rounded corners.
         mobileSinglePane && 'pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]',
       )}>
