@@ -196,6 +196,7 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       selectedClip: null,
       selectedTrack: null,
       selectedClipHasPredecessor: false,
+      element: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
       compositionSize: { width: 1920, height: 1080 },
       trackScaleMap: {},
       scale: 1,
@@ -347,6 +348,7 @@ function Consumer() {
       <span>{typeof editorData.additiveSelectionRef?.current}</span>
       <span>{typeof editorOps.selectClip}</span>
       <span>{typeof editorOps.selectClips}</span>
+      <span data-testid="element-port-state">{editorOps.element ? 'mounted' : 'missing'}</span>
       <span>{chrome.saveStatus}</span>
       <span>{playback.currentTime}</span>
       <span data-testid="agent-chat-timeline-id">{agentChatBridge.timelineId}</span>
@@ -1456,6 +1458,7 @@ describe('VideoEditorProvider', () => {
     }));
     expect(screen.getByText('false')).toBeInTheDocument();
     expect(screen.getByText('boolean')).toBeInTheDocument();
+    expect(screen.getByTestId('element-port-state')).toHaveTextContent('mounted');
     expect(screen.getAllByText('function')).toHaveLength(3);
     expect(screen.getByText('saved')).toBeInTheDocument();
     expect(screen.getByText('12.5')).toBeInTheDocument();
