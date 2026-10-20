@@ -14,11 +14,10 @@ from .core import (
     Installer,
     absolute,
     current,
-    find_data_root,
     read_json,
     write_json,
 )
-from .service import LABEL, bootstrap_root, default_program_root, legacy_roots
+from .service import LABEL, bootstrap_root, default_program_root
 from .support import FAILURE_MESSAGE, default_doctor_bundle
 from .tools import download, validate_manifest
 
@@ -72,9 +71,7 @@ def main(argv: list[str] | None = None) -> int:
         with lock_path.open("a+b") as lock:
             platform.lock_file(lock.fileno(), blocking=False)
             try:
-                data, relocate = find_data_root(
-                    Path(recorded["data_root"]) if recorded.get("data_root") else None,
-                    args.data_root, platform.data_root(), legacy_roots(Path.home(), platform.data_root()))
+                data = absolute(recorded.get("data_root") or args.data_root or platform.data_root())
                 if sys.platform == "win32":
                     for name, path in (("program directory", root), ("workspace", data)):
                         managed, installer_state = path.resolve(), lock_path.parent.resolve()
@@ -93,29 +90,6 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError("No managed Astrid installation was found to uninstall.")
                 if mode not in {"uninstall", "doctor"}:
                     platform.private_directory(root)
-                    write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
-                if relocate and mode not in {"uninstall", "doctor"}:
-                    old = backend.existing(data)
-                    if old is None:
-                        raise ValueError("The old workspace has no source profile; select it with --data-root for recovery.")
-                    realm = backend.workspace(old, data)
-                    print(f"Moving the existing workspace from {data} to {platform.data_root()} with a backup.")
-                    try:
-                        backend.stop(old, data)
-                        backup = backend.backup(old, data, realm)
-                        backend.runtime(old, data, "up", "--hosted-origin", "off", profile=True)
-                        backend.runtime(old, data, "relocate", "--destination", str(platform.data_root()),
-                                        "--backup", str(Path(backup["root"]) / "realm"),
-                                        "--confirm", "RELOCATE " + realm["realm_id"], profile=True)
-                    except (Exception, KeyboardInterrupt):
-                        backend.stop(old, data)
-                        backend.register(old, data)
-                        backend.start(old, data)
-                        backend.verify(old, data, realm["realm_id"])
-                        raise
-                    data = platform.data_root()
-                    old = backend.existing(data)
-                    backend.stop(old, data)
                     write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
                 print(f"Using your workspace at {data}.")
                 manifest = {}

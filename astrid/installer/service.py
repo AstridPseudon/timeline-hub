@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import platform as system_platform
 import plistlib
-import shlex
 import subprocess
 import sys
 import time
@@ -14,7 +13,7 @@ from xml.sax.saxutils import escape
 
 from runtime_protocol import platform
 
-from .core import Version, absolute, read_json, write_json
+from .core import Version, read_json, write_json
 
 LABEL = "haus.astrid.runtime"
 TASK = "Astrid Runtime"
@@ -50,23 +49,13 @@ def bootstrap_root(home: Path, system: str) -> Path:
     return (root.parent / "Astrid Installer" if system == "win32" else root) / "bootstrap"
 
 
-def legacy_roots(home: Path, default: Path) -> list[Path]:
-    return list(dict.fromkeys([default.with_name("banodoco_local"),
-                              home / "Library" / "Application Support" / "banodoco_local",
-                              home / ".local" / "share" / "banodoco_local",
-                              home / ".banodoco_local"]))
-
-
 def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None,
             env_file: Path | None = None) -> list[str]:
     python = version.python.with_name("pythonw.exe") if windows else version.python
-    module = version.env.get("ASTRID_INSTALL_RUNTIME_MODULE", "astrid_runtime")
-    if module not in {"astrid_runtime", "banodoco_local"}:
-        raise ValueError("Unknown Runtime module in the installation record.")
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
                  "--source-manifest", str(version.profile)]
     if env_file is None and not windows:
-        return [str(python), "-I", "-m", module, *arguments]
+        return [str(python), "-I", "-m", "astrid_runtime", *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
@@ -83,7 +72,7 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
                    "or any(not isinstance(value,str) for value in settings.values())):\n"
                    "    raise ValueError('Invalid Astrid service-env.json; use the documented string settings.')\n"
                    "os.environ.update(settings)\n")
-    script += f"from {module}.cli import main\nsys.exit(main({arguments!r}))"
+    script += f"from astrid_runtime.cli import main\nsys.exit(main({arguments!r}))"
     return [str(python), "-I", "-c", script]
 
 
@@ -153,45 +142,7 @@ class Service:
         record = read_json(self.selection)
         if record and record.get("owner") != LABEL:
             raise ValueError("The service record belongs to another installer.")
-        if record:
-            return record
-        # Adopt a service written by the earlier POSIX line, preserving its root.
-        if self.system == "darwin" and self.path.exists():
-            definition = plistlib.loads(self.path.read_bytes())
-            data = definition.get("EnvironmentVariables", {}).get("ASTRID_RUNTIME_DATA_ROOT")
-            if data:
-                return {"data_root": str(absolute(data))}
-            return self._old_wrapper_root(definition.get("ProgramArguments", []))
-        if self.system == "linux" and self.path.exists():
-            for line in self.path.read_text(encoding="utf-8").splitlines():
-                if line.startswith("Environment="):
-                    for item in shlex.split(line.partition("=")[2]):
-                        if item.startswith("ASTRID_RUNTIME_DATA_ROOT="):
-                            return {"data_root": str(absolute(item.partition("=")[2]))}
-                if line.startswith("ExecStart="):
-                    record = self._old_wrapper_root(shlex.split(line.partition("=")[2]))
-                    if record:
-                        return record
-        return {}
-
-    @staticmethod
-    def _old_wrapper_root(argv: list[str]) -> dict:
-        for argument in argv:
-            executable = Path(argument)
-            if not executable.is_absolute() or executable.name != "astrid-service":
-                continue
-            env_file = executable.parent.parent / "env"
-            if env_file.is_file():
-                for line in env_file.read_text(encoding="utf-8").splitlines():
-                    words = shlex.split(line)
-                    if words and words[0] == "export":
-                        words = words[1:]
-                    for word in words:
-                        # The old name is accepted only to migrate an install.
-                        name, _, value = word.partition("=")
-                        if name in {"ASTRID_RUNTIME_DATA_ROOT", "BANODOCO_LOCAL_DATA_ROOT"}:
-                            return {"data_root": str(absolute(value))}
-        return {}
+        return record
 
     def powershell(self, script: str) -> str:
         executable = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"

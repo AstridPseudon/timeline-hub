@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -32,12 +31,6 @@ from .core import (
 from .service import Service, bootstrap_root, platform_target, venv_python
 from .support import reveal_bundle
 from .tools import binary, install_tools, source
-
-
-def _legacy_omp_session_dir(cwd: str, agent_dir: Path) -> Path:
-    if cwd.startswith(("/", "\\")):
-        cwd = cwd[1:]
-    return agent_dir / "sessions" / ("--" + re.sub(r"[/\\:]", "-", cwd) + "--")
 
 
 class Backend:
@@ -81,10 +74,7 @@ class Backend:
 
     def runtime(self, version: Version | None, data: Path, *args, profile=False, timeout=1800) -> dict:
         python = version.python if version else Path(sys.executable)
-        module = version.env.get("ASTRID_INSTALL_RUNTIME_MODULE", "astrid_runtime") if version else "astrid_runtime"
-        if module not in {"astrid_runtime", "banodoco_local"}:
-            raise ValueError("Unknown Runtime module in the installation record.")
-        argv = [python, "-I", "-m", module, *args, "--data-root", str(data), "--json"]
+        argv = [python, "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
         if profile and version:
             argv += ["--source-manifest", str(version.profile)]
         result = json.loads(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
@@ -107,11 +97,8 @@ class Backend:
         python = venv_python(environment)
         if not python.is_file():
             return None  # The bootstrap Runtime can inspect a retained workspace.
-        # This is an intentional pre-rename compatibility probe, never a new pin.
-        module = self.run([python, "-I", "-c", "import importlib.util; print('astrid_runtime' if importlib.util.find_spec('astrid_runtime') else 'banodoco_local')"]).strip()
         return Version(environment.parent, python, profile,
-                       {"PATH": str(python.parent) + os.pathsep + os.defpath,
-                        "ASTRID_INSTALL_RUNTIME_MODULE": module})
+                       {"PATH": str(python.parent) + os.pathsep + os.defpath})
 
     def has_workspace(self, data: Path) -> bool:
         # A nonempty selected root is never mistaken for a fresh installation.
@@ -141,7 +128,7 @@ class Backend:
         chat_cwd = Path(cwd) if isinstance(cwd, str) and Path(cwd).is_absolute() else None
         option_names = {
             "ASTRID_ACP_PROFILE", "ASTRID_ACP_SESSION_DIR", "ASTRID_ACP_SYSTEM_PROMPT_FILE",
-            "ASTRID_ACP_BRIDGE_PORT", "ASTRID_ACP_COMMAND",
+            "ASTRID_ACP_COMMAND",
         }
         options = {key: value for key, value in values.items()
                    if key in option_names and isinstance(value, str) and value}
@@ -151,15 +138,6 @@ class Backend:
         record = self.service.recorded()
         retained = record.get("chat_settings") if record.get("data_root") == str(data) else None
         chat_cwd, chat_options = self._prior_chat_settings(old, retained)
-        managed_cwd = chat_cwd is not None and (
-            (old is not None and chat_cwd == old.root / "a")
-            or (chat_cwd.name == "a" and chat_cwd.parent.parent == self.root / "versions"))
-        if managed_cwd:
-            # Changing the managed cwd must not change OMP's canonical store.
-            agent_dir = Path(os.environ.get("PI_CODING_AGENT_DIR") or Path.home() / ".omp" / "agent")
-            chat_options.setdefault("ASTRID_ACP_SESSION_DIR", str(
-                _legacy_omp_session_dir(str(chat_cwd), agent_dir)))
-            chat_cwd = data / "chat"
         if chat_cwd is None:
             chat_cwd = Path(os.environ.get("ASTRID_ACP_CWD") or data / "chat")
         return chat_cwd, chat_options

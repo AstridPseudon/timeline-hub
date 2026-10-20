@@ -67,21 +67,6 @@ def write_json(path: Path, value: dict) -> None:
     durable_replace(temporary, path)
 
 
-def find_data_root(recorded: Path | None, requested: Path | None,
-                   default: Path, legacy: list[Path]) -> tuple[Path, bool]:
-    """A recorded selection is authoritative, even if its disk is unavailable."""
-    if recorded is not None:
-        return absolute(recorded), False
-    if requested is not None:
-        return absolute(requested), False
-    if (default / "runtime" / "catalog.json").exists():
-        return absolute(default), False
-    candidates = [p for p in legacy if (p / "runtime" / "catalog.json").exists()]
-    if len(candidates) > 1:
-        raise ValueError("Several old workspaces were found; select one with --data-root.")
-    return (absolute(candidates[0]), True) if candidates else (absolute(default), False)
-
-
 def version_id(value: str) -> str:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", value):
         raise ValueError("Invalid installation version identifier.")
