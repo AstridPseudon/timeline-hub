@@ -1,0 +1,176 @@
+diff --git a/src/tools/video-editor/runtime/element-adapter.ts b/src/tools/video-editor/runtime/element-adapter.ts
+index 93587b99b..5c1ff996c 100644
+--- a/src/tools/video-editor/runtime/element-adapter.ts
++++ b/src/tools/video-editor/runtime/element-adapter.ts
+@@ -196,6 +196,31 @@ function visualTrackId(config: TimelineConfig, preferred?: string): string {
+     ?? 'elements';
+ }
+ 
++/** Existing main placement/hold/track/id policy, shared by native consumers. */
++export function buildElementOverlayRow(
++  config: TimelineConfig,
++  element: AstridElementRef,
++  targetClipId?: string,
++  at?: number,
++  duration?: number,
++  params?: Record<string, unknown>,
++): TimelineClip {
++  const target = targetClipId ? requireClip(config, targetClipId) : undefined;
++  const start = at ?? target?.at ?? 0;
++  const hold = duration ?? (target ? clipDuration(target) : 1);
++  if (!Number.isFinite(start) || start < 0) throw new AstridElementOperationError('Overlay placement requires a non-negative at');
++  if (!Number.isFinite(hold) || hold <= 0) throw new AstridElementOperationError('Overlay placement requires a positive duration');
++  return {
++    id: uniqueElementClipId(config, element.id, start),
++    at: start,
++    track: visualTrackId(config, target?.track),
++    clipType: element.kind === 'effect' ? element.id : 'effect-layer',
++    hold,
++    elementRef: element,
++    ...(params ? { params } : {}),
++  };
++}
++
+ function uniqueElementClipId(config: TimelineConfig, elementId: string, at: number): string {
+   const base = `element-${elementId}-${Math.round(at * 1000)}`;
+   if (!config.clips.some((clip) => clip.id === base)) return base;
+@@ -281,23 +306,8 @@ function applyTimelineOperation(
+         });
+       }
+ 
+-      const target = operation.clip_id ? requireClip(config, operation.clip_id) : undefined;
+-      const at = operation.at ?? target?.at ?? 0;
+-      const duration = operation.duration ?? (target ? clipDuration(target) : 1);
+-      if (!Number.isFinite(at) || at < 0) throw new AstridElementOperationError('Overlay placement requires a non-negative at');
+-      if (!Number.isFinite(duration) || duration <= 0) throw new AstridElementOperationError('Overlay placement requires a positive duration');
+-      const overlay: TimelineClip = {
+-        id: uniqueElementClipId(config, operation.element.id, at),
+-        at,
+-        track: visualTrackId(config, target?.track),
+-        // Keep the Astrid element id in the ordinary visual dispatch path.
+-        // `effect-layer` is the legacy Astrid App wrapper and cannot carry a
+-        // revision-pinned Astrid component by itself.
+-        clipType: entry.kind === 'effect' ? entry.id : 'effect-layer',
+-        hold: duration,
+-        elementRef: operation.element,
+-        ...(operation.params ? { params: operation.params } : {}),
+-      };
++      const overlay = buildElementOverlayRow(config, operation.element,
++        operation.clip_id, operation.at, operation.duration, operation.params);
+       return { ...config, clips: [...config.clips, overlay] };
+     }
+     case 'timeline.update_element':
+diff --git a/src/tools/video-editor/components/ElementsLibraryPanel.tsx b/src/tools/video-editor/components/ElementsLibraryPanel.tsx
+index 78543d489..7cb9bf51f 100644
+--- a/src/tools/video-editor/components/ElementsLibraryPanel.tsx
++++ b/src/tools/video-editor/components/ElementsLibraryPanel.tsx
+@@ -7,7 +7,8 @@ import { Input } from '@/shared/components/ui/input.tsx';
+ import { Badge } from '@/shared/components/ui/badge.tsx';
+ import { useAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
+ import { timelineQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
+-import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
++import { useTimelineChromeContextSafe, useTimelineEditorData, useTimelineEditorDataSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
++import { buildElementOverlayRow } from '@/tools/video-editor/runtime/element-adapter.ts';
+ import type { AstridElementCatalogEntry } from '@/tools/video-editor/runtime/element-contract.ts';
+ 
+ type ElementFilter = 'all' | 'effect' | 'animation' | 'transition';
+@@ -27,6 +28,8 @@ export function ElementsLibraryPanel({
+ }) {
+   const { editorContext } = useAgentChatBridge();
+   const { selectedClipIds } = useTimelineEditorData();
++  const current = useTimelineEditorDataSafe()?.data;
++  const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
+   const queryClient = useQueryClient();
+   const [filter, setFilter] = useState<ElementFilter>('all');
+   const [query, setQuery] = useState('');
+@@ -60,6 +63,36 @@ export function ElementsLibraryPanel({
+       setMessage('Select two adjacent clips to apply a transition.');
+       return;
+     }
++    if (element.kind === 'effect' && !element.packId) {
++      if (!current || !elementOverlay) {
++        setMessage('Literal overlay editing is unavailable until the native timeline session is ready.');
++        return;
++      }
++      const selectedClip = current.resolvedConfig.clips.find((clip) => clip.id === selectedIds[0]);
++      const admitted = editorContext?.elementContext?.catalog.some((candidate) =>
++        candidate.id === element.id && candidate.kind === element.kind
++        && candidate.revision === element.revision && candidate.publication === 'published'
++        && !candidate.legacy);
++      if (!selectedClip || !admitted) {
++        setMessage('This literal element is not admitted for the current timeline.');
++        return;
++      }
++      setBusyId(element.id);
++      setMessage(null);
++      try {
++        const row = buildElementOverlayRow(current.resolvedConfig,
++          { id: element.id, kind: 'effect', revision: element.revision }, selectedClip.id);
++        const captured = elementOverlay.capture({ current, operation: { kind: 'create', row } });
++        const prepared = elementOverlay.finish(captured);
++        elementOverlay.submit(prepared);
++        setMessage(element.label + ' queued through the native timeline session.');
++      } catch (error) {
++        setMessage(error instanceof Error ? error.message : String(error));
++      } finally {
++        setBusyId(null);
++      }
++      return;
++    }
+     if (element.kind !== 'transition' && selectedIds.length < 1) {
+       setMessage('Select a clip to apply this element.');
+       return;
+diff --git a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody.tsx b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody.tsx
+index f194006eb..29046742c 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody.tsx
+@@ -15,6 +15,7 @@ import {
+   useTimelineEditorData,
+   useTimelineEditorOps,
+   useTimelinePlaybackContext,
++  useTimelineChromeContextSafe,
+ } from '@/tools/video-editor/hooks/timelineStore.ts';
+ import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
+ import type { EditorVariantPicker, VariantObservations } from '@/tools/video-editor/runtime/editorHostObservations.ts';
+@@ -208,6 +209,7 @@ function PropertiesPanelComponent({
+     inspectorTarget,
+   } = useTimelineEditorData();
+   const { currentTime } = useTimelinePlaybackContext();
++  const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
+   const {
+     clearSelection,
+     handleUpdateClips,
+@@ -230,6 +232,22 @@ function PropertiesPanelComponent({
+     setSelectedTrackId,
+     applyEdit,
+   } = useTimelineEditorOps();
++  const deleteLiteralOverlay = () => {
++    const clip = selectedClip;
++    const ref = clip?.elementRef;
++    if (!clip || !ref || ref.kind !== 'effect' || ref.packId || clip.clipType !== ref.id) return false;
++    if (!data || !elementOverlay) {
++      throw new Error('Literal overlay deletion is unavailable until the native timeline session is ready.');
++    }
++    const captured = elementOverlay.capture({
++      current: data,
++      operation: { kind: 'delete', select: 'parent/clip:' + clip.id },
++    });
++    const prepared = elementOverlay.finish(captured);
++    elementOverlay.submit(prepared);
++    clearSelection();
++    return true;
++  };
+   const shaderSnapshot = useShaderEffectRegistrySnapshot();
+   const {
+     staleAssetKeys,
+@@ -535,7 +553,9 @@ function PropertiesPanelComponent({
+             onChange={readOnly ? () => {} : handleSelectedClipChange}
+             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
+             onClose={clearSelection}
+-            onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
++            onDelete={!readOnly && selectedClip ? () => {
++              if (!deleteLiteralOverlay()) handleDeleteClip(selectedClip.id);
++            } : undefined}
+             onToggleMute={readOnly ? () => {} : handleToggleMute}
+             onDetachAudio={!readOnly && selectedClip ? () => handleDetachAudioClip(selectedClip.id) : undefined}
+             onSplitAtPlayhead={() => {

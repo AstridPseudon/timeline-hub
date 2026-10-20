@@ -1,0 +1,185 @@
+diff --git a/src/tools/video-editor/commands/commitSession.ts b/src/tools/video-editor/commands/commitSession.ts
+index 0922b4660..e1c94920d 100644
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@ -9,6 +9,14 @@ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.t
+ import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+ import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
++import {
++  captureElementBasis,
++  finishElementEdit,
++  selectForClip,
++  type ElementCaptureBasis,
++  type ElementCapturePort,
++  type ElementEdit,
++} from './elementGesture.ts';
+ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+ 
+ type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+@@ -318,6 +326,40 @@ export async function createTimelineCommandSession(options: Options) {
+       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+     },
+   };
++  const elementPort: ElementCapturePort = {
++    capture({ clipId, current, edit }) {
++      assertReady();
++      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
++        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
++        throw new Error('Displayed timeline does not match the raw authoring basis');
++      }
++      const select = selectForClip(current, clipId);
++      const captured = captureElementBasis(bundle, select, edit);
++      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
++      return Object.freeze({ clipId, select, edit: copy(edit) as ElementEdit, capture: captured,
++        before: bundle, localGeneration, localBasis, previewVersion: current.configVersion }) as ElementCaptureBasis;
++    },
++    finish(basis, edit) {
++      assertReady();
++      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the element edit');
++      const result = finishElementEdit(basis, edit);
++      prepared.set(JSON.stringify(result.command), { payload: {
++        commands: [result.command], before: basis.before, after: result.bundle, preview: result.preview,
++      }, generation: localGeneration, basis: basis.localBasis as OutboxBasis });
++      return { command: result.command, preview: result.preview };
++    },
++    submit({ command, preview }) {
++      assertReady();
++      const key = JSON.stringify(command);
++      const entry = prepared.get(key);
++      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
++        throw new Error('Element edit was not captured by this session or the timeline changed');
++      }
++      if (!equal(preview, entry.payload.preview)) throw new Error('Element edit requires its exact preview');
++      prepared.delete(key);
++      enqueue({ ...entry.payload, preview }, preview, entry.basis);
++    },
++  };
+   async function resolveRejected(keepLabel: boolean) {
+     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
+     const label = keepLabel ? labelIntent() : undefined;
+@@ -421,6 +463,7 @@ export async function createTimelineCommandSession(options: Options) {
+   } else await claim();
+   return {
+     port,
++    elementPort,
+     trackLabelPort,
+     useLatest: () => resolveRejected(false),
+     keepLabelChanges: () => resolveRejected(true),
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+index 703c3f4bc..c6854a3fa 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -160,6 +160,21 @@ export function useTimelineCommandSession(options: {
+           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
+           return realPort.capture(input);
+         } };
++        const realElementPort = session.elementPort;
++        session.elementPort = {
++          capture(input) {
++            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
++            return realElementPort.capture(input);
++          },
++          finish(basis, edit) {
++            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
++            return realElementPort.finish(basis, edit);
++          },
++          submit(input) {
++            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
++            realElementPort.submit(input);
++          },
++        };
+         const labelPort = session.trackLabelPort;
+         const requireCleanLabelEdit = () => {
+           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
+@@ -239,6 +254,7 @@ export function useTimelineCommandSession(options: {
+   const useLatest = useCallback(() => resolve(false), [resolve]);
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
++    elementPort: sessionRef.current?.elementPort,
+     trackLabelPort: sessionRef.current?.trackLabelPort,
+     retry, undo, flush, recover, useLatest, keepLabelChanges };
+ }
+diff --git a/src/tools/video-editor/hooks/useTimelineState.ts b/src/tools/video-editor/hooks/useTimelineState.ts
+index a949741e7..49f99b44e 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -135,6 +135,7 @@ function useTimelineEditorContextValue({
+   externalDrop,
+   trackManagement,
+   trackLabelPort,
++  elementPort,
+   uploadFiles,
+   applyEdit,
+   commands,
+@@ -178,6 +179,7 @@ function useTimelineEditorContextValue({
+   externalDrop: ExternalDropHook;
+   trackManagement: TimelineTrackManagementHook;
+   trackLabelPort?: TrackLabelCapturePort;
++  elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
+   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
+   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
+   commands: TimelineEditorCommands;
+@@ -202,6 +204,7 @@ function useTimelineEditorContextValue({
+   const moveSelectedClipsToTrack = trackManagement.moveSelectedClipsToTrack;
+ 
+   return useMemo<TimelineEditorContextValue>(() => ({
++    element: elementPort,
+     trackLabel: trackLabelPort,
+     data,
+     resolvedConfig: selection.resolvedConfig,
+@@ -327,6 +330,7 @@ function useTimelineEditorContextValue({
+     dragCoordinator.coordinator,
+     dragCoordinator.editAreaRef,
+     dragCoordinator.indicatorRef,
++    elementPort,
+     editorPreferences,
+     externalDrop.onTimelineDragLeave,
+     externalDrop.onTimelineDragOver,
+@@ -1077,6 +1081,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+     externalDrop,
+     trackManagement,
+     trackLabelPort: save.commands.trackLabelPort,
++    elementPort: save.commands.elementPort,
+     uploadFiles,
+     applyEdit,
+     commands: timelineCommands,
+@@ -1163,6 +1168,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+ 
+   const editorOps = useMemo(() => ({
+     clipMove: save.commands.port,
++    element: save.commands.elementPort,
+     trackLabel: save.commands.trackLabelPort,
+     transcriptHost,
+     setInputModality: editor.setInputModality,
+@@ -1222,7 +1228,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+     patchRegistry: editor.patchRegistry,
+     unpatchRegistry: editor.unpatchRegistry,
+     registerAsset: editor.registerAsset,
+-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
++  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
++    save.commands.port, save.commands.elementPort, save.commands.trackLabelPort]);
+ 
+   const renderRequest = useTimelineRenderRequest(
+     runtime.timelineId,
+diff --git a/src/tools/video-editor/hooks/useTimelineState.types.ts b/src/tools/video-editor/hooks/useTimelineState.types.ts
+index 7f9741081..9bfe14aa0 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.types.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.types.ts
+@@ -1,6 +1,7 @@
+ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
+ import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
++import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
+ import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+ import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
+ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
+@@ -138,6 +139,7 @@ export interface TimelineEditorDataContextValue {
+ export interface TimelineEditorOpsContextValue {
+   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
+   clipMove?: ClipMoveCapturePort;
++  element?: ElementCapturePort;
+   trackLabel?: TrackLabelCapturePort;
+   setInputModality: (inputModality: TimelineInputModality) => void;
+   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
+

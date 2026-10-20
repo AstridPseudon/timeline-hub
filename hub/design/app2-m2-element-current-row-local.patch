@@ -1,0 +1,255 @@
+diff --git a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
+index 5301c46de..00043eec4 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.test.tsx
+@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
+ import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+ import type { AstridElementDescriptor } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+ import type { ResolvedTimelineClip, ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
++import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
+ import { AstridElementParams } from './AstridElementParams.tsx';
+ import type { ClipPanelProps } from './ClipPanelBody.tsx';
+ import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
+@@ -13,6 +14,10 @@ const runtimeState = vi.hoisted(() => ({
+   descriptors: [] as AstridElementDescriptor[],
+   timelineEditability: undefined as TimelineEditability | undefined,
+ }));
++const editorState = vi.hoisted(() => ({
++  data: null as unknown,
++  element: undefined as ElementCapturePort | undefined,
++}));
+ 
+ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
+   useVideoEditorRuntime: () => ({
+@@ -21,6 +26,11 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
+   }),
+ }));
+ 
++vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
++  useTimelineEditorDataSafe: () => editorState.data,
++  useTimelineEditorOpsSafe: () => editorState.element ? { element: editorState.element } : null,
++}));
++
+ const descriptor: AstridElementDescriptor = {
+   id: 'v3-glow',
+   kind: 'effect',
+@@ -61,7 +71,7 @@ function renderForm({
+   readOnly?: boolean;
+   onChange?: ClipPanelProps['onChange'];
+ } = {}) {
+-  runtimeState.descriptors = [descriptor];
++  runtimeState.descriptors = [reference.packId === undefined ? { ...descriptor, packId: undefined } : descriptor];
+   return {
+     ...render(
+       <AstridElementParams
+@@ -104,6 +114,47 @@ describe('AstridElementParams', () => {
+     });
+   });
+ 
++  it('keeps selected-pack edits on the existing producer without native capture', () => {
++    const capture = vi.fn(() => { throw new Error('selected-pack native capture must not run'); });
++    editorState.data = { data: {} };
++    editorState.element = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ElementCapturePort;
++    const { onChange } = renderForm({ params: { selectedSegmentIndex: 2 } });
++
++    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
++
++    expect(capture).not.toHaveBeenCalled();
++    expect(onChange).toHaveBeenLastCalledWith({ params: { selectedSegmentIndex: 1 } });
++  });
++
++  it('routes a literal existing-clip edit through the mounted native port without legacy onChange', () => {
++    const literal = { ...descriptor, packId: undefined };
++    const edit = { params: { values: { selectedSegmentIndex: 1 }, clear: [] } };
++    const command = {
++      schema_version: 1, op: 'clip.set-params', version: '1', select: 'parent/clip:clip-v3-glow',
++      args: edit.params,
++    };
++    const preview = {
++      version: 1, source: 'timeline.native-existing-element',
++      operations: [{ op: 'clip.update', target: 'clip-v3-glow', payload: { params: { selectedSegmentIndex: 1 } } }],
++    };
++    const capture = vi.fn(() => ({
++      clipId: 'clip-v3-glow', select: command.select, edit, capture: {}, before: {},
++      localGeneration: 0, localBasis: {}, previewVersion: 1,
++    }));
++    const finish = vi.fn(() => ({ command, preview }));
++    const submit = vi.fn();
++    editorState.data = { data: {} };
++    editorState.element = { capture, finish, submit } as unknown as ElementCapturePort;
++    const onChange = vi.fn();
++    renderForm({ reference: literal, onChange });
++
++    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
++
++    expect(capture).toHaveBeenCalledTimes(1);
++    expect(submit).toHaveBeenCalledTimes(1);
++    expect(onChange).not.toHaveBeenCalled();
++  });
++
+   it('does not expose the form for read-only timelines or stale host registrations', () => {
+     const readOnly = renderForm({ readOnly: true });
+     expect(screen.queryByTestId('astrid-element-params')).toBeNull();
+diff --git a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
+index 6c8b9339d..7e4eede2e 100644
+--- a/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/AstridElementParams.tsx
+@@ -2,6 +2,9 @@ import { useSyncExternalStore } from 'react';
+ import { getAdmittedElementSelection, subscribeAdmittedElements } from '../../runtime/admitted-elements';
+ import { CodePathParamEditor } from '@/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx';
+ import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
++import { useTimelineEditorDataSafe, useTimelineEditorOpsSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
++import { captureClipElementEdit, submitClipElementEdit } from '@/tools/video-editor/commands/elementGesture.ts';
++import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+ import type { ClipPanelProps } from './ClipPanelBody.tsx';
+ import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
+ 
+@@ -14,6 +17,8 @@ export function AstridElementParams({
+ }: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
+   useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
+   const runtime = useVideoEditorRuntime();
++  const editorData = useTimelineEditorDataSafe();
++  const editorOps = useTimelineEditorOpsSafe();
+   const descriptors = runtime.astridElementHost?.descriptors ?? [];
+   const descriptor = resolveAstridElementParamDescriptor(
+     clip,
+@@ -37,7 +42,15 @@ export function AstridElementParams({
+       || currentDescriptor.kind !== descriptor.kind
+       || currentDescriptor.packId !== descriptor.packId
+       || currentDescriptor.revision !== descriptor.revision) return;
+-    onChange({ params: { ...params, ...nextParams } });
++    const next = { params: { ...params, ...nextParams } };
++    const reference = clip.elementRef;
++    if (!reference?.packId && editorData?.data && editorOps?.element) {
++      const edit = { params: { values: next.params as Record<string, JSON>, clear: [] } } as const;
++      const captured = captureClipElementEdit(editorOps.element, editorData.data, clip.id, edit);
++      submitClipElementEdit(captured, edit);
++      return;
++    }
++    onChange(next);
+   };
+ 
+   const schemaTitle = (descriptor.schema as { title?: unknown }).title;
+diff --git a/src/tools/video-editor/commands/elementGesture.ts b/src/tools/video-editor/commands/elementGesture.ts
+new file mode 100644
+index 000000000..d790a8ad2
+--- /dev/null
++++ b/src/tools/video-editor/commands/elementGesture.ts
+@@ -0,0 +1,116 @@
++import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
++import type { TimelineData } from '../lib/timeline-data.ts';
++import {
++  captureClipElement,
++  captureClipElementParams,
++  finishClipElement,
++  finishClipElementParams,
++  type ElementCaptureArgs,
++  type ElementCaptureBasis as NativeElementCaptureBasis,
++  type ElementParamsArgs,
++  type ElementParamsBasis as NativeElementParamsBasis,
++} from './elementCapture.ts';
++import { AuthoredState, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
++import type { AuthoredBundle } from './clipMovePrimitives.ts';
++
++export type ElementEdit =
++  | { elementRef: ElementCaptureArgs; params?: never }
++  | { elementRef?: never; params: ElementParamsArgs };
++
++export type ElementCaptureBasis = {
++  readonly clipId: string;
++  readonly select: string;
++  readonly edit: ElementEdit;
++  readonly capture: NativeElementCaptureBasis | NativeElementParamsBasis;
++  readonly before: AuthoredBundle;
++  readonly localGeneration: number;
++  readonly localBasis: unknown;
++  readonly previewVersion: number;
++};
++
++export type PreparedElementEdit = {
++  command: EditCommand;
++  preview: TimelinePatch;
++};
++
++export interface ElementCapturePort {
++  capture(input: { clipId: string; current: TimelineData; edit: ElementEdit }): ElementCaptureBasis;
++  finish(basis: ElementCaptureBasis, edit: ElementEdit): PreparedElementEdit;
++  submit(input: PreparedElementEdit): void;
++}
++
++export type CapturedElementEdit = {
++  readonly clipId: string;
++  readonly basis: ElementCaptureBasis;
++  readonly port: ElementCapturePort;
++};
++
++function selectForClip(current: TimelineData, clipId: string): string {
++  const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
++  if (matches.length !== 1) throw new Error('Element edit requires one existing clip');
++  const identity = matches[0].app?.canonical as { clipRef?: string } | undefined;
++  return identity?.clipRef ?? `parent/clip:${clipId}`;
++}
++
++export function captureClipElementEdit(
++  port: ElementCapturePort | undefined,
++  current: TimelineData,
++  clipId: string,
++  edit: ElementEdit,
++): CapturedElementEdit {
++  if (!port) throw new Error('Element edit capture is unavailable.');
++  const basis = freezeJson(port.capture({ clipId, current, edit }));
++  return Object.freeze({ clipId, basis, port });
++}
++
++export function submitClipElementEdit(captured: CapturedElementEdit, edit: ElementEdit): void {
++  const prepared = captured.port.finish(captured.basis, edit);
++  const expected = captured.basis.edit;
++  if (!equal(expected, edit)
++    || prepared.command.schema_version !== 1
++    || (prepared.command.op !== 'clip.set-element' && prepared.command.op !== 'clip.set-params')
++    || prepared.command.version !== '1'
++    || prepared.command.select !== captured.basis.select) {
++    throw new Error('Unsupported existing-clip element capture result.');
++  }
++  captured.port.submit({
++    command: freezeJson(copy(prepared.command)),
++    preview: freezeJson(copy(prepared.preview)),
++  });
++}
++
++export function finishElementEdit(
++  basis: ElementCaptureBasis,
++  edit: ElementEdit,
++): { command: EditCommand; bundle: AuthoredBundle; preview: TimelinePatch } {
++  if (!equal(basis.edit, edit)) throw new Error('Element edit changed after original capture');
++  const result = 'elementRef' in edit
++    ? finishClipElement(basis.capture, edit.elementRef)
++    : finishClipElementParams(basis.capture, edit.params);
++  const entity = new AuthoredState(result.bundle).entity(basis.select);
++  const payload = 'elementRef' in edit
++    ? { elementRef: copy(edit.elementRef.elementRef) }
++    : { params: object(entity?.params) ? copy(entity.params) as Record<string, JSON> : {} };
++  return {
++    command: result.command,
++    bundle: result.bundle,
++    preview: {
++      version: basis.previewVersion,
++      source: 'timeline.native-existing-element',
++      operations: [{ op: 'clip.update', target: basis.clipId, payload }],
++    },
++  };
++}
++
++export function captureElementBasis(
++  bundle: AuthoredBundle,
++  select: string,
++  edit: ElementEdit,
++): ElementCaptureBasis['capture'] {
++  return 'elementRef' in edit
++    ? captureClipElement(bundle, select, edit.elementRef)
++    : captureClipElementParams(bundle, select, edit.params);
++}
++
++export { selectForClip };
+
