@@ -1,0 +1,46 @@
+{
+  "accepted_duplicate_shape": "canonical_document.json with parent_revision.payload, pinned shot_revisions, pinned internal_timeline_revisions, dependency_manifest",
+  "candidate_paths": [],
+  "closure_status": "not_available",
+  "mode": "limited_search",
+  "next_action": "Provide one read-only duplicate path to the owner-film Runtime canonical_document closure.",
+  "owner_film_present": false,
+  "roots": [
+    {
+      "exists": true,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/home/user/work/wt/vw-m3-owner-film-cliplook-scan/projects"
+    },
+    {
+      "exists": true,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/home/user/work/agent/projects"
+    },
+    {
+      "exists": true,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/home/user/peteromallet/astrid-agent/projects"
+    },
+    {
+      "exists": false,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/home/user/banodoco/banodoco-workspace-runtime/projects"
+    },
+    {
+      "exists": false,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/home/user/banodoco/reigh-app/projects"
+    },
+    {
+      "exists": true,
+      "matched": [],
+      "max_depth": 5,
+      "root": "/mnt/user-data"
+    }
+  ]
+}
