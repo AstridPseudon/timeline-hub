@@ -19,7 +19,7 @@ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc971
 PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
 PRIVATE_VOICEOVER_SHA256 = '65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e'
-PRIVATE_EXTENT_SHA256 = '166644a84067b4f40fe6cc4a0d0047cfe2e4fb2678ca1d7b2fc9d48c605cfa41'
+PRIVATE_EXTENT_SHA256 = '84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc8592386cbbc5'
 
 
 def without_groups(schema):
@@ -62,7 +62,7 @@ def without_extent(schema):
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_extent(without_groups(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -107,7 +107,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_extent(without_groups(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -115,7 +115,7 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_extent(without_groups(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -128,7 +128,7 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_extent(without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
