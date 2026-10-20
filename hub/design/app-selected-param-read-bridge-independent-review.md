@@ -4,7 +4,7 @@
 
 ## Scope and implementation
 
-The complete diff is six paths, +302/-1: four product paths (+45 lines) and two test paths (+257/-1). It adds only the optional two-method `DataProvider.paramReadClient`, project-scoped forwarding through `RuntimeDataProvider`'s existing facade, the facade's guarded forwarding through existing `withSession`/`WorkspaceClient`, and the one `useTimelineSave` argument. Existing exact-retained helper, capture/acceptance, generated clients, package pins, validator, hydration and preview/render bodies are unchanged.
+The complete diff is six paths, +302/-1: four product paths (+45 lines) and two test paths (+257/-1). It adds only the optional two-method `DataProvider.paramReadClient`, project-scoped forwarding through `RuntimeDataProvider`'s existing facade, the facade's guarded forwarding through existing `withSession`/`WorkspaceClient`, and the one `useTimelineSave` argument. The source-tree audit confirms all 5833 other tracked blobs identical to the base (`notes/source-audit.json`), including existing exact-retained helper, capture/acceptance, generated clients, package pins, validator, hydration and preview/render bodies.
 
 - `dataProvider.ts:332–341`: both methods reject another project synchronously before I/O. The provider project/client are constructor-bound; its capability object is stable. No second connector or authority cache.
 - `client.ts:592–619`: the supplied pin is copied before negotiation. Existing `withSession` authenticates; the read closure holds its original base/client, then checks the current slot/opening and shared fence before and after its awaited work. Observed actor/realm/instance comparisons run before retained I/O and before returning its result. Reconnect invalidates the opening; no latest-source fallback or new endpoint is added. These checks detect observed identity changes; they do not claim a fresh remote identity request on every GET.
@@ -30,6 +30,7 @@ env TMPDIR="$N/tmp" node --require "$N/vitest-runner.cjs" node_modules/vitest/vi
 env TMPDIR="$N/tmp" node --require "$N/vitest-runner.cjs" node_modules/vitest/vitest.mjs run --config "$N/vitest.probes.config.ts" --configLoader=runner --no-cache --maxWorkers=1 --no-file-parallelism
 python3 -B "$N/audit-deps.py" > "$N/deps-after.json"
 cmp "$N/deps-before.json" "$N/deps-after.json"
+python3 -B "$N/audit-source.py"
 git diff --stat 64d7e19b..HEAD
 git diff --numstat 64d7e19b..HEAD
 git diff --exit-code HEAD -- src package.json package-lock.json vendor config
@@ -41,7 +42,7 @@ git diff --check 64d7e19b..HEAD
 | Bridge/provider/client/exact-retained helper | **4 files / 166 PASS**, exit0, 9.55s | `notes/bridge-provider-helper.log` |
 | Selected mounted refusal lifecycle | **6 selected PASS**, exit0, 5.20s; 11 unselected by explicit name filter | `notes/refusal-lifecycle.log` |
 | Independent private boundary probes | **8 PASS**, exit0, 2.08s | `notes/boundary-probes.log` |
-| Dependency/cache comparison and diff checks | **exit0**, shared observations identical, no worktree product/test change | `notes/deps-before.json`, `notes/deps-after.json` |
+| Source/dependency/cache comparisons and diff checks | **exit0**, 5833 other tracked blobs identical; shared observations identical, no worktree product/test change | `notes/deps-before.json`, `notes/deps-after.json` |
 
 The private probes exercise both document and object methods: an existing fence refuses before any traffic; a fence installed during handshake prevents retained traffic; a second real facade observing a replacement realm fences the first facade's pending read; repeated exact reads negotiate once but fetch twice without cached inputs. They use the existing public constructor/identity-store surface and synthetic Transport, with the original bearer credential checked on every request. They are diagnostic scratch outside the repository, not replacements for main-suite evidence.
 
