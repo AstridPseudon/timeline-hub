@@ -298,21 +298,9 @@ class RequestCommitPort:
             if transcript:
                 kind, schema = "media.transcript", "media.transcript/v1"
             else:
-                row = None
-                if pin in reachable:
-                    row = self.__service.store.conn.execute(
-                        "SELECT kind FROM timeline_document_input_bindings WHERE project_id=? AND document_id=? "
-                        "AND document_version=? AND content_digest=?",
-                        (self.__project, pin["document_id"], pin["version"], pin["content_digest"]),
-                    ).fetchone()
-                if row is None:
-                    row = self.__service.store.conn.execute(
-                        "SELECT kind FROM project_documents WHERE project_id=? AND id=?",
-                        (self.__project, pin["document_id"]),
-                    ).fetchone()
-                if row is None or not (row["kind"].endswith(".config") or row["kind"] == PROJECT_PACK_KIND):
+                kind = _source_kind(self.__service.store.conn, self.__project, pin, pin in reachable)
+                if kind is None:
                     raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
-                kind = row["kind"]
                 schema = PROJECT_PACK_SCHEMA if kind == PROJECT_PACK_KIND else None
             capture = capture_document_input(self.__service.store.conn, self.__project, pin,
                                              reachable_pins=reachable, expected_kind=kind, expected_schema=schema)
@@ -327,21 +315,9 @@ class RequestCommitPort:
         return self._document(pin, False)
 
     def document_object(self, pin, object_id):
-        from .timeline_commit_inputs import PROJECT_PACK_KIND, pack_snapshot_objects, read_pack_snapshot_object
-
         def read():
             capture = self.__documents.get(canonical_json(pin))
-            if capture is None or capture.document["kind"] != PROJECT_PACK_KIND:
-                raise refused("dependency_unavailable", "object read requires a captured project pack document")
-            descriptors = [value for value in pack_snapshot_objects(capture.document["content"])
-                           if value["object_id"] == object_id]
-            if not descriptors:
-                raise refused("dependency_unavailable", "object is outside the captured project pack document")
-            descriptor = descriptors[0]
-            data, identity = read_pack_snapshot_object(
-                self.__service.store.conn, self.__service.cas, self.__project, descriptor,
-                max_bytes=self.__service.max_object_bytes,
-            )
+            descriptor, data, identity = _pack_object(self.__service, self.__project, capture, object_id)
             key = (canonical_json(pin), object_id)
             captured = (descriptor, data, identity)
             if key in self.__document_objects and self.__document_objects[key] != captured:
@@ -509,6 +485,81 @@ def _media_metadata(value):
     if isinstance(value, list):
         return [_media_metadata(v) for v in value]
     return value
+
+
+def _source_kind(conn, project_id, pin, retained):
+    from .timeline_commit_inputs import PROJECT_PACK_KIND
+    row = None
+    if retained:
+        row = conn.execute(
+            "SELECT kind FROM timeline_document_input_bindings WHERE project_id=? AND document_id=? "
+            "AND document_version=? AND content_digest=?",
+            (project_id, pin["document_id"], pin["version"], pin["content_digest"]),
+        ).fetchone()
+    if row is None:
+        row = conn.execute("SELECT kind FROM project_documents WHERE project_id=? AND id=?",
+                           (project_id, pin["document_id"])).fetchone()
+    if row is None:
+        return None
+    if not (row["kind"].endswith(".config") or row["kind"] == PROJECT_PACK_KIND):
+        raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
+    return row["kind"]
+
+
+def _linked_pins(conn, project_id):
+    return [{"document_id": row[0], "version": int(row[1]), "content_digest": row[2]} for row in conn.execute(
+        "SELECT DISTINCT document_id, document_version, content_digest FROM timeline_document_input_links "
+        "WHERE project_id=?", (project_id,)).fetchall()]
+
+
+def read_project_source_document(service, project_id, pin):
+    """Read one exact retained config or project pack Document for a public caller.
+
+    Same authorized closure and custody checks as ``read_project_pack_object``;
+    the result is the VerifiedDocument the commit port's ``config_source`` returns.
+    """
+    from .timeline_commit_inputs import PROJECT_PACK_KIND, PROJECT_PACK_SCHEMA, capture_document_input
+    from .timeline_commit_validation import validate_commit_value
+    validate_commit_value(pin, "DocumentPin")
+    conn = service.store.conn
+    reachable = _linked_pins(conn, project_id)
+    kind = _source_kind(conn, project_id, pin, pin in reachable)
+    capture = capture_document_input(conn, project_id, pin, reachable_pins=reachable, expected_kind=kind,
+                                     expected_schema=PROJECT_PACK_SCHEMA if kind == PROJECT_PACK_KIND else None)
+    return {"pin": capture.pin, "document": capture.document}
+
+
+def _pack_object(service, project_id, capture, object_id):
+    from .timeline_commit_inputs import PROJECT_PACK_KIND, pack_snapshot_objects, read_pack_snapshot_object
+    if capture is None or capture.document["kind"] != PROJECT_PACK_KIND:
+        raise refused("dependency_unavailable", "object read requires a captured project pack document")
+    descriptors = [value for value in pack_snapshot_objects(capture.document["content"])
+                   if value["object_id"] == object_id]
+    if not descriptors:
+        raise refused("dependency_unavailable", "object is outside the captured project pack document")
+    data, identity = read_pack_snapshot_object(
+        service.store.conn, service.cas, project_id, descriptors[0], max_bytes=service.max_object_bytes,
+    )
+    return descriptors[0], data, identity
+
+
+def read_project_pack_object(service, project_id, pin, object_id):
+    """Read one exact retained pack object for a public caller.
+
+    The authorized closure is every document pin linked by an accepted
+    timeline record in this project, so a pin survives a live V2, removal and
+    restart exactly as it does for a commit request. Nothing is written.
+    """
+    from .timeline_commit_inputs import PROJECT_PACK_KIND, PROJECT_PACK_SCHEMA, capture_document_input
+    from .timeline_commit_validation import validate_commit_value
+    validate_commit_value(pin, "DocumentPin")
+    validate_commit_value(object_id, "Digest")
+    conn = service.store.conn
+    reachable = _linked_pins(conn, project_id)
+    capture = capture_document_input(conn, project_id, pin, reachable_pins=reachable,
+                                     expected_kind=PROJECT_PACK_KIND, expected_schema=PROJECT_PACK_SCHEMA)
+    descriptor, data, _ = _pack_object(service, project_id, capture, object_id)
+    return {**descriptor, "bytes_base64": base64.b64encode(data).decode("ascii")}
 
 
 class MediaReads:

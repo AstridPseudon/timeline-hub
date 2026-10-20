@@ -297,6 +297,39 @@ paths:
         - { name: object_id, in: query, schema: { type: string, minLength: 1 } }
         - { name: version, in: query, schema: { type: integer, minimum: 1 } }
       responses: { '200': { description: Exact immutable selection, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectMediaSelection' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/media-selection/verified:
+    get:
+      operationId: getProjectVerifiedMedia
+      description: Requires projects:read. Rechecks the exact five-field selection and returns its verified catalog metadata. Unknown, duplicate, incomplete or changed pins are refused; no selection is refreshed.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: asset, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: generation_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: variant_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: object_id, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+        - { name: catalog_digest, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+      responses: { '200': { description: Exact verified media, content: { application/json: { schema: { $ref: '#/components/schemas/VerifiedMedia' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/document-objects/verified:
+    get:
+      operationId: getProjectVerifiedDocumentObject
+      description: Requires projects:read. Reads one managed snapshot object of the exact project pack DocumentPin from the authorized accepted-record closure or the live exact version. Unknown, duplicate, incomplete, unreachable or changed pins and objects are refused; nothing is refreshed or written.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: document_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: content_digest, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+        - { name: object_id, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+      responses: { '200': { description: Exact verified pack object, content: { application/json: { schema: { $ref: '#/components/schemas/VerifiedDocumentObject' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/document-inputs/verified:
+    get:
+      operationId: getProjectVerifiedDocument
+      description: Requires projects:read. Reads the exact config or project pack Document of one DocumentPin from the authorized accepted-record closure or the live exact version. Unknown, duplicate, incomplete, unreachable or changed pins are refused; nothing is refreshed or written.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: document_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: content_digest, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+      responses: { '200': { description: Exact verified Document, content: { application/json: { schema: { $ref: '#/components/schemas/VerifiedDocument' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions:
     get:
       operationId: listProjectParentCompositionRevisions
@@ -1419,6 +1452,12 @@ components:
       allOf:
         - { $ref: '#/components/schemas/CommittedMutation' }
         - { properties: { data: { $ref: '#/components/schemas/CommitAccepted' } } }
+    VerifiedMedia:
+      $ref: './schemas/timeline-commit.json#/$defs/VerifiedMedia'
+    VerifiedDocument:
+      $ref: './schemas/timeline-commit.json#/$defs/VerifiedDocument'
+    VerifiedDocumentObject:
+      $ref: './schemas/timeline-commit.json#/$defs/VerifiedDocumentObject'
     ProjectMediaSelection:
       $ref: './schemas/media-selection.json'
     CommittedMutation:

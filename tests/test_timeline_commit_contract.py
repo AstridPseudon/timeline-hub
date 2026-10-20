@@ -323,6 +323,105 @@ def test_generated_python_rejects_mismatched_preview_and_preserves_errors():
     assert caught.value.details["reason"] == "overlap"
 
 
+def test_verified_media_public_contract_and_generated_python_adapter():
+    from urllib.parse import parse_qs, urlsplit
+
+    from astrid_runtime_client import MediaSelection, VerifiedMedia
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    operation = openapi["paths"]["/v1/projects/{project_id}/media-selection/verified"]["get"]
+    assert operation["operationId"] == "getProjectVerifiedMedia"
+    parameters = [parameter for parameter in operation["parameters"] if parameter.get("in") == "query"]
+    assert {parameter["name"] for parameter in parameters} == MediaSelection.__required_keys__
+    assert all(parameter["required"] for parameter in parameters)
+    assert openapi["components"]["schemas"]["VerifiedMedia"] == {
+        "$ref": "./schemas/timeline-commit.json#/$defs/VerifiedMedia",
+    }
+    assert get_type_hints(WorkspaceClient.get_project_verified_media) == {
+        "project_id": str, "selection": MediaSelection, "return": VerifiedMedia,
+    }
+    selection = {"asset": "alias/ &", "generation_id": "g", "variant_id": "v",
+                 "object_id": DIGEST, "catalog_digest": DIGEST}
+    response = {"selection": selection, "media_type": "video/mp4", "size": 42, "duration_seconds": 2}
+    calls = []
+
+    def transport(method, path, headers, body):
+        calls.append(path)
+        assert method == "GET" and body is None
+        assert headers["Authorization"] == "Bearer token"
+        assert "Idempotency-Key" not in headers
+        assert urlsplit(path).path == "/v1/projects/project%2Fone/media-selection/verified"
+        assert parse_qs(urlsplit(path).query) == {key: [value] for key, value in selection.items()}
+        return 200, {}, json.dumps(response).encode()
+
+    assert WorkspaceClient("http://runtime", "token", transport=transport).get_project_verified_media("project/one", selection) == response
+    assert len(calls) == 1
+    assert validator("VerifiedMedia").is_valid(response)
+
+
+def test_verified_document_object_public_contract_and_generated_python_adapter():
+    from urllib.parse import parse_qs, urlsplit
+
+    from astrid_runtime_client import DocumentPin, VerifiedDocumentObject
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    operation = openapi["paths"]["/v1/projects/{project_id}/document-objects/verified"]["get"]
+    assert operation["operationId"] == "getProjectVerifiedDocumentObject"
+    parameters = [parameter for parameter in operation["parameters"] if parameter.get("in") == "query"]
+    assert {parameter["name"] for parameter in parameters} == DocumentPin.__required_keys__ | {"object_id"}
+    assert all(parameter["required"] for parameter in parameters)
+    assert openapi["components"]["schemas"]["VerifiedDocumentObject"] == {
+        "$ref": "./schemas/timeline-commit.json#/$defs/VerifiedDocumentObject",
+    }
+    assert get_type_hints(WorkspaceClient.get_project_verified_document_object) == {
+        "project_id": str, "pin": DocumentPin, "object_id": str, "return": VerifiedDocumentObject,
+    }
+    pin = {"document_id": "document:pack/1", "version": 1, "content_digest": DIGEST}
+    response = {"object_id": DIGEST, "digest": DIGEST, "size": 2, "media_type": "application/json", "bytes_base64": "e30="}
+
+    def transport(method, path, headers, body):
+        assert method == "GET" and body is None and "Idempotency-Key" not in headers
+        assert urlsplit(path).path == "/v1/projects/project%2Fone/document-objects/verified"
+        assert parse_qs(urlsplit(path).query) == {key: [str(value)] for key, value in {**pin, "object_id": DIGEST}.items()}
+        return 200, {}, json.dumps(response).encode()
+
+    client = WorkspaceClient("http://runtime", "token", transport=transport)
+    assert client.get_project_verified_document_object("project/one", pin, DIGEST) == response
+    assert validator("VerifiedDocumentObject").is_valid(response)
+
+
+def test_verified_document_public_contract_and_generated_python_adapter():
+    from urllib.parse import parse_qs, urlsplit
+
+    from astrid_runtime_client import DocumentPin, VerifiedDocument
+
+    openapi = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    operation = openapi["paths"]["/v1/projects/{project_id}/document-inputs/verified"]["get"]
+    assert operation["operationId"] == "getProjectVerifiedDocument"
+    parameters = [parameter for parameter in operation["parameters"] if parameter.get("in") == "query"]
+    assert {parameter["name"] for parameter in parameters} == DocumentPin.__required_keys__
+    assert all(parameter["required"] for parameter in parameters)
+    assert openapi["components"]["schemas"]["VerifiedDocument"] == {
+        "$ref": "./schemas/timeline-commit.json#/$defs/VerifiedDocument",
+    }
+    assert get_type_hints(WorkspaceClient.get_project_verified_document) == {
+        "project_id": str, "pin": DocumentPin, "return": VerifiedDocument,
+    }
+    pin = {"document_id": "document:pack/1", "version": 1, "content_digest": DIGEST}
+    response = {"pin": pin, "document": {"document_id": "document:pack/1", "project_id": "p", "kind": "astrid.project-pack",
+                                         "content": {}, "version": 1, "created_at": "now", "updated_at": "now"}}
+
+    def transport(method, path, headers, body):
+        assert method == "GET" and body is None and "Idempotency-Key" not in headers
+        assert urlsplit(path).path == "/v1/projects/project%2Fone/document-inputs/verified"
+        assert parse_qs(urlsplit(path).query) == {key: [str(value)] for key, value in pin.items()}
+        return 200, {}, json.dumps(response).encode()
+
+    client = WorkspaceClient("http://runtime", "token", transport=transport)
+    assert client.get_project_verified_document("project/one", pin) == response
+    assert validator("VerifiedDocument").is_valid(response)
+
+
 def test_generated_python_history_media_and_restore_adapters():
     calls = []
 

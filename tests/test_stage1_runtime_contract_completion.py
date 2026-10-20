@@ -9,7 +9,7 @@ import pytest
 
 from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProfile, bootstrap
 from astrid_runtime.paths import RuntimePaths
-from runtime_protocol.errors import AuthorizationError, ConflictError, LeaseError
+from runtime_protocol.errors import AuthorizationError, ConflictError, LeaseError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.daemon import RuntimeDaemon
@@ -43,7 +43,21 @@ def test_targeted_mutations_replay_the_same_committed_receipt(tmp_path: Path) ->
         assert relation["receipt"]["command_kind"] == "media_relation.create"
         assert service.create_media_relation(project["id"], relation_body, idempotency_key="relation-create") == relation
 
-        timeline = service.create_timeline(project["id"], "timeline", idempotency_key="timeline-create")
+        service.create_timeline(project["id"], "timeline", idempotency_key="timeline-create")
+    finally:
+        service.close()
+
+
+# Direct timeline update/archive/recover are retired (ledger D04). The receipt
+# replay they asserted returns when the commit path covers these edits
+# (Agent popup swap / occurrence media swap bundle).
+@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="ledger D04: direct timeline writes retired; awaiting commit-path replacement")
+def test_timeline_update_archive_recover_replay_the_same_committed_receipt(tmp_path: Path) -> None:
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    try:
+        project = service.create_project({"slug": "contract", "name": "Contract"})
+        service.create_timeline(project["id"], "timeline", idempotency_key="timeline-create")
         updated = service.update_timeline("timeline", {"expected_version": 1, "shots": []}, idempotency_key="timeline-update")
         assert updated["receipt"]["event_ids"]
         assert service.update_timeline("timeline", {"expected_version": 1, "shots": []}, idempotency_key="timeline-update") == updated

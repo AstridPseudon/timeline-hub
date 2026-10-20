@@ -95,6 +95,7 @@ def test_original_admission_after_new_head_and_restart(canonical_scene, status, 
 def test_door_lost_admission_ack_new_head_restart(canonical_scene, tmp_path, monkeypatch):
     f = canonical_scene
     _publish(f)
+    request = _request(f)
     root = f["service"].store.root
     f["service"].close()
     credential_file = tmp_path / "product.json"
@@ -114,7 +115,6 @@ def test_door_lost_admission_ack_new_head_restart(canonical_scene, tmp_path, mon
 
     monkeypatch.setattr(daemon.service, "create_task", lose_ack)
     connection = http.client.HTTPConnection("127.0.0.1", world.port, timeout=15)
-    request = _request(f)
     try:
         world.provision()
         connection.request("POST", "/api/runtime/v1/tasks", json.dumps(request),
@@ -401,14 +401,15 @@ def test_replay_uses_saved_digest_but_fresh_key_still_checks_readiness(canonical
 
     f = canonical_scene
     _publish(f)
-    admitted = f["service"].create_task(_request(f))
+    request = _request(f)
+    admitted = f["service"].create_task(copy.deepcopy(request))
     head = _advance(f)
     service = _reopen(f)
     try:
-        service.register_capability({"capability_id": "rendering.render", "definition_digest": _request(f)["capability_digest"],
+        service.register_capability({"capability_id": "rendering.render", "definition_digest": request["capability_digest"],
                                      "status": "unavailable", "unavailable_reason": "fixture-renderer-offline"})
         before = _state(service.store)
-        replay = service.create_task(_request(f), enforce_readiness=True)
+        replay = service.create_task(copy.deepcopy(request), enforce_readiness=True)
         assert replay["task"]["id"] == admitted["task"]["id"]
         assert replay["task"]["spec"] == admitted["task"]["spec"]
         assert _state(service.store) == before
@@ -435,7 +436,9 @@ def test_bound_execution_request_and_effect_keep_independent_replay_identity(can
         "schema_version": 1, "target": {"kind": "machine", "machine_id": "render-machine"},
         "creative_options": {"value": True},
     }
-    request["settlement_effect"] = {"effect_type": "fixture.effect", "value": True}
+    project = f["service"].get_project(f["project"])
+    request["settlement_effect"] = {"effect_type": "project.update", "target_id": project["id"],
+                                    "expected_version": project["version"], "payload": {"metadata": {"value": True}}}
     admitted = f["service"].create_task(copy.deepcopy(request))
     _advance(f)
     service = _reopen(f)
@@ -448,7 +451,7 @@ def test_bound_execution_request_and_effect_keep_independent_replay_identity(can
         assert replay["task"]["expected_effect"] == request["settlement_effect"]
         for field in ("execution_request", "settlement_effect"):
             changed = copy.deepcopy(request)
-            value = changed[field] if field == "settlement_effect" else changed[field]["creative_options"]
+            value = changed[field]["payload"]["metadata"] if field == "settlement_effect" else changed[field]["creative_options"]
             value["value"] = 1  # JSON true and 1 remain distinct after normalization.
             with pytest.raises(ConflictError, match="different input"):
                 service.create_task(changed)

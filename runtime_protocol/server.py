@@ -489,6 +489,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "POST":
                 body = self._project_mutation_body()
+                if set(body) - {"timeline_id", "name"}:
+                    raise InvalidRequestError("timeline creation accepts only timeline_id and name")
                 if "name" in body and not isinstance(body["name"], str):
                     raise InvalidRequestError("timeline name must be a string")
                 key = self.headers.get("Idempotency-Key")
@@ -515,7 +517,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 path[2], path[4], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0],
                 authorize=authorize,
             ))
-        if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "media-selection" and method == "GET":
+        if path[:2] == ["v1", "projects"] and path[3:] in (
+                ["media-selection"], ["media-selection", "verified"], ["document-objects", "verified"],
+                ["document-inputs", "verified"]) and method == "GET":
+            verified = path[3:] == ["media-selection", "verified"]
+            document = path[3] == "document-objects"
+            source = path[3] == "document-inputs"
             identity = self._identity("projects:read")
             publisher = identity["actor"]
             def authorize():
@@ -528,14 +535,36 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
             except (ValueError, UnicodeError) as exc:
                 raise ProtocolError("invalid media selection query encoding") from exc
-            forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
+            if document:
+                forms = ({"document_id", "version", "content_digest", "object_id"},)
+            elif source:
+                forms = ({"document_id", "version", "content_digest"},)
+            elif verified:
+                forms = ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},)
+            else:
+                forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
             if set(query) not in forms or any(len(values) != 1 or not values[0].strip() for values in query.values()):
-                raise ProtocolError("exactly one complete media selection selector form is required")
+                raise ProtocolError("all four exact document object fields are required" if document
+                                    else "all three exact document pin fields are required" if source
+                                    else "all five exact media selection fields are required" if verified
+                                    else "exactly one complete media selection selector form is required")
             if "version" in query:
                 if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
-                    raise ProtocolError("output version must be a positive integer")
+                    raise ProtocolError("document version must be a positive integer" if document or source
+                                        else "output version must be a positive integer")
                 query["version"] = [int(query["version"][0])]
-            return self._send(200, self.runtime.get_project_media_selection(
+            if source:
+                return self._send(200, self.runtime.get_project_verified_document(
+                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
+                    authorize=authorize,
+                ))
+            if document:
+                return self._send(200, self.runtime.get_project_verified_document_object(
+                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
+                    query["object_id"][0], authorize=authorize,
+                ))
+            read = self.runtime.get_project_verified_media if verified else self.runtime.get_project_media_selection
+            return self._send(200, read(
                 path[2], {key: values[0] for key, values in query.items()}, authorize=authorize,
             ))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":

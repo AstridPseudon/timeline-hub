@@ -24,8 +24,7 @@ def snapshot(service):
 
 
 def new_timeline(service, commits, project, timeline):
-    service.create_timeline_document(project, {"timeline_id": timeline, "slug": timeline, "name": timeline,
-                                              "config": {}, "registry": {}}, idempotency_key=timeline)
+    service.create_timeline(project, timeline, name=timeline, idempotency_key=timeline)
     return commits.bootstrap(project, timeline, authorize=lambda: None)
 
 
@@ -324,19 +323,29 @@ def shared_editing(film, request):
 
     service = RuntimeService(film.fixture.duplicate_root)
     try:
-        # Extend the existing genuine legacy film fixture before establishing
-        # its accepted baseline. All measured moves/inverses use real Agent.
-        parent = service.get_project_parent_composition_revision(
-            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["revision_id"])["payload"]
+        # HOST-BOUNDARY source acceptance only: preserve the full raw closure
+        # and persist the repeated occurrence before installing Agent tripwires.
+        # All measured moves/restores/rematerialization use the real Agent.
+        project, timeline = film.fixture.project_id, film.fixture.timeline_id
+        commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
+        commits.install_verified_baseline(project, timeline, authorize=lambda: None)
+        document = commits.revision_closure(project, timeline, film.publication["data"]["revision_id"])
+        pair = proposal(service, commits, project, timeline, "shared-shot-baseline")
+        pair[1]["canonical_document"] = document
+        document["parent_revision"]["revision_id"] = "shared-shot-baseline"
+        parent = document["parent_revision"]["payload"]
+        before = copy.deepcopy(parent["occurrences"])
         repeated = copy.deepcopy(parent["occurrences"][-1])
         repeated.update(occurrence_id="repeated-third", placement={"start_ms": 6000, "track": "picture"})
         parent["occurrences"].append(repeated)
-        service.publish_parent_composition(film.fixture.project_id, film.fixture.timeline_id, {
-            "project_id": film.fixture.project_id, "timeline_id": film.fixture.timeline_id,
-            "expected_head": film.publication["data"]["revision_id"], "parent_revision_id": "shared-shot-baseline",
-            "parent_composition": parent,
-        }, idempotency_key="shared-shot-baseline")
-        agent = request.getfixturevalue("agent")  # Disable rendering after the legacy seed.
+        pair[1]["records"]["commands"][0]["writes"] = [{
+            "ref": "parent", "path": ["occurrences"],
+            "before": {"state": "present", "value": before},
+            "after": {"state": "present", "value": copy.deepcopy(parent["occurrences"])},
+        }]
+        refresh(pair[1])
+        accept(commits, pair)
+        agent = request.getfixturevalue("agent")  # Disable rendering after source acceptance.
         service.register_timeline_commit_provider(agent.provider())
         yield Editing(service, film, agent)
     finally:

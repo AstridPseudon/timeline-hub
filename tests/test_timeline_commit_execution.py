@@ -52,6 +52,13 @@ def _winner_before_lock(realm, op):
     ctx = context(service, project, head, op=op)
     candidate = prepared(commits, ctx)
     if op == "clip.add":
+        command = candidate["records"]["commands"][0]["command"]
+        command["select"] = "parent"
+        command["args"] = {"row": {"id": "clip", "clipType": "hold", "track": "picture", "at": 2, "hold": 1}}
+        ctx["request"]["commands"][0] = copy.deepcopy(command)
+        ctx["invocation"]["body"] = copy.deepcopy(ctx["request"])
+        ctx["request_hash"] = request_identity(ctx)
+        candidate["records"]["commands"][0]["command"] = copy.deepcopy(command)
         candidate["records"]["commands"][0]["created"] = [{"ref": "parent/clip:clip", "kind": "clip", "owner": "parent"}]
     coordinator = CommitExecutionCoordinator(commits)
     missed, resume = threading.Event(), threading.Event()

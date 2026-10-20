@@ -38,6 +38,12 @@ def _admit(store, *, spec=None, effect=None, digest=DIGEST, request=None, projec
         execution_request=request, project=project)
 
 
+def _effect(store, metadata):
+    project = store.create_project("replay-effect", "Replay effect")
+    return {"effect_type": "project.update", "target_id": project["id"],
+            "expected_version": project["version"], "payload": {"metadata": metadata}}
+
+
 def _receipt_state(store, mode):
     if mode in {"partial_current", "partial_stale"}:
         store.conn.execute("UPDATE command_idempotency SET txn_id=NULL, primary_stream_id=NULL, resulting_stream_seq=NULL, first_project_seq=NULL, last_project_seq=NULL, event_ids_json=NULL WHERE command_kind='task.create'")
@@ -62,19 +68,19 @@ def _snapshot(store):
 @pytest.mark.parametrize("receipt", ["current", "stale", "absent", "partial_current", "partial_stale"])
 @pytest.mark.parametrize("changed", ["effect", "digest", "removed_effect", "effect_scalar_type"])
 def test_changed_effect_or_digest_conflicts_without_mutating_any_admission_evidence(store, receipt, changed):
-    effect = {"effect_type": "fixture.effect", "value": True}
+    effect = _effect(store, {"value": True})
     _admit(store, effect=effect)
     _receipt_state(store, receipt)
     before = _snapshot(store)
     requested_effect, requested_digest = copy.deepcopy(effect), DIGEST
     if changed == "effect":
-        requested_effect["value"] = False
+        requested_effect["payload"]["metadata"]["value"] = False
     elif changed == "digest":
         requested_digest = OTHER_DIGEST
     elif changed == "removed_effect":
         requested_effect = None
     else:
-        requested_effect["value"] = 1  # JSON true and 1 are distinct identity.
+        requested_effect["payload"]["metadata"]["value"] = 1  # JSON true and 1 are distinct identity.
     with pytest.raises(ConflictError, match="different input"):
         _admit(store, effect=requested_effect, digest=requested_digest)
     assert _snapshot(store) == before
@@ -136,11 +142,12 @@ def test_no_effect_and_omitted_digest_remain_compatible_with_persisted_evidence(
 
 @pytest.mark.parametrize("receipt", ["stale", "absent", "partial_current", "partial_stale"])
 def test_equivalent_effect_mapping_order_refreshes_without_rewriting_task(store, receipt):
-    effect = {"effect_type": "fixture.effect", "nested": {"first": 1, "second": 2}}
+    effect = _effect(store, {"nested": {"first": 1, "second": 2}})
     admitted = _admit(store, effect=effect)
     _receipt_state(store, receipt)
     before = _snapshot(store)
-    reordered = {"nested": {"second": 2, "first": 1}, "effect_type": "fixture.effect"}
+    reordered = {**dict(reversed(list(effect.items()))),
+                 "payload": {"metadata": {"nested": {"second": 2, "first": 1}}}}
     replay = _admit(store, effect=reordered)
     assert replay["task"]["id"] == admitted["task"]["id"]
     assert _snapshot(store)["tasks"] == before["tasks"]
@@ -222,7 +229,7 @@ def test_generated_http_concurrent_exact_requests_converge_and_changed_effect_co
     try:
         daemon.service.register_capability({"capability_id": CAPABILITY, "definition_digest": DIGEST})
         arguments = dict(capability_id=CAPABILITY, capability_digest=DIGEST, input_object_ids=[],
-                        idempotency_key="concurrent-admission", settlement_effect={"effect_type": "fixture.effect"})
+                        idempotency_key="concurrent-admission", settlement_effect=_effect(daemon.service.store, {}))
         def admit(_):
             return WorkspaceClient(daemon.endpoint, daemon.token).admit_task(**arguments)
         with ThreadPoolExecutor(max_workers=2) as pool:

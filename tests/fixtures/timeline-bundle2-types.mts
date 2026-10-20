@@ -2,11 +2,29 @@ import type {
   ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs,
   ClipSplitArgs, ClipTrimArgs, DocumentPin, InverseArgs, MediaSelection,
   OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs,
-  TrackCreateArgs, TrackSetArgs, VerifiedDocument, VerifiedDocumentObject,
+  TrackCreateArgs, TrackSetArgs, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia,
 } from "../../packages/typescript/src/index.js";
+import { WorkspaceClient } from "../../packages/typescript/src/index.js";
 
 const source: DocumentPin = { document_id: "pack", version: 1, content_digest: "sha256:" + "a".repeat(64) };
 const media: MediaSelection = { asset: "asset", generation_id: "g", variant_id: "v", object_id: source.content_digest, catalog_digest: source.content_digest };
+const verified: VerifiedMedia = { selection: media, media_type: "video/mp4", size: 42, duration_seconds: 2 };
+function readVerified(client: WorkspaceClient): Promise<VerifiedMedia> {
+  // @ts-expect-error The metadata read requires the complete captured pin.
+  client.getProjectVerifiedMedia("p", { asset: "a", generation_id: "g", variant_id: "v" });
+  return client.getProjectVerifiedMedia("p", media);
+}
+function readObject(client: WorkspaceClient): Promise<VerifiedDocumentObject> {
+  // @ts-expect-error The retained object read requires the complete DocumentPin.
+  client.getProjectVerifiedDocumentObject("p", { document_id: "pack" }, media.object_id);
+  return client.getProjectVerifiedDocumentObject("p", source, media.object_id);
+}
+function readDocument(client: WorkspaceClient): Promise<VerifiedDocument> {
+  // @ts-expect-error The retained document read requires the complete DocumentPin.
+  client.getProjectVerifiedDocument("p", { document_id: "pack" });
+  return client.getProjectVerifiedDocument("p", source);
+}
+void [verified, readVerified, readObject, readDocument];
 const added: ClipAddArgs = { row: { id: "c", clipType: "element", track: "v", at: 0, hold: 1, opaque: { nil: null } } };
 const popup: OccurrenceAddMediaArgs = { row: added.row, media };
 const swapped: OccurrenceSwapMediaArgs = { old_media: media, media };

@@ -16,7 +16,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.util import canonical_json
-from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
+from test_timeline_commit_integration import agent  # noqa: F401 (shared fixture)
 
 
 def validate_prepared(prepared):
@@ -36,8 +36,7 @@ def realm(tmp_path):
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     project = service.create_project({"slug": "acceptance", "name": "Acceptance"}, idempotency_key="project")["id"]
-    service.create_timeline_document(project, {"timeline_id": "main", "slug": "main", "name": "Main", "config": {}, "registry": {}},
-                                     idempotency_key="timeline")
+    service.create_timeline(project, "main", name="Main", idempotency_key="timeline")
     commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
     head = commits.bootstrap(project, "main", authorize=lambda: None)
     yield service, commits, project, head, root
@@ -307,6 +306,45 @@ def test_preview_is_validated_and_reserves_nothing(realm):
     assert counts(service) == before
 
 
+@pytest.mark.parametrize("aliases", ["equal", "parent-empty", "config-empty"])
+def test_parent_clip_aliases_preserve_opaque_values_and_exact_retry(realm, monkeypatch, aliases):
+    import runtime_protocol.visual_seam as visual_seam
+
+    def unavailable(*args, **kwargs):
+        pytest.fail("commit evaluated a scene")
+    monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+    parent = value["canonical_document"]["parent_revision"]
+    payload = parent["payload"]
+    payload["opaque"] = {"clips": None, "pinned": {"clips": [{"value": None}]}}
+    payload["config"]["app"] = {"clips": [{"opaque": None}]}
+    payload["config"]["clips"] = copy.deepcopy(payload["clips"])
+    if aliases == "parent-empty":
+        payload["clips"] = []
+    elif aliases == "config-empty":
+        payload["config"]["clips"] = []
+    parent["content_digest"] = digest(payload)
+    value["document_digest"] = digest(value["canonical_document"])
+    original = copy.deepcopy(value)
+    before = tuple(service.store.conn.iterdump())
+    preview_ctx = context(service, project, head, dry_run=True)
+    preview = commits.preview(preview_ctx, value, authorize=lambda: None)
+    assert preview["data"]["canonical_document"] == value["canonical_document"]
+    assert tuple(service.store.conn.iterdump()) == before
+    accepted = accept(commits, ctx, value)
+    assert accepted["data"]["canonical_document"] == value["canonical_document"]
+    assert commits.revision_closure(project, "main", parent["revision_id"]) == value["canonical_document"]
+    assert value == original
+    # The exact ledger retry must precede candidate structure validation.
+    value["canonical_document"]["parent_revision"]["payload"]["config"]["clips"] = [{"id": "contradictory"}]
+    monkeypatch.setattr(visual_seam, "parent_clips", unavailable)
+    before = tuple(service.store.conn.iterdump())
+    assert accept(commits, ctx, value) == accepted
+    assert tuple(service.store.conn.iterdump()) == before
+
+
 def test_history_pages_keep_fixed_bounds_and_reject_foreign_cursor(realm):
     service, commits, project, head, _ = realm
     for i in range(3):
@@ -367,23 +405,29 @@ def test_timeline_commit_retention_survives_online_and_offline_compaction(realm)
 
 
 def test_verified_baseline_keeps_main_receipt_event_and_unknown_intent(tmp_path):
-    from test_timeline_cutover import _service
+    from runtime_protocol.timeline_commit_baseline import verify_baseline
+    from timeline_commit_film_fixture import build_film_fixture
 
-    service, project, _ = _service(tmp_path)
+    film = build_film_fixture(tmp_path)
+    service = RuntimeService(film.duplicate_root)
+    project, timeline = film.project_id, film.timeline_id
     try:
         commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
-        receipt = service.committed_receipt("parent_composition.publish", "main", "publish", project_id=project)
+        # Read the immutable captured receipt, including its original times.
+        # Ordinary old-command replay may expire independently of this proof.
+        facts = verify_baseline(service.store.conn, project, timeline, read_object=service.cas.read)
+        receipt = facts["entries"][0]["receipt"]
         before = counts(service)
-        head = commits.install_verified_baseline(project, "main", authorize=lambda: None)
-        assert head == {"revision_id": "parent-1", "publication_id": receipt["receipt_id"]}
-        entry = commits.history_entry(project, "main", head["publication_id"])
+        head = commits.install_verified_baseline(project, timeline, authorize=lambda: None)
+        assert head == {"revision_id": film.parent_revision_id, "publication_id": receipt["receipt_id"]}
+        entry = commits.history_entry(project, timeline, head["publication_id"])
         assert entry["receipt"] == receipt
         assert entry["intent"] == "legacy_unknown"
         assert entry["records"] is None
         assert entry["publisher"] is None
         assert counts(service) == {**before, "timeline_commit_history": 1}
-        assert commits.install_verified_baseline(project, "main", authorize=lambda: None) == head
-        assert commits.revision_closure(project, "main", "parent-1")["shot_revisions"][0]["shot_id"] == "shot-1"
+        assert commits.install_verified_baseline(project, timeline, authorize=lambda: None) == head
+        assert commits.revision_closure(project, timeline, film.parent_revision_id)["shot_revisions"][0]["shot_id"] == "shot-1"
         assert service.store.integrity_report()["ok"]
     finally:
         service.close()
@@ -753,6 +797,13 @@ def test_nonmanaged_project_media_relation_cannot_authorize_commit(realm):
     assert commits.head(project, "main") == head
 
 
+@pytest.fixture
+def film(tmp_path):
+    from project_isolation_fixture import load_project_isolation_fixture
+
+    return load_project_isolation_fixture(tmp_path)
+
+
 @pytest.mark.integration
 def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated(film, request):
     from types import SimpleNamespace
@@ -760,52 +811,12 @@ def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.timeline_commit_port import route_path
     from test_timeline_commit_integration import Editing, assert_json_equal, inverse, rows
-    from timeline_commit_film_fixture import _publication, _transcript, read_object_from_realm
 
     service = RuntimeService(film.fixture.duplicate_root)
     try:
-        project = service.create_project({"slug": "isolated-film", "name": "Isolated Film"},
-                                         idempotency_key="isolated-project")["id"]
-        timeline = "isolated-film"
-        service.create_timeline(project, timeline, name="Film Assembly", idempotency_key="isolated-timeline")
-        media = []
-        for index, media_id in enumerate(film.fixture.media_ids[:4]):
-            imported = service.ingest(
-                project, read_object_from_realm(film.fixture.duplicate_root, media_id),
-                media_type="video/mp4" if index < 3 else "audio/wav",
-                idempotency_key=f"isolated-media-{index}",
-            )["data"]["object_id"]
-            assert imported == media_id
-            media.append(imported)
-        transcript = _transcript(media[0])
-        transcript_id = service._transcript_document_id(project, media[0], transcript["source_id"])
-        service.create_document(project, {"document_id": transcript_id, "kind": "media.transcript", "content": transcript},
-                                idempotency_key="isolated-transcript")
-        shots = tuple(service.create_project_shot(
-            project, {"shot_id": f"isolated-shot-{index}", "name": f"Shot {index}", "metadata": {"scene": index}},
-            idempotency_key=f"isolated-shot-{index}",
-        )["data"] for index in range(1, 4))
-        binding = service.set_project_shot_text_binding(
-            project, {"shot_id": shots[0]["shot_id"], "kind": "transcript", "text": "Open on the river", "expected_head": 0},
-            idempotency_key="isolated-binding",
-        )["data"]
-        seed = _publication(project, timeline, video_ids=tuple(media[:3]), music_id=media[3],
-                            shots=shots, binding=binding, transcript_document_id=transcript_id)
-        # Allocate global identities at fixture construction, never in a retry.
-        seed["parent_revision_id"] = "isolated-parent-v1"
-        for index, (internal, shot, occurrence) in enumerate(zip(
-                seed["internal_timeline_revisions"], seed["shot_revisions"],
-                seed["parent_composition"]["occurrences"]), 1):
-            internal["revision_id"] = f"isolated-internal-{index}"
-            shot["revision_id"] = f"isolated-shot-revision-{index}"
-            shot["internal_timeline_revision_id"] = internal["revision_id"]
-            occurrence["shot_revision_id"] = shot["revision_id"]
-        parent = service.get_project_parent_composition_revision(
-            film.fixture.project_id, film.fixture.timeline_id, film.publication["data"]["new_head"],
-        )["payload"]
-        for field in ("config", "registry", "clips"):
-            seed["parent_composition"][field] = copy.deepcopy(parent[field])
-        publication = service.publish_parent_composition(project, timeline, seed, idempotency_key="isolated-publication")
+        project = film.isolated.fixture.project_id
+        timeline = film.isolated.fixture.timeline_id
+        publication = film.isolated.publication
 
         # The shared Agent fixture disables rendering only after both Main API seeds.
         actual_agent = request.getfixturevalue("agent")
