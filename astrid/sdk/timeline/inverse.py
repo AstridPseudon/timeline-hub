@@ -321,6 +321,48 @@ def _legacy_inverse_sites(records, record):
     return reads, selections
 
 
+def _materialized_payload_read(state, read, record, records):
+    """Compare the entire payload in its accepted input's physical identities."""
+    if (not isinstance(records, AcceptedRecords) or not read['ref'].endswith('/shot')
+            or read['path'] != ['payload'] or read['state']['state'] != 'present'):
+        return False
+    offset = 0
+    for entry in records.entries:
+        count = len(entry['records']['commands'])
+        commands = records[offset:offset + count]
+        offset += count
+        if not any(item is record for item in commands):
+            continue
+        if not equal(commands, entry['records']['commands']):
+            raise CommandError('payload records differ from accepted history', kind='history_unavailable')
+        before, _ = records.load_boundary(entry)
+        owner = read['ref'].removesuffix('/shot')
+        prior = State(before, closures=state.closures)
+        shot = state.occurrence(owner)['shot_id']
+        if prior.occurrence(owner)['shot_id'] != shot:
+            return False
+        source = before['source_mapping']['shots'].get(shot)
+        current = state.bundle['source_mapping']['shots'].get(shot)
+        if source is None or current is None:
+            return False
+        from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+
+        expected = _remap_known_item_references(read['state']['value'], source['item_id_map'])
+        actual = state.bundle['shots'][shot]['payload']
+        link = 'internal_timeline_revision_id'
+        # Only the exact compiler link verified by each immutable closure may
+        # change. Every other payload field, including namespaces, stays exact.
+        original = before['shots'][shot]['base_payload']
+        if ((link in expected) != (link in original)
+                or expected.get(link) != original.get(link)
+                or (link in expected and expected[link] != source[link])
+                or actual.get(link) != current[link]):
+            return False
+        expected[link] = current[link]
+        return equal(expected, actual)
+    return False
+
+
 def _validate_inputs(state, record, records):
     sites = None
 
@@ -360,7 +402,8 @@ def _validate_inputs(state, record, records):
             continue
         if sites is None:
             sites = proven_sites()
-        if not any(equal(read, site) for site in sites[0]):
+        if (not any(equal(read, site) for site in sites[0])
+                and not _materialized_payload_read(state, read, record, records)):
             raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
                                ref=read['ref'], path=read['path'])
     for selected in record['selections']:
