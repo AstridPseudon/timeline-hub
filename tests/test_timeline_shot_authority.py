@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 import pytest
 
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
+from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest, route_path
@@ -114,8 +114,7 @@ def snapshot(service):
 
 OPERATIONS = (
     "project-create", "project-update", "project-archive", "project-recover",
-    "item-add", "item-remove", "item-reorder", "item-promote",
-    "binding-set", "binding-set-by-id", "binding-rebind",
+    "item-add", "item-remove", "item-reorder",
     "timeline-create", "timeline-update", "timeline-archive", "timeline-recover",
 )
 
@@ -176,28 +175,39 @@ def test_service_shot_writes_refuse_before_replay_or_writes(authority, monkeypat
 
 
 @pytest.mark.parametrize("shot", ["placed", "unused", "fresh"])
-def test_direct_store_promotion_is_closed_before_item_updates(authority, shot):
+def test_direct_store_promotion_stale_version_rolls_back_item_updates(authority, shot):
     service, _, _, _ = authority
     before = snapshot(service)
-    for expected in (1, 99):
-        with pytest.raises(RetiredRouteError):
-            service.store.promote_shot_items(shot, expected, [(f"{shot}-candidate", {"status": "primary"})], timestamp="changed")
-        assert snapshot(service) == before
+    from runtime_protocol.errors import ConflictError
+    with pytest.raises(ConflictError), service.store._transaction():
+        service.store.promote_shot_items(shot, 99, [(f"{shot}-candidate", {"status": "primary"})], timestamp="changed")
+    assert snapshot(service) == before
 
 
-@pytest.mark.parametrize("operation", ["project-update", "item-reorder", "item-promote"])
+@pytest.mark.parametrize("operation", ["project-update", "item-reorder"])
 def test_service_same_value_shot_writes_are_also_retired(authority, operation):
     service, project, media, _ = authority
     _, _, body, method, args, kwargs = invocation(operation, project, media, "placed")
     if operation == "project-update":
         body["name"] = "placed"
-    elif operation == "item-reorder":
-        body["item_ids"] = ["placed-primary", "placed-candidate"]
     else:
-        body["candidate_item_id"] = "placed-primary"
+        body["item_ids"] = ["placed-primary", "placed-candidate"]
     before = snapshot(service)
     with pytest.raises(RetiredRouteError):
         getattr(service, method)(*args, body, idempotency_key="same-value", **kwargs)
+    assert snapshot(service) == before
+
+
+@pytest.mark.parametrize(("shot", "error"), [("placed", ConflictError), ("unused", ConflictError), ("fresh", NotFoundError)])
+def test_direct_text_binding_is_limited_to_unplaced_project_shots(authority, shot, error):
+    service, project, _, _ = authority
+    before = snapshot(service)
+    with pytest.raises(error):
+        service.set_project_shot_text_binding(
+            project,
+            {"shot_id": shot, "kind": "prompt", "slot": "hero", "text": "must not write", "expected_head": 0},
+            idempotency_key="text-scope-" + shot,
+        )
     assert snapshot(service) == before
 
 
@@ -224,7 +234,7 @@ def test_authenticated_http_shot_writes_are_retired(http_authority, operation, s
     assert snapshot(daemon.service) == before
 
 
-@pytest.mark.parametrize("operation", OPERATIONS)
+@pytest.mark.parametrize("operation", (*OPERATIONS, "item-promote"))
 def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation):
     daemon, project, media = http_authority
     token, _ = daemon.credentials.provision("reader", ["projects:read"])
@@ -237,14 +247,30 @@ def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation
         assert snapshot(daemon.service) == before
 
 
-@pytest.mark.parametrize("operation", [op for op in OPERATIONS if not op.startswith("timeline-")])
+@pytest.mark.parametrize("operation", [op for op in (*OPERATIONS, "item-promote") if not op.startswith("timeline-")])
 def test_http_foreign_project_never_mutates_shot(http_authority, operation):
     daemon, _, media = http_authority
     project = daemon.service.create_project({"slug": "other", "name": "Other"})["id"]
     method, path, body, *_ = invocation(operation, project, media, "placed")
     before = snapshot(daemon.service)
     status, payload = http_request(daemon, method, path, body, daemon.token)
-    assert status == 410, payload
+    assert status == (404 if operation == "item-promote" else 410), payload
+    assert snapshot(daemon.service) == before
+
+
+def test_http_text_binding_auth_and_film_scope_checks_precede_writes(http_authority):
+    daemon, project, media = http_authority
+    method, path, body, *_ = invocation("binding-set", project, media, "unused")
+    before = snapshot(daemon.service)
+    reader, _ = daemon.credentials.provision("text-reader", ["projects:read"])
+    for credential in ("invalid", reader):
+        status, payload = http_request(daemon, method, path, body, credential)
+        assert status == 401, payload
+        assert payload["code"] == "unauthorized"
+        assert snapshot(daemon.service) == before
+    status, payload = http_request(daemon, method, path, body, daemon.token)
+    assert status == 409, payload
+    assert payload["details"]["reason"] == "shot_in_film_history"
     assert snapshot(daemon.service) == before
 
 
@@ -324,13 +350,23 @@ def test_historical_text_binding_cannot_be_changed_or_replayed(historical_bindin
         method = "rebind_project_shot_text_binding"
         body = {"binding_id": binding["binding_id"], "expected_head": binding["head"], "media_id": binding["media_id"]}
     before, changes = snapshot(service), service.store.conn.total_changes
+    if operation == "exact-set-retry":
+        if daemon:
+            from http_helpers import Api
+            replay = Api(daemon.endpoint, daemon.token).request("POST", path, body, headers={"Idempotency-Key": key})
+        else:
+            replay = getattr(service, method)(project, body, idempotency_key=key)
+        assert replay["receipt"]["command_kind"] == "shot.text_binding.set"
+        assert snapshot(service) == before
+        assert service.store.conn.total_changes == changes
+        return
     if daemon:
         from http_helpers import Api
         with pytest.raises(RuntimeError) as error:
             Api(daemon.endpoint, daemon.token).request("POST", path, body, headers={"Idempotency-Key": key})
-        assert error.value.status == 410 and error.value.detail["code"] == "retired_route"
+        assert error.value.status == 409 and error.value.detail["code"] == "conflict"
     else:
-        with pytest.raises(RetiredRouteError):
+        with pytest.raises(ConflictError):
             getattr(service, method)(project, body, idempotency_key=key)
     assert snapshot(service) == before
     assert service.store.conn.total_changes == changes
