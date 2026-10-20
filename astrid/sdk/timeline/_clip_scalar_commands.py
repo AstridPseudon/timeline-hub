@@ -25,6 +25,11 @@ def _hold_extent(ctx, ref, values, clear):
             value = ctx.read(ref, prefix + [key])
             if value is None or (key == 'fixed_start' and isinstance(value, bool)):
                 continue
+            if key == 'cut':
+                # A cut names the owning authored group; changing the source
+                # hold must preserve that identity without treating it as a
+                # timing relation.
+                continue
             if key == 'for':
                 # Preserve independent intent; only an agreeing static extent
                 # follows this explicit source-hold edit.
