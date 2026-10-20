@@ -178,7 +178,8 @@ class DetachedPort:
         for record in records:
             assert set(record) == {"ordinal", "command", "writes", "reads", "selections",
                                    "bindings", "created", "dependencies", "derived_writes"}
-        assert all(key == value for key, value in prepared["id_map"].items())
+        from astrid.sdk.timeline._materialization import id_map
+        assert prepared["id_map"] == id_map(records)
         assert prepared["semantic_events"] == []
         document = prepared["canonical_document"]
         pins = document["dependency_manifest"]["documents"]
@@ -1389,3 +1390,84 @@ def test_native_move_then_delete_succeeds_and_unsupported_batch_keeps_original_d
         realm.call([realm.move(), invalid])
     assert error.value.failure['details']['reason'] == 'unsupported_ownership'
     assert realm.head == head and len(realm.accepted) == count
+
+
+
+def test_paired_materialization_reload_inverse_redo_restore_and_second_occurrence():
+    from astrid.sdk.timeline.capture import capture_move
+    from tests.editing_conformance.test_materialization_identity import source
+    from tests.editing_conformance.test_materialization_map_spike import allocation
+
+    original = source()
+    realm = DetachedRealm(original)
+    bundle = bundle_from_document(original)
+    first = realm.call([capture_move(bundle, 'occurrence:occ-a/clip:clip-a', 3.003)])
+    mapping, bindings, dependencies = allocation(bundle, first['data']['canonical_document'])
+    assert first['data']['id_map'] == first['receipt']['result']['id_map'] == mapping
+    record = realm.entries[-1]['records']['commands'][0]
+    assert record['bindings'][-len(bindings):] == bindings
+    assert record['dependencies'][-len(dependencies):] == dependencies
+    undo = realm.call([inverse([first['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == original
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == first['data']['canonical_document']
+    assert redo['data']['id_map'] == mapping
+    restored = realm.call([restore(original)])
+    assert restored['data']['canonical_document'] == original
+    restored_head = detached(realm.head)
+    repeated = realm.call([capture_move(bundle, 'occurrence:occ-a/clip:clip-a', 3.003)])
+    assert repeated['data']['id_map'] == mapping
+    sibling = realm.call([capture_move(bundle, 'occurrence:occ-b/clip:clip-a', 12.012)],
+                         base=restored_head)
+    assert len(sibling['data']['id_map']) == 2
+    assert set(sibling['data']['id_map'].values()).isdisjoint(mapping.values())
+    assert sibling['data']['canonical_document']['parent_revision']['payload']['occurrences'][0] == (
+        repeated['data']['canonical_document']['parent_revision']['payload']['occurrences'][0])
+
+
+
+def test_inverse_of_sibling_first_rebase_uses_original_source_context():
+    from astrid.sdk.timeline.capture import capture_move
+    from tests.editing_conformance.test_materialization_identity import source
+    from tests.editing_conformance.test_materialization_map_spike import physical
+
+    original = source()
+    bundle = bundle_from_document(original)
+    realm = DetachedRealm(original)
+    first = capture_move(bundle, 'occurrence:occ-a/clip:clip-a', 3.003)
+    sibling = realm.call([capture_move(bundle, 'occurrence:occ-b/clip:clip-a', 12.012)])
+    accepted = realm.call([first], base={'revision_id': 'parent-1', 'publication_id': 'bootstrap'})
+    assert accepted['data']['status'] == 'rebased'
+    source_pin = next(dep['pin'] for dep in realm.entries[-1]['records']['commands'][0]['dependencies']
+                      if dep['key'].startswith('materialization.source:'))
+    assert source_pin['parent'] == bundle['base_parent']
+    undo = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == sibling['data']['canonical_document']
+    assert physical(undo['data']['canonical_document'], 'occ-a') == physical(original, 'occ-a')
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == accepted['data']['canonical_document']
+    assert redo['data']['id_map'] == accepted['data']['id_map']
+
+
+@pytest.mark.parametrize('codec', ['id', 'item_id'])
+def test_semantic_item_identity_stays_reserved_after_undo(monkeypatch, codec):
+    from tests.editing_conformance.test_materialization_map import item_ops
+
+    # Install the same fixture-only typed recipe used by the conformance lane.
+    item_ops.__wrapped__(monkeypatch)
+    realm = DetachedRealm(document_fixture(shared=False))
+    call = {'schema_version': 1, 'op': 'test.item-create', 'version': '1',
+            'select': 'shot:chapter-shot/item:semantic-item',
+            'args': {'row': {codec: 'semantic-item', 'opaque': [None, {'id': 'literal'}]}}}
+    first = realm.call([call])
+    assert first['data']['id_map'] == {}
+    assert realm.entries[-1]['records']['commands'][0]['created'] == [
+        {'ref': call['select'], 'kind': 'item', 'owner': 'shot:chapter-shot'}]
+    undo = realm.call([inverse([first['receipt']['receipt_id']])])
+    before = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([call])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == before
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == first['data']['canonical_document']

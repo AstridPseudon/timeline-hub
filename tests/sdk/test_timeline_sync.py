@@ -642,3 +642,95 @@ def test_blocked_read_does_not_hold_outbox_lock_or_overwrite_concurrent_work(con
     else:
         assert state["base"]["revision_id"] == "r1" and state["pending"] == [result]
         assert client.reads == ["r0", "r0", "r1"]
+
+
+def paired_ack():
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+    from tests.editing_conformance.test_materialization_identity import source
+
+    original = bundle_from_document(source())
+    call = capture_move(original, 'occurrence:occ-a/clip:clip-a', 3.003)
+    plan = execute(original, [call])
+    document = document_from_bundle(plan.bundle)
+    body = {'api_version': 1, 'project_id': 'project-1', 'timeline_id': 'film',
+            'base_revision_id': 'parent-1', 'base_publication_id': 'bootstrap', 'commands': [call]}
+    flight = {'key': 'paired-key', 'path': '/v1/projects/project-1/timelines/film/commit'}
+    identity = {'realm_id': 'realm', 'actor_id': 'actor'}
+    data = {'status': 'accepted', 'base_revision_id': 'parent-1', 'base_publication_id': 'bootstrap',
+            'previous_revision_id': 'parent-1', 'previous_publication_id': 'bootstrap',
+            'accepted_revision_id': document['parent_revision']['revision_id'],
+            'rebased_onto': None, 'publisher': 'actor', 'commands': plan.commands, 'id_map': plan.id_map,
+            'provider_version': 'astrid-v1', 'compiler_version': 'm1', 'canonical_document': document,
+            'document_digest': 'sha256:' + hashlib.sha256(canonical_json(document).encode()).hexdigest()}
+    receipt = {'receipt_id': 'paired-publication', 'command_kind': 'timeline.commit',
+               'idempotency_key': flight['key'], 'request_hash': hashlib.sha256(canonical_json({
+                   'operation': 'commitTimeline', 'path': flight['path'], 'publisher': 'actor',
+                   'request': body}).encode()).hexdigest(), 'project_id': 'project-1',
+               'project_seq': [1, 1], 'event_ids': ['paired-event'], 'result': copy.deepcopy(data),
+               'created_at': '2026-10-20T00:00:00Z'}
+    return {'data': data, 'receipt': receipt}, body, flight, identity, original
+
+
+def test_paired_ack_verifies_known_commands_original_source_and_output_closure():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    assert _ack(json.loads(json.dumps(result)), body, flight, identity,
+                source_bundle=original) == (result['data'], result['receipt'])
+
+
+@pytest.mark.parametrize('damage', ['missing', 'extra', 'wrong', 'commands', 'owner', 'item', 'scope', 'source'])
+def test_unverified_paired_ack_refuses_even_when_receipt_echoes_the_forgery(damage):
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    data = result['data']
+    if damage == 'missing':
+        data['id_map'] = {}
+    elif damage == 'extra':
+        data['id_map']['shot:extra'] = 'extra'
+    elif damage == 'wrong':
+        data['id_map'][next(iter(data['id_map']))] = 'other'
+    elif damage == 'commands':
+        data['commands'][0]['args']['on'] = 7
+    elif damage in ('owner', 'item'):
+        parent = data['canonical_document']['parent_revision']
+        row = parent['payload']['occurrences'][0]
+        row['shot_id' if damage == 'owner' else 'shot_revision_id'] = 'other'
+        parent['content_digest'] = 'sha256:' + hashlib.sha256(canonical_json(parent['payload']).encode()).hexdigest()
+        data['document_digest'] = 'sha256:' + hashlib.sha256(canonical_json(data['canonical_document']).encode()).hexdigest()
+    elif damage == 'scope':
+        original['project_id'] = 'other-project'
+    else:
+        original['source_mapping']['_runtime_document']['shot_revisions'][0]['payload']['name'] = 'forged'
+    result['receipt']['result'] = copy.deepcopy(data)
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=original)
+
+
+def test_paired_inverse_ack_requires_the_known_accepted_source_allocation():
+    from astrid.sdk.timeline.commit import document_from_bundle
+    from astrid.sdk.timeline.sync import _ack
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    result, body, flight, identity, original = paired_ack()
+    plan = execute(original, body['commands'])
+    undone = inverse(plan.bundle, plan.records)
+    body['commands'] = [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
+                         'select': None, 'args': {'publications': ['known-publication']}}]
+    returned = copy.deepcopy(undone.commands)
+    returned[0]['args'] = copy.deepcopy(body['commands'][0]['args'])
+    data = result['data']
+    data['commands'], data['id_map'] = returned, undone.id_map
+    data['canonical_document'] = document_from_bundle(undone.bundle)
+    data['accepted_revision_id'] = data['canonical_document']['parent_revision']['revision_id']
+    data['document_digest'] = 'sha256:' + hashlib.sha256(canonical_json(data['canonical_document']).encode()).hexdigest()
+    result['receipt']['request_hash'] = hashlib.sha256(canonical_json({
+        'operation': 'commitTimeline', 'path': flight['path'], 'publisher': 'actor',
+        'request': body}).encode()).hexdigest()
+    result['receipt']['result'] = copy.deepcopy(data)
+    assert _ack(result, body, flight, identity, source_bundle=plan.bundle,
+                inverse_records=plan.records)[0] == data
+    with pytest.raises(TimelineEditError, match='nonidentity'):
+        _ack(result, body, flight, identity, source_bundle=plan.bundle)

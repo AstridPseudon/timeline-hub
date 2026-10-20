@@ -355,6 +355,13 @@ def _reservation_refs(state):
             for identity in bundle['shots']}
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
+    for shot in bundle['shots'].values():
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
+    document = bundle['source_mapping'].get('_runtime_document', {})
+    for shot in document.get('shot_revisions', []):
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
     for owner in owners:
         for kind in ('clip', 'track'):
             collection = state.collection(owner, kind)
@@ -371,12 +378,15 @@ def _reservation_refs(state):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
-    from ._command_state import State, root_identity
+    from ._command_state import State, item_identity, root_identity
 
     def valid(item):
         if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
                 or not _id(item['ref']) or not _id(item['kind'])):
             return False
+        member = item_identity(item['ref'])
+        if member is not None:
+            return item['kind'] == 'item' and item['owner'] == member[0]
         root = root_identity(item['ref'])
         if root is not None:
             return (item['kind'] == root[0]
@@ -398,7 +408,11 @@ def _check_reservations(port, plan, current, rejected, base):
     # check project-wide shot occupancy/reservations before persisting a closure.
     # Inverse creates restore authenticated accepted writes. Ordinary creates
     # must never claim an identity retired by an earlier accepted publication.
-    created = [item["ref"] for record in plan.records
+    def reservation(ref):
+        member = item_identity(ref)
+        return 'item:' + member[1] if member else ref
+
+    created = [reservation(item["ref"]) for record in plan.records
                if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
     if not created:
         return
@@ -420,7 +434,7 @@ def _check_reservations(port, plan, current, rejected, base):
             check = ordinary and record['command']['op'] != 'timeline.inverse'
             claimed = set()
             for item in items:
-                ref = item['ref']
+                ref = reservation(item['ref'])
                 if check and (ref in reserved or ref in claimed):
                     raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
                 claimed.add(ref)
@@ -560,6 +574,15 @@ class RuntimeCommitService:
                                                     if later['publication_id'] not in undo_of],
                                                    CommitRejected, base, current),
                                           state=State(_load(port, context, entry['revision_id'])))
+            source_closures = {source['base_parent']['revision_id']: source for source in inverse_sources}
+            for record in inverse_records:
+                for dependency in record['dependencies']:
+                    if dependency['key'].startswith('materialization.source:'):
+                        revision = dependency['pin']['parent']['revision_id']
+                        if revision not in source_closures:
+                            source = _load(port, context, revision)
+                            source_closures[revision] = source
+                            inverse_sources.append(source)
             closures, restored_from = {}, None
             if restore:
                 from astrid.sdk.timeline.commands import validate_command
@@ -588,7 +611,7 @@ class RuntimeCommitService:
             if not closures:
                 _hydrate(port, bundle)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures)
+                               intervening_records=inverse_intervening, closures={**source_closures, **closures})
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -604,7 +627,7 @@ class RuntimeCommitService:
                         _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures)
+                                      entries, CommitRejected, base, current)], closures={**source_closures, **closures})
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {
@@ -612,7 +635,7 @@ class RuntimeCommitService:
                     "document_digest": _digest(document),
                     "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
                                 "undo_of": undo_of, "restored_from": restored_from},
-                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "id_map": copy.deepcopy(plan.id_map), "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:
