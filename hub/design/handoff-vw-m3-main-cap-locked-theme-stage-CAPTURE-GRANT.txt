@@ -1,0 +1,3 @@
+agent e2e-viewing-main6-locked-theme-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py capture
+controller_sha256=13ae060c88e4191ac49688986d6b3711aef1bb9ca794ecac74dfc8c43c2529f6
+render_sha256=89fea7c313d754fef64f6c0ca54f2564ff408570cd59f6903a3ebfcde01a7071

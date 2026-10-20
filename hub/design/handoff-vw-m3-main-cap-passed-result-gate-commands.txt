@@ -1,0 +1,31 @@
+Worker: vw-m3-main-cap-passed-result-gate
+Date: 2026-10-20
+
+# Central evidence consumed (not rerun by this worker)
+test-service summary: pass exit=0 in 38s
+command: /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-controller.py capture
+suite: e2e-viewing-main6-locked-theme-image-cap-three-stills
+tree: 23a994070b8e25aba18703af1c6a0c840df1ab62
+
+# Independent pixel measurement run
+ROOT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python \
+  "$ROOT/handoff-vw-m3-main-cap-pixel-instrument-measure.py" \
+  --source "$ROOT/handoff-vw-m3-main-image-cap-source-vector-image.png" \
+  --background-rgb 5 8 20 \
+  --control "$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-90.png" \
+  --frame 90="$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-90.png" \
+  --frame 105="$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-105.png" \
+  --frame 119="$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-119.png" \
+  --roi 192 108 1536 864 \
+  --output "$ROOT/handoff-vw-m3-main-cap-passed-result-gate-measurement.json"
+result: exit 0, status MEASURED
+
+# Read-only byte/hash verification after measurement
+sha256sum "$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-90.png" \
+  "$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-105.png" \
+  "$ROOT/handoff-vw-m3-main-cap-locked-theme-stage-frame-119.png"
+result:
+7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a  frame-90.png (34422 bytes)
+c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b  frame-105.png (34427 bytes)
+128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be  frame-119.png (34429 bytes)

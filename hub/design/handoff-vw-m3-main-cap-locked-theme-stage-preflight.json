@@ -6954,11 +6954,11 @@
       "browser": "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4"
     }
   },
-  "free_bytes": 13177413632,
+  "free_bytes": 13170819072,
   "reserve_bytes": 10737418240,
   "staging_headroom_bytes": 2283677710,
   "required_before_extraction_bytes": 13021095950,
-  "capture_grant_present": false,
+  "capture_grant_present": true,
   "capture_run": false,
   "metadata_expected_not_measured": {
     "width": 1920,

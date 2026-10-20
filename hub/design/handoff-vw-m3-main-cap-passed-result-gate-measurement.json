@@ -1,0 +1,250 @@
+{
+  "assurance": {
+    "frame_membership_rounded": false,
+    "measurement_channels": "RGB only",
+    "png_alpha_is_layer_opacity": false,
+    "realigned": false,
+    "resized": false
+  },
+  "control_confidence": {
+    "background_informative_fraction": 1.0,
+    "control_rmse": 0.0,
+    "score": 1.0,
+    "source_match_fraction": 1.0
+  },
+  "frames": {
+    "105": {
+      "channel_fraction_rgb": [
+        0.49787234,
+        0.5,
+        0.5
+      ],
+      "informative_channel_fraction": 1.0,
+      "observed_fraction": 0.5,
+      "quantization_bounds": {
+        "conservative_high": 0.504545455,
+        "conservative_low": 0.493617021,
+        "median_high": 0.504310345,
+        "median_low": 0.495454545
+      },
+      "residual_mean_abs_rgb": 0.166667,
+      "residual_p95_abs_rgb": 0.5,
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          122,
+          124,
+          130,
+          255
+        ],
+        "rgba_mean": [
+          122.0,
+          124.0,
+          130.0,
+          255.0
+        ],
+        "rgba_min": [
+          122,
+          124,
+          130,
+          255
+        ]
+      },
+      "unit_interval_fraction": 1.0
+    },
+    "119": {
+      "channel_fraction_rgb": [
+        0.034042553,
+        0.034482759,
+        0.036363636
+      ],
+      "informative_channel_fraction": 1.0,
+      "observed_fraction": 0.034482759,
+      "quantization_bounds": {
+        "conservative_high": 0.040909091,
+        "conservative_low": 0.029787234,
+        "median_high": 0.038793103,
+        "median_low": 0.030172414
+      },
+      "residual_mean_abs_rgb": 0.172414,
+      "residual_p95_abs_rgb": 0.413793,
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          13,
+          16,
+          28,
+          255
+        ],
+        "rgba_mean": [
+          13.0,
+          16.0,
+          28.0,
+          255.0
+        ],
+        "rgba_min": [
+          13,
+          16,
+          28,
+          255
+        ]
+      },
+      "unit_interval_fraction": 1.0
+    },
+    "90": {
+      "channel_fraction_rgb": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "informative_channel_fraction": 1.0,
+      "observed_fraction": 1.0,
+      "quantization_bounds": {
+        "conservative_high": 1.0,
+        "conservative_low": 0.995454545,
+        "median_high": 1.0,
+        "median_low": 0.995689655
+      },
+      "residual_mean_abs_rgb": 0.0,
+      "residual_p95_abs_rgb": 0.0,
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          240,
+          240,
+          240,
+          255
+        ],
+        "rgba_mean": [
+          240.0,
+          240.0,
+          240.0,
+          255.0
+        ],
+        "rgba_min": [
+          240,
+          240,
+          240,
+          255
+        ]
+      },
+      "unit_interval_fraction": 1.0
+    }
+  },
+  "inputs": {
+    "background": {
+      "kind": "explicit constant RGB background; no PNG alpha",
+      "rgb": [
+        5,
+        8,
+        20
+      ],
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          5,
+          8,
+          20,
+          255
+        ],
+        "rgba_mean": [
+          5.0,
+          8.0,
+          20.0,
+          255.0
+        ],
+        "rgba_min": [
+          5,
+          8,
+          20,
+          255
+        ]
+      },
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    "control": {
+      "mode": "RGB",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-frame-90.png",
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          240,
+          240,
+          240,
+          255
+        ],
+        "rgba_mean": [
+          240.0,
+          240.0,
+          240.0,
+          255.0
+        ],
+        "rgba_min": [
+          240,
+          240,
+          240,
+          255
+        ]
+      },
+      "sha256": "7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    "frames": {
+      "105": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-frame-105.png",
+        "sha256": "c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b"
+      },
+      "119": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-frame-119.png",
+        "sha256": "128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be"
+      },
+      "90": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-locked-theme-stage-frame-90.png",
+        "sha256": "7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a"
+      }
+    },
+    "source": {
+      "mode": "RGB",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-image.png",
+      "rgba": {
+        "alpha_used_for_measurement": false,
+        "rgba_max": [
+          240,
+          240,
+          240,
+          255
+        ],
+        "rgba_mean": [
+          240.0,
+          240.0,
+          240.0,
+          255.0
+        ],
+        "rgba_min": [
+          240,
+          240,
+          240,
+          255
+        ]
+      },
+      "sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "size": [
+        16,
+        16
+      ]
+    }
+  },
+  "roi_xywh": [
+    192,
+    108,
+    1536,
+    864
+  ],
+  "status": "MEASURED"
+}
