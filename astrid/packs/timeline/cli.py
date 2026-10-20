@@ -3653,7 +3653,9 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:
-    subparser.description = "Use edit move TL --project P --clip SCOPED_ID --on SECONDS to commit a guarded move."
+    subparser.description = ("Use edit move TL --clip SCOPED_ID --on SECONDS or edit track-label TL "
+                             "--track parent/track:ID --set LABEL (or --clear) for native commits. "
+                             "The detached working-copy flags below are legacy.")
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
                            help="Timeline id or slug with a saved working copy (or use --file).")
@@ -3857,7 +3859,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
-def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False) -> int:
+def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None) -> int:
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
@@ -3868,7 +3870,10 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False) -> int:
             raise TimelineEditError("--publication cannot be combined with local draft/step undo")
         session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
+        if command is not None:
+            result = session.commit(command, **options)
+        else:
+            result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
         receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
         shown = DomainResult.success(result["data"], receipt=receipt,
                                      idempotency_key=result["idempotency_key"])
@@ -3898,7 +3903,7 @@ def _configure_commit_move(subparser: argparse.ArgumentParser) -> None:
 
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
-    CommandSpec("edit", help="Commit a clip move, or edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("edit", help="Commit a native move/track label, or edit a legacy detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
@@ -4025,6 +4030,11 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
     parser.move_parser = TimelinesParser(prog="astrid timelines edit move")
     _configure_commit_move(parser.move_parser)
     parser.move_parser.set_defaults(client=client)
+    from astrid.packs.timeline.cli_native import configure_track_label
+
+    parser.track_label_parser = TimelinesParser(prog="astrid timelines edit track-label")
+    configure_track_label(parser.track_label_parser)
+    parser.track_label_parser.set_defaults(client=client)
     subparsers = parser.add_subparsers(dest="command", required=True)
     register_product_commands(
         subparsers,
