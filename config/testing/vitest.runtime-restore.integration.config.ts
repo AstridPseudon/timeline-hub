@@ -6,7 +6,7 @@ export default defineConfig({
   ...base,
   test: {
     ...base.test,
-    include: ['tests/integration/runtimeRestore.test.ts'],
+    include: ['tests/integration/runtimeRestore.test.ts', 'tests/integration/runtimePrivate392Consumer.test.ts'],
     testTimeout: 300_000,
     hookTimeout: 300_000,
   },
