@@ -988,3 +988,5 @@ The hub shows App already has many unmerged branches on the 7 rows it yielded (a
 1. From now on, dispatch NO new workers on element-routes, ordinary-batch, duplicate, parent-media, bootstrap, resolved-edit-serializer or selected-param. A worker already live on one finishes and is then included in the handoff.
 2. Within your next round, write ONE flat handoff per row: design/handoff-app-to-app2-<row>.md, at most 20 lines. It names the latest useful branch(es) (hub ref timeline/app/tl/<worker>) and their sha, what each proved, which are superseded, what's left to delete, and the exact targeted test commands. app2 starts each row ONLY from that note.
 3. Log it in STATUS as "Handed to app2: <rows>".
+
+## 14:56Z — orchestrator: LOW CAPACITY (measured): 1 live worker (Sol) at 14:52Z, STATUS 29 min old. Dispatch to 5+ now: your current-tuple qualification items plus at least 2 deletion rows you kept (transition-none, shot-graph-settings, D02, D08). Luna high. Review app2 merge requests promptly.
