@@ -1,0 +1,210 @@
+diff --git a/tests/packs/rendering/test_normal_audio_source_phase.py b/tests/packs/rendering/test_normal_audio_source_phase.py
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/test_normal_audio_source_phase.py
+@@ -0,0 +1,153 @@
++"""UNAPPLIED source/phase requirements; no host authority or socket is simulated."""
++
++import copy
++import hashlib
++import io
++import json
++import os
++import shutil
++import struct
++import wave
++from pathlib import Path
++from urllib.parse import urlsplit
++
++import pytest
++
++from astrid.core.rendering.assets import AssetMaterializer
++from astrid.core.rendering.contracts import FrameWindow
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
++from astrid.core.rendering.service import RenderService
++from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
++    prepare_normal_audio_sources,
++)
++
++
++class ContainedURLs:
++    def __init__(self, root):
++        self.root = root
++
++    def local_url(self, path):
++        return "http://attempt.invalid/" + Path(path).resolve(strict=True).relative_to(self.root).as_posix()
++
++
++@pytest.fixture
++def overlap(tmp_path):
++    objects, entries = {}, {}
++    for key, values in (("sound", (8192, -4096)), ("other", (4096, -8192))):
++        pcm = io.BytesIO()
++        with wave.open(pcm, "wb") as writer:
++            writer.setparams((2, 2, 30000, 0, "NONE", "not compressed"))
++            writer.writeframes(struct.pack("<hh", *values) * 60000)
++        objects[key] = pcm.getvalue()
++        entries[key] = {"object_id": key, "type": "audio/wav",
++                        "digest": hashlib.sha256(objects[key]).hexdigest()}
++    registry = tmp_path / "assets.json"
++    registry.write_text(json.dumps({"assets": entries}))
++    before = registry.read_bytes()
++    with AssetMaterializer(registry, materialized_objects=objects) as materializer:
++        urls = ContainedURLs(materializer.serving_root)
++        attempt = materializer.serving_root / "envelopes"
++        attempt.mkdir()
++        project = Path(os.environ.get("AUDIO_PROPOSAL_PROJECT", "remotion")).resolve()
++        tools = RemotionRuntimeTools(Path(shutil.which("node")), "test-only", project / "unused-cli")
++        props = {
++            "timeline": {
++                "tracks": [{"id": "A1", "kind": "audio", "volume": 0.5},
++                           {"id": "A2", "kind": "audio", "volume": 0.25}],
++                "clips": [{"id": key, "track": track, "asset": key, "at": 0,
++                           "from": 0, "to": 2, "volume": 3,
++                           "params": {"fadeIn": 0.5, "fadeOut": 0.5,
++                                      "fadeInCurve": "equal-power"},
++                           "app": {"astrid_shot_composition": {
++                               "source_offset": 350, "speed": 2, "gain": 2}}}
++                          for key, track in (("sound", "A1"), ("other", "A2"))],
++            },
++            "assets": materializer.resolved_registry(urls),
++            "compiledTransitions": {"fps": 30, "tracks": []},
++        }
++
++        def prepare(value):
++            return prepare_normal_audio_sources(
++                value, materializer=materializer, asset_server=urls,
++                attempt_directory=attempt, project_dir=project, runtime_tools=tools,
++            )
++
++        def wav(clip):
++            source = clip["audio"]["render_source"]
++            url = urlsplit(source["file"])
++            assert url.netloc == "attempt.invalid"
++            path = (materializer.serving_root / url.path.lstrip("/")).resolve(strict=True)
++            path.relative_to(attempt)
++            data = path.read_bytes()
++            assert struct.unpack_from("<HHI", data, 20) == (3, 2, 30000)
++            assert len(data) == 44 + 60000 * 8
++            return data
++
++        yield props, prepare, wav
++        assert registry.read_bytes() == before
++
++
++def test_same_envelope_and_clock_keep_distinct_asset_url_and_bytes(overlap):
++    props, prepare, wav = overlap
++    before = copy.deepcopy(props)
++    output = prepare(props)
++    left, right = output["timeline"]["clips"]
++    a, b = (clip["audio"]["render_source"] for clip in (left, right))
++    assert a["envelope_key"] == b["envelope_key"]
++    assert a["source_from"] == b["source_from"] == 0
++    assert a["playback_rate"] == b["playback_rate"] == 1
++    assert a["file"] != b["file"]
++    assert struct.unpack_from("<ff", wav(left), 44 + 30000 * 8) == (0.25, -0.125)
++    assert struct.unpack_from("<ff", wav(right), 44 + 30000 * 8) == (0.125, -0.25)
++    for clip in output["timeline"]["clips"]:
++        del clip["audio"]
++    assert output == before  # gain/metadata/trim and registry stay downstream
++    assert props == before
++
++
++def test_window_start_and_sliced_clip_cannot_recover_original_fade_clock(overlap):
++    props, _, _ = overlap
++    first = props["timeline"]
++    second = copy.deepcopy(first)
++    second["clips"][0].update(at=0.5, **{"from": 0.5})
++    window = FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1))
++    assert RenderService._window_timeline(first, window) == RenderService._window_timeline(second, window)
++    # Yet sound's original gain at source .5 is 1 in first, 0 in second.
++    # The owner must retain the admitted original, before this lossy transform.
++
++
++@pytest.mark.parametrize("asset", ["sound", "other"])
++@pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
++@pytest.mark.xfail(strict=True, reason="Agent source owner: preserve original envelope phase through segment slicing")
++def test_half_second_slice_preserves_both_overlapping_audio_envelopes(overlap, tracks, asset):
++    props, prepare, wav = overlap
++    props["timeline"]["clips"][1]["at"] = 0.25
++    before = copy.deepcopy(props)
++    original = prepare(props)
++    sliced_props = copy.deepcopy(props)
++    sliced_props["timeline"] = RenderService._window_timeline(
++        props["timeline"], FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
++        tracks=tracks,
++    )
++    sliced = prepare(sliced_props)
++    assert len(sliced["timeline"]["clips"]) == 2
++    assert sliced["timeline"]["metadata"]["source_window_start_seconds"] == 0.5
++    for whole, part in zip(original["timeline"]["clips"], sliced["timeline"]["clips"]):
++        if part["asset"] != asset:
++            continue
++        assert part["at"] == 0
++        assert part["from"] == (0.5 if part["asset"] == "sound" else 0.25)
++        assert part["volume"] == whole["volume"] == 3
++        assert part["app"] == whole["app"]
++        # Exact float PCM comparison at common *source* samples: no alignment,
++        # mix cancellation, scalar gain, threshold widening or new decoder.
++        full_pcm, part_pcm = wav(whole), wav(part)
++        # These samples are past the original fade-in, before its fade-out.
++        # The first is the exact .5s fade boundary; later samples catch both
++        # an unwanted new fade-in and a prematurely moved fade-out.
++        for sample in (15000, 18000, 24000, 33000):
++            assert part_pcm[44 + sample * 8:52 + sample * 8] == full_pcm[44 + sample * 8:52 + sample * 8]
++        source = part["audio"]["render_source"]
++        assert source["source_from"] == (0.5 if part["asset"] == "sound" else 8 / 30)
++        assert source["playback_rate"] == 1
++    assert props == before
+diff --git a/remotion/tests/normal-audio-source-phase.test.mjs b/remotion/tests/normal-audio-source-phase.test.mjs
+new file mode 100644
+--- /dev/null
++++ b/remotion/tests/normal-audio-source-phase.test.mjs
+@@ -0,0 +1,47 @@
++import {expect, it} from 'vitest';
++import {
++  applyAudioEnvelope, compileAudioEnvelope, computeMediaTrim, getSanitizedPlaybackRate,
++} from '@banodoco/timeline-composition/evaluation';
++
++// Test-only demonstration of the existing derived envelope representation.
++// The Agent owner must supply the admitted original at the real transform;
++// this is neither source admission nor an alternative envelope compiler.
++const translate = (envelope, delta) => ({
++  ...envelope,
++  keyframes: envelope.keyframes.map(point => ({...point, at: point.at - delta})),
++  ...(envelope.multiply && {multiply: envelope.multiply.map(child => translate(child, delta))}),
++  ...(envelope.minimum && {minimum: envelope.minimum.map(child => translate(child, delta))}),
++});
++
++it.each([
++  [30, 0, 1, 'linear'],
++  [30, 0, 1, 'equal-power'],
++  [30, 0.05, 1.5, 'equal-power'],
++  [30000 / 1001, 0.05, 1.5, 's-curve'],
++])('translates public phase without changing PCM origin at fps=%s from=%s speed=%s curve=%s', (fps, from, speed, curve) => {
++  const original = {id: 'sound', asset: 'sound', track: 'A1', at: 0, from, to: 2,
++    speed, params: {fadeIn: 0.5, fadeOut: 0.5, fadeInCurve: curve, fadeOutCurve: curve}};
++  const sliced = {...original, at: 0, from: from + 0.5 * speed, to: Math.min(original.to, from + 1.5 * speed)};
++  const q0 = computeMediaTrim(original, fps).trimBefore / fps;
++  const q1 = computeMediaTrim(sliced, fps).trimBefore / fps;
++  const rate = getSanitizedPlaybackRate(original.speed);
++  const envelope = compileAudioEnvelope(original, fps);
++  const before = JSON.stringify(envelope);
++  const derived = translate(envelope, (q1 - q0) / rate);
++  const compiled = compileAudioEnvelope({...sliced, audio: {envelope: derived}}, fps);
++  expect(compiled).toEqual(derived);
++  expect(JSON.stringify(envelope)).toBe(before);
++  const whole = [new Float32Array(90000).fill(0.25)];
++  const part = [new Float32Array(90000).fill(0.25)];
++  applyAudioEnvelope(whole, 30000, envelope, q0, rate);
++  applyAudioEnvelope(part, 30000, compiled, q1, rate);
++  // Same seven-decimal precision as the existing attempt-PCM tests. These
++  // compare the full source, with no slicing, padding or per-clip alignment.
++  for (let sample = 0; sample < whole[0].length; sample++) {
++    expect(part[0][sample]).toBeCloseTo(whole[0][sample], 7);
++  }
++  if (from === 0 && rate === 1) {
++    expect(part[0][15000]).toBe(0.25); // exact .5s slice must not restart fade
++    expect(derived.multiply[0].keyframes[0].at).toBe(-0.5);
++  }
++});
