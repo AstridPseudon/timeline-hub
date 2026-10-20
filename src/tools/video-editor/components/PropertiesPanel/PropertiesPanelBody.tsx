@@ -1,3 +1,4 @@
+import { useClipScalarControl, useClipScalarControls } from '@/tools/video-editor/hooks/useClipScalarControl.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
@@ -240,11 +241,13 @@ function PropertiesPanelComponent({
     addVariantAsGenerationAfterClip,
     isAddingVariantAsGenerationPending,
   } = hostObservations;
+  const captureScalarEdit = useClipScalarControl(selectedClip?.id);
   // At a desk the panel stays mounted and a new clip is a change it sees. On touch the clip sheet
   // mounts the panel for the clip just tapped, so that clip counts as new and opens on its own tab.
   const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
+  const captureScalarEdits = useClipScalarControls(selectedClipIdsList);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
   // canvas renders — the render-side `useDataLanes` merge — never the
   // store's frozen-empty `dataLanes` default. Fetching goes through the
@@ -489,6 +492,10 @@ function PropertiesPanelComponent({
         ) : selectedClipIds.size > 1 ? (
           <BulkInspector
             effectResources={effectResources}
+            onScalarEditsStart={() => {
+              if (readOnly) throw new Error('Timeline is read-only');
+              return captureScalarEdits();
+            }}
             clips={bulkSelectedClips}
             visibleTabs={bulkVisibleTabs}
             compositionWidth={compositionSize.width}
@@ -533,6 +540,10 @@ function PropertiesPanelComponent({
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
+            onScalarEditStart={() => {
+              if (readOnly) throw new Error('Timeline is read-only');
+              return captureScalarEdit();
+            }}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
             onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
