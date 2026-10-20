@@ -103,7 +103,7 @@ if [ $M = main ]; then
   done
 fi
 # shared kit: main publishes tools and rules; remote machines take them (PLAN changes and tool fixes propagate)
-KIT="PLAN.md COMMON.md MANAGER-COMMON.md MODELS.md COMMS.md AREA-LEAD.md"
+KIT="PLAN.md COMMON.md MANAGER-COMMON.md MODELS.md COMMS.md AREA-LEAD.md LEAD.md"
 if [ $M = main ]; then mkdir -p hub/kit/bin; cp -p $ORCH/bin/* hub/kit/bin/ 2>/dev/null; rm -f hub/kit/bin/*.bak; for f in $KIT; do cp -p $ORCH/$f hub/kit/; done
 else [ -d hub/kit ] && { for f in $KIT; do [ -f hub/kit/$f ] && cp -p hub/kit/$f $ORCH/$f; done; for f in hub/kit/bin/*; do b=$(basename $f); [ $b = hub-sync ] && continue; cmp -s $f $ORCH/bin/$b || { cp -p $f $ORCH/bin/.$b.new && mv $ORCH/bin/.$b.new $ORCH/bin/$b; }; done   # atomic: never rewrite a running script in place
   cmp -s hub/kit/bin/hub-sync $ORCH/bin/hub-sync || cp -p hub/kit/bin/hub-sync $ORCH/bin/hub-sync.next; }   # applied by hub-syncd between cycles
