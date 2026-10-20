@@ -67,4 +67,48 @@ describe('canonical render bounds', () => {
     expect(once && getClipTimelineDuration(once)).toBe(expectedDuration);
     expect(twice && getClipTimelineDuration(twice)).toBe(expectedDuration);
   });
+
+  it('uses only the private stored occurrence cap and keeps the editor clip unchanged', () => {
+    const source = canonicalClip({
+      at: 0,
+      app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 5_000, storedOccurrenceDurationMs: 4_000 } },
+    });
+    const bounded = boundCanonicalClipToOccurrence(source, 'stored');
+
+    expect(source).toMatchObject({ hold: 5, app: { canonicalTiming: { occurrenceDurationMs: 5_000 } } });
+    expect(bounded).toMatchObject({ hold: 4, app: { canonicalTiming: {
+      occurrenceDurationMs: 4_000, storedOccurrenceDurationMs: 4_000,
+    } } });
+  });
+
+  it('uses the effective cap for missing and invalid stored metadata per clip', () => {
+    const bounded = boundCanonicalConfigClips([
+      canonicalClip({
+        id: 'valid',
+        at: 0,
+        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 5_000, storedOccurrenceDurationMs: 4_000 } },
+      }),
+      canonicalClip({ id: 'missing', at: 0 }),
+      canonicalClip({
+        id: 'negative',
+        at: 0,
+        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 5_000, storedOccurrenceDurationMs: -1 } },
+      }),
+    ], 'stored');
+
+    expect(bounded).toMatchObject([
+      { id: 'valid', hold: 4, app: { canonicalTiming: { occurrenceDurationMs: 4_000 } } },
+      { id: 'missing', hold: 5, app: { canonicalTiming: { occurrenceDurationMs: 5_000 } } },
+      { id: 'negative', hold: 5, app: { canonicalTiming: { occurrenceDurationMs: 5_000, storedOccurrenceDurationMs: -1 } } },
+    ]);
+  });
+
+  it.each([NaN, Infinity, -Infinity, '4000', null])('does not clamp malformed stored metadata to zero (%s)', (storedOccurrenceDurationMs) => {
+    const bounded = boundCanonicalClipToOccurrence(canonicalClip({
+      at: 0,
+      app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 5_000, storedOccurrenceDurationMs } },
+    }), 'stored');
+
+    expect(bounded).toMatchObject({ hold: 5, app: { canonicalTiming: { occurrenceDurationMs: 5_000 } } });
+  });
 });

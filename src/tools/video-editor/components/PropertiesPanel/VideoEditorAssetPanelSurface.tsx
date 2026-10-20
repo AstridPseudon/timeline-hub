@@ -15,6 +15,8 @@ import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionS
 import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
+import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
 import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';
 import { useVideoEditorPreviewComposition } from '../PreviewPanel/useVideoEditorPreviewComposition.ts';
@@ -37,7 +39,13 @@ function VideoEditorAssetPanelSurfaceComponent({
   const store = useTimelineStoreApiSafe();
   const view = runtime?.timelineViewStore;
   const { data, preferences, resolvedConfig } = useTimelineEditorData();
-  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
+  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig, data);
+  const compiledTransitions = previewComposition.compiledTransitions;
+  const boundedDurationInFrames = useMemo(() => {
+    if (!previewComposition.config) return undefined;
+    const output = projectOutputTimelineConfig(previewComposition.config).config;
+    return getTimelineDurationInFrames(output, output.output.fps);
+  }, [previewComposition.config]);
   const framePreview = usePanelFramePreview();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const latestRuntime = useRef(runtime);
@@ -103,7 +111,15 @@ function VideoEditorAssetPanelSurfaceComponent({
     <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
       {builtInPanel}
       <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
-      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />
+      <TimelineFramePreview
+        config={previewComposition.config}
+        request={framePreview.request}
+        bounds={surfaceRef}
+        compiledTransitions={compiledTransitions}
+        boundedDurationInFrames={boundedDurationInFrames}
+        pairedConfig={previewComposition.pairedConfig}
+        projectionFact={data?.editProjection}
+      />
     </div>
   );
 }

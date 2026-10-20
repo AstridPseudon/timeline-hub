@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../../data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '../../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../../data/shotCompositionProjection.ts';
+import { projectOutputTimelineConfig } from '../../data/timelineOutputProjection.ts';
+import { compilePlayerTransitions, preparePlayerClipOpacity, preparePlayerTrack } from '../../compositions/playerEvaluation.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../../contexts/VideoEditorRuntimeContext.tsx';
 import { createTimelineStore, TimelineStoreProvider } from '../../hooks/timelineStore.ts';
 import { assembleTimelineData, type TimelineData } from '../../lib/timeline-data.ts';
@@ -13,6 +15,8 @@ import { useVideoEditorPreviewSurface } from './useVideoEditorPreviewSurface.tsx
 
 const player = vi.hoisted(() => ({
   config: null as ResolvedTimelineConfig | null,
+  compiled: null as unknown,
+  durationInFrames: null as number | null,
   delivered: [] as ResolvedTimelineConfig[],
   listeners: new Map<string, Set<() => void>>(),
 }));
@@ -22,8 +26,10 @@ const player = vi.hoisted(() => ({
 vi.mock('@remotion/player', async () => {
   const React = await import('react');
   return {
-    Player: React.forwardRef(function Player(props: { inputProps: { config: ResolvedTimelineConfig } }, ref) {
+    Player: React.forwardRef(function Player(props: { inputProps: { config: ResolvedTimelineConfig; compiledTransitions?: unknown }; durationInFrames: number }, ref) {
       player.config = props.inputProps.config;
+      player.compiled = props.inputProps.compiledTransitions;
+      player.durationInFrames = props.durationInFrames;
       player.delivered.push(props.inputProps.config);
       React.useImperativeHandle(ref, () => ({
         addEventListener: (name: string, listener: () => void) => {
@@ -131,6 +137,9 @@ function mount(initial: TimelineData, composition: ReturnType<typeof canonical> 
 }
 function advance(ms = 150) { act(() => { vi.advanceTimersByTime(ms); }); }
 function label(text: string) { expect(screen.getByTestId('preview-revision-label').textContent).toBe(text); }
+function expectPlayerConfig(config: ResolvedTimelineConfig) {
+  expect(player.config).toEqual(projectOutputTimelineConfig(dataFor(config).resolvedConfig).config);
+}
 function flushFrame() {
   act(() => {
     const pending = [...raf.values()];
@@ -143,6 +152,8 @@ let nextFrame = 0;
 beforeEach(() => {
   vi.useFakeTimers();
   player.config = null;
+  player.compiled = null;
+  player.durationInFrames = null;
   player.delivered = [];
   player.listeners.clear();
   raf = new Map();
@@ -153,13 +164,70 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('mounted command projection delivery', () => {
+  it('bounds only the private stored-cap render copy and delivers its vector, extent and label together', () => {
+    const track = { id: 'V1', kind: 'visual' as const, label: 'Picture' };
+    const vectorTrack = { id: 'V2', kind: 'visual' as const, label: 'Vector' };
+    const base = projectCanonicalComposition(canonical('R')).config;
+    const editorConfig = (storedDurationMs: number): ResolvedTimelineConfig => ({
+      ...base,
+      output: { ...base.output, fps: 30, resolution: '1280x720', file: `stored-${storedDurationMs}` },
+      tracks: [track, vectorTrack],
+      clips: [{ id: 'cap', at: 0, track: track.id, clipType: 'hold', hold: 5, asset: 'cap-image',
+        assetEntry: { type: 'image/png', src: 'https://example.test/cap.png' }, effects: { fade_out: 1 },
+        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 5_000, storedOccurrenceDurationMs: storedDurationMs } } },
+        { id: 'vector-a', at: 0, track: vectorTrack.id, clipType: 'hold', hold: 1 },
+        { id: 'vector-b', at: 1, track: vectorTrack.id, clipType: 'hold', hold: 1, transition: { type: 'fade', duration: 0.5 } }],
+      registry: base.registry,
+    });
+    const cap4000 = editorConfig(4_000);
+    const h = mount(local(cap4000), null);
+    const rendered4000 = player.config!;
+    const clip4000 = rendered4000.clips[0]!;
+    expect(cap4000.clips[0]).toMatchObject({ hold: 5, app: { canonicalTiming: { occurrenceDurationMs: 5_000 } } });
+    expect(clip4000).toMatchObject({ hold: 4, app: { canonicalTiming: { occurrenceDurationMs: 4_000 } } });
+    expect(rendered4000).not.toBe(cap4000);
+    expect(compilePlayerTransitions(rendered4000)).toBeDefined();
+    expect(player.compiled).toBeDefined();
+    expect(player.durationInFrames).toBe(120);
+    expect(preparePlayerClipOpacity(clip4000, 30)(105)).toBeCloseTo(0.5, 12);
+    expect(preparePlayerTrack(track, [clip4000], 30, 1280, 720).scene.tracks[0]!.prepared.plans[0]!.drawDuration).toBe(120);
+
+    h.update(local(cap4000, 1), 'saving');
+    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R');
+    h.update(accepted(cap4000, 'A'), 'saved');
+    expect(player.config).toBe(rendered4000);
+    advance();
+    expect(player.config).not.toBe(cap4000);
+    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed A');
+
+    const cap4500 = editorConfig(4_500);
+    h.update(local(cap4500, 2), 'saving');
+    expect(player.config!.clips[0]!.hold).toBe(4);
+    expect(player.durationInFrames).toBe(120);
+    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed A');
+    advance();
+    const rendered4500 = player.config!;
+    expect(rendered4500).not.toBe(cap4500);
+    expect(rendered4500.clips[0]).toMatchObject({ hold: 4.5, app: { canonicalTiming: { occurrenceDurationMs: 4_500 } } });
+    expect(player.durationInFrames).toBe(135);
+    expect(preparePlayerClipOpacity(rendered4500.clips[0]!, 30)(105)).toBeCloseTo(1, 12);
+    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R');
+
+    // An acknowledgement of A updates the observed head, not the retained B fact.
+    const lateAckB = { ...local(cap4500, 2), head: { ...dataFor(cap4500).head!, headRevisionId: 'A', headPublicationId: 'pub-A' } };
+    h.update(lateAckB, 'saved');
+    advance();
+    expect(player.config!.clips[0]).toMatchObject({ hold: 4.5, app: { canonicalTiming: { occurrenceDurationMs: 4_500 } } });
+    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R');
+  });
+
   it('delivers paired canonical-shot candidate geometry through project/saving, then the accepted pinned closure', () => {
     const base = projectCanonicalComposition(canonical('R')).config;
     const h = mount(dataFor(base));
     const edit = candidate(base, 1);
     h.update(local(edit), 'dirty');
     advance();
-    expect(player.config).toBe(edit);
+    expectPlayerConfig(edit);
     expect(player.config!.clips[0]).toMatchObject({ at: 1, x: 0.25 });
     label('Unsaved local · based on R');
     h.update(local(edit), 'saving');
@@ -169,10 +237,10 @@ describe('mounted command projection delivery', () => {
     const closure = projectCanonicalComposition(canonical('A', 500)).config;
     const pinnedMedia = closure.clips.find((clip) => clip.asset)!.assetEntry;
     h.update(accepted(closure), 'saved');
-    expect(player.config).toBe(edit);
+    expectPlayerConfig(edit);
     label('Unsaved local · based on R');
     advance();
-    expect(player.config).toBe(closure);
+    expectPlayerConfig(closure);
     expect(player.config!.clips.find((clip) => clip.asset)!.assetEntry).toBe(pinnedMedia);
     expect(player.config!.registry).toBe(closure.registry);
     label('Committed A');
@@ -185,12 +253,12 @@ describe('mounted command projection delivery', () => {
     label('Unsaved local · based on R');
     h.update({ ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'A', headPublicationId: 'pub-A' } }, 'saved');
     advance();
-    expect(player.config).toBe(b);
+    expectPlayerConfig(b);
     label('Unsaved local · based on R');
     h.observe(canonical('C', 700));
     h.update({ ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'C', headPublicationId: 'pub-C' } }, 'saved');
     advance();
-    expect(player.config).toBe(b);
+    expectPlayerConfig(b);
     label('Unsaved local · based on R');
   });
 
@@ -223,10 +291,10 @@ describe('mounted command projection delivery', () => {
     expect(next.signature).toBe(initial.signature);
     h.update(next, 'saved');
     advance(149);
-    expect(player.config).toBe(config);
+    expectPlayerConfig(config);
     label('Unsaved local · based on R');
     advance(1);
-    expect(player.config).toBe(nextConfig);
+    expectPlayerConfig(nextConfig);
     label('Committed A');
   });
 
@@ -235,11 +303,11 @@ describe('mounted command projection delivery', () => {
     const h = mount(local(config));
     h.update(accepted(config), 'saved');
     advance();
-    expect(player.config).toBe(config);
-    label('Unsaved local · based on R');
+    expectPlayerConfig(config);
+    label('Committed A');
     h.update(accepted(config, 'C'), 'saved');
     advance();
-    label('Unsaved local · based on R');
+    label('Committed C');
     h.update(accepted(shotShell(config), 'C'), 'saved');
     advance();
     label('Committed R');
@@ -280,7 +348,7 @@ describe('mounted command projection delivery', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
     const h = mount(accepted(config));
     h.observe(canonical('C'), Object.assign(new Error('Cannot read D'), { targetRevisionId: 'D' }));
-    expect(player.config).toBe(config);
+    expectPlayerConfig(config);
     label('Committed A');
     expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of D unavailable');
     h.observe(canonical('C'));
@@ -297,7 +365,7 @@ describe('mounted command projection delivery', () => {
     advance(100);
     h.update(local(b, 2));
     advance();
-    expect(player.config).toBe(b);
+    expectPlayerConfig(b);
     expect(player.delivered).not.toContain(a);
     label('Unsaved local · based on R');
   });
@@ -311,9 +379,9 @@ describe('mounted command projection delivery', () => {
     const b = candidate(config, 1.5);
     h.update(accepted(a));
     h.update(local(b, 2));
-    expect(player.config).toBe(config);
+    expectPlayerConfig(config);
     flushFrame();
-    expect(player.config).toBe(b);
+    expectPlayerConfig(b);
     expect(player.delivered).not.toContain(a);
     label('Unsaved local · based on R');
   });
@@ -324,7 +392,7 @@ describe('mounted command projection delivery', () => {
     const pending = candidate(config, 1);
     h.update(accepted(pending));
     h.runtime({ timelineId: 'other-timeline' });
-    expect(player.config).toBe(pending);
+    expectPlayerConfig(pending);
     advance();
     label('Committed A');
     expect(vi.getTimerCount()).toBe(0);
