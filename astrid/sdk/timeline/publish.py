@@ -180,6 +180,25 @@ class _PublishMixin:
             result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
                                                     expected_head=expected,
                                                     idempotency_key=f"{idempotency_key}-narration-{sid}"[:120])
+            err = getattr(result, "error", None)
+            if getattr(result, "ok", True) is False and getattr(err, "code", None) == "conflict":
+                # The shot already has a binding this document does not carry (an earlier pin whose document write
+                # was lost). If it holds this very text, adopt it; else bind on top of the runtime's own head.
+                import hashlib
+
+                digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+                listed = client.shots.list_text_bindings(self.bundle["project_id"], shot_id=sid, kind="voiceover_script")
+                rows = [r for r in (getattr(listed, "data", None) or []) if isinstance(r, Mapping)] if getattr(listed, "ok", False) else []
+                rows = [r for g in (getattr(listed, "data", None) or []) for r in (g if isinstance(g, list) else [g]) if isinstance(r, Mapping)] or rows
+                current = next((r for r in rows if r.get("shot_id") == sid), None)
+                if current and current.get("content_hash") == digest:
+                    result = current
+                else:
+                    actual = (getattr(err, "details", None) or {}).get("actual_head")
+                    if isinstance(actual, int) and actual != expected:
+                        result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script",
+                                                                text=text, expected_head=actual,
+                                                                idempotency_key=f"{idempotency_key}-narration-{sid}-h{actual}"[:120])
             pin = getattr(result, "data", result)
             if getattr(result, "ok", True) is False or not isinstance(pin, Mapping):
                 raise TimelineEditError(f"could not register the narration for shot {sid}: {getattr(result, 'error', result)}")

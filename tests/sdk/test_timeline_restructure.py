@@ -420,3 +420,21 @@ def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeate
     edited["shots"][new_ids[2]]["internal_timeline"]["clips"].pop()
     with pytest.raises(TimelineEditError, match="clips differ"):
         assert_copy_equals_source(stored, edited, shot_map)
+
+
+def test_pin_narration_adopts_a_binding_the_document_lost():
+    """A shot whose binding exists in the runtime but not in the document (a lost pin) must not wedge publish."""
+    import hashlib
+    from types import SimpleNamespace
+
+    tl = Checkout(flat_film())
+    text = "hello there\n"
+    digest = "sha256:" + hashlib.sha256(text.encode()).hexdigest()
+    existing = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": digest, "head": 1}
+    err = SimpleNamespace(code="conflict", details={"actual_head": 1})
+    tl.narration_changes = lambda: {"film": text}
+    client = SimpleNamespace(shots=SimpleNamespace(
+        set_text_binding=lambda *a, **k: SimpleNamespace(ok=False, error=err),
+        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=[[existing]])))
+    assert tl.pin_narration(client, idempotency_key="k") == ["film"]
+    assert tl.bundle["shots"]["film"]["payload"]["text_bindings"] == [existing]
