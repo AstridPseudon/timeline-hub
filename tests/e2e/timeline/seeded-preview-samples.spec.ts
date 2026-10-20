@@ -1,12 +1,15 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { TIMELINE_START_LEFT } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
 import { BASELINE_CLIPS, PROJECT_SLUG, TIMELINE_SLUG, browserEvidencePath, openEditor } from './support';
 
 const FPS = 30;
 const PREVIEW_SURFACE = '[data-testid="video-editor-preview-surface"]';
 const RULER = '[data-testid="timeline-ruler"]';
 const HERO_CLIP = '[data-clip-id="clip-hero"][role="button"]';
+/** Ends the composition (at 6.5s, held 4s): its right edge is where the preview stops being seekable. */
+const LAST_CLIP = '[data-clip-id="clip-detail"][role="button"]';
 
 type RulerCalibration = {
   x1: number;
@@ -23,20 +26,26 @@ async function currentPreviewTime(page: Page): Promise<number> {
   return value;
 }
 
-async function clickRulerAndReadTime(
-  page: Page,
-  x: number,
-  requireChange = true,
-): Promise<number> {
+/**
+ * Click the ruler at `x` and return the playhead time the click produced. A ruler click sets the raw
+ * pointer time at once and the preview later reports the snapped frame time; both name the same frame
+ * (`seek` rounds to the nearest frame), so the click has landed exactly when the *frame* differs from
+ * the one before it. Waiting on the frame also ignores a late snapped update from the previous click.
+ *
+ * Every click, correction clicks included, must change the frame. That holds for this fixed seed: a
+ * correction moves the pointer by at least one frame of pixels and `seek` rounds to the nearest frame.
+ * It would fail (a 5 s poll timeout, not a retry) if a sampled frame equalled the frame the preceding
+ * calibration click left, or if the zoom were low enough that a correction moved less than half a frame.
+ */
+async function clickRulerAndReadTime(page: Page, x: number): Promise<number> {
   const ruler = await page.locator(RULER).boundingBox();
   if (!ruler) throw new Error('timeline ruler has no browser box');
-  const before = await currentPreviewTime(page);
+  const beforeFrame = Math.round((await currentPreviewTime(page)) * FPS);
   await page.mouse.click(x, ruler.y + ruler.height / 2);
-  if (requireChange) {
-    await expect.poll(() => currentPreviewTime(page), { timeout: 5_000 }).not.toBe(before);
-  } else {
-    await page.waitForTimeout(100);
-  }
+  await expect.poll(
+    async () => Math.round((await currentPreviewTime(page)) * FPS),
+    { timeout: 5_000, message: `ruler click at x=${x.toFixed(2)} must move the playhead off frame ${beforeFrame}` },
+  ).not.toBe(beforeFrame);
   return currentPreviewTime(page);
 }
 
@@ -46,10 +55,20 @@ async function calibrateRuler(page: Page): Promise<RulerCalibration> {
   // Two real pointer clicks establish the screen-x to rendered-time mapping
   // for the current zoom. Anchoring from observed frame times accounts for
   // Remotion's frame snapping and avoids relying on stale pixel geometry.
-  const x1 = ruler.x + ruler.width * 0.12;
-  const x2 = ruler.x + ruler.width * 0.42;
-  const time1 = await clickRulerAndReadTime(page, x1, false);
-  const time2 = await clickRulerAndReadTime(page, x2, false);
+  // The ruler's first TIMELINE_START_LEFT pixels are the track-label gutter, where time is clamped to 0.
+  // The ruler runs on past the end of the composition, but the preview cannot: a click there reports the
+  // raw ruler time at once and then the clamped last-frame time, so which of the two a read lands on is a
+  // race and a mapping built from it is wrong. Both calibration points therefore sit inside the
+  // composition, found from the rendered right edge of its last clip, whatever width the shell leaves the ruler.
+  const lastClip = await page.locator(LAST_CLIP).boundingBox();
+  if (!lastClip) throw new Error('last clip has no browser box');
+  const axisStart = ruler.x + TIMELINE_START_LEFT;
+  const playableEnd = Math.min(lastClip.x + lastClip.width, ruler.x + ruler.width);
+  const playableWidth = playableEnd - axisStart;
+  const x1 = axisStart + playableWidth * 0.12;
+  const x2 = axisStart + playableWidth * 0.42;
+  const time1 = await clickRulerAndReadTime(page, x1);
+  const time2 = await clickRulerAndReadTime(page, x2);
   const pixelsPerSecond = (x2 - x1) / (time2 - time1);
   if (!Number.isFinite(pixelsPerSecond) || pixelsPerSecond <= 0) {
     throw new Error(`ruler calibration did not advance: ${JSON.stringify({ x1, time1, x2, time2 })}`);
@@ -127,7 +146,7 @@ test.describe('seeded browser preview samples', () => {
       let observedFrame = -1;
       let adjustments = 0;
       for (; adjustments < 4; adjustments += 1) {
-        observedTime = await clickRulerAndReadTime(page, x, adjustments === 0);
+        observedTime = await clickRulerAndReadTime(page, x);
         observedFrame = Math.round(observedTime * FPS);
         if (observedFrame === requestedFrame) break;
         x += (requestedTime - observedTime) * calibration.pixelsPerSecond;
