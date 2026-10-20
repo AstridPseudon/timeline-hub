@@ -240,6 +240,72 @@ describe('useClipEditing unconverted nonmedia single splits', () => {
   });
 });
 
+describe('useClipEditing retained single split ingresses', () => {
+  it.each([
+    ['text', { clipType: 'text', text: { content: 'keep' } }],
+    ['hold', { clipType: 'hold' }],
+    ['transition', { transition: { type: 'dissolve', duration: 0.5 } }],
+    ['animation', { animation: { keep: [null, false] } }],
+    ['animated params', { params: { fadeIn: 0.5 } }],
+    ['relational media', { app: { astrid: { on: 'anchor' } } }],
+    ['nonliteral duration', { app: { astrid: { for: 'until next cut' } } }],
+    ['nonfixed timing', { app: { astrid: { fixed_start: false } } }],
+    ['time map', { time_map: { keep: [null, false] } }],
+    ['moving media without a source window', { from: undefined, to: undefined }],
+  ])('keeps the original %s single split positive on the legacy ingress', (_name, patch) => {
+    const current = makeConfigTimelineData({
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [
+        { id: 'a', track: 'V1', clipType: 'media', asset: 'video', at: 1, hold: 4, from: 0, to: 4, ...patch },
+      ],
+    }, { assets: { video: { type: 'video', file: 'video.mp4' } } });
+    const original = structuredClone(current.resolvedConfig.clips);
+    const applyEdit = vi.fn();
+    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const selectClip = vi.fn();
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
+    const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
+      selectedClipId: 'a', selectedTrack: null, currentTime: 3, selectClip,
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplitPort: port }));
+
+    act(() => result.current.handleSplitSelectedClip());
+
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const [{ resolvedConfig }, options] = applyEdit.mock.calls[0];
+    expect(resolvedConfig.clips).toEqual([
+      { ...original[0], hold: 2 },
+      { ...original[0], id: options.selectedClipId, at: 3, hold: 2 },
+    ]);
+    expect(port.capture).not.toHaveBeenCalled();
+    expect(port.finish).not.toHaveBeenCalled();
+    expect(port.submit).not.toHaveBeenCalled();
+    expect(selectClip).not.toHaveBeenCalled();
+  });
+
+  it('retains a single split when a sibling in the raw parent collection has a transition', () => {
+    const current = makeConfigTimelineData({
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [
+        { id: 'a', track: 'V1', clipType: 'media', asset: 'video', at: 1, hold: 4, from: 0, to: 4 },
+        { id: 'b', track: 'V1', clipType: 'media', asset: 'video', at: 5, hold: 4, from: 0, to: 4,
+          transition: { type: 'dissolve', duration: 0.5 } },
+      ],
+    }, { assets: { video: { type: 'video', file: 'video.mp4' } } });
+    const applyEdit = vi.fn();
+    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
+      selectedClipId: 'a', selectedTrack: null, currentTime: 3, selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplitPort: port }));
+
+    act(() => result.current.handleSplitSelectedClip());
+
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    expect(port.capture).not.toHaveBeenCalled();
+  });
+});
+
 describe('useClipEditing retained batch split ingresses', () => {
   it.each([
     ['text', { clipType: 'text', text: { content: 'keep' } }],

@@ -439,23 +439,24 @@ describe('mounted timeline command session', () => {
     hook.unmount();
   });
 
-  it('toasts a synchronous native refusal once and returns a structured facade failure while preserving the draft and selection', async () => {
+  it('retains unsupported single media positives on the legacy ingress before native capture', async () => {
     const raw = splitDocument();
     const clips = raw.parent_revision.payload.clips as Array<Record<string, JSON>>;
     clips[0].transition = { type: 'crossfade' };
     (raw.parent_revision.payload.config as Record<string, unknown>).clips = structuredClone(clips);
     raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
-    const { hook, service, selectClip, legacyApplyEdit, snapshotSaves } = await mounted(await environment(raw));
-    const before = hook.result.current.commit.data;
-    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    const { env, hook, service, selectClip, legacyApplyEdit, snapshotSaves } = await mounted(await environment(raw));
+    const capture = vi.spyOn(hook.result.current.commands.clipSplitPort!, 'capture');
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
     act(() => hook.result.current.editing.handleSplitSelectedClip());
-    expect(error).toHaveBeenCalledTimes(1);
-    expect(service.splitClip({ clipId: 'clip-a', time: 3 })).toMatchObject({ ok: false,
-      error: { code: 'mutation_failed', message: 'clip.split v1 does not support transition' } });
-    expect(hook.result.current.commit.data).toBe(before);
+    expect(legacyApplyEdit).toHaveBeenCalledTimes(1);
+    expect(capture).not.toHaveBeenCalled();
     expect(selectClip).not.toHaveBeenCalled();
-    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(service.splitClip({ clipId: 'clip-a', time: 3 })).toMatchObject({ ok: true,
+      data: { clipId: 'clip-a', nextClipId: 'clip-a-123456' } });
+    expect(legacyApplyEdit).toHaveBeenCalledTimes(2);
     expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
     hook.unmount();
   });
 
