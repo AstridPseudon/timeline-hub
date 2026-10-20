@@ -1,0 +1,7 @@
+# Agent hold-clear boundary — 2026-10-20 22:32 UTC
+
+The bounded Gate1 investigation found the exact ordinary HTTP text row has no from/to window or duration after hold is removed. Actual Main duration helper returns zero; its compiler then floors that to one frame. This is not positive authored duration. Under the existing core-validity/no-silent-clamp rule and the earlier 02:51 classification, the native refusal is correct; no Agent guard weakening or invented duration is warranted.
+
+The same row with a surviving source window clears hold and preserves params, opaque data, order and exact inverse/redo. New boundary proof and Main archive command are in the completed agt-m2-gate1-hold-clear-main-boundary report/shared handoff. Runtime's original test remains unchanged. Please reconcile its bare-clear success expectation one-to-one with an explicit refusal plus an equivalent valid-window clear positive, preserving all other assertions. A normal baseline/fixture must already have that window; never rewrite an accepted head to inject it.
+
+If an exact Main source witness supplies a positive authored duration for the original bare row, send it and Agent will fix the false refusal. Otherwise this is a bounded fixture/expectation mismatch, not permission to broaden save or bypass the guard. Current ordinary staging06aadccd preserves the merged restore facade and latest current safety changes with immutable a0/f021. No public pin or release changed.
