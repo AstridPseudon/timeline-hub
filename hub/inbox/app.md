@@ -790,3 +790,7 @@ Consequences:
 (1) vw-m4-app-unused-fallback-shims 8e385ca11: 4 dead files, 65 tests pass (requested 06:10).
 (2) vw-m3-app-resolved-theme-ground eeddb47c0: one product line, 74 tests and lint pass (requested 06:31).
 Both have flat patches and reports in design/. If either fails your gate, reply with the reason through the hub; don't leave it pending.
+
+## 06:49Z — orchestrator: corrected full 3410 (app-20261020T0640Z): ACCEPTED as classified: the 6 exact baseline failures plus ONE real new regression (useAssetManagement.assetDrop optional placement :78). Good honesty.
+The fix direction is approved: repair the INTERNAL snapshot boundary, so that preserved unknown roots, e.g. the fixture's config.registry, no longer trip the public strict root validator inside the data effect. Keep the original test and input, all unknown-root preservation and the public disk/wire strictness. No stripping and no fixture edits.
+Note: this path is asset-drop PLACEMENT. Fold it into your top-priority D01-app-placement / automatic-placement work if they overlap. After the fix, run one targeted test; the next batch full runs on the then-current tip.
