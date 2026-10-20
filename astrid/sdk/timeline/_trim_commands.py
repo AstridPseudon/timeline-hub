@@ -104,8 +104,11 @@ def clip_trim(ctx, command):
     source_kind = _media_kind(source)
     clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
     if clip_kind == 'audio':
-        track = ctx.read('parent/track:' + str(clip['track']))
-        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
+        track_ref = 'parent/track:' + str(clip['track'])
+        track = {key: ctx.read(track_ref, [key]) for key in
+                 ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted')}
+        if (track['id'] != clip['track'] or track['kind'] != 'audio'
+                or track['role'] not in (None, 'output') or not active(track)):
             raise CommandError('clip.trim requires an active raw audio track', ref=ref)
         if source_kind != 'audio':
             raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)

@@ -145,6 +145,48 @@ def test_raw_audio_trim_replay_refuses_changed_request_duration_before_writes():
     assert clip(plan.bundle)['to'] == 8
 
 
+def test_raw_audio_trim_rebases_over_disjoint_track_label_and_records_only_track_guards():
+    original, pin = raw_audio_bundle()
+    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
+                'duration_seconds': 8}
+    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
+                                verified_media=[metadata])
+    track_reads = [read for read in command['reads']
+                   if read['ref'] == 'parent/track:music']
+    assert [read['path'] for read in track_reads] == [
+        ['id'], ['kind'], ['role'], ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']]
+    changed = copy.deepcopy(original)
+    State(changed).entity('parent/track:music')['label'] = 'Independent'
+    plan = execute(original, [command], verified_media=[metadata])
+    rebased = replay(plan, changed, verified_media=[metadata])
+    assert State(rebased.bundle).entity(REF)['to'] == 5
+    assert State(rebased.bundle).entity('parent/track:music')['label'] == 'Independent'
+
+
+@pytest.mark.parametrize('change', ['kind', 'role', 'disabled', 'identity', 'deleted'])
+def test_raw_audio_trim_replay_refuses_changed_track_eligibility_or_identity(change):
+    original, pin = raw_audio_bundle()
+    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
+                'duration_seconds': 8}
+    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
+                                verified_media=[metadata])
+    plan = execute(original, [command], verified_media=[metadata])
+    changed = copy.deepcopy(original)
+    track = State(changed).entity('parent/track:music')
+    if change == 'kind':
+        track['kind'] = 'visual'
+    elif change == 'role':
+        track['role'] = 'source'
+    elif change == 'disabled':
+        track['disabled'] = True
+    elif change == 'identity':
+        track['id'] = 'renamed'
+    else:
+        State(changed).config('parent')['tracks'].remove(track)
+    with pytest.raises(CommandError, match='original authored guard changed'):
+        replay(plan, changed, verified_media=[metadata])
+
+
 def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
     original, pin = raw_audio_bundle()
     document = original['source_mapping']['_runtime_document']
