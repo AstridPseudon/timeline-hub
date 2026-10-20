@@ -7,7 +7,8 @@ The old frame-step policy is retired deliberately; readiness, retry, mute,
 amplify, and constant base gain remain App preview behavior.
 
 Coordination status: the latest App STATUS records App M1 complete but the
-global M1 record absent, with M2/M3 merges held. Viewing status is available at /home/user/timeline-hub/hub/status/viewing.md; the latest Viewing coordination report still records no
+global M1 record absent, with M2/M3 merges held. No standalone Viewing STATUS
+file was present; the latest Viewing coordination report still records no
 actual Player-vs-export PCM parity and acknowledges the App adapter/Agent
 compiler split. Those status findings are why this handoff remains design-only.
 
@@ -209,7 +210,10 @@ The App unit tests should stay next to `AudioTrack.tsx` and prove:
 
 The existing frame-step comparator in `AudioTrack.test.tsx` and the current
 frame-table media-conformance assertions remain as historical RED baseline
-evidence. They must not be relabelled as PCM qualification or widened. The old failing comparator remains a named historical artifact in worker notes. No new it.fails/skip marker is authorized: App permits exactly the three existing group/multi/retrack markers. Any deliberate test migration must preserve the original result and be reviewed against the explicit03:20 policy decision.
+evidence. They must not be relabelled as PCM qualification or widened. During
+the implementation change, any expectations made intentionally obsolete by
+the retired callback should remain named and become strict requirement-linked
+expected failures, rather than being deleted or inverted.
 
 Viewing's qualification must use actual Player PCM versus actual final-export
 PCM with the same pinned media/closure and unchanged fail-closed timing,
@@ -224,7 +228,7 @@ does not edit the manager-owned ledger.
 
 | id | what | contradicts | replaced by | owners | milestone/status | evidence/exit |
 |---|---|---|---|---|---|---|
-| D08b (App row; shared Viewing VW-AUDIO-STEP remains with its first owner) | App `AudioTrack.tsx` per-frame `volume(frame)` envelope callback, including the old public `audioEnvelopeAt` frame-table comparator | One continuous PCM source-time gain policy | Public Composition `applyAudioEnvelope`/`audioEnvelopeWav` in App preview and the same Agent export compiler; constant base gain plus existing App lifecycle retained | App + Agent + Viewing | M3, in progress | Keep the existing frame-step RED record forever. Delete only after Agent's compiled-clock contract is published, App's real prepared/PCM adapter is live, both consumers use it, and Viewing's actual Player-vs-export PCM goldens pass without threshold widening. |
+| VW-AUDIO-STEP (proposed handoff) | App `AudioTrack.tsx` per-frame `volume(frame)` envelope callback, including the old public `audioEnvelopeAt` frame-table comparator | One continuous PCM source-time gain policy | Public Composition `applyAudioEnvelope`/`audioEnvelopeWav` in App preview and the same Agent export compiler; constant base gain plus existing App lifecycle retained | App + Agent + Viewing | M3, in progress | Keep the existing frame-step RED record forever. Delete only after Agent's compiled-clock contract is published, App's real prepared/PCM adapter is live, both consumers use it, and Viewing's actual Player-vs-export PCM goldens pass without threshold widening. |
 
 ## Blockers and decision status
 
