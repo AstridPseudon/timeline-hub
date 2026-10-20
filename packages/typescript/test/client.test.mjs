@@ -267,3 +267,19 @@ test("default fetch receives Blob directly", async () => {
     globalThis.fetch = previousFetch;
   }
 });
+
+
+test("persisted timeline view sends explicit key and preserves the plain view response", async () => {
+  const options = { formats: ["md"], revision_id: "r1" };
+  const result = { inspection: { revision_id: "r1" }, artifacts: { md: { object_id: "view-object" } } };
+  const transport = async (method, path, headers, body) => {
+    assert.equal(method, "POST");
+    assert.equal(path, "/v1/projects/p%2Fone/timelines/t%2Ftwo/views");
+    assert.equal(headers.Authorization, "Bearer writer");
+    assert.equal(headers["Idempotency-Key"], "view-retry");
+    assert.deepEqual(JSON.parse(new TextDecoder().decode(body)), options);
+    return { status: 200, headers: {}, body: json(result) };
+  };
+  const client = new WorkspaceClient("http://runtime", "writer", transport);
+  assert.deepEqual(await client.createTimelineView("p/one", "t/two", options, "view-retry"), result);
+});

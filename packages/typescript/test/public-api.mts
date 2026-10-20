@@ -36,3 +36,8 @@ void [
   projectSequence, labeledTrack, clearedTrack, missingTrackFields, missingTrackClear,
   missingTrackValues, invalidTrackLabel, invalidTrackClear,
 ];
+
+const persistedView: Promise<Record<string, unknown>> = client.createTimelineView("p", "t", {}, "view-key");
+// @ts-expect-error Persisted views require an explicit caller idempotency key.
+client.createTimelineView("p", "t", {});
+void persistedView;

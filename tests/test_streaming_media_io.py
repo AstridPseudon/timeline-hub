@@ -479,7 +479,7 @@ def test_concurrent_upload_and_real_timeline_view_preserve_health_and_receipts(p
     try:
         start_request('view', 'POST', f'/v1/projects/{project}/timelines/{timeline}/views',
                       json.dumps({'occurrence': occurrence, 'formats': ['md']}).encode(),
-                      headers={'Content-Type': 'application/json'})
+                      headers={'Content-Type': 'application/json', 'Idempotency-Key': 'concurrent-view'})
         assert view_holds_store.wait(2), 'real view route did not hold store'
         start_request('upload', 'POST', '/v1/objects', payload,
                       headers={'Idempotency-Key': 'concurrent-upload'})
