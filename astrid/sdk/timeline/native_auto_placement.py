@@ -6,12 +6,22 @@ images use placement.create, videos use occurrence.add-media. The capture dict
 names the anchor timing and the fallback it consumed. Resolution is never
 re-run on replay, so replay and inverse are exact whatever happened to the anchor.
 
-Start rule (frames at the pinned rational fps, intervals half-open):
-  anchor present  -> the anchor's end frame (start + max(1, round(duration * fps))).
-  anchor absent   -> the lane end: the greatest end frame of the occurrence's own
-                     clips on the occurrence lane, or the occurrence start if none.
+Every clip row the resolution read travels in the command's `consumed` args and the
+op records each as a guard. A later move or change of any of them conflicts at replay
+instead of landing at a stale position; the builder is then re-run on the new head.
+An exact retry of the same request still returns the same result.
+
+Start rule (frames at the pinned rational fps, intervals half-open). The intent saved
+at submit time wins; a lane or time is recomputed only when none was saved:
+  anchor present  -> the anchor's end frame (start + max(1, round(duration * fps))),
+                     on preferred_track (else the occurrence lane).
+  anchor absent   -> the saved fallback_at (global seconds) on fallback_track (else the
+                     occurrence lane); with no saved time, the lane end: the greatest end
+                     frame of the occurrence's own clips on that lane, or the occurrence
+                     start if none.
 Absent means no anchor id was given or no such clip exists in the occurrence.
-A present anchor with unusable timing refuses; it never falls back.
+A present anchor with unusable timing refuses; it never falls back. A saved track that
+no longer exists refuses (dependency_changed); it never moves to another lane.
 Completion holds are distinct from the shared 4 s hold: image 5 s, video 5 s
 unless the caller supplies the completed asset's duration.
 
@@ -26,6 +36,7 @@ shot; display IDs and unmigrated pinnedShotGroups never identify an owner):
   hold      -> 4 s for image and video; video authors the source window 0..4.
   pooled    -> shot.pool add (no clip); placing a media that is already pooled promotes it:
                the birth command plus shot.pool remove, in one batch.
+All its reads (extent, starts, anchor lane) are guarded through every clip row of the shot.
 """
 from __future__ import annotations
 
@@ -65,26 +76,30 @@ def _kind(media, verified_media):
 
 
 def _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, frame, length, ownership,
-           verified_media):
+           verified_media, consumed):
     on = float(Fraction(frame, 1) / fps)
     if kind == 'image' and lane == home:
-        return capture_placement_create(bundle, owner, clip_id, media, on, length,
-                                        ownership=ownership, verified_media=verified_media), on
+        return capture_placement_create(bundle, owner, clip_id, media, on, length, ownership=ownership,
+                                        verified_media=verified_media, consumed=consumed), on
     number(length, 'duration', positive=True)
     clip = {'id': clip_id, 'clipType': kind, 'asset': media['asset'], 'track': lane,
             'at': on - origin, 'hold': length}
     if kind == 'video':
         clip.update({'from': 0, 'to': length, 'speed': 1})
-    return capture_occurrence_add_media(bundle, owner, clip, media, verified_media=verified_media), on
+    return capture_occurrence_add_media(bundle, owner, clip, media, verified_media=verified_media,
+                                        consumed=consumed), on
 
 
 def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_media,
-                          anchor=None, duration=None):
+                          anchor=None, duration=None, preferred_track=None, fallback_at=None,
+                          fallback_track=None):
     """Return {'commands': [...], 'capture': {...}} for one completed generation.
 
     owner is occurrence:<raw ID> with ownership='occurrence'; parent-owned media
     birth is not available in this stack. clip_id is the caller-reserved raw ID
     and media the exact five-field selection of the completed variant.
+    preferred_track, fallback_at (global seconds) and fallback_track are the values
+    saved when the task was submitted.
     """
     _explicit_occurrence(owner, ownership)
     _raw_clip_id(clip_id)
@@ -93,29 +108,34 @@ def auto_place_completion(bundle, owner, clip_id, media, *, ownership, verified_
         raise CommandError('completion placement requires image or video media', kind='unsupported_media')
     state = State(bundle)
     row = state.occurrence(owner)
-    # placement.create re-checks this at replay; occurrence.add-media does not, so
-    # the video path is guarded at capture only.
+    # Both births re-check this at replay.
     if sum(1 for other in bundle['placements'] if other['shot_id'] == row['shot_id']) != 1:
         raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
     origin = occurrence_start(row)
-    lane = (row.get('placement') or {}).get('track', row.get('track'))
+    home = (row.get('placement') or {}).get('track', row.get('track'))
     fps = rate(state.config('parent').get('output', {}).get('fps'))
     clips = state.collection(owner, 'clip')
     found = next((clip for clip in clips if anchor is not None and clip.get('id') == anchor), None)
+    lane = (preferred_track if found is not None else fallback_track) or home
+    if lane != home and state.entity(owner + '/track:' + str(lane), optional=True) is None:
+        raise CommandError('saved placement track no longer exists', kind='dependency_changed', ref=owner)
     if found is not None:
-        frame, resolution = _end_frame(found, origin, fps), 'anchor-after'
+        frame, resolution, consumed = _end_frame(found, origin, fps), 'anchor-after', [found['id']]
+    elif fallback_at is not None:
+        frame = clip_start_frame({'at': number(fallback_at, 'fallback_at'), 'hold': 1}, float(fps))
+        resolution, consumed = 'fallback-at', []
     else:
         ends = [_end_frame(clip, origin, fps) for clip in clips if clip.get('track') == lane]
         frame = max(ends, default=math.floor(origin * fps + Fraction(1, 2)))
-        resolution = 'lane-end'
+        resolution, consumed = 'lane-end', [clip['id'] for clip in clips]
     length = COMPLETION_SECONDS if kind == 'image' or duration is None else duration
-    command, on = _birth(bundle, owner, clip_id, media, kind, lane, lane, origin, fps, frame, length,
-                         ownership, verified_media)
+    command, on = _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, frame, length,
+                         ownership, verified_media, consumed)
     return {'commands': [command],
             'capture': {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
                         'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
-                        'resolution': resolution, 'fps': {'numerator': fps.numerator,
-                                                          'denominator': fps.denominator},
+                        'resolution': resolution, 'lane': lane, 'consumed': consumed,
+                        'fps': {'numerator': fps.numerator, 'denominator': fps.denominator},
                         'start_frame': frame, 'on': on, 'seconds': length}}
 
 
@@ -151,9 +171,11 @@ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_medi
     found = next((clip for clip in clips if anchor is not None and clip.get('id') == anchor), None)
     home = (row.get('placement') or {}).get('track', row.get('track'))
     lane = found.get('track') if found is not None else home
+    consumed = [clip['id'] for clip in clips]
     capture = {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
                'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
-               'lane': lane, 'fps': {'numerator': fps.numerator, 'denominator': fps.denominator}}
+               'lane': lane, 'consumed': consumed,
+               'fps': {'numerator': fps.numerator, 'denominator': fps.denominator}}
     if frame is None:
         start = max((_end_frame(clip, origin, fps) for clip in clips), default=math.floor(origin * fps + Fraction(1, 2)))
         capture.update(resolution='append', extent_frame=start)
@@ -168,7 +190,7 @@ def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_medi
             start += 1
         capture.update(resolution='explicit', requested_frame=frame, skipped=skipped)
     command, on = _birth(bundle, owner, clip_id, media, kind, lane, home, origin, fps, start, SHARED_SECONDS,
-                         ownership, verified_media)
+                         ownership, verified_media, consumed)
     capture.update(start_frame=start, on=on, seconds=SHARED_SECONDS)
     commands = [command]
     pool = state.get(owner + '/source', POOL).get('value')

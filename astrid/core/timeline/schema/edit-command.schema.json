@@ -1539,6 +1539,15 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
         }
       },
       "additionalProperties": false
@@ -1609,6 +1618,15 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
         }
       }
     },

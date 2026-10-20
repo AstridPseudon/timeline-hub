@@ -23,19 +23,25 @@ It reads the caller's original bundle and returns
 
 Emitted command: image -> `placement.create` (`hold` 5); video ->
 `occurrence.add-media` with `{from: 0, to: d, hold: d, speed: 1}` where `d` is
-`duration` (the completed asset's verified length) or 5 when none is supplied.
-`d` may not exceed the verified duration. The image hold ignores `duration`.
+`duration` (supplied by the caller) or 5 when none is supplied, never the full media
+length. `d` may not exceed the verified duration, so a source shorter than 5 s refuses
+`unsupported_timing`. The image hold ignores `duration`.
 These are the completion defaults, kept distinct from the shared 4 s hold (step 2).
 
 ## Start rule
 
 Frames at the pinned rational fps, intervals half-open, using the same
 `clip_end_frame` as the compositor (`start + max(1, round(duration * fps))`).
+The intent saved at submit time (main's behaviour: old intent wins) is used as given;
+`preferred_track`, `fallback_at` (global seconds) and `fallback_track` are builder arguments.
 
-* Anchor present: start = anchor end frame.
-* Anchor absent (no id, or no such clip in the occurrence): start = lane end, the
-  greatest end frame of the occurrence's own clips on the occurrence lane; an
-  empty lane starts at the occurrence start.
+* Anchor present: start = anchor end frame, on `preferred_track` (else the occurrence lane).
+* Anchor absent (no id, or no such clip in the occurrence): start = the saved
+  `fallback_at` on `fallback_track` (else the occurrence lane).
+* Only with no saved time: start = lane end, the greatest end frame of the occurrence's own
+  clips on the lane; an empty lane starts at the occurrence start.
+* A saved track that no longer exists refuses (`dependency_changed`): the builder does not
+  move the item to another lane. The caller shows "not placed" or re-submits.
 * A present anchor with unusable timing refuses. It never falls back.
 
 The start is quantized once, exactly as `placement.create` does, and written as a
@@ -45,15 +51,26 @@ literal. New clip goes on the occurrence lane. Result must fit the occurrence
 ## Capture contract and replay
 
 `capture` = owner, clip, kind, media pin, `anchor {id, state: present|absent}`,
-`resolution` (`anchor-after|lane-end`), fps, `start_frame`, `on`, `seconds`.
-It explains the choice for the App's persisted continuation. The command's literal
-start is the authority, so:
+`resolution` (`anchor-after|fallback-at|lane-end`), `lane`, `consumed`, fps, `start_frame`,
+`on`, `seconds`. It explains the choice for the App's persisted continuation.
+The command's literal start is what lands, and every clip row the choice read is a guard:
 
-* replay and inverse are exact (no resolution is re-run);
-* if the anchor merely *moved* afterwards, replay keeps the recorded start;
-* if the anchor was *deleted* (membership changed), replay refuses via the
-  existing collection-membership guard; the caller rebuilds, which now falls
-  back to lane end and records `absent`;
+* `consumed` is the list of raw clip IDs whose rows the builder read (anchor; every clip for a
+  lane end; none for a saved `fallback_at`). It travels as the optional `consumed` arg of
+  `placement.create` and `occurrence.add-media`; the op reads each row inside the recipe
+  recorder, so each is a recorded read guard, and an ID outside the occurrence refuses.
+* an exact retry of the same request (same head) replays to identical records; inverse is exact;
+* if a consumed clip *moved or changed* afterwards (anchor start 330 vs 360, lane end 450 vs 480,
+  shared append 510 vs 540, occupied start 391, anchor lane), replay conflicts
+  (`dependency_changed`) instead of landing at the stale position. The caller rebuilds on the
+  new head, which re-reads and records the new values;
+* if a clip was *added, deleted or reordered*, replay refuses via the existing
+  collection-membership guard; a rebuild records `absent` or the new lane end;
+* a saved `fallback_at` consumes nothing, so a sibling moving does not change the approved start;
+* both births (`placement.create` and every `occurrence.add-media` branch, including videos
+  and images off the home lane) check the exclusive owner at replay, so a retargeted
+  occurrence cannot expose one birth through two scopes (replay refuses `selection_changed` on the
+  recorded `placement.owners` selection; a fresh capture refuses `unsupported_ownership`);
 * undo is the existing strict ABA of create/add-media (any intervening write to the
   created clip refuses), redo follows the removal recipe.
 
@@ -67,15 +84,16 @@ exact variant binding, shared/parent/unbound refusal, unverified/audio media,
 unusable anchor timing, anchor moved/deleted replay, guarded undo/redo and the
 provider undo/redo through `MediaRealm`.
 
-## Known gaps
+## Corrected guards (2026-10-20)
 
-* The video path (`occurrence.add-media`) has no exclusive-owner check at replay;
-  isolation is enforced at capture only. A one-line `_exclusive` in `add_media`
-  would close it but changes that op's existing goldens, so it is left for the
-  owner. (`placement.create` already re-checks at replay.)
-* Anchor *movement* is not a conflict: there is no read-only guard op, and a no-op
-  `placement.move` would write `fixed_start` intents. Guarding it needs a read of
-  the anchor inside the command, i.e. a schema change.
+Replaces the two former known gaps. `occurrence.add-media` now checks the exclusive owner
+(`_exclusive`, a `placement.owners` selection) on every branch, which adds that selection to
+the goldens `recipe_m2_occurrence_media.json` (add) and `recipe_m2_placement_create_unplace.json`
+(create). The optional closed `consumed` arg (schema `OccurrenceAddMediaArgs`,
+`PlacementCreateArgs`) is the only schema change; the vendored Runtime client types and Runtime
+artifacts still need their normal regeneration. Tests that used to assert "replay keeps the
+recorded start after the anchor/shot moved" now assert the conflict and a corrected rebuild
+(old -> new).
 
 ## Step 2 needs (out of scope)
 
@@ -106,8 +124,9 @@ non-empty `pinnedShotGroups` refuses `migration_needed`; display IDs never ident
   (capture `skipped`); interval overlap is allowed.
 * Lane: the anchor's lane when the anchor is in the shot, else the occurrence lane. The
   anchor never moves the start. Capture records anchor state, lane, extent / skipped frames.
-* Replay/inverse are exact (literal start); a deleted shot clip refuses via the existing
-  membership guard and a rebuild records `absent`.
+* Replay/inverse are exact (literal start). Every clip row of the shot is a `consumed` guard
+  (append extent, occupied starts, anchor lane): a changed clip conflicts at replay, a deleted
+  one refuses via the membership guard, and a rebuild records the new values.
 * `unplace_shared(..., keep_as_pooled=False)` = `placement.unplace` (image only; binding kept).
 
 Evidence: `test_recipe_m2_shared_auto_placement.py`, golden `recipe_m2_shared_auto_placement.json`.
@@ -159,3 +178,9 @@ the new args is a follow-up.
    select `occurrence:<id>`, args `{"duration_ms": <positive number>}`, guarded on the old
    value; the builder would emit it with the birth command. Tests use a widened window.
 3. Group migration (`timeline.migrate-groups`) lives on `tl/agt-m2-group-*` branches, not in this base.
+
+Still open (separate from the guards above): parent-owned completion births (missing parent
+births, `clip.add-media`), append growth past the occurrence window (item 2), video unplace
+(`placement.unplace` is image only), and the omitted opacity/volume/manual-track defaults of the
+old completion add. Shared placement still uses a fixed 4 s and pinned rational fps, not the old
+numeric fps default.

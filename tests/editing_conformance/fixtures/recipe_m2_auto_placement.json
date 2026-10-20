@@ -6,11 +6,16 @@
         "state": "absent"
       },
       "clip": "placed",
+      "consumed": [
+        "clip-a",
+        "clip-b"
+      ],
       "fps": {
         "denominator": 1001,
         "numerator": 30000
       },
       "kind": "image",
+      "lane": "picture",
       "media": {
         "asset": "reserved-new",
         "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -35,6 +40,10 @@
     "commands": [
       {
         "args": {
+          "consumed": [
+            "clip-a",
+            "clip-b"
+          ],
           "hold": 5,
           "id": "placed",
           "media": {
@@ -278,6 +287,61 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-a",
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 5,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-b",
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -305,19 +369,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -369,21 +420,6 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "key": "collection.tracks",
-            "members": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "order": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "owner": "occurrence:occ-a",
-            "policy": "guard-membership",
-            "query_version": 1
-          },
-          {
-            "boundaries": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
             ],
@@ -395,6 +431,21 @@
             "order": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
@@ -412,11 +463,15 @@
         "state": "present"
       },
       "clip": "placed",
+      "consumed": [
+        "clip-a"
+      ],
       "fps": {
         "denominator": 1001,
         "numerator": 30000
       },
       "kind": "image",
+      "lane": "picture",
       "media": {
         "asset": "reserved-new",
         "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -441,6 +496,9 @@
     "commands": [
       {
         "args": {
+          "consumed": [
+            "clip-a"
+          ],
           "hold": 5,
           "id": "placed",
           "media": {
@@ -684,6 +742,40 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-a",
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -711,19 +803,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -775,21 +854,6 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "key": "collection.tracks",
-            "members": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "order": [
-              "occurrence:occ-a/track:picture"
-            ],
-            "owner": "occurrence:occ-a",
-            "policy": "guard-membership",
-            "query_version": 1
-          },
-          {
-            "boundaries": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
             ],
@@ -801,6 +865,21 @@
             "order": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
@@ -818,11 +897,16 @@
         "state": "absent"
       },
       "clip": "placed",
+      "consumed": [
+        "clip-a",
+        "clip-b"
+      ],
       "fps": {
         "denominator": 1001,
         "numerator": 30000
       },
       "kind": "video",
+      "lane": "picture",
       "media": {
         "asset": "reserved-new",
         "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -850,6 +934,10 @@
     "commands": [
       {
         "args": {
+          "consumed": [
+            "clip-a",
+            "clip-b"
+          ],
           "media": {
             "asset": "reserved-new",
             "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1101,6 +1189,64 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "from": 2,
+                "hold": 4,
+                "id": "clip-a",
+                "speed": 2,
+                "to": 6,
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-b",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 5,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-b",
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -1128,19 +1274,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -1177,14 +1310,14 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
+              "shot:shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f"
             ],
-            "key": "collection.tracks",
+            "key": "placement.owners",
             "members": [
-              "occurrence:occ-a/track:picture"
+              "occurrence:occ-a"
             ],
             "order": [
-              "occurrence:occ-a/track:picture"
+              "occurrence:occ-a"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
@@ -1207,6 +1340,21 @@
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
             "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
           }
         ],
         "version": "1"
@@ -1220,11 +1368,15 @@
         "state": "present"
       },
       "clip": "placed",
+      "consumed": [
+        "clip-a"
+      ],
       "fps": {
         "denominator": 1001,
         "numerator": 30000
       },
       "kind": "video",
+      "lane": "picture",
       "media": {
         "asset": "reserved-new",
         "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1252,6 +1404,9 @@
     "commands": [
       {
         "args": {
+          "consumed": [
+            "clip-a"
+          ],
           "media": {
             "asset": "reserved-new",
             "catalog_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1503,6 +1658,43 @@
           },
           {
             "path": [],
+            "ref": "occurrence:occ-a/collection:clip",
+            "state": {
+              "state": "present",
+              "value": {
+                "members": {
+                  "state": "present",
+                  "value": []
+                }
+              }
+            }
+          },
+          {
+            "path": [],
+            "ref": "occurrence:occ-a/clip:clip-a",
+            "state": {
+              "state": "present",
+              "value": {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "from": 2,
+                "hold": 4,
+                "id": "clip-a",
+                "speed": 2,
+                "to": 6,
+                "track": "picture"
+              }
+            }
+          },
+          {
+            "path": [],
             "ref": "occurrence:occ-a/collection:track",
             "state": {
               "state": "present",
@@ -1530,19 +1722,6 @@
             "ref": "occurrence:occ-a/asset:reserved-new",
             "state": {
               "state": "absent"
-            }
-          },
-          {
-            "path": [],
-            "ref": "occurrence:occ-a/collection:clip",
-            "state": {
-              "state": "present",
-              "value": {
-                "members": {
-                  "state": "present",
-                  "value": []
-                }
-              }
             }
           },
           {
@@ -1579,14 +1758,14 @@
           },
           {
             "boundaries": [
-              "occurrence:occ-a/track:picture"
+              "shot:shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f"
             ],
-            "key": "collection.tracks",
+            "key": "placement.owners",
             "members": [
-              "occurrence:occ-a/track:picture"
+              "occurrence:occ-a"
             ],
             "order": [
-              "occurrence:occ-a/track:picture"
+              "occurrence:occ-a"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
@@ -1605,6 +1784,21 @@
             "order": [
               "occurrence:occ-a/clip:clip-a",
               "occurrence:occ-a/clip:clip-b"
+            ],
+            "owner": "occurrence:occ-a",
+            "policy": "guard-membership",
+            "query_version": 1
+          },
+          {
+            "boundaries": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "key": "collection.tracks",
+            "members": [
+              "occurrence:occ-a/track:picture"
+            ],
+            "order": [
+              "occurrence:occ-a/track:picture"
             ],
             "owner": "occurrence:occ-a",
             "policy": "guard-membership",
