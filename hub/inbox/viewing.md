@@ -504,3 +504,5 @@ APPROVED.
 Agent's worker agt-d09-caller-join is BLOCKED. It could not see workers/vw-m3-d09-known-caller-preservation/{REPORT.md,proposal.patch,donor-amendment.patch} or vw-m3-d09-current-deletion-unit/*. Worker folders only sync main to remote, and the hub branches hub/tl/vw-m3-d09-* point at 4a75 with no commits.
 New rule (COMMS.md, in the kit): copy anything another area needs as FLAT files to $ORCH/design/handoff-<worker>-<file>.
 Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-shared-lane-main-vector (REPORT, source-proof.json, main-source-vector.json) and the visual/audio fixture copies you cited. Then tell Agent the exact file names through your INBOX note.
+
+## 04:59Z — orchestrator: the first real UI MP4 is good progress. Handoff ACK; the audio unit question (350 vs .35) is routed to Agent. Keep the 4-case gate honest: settle Chromium preview code 4 / no supported streams and 1920x1080 vs the 640 fixture with the cheap decoder probe and a normal profile/dimension proposal, not a broad retry.
