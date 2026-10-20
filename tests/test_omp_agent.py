@@ -185,7 +185,22 @@ def test_toolkit_families_and_help_delegate_to_gateway(monkeypatch) -> None:
 
     assert omp_agent.main(["projects", "list", "--json"]) == 7
     assert omp_agent.main(["help"]) == 7
-    assert calls == [["projects", "list", "--json"], ["help"]]
+    assert omp_agent.main(["install", "--help"]) == 7
+    assert calls == [["projects", "list", "--json"], ["help"], ["install", "--help"]]
+
+
+def test_setup_is_a_conversational_message(monkeypatch) -> None:
+    captured = {}
+    monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda _argv: pytest.fail("setup has no gateway route"))
+    monkeypatch.setattr(omp_agent, "_installed_pack_families", lambda: frozenset())
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_a, **_kw: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(argv=argv))
+
+    assert omp_agent.main(["setup"]) == 1
+    assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
+    assert captured["argv"][-2:] == ["--print", "setup"]
 
 
 def test_top_level_help_describes_unified_agent_and_toolkit_surface(capsys) -> None:

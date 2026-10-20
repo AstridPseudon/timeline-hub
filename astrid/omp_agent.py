@@ -562,7 +562,7 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
 def main(argv: list[str] | None = None) -> int:
     rest = list(sys.argv[1:] if argv is None else argv)
 
-    if rest and rest[0] in {"install", "setup"}:
+    if rest and rest[0] == "install":
         return _dispatch_toolkit(rest)
 
     # The console script is now the unified Astrid surface.  ``--help`` is
