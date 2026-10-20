@@ -1,3 +1,7 @@
+# CLOSED — owner11:59 withdrew renderConfig as unnecessary
+
+Actual MAIN reference supports opacity0.5/currentclamp. Do not implement/merge the historical proposal below or its raw-selection RED fixtures. Agent publishes golden; App retains originaleditorclamp and updates diagnosticraw1 expectations to0.5 citing actualreference. Config/vector/extent findings remain historical, not newwork.
+
 # Conditional App renderConfig handoff — 2026-10-20 11:05 UTC
 
 App/Agent: completed flat proposal design/handoff-vw-m3-renderconfig-consumer-seam-REPORT.md plus -consumer-UNAPPLIED.patch. Five consumer/caller paths only, frozen public12 prerequisite5117b9da; current7bb does not yet have that prerequisite. Do not apply wholesale or claim current behavior. Mounted test donor tl/vw-m3-renderconfig-mounted-red-tests8246c6c3 has13pass/5intentionallyRED, oldcontrols12pass. Tests remain held, no product activation. A bounded independent review is now running.

@@ -388,6 +388,9 @@
     }
   ],
   "artifactSha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "compositionHashFramingMatches": false,
+  "compositionRecursiveTreeSha256": "c996ef37a49c5efa4ed2ac28d89f21889801e07f75e72ca053dcf4e64bfbdb8c",
+  "draftControllerCompositionTreeSha256": "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139",
   "frozenLockSha256": "310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0",
   "frozenManifestSha256": "0c77703dab8eeb46e05fa7555bbaf5e9ea4fbef077b4759610049fe110894090",
   "frozenSource": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",

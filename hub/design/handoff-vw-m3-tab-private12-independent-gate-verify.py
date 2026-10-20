@@ -99,10 +99,14 @@ def audit_evidence(baseline):
     assert lock["integrity"] == "sha512-" + base64.b64encode(hashlib.sha512(artifact).digest()).decode()
     assert sha(artifact) == "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
     members = []
+    tree_rows = []
     with tarfile.open(fileobj=io.BytesIO(artifact)) as archive:
         for member in archive.getmembers():
             assert member.isfile() and member.name.startswith("package/") and ".." not in Path(member.name).parts
-            members.append(dict(path=member.name.removeprefix("package/"), bytes=member.size, sha256=sha(archive.extractfile(member).read())))
+            data_hash = sha(archive.extractfile(member).read())
+            relative = member.name.removeprefix("package/")
+            members.append(dict(path=relative, bytes=member.size, sha256=data_hash))
+            tree_rows.append([relative, "executable" if member.mode & 0o111 else "file", data_hash])
     assert len(members) == 77
     supplied = json.loads((design / "handoff-vw-m3-app-private-clean12-graph-frozen12-members.json").read_text())
     assert members == supplied
@@ -113,7 +117,11 @@ def audit_evidence(baseline):
         assert sha(data) == expected["manifest_sha256"]
         assert json.loads(data)["version"] == expected["version"]
         peers[name] = dict(manifestSha256=sha(data), **selected[name])
-    return dict(status="REJECT", frozenSource=frozen, frozenManifestSha256=sha(manifest), frozenLockSha256=sha(lock_bytes), artifactSha256=sha(artifact), artifactMemberCount=len(members), artifactMembers=members, selected11FilteredHash=selected_hash, selected11IsWholeGraph=False, sixPeerChecks=peers, remainingSelfTargetingLinkCount=len(remaining), remainingSelfTargetingLinks=remaining, privateGraphVerified=False)
+    recursive_tree = sha(encoded(sorted(tree_rows, key=lambda row: tuple(row[0].split("/")))))
+    flat_tree = sha(encoded(sorted(tree_rows)))
+    assert recursive_tree == "c996ef37a49c5efa4ed2ac28d89f21889801e07f75e72ca053dcf4e64bfbdb8c"
+    assert flat_tree == "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139"
+    return dict(status="REJECT", compositionRecursiveTreeSha256=recursive_tree, draftControllerCompositionTreeSha256=flat_tree, compositionHashFramingMatches=False, frozenSource=frozen, frozenManifestSha256=sha(manifest), frozenLockSha256=sha(lock_bytes), artifactSha256=sha(artifact), artifactMemberCount=len(members), artifactMembers=members, selected11FilteredHash=selected_hash, selected11IsWholeGraph=False, sixPeerChecks=peers, remainingSelfTargetingLinkCount=len(remaining), remainingSelfTargetingLinks=remaining, privateGraphVerified=False)
 
 def main():
     parser = argparse.ArgumentParser()

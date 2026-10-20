@@ -1,0 +1,563 @@
+{
+  "status": "READY",
+  "ready": true,
+  "privateRoot": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project",
+  "frozenProductRoot": "0ea988bdd2907c876b82fd2620820e3fb6d6ea84",
+  "manifestSha256": "0c77703dab8eeb46e05fa7555bbaf5e9ea4fbef077b4759610049fe110894090",
+  "lockSha256": "310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0",
+  "artifact": {
+    "path": "vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+    "bytes": 58444,
+    "sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "members": 77,
+    "integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
+  },
+  "npmCi": {
+    "command": "npm ci --no-audit --no-fund",
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/npm-ci.log",
+    "node": "20.19.4",
+    "npm": "10.8.2",
+    "registryNodesWithIntegrity": 671,
+    "registryNodesMissingIntegrity": []
+  },
+  "normalPostinstall": {
+    "command": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node scripts/patches/remotion-4.0.509-audio-resume.mjs --check",
+    "exit": 0,
+    "stdout": "Read-only preflight passed for remotion@4.0.509: dist/cjs/audio/shared-audio-tags.js=patched, dist/esm/index.mjs=patched",
+    "stderr": ""
+  },
+  "pureImports": {
+    "command": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node --input-type=module -e import 'react'; import 'react-dom'; import 'remotion'; import '@remotion/media'; import '@remotion/player'; import '@remotion/layout-utils'; import '@banodoco/timeline-composition'; console.log('pure-imports-ok')",
+    "exit": 0,
+    "stdout": "pure-imports-ok",
+    "stderr": ""
+  },
+  "typeProbe": {
+    "command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/.bin/tsc --project /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/type-probe.tsconfig.json",
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "physicalGraph": {
+    "entryCount": 35641,
+    "regularFileCount": 32417,
+    "packageJsonCount": 624,
+    "symlinkCount": 36,
+    "invalidSymlinkCount": 0,
+    "allowedSymlinkPolicy": "only relative internal .bin links; all package/local links materialized as real directories",
+    "hardlinkFileCount": 4,
+    "externalHardlinkFileCount": 0,
+    "foreignDeviceFileCount": 0,
+    "missingLockNodes": [],
+    "extraPhysicalNodes": [
+      "node_modules/@babel/runtime/helpers/esm",
+      "node_modules/@banodoco/timeline-ops",
+      "node_modules/@banodoco/timeline-schema",
+      "node_modules/@base-ui/react/esm",
+      "node_modules/@base-ui/utils/esm",
+      "node_modules/@floating-ui/utils/dom",
+      "node_modules/@react-three/fiber/native",
+      "node_modules/@remotion/media/node_modules/zod/locales",
+      "node_modules/@remotion/media/node_modules/zod/mini",
+      "node_modules/@remotion/media/node_modules/zod/v3",
+      "node_modules/@remotion/media/node_modules/zod/v4",
+      "node_modules/@remotion/media/node_modules/zod/v4-mini",
+      "node_modules/@remotion/media/node_modules/zod/v4/classic",
+      "node_modules/@remotion/media/node_modules/zod/v4/core",
+      "node_modules/@remotion/media/node_modules/zod/v4/locales",
+      "node_modules/@remotion/media/node_modules/zod/v4/mini",
+      "node_modules/@tanstack/react-query/build/query-codemods",
+      "node_modules/@testing-library/user-event/dist/cjs",
+      "node_modules/@testing-library/user-event/dist/esm",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/balanced-match/dist/commonjs",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/balanced-match/dist/esm",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion/dist/commonjs",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion/dist/esm",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch/dist/commonjs",
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch/dist/esm",
+      "node_modules/@ungap/structured-clone/cjs",
+      "node_modules/fake-indexeddb",
+      "node_modules/flatted/cjs",
+      "node_modules/lru-cache/dist/commonjs",
+      "node_modules/lru-cache/dist/esm",
+      "node_modules/nanoid/async",
+      "node_modules/nanoid/non-secure",
+      "node_modules/nanoid/url-alphabet",
+      "node_modules/react-remove-scroll-bar/constants",
+      "node_modules/react-remove-scroll/UI",
+      "node_modules/react-remove-scroll/sidecar",
+      "node_modules/resolve/test/module_dir/zmodules/bbb",
+      "node_modules/resolve/test/resolver/baz",
+      "node_modules/resolve/test/resolver/browser_field",
+      "node_modules/resolve/test/resolver/dot_main",
+      "node_modules/resolve/test/resolver/dot_slash_main",
+      "node_modules/resolve/test/resolver/false_main",
+      "node_modules/resolve/test/resolver/incorrect_main",
+      "node_modules/resolve/test/resolver/invalid_main",
+      "node_modules/resolve/test/resolver/multirepo",
+      "node_modules/resolve/test/resolver/multirepo/packages/package-a",
+      "node_modules/resolve/test/resolver/multirepo/packages/package-b",
+      "node_modules/resolve/test/resolver/nested_symlinks/mylib",
+      "node_modules/resolve/test/resolver/symlinked/package",
+      "node_modules/rollup/dist/es",
+      "node_modules/tslib/modules",
+      "node_modules/vite/types",
+      "node_modules/zod/locales",
+      "node_modules/zod/mini",
+      "node_modules/zod/v3",
+      "node_modules/zod/v4",
+      "node_modules/zod/v4-mini",
+      "node_modules/zod/v4/classic",
+      "node_modules/zod/v4/core",
+      "node_modules/zod/v4/locales",
+      "node_modules/zod/v4/mini"
+    ],
+    "versionMismatches": []
+  },
+  "peers": {
+    "react": {
+      "version": "18.3.1",
+      "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "tree": {
+        "sha256": "d2db38902658bec64dbaf9fe24c53cd2eedd03fd9a0ead4dcecacf04d24199ea",
+        "fileCount": 400
+      }
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "tree": {
+        "sha256": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4",
+        "fileCount": 784
+      }
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    }
+  },
+  "artifactMembers": [
+    {
+      "path": "dist/animations.generated.js",
+      "bytes": 245,
+      "sha256": "fa4b15b205f4dee8dc8b20f2ea2036e505ef1cdcd1e06b66c9be85863ad124ec"
+    },
+    {
+      "path": "dist/chunk-BLDFPOW3.js",
+      "bytes": 12419,
+      "sha256": "e296054fd6189c1458196dddb549381eccaa07056ed752f5c083e583fa10f6bf"
+    },
+    {
+      "path": "dist/chunk-DMRW7SC3.js",
+      "bytes": 41521,
+      "sha256": "6b611144f2f9689048ff739e0c33a3700010999b13897fe03448336da07d3b1d"
+    },
+    {
+      "path": "dist/chunk-DUR3GNZH.js",
+      "bytes": 5856,
+      "sha256": "7761523b704a585a09c0d9e45f2dd0edc0f6c9889aaf2d0d9d679cfc8ec23df3"
+    },
+    {
+      "path": "dist/chunk-GWYPEUCA.js",
+      "bytes": 11312,
+      "sha256": "0423ede380691a48bd734c4d8aa356d697bdf1f268ee302bbc6e5f605d1d31ee"
+    },
+    {
+      "path": "dist/chunk-IPYPAILB.js",
+      "bytes": 1096,
+      "sha256": "b899ad286e5b4664f200cd89f4ba1afaf009aa0596fe823ff601a1919b8111b4"
+    },
+    {
+      "path": "dist/chunk-KA66CXRB.js",
+      "bytes": 13284,
+      "sha256": "749a3a8408d705f22239fd9401b4eeb15450d0f298805356153c7d8fa059e65c"
+    },
+    {
+      "path": "dist/chunk-LG3Y3LFP.js",
+      "bytes": 1170,
+      "sha256": "9f38188840874ae37ca1ec3bb5a64316e47d479ee2a017b57a86eceff846be7e"
+    },
+    {
+      "path": "dist/chunk-SE4TPVLW.js",
+      "bytes": 17300,
+      "sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b"
+    },
+    {
+      "path": "dist/chunk-SZIJH2BM.js",
+      "bytes": 4351,
+      "sha256": "51e13b71a8b0db6663c05c994bb7e39c2cc97e173d032837ee3cd0825c9997bb"
+    },
+    {
+      "path": "dist/effects.generated.js",
+      "bytes": 323,
+      "sha256": "d263b83ba162baa42e1735cc0335a36f5fa8beabed498a87974cfbf187166d9c"
+    },
+    {
+      "path": "dist/evaluation.js",
+      "bytes": 1496,
+      "sha256": "5bfa7ac353d7e584c8cb7d3082cb6b49c209a1ec679bc31c25c4b6d8dc7a9390"
+    },
+    {
+      "path": "dist/index.js",
+      "bytes": 29533,
+      "sha256": "364460a558df5b0b9c6633113943f3414fd1c1873cb1357d01ecf7d279a41e52"
+    },
+    {
+      "path": "dist/registries.js",
+      "bytes": 425,
+      "sha256": "dd8b245ba3a2204af3cef9ae6858148a146997d84315c0ce8def3e7133f9019c"
+    },
+    {
+      "path": "dist/registry.generated.js",
+      "bytes": 457,
+      "sha256": "e4a55bcec4b2496dd2728f62757619f3aade270f81ef36bec199601e2a272f63"
+    },
+    {
+      "path": "dist/theme-api.js",
+      "bytes": 1593,
+      "sha256": "30184b842965a640022817033e81fc2f27d30361afbb7355d1db2e00e917603c"
+    },
+    {
+      "path": "dist/transitions.generated.js",
+      "bytes": 253,
+      "sha256": "a5f126233840e53378fbc53d4948d4eba405c6b496cac73f31d4bc5f56ec77af"
+    },
+    {
+      "path": "package.json",
+      "bytes": 3170,
+      "sha256": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb"
+    },
+    {
+      "path": "README.md",
+      "bytes": 23481,
+      "sha256": "88456f72f002df362a8c4b822514e6b6faa5a97f41bfc64ba892ba5fa4a6184b"
+    },
+    {
+      "path": "dist/lib/animation-easing.d.ts",
+      "bytes": 418,
+      "sha256": "566b706fd93cbee4977f220af6750fccbeaa3e5a8a48968f5da1c3ffecfda9d3"
+    },
+    {
+      "path": "dist/lib/animations.d.ts",
+      "bytes": 1430,
+      "sha256": "2572f661cb08d12a849aaeee33120edc61e5af465d2c1d0dcc4bbe5f147acb86"
+    },
+    {
+      "path": "dist/animations.generated.d.ts",
+      "bytes": 549,
+      "sha256": "dcdf510c086b8638e150939808224ea0d61bd421a28a72aa99c0eccaaecb2fed"
+    },
+    {
+      "path": "dist/lib/audio-curves.generated.d.ts",
+      "bytes": 587,
+      "sha256": "fb1570159b5f5ed5fc9253bb8e22a967c7a16708090a2abba7e5b0ce81193687"
+    },
+    {
+      "path": "dist/lib/audio-envelope.d.ts",
+      "bytes": 2107,
+      "sha256": "176f12817826ef20e4e7b495ea5c05174ac05e409bacb0ffc1fd0f8c520b9dd6"
+    },
+    {
+      "path": "dist/AudioTrack.d.ts",
+      "bytes": 317,
+      "sha256": "eec7d7c05133ff85fb47cfd4494d1c1cbfc77e00d69b500d6a2cc2ac392bfe3f"
+    },
+    {
+      "path": "dist/lib/beat-loop.d.ts",
+      "bytes": 1254,
+      "sha256": "9e397a7601da1f9d96366de6e8214dc4a75c4f138516ed91899c235d4611c0a5"
+    },
+    {
+      "path": "dist/lib/clip-look.d.ts",
+      "bytes": 1446,
+      "sha256": "2020bebe2f4c361e1ad926c54aac35925a48b370b51bad41c2a6b06896b4ca55"
+    },
+    {
+      "path": "dist/ClipAnimationPhase.d.ts",
+      "bytes": 690,
+      "sha256": "7de95ce9c33bd647625f89a626e6ddb7af39a18e42ffe2787fa1a5730e34e653"
+    },
+    {
+      "path": "dist/ClipLook.d.ts",
+      "bytes": 946,
+      "sha256": "5be635d470accfbd0618ab02ff451e9401c176c93aca6b7851a7db61be9fee09"
+    },
+    {
+      "path": "dist/builtins/animations/fade-up/component.d.ts",
+      "bytes": 287,
+      "sha256": "9e25aef76467bec99fe8e9573c11855395678e473fb25554425e8015e6c5787f"
+    },
+    {
+      "path": "dist/builtins/animations/fade/component.d.ts",
+      "bytes": 290,
+      "sha256": "da24676182baa4bd322130a1d3539c9e4874f1997b7b5aa9f41973ca3a5a7c63"
+    },
+    {
+      "path": "dist/builtins/animations/scale-in/component.d.ts",
+      "bytes": 289,
+      "sha256": "f1dd5d3699f2361b8dd79a0c155e46a3e8c71e360a409f7c78fcb4b310d14db5"
+    },
+    {
+      "path": "dist/builtins/animations/slide-left/component.d.ts",
+      "bytes": 293,
+      "sha256": "54758f873699684fec2be4e8423bb160cc3e17a05157af9375fa7a261e54a2ae"
+    },
+    {
+      "path": "dist/builtins/animations/slide-up/component.d.ts",
+      "bytes": 284,
+      "sha256": "456c01fbe5e442e6c42ce236e1006f489d2a5e57c7068216224a8ac16ddd9a74"
+    },
+    {
+      "path": "dist/builtins/animations/type-on/component.d.ts",
+      "bytes": 275,
+      "sha256": "092f60b4b132628da2c7a3592407e5dfac08aca291091a0352b27a5c303506c4"
+    },
+    {
+      "path": "dist/builtins/effects/text-card/component.d.ts",
+      "bytes": 669,
+      "sha256": "c2c42f404bc6e0e0e573121426f994669e8da8ce9f694a2bb85dd25f87cc3205"
+    },
+    {
+      "path": "dist/builtins/themes/2rp/effects/art-card/component.d.ts",
+      "bytes": 433,
+      "sha256": "a05ea6ee618dd74d92c4362d1f0279c04f00d37c0126c4bf2978632b83704d7b"
+    },
+    {
+      "path": "dist/builtins/themes/2rp/effects/cta-card/component.d.ts",
+      "bytes": 430,
+      "sha256": "3de063b1b5bf95128e5db98b4f300d9cab266df4bd8a231cbf13b70b11d80ac3"
+    },
+    {
+      "path": "dist/builtins/themes/2rp/effects/resource-card/component.d.ts",
+      "bytes": 497,
+      "sha256": "4ae066ee665797012695650a1951b10e5011395116259481e761fbc116595bef"
+    },
+    {
+      "path": "dist/builtins/themes/2rp/effects/section-hook/component.d.ts",
+      "bytes": 450,
+      "sha256": "88151343fbe05a95a8c74c6ebb72d4336e567c98dcc8cd68b74ba8c3cc678558"
+    },
+    {
+      "path": "dist/builtins/transitions/cross-fade/component.d.ts",
+      "bytes": 253,
+      "sha256": "c541fa5948637d751f013a7c6dc036136533f00038754be9192bef53d38e7432"
+    },
+    {
+      "path": "dist/builtins/transitions/fade/component.d.ts",
+      "bytes": 128,
+      "sha256": "99f36cd1e1421b85139bc0c9a92d68fabe1ef5e0ba94e414b797dd8edd08fcce"
+    },
+    {
+      "path": "dist/lib/duration.d.ts",
+      "bytes": 680,
+      "sha256": "df349bd9b431a410e325aba2361319ff339634798324ae9c0e463948fb98dac0"
+    },
+    {
+      "path": "dist/lib/effect-params.d.ts",
+      "bytes": 118,
+      "sha256": "813c795eb50af4ec8a22546fb01b88d211622b5c0ac664bbe42199d1ba75e990"
+    },
+    {
+      "path": "dist/effects-types.d.ts",
+      "bytes": 3892,
+      "sha256": "64d0351954aa506f4198fcd5d0641cf00c26f2796a26f9e722c37d0c81cde8d4"
+    },
+    {
+      "path": "dist/effects.generated.d.ts",
+      "bytes": 546,
+      "sha256": "f294ad0885043dc58eacba78a9011fe5c9a92a0471ba45dfc6a56888fabbfa6b"
+    },
+    {
+      "path": "dist/evaluation.d.ts",
+      "bytes": 3154,
+      "sha256": "8af0201e86b0685412e5958c9824739f2a9a4812c67796d96df2607ef496c24a"
+    },
+    {
+      "path": "dist/lib/fade.d.ts",
+      "bytes": 131,
+      "sha256": "693ef17faa4b8a82941a7041d7213d431f9f5aed7d70e065e5a0908f6b979249"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "bytes": 2471,
+      "sha256": "da76faee7226e65a18f91a2fb45e2a260f33aef8768609093872c7eff1a76e03"
+    },
+    {
+      "path": "dist/lib/keyframe-easing.d.ts",
+      "bytes": 254,
+      "sha256": "48269f559ebbaaa14f3763e44b85ab9e6813c9374ec7a26fb30d68cb4c8d9370"
+    },
+    {
+      "path": "dist/lib/keyframe-origin.d.ts",
+      "bytes": 1215,
+      "sha256": "8e6e7f6aa32e88cec5556188d91258b304d9015f2dd8d6c9c1c3c20e5d15e6e6"
+    },
+    {
+      "path": "dist/lib/modifier-admission.d.ts",
+      "bytes": 395,
+      "sha256": "a39547d7f7bca2d1131bfff58470893cd257e55b9c602bb017762d2761e0107b"
+    },
+    {
+      "path": "dist/lib/modifier-bounds.d.ts",
+      "bytes": 322,
+      "sha256": "7f1e4d7011909e3cfc0ee295e2447958c04994eaa957072072e6c5aca3fb9645"
+    },
+    {
+      "path": "dist/lib/modifier-keyframes.d.ts",
+      "bytes": 847,
+      "sha256": "1343b772dbd9bc3dc6bd632bdb2b5fcdf38eac3b8663d7e72fdf202fb27ba685"
+    },
+    {
+      "path": "dist/modifier-types.d.ts",
+      "bytes": 2701,
+      "sha256": "51e5409a3468eda0fd1bf9a34dee4740e67b7fc2cbb91799f057440c854eebf7"
+    },
+    {
+      "path": "dist/lib/modifiers.d.ts",
+      "bytes": 704,
+      "sha256": "3dc2380942a77d37908ef0de745162e3e6e62d75549d273013b2403c0a1b0258"
+    },
+    {
+      "path": "dist/modifiers.d.ts",
+      "bytes": 583,
+      "sha256": "8847e2db3c2da608dae8985ab7f6f6bee5ec528d0bf37538a63365ac46917d8f"
+    },
+    {
+      "path": "dist/lib/motion-curves.generated.d.ts",
+      "bytes": 1106,
+      "sha256": "31bf18b3642279150d5929ed29c1c842158e7217990a71a908545fa4eb1c7808"
+    },
+    {
+      "path": "dist/registries.d.ts",
+      "bytes": 1275,
+      "sha256": "566c301b6a48c34ce65b84f3619b61378c1456f36e202b8056ec4f660c96832f"
+    },
+    {
+      "path": "dist/registry.generated.d.ts",
+      "bytes": 1656,
+      "sha256": "14179f9151f6a172d247426c9fa1b1bd79547fd0f7513027acd9ff5e1b1d82d5"
+    },
+    {
+      "path": "dist/RegistryContext.d.ts",
+      "bytes": 338,
+      "sha256": "a603bf7ba688c5a3ecabbfbb6295278fa4170e1cda42437e4f7f5284fd6e398d"
+    },
+    {
+      "path": "dist/lib/render-bounds.d.ts",
+      "bytes": 1433,
+      "sha256": "2a76cab5181640eb98bf6cd40a9c7f652d6c2df205638e9124c34b3a8bd6540c"
+    },
+    {
+      "path": "dist/scene-capabilities.d.ts",
+      "bytes": 2805,
+      "sha256": "8b50046828d459c99fbee0bb6ec5c4d834e3a13afbfd16204d8e44fa9baffcc7"
+    },
+    {
+      "path": "dist/scene-evaluation.d.ts",
+      "bytes": 2921,
+      "sha256": "8f4d7bf5271c74eec7eb87c651384ce77f6bfdf78a5bb55ee807fc46be48a2b3"
+    },
+    {
+      "path": "dist/theme-api.d.ts",
+      "bytes": 2841,
+      "sha256": "c35fd5f289dbb6e208a23475c17746572615a5068fc7bb7e411ba5d1d01459dd"
+    },
+    {
+      "path": "dist/ThemeContext.d.ts",
+      "bytes": 1226,
+      "sha256": "5d0acfce91aaec43d2d4ea322d7666e42b49564a11163faca9885bd8393f0433"
+    },
+    {
+      "path": "dist/TimelineComposition.d.ts",
+      "bytes": 2530,
+      "sha256": "c5ca2b228b1ef4afcc63ee09cc47ea35d50f5c1679cc319d769d0c074f6f9f98"
+    },
+    {
+      "path": "dist/lib/tracks.d.ts",
+      "bytes": 291,
+      "sha256": "2f0b573259ff14991d317cfcf4e11f8347d4d2da01e99f13b62a2b850732c42d"
+    },
+    {
+      "path": "dist/lib/transition-declarations.d.ts",
+      "bytes": 2141,
+      "sha256": "188fc5dadcda032c4fc2212adfc21902e1eb0936bc8c0be0f030cebf21253f59"
+    },
+    {
+      "path": "dist/lib/transition-spans.d.ts",
+      "bytes": 1730,
+      "sha256": "ce6087e85a0f3b59baaa056399cb372de852b96e10423a5796ba546dbe783174"
+    },
+    {
+      "path": "dist/TransitionLayer.d.ts",
+      "bytes": 365,
+      "sha256": "9d11710352e33bcc265a1f6acd4c4778961a45269b90c169caca07d7130452ea"
+    },
+    {
+      "path": "dist/lib/transitions.d.ts",
+      "bytes": 652,
+      "sha256": "c0ac047b7a3283f0e359c22225036a2df51540c427122d2c8851a32e289b8ff4"
+    },
+    {
+      "path": "dist/transitions.generated.d.ts",
+      "bytes": 506,
+      "sha256": "064f3cb031312045501d3e6be07cb18e45d77060915209ae1375c3b04ab3bc92"
+    },
+    {
+      "path": "dist/lib/trim.d.ts",
+      "bytes": 208,
+      "sha256": "708239edae3993e8c7050fdc246e85b3a9da64a4db074df1a7c75b97ab1c75bb"
+    },
+    {
+      "path": "dist/types.d.ts",
+      "bytes": 3143,
+      "sha256": "d1c8f4088362f2935c96bc0c442ebc640af8a8954c396b03faaa36b8be75a95c"
+    },
+    {
+      "path": "dist/lib/use-audio-envelope.d.ts",
+      "bytes": 257,
+      "sha256": "a5a802a551b54d56aec3872ec670bab8c180f780ae12eef4d07f458c9a2052a8"
+    },
+    {
+      "path": "dist/VisualClip.d.ts",
+      "bytes": 345,
+      "sha256": "26bcceaf8385556c15272c17dcb469fed88827424e21a6442c3be5b3fb7e7b31"
+    }
+  ],
+  "resources": {
+    "floorBytes": 10737418240,
+    "budgetBytes": 1400000000,
+    "freeBeforeBytes": 11677147136,
+    "freeAfterBytes": 11677130752,
+    "privateAllocationBytes": 752308224
+  },
+  "scope": "static minimal capability environment only; not Root activation, M2, current API, browser/socket, render, parity, or full-suite qualification"
+}

@@ -1,0 +1,86 @@
+{
+  "verdict": "REJECT",
+  "reviewComplete": true,
+  "privateCandidateGraph": null,
+  "harnessCommittedSourceSha": "2d97bef4a39db1c2c10dc1c1d56e932d6c5dfb0c",
+  "controllerSha256": "aa44a3b4e3864f2c2130713581f49660bcae670f8059936a027f65176a010fd0",
+  "reasons": [
+    "147 unapproved retained self-targeting absolute package links remain after six permitted exclusions; no physical READY private graph exists",
+    "FROZEN_PRIVATE_GRAPH is null; no actual current --list, final environment fingerprint or manager pure preflight exists",
+    "FROZEN_COMPOSITION uses flat globally sorted framing, inconsistent with recursive hashTree; correct 77-member archive would fail its expected hash"
+  ],
+  "composition": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "compositionRecursiveTree": "c996ef37a49c5efa4ed2ac28d89f21889801e07f75e72ca053dcf4e64bfbdb8c",
+  "draftControllerCompositionTree": "71b44e67e4eeffb0f904bb3a21e24d12ba06c4b2e41d43592a859aced3bb3139",
+  "sharedPrePost": {
+    "added": [],
+    "afterSha256": "4f318e4d09e07d8baad544c475662ef7aedb2900bafd658812c70bd571210ccb",
+    "beforeSha256": "4f318e4d09e07d8baad544c475662ef7aedb2900bafd658812c70bd571210ccb",
+    "changed": [],
+    "removed": []
+  },
+  "browserOfflineIdentity": {
+    "tree": {
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "fileCount": 255
+    },
+    "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+    "packageVersion": "155.0.8059.84-1",
+    "browserLaunched": false,
+    "freeBytes": 12336078848
+  },
+  "sourceOnlyEightTestFilesDiffer": true,
+  "correctedFixtureBytesMatchDonor": true,
+  "freeBytesAtFinalization": 11688599552,
+  "minimumFreeBytesRequired": 10737418240,
+  "producerArtifactFileSha256": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-README.md": "1ce1ba9bb044ea4bfa56ecbe581cff928c3cb344e55e68789a7cb110663115e7",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-REPORT.json": "0caafa9c1e1473215ebc3b4d36704ecb69f2aa1bc14767554cfbc117f09c8faa",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-REPORT.md": "febc9f6c6f4c4bd2b86cc5bd0ee90c179d3597f85ece86f299739784df919c95",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-audit.py": "7e02784916d81da167e2d6b9d4d7fd873da0ff378ddcbba803489ca75494923d",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-frozen12-members.json": "3be165269c372dce56a838595f84cd5a7ad815bfa641ccd7d9aa8ea63d517f96",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-package-versions.json": "c8b4627a982a6814214f1a03b2c6f220c03b686598ee27cd47fcad91a252d528",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-source-manifest.json": "6bc3d7e6b80841589397fa28026f2a03a6459f6b162f3e372167c37e78e6cf98",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-app-private-clean12-graph-unexpected-self-links.json": "57d3fcc9079c4eab59105674afdd0ba512e0c6bd1d36313f6ac79a99c98cb7fc",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-COMMAND.md": "0ab48d309d88610f5fbfaa5aa4a11ae89988dcfc5eadda2531b801ef5a2470db",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-COORDINATION.md": "77bb50f7d710a643ba50f7a4dc4d47e9aa6ae39c9e9ad2487cdede21b6da84b2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-REPORT.md": "b4c435d9f530ab0311938d4dda9780013dc7782305ca6344d6200db2ca0e0dc7",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-discovery-blocked.log": "569d83bab3ad14c7735f21ee53a240fc7c83196fac255761ae16b54655a701d9",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-offline-tests.log": "4c553e14bdf7bddb013819c51af6aa664346ab48d548e28ffc3d447bbebe7747",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-proposal.patch": "4fecc3ba49276c05bccaca14c9e99fef0397892d2d6188aed050fcc2eed16201",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-setup-tab-audio-capture.sh": "0181a410569b61b41af235e80b6fed9e1ce1ccaf928c17cd710f93112cf7aca0",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-source-fingerprint.json": "7259e522d489c0f54ef1c24e86200bfed543a8d728f3aff7b290ea09ef602810",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-static-checks.log": "df191f44c3d472f5196c0d45c263ddfe00dea1517fd2d6d8a2356797baeb7cfb",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.analysis.mjs": "152a1a18bc4d08355e021a581f49f91a42ad3a03a1fff23ee014ca7b848c8173",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.analysis.test.mjs": "c2952408d21f707e753499cab9669e8bf9e18fe7b6530a5bc53a27fd493e06d7",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.config.ts": "f894ef4c68ab2922f5e2acc355206e73279d8c3e76071029fa5e27266fb1c77f",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.controller.mjs": "aa44a3b4e3864f2c2130713581f49660bcae670f8059936a027f65176a010fd0",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.controller.test.mjs": "e45de8c44ca3ded6c52abee6b5300769e30c141136c8f23c00c0ef1caee605b6",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.environment.test.mjs": "a69f128fb1ae7dccba5916ebc8afa5c0860c67595d5693da5082284f2395d9c4",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.probe.ts": "51de3cb5b6f024171f5079c6f11b42f92c2b1f22e648052f879c5f5c1bffec8d"
+  },
+  "notPerformed": [
+    "browser launch",
+    "suite",
+    "capture",
+    "render",
+    "listener",
+    "network",
+    "install",
+    "central request",
+    "grant",
+    "shared write",
+    "product edit",
+    "git mutation"
+  ],
+  "unverified": [
+    "complete private copy bytes and ownership",
+    "all transitive physical import resolution",
+    "final graph/source/browser pre/post run identity",
+    "actual current Playwright discovery",
+    "current manager pure preflight",
+    "Runtime/host/source certification",
+    "current capturability",
+    "Player/export or pixel/audio parity"
+  ]
+}

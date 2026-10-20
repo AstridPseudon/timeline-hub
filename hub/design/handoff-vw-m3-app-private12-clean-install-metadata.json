@@ -1,0 +1,34 @@
+{
+  "status": "READY",
+  "privateRoot": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project",
+  "frozenProductRoot": "0ea988bdd2907c876b82fd2620820e3fb6d6ea84",
+  "node": "20.19.4",
+  "npm": "10.8.2",
+  "packageJsonSha256": "0c77703dab8eeb46e05fa7555bbaf5e9ea4fbef077b4759610049fe110894090",
+  "packageLockSha256": "310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0",
+  "compositionArtifactSha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "compositionArtifactBytes": 58444,
+  "compositionArtifactMembers": 77,
+  "peerVersions": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.509",
+    "@remotion/media": "4.0.509",
+    "@remotion/player": "4.0.509",
+    "@remotion/layout-utils": "4.0.509"
+  },
+  "peerTreeSha256": {
+    "react": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+    "react-dom": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+    "remotion": "d2db38902658bec64dbaf9fe24c53cd2eedd03fd9a0ead4dcecacf04d24199ea",
+    "@remotion/media": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4",
+    "@remotion/player": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+    "@remotion/layout-utils": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a"
+  },
+  "normalPostinstallCheck": "Read-only preflight passed for remotion@4.0.509: dist/cjs/audio/shared-audio-tags.js=patched, dist/esm/index.mjs=patched",
+  "pureImportProbe": "pass",
+  "typeProbe": "pass",
+  "physicalManifestSha256": "d20a148e05c14ba3e0cbb31ba3accf3b349fd95c21529e6a7df38633e8a02a46",
+  "privateAllocationBytes": 752308224,
+  "freeAfterBytes": 11677130752
+}
