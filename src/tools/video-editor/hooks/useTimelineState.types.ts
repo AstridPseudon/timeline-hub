@@ -233,6 +233,7 @@ export interface TimelineChromeContextValue {
   renderResultUrl: string | null;
   renderResultFilename: string | null;
   renderResultInfo: { revision: number | null; completedAt: number } | null;
+  downloadRenderResult: () => Promise<void>;
   activeRenderTaskId: string | null;
   renderDestination: RenderExportDestination;
   setRenderDestination: (destination: RenderExportDestination) => void;
