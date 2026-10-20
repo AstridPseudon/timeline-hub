@@ -16,8 +16,8 @@ from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
-INTEGRITY = "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg=="
+SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
 REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
                     "./animations.generated", "./transitions.generated", "./registry.generated")
 
@@ -28,19 +28,19 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
     cli.write_text("// CLI")
     package = project / "node_modules/@banodoco/timeline-composition"
     package.parent.mkdir(parents=True)
-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz") as archive:
+    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
         archive.extractall(project)
     (project / "package").rename(package)
     return package, json.loads((package / "package.json").read_text())
 
 
 def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     lock = json.loads((REMOTION / "package-lock.json").read_text())
     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    assert package["version"] == "0.0.10"
-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.10.tgz"
+    assert package["version"] == "0.0.12"
+    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
     assert package["integrity"] == INTEGRITY
     with tarfile.open(artifact) as archive:
         manifest_file = archive.extractfile("package/package.json")

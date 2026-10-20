@@ -1,4 +1,4 @@
-"""Actual registered presenter draw and capability against immutable public10."""
+"""Actual registered presenter draw and capability against immutable public12."""
 import hashlib
 import json
 import os
@@ -11,7 +11,8 @@ import pytest
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
 from scripts import gen_effect_registry
-from tests.packs.rendering.test_composition_package import SHA256
+
+SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
 
 ROOT = Path(__file__).resolve().parents[3]
 PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
@@ -21,7 +22,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(scope="module")
 def presenter_query(tmp_path_factory):
     artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
-        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz")))
+        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
     # Explicit immutable releases only; this override does not change the host pin.
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
         SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
@@ -108,7 +109,7 @@ def test_presenter_public_scene_contract(presenter_query, case):
     assert presenter_query(case)["ok"] is True
 
 
-def test_presenter_public10_declarations(presenter_query, tmp_path):
+def test_presenter_public12_declarations(presenter_query, tmp_path):
     # Check copied source against the archive's declarations through ordinary
     # node_modules lookup; no source alias or installed package is patched.
     project = tmp_path / "typecheck"

@@ -46,7 +46,27 @@ export const prepareHostScene = (props, b) => {
     undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
 };
 const basis = {width: 1920, height: 1080, fps: 30};
-const theme = DEFAULT_THEME;
+// Composition 0.0.12's package default is Agent's navy theme. The historical
+// SSR hashes intentionally use this explicit pre-12 theme so the presenter
+// preservation check does not silently turn an old fixture into a new default.
+assert.deepEqual(DEFAULT_THEME, {
+  id: 'banodoco-default',
+  visual: {
+    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
+    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
+      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
+    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
+  },
+});
+const theme = {
+  id: 'banodoco-default',
+  visual: {
+    color: {fg: '#ffffff', bg: '#000000', accent: '#ffffff'},
+    type: {families: {heading: 'Georgia, serif', body: 'Georgia, serif'},
+      size: {base: 64, small: 36, large: 96}, weight: {normal: 400, bold: 700}, lineHeight: 1.1},
+    motion: {fadeMs: 250}, canvas: {width: 1920, height: 1080, fps: 30},
+  },
+};
 const runtimeTheme = toRuntimeTheme(theme);
 const registries = source.resolveHostRegistries(runtimeTheme);
 const owner = {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'};
