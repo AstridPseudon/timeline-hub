@@ -11,6 +11,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, InvalidRequestError, LeaseError, RetiredRouteError, ValidationError
 from runtime_protocol.service import RuntimeService
+from test_timeline_commit_integration import Editing, agent, film, positions, rows
 
 
 def _digest(value: bytes | str) -> str:
@@ -219,21 +220,50 @@ def test_project_reference_updates_require_idempotency_keys_at_service_boundary(
         service.close()
 
 
-# Direct shot writes are retired (ledger RT02), so their key checks are gone
-# with them; this returns when the commit path owns shot updates.
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="ledger RT02: direct shot writes retired; awaiting commit-path replacement")
-def test_project_shot_updates_require_idempotency_keys_at_service_boundary(tmp_path: Path) -> None:
-    RealmStore.initialize(tmp_path / "realm").close()
-    service = RuntimeService(tmp_path / "realm")
+@pytest.mark.integration
+def test_project_shot_updates_require_idempotency_keys_at_service_boundary(
+    film, agent, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The retired shot writer maps to the keyed, real-provider commit path."""
+    service = RuntimeService(film.fixture.duplicate_root)
     try:
-        project = service.create_project({"slug": "p1", "name": "P1"}, idempotency_key="project")
-        shot = service.create_project_shot(project["id"], {"name": "Shot", "metadata": {}}, idempotency_key="shot")
-        with pytest.raises(InvalidRequestError, match="Idempotency-Key is required"):
-            service.update_project_shot(project["id"], shot["data"]["shot_id"], {"expected_version": 1, "name": "Updated"})
-        with pytest.raises(InvalidRequestError, match="at most 256"):
+        service.register_timeline_commit_provider(agent.provider())
+        editing = Editing(service, film, agent)
+        editing.assert_baseline()
+        body = editing.body([editing.move("music-bed", 1)])
+        before = rows(service)
+
+        # The public direct shot route remains retired; its replacement is the
+        # command below, not a resurrection of the old writer.
+        with pytest.raises(RetiredRouteError, match="direct shot writes are retired"):
             service.update_project_shot(
-                project["id"], shot["data"]["shot_id"], {"expected_version": 1, "name": "Updated"}, idempotency_key="x" * 257
+                film.fixture.project_id, "shot-1", {"expected_version": 1, "name": "Updated"},
+                idempotency_key="retired-shot-write",
             )
+        assert rows(service) == before
+
+        with pytest.raises(InvalidRequestError, match="Idempotency-Key is required"):
+            editing.commit(body, None)
+        assert rows(service) == before
+        with pytest.raises(InvalidRequestError, match="must start"):
+            editing.commit(body, "")
+        assert rows(service) == before
+        with pytest.raises(InvalidRequestError, match="at most 256"):
+            editing.commit(body, "x" * 257)
+        assert rows(service) == before
+
+        accepted = editing.commit(body, "film-shot-edit")
+        assert accepted["data"]["status"] == "accepted"
+        assert positions(accepted["data"]["canonical_document"])["music-bed"] == 1
+        after = rows(service)
+
+        def forbidden(self, context, port):
+            raise AssertionError("idempotent retry executed the semantic provider")
+
+        with monkeypatch.context() as retry:
+            retry.setattr(type(service._timeline_commit_provider), "commit", forbidden)
+            assert editing.commit(body, "film-shot-edit") == accepted
+        assert rows(service) == after
     finally:
         service.close()
 
