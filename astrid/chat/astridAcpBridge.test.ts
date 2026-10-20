@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { EventEmitter } from 'node:events';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -30,12 +31,13 @@ class FakeReadable {
   }
 }
 
-class FakeWritable {
+class FakeWritable extends EventEmitter {
   readonly writes: string[] = [];
   ended = false;
 
   write(chunk: string): boolean {
     this.writes.push(chunk);
+    this.emit('write');
     return true;
   }
 
@@ -82,11 +84,20 @@ async function tick(): Promise<void> {
 }
 
 async function waitForRequest(process: FakeProcess, after = 0): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    if (process.stdin.writes.length > after) return;
-    await tick();
-  }
-  throw new Error('expected an ACP request');
+  if (process.stdin.writes.length > after) return;
+  await new Promise<void>((resolve, reject) => {
+    const written = () => {
+      if (process.stdin.writes.length <= after) return;
+      clearTimeout(timeout);
+      process.stdin.off('write', written);
+      resolve();
+    };
+    const timeout = setTimeout(() => {
+      process.stdin.off('write', written);
+      reject(new Error('expected an ACP request'));
+    }, 1_000);
+    process.stdin.on('write', written);
+  });
 }
 
 async function listen(server: ReturnType<typeof createAstridAcpHttpServer>['server']): Promise<number> {
