@@ -1,3 +1,4 @@
+import type { CapturedClipScalarEdit } from '../../commands/clipScalarGesture.ts';
 import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -48,6 +49,7 @@ export interface ClipPanelProps {
   precisionEnabled: boolean;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onScalarEditStart?: () => CapturedClipScalarEdit;
   onResetPosition: () => void;
   onClose: () => void;
   onDelete?: () => void;
@@ -96,6 +98,7 @@ export function ClipPanelBody({
   interactionMode,
   precisionEnabled,
   onChange,
+  onScalarEditStart,
   onResetPosition,
   onClose,
   onDelete,
@@ -294,6 +297,7 @@ export function ClipPanelBody({
             <ClipEffectsTab
               clip={clip}
               onChange={onChange}
+              onScalarEditStart={onScalarEditStart}
               effectResources={effectResources}
               clipDescriptor={clipDescriptor}
               isClipTypeRegistered={Boolean(clipDescriptor || clipTypeRegistryRecord)}
