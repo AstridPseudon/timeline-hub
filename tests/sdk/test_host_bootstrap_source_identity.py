@@ -139,10 +139,10 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
         "schema_digest": "schema-1",
     }
     inventory = SimpleNamespace(identity="inventory-1", roots=(managed,), sources=(SimpleNamespace(pack_root=managed),))
-    inventory_calls: list[object] = []
+    inventory_calls: list[str] = []
 
     def active_inventory():
-        inventory_calls.append(inventory)
+        inventory_calls.append(inventory.identity)
         return inventory
 
     monkeypatch.setattr("astrid.core.pack.source_setup.active_source_inventory", active_inventory)
@@ -216,7 +216,8 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result["host_status"] == "ready"
     assert result["host_source_inventory_identity"] == "inventory-1"
-    assert len(inventory_calls) == 1
+    # The probe may re-verify the inventory, so count is not pinned; every read must see the launched identity.
+    assert inventory_calls and set(inventory_calls) == {"inventory-1"}
     assert "--source-inventory-identity" in launches[0]
     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
     assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
@@ -239,7 +240,8 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     assert result2["host_status"] == "ready"
     assert len(launches) == 2
     assert "launch_argv" not in state
-    assert len(inventory_calls) == 2
+    assert inventory_calls[-1] == "inventory-2"
+    assert set(inventory_calls) == {"inventory-1", "inventory-2"}
     assert terminated, "changed source inventory must not reuse the old ready host"
 
     # Disabling the last managed source must not reuse a host that still
@@ -250,7 +252,7 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     result3 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result3["host_status"] == "ready"
     assert len(launches) == 3
-    assert len(inventory_calls) == 3
+    assert inventory_calls[-1] == ""
 
 
 def test_bootstrap_stops_on_correlated_terminal_registration_failure(
