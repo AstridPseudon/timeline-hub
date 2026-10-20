@@ -11,8 +11,11 @@ import math
 from typing import Any, Callable, Mapping
 
 from .draft_voiceover_proposal import (
-    _MEDIA_SELECTION_FIELDS, _PRODUCER_FIELDS, _capture_voiceover_commands,
-    _commit_voiceover_proposal, _known_voiceover_insertions, _voiceover_proposal,
+    _capture_voiceover_commands,
+    _commit_voiceover_proposal,
+    _known_voiceover_insertions,
+    _native_voiceover_ready,
+    _voiceover_proposal,
     runtime_synthesizer,
 )
 
@@ -446,25 +449,25 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
     bound.validate(prepared["candidate"])
     diff = bound.diff(prepared["candidate"])
     frozen = bound.preview(prepared["candidate"])
-    if not _known_voiceover_insertions(candidate, prepared["generated"]):
+    # Keep the established publish route for ripple and existing-clip
+    # regeneration until the native proposal branch has a real settled
+    # producer/output carrier.  This decision is made before capture; a
+    # partially captured batch is never silently published through the old
+    # route or relabelled as an open proposal.
+    if (not _known_voiceover_insertions(candidate, prepared["generated"])
+            or timing_policy != "preserve"
+            or not _native_voiceover_ready(candidate, scripts, prepared["generated"],
+                                           base_publication_id)):
         receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
         return {"status": "published", "published": True, "plan": plan, "diff": diff,
                 "generated": prepared["generated"], "receipt": receipt}
-    if timing_policy != "preserve":
-        return {"status": "proposal_open", "published": False, "plan": plan,
-                "diff": diff, "generated": prepared["generated"],
-                "gaps": [{"capability": "voiceover timing retime",
-                          "reason": "known insertion proposal has no native placement/parent retime command"}],
-                "candidate_digest": frozen.get("candidate_digest")}
     commands, gaps, producer = _capture_voiceover_commands(
         candidate, scripts, prepared["generated"])
-    if not isinstance(base_publication_id, str) or not base_publication_id:
-        gaps.append({"capability": "producer proposal admitted target",
-                     "reason": "the pinned Runtime head has no publication identity"})
     if gaps or producer is None:
-        return {"status": "proposal_open", "published": False, "plan": plan,
-                "diff": diff, "generated": prepared["generated"], "gaps": gaps,
-                "candidate_digest": frozen.get("candidate_digest")}
+        raise VoiceoverSyncError(
+            "native voiceover capture changed after preflight: "
+            + "; ".join(str(gap.get("reason", "unknown gap")) for gap in gaps)
+        )
     proposal = _voiceover_proposal(producer, candidate, base_publication_id, commands)
     receipt = _commit_voiceover_proposal(client, proposal)
     return {"status": "published", "published": True, "plan": plan, "diff": diff,

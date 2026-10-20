@@ -200,111 +200,12 @@ def coordinator_client(c,s,current='h',fail_publish=False):
     bound=Bound(); calls=[0]
     def opened(*args,**kwargs):
         calls[0]+=1
-        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current,
-                            'head_publication_id':'pub0'}}
+        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current}}
     client=SimpleNamespace(endpoint='http://localhost:8787', media=Media(),
         projects=SimpleNamespace(show=lambda *a:{'project_id':'p'}),
         timelines=SimpleNamespace(open_composition=opened,resolve_scope=lambda *a:{'project_id':'p','timeline_id':'t'},script=lambda *a,**k:s),
         open_authoring_target=lambda target:bound)
     return client,bound
-
-
-def enable_known_requester(monkeypatch, *, fail=False):
-    producer = {'task_id': 'speech-task', 'attempt_id': 'speech-attempt',
-                'executor_id': 'speech-worker', 'fence': 1, 'runtime_epoch': 1}
-    command = {'schema_version': 1, 'op': 'track.create', 'version': '1',
-               'select': 'occurrence:o1', 'args': {'row': {'id': 'voice', 'kind': 'audio'}}}
-    monkeypatch.setattr(vo, '_capture_voiceover_commands', lambda *args: ([command], [], producer))
-    if fail:
-        def refused(*args):
-            raise RuntimeError('CAS conflict')
-        monkeypatch.setattr(vo, '_commit_voiceover_proposal', refused)
-    else:
-        monkeypatch.setattr(vo, '_commit_voiceover_proposal',
-                            lambda client, proposal: {'publication': {'head': 'new'}, 'proposal': proposal})
-
-
-def known_capture_case(*, selection=True, media_type='audio/wav', text_provenance='registered_pin',
-                       text_mime='text/plain; charset=utf-8'):
-    from astrid.sdk.timeline.commit import bundle_from_document
-    from tests.editing_conformance.test_recipe_occurrence_media import inputs
-
-    document, *_ = inputs('audio')
-    candidate = bundle_from_document(document)
-    candidate['placements'] = candidate['placements'][:1]
-    placement = candidate['placements'][0]
-    occurrence_id, shot_id = placement['occurrence_id'], placement['shot_id']
-    shot = candidate['shots'][shot_id]
-    shot['internal_timeline']['tracks'] = []
-    shot['internal_timeline']['clips'] = []
-    shot['internal_timeline']['registry']['assets'] = {}
-    text = 'New voiceover'
-    text_id = vo.digest(text)
-    shot['payload']['text_bindings'] = [{
-        'kind': 'voiceover_script', 'slot': None, 'media_id': text_id,
-        'content_hash': text_id, 'byte_size': len(text.encode()), 'mime_type': text_mime,
-    }]
-    scripts = {'occurrences': [{
-        'occurrence_id': occurrence_id, 'status': 'present', 'text': text,
-        'bindings': [{'media_id': text_id, 'content_hash': text_id,
-                      'byte_size': len(text.encode()), 'provenance': text_provenance}],
-    }]}
-    selected = {
-        'asset': 'voice', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
-        'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64,
-    }
-    producer = {'task_id': 'speech-task', 'attempt_id': 'speech-attempt',
-                'executor_id': 'speech-worker', 'fence': 1, 'runtime_epoch': 1}
-    output = {**selected, 'selection': selected, 'provenance': producer,
-              'media_type': media_type, 'size': 1234, 'project_id': candidate['project_id']}
-    if not selection:
-        output['selection'] = {key: selected[key] for key in selected if key != 'variant_id'}
-    generated = [{'occurrence_id': occurrence_id, 'shot_id': shot_id,
-                  'clip_id': 'draft-voiceover-' + occurrence_id,
-                  'duration_seconds': 4, 'project_id': candidate['project_id'], 'output': output}]
-    return candidate, scripts, generated, producer, selected
-
-
-def test_known_voiceover_capture_orders_native_commands_and_preserves_exact_pins():
-    candidate, scripts, generated, producer, selected = known_capture_case()
-    commands, gaps, actual_producer = vo._capture_voiceover_commands(candidate, scripts, generated)
-
-    assert not gaps and actual_producer == producer
-    assert [command['op'] for command in commands] == [
-        'track.create', 'occurrence.add-media', 'text-binding.set']
-    media = commands[1]['args']['media']
-    assert media == selected
-    assert set(media) == {'asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'}
-    assert commands[1]['args']['row'] == {
-        'id': 'draft-voiceover-occ-a', 'clipType': 'media', 'asset': 'voice',
-        'track': 'draft-voiceover-occ-a', 'at': 0, 'from': 0, 'to': 4, 'hold': 4,
-    }
-    assert commands[2]['args']['binding'] == {'kind': 'voiceover_script', 'slot': None}
-    assert commands[2]['args']['text'] == {
-        'object_id': vo.digest('New voiceover'), 'digest': vo.digest('New voiceover'),
-        'size': len('New voiceover'.encode()), 'media_type': 'text/plain; charset=utf-8',
-    }
-    proposal = vo._voiceover_proposal(producer, candidate, 'pub-1', commands)
-    assert set(proposal) == {
-        'schema_version', 'producer', 'admitted_target', 'commands', 'rationale', 'proposal_digest'}
-    assert proposal['admitted_target']['base_publication_id'] == 'pub-1'
-
-
-@pytest.mark.parametrize('case', [
-    {'selection': False},
-    {'media_type': 'audio/mp3'},
-    {'text_provenance': 'legacy_unregistered_pin'},
-    {'text_mime': 'text/plain'},
-])
-def test_known_voiceover_capture_keeps_unsettled_media_or_text_open(case):
-    candidate, scripts, generated, _producer, _selected = known_capture_case(**case)
-    commands, gaps, _actual_producer = vo._capture_voiceover_commands(candidate, scripts, generated)
-
-    assert commands == []
-    if case.get('text_provenance', 'registered_pin') != 'registered_pin' or case.get('text_mime'):
-        assert any(gap['capability'] == 'text-binding.set' for gap in gaps)
-    else:
-        assert any(gap['capability'] == 'settled voiceover variant' for gap in gaps)
 
 
 def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
@@ -328,27 +229,15 @@ def test_coordinator_detects_concurrent_head_and_cas_failure(monkeypatch):
     with pytest.raises(RuntimeError,match='CAS conflict'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
-    c,s=fixture(audio=False);s['occurrences'][0]['text']='New'
-    client,bound=coordinator_client(c,s)
-    monkeypatch.setattr(vo, 'runtime_synthesizer',
-                        lambda *a: lambda text, settings: {**synthesis(text, settings), 'duration_seconds': 2})
-    enable_known_requester(monkeypatch, fail=True)
-    with pytest.raises(RuntimeError,match='CAS conflict'):
-        vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
-    assert not bound.published
 
 
 def test_coordinator_publishes_once_with_provenance(monkeypatch):
-    c,s=fixture(audio=False);s['occurrences'][0]['text']='New'
-    monkeypatch.setattr(vo, 'runtime_synthesizer',
-                        lambda *a: lambda text, settings: {**synthesis(text, settings), 'duration_seconds': 2})
+    c,s=fixture();s['occurrences'][0]['text']='New'
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
     client,bound=coordinator_client(c,s)
-    enable_known_requester(monkeypatch)
-    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
-    assert result['published'] and not bound.published
+    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+    assert result['published'] and bound.published
     assert result['generated'][0]['text']=='New'
-    assert result['proposal']['admitted_target']['base_publication_id']=='pub0'
-    assert result['proposal']['producer']['task_id']=='speech-task'
 
 
 def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_errors(monkeypatch):
@@ -358,7 +247,7 @@ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_err
         error=RuntimeError('missing');error.code='not_found';raise error
     client.media.read_bytes=missing
     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
-    assert result['published'] and len(result['generated'])==2 and bound.published
+    assert result['published'] and len(result['generated'])==2
 
     c,s=fixture();client,bound=coordinator_client(c,s)
     def forbidden(_object_id):

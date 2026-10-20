@@ -26,9 +26,8 @@ def _completed_voiceover_output(result: Mapping[str, Any]) -> tuple[dict, dict, 
     if not isinstance(output, Mapping):
         return None
     selection = output.get("selection")
-    if not isinstance(selection, Mapping):
-        selection = {key: output.get(key) for key in _MEDIA_SELECTION_FIELDS}
-    if (set(selection) != set(_MEDIA_SELECTION_FIELDS)
+    if (not isinstance(selection, Mapping)
+            or set(selection) != set(_MEDIA_SELECTION_FIELDS)
             or any(not isinstance(selection.get(key), str) or not selection[key]
                    for key in _MEDIA_SELECTION_FIELDS)
             or _DIGEST.fullmatch(selection["object_id"]) is None
@@ -46,9 +45,64 @@ def _completed_voiceover_output(result: Mapping[str, Any]) -> tuple[dict, dict, 
             or any(type(provenance.get(key)) is not int or provenance[key] <= 0
                    for key in ("fence", "runtime_epoch"))):
         return None
+    if (not isinstance(output.get("association_id"), str)
+            or not isinstance(output.get("task_id"), str)
+            or not isinstance(output.get("attempt_id"), str)
+            or output["task_id"] != provenance["task_id"]
+            or output["attempt_id"] != provenance["attempt_id"]):
+        return None
+    if output.get("object_id") is not None and output.get("object_id") != selection["object_id"]:
+        return None
     if output.get("media_type") != "audio/wav" or output.get("project_id") not in (None, result.get("project_id")):
         return None
     return dict(selection), {key: provenance[key] for key in _PRODUCER_FIELDS}, dict(output)
+
+
+def _native_voiceover_ready(candidate: Mapping, scripts: Mapping, generated: list[Mapping],
+                            base_publication_id: Any) -> bool:
+    """Preflight the known-child branch without capturing any commands.
+
+    Normal speech results do not satisfy this predicate: native activation is
+    reserved for an existing Runtime-admitted, task/attempt-bound managed
+    output with an explicit completed selection and the ordinary captured
+    child/text shape.
+    """
+    if not isinstance(base_publication_id, str) or not base_publication_id or not generated:
+        return False
+    producer = None
+    for item in generated:
+        completed = _completed_voiceover_output(item)
+        if completed is None:
+            return False
+        _selection, pin, output = completed
+        if producer is None:
+            producer = pin
+        elif producer != pin:
+            return False
+        oid, shot_id = item.get("occurrence_id"), item.get("shot_id")
+        placement = next((row for row in candidate.get("placements", [])
+                          if row.get("occurrence_id") == oid and row.get("shot_id") == shot_id), None)
+        shot = candidate.get("shots", {}).get(shot_id, {})
+        internal = shot.get("internal_timeline", {})
+        tracks = internal.get("tracks")
+        registry = internal.get("registry", {}).get("assets") if isinstance(internal.get("registry"), Mapping) else None
+        clips = internal.get("clips")
+        if (not isinstance(placement, Mapping) or not isinstance(tracks, list)
+                or not isinstance(registry, dict) or not isinstance(clips, list)):
+            return False
+        clip_id = item.get("clip_id")
+        if not isinstance(clip_id, str) or any(clip.get("id") == clip_id for clip in clips):
+            return False
+        if sum(track.get("kind") == "audio" for track in tracks) > 1:
+            return False
+        size = output.get("size", output.get("bytes"))
+        duration = item.get("duration_seconds")
+        if (type(size) is not int or size <= 0 or not isinstance(duration, (int, float))
+                or isinstance(duration, bool) or not math.isfinite(duration) or duration <= 0):
+            return False
+        if _script_binding_pin(candidate, scripts, oid, shot_id) is None:
+            return False
+    return producer is not None
 
 
 def _script_binding_pin(candidate: Mapping, scripts: Mapping, occurrence_id: str,
@@ -247,20 +301,10 @@ def runtime_synthesizer(client, project):
                 or manifest.get("audio_sha256") != audio_id.removeprefix("sha256:")
                 or manifest.get("text_sha256") != digest(text).removeprefix("sha256:")):
             raise VoiceoverSyncError("Managed speech provenance failed hash verification")
-        provenance = audio_row.get("provenance")
-        if not isinstance(provenance, Mapping):
-            provenance = audio_row.get("producer")
-        if not isinstance(provenance, Mapping):
-            provenance = {key: audio_row.get(key) for key in _PRODUCER_FIELDS}
-        selection = audio_row.get("selection")
-        if not isinstance(selection, Mapping):
-            selection = {key: audio_row.get(key) for key in _MEDIA_SELECTION_FIELDS}
         return {"text": manifest["text"], "settings": manifest["settings"],
                 "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
                 "run_id": result.run_id, "task_id": result.kernel_task_id,
-                "project_id": project, "output": {**dict(audio_row),
-                "selection": dict(selection), "provenance": dict(provenance),
-                "object_id": audio_id}}
+                "project_id": project, "output": dict(audio_row)}
     return synthesize
 
 
