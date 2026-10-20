@@ -27,11 +27,12 @@ write, renderer, model call, or network path changed.
 ## Evidence
 
 - Direct targeted generation/import/catalog/media-selection neighbors:
-  `33 passed in 14.64s`.
+  `33 passed in 10.94s`.
 - Direct settlement/CAS neighbors without sockets:
   `28 passed in 4.70s`.
 - Central socket-dependent targeted suite for `tests/test_object_location.py`
-  and `tests/test_streaming_media_io.py`: `61 passed in 13.97s`.
+  and `tests/test_streaming_media_io.py`: `61 passed in 12.90s` on final tree
+  `4acc1ff65a3b5dddc5b0dc885a0a5449b9b9c287`.
 - The valid speech fixture proves normal task settlement, receipt, exact CAS
   bytes, attempt-bound association, five-field selection, verified `1.0`
   second duration, and unchanged canonical timeline row counts.

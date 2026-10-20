@@ -13,16 +13,16 @@ The successor changes two paths relative to `f511038ded7a0ae49e2935efc37800b6303
 
 Source hashes at the final uncommitted worker snapshot:
 
-- `astrid/core/execution/custody_broker.py`: `3ff9ff42cbf073bbc66eeedb4f36ba4e3ee1ba45cad734227447698b1d62e3ce`
+- `astrid/core/execution/custody_broker.py`: `f8f9bc3e4028571df3e0d70489a7fcb5bc3487a7262b18c878346d7ee7137bb7`
 - `astrid/core/execution/process_group.py`: `df8d111c415b2700d1421a1a592bce38267b939395945adbf7600412db8d1cb1` (unchanged by successor delta)
 - `tests/core/execution/test_process_group.py`: `1065454547f4a6b9f9a04c4c6d4804640dc9bf13362136525971b466a7cc350c`
-- central source snapshot: `35ec0c4d7a11ac3d0c9689df1f803b8cb41748fb`
+- central source snapshot: `001877d1cd14c716c3fca18606413f01aab44c49`
 
 The direct test file adds two Linux-only tests: a real live child with a closed descriptor and `/dev/null` descriptor reuse both refuse exit proof and conditional release; a genuinely exited child produces positive proof and retains that provenance after conditional release. All original assertions remain unchanged.
 
 Final evidence:
 
-- central `root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"`: **629 passed, 16 skipped** in 40.51s, exit 0, 0 deselected;
+- central `root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"`: **629 passed, 16 skipped** in 58.42s, exit 0, 0 deselected;
 - local focused pidfd/reuse selection: **3 passed, 66 deselected** in 0.40s;
 - local pre-existing fake Linux admission case: **1 passed, 575 deselected** in 1.16s;
 - updated `probe_pidfd.py`: all live/closed/reused/release/genuine-exit controls passed, including refusal of the synthetic replacement census after descriptor loss/substitution.
