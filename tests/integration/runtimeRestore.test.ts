@@ -257,10 +257,17 @@ it('ShotEditor reads, edits and saves Runtime-valid raw settings without changin
     }
 
     // A malformed known field is not a valid authoring fixture.
+    const current = await readClosure(head);
+    const invalidShotRevisionId = randomUUID();
+    const selectedOccurrenceId = current.parent.payload.occurrences[0].occurrence_id;
     const invalid = await harness.runtimeJson('POST', `${timelinePath}/composition-revisions`, {
       project_id: projectId, timeline_id: seed.timelineId, expected_head: head, parent_revision_id: randomUUID(),
-      parent_composition: (await readClosure(head)).parent.payload,
-      shot_revisions: [{ shot_id: seed.shotId, revision_id: randomUUID(), internal_timeline_revision_id: initialShot.internal_timeline_revision_id, payload: { metadata: [] } }],
+      parent_composition: {
+        ...current.parent.payload,
+        occurrences: current.parent.payload.occurrences.map((occurrence: Record<string, unknown>) => occurrence.occurrence_id === selectedOccurrenceId
+          ? { ...occurrence, shot_revision_id: invalidShotRevisionId } : occurrence),
+      },
+      shot_revisions: [{ shot_id: seed.shotId, revision_id: invalidShotRevisionId, internal_timeline_revision_id: current.shot.internal_timeline_revision_id, payload: { ...current.shot.payload, metadata: [] } }],
       internal_timeline_revisions: [],
     });
     expect(invalid.status).toBe(400);
