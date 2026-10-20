@@ -22,6 +22,26 @@ def ordinary_trim_requested(parsed):
     return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
 
 
+def ordinary_move_requested(parsed):
+    from astrid.sdk.timeline import store
+
+    if (parsed.client is None or parsed.file or parsed.draft
+            or parsed.on is None):
+        return False
+    try:
+        float(parsed.on)
+    except (TypeError, ValueError):
+        # Symbolic moments (for example, ``after \"Astrid\"``) still need
+        # the detached checkout's authored-word resolution.
+        return False
+    accepted = {'project', 'ref', 'clip', 'cut', 'near', 'on', 'dry_run',
+                'idempotency_key', 'json', 'no_sweep'}
+    if not all(name in accepted or getattr(parsed, name) == default
+               for name, default in parsed.native_trim_defaults.items() if name != 'help'):
+        return False
+    return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
+
+
 def _trim_selector(bundle, parsed):
     from astrid.core.timeline.cuts import bundle_fps
     from astrid.core.timeline.duration import clip_timeline_duration
@@ -79,6 +99,20 @@ def commit_trim(session, parsed, options):
             return NotImplemented
         return session.commit(command, **options)
     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
+
+
+def commit_move(session, parsed, options):
+    with session.outbox.locked():
+        state = session._state()
+    # Resolve aliases against the pinned original head. The native command
+    # stores the parent owner in its selection; it never infers ownership from
+    # a display id or recaptures it after a lost acknowledgement.
+    bundle = session._bundle({**state, 'pending': []})
+    select = _trim_selector(bundle, parsed)
+    if select is None or not select.startswith('parent/clip:'):
+        return NotImplemented
+    return session.move(select, float(parsed.on), **options)
+
 
 def configure_track_label(parser):
     from astrid.packs.timeline.cli import (
