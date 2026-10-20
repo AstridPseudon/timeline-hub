@@ -514,7 +514,7 @@ def test_all_generated_dto_annotations_resolve():
 
     for name, value in vars(dto).items():
         if isinstance(value, type) and hasattr(value, "__required_keys__"):
-            assert get_type_hints(value), name
+            assert set(get_type_hints(value)) == value.__required_keys__ | value.__optional_keys__, name
     assert dto.TimelineCommitPage(items=[], next_cursor=None, head={}) == {
         "items": [],
         "next_cursor": None,

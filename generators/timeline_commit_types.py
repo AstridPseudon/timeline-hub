@@ -76,10 +76,13 @@ def render() -> dict[str, str]:
         py = language == "python"
         if "$ref" in schema:
             target = schema["$ref"]
-            if target.startswith("#/$defs/") or target.startswith(
-                "edit-command.json#/$defs/"
-            ):
-                name = target.rsplit("/", 1)[1]
+            if target.startswith(("#/$defs/", "edit-command.json#/$defs/")):
+                name, *path = target.split("#/$defs/", 1)[1].split("/")
+                if path:
+                    value = definitions[name]
+                    for token in path:
+                        value = value[token.replace("~1", "/").replace("~0", "~")]
+                    return expression(value, language)
                 return repr(name) if py else name
             # Canonical payloads remain open, owned by their existing schemas.
             return "dict[str, Any]" if py else "Record<string, unknown>"
@@ -132,6 +135,12 @@ def render() -> dict[str, str]:
                         fields.append(f"{key!r}: {item}")
                     else:
                         fields.append(f"{key}{'' if key in required else '?'}: {item}")
+                if not py and schema.get("additionalProperties", True) is not False:
+                    additional = schema.get("additionalProperties", {})
+                    item = expression(additional, language) if isinstance(additional, dict) else "unknown"
+                    fields.append(f"[key: string]: {item}")
+                elif not py and not fields:
+                    fields.append("[key: string]: never")
                 return (
                     "{ " + "; ".join(fields) + " }"
                     if not py

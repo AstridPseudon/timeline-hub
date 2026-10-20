@@ -5,6 +5,7 @@ belong to the commit store and coordinator. No renderer participates here.
 """
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
@@ -112,6 +113,7 @@ class RequestCommitPort:
         self.__media = {}
         self.__takes = {}
         self.__documents = {}
+        self.__document_objects = {}
         self.__history_pins = []
         self.__preview = None
         self.__request = self.__context["request"]
@@ -280,7 +282,11 @@ class RequestCommitPort:
         return self._read(read)
 
     def _document(self, pin, transcript):
-        from .timeline_commit_inputs import capture_document_input
+        from .timeline_commit_inputs import (
+            PROJECT_PACK_KIND,
+            PROJECT_PACK_SCHEMA,
+            capture_document_input,
+        )
         def read():
             reachable = [item for closure in self.__closures.values()
                          for item in closure["dependency_manifest"]["documents"]]
@@ -303,9 +309,10 @@ class RequestCommitPort:
                         "SELECT kind FROM project_documents WHERE project_id=? AND id=?",
                         (self.__project, pin["document_id"]),
                     ).fetchone()
-                if row is None or not row["kind"].endswith(".config"):
-                    raise refused("dependency_unavailable", "config input requires a registered config kind")
-                kind, schema = row["kind"], None
+                if row is None or not (row["kind"].endswith(".config") or row["kind"] == PROJECT_PACK_KIND):
+                    raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
+                kind = row["kind"]
+                schema = PROJECT_PACK_SCHEMA if kind == PROJECT_PACK_KIND else None
             capture = capture_document_input(self.__service.store.conn, self.__project, pin,
                                              reachable_pins=reachable, expected_kind=kind, expected_schema=schema)
             self.__documents[canonical_json(pin)] = capture
@@ -318,8 +325,32 @@ class RequestCommitPort:
     def config_source(self, pin):
         return self._document(pin, False)
 
+    def document_object(self, pin, object_id):
+        from .timeline_commit_inputs import PROJECT_PACK_KIND, pack_snapshot_objects, read_pack_snapshot_object
+
+        def read():
+            capture = self.__documents.get(canonical_json(pin))
+            if capture is None or capture.document["kind"] != PROJECT_PACK_KIND:
+                raise refused("dependency_unavailable", "object read requires a captured project pack document")
+            descriptors = [value for value in pack_snapshot_objects(capture.document["content"])
+                           if value["object_id"] == object_id]
+            if not descriptors:
+                raise refused("dependency_unavailable", "object is outside the captured project pack document")
+            descriptor = descriptors[0]
+            data, identity = read_pack_snapshot_object(
+                self.__service.store.conn, self.__service.cas, self.__project, descriptor,
+                max_bytes=self.__service.max_object_bytes,
+            )
+            key = (canonical_json(pin), object_id)
+            captured = (descriptor, data, identity)
+            if key in self.__document_objects and self.__document_objects[key] != captured:
+                raise refused("dependency_unavailable", "captured project pack object changed")
+            self.__document_objects[key] = captured
+            return {**descriptor, "bytes_base64": base64.b64encode(data).decode("ascii")}
+        return self._read(read)
+
     def validate(self, prepared):
-        from .timeline_commit_inputs import validate_captured_document_inputs
+        from .timeline_commit_inputs import read_pack_snapshot_object, validate_captured_document_inputs
         self.__authorize()
         for revision, captured in self.__closures.items():
             if self.__store.revision_closure(self.__project, self.__timeline, revision) != captured:
@@ -351,6 +382,13 @@ class RequestCommitPort:
         if any(pin not in recorded for pin in pins):
             raise refused("dependency_unavailable", "document input lacks a recorded dependency")
         validate_captured_document_inputs(self.__service.store.conn, self.__documents.values())
+        for descriptor, data, identity in self.__document_objects.values():
+            current = read_pack_snapshot_object(
+                self.__service.store.conn, self.__service.cas, self.__project, descriptor,
+                max_bytes=self.__service.max_object_bytes,
+            )
+            if current != (data, identity):
+                raise refused("dependency_unavailable", "captured project pack object changed")
 
     def persist(self, prepared, publication_id, revision_id):
         from .timeline_commit_inputs import DocumentInputLink, persist_document_input_links

@@ -115,6 +115,9 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    native_exports = 'export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, VerifiedDocument, VerifiedDocumentObject } from "./timeline-commit-types.js";'
+    if native_exports not in source:
+        source = native_exports + "\n" + source
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
@@ -236,6 +239,12 @@ def main() -> int:
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
+    generated["packages/python/astrid_runtime_client/__init__.py"] = _regular(
+        ROOT / "generators/python_client_init_template.py", "Python package exports template"
+    ).decode("utf-8").replace(
+        "Authoritative Python package exports; rendered by generators/generate.py.",
+        "Generated, product-neutral client for the workspace.v1 protocol.",
+    )
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
     from timeline_commit_resources import render as render_commit_resources
