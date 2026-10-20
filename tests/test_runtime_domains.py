@@ -22,6 +22,10 @@ class _RetiredTimelineUpdate(ApiError):
     """Marker for the one direct timeline writer expected to remain retired."""
 
 
+class _RetiredTimelinePublication(ApiError):
+    """Marker for the retired timeline publication call expected to remain retired."""
+
+
 def _retired_timeline_update(client, payload):
     try:
         return legacy_call(client, "PATCH", "/v1/timelines/timeline", payload, key="timeline-update")
@@ -33,6 +37,22 @@ def _retired_timeline_update(client, payload):
             and error.details.get("reason") == "timeline_commit_required"
         ):
             raise _RetiredTimelineUpdate(
+                error.status, error.code, error.message, error.request_id, error.details
+            ) from error
+        raise
+
+
+def _retired_timeline_publication(client, timeline_id, payload):
+    try:
+        return legacy_call(client, "PATCH", f"/v1/timelines/{timeline_id}", payload, key=f"{timeline_id}-update")
+    except ApiError as error:
+        if (
+            error.status == 410
+            and error.code == "retired_route"
+            and error.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
+            and error.details.get("reason") == "timeline_commit_required"
+        ):
+            raise _RetiredTimelinePublication(
                 error.status, error.code, error.message, error.request_id, error.details
             ) from error
         raise
@@ -244,7 +264,11 @@ def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement")
+@pytest.mark.xfail(
+    strict=True,
+    raises=_RetiredTimelinePublication,
+    reason="RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement",
+)
 def test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
@@ -253,11 +277,47 @@ def test_generated_python_client_timeline_publication_is_retired_pending_commit_
         project = client.create_project("Domain Project", idempotency_key="domain-project")
         timeline = client.create_timeline(project.project_id, "timeline-1", idempotency_key="timeline-1")
         assert timeline["version"] == 1
-        saved = legacy_call(client, "PATCH", "/v1/timelines/timeline-1", {"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]}, key="timeline-1-update")
+        saved = _retired_timeline_publication(
+            client,
+            "timeline-1",
+            {"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]},
+        )
         assert saved["version"] == 2 and saved["shots"][0]["shot_id"] == "shot-1"
         with pytest.raises(ApiError) as stale_timeline:
             legacy_call(client, "PATCH", "/v1/timelines/timeline-1", {"expected_version": 1, "shots": []}, key="timeline-1-stale")
         assert stale_timeline.value.status == 409
+    finally:
+        daemon.stop()
+
+
+def test_generated_direct_reference_writer_is_refused_without_writes(tmp_path):
+    """The retired /v1/references writer refuses before changing timeline state."""
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Reference refusal", idempotency_key="reference-refusal-project")
+        client.create_timeline(project.project_id, "timeline", idempotency_key="reference-refusal-timeline")
+        before = client.get_project_timeline(project.project_id, "timeline")
+        before_changes = daemon.service.store.conn.total_changes
+
+        with pytest.raises(ApiError) as error:
+            legacy_call(
+                client,
+                "PATCH",
+                "/v1/references/reference-refused",
+                {"expected_version": 1, "role": "source"},
+                key="reference-refused",
+            )
+        assert error.value.status == 410
+        assert error.value.code == "retired_route"
+        assert error.value.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
+        assert error.value.details["reason"] == "timeline_commit_required"
+        assert client.get_project_timeline(project.project_id, "timeline") == before
+        assert daemon.service.store.conn.total_changes == before_changes
+        assert daemon.service.store.conn.execute(
+            "SELECT 1 FROM command_idempotency WHERE idempotency_key=?", ("reference-refused",)
+        ).fetchone() is None
     finally:
         daemon.stop()
 
