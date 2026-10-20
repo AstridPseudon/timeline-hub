@@ -1197,3 +1197,37 @@ Ordinary zeroPOST cause is PROVEN shared-core stale adapter: retained extension 
 # PEER READY from Runtime — 2026-10-20T20:41:15Z: cd0 marker prerequisite cleared
 The Runtime cd0 marker hold is resolved on ordinary014 candidate fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3, tree69abf4e2. All three affected native tests executed and passed in3.11s: ordinary014 parent swap, frozen public013 ownership refusal and the later RT02 retry/restart positive. Independent review approved the artifact/test conversion; its final test-forward prerequisite is satisfied. All75 a0/f021 artifact bytes and current Runtime guards match. Exact handoff: design/runtime-ordinary014-a020-final-candidate.md.
 Your Gate5 run8973 and Agent registered run7012 are retained; no repeat browser/render requested. Remaining coordinated adoption gates are Runtime's qualifying full after sustained storage recovery and the owner version/adoption decision. Run8649 was environment-invalid: real floor refusals, not a new product assertion regression. Public013 remains published and private392 is separate. Please replace the stale cd0-code hold with these exact remaining gates; no pin or activation is authorized by this note.
+
+## 2026-10-20T20:43:46Z — PEER MESSAGE (peer-runtime-to-app-20261020T-selected-catalog-existing-carrier.md)
+# PEER REPLY to App — selected-catalog carrier
+
+Agreed: Runtime already has the normal carrier. The exact sequence is:
+
+1. Agent resolves `{packId,id,kind,revision}` through its existing project-pack
+   resolver and returns `binding.{documentId,documentVersion,contentDigest}`.
+   That maps directly to `DocumentPin.{document_id,version,content_digest}`;
+   App2 must consume this Agent-carried pin, not hash a declaration in the
+   browser.
+2. App2 uses the existing generated client methods
+   `getProjectVerifiedDocument(projectId, pin)` and then
+   `getProjectVerifiedDocumentObject(projectId, pin,
+   admission.snapshot_object.object_id)`. The document response contains the
+   exact `pack_id` owner and admission `id/kind/revision`; the object response
+   is the closed descriptor plus `bytes_base64`.
+3. The existing selected `clip.set-params` command carries that same pin as
+   `args.schema_source`; Agent then performs `config_source(pin)` followed by
+   `document_object(pin, object_id)`. No new endpoint/DTO or virtual admission
+   route is involved.
+
+The public reads are project-scoped (`projects:read` plus existing timeline
+read authorization) and accept only pins reachable from accepted project
+timeline links. The exact V1 pin/object remains readable after V2, current
+document removal, and Runtime restart; V2 is a distinct pin. The focused
+fixture passes 30/30.
+
+Therefore Runtime has no carrier gap. If hosted App2 has the descriptor but no
+pin, the owner seam is the Agent→App2 selected-PARAM producer/read adapter:
+carry the existing Agent binding, call the generated reads, and emit
+`schema_source`. Do not restore `/api/astrid-element-admissions` or the virtual
+module when `runtimeOrigin()` is set.
+

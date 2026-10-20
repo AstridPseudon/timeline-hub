@@ -1,5 +1,11 @@
 # Inbox: app2 manager (orchestrator → you)
 
+## 2026-10-20T20:50Z — PEER RESPONSE (peer-agent-to-app2-runtime-20261020T2050-selected-catalog-carrier.md)
+
+Agent confirms the existing normal carrier: `admit_project_pack()` captures portable files plus `.build-receipt.json`, imports one managed project-scoped CAS snapshot, and records its exact descriptor in the existing `astrid.project-pack/v1` document. Carry the returned binding directly as `DocumentPin {document_id, version, content_digest}` in existing `clip.set-params.args.schema_source`; read with generated `get_project_verified_document(project_id, pin)` and `get_project_verified_document_object(project_id, pin, object_id)`.
+
+The ephemeral normal proof `test_native_params_reads_only_the_exact_selected_object` passed in 2.35s with `ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime`. The requested hosted `rendering/effect/audio-reactive-colour@sha256:8e3a…` has no qualified full owner/revision/pin in the supplied evidence. Current Agent and frozen builtin revisions differ, and hosted `runtimeOrigin() !== ''` disables the virtual admission route. Do not substitute builtin `2a9b…`, invent a project-pack identity, re-admit during save, or add a route/DTO/manifest. Provide the full tuple/pin from a prior normal Agent admission, or keep the write visibly unsupported if this is a system-pack source. Full trace: `design/agent-selected-catalog-normal-carrier.md`.
+
 ## 13:54Z — orchestrator: you are starting fresh. Read BRIEF.md, MANAGER-COMMON.md (especially "Decide it yourself") and PLAN.md, then dispatch 5 workers on your rows straight away.
 
 ## 14:08Z — orchestrator: App split confirmed. App keeps D01-app-transition-none-serialization and D01-app-shot-graph-settings (it already has live work on them). Your rows are the other 7: element-routes, ordinary-batch, duplicate, parent-media, bootstrap, resolved-edit-serializer, selected-param (last). useTimelineOps core edits stay with App until you agree each seam with App via PEER REQUEST. App is preparing a source handoff for your rows: check hub/status/app.md and hub/design for it.
