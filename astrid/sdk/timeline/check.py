@@ -204,6 +204,18 @@ class _CheckMixin:
                        + (f": {', '.join(span.findings)}" if span.findings else ""))
         return out
 
+    def _scene_only_problems(self, result: Any, context: Mapping[str, Any]) -> list[str]:
+        """Format a bound managed Scene result with the established advisory reader.
+
+        The explicit-check caller may use this after Viewing supplies the
+        managed invocation result. Save/core paths do not call it.
+        """
+        from astrid.sdk.timeline_filmstrip import _scene_only_spans
+
+        return self._scene_problems(_scene_only_spans(
+            result, context, duration_frames=int(round(self.duration * self.fps)),
+        ))
+
     def _length_problems(self) -> list[str]:
         """Visible clips that run past the end of their shot's placement: the render stops at the shot's end, so
         they would be cut off. Audio is exempt (a music bed runs out with the film). Blocking."""
