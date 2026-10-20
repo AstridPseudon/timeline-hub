@@ -146,13 +146,19 @@ function accepted(post: CommitPost): CommitAcceptedMutation {
   expect(post.status, JSON.stringify(post.response)).toBe(200);
   expect(post.response.data.status).toMatch(/^(accepted|rebased)$/);
   expect(post.key).toBeTruthy();
-  expect(post.response.receipt.receipt_id).toBe(post.key);
+  // Runtime keeps publication/receipt identity separate from request retry identity.
+  expect(post.response.receipt.receipt_id).toBeTruthy();
   expect(post.response.receipt.idempotency_key).toBe(post.key);
   expect(post.response.receipt.result).toEqual(post.response.data);
   return post.response;
 }
 
 const clipsOf = (document: CanonicalDocument) => document.parent_revision.payload.clips as Array<Record<string, any>>;
+const withoutConflict = <T extends { conflict?: unknown }>(intents: T[]) => intents.map((intent) => {
+  const original = structuredClone(intent);
+  delete original.conflict;
+  return original;
+});
 
 function expectOnlyDeleted(before: CanonicalDocument, after: CanonicalDocument, clipId: string) {
   const expected = structuredClone(before.parent_revision.payload);
@@ -389,8 +395,13 @@ test('M2 current013 parent DELETE conflict: same-property Agent move wins while 
   await expect(page.getByTestId('timeline-command-recovery'))
     .toContainText('Your changes are retained and need resolution before they can be saved.');
   const retained = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
-  expect(retained.intents).toEqual(owner.intents);
+  // The conflict is additive state; the original intent, including its guards, remains byte-exact.
+  expect(withoutConflict(retained.intents)).toEqual(owner.intents);
+  expect(retained.intents.map((intent) => intent.conflict)).toEqual([
+    expect.objectContaining({ kind: 'conflict' }),
+  ]);
   expect(retained.pending?.request).toEqual(owner.pending?.request);
+  expect(retained.pending?.outcome).toMatchObject({ kind: 'rejected', error: { kind: 'conflict' } });
   expect(JSON.parse(retained.pending!.request.body).commands).toEqual(heldRequest.commands);
   expect((await history(harness, seed3)).head).toEqual(pinOf(moved));
   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 1);
@@ -400,16 +411,21 @@ test('M2 current013 parent DELETE conflict: same-property Agent move wins while 
   await page.reload();
   await expectConnected(page);
   const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
-  expect(reloaded.intents).toEqual(retained.intents);
-  expect(reloaded.pending).toEqual(retained.pending);
+  expect(withoutConflict(reloaded.intents)).toEqual(owner.intents);
+  expect(reloaded.intents.map((intent) => intent.conflict)).toEqual(retained.intents.map((intent) => intent.conflict));
+  expect(reloaded.pending?.request).toEqual(retained.pending?.request);
+  expect(reloaded.pending?.outcome).toEqual(retained.pending?.outcome);
   const recover = page.getByRole('button', { name: /^Recover saved edits/ })
     .and(page.locator(`[data-owner-id="${owner.ownerId}"]`));
   await expect(recover).toBeVisible(CEILING);
   await recover.click();
   await expect(page.getByTestId('timeline-command-recovery'))
     .toContainText('Your changes are retained and need resolution before they can be saved.');
-  expect((await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId))
-    .toMatchObject({ intents: retained.intents, pending: retained.pending });
+  const recovered = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(withoutConflict(recovered.intents)).toEqual(owner.intents);
+  expect(recovered.intents.map((intent) => intent.conflict)).toEqual(retained.intents.map((intent) => intent.conflict));
+  expect(recovered.pending?.request).toEqual(retained.pending?.request);
+  expect(recovered.pending?.outcome).toEqual(retained.pending?.outcome);
   expect(wire.posts).toHaveLength(1);
   expect(wire.legacy).toEqual([]);
 });
