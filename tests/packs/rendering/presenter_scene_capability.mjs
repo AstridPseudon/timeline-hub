@@ -11,7 +11,7 @@ import {Internals} from 'remotion';
 import {DEFAULT_THEME, TimelineComposition, compileCanonicalTransitions, toRuntimeTheme, prepareCompositionScene, getTimelineDurationInFrames} from '@banodoco/timeline-composition';
 import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
-import {loadHostScene} from './native-scene.mjs';
+import {foldSceneMotion, loadHostScene} from './native-scene.mjs';
 
 Error.stackTraceLimit = 0;
 const project = process.cwd();
@@ -94,7 +94,7 @@ const mode = process.argv[2];
 if (mode === 'snapshots') {
   console.log(JSON.stringify(snapshots()));
 } else {
-  assert.ok(['states', 'geometry', 'unknowns', 'clock', 'registration'].includes(mode));
+  assert.ok(['states', 'geometry', 'unknowns', 'clock', 'registration', 'exact-fold'].includes(mode));
   const {MOUTH_LEVEL, motionAt, presenterAt, mouthStateAt} = source;
   const support = (c, frame, b = basis) => source.Presenter.prepareSceneCapability({clip: c, ...b,
     rendererIdentity: 'registered-ssr', fontDigests: {}}).frame(frame);
@@ -108,6 +108,86 @@ if (mode === 'snapshots') {
     assert.equal(layer.diagnostics.motion.mouth, MOUTH_LEVEL[state]);
     return state;
   };
+
+  if (mode === 'exact-fold') {
+    const {repeated, samples} = JSON.parse(process.argv[3]);
+    const fps = 30000 / 1001;
+    const b = {...basis, fps};
+    assert.equal(repeated.length, 2);
+    const identity = c => c.app.astrid_shot_composition;
+    assert.equal(identity(repeated[0]).source_clip_id, identity(repeated[1]).source_clip_id);
+    assert.notEqual(identity(repeated[0]).occurrence_id, identity(repeated[1]).occurrence_id);
+    const ids = new Map(repeated.map(c => [identity(c).occurrence_id, c.id]));
+    // Keep the projector's exact occurrence IDs, even though times, labels and
+    // source IDs coincide. These are synthetic authored inputs, not certified media.
+    for (const [i, c] of repeated.entries()) Object.assign(c, {
+      track: c.id, clipType: 'am-presenter', elementRef: owner, at: 0, from: 7,
+      hold: (i === 0 ? 301 : 150.5) / fps, speed: i === 0 ? 1 : .5,
+      params: {words: [[180 / fps, 183 / fps]], seed: 7, chrome: 'none', blinkEvery: 0},
+    });
+    const outgoing = clip({}, {id: 'out', track: 'transition', hold: 100 / fps});
+    const incoming = clip({words: [[0, 6 / fps]], seed: 7, chrome: 'none', blinkEvery: 0},
+      {id: 'in', track: 'transition', at: 100 / fps, from: 17, hold: 12 / fps, speed: 2,
+        transition: {type: 'fade', duration: 6 / fps}});
+    const props = propsFor([...repeated, outgoing, incoming], b);
+    const original = JSON.stringify(props);
+    // One actual host/public preparation for every selection and fact below.
+    const scene = prepareHostScene(props, b, {});
+    const observed = new Map();
+    const firstId = ids.get(identity(repeated[0]).occurrence_id);
+    const secondId = ids.get(identity(repeated[1]).occurrence_id);
+    const request = {ranges: [[0, 301]], maxFrames: 301,
+      clipIds: [secondId, 'in', firstId], keys: ['mouth', 'not-published']};
+    const folded = foldSceneMotion(scene, (sameScene, frame) => {
+      assert.equal(sameScene, scene);
+      assert.equal(frame, observed.size);
+      const answer = querySceneFrame(sameScene, frame);
+      observed.set(frame, answer);
+      return answer;
+    }, request);
+    assert.equal(observed.size, 301);
+    assert.equal(folded.totalFrames, 301);
+    assert.equal(JSON.stringify(props), original);
+    assert.equal(scene.assets, props.assets);
+    const counts = new Map(folded.counts.map(row => [`${row.clipId}:${row.key}`, row]));
+    const expected = (clipId, key, values, unknownFrames = 0, absentFrames = 0) => {
+      assert.deepEqual(counts.get(`${clipId}:${key}`), {
+        clipId, key, values: values.map(([value, count]) => ({value, count})),
+        unknownFrames, absentFrames, totalFrames: 301,
+      });
+    };
+    expected(firstId, 'mouth', [[MOUTH_LEVEL.closed, 299], [MOUTH_LEVEL.half, 1], [MOUTH_LEVEL.open, 1]]);
+    expected(secondId, 'mouth', [[MOUTH_LEVEL.closed, 301]]);
+    expected('in', 'mouth', [[MOUTH_LEVEL.closed, 10], [MOUTH_LEVEL.half, 1], [MOUTH_LEVEL.open, 1]], 0, 289);
+    expected(firstId, 'not-published', [], 301);
+    expected(secondId, 'not-published', [], 301);
+    expected('in', 'not-published', [], 12, 289);
+    for (const row of folded.counts) assert.equal(row.values.reduce((n, v) => n + v.count, 0)
+      + row.unknownFrames + row.absentFrames, row.totalFrames);
+    const layer = (id, frame) => observed.get(frame).layers.find(l => l.clipId === id);
+    assert.equal(samples.length, 60);
+    for (const f of samples) assert.equal(layer(firstId, f).diagnostics.motion.mouth, MOUTH_LEVEL.closed);
+    for (const f of [180, 181, 182]) assert.ok(!samples.includes(f));
+    // Labels apply only to the resolved presenter, via its existing codebook.
+    const labels = new Map(Object.entries(MOUTH_LEVEL).map(([label, value]) => [value, label]));
+    assert.deepEqual(counts.get(`${firstId}:mouth`).values.map(({value, count}) =>
+      ({label: labels.get(value), count})), [
+      {label: 'closed', count: 299}, {label: 'half', count: 1}, {label: 'open', count: 1},
+    ]);
+    assert.equal(layer('in', 93), undefined);
+    assert.equal(layer('in', 94).contentFrame, 0); // incoming preroll before authored at=100
+    assert.equal(layer('in', 99).contentFrame, 5);
+    assert.ok(layer('in', 105));
+    assert.equal(layer('in', 106), undefined); // half-open end
+    assert.equal(layer(firstId, 181).contentFrame, 181); // from=7 is not a second clock
+    assert.equal(layer(secondId, 181).contentFrame, 181);
+    // No source-ID fallback and no implicit/excessive frame allowance.
+    const noQuery = () => assert.fail('invalid request must refuse before querying');
+    for (const change of [{clipIds: [identity(repeated[0]).source_clip_id]},
+      {maxFrames: undefined}, {maxFrames: 300}, {maxFrames: 3601}]) {
+      assert.throws(() => foldSceneMotion(scene, noQuery, {...request, ...change}), /scene_motion_/);
+    }
+  }
 
   if (mode === 'states') {
     assert.deepEqual(MOUTH_LEVEL, {closed: 0, half: .5, open: 1});

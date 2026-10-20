@@ -102,8 +102,8 @@ export default Object.assign(({params}) => createElement('div', {'data-probe': p
         assert Path(peer["path"]).is_relative_to(peers)
         assert peer["version"] == ("18.3.1" if name in ("react", "react-dom") else "4.0.509")
 
-    def query(case):
-        result = subprocess.run([str(node.path), "query.mjs", case], cwd=project, env=env,
+    def query(case, *args):
+        result = subprocess.run([str(node.path), "query.mjs", case, *args], cwd=project, env=env,
                                 text=True, capture_output=True, timeout=60)
         assert result.returncode == 0, result.stdout + result.stderr
         return json.loads(result.stdout)
