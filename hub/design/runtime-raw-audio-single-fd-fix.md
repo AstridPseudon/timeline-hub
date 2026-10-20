@@ -13,8 +13,8 @@ The post-parse check intentionally reuses the existing helper instead of
 comparing the first and last ctime directly: on Linux, an atomic pathname
 rename changes the old inode's ctime even though its open descriptor and bytes
 remain authoritative. The path-replacement race therefore parses the original
-one-second WAV, while an in-place two-second replacement fails the size/hash
-verification before returning metadata. Hashing remains chunked and bounded;
+one-second WAV, while an in-place same-size header corruption fails the
+size/hash verification before returning metadata. Hashing remains chunked and bounded;
 no whole-file buffer, decoder, ffprobe, public DTO, endpoint, or ABI change was
 added.
 
@@ -27,8 +27,8 @@ accepted-retry ledger-first ordering are unchanged.
 deterministically injects the reviewer race immediately after the first
 descriptor verification. Its `rename` case swaps a two-second WAV into the
 CAS pathname and proves the result remains one second from the original open
-descriptor. Its `inplace` case overwrites the same pathname/inode and proves
-the read refuses with a CAS size/hash conflict.
+descriptor. Its `inplace` case corrupts the same-size pathname/inode and proves
+the read refuses with a CAS hash conflict, even when WAV parsing fails.
 
 ## Evidence
 

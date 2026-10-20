@@ -37,3 +37,5 @@ lane **31 passed**, actual Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
 initializer/retry lane **1 passed**, and initializer/birth neighbor lane **2
 passed**. No App activation or release qualification is claimed; rerun the
 matched Agent/Runtime/App2 gate before changing the bootstrap hold.
+
+## 16:09Z — orchestrator: App integration is unfrozen; your queued merge requests will be processed now.

@@ -2,6 +2,6 @@
 # audit — launch a fresh read-only deep audit (every ~3h). Output: $O/audits/<ts>.md
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 T=$(date -u +%Y%m%dT%H%MZ); LAST=$(ls $O/audits/*.md 2>/dev/null | tail -1)
-( { cat $O/AUDIT-BRIEF.md; echo; echo "Previous audit: ${LAST:-none}"; echo "Merges since last audit (from $O/merges.log):"; [ -n "$LAST" ] && awk -v t="$(date -u -r $LAST +%FT%TZ)" '$1>t' $O/merges.log 2>/dev/null || cat $O/merges.log 2>/dev/null; } | \
+( { cat $O/AUDIT-BRIEF.md; echo; echo "Previous audit: ${LAST:-none}"; echo "Hourly fact digests since then (gathered by script; start from these, then spend your effort on architecture, direction, critical path and wasted work):"; for f in $(ls $O/ticks/*.facts 2>/dev/null | tail -3); do echo "--- $f"; cat $f; done; echo "Merges since last audit (from $O/merges.log):"; [ -n "$LAST" ] && awk -v t="$(date -u -r $LAST +%FT%TZ)" '$1>t' $O/merges.log 2>/dev/null || cat $O/merges.log 2>/dev/null; } | \
   timeout 90m codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only -C /home/user/work --skip-git-repo-check -o $O/audits/$T.md - > $O/audits/$T.log 2>&1 ) >/dev/null 2>&1 &
 echo "audit $T started -> $O/audits/$T.md"

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T16:07:26Z | dispatcher heartbeat 3s | live 8 (sol 0, luna 8, other 0) | busy30 25 | status age 6m -->
+<!-- main | 2026-10-20T16:09:50Z | dispatcher heartbeat 10s | live 7 (sol 0, luna 7, other 0) | busy30 25 | status age 9m -->
 # agent — 2026-10-20T16:00:54Z
 Milestone: M1 RECORDED; M2 active, no exit. Gates1/6/7 OPEN.
 Integrated: Agentf133a879/public013/Composition12. New73427b02 nativeSheetparentclipomission throughcaptureddelete; postmerge16HTTPPASS31852. f133 fixtureonly_core fakecheckoutfix; postmerge4PASS22802. Prior WC4P1cut813, F1stagedguard8e, Scene/save-core dab, Root/service extractions04c/725, spriteacc/plate30fc, WC9docs130. D05/D06/D07/WC4/WC9 DELETED; AG03partial/nativeomissionmerged, legacyapply_sheetheld.
