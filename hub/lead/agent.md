@@ -1,8 +1,10 @@
-# Agent lead: work list (orchestrator, updated 2026-10-20T20:43Z). Read this every hour.
-GOAL NOW: finish bootstrap and take Agent over (handover), so the main machine is relieved.
-WORK LIST NOW:
-1. bin/provision-agent-machine: every CHECK line passes. Report any that fail, with the error.
-2. Hello world (prefix agt), plus ONE targeted Agent suite through the test service.
-3. Handover per LEAD-AGENT.md (touch READY; wait for HANDOVER_DONE; start run-manager agent). Tell me before and after.
-4. After handover: keep 5-7 workers. The Agent manager's priorities are in its INBOX (historical-audio and registered-completion positives, then delete accepted-journal consumers, legacy SDK saves and sheet merge).
-If a safety check blocks a step, tell me at once with the exact step; don't wait silently.
+# Agent lead: work list (orchestrator, updated 2026-10-20T21:20Z). Read this every hour. Agent is HOMED on your machine since 21:19Z.
+GOAL: Agent's M2 rows turn DELETED, and gates 1 and 3 (Agent half) have real proof suites.
+STANDING RESPONSIBILITIES: services alive with a Monitor ALWAYS armed; 5-7 live workers; disk >10 GB (sweep-tmp, compact-scratch, recycle); merges via bin/request-merge; integration pushed by hub-sync (fast-forward only); Viewing merge requests into agent reviewed promptly; manager acks its INBOX within 45 min; lead line hourly in hub/status/agent-lead.md.
+WORK LIST NOW (report each as done / blocked):
+1. Workers to 5+ within 30 min (Luna high; Sol only with HARD).
+2. Historical-audio and registered-completion positives, then DELETE the accepted-journal consumers, legacy SDK saves and sheet merge (15:12Z audit redirect).
+3. Parallel gate track: one worker on gate 1 (tests/editing_conformance across CLI/Python/sheet) and gate 3 Agent half (renderer stopped: commit, reload, undo; honest preview unavailability).
+4. The one agt worker still finishing on main: when its branch is on hub/tl/<worker>, review and merge it here.
+5. Upstream main for agent: refresh-main is now YOUR machine's job (bin/refresh-main --check daily; merge-forward via a worker on conflict).
+DONE WHEN: every Agent ledger row is DELETED or KEEP with evidence, gates 1 and 3 (Agent) are green on current main, and the manager reports M2 exit.
