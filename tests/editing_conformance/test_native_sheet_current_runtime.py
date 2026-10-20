@@ -6,15 +6,20 @@ transport, unmodified generated client and startup-loaded semantic provider.
 from __future__ import annotations
 
 import copy
+import hashlib
+import importlib.util
 import json
+from pathlib import Path
 
 import pytest
 
 from astrid.packs.timeline.cli import build_parser
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_sheet import NativeSheet
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance import test_native_batch_ingress
@@ -25,6 +30,8 @@ from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
 pytestmark = pytest.mark.integration
 runtime = test_native_batch_ingress.runtime
 REF = 'parent/clip:title'
+LEGACY_HELPER_COMMIT = '382f523ef957afb2bd299c5e21424ca821b23f05'
+LEGACY_HELPER_SHA256 = '5e152bfa716b9003b831648cad16f6adb9c334cd18a6a7cf32a31accefe82617'
 
 
 def run(runtime, *args):
@@ -62,6 +69,94 @@ def raw():
     return [command('clip.move', REF, {'on': 3.017}),
             command('clip.set', REF, {'values': {'hold': 2.013}, 'clear': ['transition']}),
             command('clip.set-params', REF, {'values': {'text': ''}, 'clear': []}), label('')]
+
+
+def trusted_legacy_parent(service, document):
+    """Load Runtime's reviewed test-only storage seed without copying its code."""
+    from tests.helpers.runtime import runtime_checkout
+
+    helper_path = runtime_checkout(LEGACY_HELPER_COMMIT) / 'tests' / 'timeline_trusted_bootstrap.py'
+    helper_bytes = helper_path.read_bytes()
+    assert hashlib.sha256(helper_bytes).hexdigest() == LEGACY_HELPER_SHA256
+    spec = importlib.util.spec_from_file_location('_runtime_trusted_bootstrap', helper_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.seed_trusted_legacy_parent(
+        service, document, idempotency_key='native-sheet-legacy-cut-fixture')
+
+
+def tiny_legacy_document(service, project):
+    """Bind the existing Main tiny fixture to real Runtime media and Documents."""
+    fixture_path = Path(__file__).parents[1] / 'fixtures' / 'timeline_editing' / 'tiny.json'
+    source = json.loads(fixture_path.read_text())
+    timeline = source['shots']['B']['internal_timeline']
+    media_ids = {}
+    for asset in ('P', 'Q', 'R'):
+        result = service.ingest(
+            project, f'timeline-tiny-{asset}'.encode(),
+            media_type='application/octet-stream', original_name=f'tiny-{asset}',
+            idempotency_key=f'native-sheet-legacy-media-{asset}')
+        media_ids[asset] = result['data']['object_id']
+
+    transcript_content = {
+        'schema': 'media.transcript/v1',
+        'media_id': media_ids['P'],
+        'source_id': 'whisper',
+        'segments': [{
+            'id': 's2', 'start': 0.0, 'end': 1.0, 'text': 'Live now.',
+            'words': [
+                {'id': 'w-live', 'start': 0.1, 'end': 0.4, 'text': 'Live'},
+                {'id': 'w-now', 'start': 0.5, 'end': 0.8, 'text': 'now'},
+            ],
+        }],
+    }
+    document_id = service._transcript_document_id(project, media_ids['P'], 'whisper')
+    source_result = service.create_document(
+        project,
+        {'document_id': document_id, 'kind': 'media.transcript', 'content': transcript_content},
+        idempotency_key='native-sheet-legacy-transcript',
+    )
+    transcript_pin = {
+        'document_id': document_id,
+        'version': source_result['data']['version'],
+        'content_digest': _digest(transcript_content),
+    }
+
+    clips = copy.deepcopy(timeline['clips'])
+    tracks = copy.deepcopy(timeline['tracks'])
+    registry = copy.deepcopy(timeline['registry'])
+    for asset, entry in registry['assets'].items():
+        entry['media_id'] = media_ids[asset]
+    group_clips = [row for row in clips if row['id'] == 'b-type']
+    group = {
+        'shotId': 'legacy-c2', 'trackId': 'type',
+        'clipIds': [row['id'] for row in group_clips], 'mode': 'images',
+        'items': [], 'imageClipSnapshot': copy.deepcopy(group_clips),
+    }
+    payload = {
+        'config': {
+            'clips': copy.deepcopy(clips), 'tracks': tracks,
+            'output': {'fps': {'numerator': 30000, 'denominator': 1001}, 'opaque': None},
+            'pinnedShotGroups': [group], 'parent_only': {'audio': [None]},
+        },
+        'clips': clips, 'occurrences': [], 'opaque': {'fixture': 'timeline_editing/tiny.json'},
+        'registry': registry,
+    }
+    return {
+        'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
+        'parent_revision': {
+            'revision_id': 'legacy-tiny-parent', 'payload': payload,
+            'content_digest': _digest(payload),
+        },
+        'shot_revisions': [], 'internal_timeline_revisions': [],
+        'dependency_manifest': _manifest(
+            [], [],
+            [{'media_id': media_ids[asset], 'content_digest': media_ids[asset]}
+             for asset in ('P', 'Q', 'R')],
+            [transcript_pin],
+        ),
+    }
 
 
 def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection(
@@ -138,6 +233,67 @@ def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed
     with pytest.raises(CommitConflict):
         selected_sheet.apply(remove_row(selected_sheet.text, target), session=selected, dry_run=False)
     assert runtime.history()['head'] == head and len(runtime.history()['items']) == count
+
+
+def test_http_legacy_cut_native_for_admits_rebases_reads_and_undoes(runtime, monkeypatch):
+    service = runtime.service()
+    document = tiny_legacy_document(service, runtime.project)
+    original_target = copy.deepcopy(
+        next(row for row in document['parent_revision']['payload']['clips'] if row['id'] == 'b-type'))
+    setup = trusted_legacy_parent(service, document)
+
+    # Restart and open through the authenticated public SDK before making any edit.
+    runtime.restart()
+    session = runtime.session(name='legacy-native')
+    admitted = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert admitted.ok
+    admitted_target = State(admitted.data['bundle']).entity('parent/clip:b-type')
+    assert admitted_target == original_target
+    assert admitted.data['bundle']['parent']['config']['clips'] == document['parent_revision']['payload']['clips']
+    assert runtime.history()['head']['revision_id'] == setup['data']['accepted_revision_id']
+    assert len(runtime.history()['items']) == 2
+
+    monkeypatch.setattr(Checkout, 'save', lambda *args, **kwargs: pytest.fail('legacy save'))
+    monkeypatch.setattr(Checkout, '__init__', lambda *args, **kwargs: pytest.fail('legacy projection'))
+    sheet = NativeSheet.export(session)
+    target = 'parent/clip:b-type'
+    edited = property_cell(sheet.text, target, 'hold', '1.5')
+    plan = sheet.preview(edited)
+    assert plan.commands == [
+        capture_clip_set(sheet._bundle, target, values={'hold': 1.5}),
+    ]
+    assert State(plan.bundle).entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+
+    peer = runtime.session(name='legacy-native-peer')
+    peer.commit(label('Peer', track='type'))
+    result = sheet.apply(edited, session=session, dry_run=False)
+    assert result['data']['status'] == 'rebased'
+    assert len(runtime.calls) == 2
+    request = json.loads(runtime.calls[-1][0])
+    assert request['commands'] == plan.commands
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    assert State(accepted).entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+    assert State(accepted).entity('parent/track:type')['label'] == 'Peer'
+
+    runtime.restart()
+    reloaded = runtime.session(name='legacy-native-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'])
+    assert stored.ok
+    stored_state = State(stored.data['bundle'])
+    assert stored_state.entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+    assert stored_state.entity('parent/track:type')['label'] == 'Peer'
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(target) == original_target
+    assert State(restored).entity('parent/track:type')['label'] == 'Peer'
 
 
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
