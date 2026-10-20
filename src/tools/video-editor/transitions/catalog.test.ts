@@ -44,6 +44,21 @@ function makeClipTransition(overrides?: Partial<ClipTransition>): ClipTransition
 // ---------------------------------------------------------------------------
 
 describe('materializeTransitionDefaults', () => {
+  it('materializes prototype-looking parameter names as ordinary own JSON data', () => {
+    const schema: ParameterSchema = ['__proto__', 'constructor', 'prototype'].map((name) => ({
+      name, label: name, description: '', type: 'audio-binding',
+      default: { source: 'bass', min: 0, max: 1 },
+    }));
+    const before = JSON.stringify(schema);
+    const result = materializeTransitionDefaults(schema);
+    const expected = JSON.parse('{"__proto__":{"source":"bass","min":0,"max":1},"constructor":{"source":"bass","min":0,"max":1},"prototype":{"source":"bass","min":0,"max":1}}');
+    expect(result).toEqual(expected);
+    expect(Object.keys(result)).toEqual(['__proto__', 'constructor', 'prototype']);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(JSON.stringify(schema)).toBe(before);
+  });
+
   it('returns an empty frozen record for undefined schema', () => {
     const result = materializeTransitionDefaults(undefined);
     expect(result).toEqual({});

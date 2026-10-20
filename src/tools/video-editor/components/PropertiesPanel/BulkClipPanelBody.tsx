@@ -183,7 +183,6 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
     compositionWidth,
     compositionHeight,
     sharedText,
-    sharedTransition,
     sharedEntranceType,
     sharedExitType,
     sharedContinuousType,
@@ -639,13 +638,9 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                       step={0.05}
                       onChange={(value) => {
                         if (value !== null) {
-                          onChangeDeep((meta) => ({
-                            transition: {
-                              type: sharedTransitionType!,
-                              duration: value,
-                              params: meta.transition?.params ?? sharedTransition?.params,
-                            },
-                          }));
+                          onChangeDeep((meta) => meta.transition ? ({
+                            transition: { ...meta.transition, duration: value },
+                          }) : {});
                         }
                       }}
                     />
@@ -672,13 +667,15 @@ export function BulkClipPanelBody(props: BulkClipPanelProps & {effectResources: 
                         className="h-6 gap-1 text-xs"
                         onClick={() => {
                           if (!sharedTransitionType || !resolvedTransitionRecord?.schema) return;
-                          onChangeDeep(() => ({
+                          onChangeDeep((meta) => meta.transition ? ({
                             transition: {
-                              type: sharedTransitionType,
-                              duration: sharedTransitionDuration ?? 0.5,
-                              params: materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                              ...meta.transition,
+                              params: {
+                                ...meta.transition.params,
+                                ...materializeTransitionDefaults(resolvedTransitionRecord.schema),
+                              },
                             },
-                          }));
+                          }) : {});
                         }}
                       >
                         <RefreshCw className="h-3 w-3" /> Reset defaults
