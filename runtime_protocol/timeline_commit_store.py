@@ -57,8 +57,17 @@ def timeline_scope_is_empty(conn, timeline_id, *, project_id=None):
     if project_id is not None:
         document = conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?",
                                 (f"timeline:{timeline_id}", project_id)).fetchone()
-        if document is not None and has_authored_content(json.loads(document["content_json"])):
-            return False
+        if document is not None:
+            # Baseline verification already rejects duplicate/non-finite JSON.
+            # Use the same parser here so corrupt legacy bytes cannot hide
+            # authored content behind a last-key-wins decode.
+            from .timeline_commit_baseline import _json
+            try:
+                content = _json(document["content_json"])
+            except (TypeError, ValueError):
+                return False
+            if has_authored_content(content):
+                return False
     # Any row keyed to the timeline is authored data.
     for table in _SHELL_SCOPE_TABLES:
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
@@ -909,10 +918,10 @@ class TimelineCommitStore:
             return detached(plan["head"])
 
     def adopt_empty_shell(self, project_id, timeline_id, *, authorize):
-        """Install the verified empty publication of a headless shell as its head.
+        """Bootstrap an empty headless shell or adopt its verified publication.
 
-        Refuses before any write unless the shell is exactly one unpublished
-        empty bootstrap. Returns the publication event that was adopted.
+        A shell without a parent must have no retained parent or publication.
+        Returns the publication event installed by the existing bootstrap path.
         """
         from .cas import ContentAddressedStore
         from .timeline_commit_baseline import bootstrap_install_plan
@@ -920,12 +929,27 @@ class TimelineCommitStore:
         with self.store._mutex, self.store._transaction():
             authorize()
             self._membership(project_id, timeline_id)
-            current = self.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
-                                        (project_id, timeline_id)).fetchone()
-            if current is None or current["revision_id"] is None or current["publication_id"] is not None:
+            current = self.conn.execute("SELECT project_id, revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=?",
+                                        (timeline_id,)).fetchone()
+            if current is not None and (current["project_id"] != project_id or current["publication_id"] is not None):
                 reject("history_unavailable")
             if not timeline_scope_is_empty(self.conn, timeline_id, project_id=project_id):
                 reject("history_unavailable")
+            if current is None or current["revision_id"] is None:
+                if self.conn.execute("SELECT 1 FROM parent_composition_revisions WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+                    reject("history_unavailable")
+                # Normal create retains its empty legacy projection as well.
+                empty_legacy = {"shots": [], "references": []}
+                for row in self.conn.execute("SELECT * FROM internal_timeline_revisions WHERE timeline_id=?", (timeline_id,)):
+                    if row["project_id"] != project_id or row["payload_json"] != canonical_json(empty_legacy) or row["content_digest"] != digest(empty_legacy):
+                        reject("history_unavailable")
+                if self.conn.execute("SELECT 1 FROM command_idempotency WHERE command_kind='parent_composition.publish' AND aggregate_id=? LIMIT 1",
+                                     (timeline_id,)).fetchone() or self.conn.execute(
+                        "SELECT 1 FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published' LIMIT 1", (timeline_id,)).fetchone():
+                    reject("history_unavailable")
+                head = self.bootstrap(project_id, timeline_id, authorize=authorize)
+                entry = self.history_entry(project_id, timeline_id, head["publication_id"])
+                return entry["receipt"]["event_ids"][0]
             plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
                                           read_object=ContentAddressedStore(self.store.cas_root).read)
             self._install_entries(project_id, timeline_id, plan)
