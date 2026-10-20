@@ -101,6 +101,12 @@ if (mode === 'snapshots') {
   const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
     registries, source.Presenter);
   const px = value => value === 0 ? '0' : `${value}px`;
+  const geometry = (c, frame, fps, rect) => {
+    const {left: x, top: y, width, height} = source.pixelGeometry(rect, presenterAt(c.params, frame, fps).view);
+    return {x, y, width, height};
+  };
+  const erase = (c, frame, fps) => geometry(c, frame, fps, source.mouthEraseRect(source.mouthAnchor(c.params)));
+  const inspection = (c, frame, fps) => geometry(c, frame, fps, source.mouthInspectionRect(c.params));
   const eraseStyle = rect => `position:absolute;left:${px(rect.x)};top:${px(rect.y)};width:${px(rect.width)};height:${px(rect.height)};background:`;
   const assertMotion = (c, frame, b = basis, layer = query(c, frame, b), supplied = frame) => {
     assert.deepEqual(layer.diagnostics.motion, motionAt(c.params, supplied, b.fps));
@@ -207,7 +213,8 @@ if (mode === 'snapshots') {
           seen.add(state);
           const html = render(props, frame, b);
           assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
-          const mouth = layer.diagnostics.mouth.rect;
+          assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
+          const mouth = erase(c, frame, fps);
           assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
         }
       }
@@ -224,7 +231,7 @@ if (mode === 'snapshots') {
   }
 
   if (mode === 'geometry') {
-    const inputs = [{}, {mouth: null}, {mouth: {x: -20, y: 999, w: 0}},
+    const inputs = [{}, {mouth: {x: 151}}, {mouth: {x: 151, y: 104}}, {mouth: null}, {mouth: {x: -20, y: 999, w: 0}},
       {mouth: {x: 999, y: -1, w: 99}}, {mouth: {x: 152.5, y: 103.7, w: 20.6}},
       {zoom: 2, focus: {x: 190.4, y: 120.7}},
       {zoom: 99, focus: {x: -100, y: 999}},
@@ -242,20 +249,21 @@ if (mode === 'snapshots') {
         assert.equal(layer.diagnostics.mouth.status, 'known');
         const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
         const html = render(props, frame, b);
-        if (state !== 'closed') assert.ok(html.includes(eraseStyle(layer.diagnostics.mouth.rect) + '#EDB98E'));
+        assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
+        if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
         assert.equal(layer.visible, 'unknown');
         assert.equal(layer.opaqueSupport, 'none');
         assert.equal(layer.diagnostics.face, undefined);
         assert.equal(layer.diagnostics.text, undefined);
       }
     }
-    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 900, y: 618, width: 126, height: 24});
+    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
     assert.deepEqual(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.rect,
-      {x: -6, y: 1068, width: 18, height: 24});
+      {x: -12, y: 1056, width: 30, height: 48});
     const small = {...basis, width: 960, height: 540};
     const layer = query(clip(), 0, small);
     // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
-    assert.deepEqual(layer.diagnostics.mouth.rect, {x: 900, y: 618, width: 126, height: 24});
+    assert.deepEqual(layer.diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
     assert.deepEqual(layer.bounds.rect, {x: 0, y: 0, width: 960, height: 540});
   }
 

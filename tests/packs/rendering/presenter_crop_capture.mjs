@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {bundle} from '@remotion/bundler';
 import {openBrowser, renderStill, selectComposition} from '@remotion/renderer';
-import {basis, inspect, params, propsFor} from './presenter_crop_geometry.mjs';
+import {basis, eraseRegion, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
 import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
 
 assert.equal(process.env.VIEWING_CROP_CENTRAL, '1');
@@ -13,8 +13,13 @@ const output = process.argv[2];
 assert.ok(path.isAbsolute(output));
 const frames = [0, 3, 4, 5];
 const props = propsFor(params);
-const rows = inspect(props, basis, frames);
-assert.deepEqual([...new Set(rows.map(r => r.motion.mouth))].sort(), [0, .5, 1]);
+// Fixed component-zero ROI, retained for every PNG. No per-PNG ROI query.
+const scene = prepareRoot(props, basis, {});
+const zero = seriesInspection(scene, props);
+assert.equal(zero.frame, 0);
+assert.deepEqual(props.timeline.clips[0].params, {mouth: {x: 151, y: 104, w: 19},
+  words: [[.1, .4]], chrome: 'none', blinkEvery: 0, seed: 7});
+const rows = [{...zero, erase: eraseRegion(params, 0, basis.fps)}];
 const buildDir = path.join(output, 'bundle');
 const serveUrl = await bundle({entryPoint: path.join(process.cwd(), 'presenter_crop_entry.mjs'),
   outDir: buildDir, webpackOverride: remotionPrimitiveAliasesFor(process.cwd()),

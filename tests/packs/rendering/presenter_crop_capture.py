@@ -64,48 +64,63 @@ def test_actual_registered_presenter_crop_pixels(presenter_query, tmp_path):
     paths = [output / f"frame-{f}.png" for f in case["frames"]]
     before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     old = png_crop(model.mouth_box(legacy_element(case), 0), size)
-    new = png_crop(public_box(case["rows"][0]), size)
-    assert (area(old), area(new)) == (799, 387)
+    compat = png_crop(public_box(case["rows"][0]), size)
+    erase = png_crop(public_box(case["rows"][0], "erase"), size)
+    assert old == compat == (298, 202, 345, 219)
+    assert erase == (300, 206, 343, 215)
+    assert (area(old), area(compat), area(erase)) == (799, 799, 387)
+    assert len(case["rows"]) == 1  # one component-zero query for the series
+    assert case["rows"][0]["componentFrame"] == 0
+    assert case["rows"][0]["clipId"] == "presenter"
+    crops = {"old": old, "compat": compat, "erase": erase}
     images = []
     for path in paths:
         with Image.open(path) as captured:
             assert captured.format == "PNG" and captured.size == size
             images.append(captured.convert("RGB"))
-    # Positive: the same unaltered captured PNG through each crop/comparator.
-    # Every captured pose retains a nonempty footprint; no placeholder image.
-    for image, row in zip(images, case["rows"]):
-        assert png_crop(public_box(row), size) == new
-        for crop in (old, new):
+    # Same unaltered actual PNGs and the unchanged strict >2% comparator.
+    for image in images:
+        assert image.crop(old).tobytes() == image.crop(compat).tobytes()
+        for crop in crops.values():
             region = image.crop(crop)
             assert _diff_fraction(region, region.copy())[0] == 0
-    fractions = {"old": [], "public": []}
-    for a, b in zip(images, images[1:]):
-        for label, crop in (("old", old), ("public", new)):
-            fractions[label].append(_diff_fraction(a.crop(crop), b.crop(crop))[0])
-    assert any(f > .02 for f in fractions["old"]), fractions
-    assert any(f > .02 for f in fractions["public"]), fractions
-    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["public"]]
+    fractions = {label: [_diff_fraction(a.crop(crop), b.crop(crop))[0]
+                         for a, b in zip(images, images[1:])]
+                 for label, crop in crops.items()}
+    assert fractions["old"] == fractions["compat"]
+    for values in fractions.values():
+        assert any(f > .02 for f in values), fractions
+    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["compat"]]
+    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["erase"]]
 
-    # Negative control uses a COPY of a real PNG. Exactly eight bright/dark
-    # pixels in the overlap change above CHANGE_LEVEL: opposite 2% verdicts.
-    planted = images[0].copy()
-    for x in range(new[0] + 2, new[0] + 10):
-        point = (x, new[1] + 2)
-        original = planted.getpixel(point)
-        planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
-    negative = {}
-    for label, crop in (("old", old), ("public", new)):
-        negative[label] = _diff_fraction(images[0].crop(crop), planted.crop(crop))[0]
-        assert negative[label] == 8 / area(crop)
-    assert negative["old"] <= .02 < negative["public"]
-    # A larger planted defect is caught by BOTH unchanged comparators.
-    for x in range(new[0] + 2, new[0] + 22):
-        point = (x, new[1] + 2)
-        original = images[0].getpixel(point)
-        planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
-    for crop in (old, new):
-        assert _diff_fraction(images[0].crop(crop), planted.crop(crop))[0] == 20 / area(crop)
-        assert 20 / area(crop) > .02
+    def planted_fractions(points):
+        # Plant above CHANGE_LEVEL in a fresh copy; never edit a captured PNG.
+        planted = images[0].copy()
+        for point in points:
+            original = images[0].getpixel(point)
+            planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
+        return {label: _diff_fraction(images[0].crop(crop), planted.crop(crop))[0]
+                for label, crop in crops.items()}
+
+    controls = {}
+    for count in (8, 15, 16, 20):
+        points = [(erase[0] + 2 + i, erase[1] + 2) for i in range(count)]
+        values = planted_fractions(points)
+        for label, crop in crops.items():
+            assert values[label] == count / area(crop)
+        assert (values["old"] > .02) == (count >= 16)
+        assert (values["compat"] > .02) == (count >= 16)
+        assert values["erase"] > .02
+        controls[str(count)] = values
+    assert controls["8"]["old"] <= .02 < controls["8"]["erase"]
+    assert controls["15"]["old"] <= .02 < controls["16"]["old"]
+    # Sixteen points wholly in padding: old/compat detect, erase misses.
+    points = [(compat[0] + i, compat[1]) for i in range(16)]
+    assert all(not (erase[0] <= x < erase[2] and erase[1] <= y < erase[3]) for x, y in points)
+    padding = planted_fractions(points)
+    assert padding == {"old": 16 / 799, "compat": 16 / 799, "erase": 0}
+    assert padding["old"] > .02 and padding["compat"] > .02
+    controls["padding16"] = padding
     assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
-    print(json.dumps({"png_sha256": before, "crop": {"old": old, "public": new},
-                      "natural_pairs": fractions, "eight_pixel_negative": negative}, sort_keys=True))
+    print(json.dumps({"png_sha256": before, "crop": crops,
+                      "natural_pairs": fractions, "planted_controls": controls}, sort_keys=True))

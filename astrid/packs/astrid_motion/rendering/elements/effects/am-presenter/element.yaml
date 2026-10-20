@@ -9,8 +9,11 @@ description: Draws the speaker's pixel mouth (closed, half, open on a 3-frame cy
 # motion.ts exports MOUTH_LEVEL: closed=0, half=0.5, open=1. Human labels apply
 # only to the resolved astrid_motion/effects/am-presenter source and revision;
 # foreign motion.mouth scalars and other values have unknown labels.
-# diagnostics.mouth uses the shared erase rectangle and presenterAt transform:
-# an inspection footprint, including closed pose, not occupied pixels or alpha.
+# diagnostics.mouth pads the shared erase rectangle by 1 logical px horizontally
+# and 2 vertically, using the drawing transform. Normalized default, partial and
+# raw-invalid regions stay known. This inspection ROI makes no occupancy claim.
+# Legacy equivalence requires separate qualification of complete normalized
+# integer anchors; absent/partial/un-normalized anchors remain unqualified.
 # Mosaic makes the region unknown; the public scene invalidates it for
 # unsupported outer geometry. Presence is unknown; opaqueSupport is none.
 # No underlying plate, asset alpha, face or text region is inferred.

@@ -89,12 +89,15 @@ export default Object.assign(({params}) => createElement('div', {'data-probe': p
     peer_identity = {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"}
     preflight = """
       import {createRequire} from 'node:module';
-      import {realpathSync} from 'node:fs';
+      import {realpathSync, readFileSync} from 'node:fs';
+      import {createHash} from 'node:crypto';
       import {fileURLToPath} from 'node:url';
       const require = createRequire(import.meta.url);
       console.log(JSON.stringify(Object.fromEntries(['react', 'react-dom', 'remotion',
         '@remotion/media', '@remotion/renderer', '@remotion/layout-utils'].map(name =>
-          [name, {path: realpathSync(fileURLToPath(import.meta.resolve(name))), version: require(`${name}/package.json`).version}]))));
+          [name, {path: realpathSync(fileURLToPath(import.meta.resolve(name))),
+            sha256: createHash('sha256').update(readFileSync(fileURLToPath(import.meta.resolve(name)))).digest('hex'),
+            version: require(`${name}/package.json`).version}]))));
     """
     resolved = json.loads(subprocess.check_output([str(node.path), "--input-type=module", "-e", preflight],
                                                 cwd=project, env=env, text=True, timeout=30))
@@ -114,6 +117,8 @@ export default Object.assign(({params}) => createElement('div', {'data-probe': p
     try:
         yield query
         assert hashes() == expected
+        assert json.loads(subprocess.check_output([str(node.path), "--input-type=module", "-e", preflight],
+                                                  cwd=project, env=env, text=True, timeout=30)) == resolved
         assert {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"} == peer_identity
     finally:
         shutil.rmtree(project_root)

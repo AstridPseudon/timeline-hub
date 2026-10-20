@@ -30,8 +30,17 @@ export const mouthAnchor = (raw: unknown): Anchor =>
 
 export type PixelRect = {x: number; y: number; w: number; h: number};
 
-// The erase rectangle is also the inspection footprint, even in closed pose.
+// The drawing erases this rectangle before the half/open mouth pixels.
 export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
+
+// Public inspection area around the actual drawing geometry, including closed
+// pose. It deliberately follows the same normalization as drawing, so default,
+// partial, fractional and raw-invalid anchors retain their known normalized
+// public region.
+export const mouthInspectionRect = (raw: unknown): PixelRect => {
+  const r = mouthEraseRect(mouthAnchor(raw));
+  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
+};
 
 export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
   left: v.originX + r.x * v.scale,
