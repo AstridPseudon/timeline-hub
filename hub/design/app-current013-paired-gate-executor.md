@@ -1,6 +1,6 @@
 # Exact current013 paired editing gate executor
 
-**BLOCKED / NOT QUALIFIED.** Prepared one exact named central suite and the snapshot-only public12 dependency helper. No central request was submitted, so there are **no Test IDs** and no actual browser, Runtime/Agent acceptance, or restore result. The independent root review is still pending at this report draft; composed source typecheck is PASS. Required cold-label test files and the documented Chrome155 executable are absent from the supplied inputs. No pins, product code, test bodies, assertions, helpers, or settled decisions were changed.
+**BLOCKED / NOT QUALIFIED.** Prepared one exact named central suite and the snapshot-only public12 dependency helper. No central request was submitted, so there are **no Test IDs** and no actual browser, Runtime/Agent acceptance, or restore result. The independent exact-root review returned **HOLD**; composed source typecheck is **PASS**. Required cold-label test files and the documented Chrome155 executable are absent from the supplied inputs. No pins, product code, test bodies, assertions, helpers, or settled decisions were changed.
 
 ## Exact sources: start and end
 
@@ -26,7 +26,7 @@ d0196c5ae92f8164996229d0b17c21ad2b199eaef222b7b148e2549461fd93e8  scripts/testin
 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3  vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz
 ```
 
-Read PLAN.md, wrapper final review/fix/preparation reports, MAIN17 Root013 source report, Agent keeper and Runtime keeper reports, and existing central/vendor/build/config support. The final repaired wrapper approval applies to wrapper source only. The separate exact-root review remains the mandatory execution gate.
+Read PLAN.md, wrapper final review/fix/preparation reports, MAIN17 Root013 source report, Agent keeper and Runtime keeper reports, and existing central/vendor/build/config support. The final repaired wrapper approval applies to wrapper source only. The separate exact-root review is the mandatory execution gate and has not approved this source.
 
 ## Prepared central command
 
@@ -80,7 +80,7 @@ Other read-only checks: `git rev-parse HEAD HEAD^{tree}`, `git status --porcelai
 
 ## Blocking evidence and unrun work
 
-1. **Independent root APPROVE is required.** Worker `app-m3-main17-root013-final-review` had no final verdict at this report draft. Its active review is not replaced with this worker's judgment. **Composed typecheck PASS is confirmed** by `design/app-main17-root013-composed-typecheck.md`: exact App commit/tree, one actual `npm exec tsc -- --noEmit -p tsconfig.app.json`, exit 0, zero diagnostics. This worker did not rerun tsc.
+1. **Independent root review is HOLD.** `design/app-main17-root013-final-review.md` reports a P1: a dirty focused track row unmounts, its finish is synchronously refused, and remount loses the typed name and original capture. The independent reviewer reproduced this on desktop, phone and tablet (3 private diagnostic assertions fail; its existing targeted main suites passed 156 and package checks passed 9). This worker did not rerun or weaken those tests and did not make a source fix. The explicit required APPROVE is absent, so **no central lane may be launched**. **Composed typecheck PASS is confirmed** by `design/app-main17-root013-composed-typecheck.md`: exact App commit/tree, one actual `npm exec tsc -- --noEmit -p tsconfig.app.json`, exit 0, zero diagnostics. This worker did not rerun tsc.
 2. **Cold-label source is absent on exact tree 96605f2.** Both `playwright.track-label.config.ts` and `tests/e2e/local/track-label-command.spec.ts` are absent from disk and `git ls-tree`. They exist on retained older source `080a5743a4e38847e0cc84dd07ccada67adb27f1` / tree `e23943807f9bf5c30a568dc7441357130747f68c`, inspected read-only. That tree was not substituted. An external overlay would change the asserted test-source inputs and needs an explicit orchestrator decision; no overlay was applied. The prepared cold-label lane cannot run successfully on the specified source as supplied.
 3. **Documented Chrome155 is unavailable.** The retained Chrome155 environment report names `/opt/google/chrome/chrome`, version `155.0.8059.84`, hash `cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76`. `ls -l` and `sha256sum` on that exact path fail because it does not exist. A read-only search under `/home/user/work`, `/tmp`, `/usr/bin`, `/opt` found only `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` (the old documented141 executable). No browser was launched, no download/install attempted, and no browser fallback chosen. The prepared browser lane requires the prescribed155 executable/hash before launch.
 
@@ -88,7 +88,7 @@ Other read-only checks: `git rev-parse HEAD HEAD^{tree}`, `git status --porcelai
 
 ## Recommended next steps
 
-Obtain the exact-root independent verdict. Resolve any review blockers in a follow-up source worker; do not weaken the failed assertions. Have the orchestrator resolve the missing cold-label source and existing Chrome155 path before requesting a browser lane. If source changes, rebind the newly reviewed App TREE and command/cache identity rather than claiming this tree was qualified.
+Resolve the exact-root HOLD in a bounded follow-up source worker and obtain fresh independent approval; do not weaken the failed assertions. Have the orchestrator resolve the missing cold-label source and existing Chrome155 path before requesting a browser lane. If source changes, rebind the newly reviewed App TREE and command/cache identity rather than claiming this tree was qualified.
 
 Only after the review is APPROVE, typecheck is PASS, all inputs exist and the exact pins still match, the intended sequential service commands are the following (prepared, **not executed**):
 
@@ -101,3 +101,5 @@ R=$("$O/bin/request-test" app-m3-current013-paired-gate-executor "$S" --files re
 ```
 
 Run each only after assessing the preceding result; wait again on the same result if exit124, never resubmit. Actual failures require concrete triage/report and a follow-up worker, with no broad automatic retry. The manager retains its one post-merge full suite; none belongs to this worker. No running gate needs this worker's worktree kept.
+
+Final status recorded 2026-10-20T12:41Z: BLOCKED marker written, no DONE or KEEP because the requested actual qualification has not completed and no gate is running. Commit message supplied. The one added suite remains prepared but unrequested.

@@ -1,0 +1,34 @@
+# Editor-owned explicit image placement preparation
+
+Status: source preparation implemented; **production automatic placement unavailable**.
+Base: App `171a259acbeb3ced855ca8f72fed0943a2f5a5cb`, tree `f33b5268678efe390a5732022d81b53f35ccf509` (normal013/public12). PLAN and the manager assembly decision were read first. No settled decision was changed or contradicted.
+
+## Source
+
+- `TimelineEditorShellCore` mounts `EditorImageGeneration` using its existing command-session surface. The 13-line owner invokes the existing shared modal and retains the original session binding for that draft. The command hook/state only forward this existing session member.
+- The modal starts unchecked. Checked generation requires explicit raw occurrence/lane, an optional raw anchor, one prompt and one image. Its displayed policy is five seconds after the anchor, or the selected lane end if absent. No associated shot, gallery selection or ambient editor supplies approval. The original project/session is checked; errors keep the form and explicit target. Unchecked generation retains its existing producer path.
+- `commands/editorImagePlacement.ts` (~120 lines) validates the raw target against the accepted authored bundle, requires a clean existing claimed command owner, and reserves the native completion approval, original head/readClosure (inline original canonical document), fallback/lane/output and allocated clip ID in that SAME outbox. Preparation does not resolve a newer head. IDs and admission key are reused after two owner reopenings; preparation allocates no UUID when a saved reservation exists.
+- `createTask` accepts the optional existing-client/reservation seam. Catalog/input validation uses that supplied client's existing routes. `taskRoutes.admit` serializes its final normalized closed envelope ONCE, awaits durable reservation, checks the original synchronous host/claim, and sends that exact string through the existing raw-body transport. Existing callers retain the same envelope bytes, key generation, response projection and retry behavior. No transport implementation, task lifecycle, billing, settlement or media writer changed.
+- The optional admission callback verifies project/capability/digest/key against the reserved request and durably records task/run IDs under the same claim. A failed/unknown response retains the original reservation. Reopen validates the unchanged UI spec against the saved envelope, bypasses creative recomposition, and checks final normalized bytes/key against the original before any POST.
+- Ported only placement storage/fences, native auto capture, requester and callback dependencies from approved App `47250bdf82ee49dcf212fe56e92ad5d79989ba24` (including a103 synchronous fences and ca51 native capture). The required primitive additions and exports are reused unchanged. No older root/pin/render/bootstrap cohort was imported. Existing outbox tests remain intact; approved requester/native tests were added, with two exact-byte replay cases.
+- The existing generated requester serializer puts schema_version first; the App route's existing closed envelope puts project first. Recomposition would violate byte identity. The requester now accepts already-serialized JSON and requires an explicit same-host `admitPreparedTask` callback for such replay; without it, recovery stays visibly retryable with original bytes retained. The generated normal caller's behavior and its newline/refusal tests remain. This is a local existing-client callback seam, not a new wire DTO or endpoint.
+
+No global authority singleton, second owner/store/outbox, provider, generic journal/framework, producer guard/epoch, anonymous retrospective placement, pin refresh, Auth/player/render/root/package/config change was added. Only the worker's ignored node_modules link points to the read-only coherent12 dependency tree; no shared dependency/cache/runtime/venv was mutated.
+
+## Honest availability and remaining activation gates
+
+The production hook DOES NOT inject `imagePlacementHost`. The visible modal states that its operation host/session binding is unqualified; checked generation refuses BEFORE compose/task submission and keeps the draft. Unchecking retains ordinary generation for manual use. No silent opt-in/no-op or Placed label is supplied.
+
+The source-only session injection is exercised with an explicitly trusted in-process host fixture. It does not qualify a real browser authenticated operation lifetime. Existing requester/native callback source remains inactive. There is no completion coordinator or production recovery dispatch.
+
+Before activation, bind the real operation host's supplied task client, literal synchronous lifecycle/claim checks, exact prepared-byte replay and original readClosure codec to the existing validated commit adapter. Then qualify matched Agent905/Runtime013 with real task/native placement acceptance, canonical reload, guarded undo/redo and strict ABA, lost admission/commit ACK plus restart/exact retry, media/task/output invalidations and duplicate completion, and zero legacy traffic. Browser/socket proofs require a separately authorized central test-service task. The Runtime media fence ACK is consumed: exact five-field selection plus transactional acceptance recheck suffices; no new guard or wire is requested.
+
+No fundamental missing wire contract was found. Actual activation is deliberately unverified, as required by this brief. No BLOCKED marker is needed for this completed preparation slice.
+
+## Tests and limits
+
+The new `EditorImageGeneration.test.tsx` uses the REAL editor owner component, modal, image producer, createTask, task route/transport and existing session/outbox. It mocks form rendering, app providers and fetch replies, using the existing fake IndexedDB. Its 12 cases prove unchecked generation/no approval, visible unavailable/no requests, exact saved pre-POST bindings, reservation failure/delay zero task POST, one-output/explicit-target refusal, unchanged bytes/key/IDs over two reopenings with no new UUID allocation, dirty-predecessor refusal, changed draft/target/scope refusal, lifecycle loss after durable reservation and wrong-task-key response retention. Composer POST is preparation data; zero POST claims here mean ZERO `/v1/tasks` POST. No browser crash/fsync or real Runtime acceptance is claimed.
+
+Evidence: 15-file targeted run 688 PASS; subsequent affected runs 4/114, 3/16 and final ingress 1/12 PASS, all exit 0. Scoped ESLint on all 20 changed files plus final two-file rerun and git diff --check PASS. These targeted counts overlap.
+
+Targeted commands and full logs: `workers/app-m2-auto-editor-generation-ingress/report.md` and `notes/`. No passing behavior test was weakened, skipped, deleted or changed to expect refusal. No full suite, central service, build, project tsc/compiler API, browser/socket or install was run. No git commit/merge/rebase/checkout/push/ref mutation.
