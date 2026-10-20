@@ -23,7 +23,7 @@ from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
 from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
 from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
-from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
+from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas, trim_source_interval)
 
 
 # ----------------------------------------------------------------------- views
@@ -438,8 +438,11 @@ class Clip(_Suggest):
         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
-        self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r(source_out - source_in)
+        try:
+            source_in, source_out, hold = trim_source_interval(source_in, source_out, limit)
+        except TimelineEditError as exc:
+            raise TimelineEditError(f"{self.address}: {exc}") from exc
+        self.data["from"], self.data["to"], self.data["hold"] = source_in, source_out, hold
         intent.set_until(self.data, None)
         intent.set_for(self.data, None)
         self._tl._mcache = None

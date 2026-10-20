@@ -16,6 +16,8 @@ from astrid.core.timeline.duration import (
     timeline_duration_seconds,
 )
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State
+from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline._recording import Recording
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
@@ -26,6 +28,7 @@ from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_clip_trim.json'
+BOUNDARIES = json.loads(FIXTURE.with_name('recipe_m2_clip_trim_boundaries.json').read_text())
 REF = 'parent/clip:clip-a'
 
 
@@ -76,7 +79,7 @@ def test_trim_matches_main_model_precedence_and_source_defaults(monkeypatch, cha
                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
 
 
-@pytest.mark.parametrize('speed', [2, 3 / 2])
+@pytest.mark.parametrize('speed', [1, 2, .5, 3 / 2])
 def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatch, speed):
     original = bundle(speed=speed, hold=17)
     row = copy.deepcopy(clip(original))
@@ -304,3 +307,61 @@ def test_trim_accepts_static_move_intent_but_refuses_dynamic_follow():
     dynamic = bundle(app={'astrid': {'on': 'word:one'}})
     with pytest.raises(CommandError, match='does not support'):
         capture_clip_trim(dynamic, REF, in_s=1, out_s=5)
+
+
+@pytest.mark.parametrize('case', BOUNDARIES['cases'], ids=lambda case: case['id'])
+def test_portable_boundary_vectors_match_model_and_preserve_native_guards(monkeypatch, case):
+    # Reproduce App's counterexample from its unchanged original raw fixture;
+    # only authoritative duration and its required digest change in the input.
+    document = json.loads(FIXTURE.read_text())['input']
+    payload = document['parent_revision']['payload']
+    payload['registry']['assets']['picture']['duration'] = case['duration']
+    document['parent_revision']['content_digest'] = _digest(payload)
+    before = copy.deepcopy(document)
+    original = bundle_from_document(document)
+    row = copy.deepcopy(clip(original))
+    model_before = copy.deepcopy(row)
+    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged')
+    monkeypatch.setattr(Clip, '_source_duration', lambda self: case['duration'])
+    model = Clip(tl, None, row)
+    if 'error' in case:
+        def unexpected_write(*args):
+            pytest.fail('invalid trim must refuse before recording any write')
+
+        monkeypatch.setattr(Recording, 'write', unexpected_write)
+        with pytest.raises(CommandError, match=case['error']):
+            capture_clip_trim(original, REF, **case['args'])
+        with pytest.raises(TimelineEditError, match=case['error']):
+            model.trim(**case['args'])
+        assert row == model_before and tl._mcache == 'unchanged'
+    else:
+        model.trim(**case['args'])
+        command = capture_clip_trim(original, REF, **case['args'])
+        plan = execute(original, [command])
+        assert clip(plan.bundle) == row
+        assert {key: row[key] for key in case['applied']} == case['applied']
+        assert 0 <= row['from'] < row['to'] <= case['duration']
+        assert clip_timeline_duration(row) == pytest.approx(row['hold'] / row['speed'])
+        # Exact retry/replay and guarded undo/redo still use the raw source pin.
+        assert execute(original, [command]).records == plan.records
+        assert replay(plan, original).records == plan.records
+        undone = inverse(plan.bundle, plan.records)
+        assert undone.bundle == original
+        assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+        with pytest.raises(CommandError, match='intervening'):
+            inverse(plan.bundle, plan.records, [later(REF, ['hold'], row['hold'])])
+        forged = copy.deepcopy(command)
+        forged['reads'] = []
+        with pytest.raises(CommandError, match='reads'):
+            execute(original, [forged])
+        published = document_from_bundle(plan.bundle)
+        output = published['parent_revision']['payload']
+        for rows in (output['clips'], output['config']['clips']):
+            assert next(item for item in rows if item['id'] == 'clip-a') == row
+        assert output['registry'] == payload['registry']
+        assert output['occurrences'] == payload['occurrences']
+        assert output['config']['output'] == payload['config']['output']
+        for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
+            assert published[key] == document[key]
+    assert document == before
+    assert original == bundle_from_document(before)

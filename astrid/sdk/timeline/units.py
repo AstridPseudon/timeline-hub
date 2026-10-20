@@ -7,7 +7,24 @@ from fractions import Fraction
 from typing import Any, Mapping
 
 from astrid.core.timeline import moments as mo
-from astrid.sdk.timeline._common import LOGICAL_PX, POSITION_KEYS, TimelineEditError, _num
+from astrid.sdk.timeline._common import LOGICAL_PX, POSITION_KEYS, TimelineEditError, _num, _r
+
+
+def trim_source_interval(source_in: float, source_out: float, limit: float) -> tuple[float, float, float]:
+    """Round an already validated source interval without exceeding the raw file limit.
+
+    Keep nearest six-decimal precision, moving an overshooting out point to
+    the greatest six-decimal point inside the file. Do the floor in exact
+    arithmetic: floating multiplication could round back up to the boundary.
+    Refuse collapsed intervals rather than expanding a tiny requested window.
+    """
+    applied_in, applied_out = _r(source_in), _r(source_out)
+    if applied_out > limit:
+        applied_out = math.floor(Fraction(limit) * 1_000_000) / 1_000_000
+    hold = _r(applied_out - applied_in)
+    if applied_out <= applied_in or hold <= 0:
+        raise TimelineEditError("source range collapses at authored precision")
+    return applied_in, applied_out, hold
 
 
 def frame_time(frame: int, fps: int | float) -> Fraction:

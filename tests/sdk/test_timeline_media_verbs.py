@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -38,6 +39,35 @@ def test_trim_keeps_film_start_and_slip_keeps_film_span():
     assert clip.duration == pytest.approx(2)
     assert clip.data["from"] == 3
     assert clip.data["to"] == 5
+
+
+@pytest.mark.parametrize("speed", [1, 2, 3 / 2])
+@pytest.mark.parametrize("out_s", [None, 9.9999999, 9.99999989])
+def test_trim_raw_file_end_keeps_source_seconds_and_registry_unchanged(speed, out_s):
+    tl = tiny()
+    registry = tl.bundle["shots"]["A"]["internal_timeline"]["registry"]
+    registry["assets"]["Q"]["duration"] = 9.9999999
+    clip = tl.clip("a-music")
+    clip.data.update(speed=speed, **{"from": None, "to": None})
+    before_registry, before_start = copy.deepcopy(registry), clip.start
+    clip.trim(in_s=1.0000004, out_s=out_s)
+    assert (clip.data["from"], clip.data["to"], clip.data["hold"]) == (1, 9.999999, 8.999999)
+    assert clip.duration == pytest.approx(8.999999 / speed, abs=1e-6)
+    assert clip.start == before_start
+    assert clip.data["speed"] == speed
+    assert registry == before_registry
+
+
+@pytest.mark.parametrize("in_s,out_s", [(0, 10), (0, 9.999999900000002),
+    (0, .0000001), (9.9999994, 9.9999999)])
+def test_trim_unrepresentable_or_raw_overrange_window_leaves_model_unchanged(in_s, out_s):
+    tl = tiny()
+    tl.bundle["shots"]["A"]["internal_timeline"]["registry"]["assets"]["Q"]["duration"] = 9.9999999
+    clip = tl.clip("a-music")
+    before = copy.deepcopy(clip.data)
+    with pytest.raises(TimelineEditError, match="a-music:.*(must fit|collapses)"):
+        clip.trim(in_s=in_s, out_s=out_s)
+    assert clip.data == before
 
 
 @pytest.mark.parametrize("method", [lambda clip: clip.trim(in_s=-1), lambda clip: clip.trim(out_s=11), lambda clip: clip.slip(-1), lambda clip: clip.slip(7)])

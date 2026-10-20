@@ -7,8 +7,9 @@ import re
 from astrid.sdk import timeline_intent as intent
 
 from ._command_state import CommandError
-from ._common import _r
+from ._common import TimelineEditError
 from .capture import CLIP_FIELDS, RELATIONS, number
+from .units import trim_source_interval
 
 
 def clip_trim(ctx, command):
@@ -72,12 +73,13 @@ def clip_trim(ctx, command):
     if source_in < 0 or source_out > limit or source_out <= source_in:
         raise CommandError(f'source range must fit inside the file (0–{limit:g} s)', ref=ref)
     # ``hold`` is authored source time; playback duration applies ``speed``.
-    hold = _r(source_out - source_in)
-    if _r(source_out) <= _r(source_in) or hold <= 0:
-        raise CommandError('source range collapses at authored precision', ref=ref)
+    try:
+        source_in, source_out, hold = trim_source_interval(source_in, source_out, limit)
+    except TimelineEditError as exc:
+        raise CommandError(str(exc), ref=ref) from exc
     ctx.dependency('trim.source', 'entity', {'asset': asset, 'source': source})
     ctx.bind('trim.target', ref, dependencies=['trim.source'])
-    for key, value in (('from', _r(source_in)), ('to', _r(source_out)), ('hold', hold)):
+    for key, value in (('from', source_in), ('to', source_out), ('hold', hold)):
         ctx.write(ref, [key], value)
     # Main's clear helpers also tidy empty/null containers and handle legacy
     # flat intent precedence. Guard the app object they consume as one unit.
