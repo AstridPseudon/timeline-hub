@@ -430,11 +430,55 @@ def test_pin_narration_adopts_a_binding_the_document_lost():
     tl = Checkout(flat_film())
     text = "hello there\n"
     digest = "sha256:" + hashlib.sha256(text.encode()).hexdigest()
-    existing = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": digest, "head": 1}
+    existing = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": digest, "head": 1, "slot": None}
     err = SimpleNamespace(code="conflict", details={"actual_head": 1})
     tl.narration_changes = lambda: {"film": text}
     client = SimpleNamespace(shots=SimpleNamespace(
         set_text_binding=lambda *a, **k: SimpleNamespace(ok=False, error=err),
-        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=[[existing]])))
+        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=([existing], None))))
     assert tl.pin_narration(client, idempotency_key="k") == ["film"]
     assert tl.bundle["shots"]["film"]["payload"]["text_bindings"] == [existing]
+
+
+def test_pin_narration_does_not_adopt_a_different_text_and_reports_the_conflict():
+    from types import SimpleNamespace
+
+    tl = Checkout(flat_film())
+    other = {"binding_id": "b1", "shot_id": "film", "kind": "voiceover_script", "content_hash": "sha256:other", "head": 1, "slot": None}
+    err = SimpleNamespace(code="conflict", details={"actual_head": 1})
+    tl.narration_changes = lambda: {"film": "hello there\n"}
+    sets = []
+    client = SimpleNamespace(shots=SimpleNamespace(
+        set_text_binding=lambda *a, **k: sets.append(k) or SimpleNamespace(ok=False, error=err),
+        list_text_bindings=lambda *a, **k: SimpleNamespace(ok=True, data=([other], None))))
+    with pytest.raises(TimelineEditError, match="could not register"):
+        tl.pin_narration(client, idempotency_key="k")
+    assert len(sets) == 1  # never retried at the runtime's head
+
+
+def test_duplicate_refuses_when_the_wrong_form_of_the_source_is_copied(monkeypatch):
+    """Revert experiment as a test: if _duplicate copied the flat shot (ignoring structure_base), the copy stores one
+    shot while the source stores three, and the duplicate is refused before anything is published."""
+    from types import SimpleNamespace
+
+    from astrid.sdk import timeline_duplicate as td
+
+    src = Checkout(flatten(copy.deepcopy(published(split(flat_film())))))
+    empty = flat_film()
+    empty["timeline_id"] = "dup"
+    dst = Checkout(empty)
+    for tl in (src, dst):
+        tl.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
+    opened = {"t": src, "dup": dst}
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
+    real = td.copy_content
+    monkeypatch.setattr(td, "copy_content", lambda content, target, **kw: real(src.bundle, target, **kw))  # the original bug
+    published_docs = []
+    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: published_docs.append(1) or {})
+    archived = []
+    client = SimpleNamespace(timelines=SimpleNamespace(
+        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
+        archive=lambda *a: archived.append(a) or SimpleNamespace(ok=True)))
+    with pytest.raises(TimelineEditError, match="distinct shots"):
+        td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
+    assert not published_docs and archived

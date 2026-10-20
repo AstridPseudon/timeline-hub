@@ -140,7 +140,10 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
 
 
 def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, Any], shot_map: Mapping[str, str]) -> None:
-    """Prove a copy is its source under a one-to-one shot-id mapping, or raise (nothing is published).
+    """Prove ``copied`` is a faithful copy of ``source`` (its input) under ``shot_map``, or raise.
+
+    This proves the copy equals the bundle it was given, not that the bundle is the right form of the film;
+    ``_duplicate`` separately compares against what the source itself stores.
 
     Same number of placements; distinct source shots map to distinct new shots (a shot placed twice stays one shot
     placed twice); each placement keeps its start and length; each shot's clips are the source's, ids remapped.
@@ -210,9 +213,12 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
         dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
-        stored = dst.stored_document()  # what publish will store: the copy must still be one shot per source shot
-        if len({str(r["shot_id"]) for r in stored["placements"]}) != len({str(r["shot_id"]) for r in content["placements"]}):
-            raise TimelineEditError("the copy would be stored with a different number of distinct shots than its source")
+        # What publish will store for the copy must have as many distinct shots as what the SOURCE stores. The source
+        # side is read independently of `content`, so copying the wrong form of the source is caught here.
+        copy_shots = {str(r["shot_id"]) for r in dst.stored_document()["placements"]}
+        source_shots = {str(r["shot_id"]) for r in src.stored_document()["placements"]}
+        if len(copy_shots) != len(source_shots):
+            raise TimelineEditError(f"the copy would be stored with {len(copy_shots)} distinct shots, its source stores {len(source_shots)}")
         report = dst.check()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))

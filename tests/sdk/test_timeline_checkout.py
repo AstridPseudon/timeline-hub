@@ -501,6 +501,9 @@ def test_narration_cas_conflict_is_not_retried_at_actual_head():
                 idempotency_key=kwargs["idempotency_key"],
             )
 
+        def list_text_bindings(self, project, **kwargs):
+            return DomainResult.success(([], None))
+
     class Client:
         def __init__(self):
             self.shots = Shots()
