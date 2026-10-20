@@ -131,7 +131,11 @@ def paths(tmp_path, snapshot):
     return timeline, assets
 
 
-def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None):
+_DEFAULT_CACHE = object()
+
+
+def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None,
+            cache=_DEFAULT_CACHE):
     timeline, assets = paths(tmp_path, snapshot)
     calls = []
     materialized_root = tmp_path / "materialized"
@@ -182,7 +186,9 @@ def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None
     result = composed_frame.RemotionFrameProvider(
         snapshot, timeline_path=timeline, assets_path=assets, project_dir=tmp_path,
         theme_path=theme_path, materialized_root=materialized_root,
-        materialized_objects={"object-image": str(image)}, cache=composed_frame.FrameCaptureCache(tmp_path / "cache"),
+        materialized_objects={"object-image": str(image)},
+        cache=(composed_frame.FrameCaptureCache(tmp_path / "cache")
+               if cache is _DEFAULT_CACHE else cache),
     )
     return result, calls
 
@@ -236,6 +242,10 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
     p, calls = provider(tmp_path, monkeypatch, snapshot)
     p.capture(cards(0), tmp_path / "first")
     prior = p.scene_capture
+    # This proof covers the unchanged PNG-only fallback, separately from the
+    # optional source-bound public rows written by current fresh captures.
+    key = composed_frame.frame_cache_key(p.snapshot, 0, None)
+    p.cache.write(key, (tmp_path / "first/frames/0.png").read_bytes())
     info = p.capture(cards(0, 24), tmp_path / "mixed")
     assert info["evidence_source"] == "mixed" and info["cached_frames"] == info["fresh_frames"] == 1
     assert [call[0] for call in calls] == [(0,), (24,)]

@@ -1851,7 +1851,8 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         window = resolve_window(snapshot, options, fps_value, int(snapshot['duration_frames']))
         cut = window['cut']
         context = build_context(snapshot, cut, frames, fps=fps_value, frame_size=size,
-                                beats=options.get('beats'), layer_names=options.get('layers') or ())
+                                beats=options.get('beats'), layer_names=options.get('layers') or (),
+                                frame_provider=frame_provider)
         context.shared['window'] = window
         context.shared['frame_labels'] = {int(k): v for k, v in (motion_meta.get('labels') or {}).items()}
         from .motion.window import preset_settings
