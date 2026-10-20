@@ -104,6 +104,8 @@ def test_linux_proc_identity_parser_uses_stat_and_brackets_start_tick(monkeypatc
             return FakePath(self.value.rstrip("/") + "/" + str(part))
         def read_text(self):
             reads.append(self.value)
+            if self.value == "/proc/sys/kernel/random/boot_id":
+                return "b38142f7-84c5-487d-95a4-8180cbff3972\n"
             tick = start_ticks[min(len(reads) - 1, 1)]
             fields = ["S", "23", "24", "25"] + ["0"] * 15 + [tick, "0"]
             return "77 (worker ) with parens) " + " ".join(fields)
@@ -117,8 +119,8 @@ def test_linux_proc_identity_parser_uses_stat_and_brackets_start_tick(monkeypatc
     assert value["parent_pid"] == 23
     assert value["process_group"] == 24
     assert value["session_id"] == 25
-    assert value["birth_id"] == "proc-start-ticks:4242"
-    assert len(reads) == 2
+    assert value["birth_id"] == "b38142f7-84c5-487d-95a4-8180cbff3972:4242"
+    assert reads == ["/proc/sys/kernel/random/boot_id", "/proc/77/stat", "/proc/77/stat"]
 
 
 def test_linux_proc_identity_rejects_pid_reuse_during_observation(monkeypatch):
@@ -129,6 +131,8 @@ def test_linux_proc_identity_rejects_pid_reuse_during_observation(monkeypatch):
         def __init__(self, value): self.value = str(value)
         def __truediv__(self, part): return FakePath(self.value.rstrip("/") + "/" + str(part))
         def read_text(self):
+            if self.value == "/proc/sys/kernel/random/boot_id":
+                return "b38142f7-84c5-487d-95a4-8180cbff3972\n"
             fields = ["S", "23", "24", "25"] + ["0"] * 15 + [next(ticks), "0"]
             return "77 (worker) " + " ".join(fields)
         def stat(self): return SimpleNamespace(st_uid=501)
@@ -136,6 +140,43 @@ def test_linux_proc_identity_rejects_pid_reuse_during_observation(monkeypatch):
     monkeypatch.setattr(platform, "Path", FakePath)
     with pytest.raises(OSError, match="changed"):
         platform.process_identity(77)
+
+
+@pytest.mark.parametrize("boot_id,tick", [
+    (None, "4242"), ("", "4242"), ("corrupt", "4242"),
+    ("b38142f7-84c5-487d-95a4-8180cbff3972", "corrupt"),
+])
+def test_linux_proc_identity_refuses_unknown_boot_or_start_tick(tmp_path, monkeypatch, boot_id, tick):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    proc = tmp_path / "proc"
+    (proc / "77").mkdir(parents=True)
+    fields = ["S", "23", "24", "25"] + ["0"] * 15 + [tick, "0"]
+    (proc / "77" / "stat").write_text("77 (worker) " + " ".join(fields))
+    boot = tmp_path / "boot_id"
+    if boot_id is not None:
+        boot.write_text(boot_id)
+    monkeypatch.setattr(platform, "Path", lambda path: boot if str(path).endswith("boot_id") else proc)
+    with pytest.raises(OSError):
+        platform.process_identity(77)
+
+
+@pytest.mark.parametrize("birth_id", [
+    "e1a239c5-fbdb-4c06-b924-6f0479e69568:4242",  # Same PID/tick, prior boot.
+    "b38142f7-84c5-487d-95a4-8180cbff3972:4243",  # Reused PID.
+    "proc-start-ticks:4242", "corrupt",
+])
+def test_linux_signal_refuses_mismatched_birth_before_kernel_signal(monkeypatch, birth_id):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="linux"))
+    observed = {"pid": 77, "uid": 501, "birth_id": "b38142f7-84c5-487d-95a4-8180cbff3972:4242"}
+    opened, closed = [], []
+    monkeypatch.setattr(platform.os, "pidfd_open", lambda pid: opened.append(pid) or 99, raising=False)
+    monkeypatch.setattr(platform.os, "close", closed.append)
+    monkeypatch.setattr(platform.signal, "pidfd_send_signal", lambda *_: pytest.fail("mismatched birth signaled"), raising=False)
+    monkeypatch.setattr(platform, "process_identity", lambda pid: observed)
+    with pytest.raises(OSError, match="incarnation changed"):
+        platform.signal_process({**observed, "birth_id": birth_id}, platform.TERM)
+    assert opened == [77]
+    assert closed == [99]
 
 
 def test_darwin_identity_keeps_legacy_birth_marker_and_brackets_native_observation(monkeypatch):
