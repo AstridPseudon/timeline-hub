@@ -7,8 +7,10 @@ import {
   VideoEditorRuntimeProvider,
   type VideoEditorRuntimeContextValue,
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { useAssetManagement } from './useAssetManagement';
+import { useAssetManagement, type UseAssetManagementArgs } from './useAssetManagement';
 import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 
 const extractVideoMetadataMock = vi.fn();
 
@@ -33,9 +35,9 @@ function buildRuntimeValue(provider: Record<string, unknown>): VideoEditorRuntim
   };
 }
 
-function buildArgs() {
+function buildArgs(): UseAssetManagementArgs {
   return {
-    dataRef: { current: null },
+    dataRef: { current: null as TimelineData | null },
     selectedTrackId: null,
     selectedProjectId: 'runtime-project-id',
     selectClip: vi.fn(),
@@ -48,8 +50,29 @@ function buildArgs() {
   };
 }
 
-function renderAssetManagement(provider: Record<string, unknown>) {
-  return renderHook(() => useAssetManagement(buildArgs()), {
+function buildDropData(): TimelineData {
+  const tracks = [{ id: 'V1', kind: 'visual' as const }];
+  const registry = { assets: {} };
+  const config = { output: { width: 1280, height: 720, fps: 30 }, tracks, clips: [], registry };
+  return {
+    config,
+    configVersion: 1,
+    registry,
+    resolvedConfig: config,
+    rows: [{ id: 'V1', actions: [] }],
+    meta: {},
+    effects: {},
+    assetMap: {},
+    output: config.output,
+    tracks,
+    clipOrder: { V1: [] },
+    signature: 'sig',
+    stableSignature: 'stable',
+  } as TimelineData;
+}
+
+function renderAssetManagement(provider: Record<string, unknown>, args = buildArgs()) {
+  return renderHook(() => useAssetManagement(args), {
     wrapper: ({ children }) => (
       <VideoEditorRuntimeProvider value={buildRuntimeValue(provider)}>
         {children}
@@ -163,6 +186,139 @@ describe('useAssetManagement Runtime media imports', () => {
       variantId: 'variant-1',
     });
     expect(JSON.stringify(prepared?.entry)).not.toContain('catalog_digest');
+  });
+
+  it('routes a selected prepared video to the native addClip consumer', async () => {
+    const addClip = vi.fn().mockResolvedValue({ ok: true, data: { clipId: 'clip-1', trackId: 'V1' } });
+    const args = buildArgs();
+    args.commands = { addClip: addClip as unknown as TimelineCommands['addClip'] };
+    args.dataRef.current = buildDropData();
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, args);
+    const mediaSelection = Object.freeze({
+      asset: 'sha256:asset',
+      generation_id: 'generation-1',
+      variant_id: 'variant-1',
+      object_id: 'sha256:object',
+      catalog_digest: 'sha256:catalog',
+    });
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'object.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection,
+      },
+    });
+
+    let placed = false;
+    await act(async () => {
+      placed = await result.current.handleAssetDrop('sha256:asset', 'V1', 3, false, false, prepared ?? undefined);
+    });
+
+    expect(placed).toBe(true);
+    expect(addClip).toHaveBeenCalledWith({ preparedAsset: prepared, trackId: 'V1', time: 3 });
+    expect(addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toBe(mediaSelection);
+    expect(args.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses a selected prepared video when the native consumer is unavailable', async () => {
+    const args = buildArgs();
+    args.dataRef.current = buildDropData();
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, args);
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'object.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection: {
+          asset: 'sha256:asset',
+          generation_id: 'generation-1',
+          variant_id: 'variant-1',
+          object_id: 'sha256:object',
+          catalog_digest: 'sha256:catalog',
+        },
+      },
+    });
+
+    let placed = true;
+    await act(async () => {
+      placed = await result.current.handleAssetDrop('sha256:asset', 'V1', 3, false, false, prepared ?? undefined);
+    });
+
+    expect(placed).toBe(false);
+    expect(args.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('preserves the native refusal without falling back to a local snapshot edit', async () => {
+    const addClip = vi.fn().mockResolvedValue({
+      ok: false,
+      error: { code: 'mutation_failed', message: 'verified media refused' },
+    });
+    const args = buildArgs();
+    args.commands = { addClip: addClip as unknown as TimelineCommands['addClip'] };
+    args.dataRef.current = buildDropData();
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, args);
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'object.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection: {
+          asset: 'sha256:asset',
+          generation_id: 'generation-1',
+          variant_id: 'variant-1',
+          object_id: 'sha256:object',
+          catalog_digest: 'sha256:catalog',
+        },
+      },
+    });
+
+    let placed = true;
+    await act(async () => {
+      placed = await result.current.handleAssetDrop('sha256:asset', 'V1', 3, false, false, prepared ?? undefined);
+    });
+
+    expect(placed).toBe(false);
+    expect(args.applyEdit).not.toHaveBeenCalled();
   });
 
   it('fails closed for a direct Bridge provider instead of using the legacy generation writer', async () => {

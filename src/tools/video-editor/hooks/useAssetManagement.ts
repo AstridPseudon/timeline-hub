@@ -35,6 +35,7 @@ import type {
   TimelinePatchRegistry,
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
+import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 
 type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
@@ -68,6 +69,7 @@ export interface UseAssetManagementArgs {
   patchRegistry: TimelinePatchRegistry;
   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
   resolveAssetUrl: (file: string) => Promise<string>;
+  commands?: Pick<TimelineCommands, 'addClip'>;
 }
 
 export interface UseAssetManagementResult {
@@ -83,7 +85,7 @@ export interface UseAssetManagementResult {
     insertAtTop?: boolean,
     preparedAsset?: TimelineProvisionedAsset,
     removeClipId?: string,
-  ) => boolean;
+  ) => boolean | Promise<boolean>;
 }
 
 export interface AssetDropTargetResolution {
@@ -176,6 +178,7 @@ export function useAssetManagement({
   setSelectedTrackId,
   applyEdit,
   patchRegistry,
+  commands,
 }: UseAssetManagementArgs): UseAssetManagementResult {
   const runtime = useVideoEditorRuntime();
   const getDataRef = useCallback(() => {
@@ -273,7 +276,18 @@ export function useAssetManagement({
     forceNewTrack: boolean,
     insertAtTop: boolean,
     removeClipId?: string,
-  ) => {
+  ): boolean | Promise<boolean> => {
+    if (prepared.mediaType === 'video' && prepared.mediaSelection) {
+      if (!commands) {
+        return false;
+      }
+      return Promise.resolve(commands.addClip({
+        preparedAsset: prepared,
+        ...(trackId !== undefined ? { trackId } : {}),
+        time,
+      })).then((result) => result.ok);
+    }
+
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
     if (!current) {
@@ -309,7 +323,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [getApplyEdit, getDataRef, getSelectedTrackId]);
+  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {
