@@ -18,6 +18,12 @@ export type ElementEdit =
   | { elementRef: ElementCaptureArgs; params?: never }
   | { elementRef?: never; params: ElementParamsArgs };
 
+type ElementRefEdit = Extract<ElementEdit, { elementRef: ElementCaptureArgs }>;
+
+function isElementRefEdit(edit: ElementEdit): edit is ElementRefEdit {
+  return 'elementRef' in edit;
+}
+
 export type ElementCaptureBasis = {
   readonly clipId: string;
   readonly select: string;
@@ -85,11 +91,11 @@ export function finishElementEdit(
   edit: ElementEdit,
 ): { command: EditCommand; bundle: AuthoredBundle; preview: TimelinePatch } {
   if (!equal(basis.edit, edit)) throw new Error('Element edit changed after original capture');
-  const result = 'elementRef' in edit
+  const result = isElementRefEdit(edit)
     ? finishClipElement(basis.capture, edit.elementRef)
     : finishClipElementParams(basis.capture, edit.params);
   const entity = new AuthoredState(result.bundle).entity(basis.select);
-  const payload = 'elementRef' in edit
+  const payload = isElementRefEdit(edit)
     ? { elementRef: copy(edit.elementRef.elementRef) }
     : { params: object(entity?.params) ? copy(entity.params) as Record<string, JSON> : {} };
   return {
@@ -108,7 +114,7 @@ export function captureElementBasis(
   select: string,
   edit: ElementEdit,
 ): ElementCaptureBasis['capture'] {
-  return 'elementRef' in edit
+  return isElementRefEdit(edit)
     ? captureClipElement(bundle, select, edit.elementRef)
     : captureClipElementParams(bundle, select, edit.params);
 }
