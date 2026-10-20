@@ -58,6 +58,21 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('retains arbitrary parent roots through the accepted occurrence projection', () => {
+    const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"ordered":[2,0,1],"__proto__":{"constructor":{"prototype":null}},"constructor":false,"prototype":[]}');
+    const contract = { ...fixture, parent_composition: { ...fixture.parent_composition,
+      config: { ...fixture.parent_composition.config, ...opaque } } };
+    const before = JSON.stringify(contract);
+    const composition = createShotCompositionAdapter({ load: async () => contract }).prepare(contract);
+    const config = projectCanonicalComposition(composition).config;
+    expect(config).toMatchObject({ opaque: { retained: [null, false, []] } });
+    expect(JSON.stringify(Object.fromEntries(Object.keys(opaque).map((key) => [key, (config as unknown as Record<string, unknown>)[key]])))).toBe(JSON.stringify(opaque));
+    for (const key of Object.keys(opaque)) expect(Object.hasOwn(config, key)).toBe(true);
+    expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
+    expect(JSON.stringify(contract)).toBe(before);
+    expect(config.clips.some((clip) => clip.id === 'occ-1:alpha-video')).toBe(true);
+  });
+
   it('retains raw clip IDs with isolated occurrence owners for repeated sources', () => {
     const projection = projectCanonicalComposition(prepared);
     expect(projection.clipIdentities.get('occ-1:alpha-video')).toMatchObject({

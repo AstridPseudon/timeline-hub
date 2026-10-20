@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { document, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { authoringBundleFromDocument } from '../commands/authoringBundle.ts';
+import { executeClipMove } from '../commands/clipMoveCapture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import type { CommandSessionState } from '../commands/commitSession.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
@@ -13,8 +16,8 @@ import { useTimelineCommit } from './useTimelineCommit.ts';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-async function setup() {
-  const env = await environment();
+async function setup(initialDocument = document()) {
+  const env = await environment(initialDocument);
   vi.stubGlobal('indexedDB', env.factory);
   const held = new Set<string>();
   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
@@ -63,6 +66,54 @@ const publishC = (env: Awaited<ReturnType<typeof environment>>) => env.provider.
 }, ['p1'], 'independent-c');
 
 describe('atomic command projection facts', () => {
+  it('preserves raw opaque roots on load, preview, recovery and accepted projection', async () => {
+    const raw = document();
+    const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"ordered":[0,false,null,[],{}],"__proto__":{"prototype":null},"constructor":false,"prototype":[]}');
+    raw.parent_revision.payload.config = { ...raw.parent_revision.payload.config as object, ...opaque };
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const original = structuredClone(raw);
+    const { env, mount, held } = await setup(raw);
+    const assertRoots = (data: TimelineData) => {
+      expect(data.config).toMatchObject({ opaque: { retained: [null, false, []] } });
+      for (const config of [data.config, data.resolvedConfig]) {
+        expect(Object.fromEntries(Object.keys(opaque).map((key) => [key, (config as unknown as Record<string, unknown>)[key]]))).toStrictEqual(opaque);
+        for (const key of Object.keys(opaque)) expect(Object.hasOwn(config, key)).toBe(true);
+        expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
+        expect(config).not.toHaveProperty('editProjection');
+      }
+    };
+    const first = mount();
+    await waitFor(() => expect(first.hook.result.current.commands.port).toBeDefined());
+    assertRoots(first.hook.result.current.commit.data!);
+    env.setFault('lost');
+    act(() => { first.move(5); first.move(7); });
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    assertRoots(first.hook.result.current.commit.data!);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    await waitFor(() => expect(held.size).toBe(0));
+    const recovered = mount(await latestData(env));
+    await waitFor(() => expect(recovered.hook.result.current.commands.state.status).toBe('recovery'));
+    assertRoots(recovered.hook.result.current.commit.data!);
+    env.setFault('busy');
+    await act(async () => { await recovered.hook.result.current.commands.recover(owner); });
+    expect(recovered.hook.result.current.commit.data?.config.clips[0].at).toBe(7);
+    assertRoots(recovered.hook.result.current.commit.data!);
+    env.setFault(null);
+    await act(async () => { await recovered.hook.result.current.commands.retry(); });
+    expect(recovered.hook.result.current.commands.state.status).toBe('saved');
+    expect(recovered.hook.result.current.commit.data?.editProjection?.kind).toBe('accepted');
+    for (const { data } of recovered.installed) assertRoots(data);
+    const accepted = await env.provider.loadTimelineCommandBasis('timeline-commit');
+    let expected = await authoringBundleFromDocument(original);
+    const requests = new Map(env.commits().map((call) => [call.key, call.body!]));
+    for (const request of requests.values()) expected = executeClipMove(expected, request.commands[0]).bundle;
+    expect(accepted.canonicalDocument.parent_revision.payload).toEqual({ ...expected.parent, occurrences: [] });
+    expect(env.commits()[2]).toEqual(env.commits()[0]);
+    expect(JSON.stringify(env.commits())).not.toContain('editProjection');
+    expect(raw).toStrictEqual(original);
+  });
+
   it('installs accepted closure data and its exact fact while the session is still saving', async () => {
     const { env, mount } = await setup();
     const { hook, move, installed } = mount();
