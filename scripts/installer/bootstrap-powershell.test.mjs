@@ -16,6 +16,133 @@ test('PowerShell opens install log appends with sharing compatible with the runn
   assert.doesNotMatch(script, /File\.AppendAllText\(log/);
 });
 
+for (const architecture of ['PROCESSOR_ARCHITECTURE', 'PROCESSOR_ARCHITEW6432']) {
+  test(`PowerShell refuses ARM64 via ${architecture} before downloads`, () => scenario(async (context, run) => {
+    const result = await run([], { PROCESSOR_ARCHITECTURE: 'AMD64', PROCESSOR_ARCHITEW6432: '', [architecture]: 'ARM64' });
+    alive(result);
+    assert.match(result.stdout, /CAUGHT: Astrid does not support Windows ARM64 yet\./);
+    assert.doesNotMatch(result.stdout, /Details:|Astrid could not get ready/);
+    assert.deepEqual(await context.calls(), []);
+    await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
+  }));
+}
+
+test('PowerShell -File reports ARM64 refusal as one sentence with a failure status', () => scenario(async (context) => {
+  const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', path.join(repo, 'public/install.ps1')], {
+    PROCESSOR_ARCHITECTURE: 'ARM64', PROCESSOR_ARCHITEW6432: '',
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stderr.trim(), 'Astrid does not support Windows ARM64 yet.');
+  assert.equal(result.stdout, '');
+  assert.deepEqual(await context.calls(), []);
+}));
+
+test('PowerShell preserves organization-policy guidance in the admitted log before downloads', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  await writeFile(harness, `
+function Get-ExecutionPolicy {
+    param([switch]$List)
+    [pscustomobject]@{ Scope = 'MachinePolicy'; ExecutionPolicy = 'Restricted' }
+}
+` + await readFile(harness, 'utf8'));
+  const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness]);
+  alive(result);
+  assert.match(result.stdout, /CAUGHT: Astrid could not get ready\./);
+  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /Process-level Bypass cannot override Group Policy/);
+  assert.deepEqual(await context.calls(), []);
+  await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
+}));
+
+test('PowerShell decodes UTF-8 stdout and stderr and enables isolated Python UTF-8 mode', () => scenario(async (context, run) => {
+  const result = await run([], { MOCK_UNICODE_OUTPUT: '1' });
+  alive(result);
+  assert.match(result.stdout, /Workspace: 测试\/Zoë/);
+  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /Diagnostic: 测试\/Zoë/);
+  const args = (await context.calls()).at(-1);
+  assert.deepEqual(args.slice(args.indexOf('python') + 1, args.indexOf('-m')), ['-u', '-I', '-X', 'utf8']);
+}));
+
+// Exercise the Windows branch on Linux. Only the native SID lookup, Win32
+// creation call and ACL observations are faked; production admission runs.
+async function windowsDirectories(context, env = {}) {
+  const harness = await context.powershell();
+  const script = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
+    .replace('[Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT', '$false')
+    .replace('[Security.Principal.WindowsIdentity]::GetCurrent().User.Value', "'S-1-5-21-1234'");
+  const target = path.join(context.root, 'windows-bootstrap.ps1');
+  await writeFile(target, script);
+  context.env.MOCK_INSTALL_SCRIPT = target;
+  context.env.MOCK_PRIVATE_DIRS = path.join(context.root, 'private-dirs');
+  const prelude = `
+Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+public static class AstridInstallerDirectoryV1 {
+    public static void Create(string path, string sddl) {
+        File.AppendAllText(Environment.GetEnvironmentVariable("MOCK_PRIVATE_DIRS"), path + "\\t" + sddl + "\\n");
+        Directory.CreateDirectory(path);
+    }
+}
+'@
+function Get-Item {
+    param([switch]$Force, [string]$LiteralPath)
+    [pscustomobject]@{ Attributes = if ($env:MOCK_ACL_FAILURE -eq 'reparse') { [IO.FileAttributes]::ReparsePoint } elseif ($env:MOCK_ACL_FAILURE -eq 'file') { [IO.FileAttributes]::Normal } else { [IO.FileAttributes]::Directory } }
+}
+function Get-Acl {
+    param([string]$LiteralPath)
+    $Acl = [pscustomobject]@{
+        AreAccessRulesProtected = $env:MOCK_ACL_FAILURE -ne 'inherited'
+        Sddl = if ($env:MOCK_ACL_FAILURE -eq 'unknown-ace') { 'D:P(XA;;FA;;;WD)' } else { 'D:P(A;OICI;FA;;;S-1-5-21-1234)(A;OICI;FA;;;SY)' }
+    }
+    $Acl | Add-Member ScriptMethod GetOwner {
+        param($Type)
+        [pscustomobject]@{ Value = if ($env:MOCK_ACL_FAILURE -eq 'foreign-owner') { 'S-1-5-21-9999' } else { 'S-1-5-21-1234' } }
+    }
+    $Acl | Add-Member ScriptMethod GetAccessRules {
+        param($Explicit, $Inherited, $Type)
+        foreach ($Trustee in @('S-1-5-21-1234', 'S-1-5-18')) {
+            [pscustomobject]@{
+                IdentityReference = [pscustomobject]@{ Value = if ($env:MOCK_ACL_FAILURE -eq 'everyone') { 'S-1-1-0' } else { $Trustee } }
+                AccessControlType = if ($env:MOCK_ACL_FAILURE -eq 'deny') { [Security.AccessControl.AccessControlType]::Deny } else { [Security.AccessControl.AccessControlType]::Allow }
+                PropagationFlags = if ($env:MOCK_ACL_FAILURE -eq 'inherit-only') { [Security.AccessControl.PropagationFlags]::InheritOnly } else { [Security.AccessControl.PropagationFlags]::None }
+            }
+        }
+    }
+    $Acl
+}
+`;
+  await writeFile(harness, prelude + await readFile(harness, 'utf8'));
+  return context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness], env);
+}
+
+test('PowerShell creates only Astrid roots with protected owner/SYSTEM ACLs before downloads', () => scenario(async (context) => {
+  const result = await windowsDirectories(context);
+  alive(result);
+  assert.match(result.stdout, /Astrid is ready\./);
+  const records = (await readFile(context.env.MOCK_PRIVATE_DIRS, 'utf8')).trim().split('\n').map((line) => line.split('\t'));
+  assert.deepEqual(records.slice(0, 4).map(([directory]) => directory), [
+    path.join(context.env.LOCALAPPDATA, 'Astrid'), path.join(context.env.LOCALAPPDATA, 'Astrid/bootstrap'),
+    path.join(context.env.LOCALAPPDATA, 'Astrid Runtime'), path.join(context.env.LOCALAPPDATA, 'Astrid Runtime/logs'),
+  ]);
+  assert.equal(records.length, 5);
+  for (const [directory, sddl] of records) {
+    assert.notEqual(directory, context.env.LOCALAPPDATA);
+    assert.equal(sddl, 'O:S-1-5-21-1234D:P(A;OICI;FA;;;S-1-5-21-1234)(A;OICI;FA;;;SY)');
+  }
+}));
+
+for (const failure of ['inherited', 'foreign-owner', 'everyone', 'deny', 'unknown-ace', 'inherit-only', 'reparse', 'file']) {
+  test(`PowerShell rejects ${failure} Windows directory security before writing or downloading`, () => scenario(async (context) => {
+    const result = await windowsDirectories(context, { MOCK_ACL_FAILURE: failure });
+    alive(result);
+    assert.match(result.stdout, /CAUGHT: Astrid directories (require|must be)/);
+    assert.doesNotMatch(result.stdout, /Details:/);
+    assert.deepEqual(await context.calls(), []);
+    await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
+    await assert.rejects(readFile(context.env.MOCK_LOG), { code: 'ENOENT' });
+  }));
+}
+
 test('PowerShell uses a fresh process helper after an older bootstrap ran in the same session', () => scenario(async (context) => {
   const harness = await context.powershell();
   let script = await readFile(harness, 'utf8');
@@ -320,7 +447,7 @@ $Function = $Ast.Find({ param($Node) $Node -is [Management.Automation.Language.F
 Invoke-Expression $Function.Extent.Text
 $Log = $env:MOCK_LOG
 $Info = Invoke-InstallerCommand 'native-child' @('python','-u','-I','-m','astrid','install') -StreamOutput
-[Console]::WriteLine(($Info | Select-Object UseShellExecute, CreateNoWindow, RedirectStandardInput, RedirectStandardOutput, RedirectStandardError, Arguments | ConvertTo-Json -Compress))
+[Console]::WriteLine(($Info | Select-Object UseShellExecute, CreateNoWindow, RedirectStandardInput, RedirectStandardOutput, RedirectStandardError, Arguments, @{Name='StandardOutputEncoding';Expression={$_.StandardOutputEncoding.WebName}}, @{Name='StandardErrorEncoding';Expression={$_.StandardErrorEncoding.WebName}} | ConvertTo-Json -Compress))
 `);
   const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', unit]);
   assert.equal(result.code, 0, result.stderr);
@@ -330,5 +457,7 @@ $Info = Invoke-InstallerCommand 'native-child' @('python','-u','-I','-m','astrid
   assert.equal(info.RedirectStandardInput, false);
   assert.equal(info.RedirectStandardOutput, true);
   assert.equal(info.RedirectStandardError, true);
+  assert.equal(info.StandardOutputEncoding, 'utf-8');
+  assert.equal(info.StandardErrorEncoding, 'utf-8');
   assert.equal(info.Arguments, '"python" "-u" "-I" "-m" "astrid" "install"');
 }));

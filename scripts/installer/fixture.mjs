@@ -13,6 +13,11 @@ import json, os, pathlib, shutil, subprocess, sys, time
 args = sys.argv[1:]
 with open(os.environ['MOCK_CALLS'], 'a') as stream: stream.write(json.dumps(args) + '\\n')
 print('native progress on stderr', file=sys.stderr)
+if os.environ.get('MOCK_UNICODE_OUTPUT') and args[:1] == ['run']:
+    sys.stdout.buffer.write('Workspace: 测试/Zoë\\n'.encode('utf-8'))
+    sys.stdout.buffer.flush()
+    sys.stderr.buffer.write('Diagnostic: 测试/Zoë\\n'.encode('utf-8'))
+    sys.stderr.buffer.flush()
 if args == ['--version']:
     print(os.environ.get('MOCK_UV_VERSION', 'uv 0.11.32 (x86_64-unknown-linux-gnu)'))
     sys.exit(0)
@@ -93,7 +98,7 @@ export async function fixture() {
     MOCK_CALLS: path.join(root, 'calls.jsonl'),
     MOCK_LOG: path.join(root, 'state/astrid-runtime/logs/install.log'),
   };
-  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_EXPECTED_LOCK_CONTENT', 'MOCK_CORE_DISK_FAILURE']) delete env[key];
+  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_EXPECTED_LOCK_CONTENT', 'MOCK_CORE_DISK_FAILURE', 'MOCK_UNICODE_OUTPUT', 'MOCK_ACL_FAILURE']) delete env[key];
   await writeFile(path.join(bootstrap, 'uv'), mockUv, { mode: 0o755 });
   await writeFile(path.join(bin, 'curl'), `#!/usr/bin/env python3
 import os, pathlib, shutil, sys

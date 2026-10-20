@@ -11,6 +11,8 @@
     $Log = Join-Path $LogDir 'install.log'
     $Temp = Join-Path ([IO.Path]::GetTempPath()) ('astrid-install-' + [Guid]::NewGuid().ToString('N'))
     $CoreFailure = $null
+    $PreparationFailure = $null
+    $LogReady = $false
     $NativeExitCode = 1
 
     # The readers run in .NET so stderr never becomes a PS 5.1 terminating
@@ -27,12 +29,78 @@
         $Info.CreateNoWindow = $false
         $Info.RedirectStandardOutput = $true
         $Info.RedirectStandardError = $true
+        $Info.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+        $Info.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
         return [AstridInstallerProcessV2]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
     }
 
+    function Initialize-PrivateDirectory([string]$Path) {
+        if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
+            [IO.Directory]::CreateDirectory($Path) | Out-Null
+            return
+        }
+        $Sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        [AstridInstallerDirectoryV1]::Create($Path, "O:${Sid}D:P(A;OICI;FA;;;${Sid})(A;OICI;FA;;;SY)")
+        $Attributes = (Get-Item -Force -LiteralPath $Path).Attributes
+        if (($Attributes -band [IO.FileAttributes]::ReparsePoint) -or -not ($Attributes -band [IO.FileAttributes]::Directory)) {
+            throw 'Astrid directories must be directories without reparse points.'
+        }
+        $Acl = Get-Acl -LiteralPath $Path
+        if ($Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $Sid -or
+            -not $Acl.AreAccessRulesProtected -or $Acl.Sddl -match '\((?!A;)') {
+            throw 'Astrid directories require a protected owner/SYSTEM DACL.'
+        }
+        $OwnerAccess = $false
+        foreach ($Rule in $Acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+            if ($Rule.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
+                $Rule.IdentityReference.Value -notin @($Sid, 'S-1-5-18')) {
+                throw 'Astrid directories require a protected owner/SYSTEM DACL.'
+            }
+            if ($Rule.IdentityReference.Value -eq $Sid -and
+                -not ($Rule.PropagationFlags -band [Security.AccessControl.PropagationFlags]::InheritOnly)) { $OwnerAccess = $true }
+        }
+        if (-not $OwnerAccess) { throw 'Astrid directories require owner access.' }
+    }
+
     try {
-        New-Item -ItemType Directory -Force -Path $Bootstrap, $LogDir, $Temp | Out-Null
+        if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') {
+            $PreparationFailure = 'Astrid does not support Windows ARM64 yet.'
+            throw $PreparationFailure
+        }
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        if (-not ('AstridInstallerDirectoryV1' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+public static class AstridInstallerDirectoryV1 {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Attributes { public int Length; public IntPtr Descriptor; public int Inherit; }
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool ConvertStringSecurityDescriptorToSecurityDescriptorW(string sddl, uint revision, out IntPtr descriptor, IntPtr size);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool CreateDirectoryW(string path, ref Attributes attributes);
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr LocalFree(IntPtr memory);
+    public static void Create(string path, string sddl) {
+        IntPtr descriptor;
+        if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, 1, out descriptor, IntPtr.Zero)) throw new Win32Exception(Marshal.GetLastWin32Error());
+        try {
+            var attributes = new Attributes { Length = Marshal.SizeOf(typeof(Attributes)), Descriptor = descriptor };
+            if (!CreateDirectoryW(path, ref attributes)) {
+                int error = Marshal.GetLastWin32Error();
+                if (error != 183) throw new Win32Exception(error);
+            }
+        } finally { LocalFree(descriptor); }
+    }
+}
+'@
+        }
+        # Only Astrid-owned roots get private ACLs; LOCALAPPDATA is untouched.
+        foreach ($Directory in @((Split-Path $Bootstrap), $Bootstrap, (Split-Path $LogDir), $LogDir, $Temp)) {
+            Initialize-PrivateDirectory $Directory
+        }
+        $LogReady = $true
         $Policy = Get-ExecutionPolicy -List
         $Enforced = $Policy | Where-Object { $_.Scope -in @('MachinePolicy','UserPolicy') -and $_.ExecutionPolicy -in @('Restricted','AllSigned') }
         if ($Enforced) {
@@ -206,7 +274,7 @@ public sealed class AstridInstallerProcessV2 {
         $ClientRequirement = $RuntimeRequirement + '#subdirectory=packages/python'
         $Result = Invoke-InstallerCommand $Uv @('pip','install','--python',$VenvPython,'--no-deps',$RuntimeRequirement,$ClientRequirement,$AgentRequirement) -LogOutput
         if ($Result.ExitCode -ne 0) { throw 'The pinned Astrid packages could not be installed.' }
-        $RunArgs = @('run', '--no-project', '--python', $VenvPython, 'python','-u','-I','-m','astrid','install','--manifest',$Manifest)
+        $RunArgs = @('run', '--no-project', '--python', $VenvPython, 'python','-u','-I','-X','utf8','-m','astrid','install','--manifest',$Manifest)
         $RunArgs += $InstallerArgs
         $Result = Invoke-InstallerCommand $Uv $RunArgs -StreamOutput
         $NativeExitCode = $Result.ExitCode
@@ -223,13 +291,15 @@ public sealed class AstridInstallerProcessV2 {
             throw 'The Astrid installer did not finish; see the log.'
         }
     } catch {
+        $FailureMessage = $_.Exception.Message
         try {
+            if (-not $LogReady) { throw 'The installer log directory was not admitted.' }
             $ErrorText = ($_ | Out-String) + [Environment]::NewLine
             $ErrorBytes = [Text.UTF8Encoding]::new($false).GetBytes($ErrorText)
             $ErrorStream = [IO.FileStream]::new($Log, [IO.FileMode]::Append, [IO.FileAccess]::Write, [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
             try { $ErrorStream.Write($ErrorBytes, 0, $ErrorBytes.Length) } finally { $ErrorStream.Dispose() }
         } catch { }
-        $Message = if ($CoreFailure) { $CoreFailure } else { "Astrid could not get ready.`nDetails: $Log" }
+        $Message = if ($CoreFailure) { $CoreFailure } elseif ($PreparationFailure) { $PreparationFailure } elseif (-not $LogReady) { $FailureMessage } else { "Astrid could not get ready.`nDetails: $Log" }
         $global:LASTEXITCODE = $NativeExitCode
         if ($FileInvocation) {
             [Console]::Error.WriteLine($Message)
