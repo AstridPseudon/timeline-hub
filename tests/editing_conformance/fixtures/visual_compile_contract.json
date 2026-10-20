@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "contract": "design/visual-compile-contract.md",
   "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py (identical to this tree) and astrid/core/timeline/duration.py",
   "source": {
@@ -450,6 +450,34 @@
       }
     ]
   },
+  "overhang_closure": {
+    "label": "OVERHANG VARIANT (not App output)",
+    "note": "Vector 2. One occurrence whose source-window child is longer than the occurrence, so clampToOccurrenceDuration is exercised. It reuses the native shot-1 revision (clip-a: at 1, hold 4, from 2, to 6, speed 2, so 2 s on the timeline). occ-c starts at 2 s and lasts 1.5 s, so its window is [2, 3.5) s. The child is absolute [3, 5) s, which overhangs the occurrence end by 1.5 s. The parent and its ordinary clips are the native payload unchanged.",
+    "occurrences": [
+      {
+        "occurrence_id": "occ-c",
+        "shot_id": "chapter-shot",
+        "shot_revision_id": "shot-1",
+        "placement": {
+          "start_ms": 2000,
+          "track": "picture"
+        },
+        "duration_ms": 1500,
+        "source_offset": 0,
+        "speed": 1,
+        "track": "picture"
+      }
+    ],
+    "clamp": {
+      "on": "The compiler's only policy (03:46 decision): visible end = min(child end, occurrence end) = 3.5 s.",
+      "off": "The unclamped child end, 5 s. The compiler has no clamp-off mode; this row is the App per-call option's output, computed from the authored child and not emitted by the compiler."
+    },
+    "physical_reference": {
+      "status": "pending",
+      "owner": "viewing",
+      "note": "The MAIN physical reference is not recorded here. It comes from Viewing's executable analog (04:40 decision): generated playable media with these exact durations, labelled as an analog, with MAIN fed Fraction(30000, 1001). No values are entered until that run exists."
+    }
+  },
   "vectors": [
     {
       "id": "popup-occurrence-a-start-frame",
@@ -492,6 +520,53 @@
       "source_clip_id": "clip-a",
       "field": "duration_frames",
       "expect": 60
+    },
+    {
+      "id": "overhang-clamp-on-start-frame",
+      "closure": "overhang",
+      "clamp": "on",
+      "occurrence_id": "occ-c",
+      "source_clip_id": "clip-a",
+      "field": "start_frame",
+      "expect": 90
+    },
+    {
+      "id": "overhang-clamp-on-end-frame",
+      "closure": "overhang",
+      "clamp": "on",
+      "occurrence_id": "occ-c",
+      "source_clip_id": "clip-a",
+      "field": "end_frame",
+      "expect": 105
+    },
+    {
+      "id": "overhang-clamp-on-duration-frames",
+      "closure": "overhang",
+      "clamp": "on",
+      "occurrence_id": "occ-c",
+      "source_clip_id": "clip-a",
+      "field": "duration_frames",
+      "expect": 15
+    },
+    {
+      "id": "overhang-clamp-off-end-frame",
+      "closure": "overhang",
+      "clamp": "off",
+      "occurrence_id": "occ-c",
+      "source_clip_id": "clip-a",
+      "field": "end_frame",
+      "expect": 150,
+      "xfail": "The compiler has one clamp policy (clamp on, 03:46 decision) and no unclamped mode. This row restores only if an unclamped mode is reinstated for this closure, which the decision does not do."
+    },
+    {
+      "id": "overhang-clamp-off-duration-frames",
+      "closure": "overhang",
+      "clamp": "off",
+      "occurrence_id": "occ-c",
+      "source_clip_id": "clip-a",
+      "field": "duration_frames",
+      "expect": 60,
+      "xfail": "The compiler has one clamp policy (clamp on, 03:46 decision) and no unclamped mode. This row restores only if an unclamped mode is reinstated for this closure, which the decision does not do."
     }
   ]
 }
