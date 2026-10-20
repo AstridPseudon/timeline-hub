@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T06:54:37Z | dispatcher heartbeat 13s -->
+<!-- main | 2026-10-20T06:59:59Z | dispatcher heartbeat 6s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -18,5 +18,6 @@ Backlog from 06:29 audit (not started): (4) ONE capture verifier = _candidate_do
 06:38: no new inbox; rt-m2-restore-route-scope-deny and rt-m2-keep-split-live running. Ledger evidence fix (6) deferred until those two finish (both edit the ledger file).
 06:45: rt-m2-keep-split-live DONE (74 pass / 6 strict xfail, live halves for reference CRUD/rollback/idempotency + Python client on real daemon) merge queued. Waiting on rt-m2-restore-route-scope-deny.
 06:50: MERGED keep-split-live 1f3e64d. Dispatched rt-m2-api-surface-census (read-only: retired-ops removability, verified-read consolidation proposal, frozen fixture usage -> design/runtime-api-surface.md; plus ledger evidence fix RT01/RT02/RT04/D04). Still waiting: rt-m2-restore-route-scope-deny.
-Workers live: 2.
+06:58 ACK 06:50 standing capacity rule. Dispatched to reach 5: rt-m2-d13-forward (D13 reviewed cohort bbf2eaa forward-merged onto current integration, qualification report, no old-endpoint 410), rt-m2-crash-window-audit (gate 2 windows), rt-m2-gate5-scenario-map (design note for gate 5 with App). Running: restore-route-scope-deny, api-surface-census.
+Workers live: 5.
 Resources: ~9GB free.

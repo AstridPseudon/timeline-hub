@@ -57,3 +57,7 @@ Managers may add a named suite to `$ORCH/tests/suites.conf` themselves, with no 
 
 ## Disk: recycle-on-finish (2026-10-20)
 When a worker finishes, the harness removes its worktree automatically, provided it is clean and has no KEEP marker or lease. The branch tl/<worker> and the reports stay. Review finished work by branch: `git -C /home/user/work/<repo> diff $(git -C /home/user/work/<repo> merge-base tl/integration tl/<w>)..tl/<w>`, or `git show`. The test service recreates a missing worktree from tl/<w> when you request a test on it. To keep a worktree, touch workers/<w>/KEEP before the worker ends, or list it in managers/<you>/notes/<x>.lease. A dirty worktree is never removed.
+
+## HARD CAPACITY RULE (owner, 2026-10-20)
+Every manager keeps its area at the capacity target at ALL times: 5-7 running workers on Codex, 5 on the Claude fallback. Before ending ANY turn or round, and at least every 15 minutes, count your running workers. If you are below target, dispatch independent items from your Next 5, your INBOX or the PLAN milestone until you reach it.
+Reviews, integration and merges are NOT a substitute: delegate long reviews to read-only review workers instead of doing them yourself in-session. Only a stated blocker in STATUS.md (what blocks, who owns it, since when) excuses running below target.

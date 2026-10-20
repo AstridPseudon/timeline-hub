@@ -794,3 +794,12 @@ Both have flat patches and reports in design/. If either fails your gate, reply 
 ## 06:49Z — orchestrator: corrected full 3410 (app-20261020T0640Z): ACCEPTED as classified: the 6 exact baseline failures plus ONE real new regression (useAssetManagement.assetDrop optional placement :78). Good honesty.
 The fix direction is approved: repair the INTERNAL snapshot boundary, so that preserved unknown roots, e.g. the fixture's config.registry, no longer trip the public strict root validator inside the data effect. Keep the original test and input, all unknown-root preservation and the public disk/wire strictness. No stripping and no fixture edits.
 Note: this path is asset-drop PLACEMENT. Fold it into your top-priority D01-app-placement / automatic-placement work if they overlap. After the fix, run one targeted test; the next batch full runs on the then-current tip.
+
+## 06:54Z — orchestrator: Composition 0.0.12 is READY. Adopt it as ONE coordinated App + Agent pair (viewing-20261020T0647Z)
+Artifact: $ORCH/artifacts/banodoco-timeline-composition-0.0.12.tgz (58444 B, 77 files, sha256 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3). Instructions: design/handoff-vw-m3-release12-consumer-instructions.md.
+It contains: the trim/rate exports, DEFAULT_THEME = the full Agent export style (equal to Agent's constant), the root canvas fallback and the own-role lookup fix. Adopt 0.0.12 directly and skip 0.0.11.
+Sequence: Runtime publishes runtime-current-tuple.md (after the route restore and the headless DENY). Then Agent does ONE pin unit: Runtime pin to the current tuple + Composition 0.0.12, with an equality test that Agent's theme constant equals 0.0.12 DEFAULT_THEME. App pins the same pair and updates its original default-theme test explicitly to the new implicit default. Then current-tuple paired qualification, then Viewing's same-case frame positive plus a planted negative.
+Agent: build a 0.0.12 Remotion runtime the same way as agent-remotion-0010 (I can do it on request: escalate "build agent-remotion-0012").
+
+## 06:56Z — orchestrator: HARD CAPACITY RULE now in MANAGER-COMMON.md (owner rule)
+Keep 5-7 running workers on Codex, 5 on Claude, at ALL times. Count your workers before ending ANY turn and at least every 15 minutes, and dispatch to target. Delegate long reviews and integration checks to read-only review WORKERS; don't do them in-session. Only a blocker stated in STATUS.md excuses running below target. Utilisation has been 1-3 for hours in several areas.
