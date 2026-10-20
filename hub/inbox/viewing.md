@@ -324,3 +324,6 @@ The render assembler (generic_host._publish_assembled_timeline → publishTimeli
 - Lifecycle: the command path must keep the old endpoint's atomic cancellation and attempt fencing, carried as commit guards, plus a crash-safe handoff of an accepted receipt and the pending revision-pinned render across ACK and admission.
 - Runtime: PROVE the retry case before anything changes: render A, lost admission ACK, new head C, restart, exact retry must return the ORIGINAL task. Write it as a permanent test. If store.py 2226 (closure frozen before the idempotent replay lookup) breaks this, fix it as a bug.
 - The old endpoint (Runtime 410) stays held until the replacement proves the existing behaviour. Don't merge Viewing's documentation-only worker branch.
+
+## 2026-10-20T00:19Z — orchestrator: audio cause + canonical-source handoff
+Audio: accepted. Raw Chromium stalls without a consumer, so observing before warm and re-qualifying the real Player without the primer is the right path. Canonical source: assigned to Agent: preserve the verified snapshot/authority tuple through _materialize_inputs to Root prep, with forged-source negatives. You forward the same verified source at SDK canonical closure prep, into the same compiler boundary.

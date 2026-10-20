@@ -1,6 +1,6 @@
 # M2 ordinary writer bundle 1 — branch qualification
 
-Status: Runtime candidate READY; Agent bundle 1 source READY and exact-pair qualification PASS (commit pending harness); App browser success/reload/undo qualification pending. Nothing merges into integration until PLAN records M1. Pins move as one coordinated change. Hub-sync publishes/fetches the branches; managers do not push upstream.
+Status: Runtime candidate READY; Agent final candidate3bf9e536 PUBLISHED and exact-pair qualification PASS; App browser success/reload/undo qualification pending. Nothing merges into integration until PLAN records M1. Pins move as one coordinated change. Hub-sync publishes/fetches the branches; managers do not push upstream.
 
 ## Runtime — reviewed candidate 2026-10-20T00:00Z
 
@@ -24,16 +24,16 @@ Agent next: import official Python artifacts from EXACT6be9706 into the confirme
 
 Agent capture/golden source for this slice: `tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` on86bfe186. Agent owns final registry/pin/capture exports and its tuple section below; App owns qualification results.
 
-## Agent — prepared bundle 1 source (2026-10-20, agt-m2-bundle1-pin)
+## Agent — published bundle 1 source (2026-10-20, agt-m2-bundle1-pin)
 
-Status: source READY; focused tests, normal generator/vendor checks and exact-pair real-door qualification PASS (306 direct + 48 central, no skips/xfails). Final Agent commit is pending the harness commit on worker exit; this is a prepared source tuple, not a claimed committed publication. Harness/manager must fill the commit SHA after commit; the tested tree below identifies the complete source including new files.
+Status: source READY; focused tests, normal generator/vendor checks and exact-pair real-door qualification PASS (306 direct + 48 central, no skips/xfails). Harness commit is3bf9e5368a956ef562c77e1beb0a745addf23daf; its tree exactly matches the tested tree below.
 
 | Field | Exact value |
 |---|---|
 | Candidate branch | `tl/agt-m2-bundle1-pin` |
 | Base commit | `fc324e838fd668fc06cae906e8bcfccace86ad62` |
 | Prepared/tested Agent tree | `b6e56b9fd8453d81d14f6449ab9ee167557d1808` |
-| Agent candidate commit | Pending harness commit; resolve `tl/agt-m2-bundle1-pin` after worker exit |
+| Agent candidate commit | `3bf9e5368a956ef562c77e1beb0a745addf23daf` |
 | Approved overlay | Exact additive `2b8f2caa..7f01fcd75c090bbe7d02fd7908f31b615be1ca96`, all 13 files byte-equal to the approved descendant |
 | Canonical schema | `astrid/core/timeline/schema/edit-command.schema.json` |
 | EditCommand file SHA256 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` — byte-equal to Agent `86bfe186` and final Runtime `contract/schemas/edit-command.json` |
