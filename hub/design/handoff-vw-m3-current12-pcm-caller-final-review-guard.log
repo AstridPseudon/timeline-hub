@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current12-pcm-caller-final-review-guard.py", line 47, in <module>
+    assert old[name] == new[name], name
+           ~~~^^^^^^
+KeyError: '_serialize_timeline'

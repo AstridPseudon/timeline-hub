@@ -1,0 +1,24 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___________ test_legacy_service_keeps_covered_pre_tail_output[0-30] ____________
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:329: in test_legacy_service_keeps_covered_pre_tail_output
+    tree = _root_probe(tmp_path, _props(selected))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/baseline/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+__________ test_legacy_service_keeps_covered_pre_tail_output[150-165] __________
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:329: in test_legacy_service_keeps_covered_pre_tail_output
+    tree = _root_probe(tmp_path, _props(selected))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:179: in _root_probe
+    extract = subprocess.run(
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['tar', '-xOf', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/baseline/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz', 'package/dist/chunk-SE4TPVLW.js']' returned non-zero exit status 2.
+=========================== short test summary info ============================
+FAILED ../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py::test_legacy_service_keeps_covered_pre_tail_output[0-30]
+FAILED ../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py::test_legacy_service_keeps_covered_pre_tail_output[150-165]
+2 failed, 20 deselected in 4.72s

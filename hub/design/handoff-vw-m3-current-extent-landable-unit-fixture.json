@@ -1,0 +1,10 @@
+{
+  "fixture_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-native-extent-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz",
+  "fixture_sha256": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+  "current_archive": "/home/user/work/wt/vw-m3-current-extent-landable-unit/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+  "current_archive_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "identical_duration_member": "package/dist/chunk-SE4TPVLW.js",
+  "duration_sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b",
+  "temporary_fixture_leaf": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-native-extent-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz",
+  "root_typescript_leaf": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-unit/root-modules/node_modules/typescript"
+}

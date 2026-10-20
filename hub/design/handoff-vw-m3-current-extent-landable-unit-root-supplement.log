@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: both Root callbacks keep 300/600 original frames at rational FPS for empty and sparse layers
+ok 1 - both Root callbacks keep 300/600 original frames at rational FPS for empty and sparse layers
+  ---
+  duration_ms: 144.411109
+  ...
+# Subtest: both Root callbacks refuse boolean extent overrides
+ok 2 - both Root callbacks refuse boolean extent overrides
+  ---
+  duration_ms: 64.637497
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 231.735965

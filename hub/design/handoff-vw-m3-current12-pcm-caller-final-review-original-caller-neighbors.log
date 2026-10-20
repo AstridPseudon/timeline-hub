@@ -1,0 +1,49 @@
+............................................................FF........FF [ 96%]
+.FF                                                                      [100%]
+=================================== FAILURES ===================================
+____ test_service_layered_plan_native_renderer_isolates_and_adjusts_once[0] ____
+tests/packs/rendering/test_live_scene_composition.py:66: in test_service_layered_plan_native_renderer_isolates_and_adjusts_once
+    assert (clip['at'], clip['from'], clip['to'], clip['speed'], clip['hold']) == (0, 63, 65, 2, 2)
+E   assert (2, 55, 75, 2, 20) == (0, 63, 65, 2, 2)
+E     
+E     At index 0 diff: 2 != 0
+E     Use -v to get more diff
+____ test_service_layered_plan_native_renderer_isolates_and_adjusts_once[1] ____
+tests/packs/rendering/test_live_scene_composition.py:66: in test_service_layered_plan_native_renderer_isolates_and_adjusts_once
+    assert (clip['at'], clip['from'], clip['to'], clip['speed'], clip['hold']) == (0, 63, 65, 2, 2)
+E   assert (2, 55, 75, 2, 20) == (0, 63, 65, 2, 2)
+E     
+E     At index 0 diff: 2 != 0
+E     Use -v to get more diff
+___ test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0] ___
+tests/packs/rendering/test_live_scene_composition.py:181: in test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-83/test_native_window_layer_is_ma0/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+___ test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1] ___
+tests/packs/rendering/test_live_scene_composition.py:181: in test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-83/test_native_window_layer_is_ma1/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+_______ test_layer_materialization_retains_null_window_support_rejection _______
+tests/packs/rendering/test_live_scene_composition.py:212: in test_layer_materialization_retains_null_window_support_rejection
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-83/test_layer_materialization_ret0/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+____ test_locked_release_is_built_and_requires_no_separate_schema_or_theme _____
+tests/packs/rendering/test_composition_package.py:42: in test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+    assert package["version"] == "0.0.10"
+E   AssertionError: assert '0.0.12' == '0.0.10'
+E     
+E     - 0.0.10
+E     ?      ^
+E     + 0.0.12
+E     ?      ^
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[1]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_layer_materialization_retains_null_window_support_rejection
+FAILED tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+6 failed, 69 passed, 1 deselected in 38.61s

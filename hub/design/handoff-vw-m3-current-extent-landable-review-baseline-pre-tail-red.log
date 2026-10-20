@@ -1,0 +1,19 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive _____
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:274: in test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive
+    native = remotion._native_window_argument(
+../../../design/handoff-vw-m3-current-extent-landable-review-pre-tail-red-run.py:920: in _native_window_argument
+    raise ValueError("composition duration conflicts with an existing render clock")
+E   ValueError: composition duration conflicts with an existing render clock
+_______ test_fully_covered_pre_tail_root_callback_accepts_native_extent ________
+../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py:293: in test_fully_covered_pre_tail_root_callback_accepts_native_extent
+    assert tree.get("error") is None, tree
+E   AssertionError: {'error': 'composition duration conflicts with an existing render clock'}
+E   assert 'composition duration conflicts with an existing render clock' is None
+E    +  where 'composition duration conflicts with an existing render clock' = <built-in method get of dict object at 0x7f6e938e6a80>('error')
+E    +    where <built-in method get of dict object at 0x7f6e938e6a80> = {'error': 'composition duration conflicts with an existing render clock'}.get
+=========================== short test summary info ============================
+FAILED ../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py::test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive
+FAILED ../../../design/handoff-vw-m3-current-extent-landable-review-tail-tests.py::test_fully_covered_pre_tail_root_callback_accepts_native_extent
+2 failed, 20 deselected in 3.76s
