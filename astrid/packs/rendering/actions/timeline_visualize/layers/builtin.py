@@ -381,7 +381,8 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
             or not 1 <= raw_mouth["w"] <= 40):
         return None
     public_scene = ctx.shared.get("public_scene")
-    if not isinstance(public_scene, Mapping) or any(frame not in public_scene for frame in frames):
+    if (ctx.shared.get("public_scene_evidence_mode") not in {"fresh_capture", "cache"}
+            or not isinstance(public_scene, Mapping) or any(frame not in public_scene for frame in frames)):
         return None
     facts = [public_scene[frame] for frame in frames]
     if any(not isinstance(fact, Mapping) for fact in facts):

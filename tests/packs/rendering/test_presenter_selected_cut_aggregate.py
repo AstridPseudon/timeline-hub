@@ -95,7 +95,7 @@ def public_zero(presenter_query, retained):
     return answer["zero"]
 
 
-def _public_provider(case, rows, monkeypatch):
+def _public_provider(case, rows, monkeypatch, *, mode="fresh"):
     props = deepcopy(case["props"])
     rows = deepcopy(rows)
     by_frame = {row["frame"]: row for row in rows}
@@ -108,6 +108,10 @@ def _public_provider(case, rows, monkeypatch):
 
     class Provider:
         source_identity = "fresh-presenter"
+        fresh_scene_frames = (set(case["frames"]) if mode == "fresh"
+                              else {case["frames"][0]} if mode == "mixed" else set())
+        _cached_scenes = ({frame: capture for frame in case["frames"]} if mode == "cache"
+                          else {frame: capture for frame in case["frames"][1:]} if mode == "mixed" else {})
 
         def scene_for_frame(self, frame):
             return capture if frame in by_frame else None
@@ -126,14 +130,30 @@ def context(case, order=(0, 3, 4, 5), frame_provider=None):
                                frame_size=tuple(case["size"]), frame_provider=frame_provider)
 
 
-def test_fresh_public_mouth_facts_drive_existing_consumer(public_capture_rows, retained, monkeypatch):
-    provider = _public_provider(retained, public_capture_rows, monkeypatch)
+@pytest.mark.parametrize("mode", ["fresh", "cache"])
+def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_rows, retained, monkeypatch, mode):
+    provider = _public_provider(retained, public_capture_rows, monkeypatch, mode=mode)
     ctx = context(retained, frame_provider=provider)
     presenter = ctx.elements[0]
+    assert ctx.shared["public_scene_evidence_mode"] == ("fresh_capture" if mode == "fresh" else "cache")
     assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5])["rect"] == (894.0, 606.0, 138.0, 48.0)
     monkeypatch.setattr(model, "mouth_box", lambda *_args: None)
     result = builtin.render_lipsync(ctx)
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+
+
+def test_mixed_public_mouth_facts_keep_private_fallback(public_capture_rows, retained, monkeypatch):
+    provider = _public_provider(retained, public_capture_rows, monkeypatch, mode="mixed")
+    mixed = context(retained, frame_provider=provider)
+    private = context(retained)
+    presenter = mixed.elements[0]
+    assert mixed.shared["public_scene"] == {}
+    assert mixed.shared["public_scene_evidence_mode"] is None
+    assert builtin._public_mouth_facts(mixed, presenter, [0, 3, 4, 5]) is None
+    mixed_result = builtin.render_lipsync(mixed)
+    private_result = builtin.render_lipsync(private)
+    assert mixed_result.findings == private_result.findings
+    assert mixed_result.image.tobytes() == private_result.image.tobytes()
 
 
 @pytest.mark.parametrize("raw_mouth", [None, {"x": 151, "y": 104}])
