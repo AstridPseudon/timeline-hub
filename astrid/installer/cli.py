@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .backend import Backend
 from .core import (
+    BackupSpaceError,
     Installer,
     absolute,
     current,
@@ -111,10 +112,12 @@ def main(argv: list[str] | None = None) -> int:
             finally:
                 platform.unlock_file(lock.fileno())
         return 0
-    except (Exception, KeyboardInterrupt):
+    except (Exception, KeyboardInterrupt) as failure:
         with contextlib.suppress(OSError):
             with log.open("a", encoding="utf-8") as stream:
                 traceback.print_exc(file=stream)
         print(FAILURE_MESSAGE)
+        if isinstance(failure, BackupSpaceError):
+            print(str(failure))
         print(f"Details: {log}")
         return 1

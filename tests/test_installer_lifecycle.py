@@ -273,7 +273,7 @@ def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypat
     monkeypatch.setattr(cli, "Backend", no_space)
 
     assert cli.main(["--root", str(tmp_path / "program")]) == 1
-    assert capsys.readouterr().out.splitlines() == [FAILURE_MESSAGE, f"Details: {tmp_path / 'logs/install.log'}"]
+    assert capsys.readouterr().out.splitlines() == [FAILURE_MESSAGE, message, f"Details: {tmp_path / 'logs/install.log'}"]
     assert message in (tmp_path / "logs/install.log").read_text()
 
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 HELP_URL = "https://github.com/banodoco/astrid-agent/blob/main/docs/setup/troubleshooting.md#asking-for-help"
 HELP_MESSAGE = f"For help, attach the doctor bundle using the instructions at {HELP_URL}"
-FAILURE_MESSAGE = "Astrid couldn't finish. Nothing in your workspace was changed or removed."
+FAILURE_MESSAGE = "Astrid couldn't finish. Your work is kept."
 
 
 def default_doctor_bundle() -> Path:
