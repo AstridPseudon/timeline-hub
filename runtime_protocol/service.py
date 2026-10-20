@@ -7170,15 +7170,111 @@ class RuntimeService:
 
     @_verified_mutation
     def publish_timeline_render(self, attempt_id, body, *, idempotency_key=None, identity=None):
-        from .errors import RetiredRouteError
+        def refuse():
+            raise RetiredRouteError(
+                "timeline render publication is retired; commit commands before admitting revision-pinned render tasks",
+                details={
+                    "reason": "command_required",
+                    "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit",
+                },
+            )
 
-        raise RetiredRouteError(
-            "timeline render publication is retired; commit commands before admitting revision-pinned render tasks",
-            details={
-                "reason": "command_required",
-                "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit",
-            },
-        )
+        # A missing attempt cannot identify a checkpoint. Keep the public
+        # retirement response for that case, without parsing or looking up
+        # any other request state.
+        with self.store._mutex:
+            attempt = self.store.conn.execute("SELECT * FROM attempts WHERE id=?", (attempt_id,)).fetchone()
+        if attempt is None:
+            refuse()
+
+        require_idempotency_key(idempotency_key)
+        body = dict(_wire_object(
+            body,
+            required=("lease_id", "fence", "runtime_epoch", "timeline_id", "expected_version", "config", "registry", "render"),
+            allowed=("lease_id", "fence", "runtime_epoch", "timeline_id", "expected_version", "config", "registry", "render", "slug", "name"),
+        ))
+        _wire_string(body, "lease_id")
+        _wire_integer(body, "fence")
+        _wire_integer(body, "runtime_epoch", positive=True)
+        timeline_id = _wire_string(body, "timeline_id")
+        expected_version = self._expected_version(body)
+        config, registry, render = body["config"], body["registry"], body["render"]
+        if not isinstance(config, dict) or not isinstance(registry, dict) or not isinstance(render, dict):
+            raise ValidationError("config, registry, and render must be objects")
+        allowed_render = {"capability_id", "capability_digest", "schema_version", "spec", "storage_estimate", "settlement_effect"}
+        unknown_render = sorted(set(render) - allowed_render)
+        if unknown_render:
+            raise ValidationError("render contains unsupported fields", details={"fields": unknown_render})
+        if render.get("capability_id") != "rendering.render":
+            raise ValidationError("publication render capability must be rendering.render")
+        _wire_string(render, "capability_digest")
+        if not isinstance(render.get("spec"), dict):
+            raise ValidationError("render.spec must be an object")
+        frozen = {
+            "timeline_id": timeline_id,
+            "expected_version": expected_version,
+            "config": config,
+            "registry": registry,
+            "render": render,
+            "slug": body.get("slug"),
+            "name": body.get("name"),
+        }
+        request_hash = hashlib.sha256(canonical_json(frozen).encode()).hexdigest()
+
+        with self.store._mutex:
+            self._assert_attempt_identity(attempt, identity)
+            task = self.store.conn.execute("SELECT * FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone()
+            if task is None:
+                refuse()
+            project_row = self.store.conn.execute(
+                "SELECT project_id FROM runs WHERE id=?", (task["run_id"],)
+            ).fetchone()
+            project_id = project_row["project_id"] if project_row else None
+            if not project_id or not self.store.conn.execute(
+                "SELECT 1 FROM projects WHERE id=?", (project_id,)
+            ).fetchone():
+                refuse()
+
+            checkpoint = self.store.timeline_render_publication(str(task["id"]))
+            if checkpoint is not None:
+                if checkpoint["request_hash"] != request_hash:
+                    raise ConflictError("authoring task publication payload changed")
+                prepared = checkpoint.get("prepared")
+                checkpoint_timeline_id = checkpoint.get("timeline_id")
+                if checkpoint_timeline_id is None and isinstance(prepared, dict):
+                    checkpoint_timeline_id = prepared.get("timeline_id")
+                if checkpoint_timeline_id != timeline_id:
+                    raise ConflictError(
+                        "timeline does not match the published checkpoint",
+                        details={"reason": "publication_target_mismatch"},
+                    )
+                if checkpoint["state"] == "published" and checkpoint.get("result") is not None:
+                    # This is deliberately the only legacy success path. It
+                    # returns durable prior output and performs no live-target,
+                    # document, CAS, task, or history work.
+                    return checkpoint["result"]
+                # A prepared checkpoint cannot safely be completed by the
+                # retired writer. Leave it durable for the native replacement
+                # to account for; do not turn it into a compatibility write.
+                refuse()
+
+            current_epoch = self.store._current_runtime_epoch()
+            self._validate_attempt_lease(attempt, body, current_epoch)
+            dependency_count = self.store.conn.execute(
+                "SELECT COUNT(*) FROM task_dependencies WHERE continuation_task_id=?", (task["id"],)
+            ).fetchone()[0]
+            admitted = self.store.conn.execute(
+                "SELECT 1 FROM continuation_admissions WHERE continuation_task_id=?", (task["id"],)
+            ).fetchone()
+            if dependency_count != 2 or admitted is None:
+                raise ValidationError("timeline publication requires an admitted two-child continuation")
+            timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+            if not timeline:
+                raise NotFoundError("timeline not found")
+            if timeline["project_id"] != project_id:
+                raise ConflictError("timeline is outside the authoring task project")
+            self._assert_legacy_render_publication_target(task, project_id, timeline_id)
+            refuse()
 
     def _is_authorized_generic_output(
         self, digest, size, media_type, *, name, output_port, filename,
