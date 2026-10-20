@@ -2056,6 +2056,8 @@ function runtimeGraphToContract(
     const audio = canonicalAudio(shotPayload);
     return {
       ...shotPayload,
+      // Display normalization must not become authored successor payload data.
+      rawJson: shotPayload,
       shot_id: requiredString(shot.shot_id, 'shot revision.shot_id'),
       revision_id: requiredString(shot.revision_id, 'shot revision.revision_id'),
       document_role: 'shot_revision',
@@ -2203,6 +2205,7 @@ function runtimeGraphToContractFromCanonicalDocument(
 }
 
 function runtimePayloadWithoutCanonicalEnvelope(revision: RuntimeRecord): RuntimeRecord {
+  if (revision.rawJson !== undefined) return requiredRecord(revision.rawJson, 'shot revision.rawJson');
   const { shot_id: _shotId, revision_id: _revisionId, document_role: _role, content_digest: _digest, internal_timeline_revision: _internal, publish: _publish, ...payload } = revision;
   return payload;
 }
