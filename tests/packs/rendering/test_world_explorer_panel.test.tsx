@@ -107,6 +107,11 @@ async function sampleLiveScene() {
   return { liveScene: ingested.liveScene, duration: parsed.manifest.duration };
 }
 const SAMPLE = await sampleLiveScene();
+/** The sample's length, and how the panel prints it: m:ss, and m:ss.t for the travel readout. */
+const SAMPLE_END = SAMPLE.duration;
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const tenths = (s: number) => `${mmss(Math.floor(s))}.${Math.round((s % 1) * 10)}`;
+const SCENE_USE = new RegExp(`^Scene 1 ${mmss(SAMPLE_END)}\\s*· 1 use$`);
 
 /** What a scene declares when it supports free roam: a start view the viewer can move from. */
 const EXPLORE = { start: { position: [0, 1, 5] as [number, number, number], target: [0, 1, 0] as [number, number, number] } };
@@ -282,8 +287,8 @@ describe('World Explorer panel', () => {
       expect.objectContaining({
         name: 'Lantern Valley',
         duration: SAMPLE.duration,
-        events: [{ name: 'Dawn', start: 0, end: 3 }, { name: 'Lanterns rise', start: 3, end: 5 }, { name: 'Lantern flare', start: 5.5 }],
-        cameras: [{ name: 'Valley walk', start: 0, end: 3 }, { name: 'Lantern close-up', start: 3, end: 6, worldStart: 3 }],
+        events: SAMPLE_WORLD.events,
+        cameras: SAMPLE_WORLD.cameras,
       }),
     ]);
     expect(harness.toast).toHaveBeenCalledWith('Added Lantern Valley to the library', 'info');
@@ -303,15 +308,15 @@ describe('World Explorer panel', () => {
     const worlds = view.getByRole('group', { name: 'Worlds' });
     const inVideo = within(worlds).getByRole('list', { name: 'In this video' });
     // The accessible name drops the space before the separator, so the match allows any spacing there.
-    expect(within(inVideo).getByRole('button', { name: /^Scene 1 0:06\s*· 1 use$/ })).toBeTruthy();
+    expect(within(inVideo).getByRole('button', { name: SCENE_USE })).toBeTruthy();
     expect(within(worlds).queryByRole('list', { name: 'Library' })).toBeNull();
     expect(within(worlds).queryByRole('button', { name: /^Lantern/ })).toBeNull();
 
-    fireEvent.click(within(inVideo).getByRole('button', { name: /^Scene 1 0:06\s*· 1 use$/ }));
+    fireEvent.click(within(inVideo).getByRole('button', { name: SCENE_USE }));
     expect(view.queryByRole('group', { name: 'Worlds' })).toBeNull();
 
     fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
-    expect(view.getByText(/Stretch 0:00\.0 – 0:06\.0 · 6\.0 s at 1×/)).toBeTruthy();
+    expect(view.getByText(new RegExp(`Stretch ${tenths(0)} – ${tenths(SAMPLE_END)} · ${SAMPLE_END}\\.0 s at 1×`))).toBeTruthy();
     expect(view.getByTitle('On V1 at 0:02')).toBeTruthy();
   });
 
@@ -346,16 +351,16 @@ describe('World Explorer panel', () => {
     fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     const travel = view.getByRole('group', { name: 'Camera travel' });
 
-    expect(view.getByText('0:00.0 / 0:06')).toBeTruthy();
+    expect(view.getByText(`${tenths(0)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
-    expect(view.getByText('0:01.0 / 0:06')).toBeTruthy();
+    expect(view.getByText(`${tenths(1)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowRight', shiftKey: true });
-    expect(view.getByText('0:06.0 / 0:06')).toBeTruthy();
+    expect(view.getByText(`${tenths(6)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowLeft', shiftKey: true });
-    expect(view.getByText('0:01.0 / 0:06')).toBeTruthy();
+    expect(view.getByText(`${tenths(1)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
 
     fireEvent.keyDown(travel, { key: 'i' });
-    expect(view.getByText(/Stretch 0:01\.0 – 0:06\.0 · 5\.0 s at 1×/)).toBeTruthy();
+    expect(view.getByText(new RegExp(`Stretch ${tenths(1)} – ${tenths(SAMPLE_END)} · ${SAMPLE_END - 1}\\.0 s at 1×`))).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'o' });
@@ -372,7 +377,7 @@ describe('World Explorer panel', () => {
     expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
     expect(view.queryByRole('button', { name: 'Pause' })).toBeNull();
     fireEvent.keyDown(view.getByRole('combobox', { name: 'Speed' }), { key: 'ArrowRight' });
-    expect(view.getByText('0:03.0 / 0:06')).toBeTruthy();
+    expect(view.getByText(`${tenths(3)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
   });
 
   it('moves the free camera with keys on the World viewer in Explore, and Space pauses the world', async () => {
@@ -456,8 +461,8 @@ describe('World Explorer panel', () => {
       {
         op: 'clip.update',
         target: 'world-1',
-        // The stretch opens on the sample's first camera (Valley walk, 0-3), not the whole world.
-        payload: { mode: 'merge', from: 0, to: 3, speed: 1, app: { liveScene: expect.any(Object) } },
+        // The stretch opens on the sample's first camera (Valley flight, 0-25), not the whole world.
+        payload: { mode: 'merge', from: 0, to: SAMPLE_WORLD.cameras[0].end, speed: 1, app: { liveScene: expect.any(Object) } },
         order: 1,
       },
     ]);
@@ -574,7 +579,7 @@ describe('World Explorer panel', () => {
       expect.objectContaining({ events: [{ name: 'Bridge', start: 1 }], cameras: SAMPLE_WORLD.cameras }),
     ]);
     expect(view.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
-    expect(view.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
+    expect(view.queryByRole('button', { name: `${SAMPLE_WORLD.events[0].name} 0:00` })).toBeNull();
 
     act(() => scene.onReady!({ events: [{ name: 'Bridge', start: 1 }], cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
     expect(set).toHaveBeenCalledTimes(1);
@@ -583,7 +588,7 @@ describe('World Explorer panel', () => {
     // The library's last copy stands in until the scene reports again, and the default world is the one last viewed.
     const again = mount(harness);
     expect(again.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
-    expect(again.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
+    expect(again.queryByRole('button', { name: `${SAMPLE_WORLD.events[0].name} 0:00` })).toBeNull();
   });
 
   /** Two library worlds: the sample (real package) and a spare entry that has no package behind it. */

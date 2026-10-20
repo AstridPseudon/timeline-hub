@@ -123,12 +123,20 @@
     "astrid/packs/rendering/shared/managed-media-policy.ts": "sha256:712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
     "astrid/packs/rendering/shared/managed-media.tsx": "sha256:7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
     "astrid/packs/rendering/shared/readiness-image.tsx": "sha256:5fcf2539131fd75dfbedffb71b075bf165c840404a1036451dcf874ea486832f",
-    "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": "sha256:467c92e06e4c9171d3fa25bf738c89f8fbe90d06aa4474275eb1ffbb28c4492d",
-    "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": "sha256:2c49696ccde8e7e65917c5a5e84a8d8201d24e286bf7311e841bc73fc8b3e1a8",
+    "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": "sha256:cf1bf8eda1b927a6570dfa1b3825b75f8ab17c127753636c1a7989da354dcbe5",
+    "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": "sha256:ffdbd10533b0ec3c2c686d834825b859280274ef387f5c2938c074e5623ef6bf",
     "astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts": "sha256:012c8d739dfddf33742e0479a19a59d0a1f1b7e618e1e3948a049b962080a022",
-    "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": "sha256:022b7b12021ba8d8976066ecd58d704fbef76cc4a33bbf584d8b975cd8217c0d",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": "sha256:d735f75379214541b3a92e6eb8b5d1b652151fc6a28ecc95f1ab6f2ad36fb59a",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "sha256:7b19bc50213a86e957d21c02e316c4f4a71c4f272ea38bc0087944f72e4a9310",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": "sha256:a510dd82c09e5ec85cdc610c21c900e9e7ca2dbf5fc11b44cac9ebca5266aa9f",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": "sha256:42e3c8ff55b6fdca837f3def93f39877c8bb1cbec2461f17eb0f6f79ec02d9f4",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/model.ts": "sha256:3e6fef859b7496db55eccb175f41717b63c3207b1477510c12ae0f3d4b1a9f6c",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/rows.ts": "sha256:5c1e036a1c0a67484a8c87df366d3d7edcc9430467448248f2f784cdb3656083",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/ui.ts": "sha256:8b034ca684857ffaf8cf437a205de6f0cab33c7762e737494110bd19e10141ce",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample.ts": "sha256:889e0ffe9413419f6c8a45267fe9bb3dd1f18259ec7a0ec2c903f56926912b73",
+    "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": "sha256:8d0720df352ae4fb91aaef69e1bcc4bad02b3a3413dff3d213acdcce9518cd96",
     "astrid/packs/rendering/ui/threejs-live-editor/identity.ts": "sha256:9387859fd696c91d8285c7472e0637fa7c8c8c7eedd678a97dbc6c70798a8b89",
-    "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
+    "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": "sha256:3f21cf740fe7910a7c9be1439b01758d964214a12cf5cdc146196dc7a159a9aa",
     "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
     "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
@@ -157,5 +165,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:3f7bdc2333249b368d3de9eb5e8875e767807953d99a7e529e74ce0869425480"
+  "version": "sha256:952596a5c16117a187e47b59b606ffc6fd50448879051173e8646531cd33880f"
 }
