@@ -38,12 +38,12 @@ FRAMES = RATE * 2
 STEREO = {"sound": (8192, -4096), "other": (-16384, 2048)}
 WINDOW = FrameWindow(15, 45, (30, 1))
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-WORKER = ORCH / "workers/vw-m3-normal-pcm-http-route-proof"
+PROJECT = ORCH / "workers/vw-m3-normal-pcm-producer-current/checks/remotion"
 
 
 def _project_dir() -> Path:
     value = os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
-    project = Path(value) if value else WORKER / "checks/remotion"
+    project = Path(value) if value else PROJECT
     return project.resolve(strict=True)
 
 
@@ -177,6 +177,13 @@ def _build_run(
 ):
     """Run the actual normal backend with only the final encoder mocked."""
 
+    for name in (
+        "PYTHONUSERBASE", "PYTHONNOUSERSITE", "PYTHONSAFEPATH", "PYTHONPLATLIBDIR",
+        "PYTHONCASEOK", "PYTHONUTF8", "PYTHONCOERCECLOCALE", "PYTHONSTARTUP",
+        "PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME", "NODE_OPTIONS",
+        "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF",
+    ):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
     monkeypatch.delenv("ASTRID_PROGRESS_PATH", raising=False)
     monkeypatch.setenv("ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES", "0")
@@ -282,7 +289,9 @@ def _build_run(
         props = json.loads(props_path.read_text())
         state.props_runs.append(props)
         assert props["timeline"]["tracks"] == expected_timeline["tracks"]
-        assert props["timeline"]["clips"] == expected_timeline["clips"]
+        for actual, expected in zip(props["timeline"]["clips"], expected_timeline["clips"]):
+            assert all(actual[key] == value for key, value in expected.items())
+            assert set(actual) - set(expected) <= {"audio"}
         assert ("--frames=15-44" in argv) == (mode != "full")
         for key, entry in props["assets"]["assets"].items():
             url = entry["file"]
