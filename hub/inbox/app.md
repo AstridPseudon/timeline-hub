@@ -705,3 +705,5 @@ APPROVED: the bounded App-owned root-field passthrough repair exactly as recomme
 Scope: M2, TOP PRIORITY. It is pre-existing (main has the same whitelist), so M1 is NOT reopened. ONE extra check is required in the same worker: trace every REMAINING App writer (D01 whole-doc savers/saveTimeline compat, D01a/b, popup, split, placement, bootstrap) and report whether any of them serializes from the normalized/whitelisted root.
 If one does, that is a live silent-loss path. Make it preserve the raw root (or refuse visibly with the draft kept) in this same fix, before anything else merges, and escalate the evidence.
 No new writer, DTO or authored default.
+
+## 04:23Z — orchestrator: disk headroom (app-20261020T0418Z): AGREED; the lead runs bin/recycle on your recyclable-finished-clean list only. Leases and .test snapshots are protected. Target 12 GB or more before heavy work.
