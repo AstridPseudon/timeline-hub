@@ -641,3 +641,23 @@ APPROVED, the same pattern as the 02:13 MediaReads.selected decision.
 - Runtime: expose the EXISTING in-process retained document read (config_source/document_object, keyed by the exact DocumentPin {document_id, version, content_digest}) through the normal public read and the generated client. Use the same authorized-closure reachability, retained-binding, custody and race checks, so it survives a live V2, removal, GC or restart. No second object endpoint and no new wire fields. Normal artifacts plus a paired freeze. The required test is the 4 to 8 under V1 max 10 case: after V2 max 20, removal and restart, it still uses V1 and refuses 16.
 - Agent: review the read against your native selected-PARAM capture and consume it in the paired freeze.
 - App: no hydrator and no caller-hashed declaration. Until the read ships, the explicit refusal of changed selected-pack PARAM stays, and that writer is NOT retired. After the read ships: adapter, captures, native goldens, then browser reload, retry and inverse, then cut the writer with a ledger row.
+
+## 03:46Z — orchestrator DECISION: popup projection consistency (app-20261020T0345Z); M2/M3, not M1
+This falls under the ratified ONE compiler. Agent's compiler defines the render-facing vector for this exact closure: occurrences A 8 s and B 10 s on a shared lane, with clampToOccurrenceDuration in question. The reference is MAIN's current visible result for the same closure, frames or the public scene; Viewing confirms it.
+Then App uses that ONE compiled result for BOTH the local candidate and the accepted projection. Remove the per-call clamp option divergence; do not flip the global default just to pass a unit test. The raw AuthoringBundle and editor source windows stay as they are.
+Agent adds this closure to the shared golden set (alongside design/audio-compile-contract.md, or a sibling design/visual-compile-contract.md). Popup UI conversion and writer retirement stay held until App consumes it.
+
+## 03:48Z — orchestrator: from the 03:50Z audit (CONCERNS; audits/20261020T0350Z.md)
+A. After the M1 record, merge the held M2/M3 work in SMALL GATED UNITS: one branch per merge, each with its targeted + paired tests on the current tuple, never a big batch. The frozen Bundle1/Bundle2 pins stay untouched.
+B. Deletions are the biggest debt: only 5 ledger rows are DELETED. D05 (-783), D06 (-1698), D09 (-452) and App's ~-20k sit on held branches. Put each area's qualified deletion branches FIRST in its post-M1 merge order.
+C. Run TS remapItems against Agent's shared opaque-remap fixture set once it is published, so the two cannot drift.
+
+## 03:51Z — orchestrator: *** M1 RECORDED *** (PLAN Gate record). M2 MERGES ARE OPEN.
+Agent's final full 1020031037-28578 shows exactly the 109-node supported-env baseline (0 new, 0 missing). Runtime, App and Viewing M1 were already accepted.
+Merge rules from now on:
+(1) SMALL GATED UNITS: one branch per merge, with its targeted + paired tests on the CURRENT integration tuple, and each merge re-checked after the previous one lands.
+(2) Order: qualified DELETION branches first (D05, D06, D09, App's big writer removals once their replacements are qualified); then M2 writer bundle #1 (track label + Bundle1 release with the initial projection 70f / public10 root batch, as decided at 02:07); then bundle #2 (popup); then the rest.
+(3) The frozen Bundle1/Bundle2 pins are never mutated; a new pin means a new artifact.
+(4) Every deletion updates its ledger row to DELETED, with the replacing test named.
+(5) Composition 0.0.10/0.0.11 adoption happens as ONE coordinated App + Agent pin change.
+M2 exit = all App writers on EditCommands (PLAN M2) plus their deletion-ledger rows. Keep 5 workers (Claude areas) or 5-7 (Codex areas).

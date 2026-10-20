@@ -20,10 +20,16 @@ printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nw
 [ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
 touch $D/running
-( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree. When the WHOLE task is complete, create the empty file $D/DONE; if genuinely blocked, write the reason to $D/BLOCKED."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
-    (cd $WT && timeout $((TMO*60)) claude -p --model "$M" --permission-mode acceptEdits "${CLAUDE_PERMS[@]}" --add-dir /home/user/work --add-dir /home/user/peteromallet \
-      --add-dir /home/user/banodoco --add-dir $O --output-format text) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; echo ${PIPESTATUS[0]} > $D/exit
+    # claude -p ends after one turn: resume the same session until DONE/BLOCKED, the time budget, or 15 resumes.
+    SID=$(cat /proc/sys/kernel/random/uuid); echo $SID > $D/session; END=$(( $(date +%s) + TMO*60 ))
+    CL=(claude -p --model "$M" --permission-mode acceptEdits "${CLAUDE_PERMS[@]}" --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O --output-format text)
+    (cd $WT && timeout $((TMO*60)) "${CL[@]}" --session-id $SID) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; RC=${PIPESTATUS[0]}; K=0
+    while [ ! -f $D/DONE ] && [ ! -f $D/BLOCKED ] && [ $K -lt 15 ] && [ $(date +%s) -lt $END ]; do K=$((K+1)); echo "=== resume $K $(date -u +%FT%TZ)" >> $D/log.txt
+      echo "Continue YOUR TASK from where you stopped. Do not stop at a plan or a list of next steps: do them. That includes targeted tests through the central test service (bin/request-test, then bin/wait-test; if a wait is long, end the turn and check again on resume). When the WHOLE task is complete, give your final report as your answer, write $D/commit-msg and create $D/DONE. If genuinely blocked, write the reason to $D/BLOCKED." | \
+        (cd $WT && timeout $(( END - $(date +%s) )) "${CL[@]}" --resume $SID) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; RC=${PIPESTATUS[0]}; done
+    echo $RC > $D/exit
   else
   timeout $((TMO*60)) codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
    --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1; echo $? > $D/exit
