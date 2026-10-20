@@ -1,8 +1,4 @@
-"""Real Agent candidate projection -> Runtime admission -> claim -> Agent host.
-
-The saved full expansion golden remains blocked by CanonicalDocument's missing
-outer read metadata. These tests qualify the unpublished candidate path only.
-"""
+"""Real Agent projection -> Runtime admission -> claim -> Agent host."""
 from __future__ import annotations
 
 import json
@@ -85,6 +81,7 @@ def candidate(tmp_path, astrid_importable):
         media = service.ingest(project, fixture["media_bytes"].encode(), media_type="video/mp4",
                                idempotency_key="media")["data"]["object_id"]
         publication = fixture["publication"]
+        publication["parent_composition"]["config"]["opaque_numeric"] = 0
         assert publication["shot_revisions"][0]["payload"]["items"][0]["media_id"] == media
         # Use a fully pinned authored registry; the SDK's media admission must
         # not have to enrich an incomplete registry after pure projection.
@@ -243,14 +240,19 @@ def test_original_working_copy_forgeries_refuse_before_writes(candidate, field, 
 
 
 @pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
-def test_working_copy_without_candidate_is_admitted_uncertified(candidate, tmp_path, inline):
+@pytest.mark.parametrize("carrier", ["capture_snapshot", "input_snapshot", "filmstrip_snapshot"])
+def test_working_copy_without_candidate_is_admitted_uncertified(candidate, tmp_path, inline, carrier):
     snapshot, _ = _candidate_snapshot(candidate)
     request = _request(candidate, snapshot, None, inline=inline)
+    context = request["spec"]["authority_context"]
+    suffix = "" if inline else "_ref"
+    context[carrier + suffix] = context.pop("capture_snapshot" + suffix)
+    request["spec"]["inputs"]["filmstrip_authority"] = canonical_json(context)
     task = candidate.service.create_task(request)["task"]
     claim = candidate.service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
                                           "runtime_epoch": candidate.service.health()["runtime_epoch"]})
     assert claim["task_id"] == task["id"]
-    ref = claim["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
+    ref = claim["spec"]["spec"]["authority_context"][carrier + "_ref"]
     assert ref == {"digest": snapshot_digest(snapshot), "project_id": candidate.project,
                    "timeline_id": "main", "source_kind": "cas"}
     assert "authoring_preview" not in claim["spec"]["spec"]["inputs"]
@@ -274,3 +276,188 @@ def test_explicit_cas_candidate_is_native_without_binding(candidate, tmp_path):
     assert ref["source_kind"] == "cas"
     assert not ref.get("revision_id") and not ref.get("revision_digest")
     assert values.timeline_source is None
+
+
+def _saved_snapshot(case):
+    from astrid.sdk.timeline_filmstrip import prepare_filmstrip
+
+    snapshot = prepare_filmstrip({"composed_capture": True, "timeline_ref": "main",
+                                  "revision_id": "parent-1"},
+                                 project=case.project, client=case.client)["capture_snapshot"]
+    projection = case.service._timeline_commit_provider.project_capture(case.document)
+    assert projection == {"config": snapshot["config"], "registry": snapshot["registry"],
+                          "expansion": snapshot["metadata"]["capture_authority"]["expansion"]}
+    return snapshot
+
+
+def _saved_request(case, snapshot, *, inline, native=False):
+    context = {"mode": "composed_capture", "project_id": case.project, "timeline_id": "main",
+               "capture_snapshot": snapshot}
+    if not native:
+        context["revision_id"] = snapshot["metadata"]["capture_authority"]["parent_revision_id"]
+    if not inline:
+        context.pop("capture_snapshot")
+        digest = snapshot_digest(snapshot)
+        result = case.service.ingest(case.project, snapshot_bytes(snapshot), media_type="application/json",
+                                     idempotency_key="saved-" + digest.removeprefix("sha256:"))
+        assert result["data"]["object_id"] == digest
+        ref = {"digest": digest, "project_id": case.project, "timeline_id": "main", "source_kind": "cas"}
+        if not native:
+            authority = snapshot["metadata"]["capture_authority"]
+            ref.update(source_kind="revision", revision_id=authority["parent_revision_id"],
+                       revision_digest=authority["parent_content_digest"])
+        context["capture_snapshot_ref"] = ref
+    return {"project": case.project, "capability_id": CAPABILITY, "capability_digest": CAPABILITY_DIGEST,
+            "input_object_ids": [case.media], "idempotency_key": "actual-saved",
+            "spec": {"authority_context": context, "inputs": {"filmstrip_authority": canonical_json(context)}}}
+
+
+@pytest.mark.parametrize("native", [False, True], ids=["saved", "native"])
+@pytest.mark.parametrize("inline", [False, True], ids=["ref", "inline"])
+def test_actual_saved_and_native_reach_claim_and_host(candidate, tmp_path, native, inline):
+    snapshot = _saved_snapshot(candidate)
+    if native:
+        snapshot["metadata"].pop("capture_authority")
+        snapshot["metadata"].pop("canonical_timeline")
+    request = _saved_request(candidate, snapshot, inline=inline, native=native)
+    before = _state(candidate.service)
+    task, values = _claim_and_materialize(candidate, request, tmp_path / "attempt")
+    ref = task["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
+    assert ref["source_kind"] == ("cas" if native else "revision")
+    assert candidate.service.object(ref["digest"])[1] == snapshot_bytes(snapshot)
+    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+    if native:
+        assert values.timeline_source is None
+    else:
+        binding = values.timeline_source.read()
+        assert binding["snapshot"] == snapshot
+        assert binding["authority"] == snapshot["metadata"]["capture_authority"]
+        assert binding["ref"] == ref
+    assert candidate.service.create_task(request)["task"]["id"] == task["id"]
+    assert candidate.service._timeline_commits()[0].revision_closure(
+        candidate.project, "main", "parent-1") == candidate.document
+    after = _state(candidate.service)
+    assert after["staging"] == before["staging"]
+    assert all(after["CAS"][name] == payload for name, payload in before["CAS"].items())
+
+
+@pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
+@pytest.mark.parametrize("inline", [False, True], ids=["ref", "inline"])
+def test_original_saved_forgeries_refuse_before_writes(candidate, field, inline):
+    from tests.test_snapshot_authority_refusal import _refresh_identity
+
+    snapshot = _saved_snapshot(candidate)
+    if field == "config":
+        snapshot["config"]["clips"][0]["hold"] = 123
+    elif field == "registry":
+        next(iter(snapshot["registry"]["assets"].values()))["opaque_asset"] = "not from the immutable source"
+    else:
+        for key in ("capture_authority", "canonical_timeline"):
+            snapshot["metadata"][key]["expansion"]["shots"][0]["content_digest"] = "sha256:" + "0" * 64
+    _refresh_identity(snapshot)
+    request = _saved_request(candidate, snapshot, inline=inline)
+    _assert_refused_without_writes(candidate.service, request)
+
+
+@pytest.mark.parametrize("damage", [
+    "kind", "head", "candidate_digest", "publication_digest", "publication",
+    "project_id", "timeline_id", "base_parent", "base_parent_payload",
+    "base_placements", "source", "child_base", "internal_base", "embedded_base",
+    "retained_pin", "candidate_after_freeze", "json_bool", "json_float", "reused_pin",
+    "publication_derivation", "source_mapping_shape", "source_shots_shape",
+    "base_placements_shape", "placement_sources_shape", "base_placement_identity",
+    "base_placement_payload", "placements_shape", "placement_shape", "shots_shape",
+    "shot_shape", "child_source",
+])
+def test_runtime_candidate_verifier_covers_removed_agent_checks(candidate, damage):
+    from astrid.core.timeline.authoring_bundle import preview_authoring_candidate
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from runtime_protocol.capture_validation import _candidate_document
+    from runtime_protocol.errors import ConflictError, ValidationError
+    from runtime_protocol.timeline_commit import CommitRejected
+
+    bundle = bundle_from_document(candidate.document)
+    bundle["parent"]["config"]["opaque_draft"] = [None, False, 0, 2.0]
+    identity = next(iter(bundle["shots"]))
+    if damage in {"project_id", "timeline_id"}:
+        bundle[damage] = "foreign"
+    elif damage == "base_parent":
+        bundle[damage]["revision_id"] = "other-parent"
+    elif damage in {"base_parent_payload", "base_placements"}:
+        bundle[damage]["forged"] = True
+    elif damage == "source":
+        bundle["source_mapping"]["placements"] = {}
+    elif damage in {"child_base", "internal_base"}:
+        key = "base_payload" if damage == "child_base" else "base_internal_timeline"
+        bundle["shots"][identity][key]["forged"] = True
+    elif damage == "embedded_base":
+        bundle["source_mapping"]["_runtime_document"]["project_id"] = "foreign"
+    elif damage in {"retained_pin", "reused_pin"}:
+        key = "internal_timeline_content_digest" if damage == "retained_pin" else "content_digest"
+        bundle["source_mapping"]["shots"][identity][key] = "sha256:" + "0" * 64
+    elif damage in {"json_bool", "json_float"}:
+        # JSON false/0.0 differ from the exact saved integer zero.
+        bundle["base_parent_payload"]["config"]["opaque_numeric"] = (
+            False if damage == "json_bool" else 0.0)
+    preview = preview_authoring_candidate(bundle)
+    frozen = preview["candidate"]
+    if damage == "source_mapping_shape":
+        frozen["source_mapping"] = []
+    elif damage == "source_shots_shape":
+        frozen["source_mapping"]["shots"] = []
+    elif damage == "base_placements_shape":
+        frozen["base_placements"] = []
+    elif damage == "placement_sources_shape":
+        frozen["source_mapping"]["placements"] = []
+    elif damage in {"base_placement_identity", "base_placement_payload"}:
+        row = next(iter(frozen["base_placements"].values()))
+        row["occurrence_id" if damage == "base_placement_identity" else "gain"] = (
+            "foreign" if damage == "base_placement_identity" else 2)
+    elif damage == "placements_shape":
+        frozen["placements"] = {}
+    elif damage == "placement_shape":
+        frozen["placements"] = [None]
+    elif damage == "shots_shape":
+        frozen["shots"] = []
+    elif damage == "shot_shape":
+        frozen["shots"][identity] = None
+    elif damage == "child_source":
+        frozen["source_mapping"]["shots"][identity]["content_digest"] = "sha256:" + "0" * 64
+    # Keep hashes self-consistent, including for malformed candidate bases.
+    preview["candidate_digest"] = _digest(frozen)
+    ref = {"revision_id": preview["publication"]["parent_revision_id"], "working_copy": {
+        "candidate_digest": preview["candidate_digest"], "publication_digest": preview["publication_digest"],
+        "base_revision_id": candidate.document["parent_revision"]["revision_id"],
+        "base_revision_digest": candidate.document["parent_revision"]["content_digest"]}}
+    if damage in {"kind", "candidate_digest", "publication_digest", "head", "publication"}:
+        preview[damage] = {} if damage in {"head", "publication"} else "forged"
+    elif damage == "candidate_after_freeze":
+        preview["candidate"]["parent"]["config"]["opaque_draft"] = "changed after freezing"
+    elif damage == "publication_derivation":
+        preview["candidate"]["parent"]["config"]["opaque_draft"] = "different authored result"
+        preview["candidate_digest"] = _digest(preview["candidate"])
+        ref["working_copy"]["candidate_digest"] = preview["candidate_digest"]
+    commits, _ = candidate.service._timeline_commits()
+    before = _state(candidate.service)
+    try:
+        # Exercise Runtime's verifier directly so Agent's still-present checks
+        # cannot conceal a missing Runtime check before their proposed deletion.
+        with pytest.raises((ConflictError, ValidationError, CommitRejected)):
+            _candidate_document(commits, candidate.document, preview, ref)
+    finally:
+        assert _state(candidate.service) == before
+
+
+@pytest.mark.parametrize("inline", [False, True], ids=["ref", "inline"])
+def test_current_agent_still_refuses_unrelated_candidate_publication(candidate, inline):
+    from tests.test_snapshot_authority_refusal import _refresh_identity
+
+    snapshot, preview = _candidate_snapshot(candidate)
+    preview["candidate"]["parent"]["config"]["opaque_parent_config"] = {"different": True}
+    preview["candidate_digest"] = _digest(preview["candidate"])
+    snapshot["metadata"]["working_copy"]["candidate_digest"] = preview["candidate_digest"]
+    for key in ("capture_authority", "canonical_timeline"):
+        snapshot["metadata"][key]["expansion"]["working_copy"]["candidate_digest"] = preview["candidate_digest"]
+    _refresh_identity(snapshot)
+    request = _request(candidate, snapshot, preview, inline=inline)
+    _assert_refused_without_writes(candidate.service, request)

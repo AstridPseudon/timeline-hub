@@ -24,7 +24,7 @@ def main():
     stage, runtime_root, agent_root, directory, field, inline = sys.argv[1:]
     sys.path[:0] = [agent_root, runtime_root]
     from tests.sdk.test_capture_source_runtime import CAPABILITY, CaptureRuntime, runtime
-    from runtime_protocol.errors import ValidationError
+    from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
 
     directory = Path(directory)
@@ -81,6 +81,9 @@ def main():
     with_service = RuntimeService(directory / "realm")
     try:
         service = with_service
+        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         before = _cas_files(service)
         assert _cas_hashes(service) == recorded["cas"]
         accepted = recorded["accepted"]
@@ -88,10 +91,9 @@ def main():
         retry_refusal = None
         try:
             assert service.create_task(recorded["request"]) == accepted
-        except ValidationError as exc:
-            # This is the existing optional-provider refusal, not evidence of
-            # safe claim/materialization. Continue exercising the stored task.
-            assert str(exc) == "canonical capture projection provider is unavailable"
+        except RuntimeErrorBase as exc:
+            # Keep exercising the stored task; the test separately requires
+            # an exact retry to succeed, so a refusal is never a passing retry.
             retry_refusal = str(exc)
         task = service.task(task_id)
         assert task["task"]["id"] == task_id

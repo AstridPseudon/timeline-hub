@@ -58,10 +58,11 @@ def upgraded_capture(archived_capture, tmp_path_factory, request):
     old_runtime, agent = archived_capture
     helper = Path(__file__).with_name("snapshot_legacy_fixture.py")
     for stage, runtime in (("admit", old_runtime), ("reopen", ROOT)):
+        consumer = agent if stage == "admit" else astrid_checkout()
         env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1",
                "ASTRID_RUNTIME_CHECKOUT": str(runtime)}
         result = subprocess.run(
-            [sys.executable, str(helper), stage, str(runtime), str(agent),
+            [sys.executable, str(helper), stage, str(runtime), str(consumer),
              str(tmp_path), field, str(int(inline))],
             cwd=tmp_path, env=env, text=True, capture_output=True, timeout=90,
         )
