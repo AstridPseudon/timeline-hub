@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { lstatSync, mkdtempSync, readFileSync, readlinkSync, readdirSync, realpathSync, rmSync, statfsSync, statSync } from 'node:fs';
+import { closeSync, lstatSync, mkdtempSync, openSync, readFileSync, readlinkSync, readdirSync, realpathSync, rmSync, statfsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -31,7 +31,7 @@ export const CHROME155 = Object.freeze({
 });
 export const NODE20 = Object.freeze({
   version: 'v20.19.4',
-  executable: '/tmp/vw-m3-agent-gate-node20.19.4/bin/node',
+  executable: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node',
   sha256: '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490',
 });
 export const MIN_FREE_BYTES = 10 * 1024 ** 3;
@@ -222,7 +222,7 @@ export function assertFreshGrantAndMarker(appRoot) {
 export function runParityPreflight(appRoot, agentRoot, runtimeRoot) {
   const helper = path.join(appRoot, 'tests/e2e/timeline/viewing-parity/harness.ts');
   const script = `import { assertRunBoundary, assertSourceVersionsUnchanged, sourceVersions } from ${JSON.stringify(pathToFileURL(helper).href)};\nconst profile = 'native-codec-chrome155';\nawait assertRunBoundary();\nconst before = await sourceVersions(profile);\nawait assertRunBoundary();\nconst after = await sourceVersions(profile);\nassertSourceVersionsUnchanged(before, after);\n`;
-  const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], {
+  const result = spawnSync(NODE20.executable, ['--import', 'tsx', '--input-type=module', '--eval', script], {
     cwd: appRoot,
     env: { ...process.env, ASTRID_CHECKOUT: agentRoot, ASTRID_RUNTIME_CHECKOUT: runtimeRoot },
     encoding: 'utf8',
@@ -233,11 +233,29 @@ export function runParityPreflight(appRoot, agentRoot, runtimeRoot) {
 
 export function discover(appRoot) {
   const playwright = path.resolve(appRoot, 'node_modules', '@playwright', 'test', 'cli.js');
-  const result = spawnSync(process.execPath, [playwright, 'test', '--config', 'playwright.viewing-parity.native-codec.config.ts', '--list'], {
-    cwd: appRoot, encoding: 'utf8',
-  });
-  if (result.status !== 0 || result.error) throw new Error(`offline Playwright discovery failed: ${result.error?.message ?? (result.stderr || result.stdout)}`);
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  const directory = mkdtempSync(path.join('/tmp', SHORT_TEMP_PREFIX));
+  const stdoutPath = path.join(directory, 'discovery.stdout');
+  const stderrPath = path.join(directory, 'discovery.stderr');
+  let result;
+  let output;
+  try {
+    const stdout = openSync(stdoutPath, 'w');
+    const stderr = openSync(stderrPath, 'w');
+    try {
+      result = spawnSync(NODE20.executable, [playwright, 'test', '--config', 'playwright.viewing-parity.native-codec.config.ts', '--list'], {
+        cwd: appRoot, stdio: ['ignore', stdout, stderr],
+      });
+    } finally {
+      closeSync(stdout);
+      closeSync(stderr);
+    }
+    output = `${readFileSync(stdoutPath, 'utf8')}${readFileSync(stderrPath, 'utf8')}`;
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+  if (result.status !== 0 || result.error) {
+    throw new Error(`offline Playwright discovery failed: ${result.error?.message ?? output}`);
+  }
   if (!/^Total: 5 tests in 1 file$/m.test(output)) throw new Error('offline discovery must find exactly five parity cases');
   const cases = readFileSync(path.join(appRoot, 'tests/e2e/timeline/viewing-parity/cases.ts'), 'utf8');
   const required = [
