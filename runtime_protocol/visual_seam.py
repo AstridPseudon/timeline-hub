@@ -463,7 +463,9 @@ def evaluate_closure(parent, shots, internal, *, timeline_id, materialize=False)
 
 
 def admit_closure(parent, shots, internal, *, timeline_id, materialize=False):
-    report, metadata = evaluate_closure(parent, shots, internal, timeline_id=timeline_id, materialize=materialize)
-    if report["blocked"]:
-        raise ValidationError("visual seam admission blocked", details={"code": "visual_seam_admission_blocked", "report": report})
-    return report, metadata
+    """Return advisory seam diagnostics and the optional render projection.
+
+    As with authoring saves, report findings do not prevent rendering. Closure
+    integrity and timing errors still raise during normalization.
+    """
+    return evaluate_closure(parent, shots, internal, timeline_id=timeline_id, materialize=materialize)

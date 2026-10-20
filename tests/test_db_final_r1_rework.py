@@ -148,7 +148,7 @@ def test_replacement_epoch_floor_survives_restarts_and_fences_stale_worker(tmp_p
     active = tmp_path / "active"
     support = tmp_path / "support"
     RealmStore.initialize(active).close()
-    daemon = RuntimeDaemon(active, support_root=support, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active, support_root=support).start()
     old_epoch = daemon.service.health()["runtime_epoch"]
     backup = tmp_path / "old-backup"
     try:
@@ -178,7 +178,7 @@ def test_older_snapshot_offline_replacement_preserves_external_support_custody(t
     active = tmp_path / "active"
     support = tmp_path / "support"
     RealmStore.initialize(active).close()
-    daemon = RuntimeDaemon(active, support_root=support, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active, support_root=support).start()
     backup = tmp_path / "older-backup"
     try:
         daemon.service.backup(backup)
@@ -221,7 +221,7 @@ def test_offline_replacement_verifies_backup_without_admitting_damaged_root(tmp_
     damaged = tmp_path / "damaged"
     RealmStore.initialize(damaged).close()
     (damaged / "realm.sqlite3").write_bytes(b"damaged-active-root")
-    daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support", production_worker_credentials=True)
+    daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support")
     result = daemon.replace_from_backup(backup, retain_superseded=True)
     try:
         assert result["offline"] is True
@@ -248,7 +248,7 @@ def test_offline_replacement_discards_superseded_root_by_default(tmp_path):
     damaged = tmp_path / "damaged"
     RealmStore.initialize(damaged).close()
     (damaged / "realm.sqlite3").write_bytes(b"damaged-active-root")
-    daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support", production_worker_credentials=True)
+    daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support")
     result = daemon.replace_from_backup(backup)
     try:
         assert result["offline"] is True

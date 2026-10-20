@@ -82,7 +82,7 @@ def daemon(tmp_path):
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
     daemon = RuntimeDaemon(
-        realm, support_root=tmp_path / "support", production_worker_credentials=True
+        realm, support_root=tmp_path / "support"
     ).start()
     try:
         yield daemon
@@ -1040,7 +1040,6 @@ def test_remote_cleanup_restart_with_local_profiles_then_local_start(
     local_owner = RuntimeDaemon(
         daemon.root,
         support_root=daemon.support_root,
-        production_worker_credentials=True,
         local_worker_profiles={"fixture": {}},
         local_worker_preparer=object(),
         local_worker_inspector=object(),

@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from tests.runtime_credentials import provision_executor_token
+
 from astrid_runtime_client import ApiError, WorkspaceClient
 from http_helpers import legacy_call
 from runtime_protocol.daemon import RuntimeDaemon
@@ -209,7 +211,7 @@ def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_
         client.cancel_task(task.task_id, idempotency_key="domain-cancel")
 
         client.register_executor({"executor_id": "domain-executor", "max_concurrency": 1, "resource_keys": [], "capabilities": [{"capability_id": "render.basic", "definition_digest": _digest("render.basic"), "status": "ready", "required_resource_keys": [], "estimated_scratch_bytes": 0, "estimated_output_bytes": 1}], "protocol": "workspace.v1"}, idempotency_key="domain-executor")
-        worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+        worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "domain-executor"))
         failed_task = client.admit_task(capability_id="render.basic", capability_digest=_digest("render.basic"), input_object_ids=[], idempotency_key="failed-domain-task")
         epoch = worker.health().runtime_epoch
         attempt = worker.claim_task(executor_id="domain-executor", capability_ids=["render.basic"], idempotency_key="failed-domain-claim", runtime_epoch=epoch)

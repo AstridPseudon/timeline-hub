@@ -3018,8 +3018,8 @@ class RuntimeService:
         # render-readiness gate to an otherwise valid parent edit. Existing
         # canonical timelines may predate seam intent metadata; blocking a
         # track reorder here would make ordinary authoring persistence depend
-        # on render migration. Strict seam admission remains at the enforced
-        # render/task boundary, and this report is still returned for review.
+        # on render migration. Render admission likewise returns these
+        # diagnostics for review without gating on report findings.
         seam_report, _ = evaluate_closure(
             parent_payload, resolved_shots,
             {v["revision_id"]: v for v in resolved_internal.values()},

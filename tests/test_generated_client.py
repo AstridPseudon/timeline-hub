@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.runtime_credentials import provision_executor_token
+
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import ApiError, Capability, ClaimWaiting, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
@@ -189,7 +191,7 @@ def test_connected_register_executor_response_uses_generated_capability_parser(t
 def test_owner_get_executor_observes_exact_readiness_and_session(tmp_path: Path) -> None:
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
-    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support", production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(realm, support_root=tmp_path / "support").start()
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
         owner.register_executor({
@@ -308,7 +310,7 @@ def test_generation_intent_round_trips_through_admission_claim_and_terminal_read
         task = client.get_task(admitted["task_id"])
         assert task.generation_intent == intent
         assert "generation_intent" not in task.spec
-        worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+        worker = WorkspaceClient(daemon.endpoint, provision_executor_token(daemon, "generation-intent-worker"))
         attempt = worker.claim_task(
             executor_id="generation-intent-worker",
             capability_ids=[capability.capability_id],

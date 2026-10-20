@@ -894,7 +894,6 @@ def test_private_owner_route_does_not_take_sqlite_mutex(tmp_path):
     daemon = RuntimeDaemon(
         root,
         support_root=profile.support_root,
-        production_worker_credentials=True,
         local_worker_profiles={"astrid": profile},
         local_worker_preparer=preparer,
         local_worker_inspector=inspector,

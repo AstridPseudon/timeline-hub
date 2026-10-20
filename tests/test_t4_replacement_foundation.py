@@ -23,7 +23,7 @@ def test_verified_candidate_replaces_owner_with_fresh_epoch_credentials_and_quar
     active_root = tmp_path / "active"
     support_root = tmp_path / "support"
     _fresh(active_root)
-    daemon = RuntimeDaemon(active_root, support_root=support_root, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active_root, support_root=support_root).start()
     old_service = daemon.service
     old_epoch = old_service.health()["runtime_epoch"]
     old_token = daemon.token
@@ -59,7 +59,7 @@ def test_verified_candidate_activation_discards_superseded_root_by_default(tmp_p
     active_root = tmp_path / "active"
     support_root = tmp_path / "support"
     _fresh(active_root)
-    daemon = RuntimeDaemon(active_root, support_root=support_root, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active_root, support_root=support_root).start()
     old_service = daemon.service
     old_epoch = old_service.health()["runtime_epoch"]
     backup = tmp_path / "backup"
@@ -88,7 +88,7 @@ def test_failed_replacement_rolls_back_and_leaves_recoverable_state(tmp_path, mo
     active_root = tmp_path / "active"
     support_root = tmp_path / "support"
     _fresh(active_root)
-    daemon = RuntimeDaemon(active_root, support_root=support_root, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active_root, support_root=support_root).start()
     backup = tmp_path / "backup"
     candidate = tmp_path / "candidate"
     original_start = daemon._start
@@ -125,7 +125,7 @@ def test_failed_replacement_rolls_back_and_leaves_recoverable_state(tmp_path, mo
 def test_in_root_default_support_is_rejected_before_replacement_moves(tmp_path):
     active_root = tmp_path / "active"
     _fresh(active_root)
-    daemon = RuntimeDaemon(active_root, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(active_root).start()
     backup = tmp_path / "backup"
     candidate = tmp_path / "candidate"
     try:
@@ -139,7 +139,7 @@ def test_in_root_default_support_is_rejected_before_replacement_moves(tmp_path):
     finally:
         daemon.stop()
 
-    offline = RuntimeDaemon(active_root, production_worker_credentials=True)
+    offline = RuntimeDaemon(active_root)
     try:
         with pytest.raises(ConflictError, match="support_root outside the active realm root"):
             offline.replace_from_backup(backup)
@@ -149,7 +149,7 @@ def test_in_root_default_support_is_rejected_before_replacement_moves(tmp_path):
 
 
 def test_cleanup_does_not_shutdown_http_server_without_serving_thread():
-    daemon = RuntimeDaemon("/tmp/runtime-cleanup-regression", production_worker_credentials=True)
+    daemon = RuntimeDaemon("/tmp/runtime-cleanup-regression")
     daemon.httpd = RuntimeHTTPServer(("127.0.0.1", 0), RuntimeHandler)
     try:
         daemon._shutdown_http()
@@ -199,7 +199,7 @@ def test_catalog_rejects_stale_owner_and_revokes_readiness(tmp_path):
     root = tmp_path / "active"
     support = tmp_path / "support"
     _fresh(root)
-    daemon = RuntimeDaemon(root, support_root=support, production_worker_credentials=True).start()
+    daemon = RuntimeDaemon(root, support_root=support).start()
     try:
         proof = daemon.service.catalog_admission(daemon.instance_id)
         realm_id = daemon.service.realm["id"]

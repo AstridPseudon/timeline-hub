@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import sqlite3
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -16,7 +17,9 @@ from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.timeline_commit_validation import validate_commit_value
 from runtime_protocol.util import canonical_json
+from runtime_protocol.visual_seam import evaluate_closure
 from test_timeline_commit_port import PreparedProvider
+from test_visual_seam_admission import _accept_visual_publication
 
 
 def _digest(data):
@@ -196,6 +199,77 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
+@pytest.mark.parametrize(
+    "picture_tracks,issue_code",
+    [(None, "boundary/empty-child-picture"), (["plate"], "boundary/child-picture-gap")],
+    ids=["custom-track-unclassified", "declared-picture-track-gap"],
+)
+def test_unsafe_occurrence_seam_is_advisory_and_materialized_for_render(canonical_scene, picture_tracks, issue_code):
+    f = canonical_scene
+    publication = {
+        "project_id": f["project"], "timeline_id": "main", "expected_head": None,
+        "parent_revision_id": "unsafe-occurrence-parent",
+        "internal_timeline_revisions": [{
+            "timeline_id": "main", "revision_id": "unsafe-occurrence-child",
+            "payload": {
+                "tracks": [{"id": "plate", "kind": "visual"}],
+                "clips": [
+                    {"id": "custom-a", "clipType": "am-footage", "at": 0, "hold": 0.5, "track": "plate"},
+                    {"id": "custom-b", "clipType": "am-snap-plate", "at": 0.8, "hold": 0.5, "track": "plate"},
+                ],
+                "effects": [], "audio": [], "layout": {}, "registry": {}, "assets": [],
+            },
+        }],
+        "shot_revisions": [{
+            "shot_id": "unsafe-shot", "revision_id": "unsafe-shot-revision",
+            "internal_timeline_revision_id": "unsafe-occurrence-child",
+            "payload": {"metadata": {}, "items": [], "pools": [], "selected_variants": {},
+                        "provenance": {}, "generation_inputs": {}, "audio_bindings": [], "text_bindings": []},
+        }],
+        "parent_composition": {
+            "config": {"output": {"fps": 30}, "tracks": [{"id": "visual", "kind": "visual"}]},
+            "registry": {}, "clips": [],
+            "occurrences": [{
+                "occurrence_id": "unsafe-occurrence", "shot_id": "unsafe-shot",
+                "shot_revision_id": "unsafe-shot-revision", "placement": {"start_ms": 0},
+                "source_offset": 0, "duration_ms": 2000, "speed": 1, "track": "visual",
+                "transform": {}, "gain": 1, "mute": False, "provenance": {},
+            }],
+        },
+    }
+    if picture_tracks is not None:
+        publication["parent_composition"]["config"]["app"] = {
+            "visualSeamContract": {"pictureTracks": picture_tracks},
+        }
+    saved = _accept_visual_publication(
+        f["service"], publication, idempotency_key="save-unsafe-occurrence"
+    )
+    document = saved["data"]["canonical_document"]
+    report, _ = evaluate_closure(
+        document["parent_revision"]["payload"],
+        {(image["shot_id"], image["revision_id"]): image for image in document["shot_revisions"]},
+        {image["revision_id"]: image for image in document["internal_timeline_revisions"]},
+        timeline_id="main",
+    )
+    assert report["blocked"] is True
+
+    request = _request(f, head="unsafe-occurrence-parent", key="render-unsafe-occurrence")
+    request["spec"]["params"]["canonical_occurrence_ids"] = ["unsafe-occurrence"]
+    admitted = f["service"].create_task(request)
+    spec = admitted["task"]["spec"]
+    authority = spec["spec"]["inputs"]["timeline_authority"]
+    snapshot = _snapshot(f["service"], spec)
+
+    assert authority["visual_seam_report"] == report
+    assert authority["visual_seam_report"]["blocked"] is True
+    assert any(issue["code"] == issue_code
+               for issue in authority["visual_seam_report"]["structuralIssues"])
+    assert [clip["clipType"] for clip in snapshot["config"]["clips"]] == ["am-footage", "am-snap-plate"]
+    assert [clip["track"] for clip in snapshot["config"]["clips"]] == ["plate", "plate"]
+    assert [(clip["at"], clip["hold"]) for clip in snapshot["config"]["clips"]] == [(0, 0.5), (0.8, 0.5)]
+    assert snapshot["config"].get("app", {}).get("visualSeamContract", {}).get("pictureTracks") == picture_tracks
+
+
 @pytest.mark.parametrize("alpha", [False, True], ids=["opaque", "alpha-stamp"])
 def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canonical_scene, monkeypatch, alpha):
     f = canonical_scene
@@ -223,11 +297,11 @@ def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canoni
     png_raw_frame_bytes = (4 * 1920 + 1) * 1080
     png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
     png_sequence_bytes = png_frame_bytes * 5040
-    jpeg_sequence_bytes = ((1920 * 1080 * 6 + 4) // 5) * 5040
+    jpeg_sequence_bytes = ((1920 * 1080) // 2) * 5040
     if alpha:
-        assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
+        assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.25)
     else:
-        assert estimate["scratch_bytes"] >= jpeg_sequence_bytes + 256 * 1024 * 1024
+        assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.25)
         assert estimate["scratch_bytes"] < png_sequence_bytes
 
 

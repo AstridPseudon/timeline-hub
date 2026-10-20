@@ -285,8 +285,9 @@ def test_occurrence_context_binds_lane_boundary_children_and_independent_cues(mo
         changed, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
         assert changed["boundaries"][0]["canonicalContext"] != boundary["canonicalContext"]
         assert changed["blocked"]
-        with pytest.raises(ValidationError, match="visual seam admission blocked"):
-            admit_closure(parent, shots, internal, timeline_id="main")
+        diagnostic, materialized = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+        assert diagnostic["blocked"]
+        assert materialized["render_config"]["clips"]
         clip.clear()
         clip.update(original)
     incoming[0]["entrance"] = {"type": "fade", "duration": 0.7}
@@ -341,16 +342,17 @@ def test_occurrence_seam_binds_lane_boundary_owners_and_independent_cue_contribu
         outgoing[1]["effects"][0]["params"]["keyframes"][1]["x"] = 20
     else:
         outgoing[1]["opacity"] = 0.5
-    with pytest.raises(ValidationError) as error:
-        admit_closure(parent, shots, internal, timeline_id="main")
-    assert error.value.details["code"] == "visual_seam_admission_blocked"
+    diagnostic, materialized = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+    assert diagnostic["blocked"]
+    assert materialized["render_config"]["clips"]
     # Reauthor, then a relevant incoming fade edit must independently invalidate.
     current = evaluate_closure(parent, shots, internal, timeline_id="main")[0]
     parent["config"]["app"] = {"visualSeamContract": _portable_policy(current, 30)}
     assert not admit_closure(parent, shots, internal, timeline_id="main")[0]["blocked"]
     incoming[0]["entrance"]["duration"] = 0.7
-    with pytest.raises(ValidationError):
-        admit_closure(parent, shots, internal, timeline_id="main")
+    diagnostic, materialized = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+    assert diagnostic["blocked"]
+    assert materialized["render_config"]["clips"]
 
 
 @pytest.mark.parametrize("pause", [
@@ -630,16 +632,43 @@ def test_incoming_fade_is_risky_and_custom_media_reference_stays_opaque():
     ([{"id": "picture", "clipType": "media", "at": 0, "hold": 0.5, "track": "v"},
       {"id": "tail-fx", "clipType": "end-spanning-layer", "at": 0, "hold": 1, "track": "fx"}], "boundary/child-picture-gap"),
 ])
-def test_occurrence_requires_complete_picture_output(clips, code):
+def test_occurrence_picture_coverage_findings_are_advisory(clips, code):
     body = _unsafe_publication("p")
     parent = body["parent_composition"]
     shots = {("s", "unsafe-shot"): {"internal_timeline_revision_id": "unsafe-child", "payload": {}}}
     internals = {"unsafe-child": {"payload": {"clips": clips}}}
-    with pytest.raises(ValidationError) as error:
-        admit_closure(parent, shots, internals, timeline_id="main")
-    report = error.value.details["report"]
-    assert error.value.details["code"] == "visual_seam_admission_blocked"
+    report, metadata = admit_closure(parent, shots, internals, timeline_id="main", materialize=True)
     assert any(i["code"] == code for i in report["structuralIssues"])
+    assert [clip["app"]["canonical"]["sourceClipId"] for clip in metadata["render_config"]["clips"]] == [clip["id"] for clip in clips]
+
+
+@pytest.mark.parametrize("start_ms,hold,rendered_count", [(0, 0, 0), (-1000, 1, 1)])
+def test_invalid_occurrence_diagnostic_still_returns_materialized_closure(start_ms, hold, rendered_count):
+    parent = _unsafe_publication("p")["parent_composition"]
+    parent["occurrences"][0]["placement"]["start_ms"] = start_ms
+    shots = {("s", "unsafe-shot"): {"internal_timeline_revision_id": "unsafe-child"}}
+    internal = {"unsafe-child": {"payload": {"clips": [
+        {"id": "picture", "clipType": "media", "track": "v", "at": 0, "hold": hold},
+    ]}}}
+
+    report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+
+    assert report["blocked"]
+    assert any(issue["code"] == "boundary/invalid-occurrence" for issue in report["structuralIssues"])
+    assert len(metadata["render_config"]["clips"]) == rendered_count
+
+
+@pytest.mark.parametrize("change,message", [
+    ({"speed": 0}, "visual timing speed must be positive"),
+    ({"hold": -1}, "visual timing duration must be finite and non-negative"),
+    ({"at": float("inf")}, "visual timing start must be finite"),
+])
+def test_render_materialization_still_rejects_invalid_timing(change, message):
+    parent = {"config": {"output": {"fps": 30}}, "occurrences": [], "clips": [
+        {"id": "picture", "clipType": "media", "at": 0, "hold": 1, **change},
+    ]}
+    with pytest.raises(ValidationError, match=message):
+        admit_closure(parent, {}, {}, timeline_id="main", materialize=True)
 
 
 def _custom_picture_closure():
@@ -670,6 +699,26 @@ def test_declared_custom_picture_lane_counts_opaque_content_without_mutating_pin
     assert len(report["opaqueElements"]) == 2
     assert all(s["primary"] for s in report["spans"])
     assert [c["clipType"] for c in metadata["render_config"]["clips"]] == ["custom-picture"] * 2
+    assert internal == original
+
+
+@pytest.mark.parametrize("clip_type", ["am-footage", "am-snap-plate", "am-type"])
+def test_film_shape_custom_picture_on_visual_plate_is_advisory_and_materialized(clip_type):
+    parent, shots, internal = _custom_picture_closure()
+    parent["config"]["app"] = {"someOtherAuthoringSetting": True}
+    for child in internal.values():
+        child["payload"]["clips"][0]["clipType"] = clip_type
+
+    original = copy.deepcopy(internal)
+    report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
+
+    assert report["blocked"]
+    assert [issue["code"] for issue in report["structuralIssues"]] == [
+        "boundary/empty-child-picture", "boundary/empty-child-picture"]
+    assert [span["primary"] for span in report["spans"]] == [False, False]
+    assert len(report["opaqueElements"]) == 2
+    assert [clip["clipType"] for clip in metadata["render_config"]["clips"]] == [clip_type, clip_type]
+    assert [clip["track"] for clip in metadata["render_config"]["clips"]] == ["plate", "plate"]
     assert internal == original
 
 
@@ -923,7 +972,7 @@ def test_pinned_asset_resolution_preserves_nearest_scope_without_mixing_metadata
     pytest.param([], "boundary/empty-child-picture", id="clips0"),
     pytest.param([{"id": "picture", "clipType": "media", "at": 0.2, "hold": 1, "track": "v"}], "boundary/child-picture-gap", id="clips1"),
 ])
-def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp_path, clips, code):
+def test_publication_and_render_preserve_uncovered_child_with_advisory_report(tmp_path, clips, code):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -945,11 +994,15 @@ def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp
         )
         assert report["blocked"] is True
         assert [issue["code"] for issue in report["structuralIssues"]] == [code]
-        # The enforced render boundary still runs the strict guard and queues nothing.
-        with pytest.raises(ValidationError, match="visual seam admission"):
-            service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
-                                 "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
-        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
-        assert service.store.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+        rendered = service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
+                                        "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
+        frozen = rendered["task"]["spec"]["spec"]
+        authority = frozen["inputs"]["timeline_authority"]
+        assert authority["visual_seam_report"]["blocked"] is True
+        assert [issue["code"] for issue in authority["visual_seam_report"]["structuralIssues"]] == [code]
+        frozen_clips = json.loads(service.object(frozen["timeline_snapshot_ref"]["digest"])[1])["config"]["clips"]
+        assert [clip["app"]["canonical"]["sourceClipId"] for clip in frozen_clips] == [clip["id"] for clip in clips]
+        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 1
+        assert service.store.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 1
     finally:
         service.close()

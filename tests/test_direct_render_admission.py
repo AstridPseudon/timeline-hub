@@ -3,7 +3,9 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +17,7 @@ from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.timeline_commit_validation import validate_commit_value
+from runtime_protocol.util import canonical_json
 
 
 def _digest(value: bytes | str) -> str:
@@ -209,15 +212,59 @@ def test_direct_long_render_admission_budgets_current_fallback(tmp_path, monkeyp
         png_raw_frame_bytes = (4 * 1920 + 1) * 1080
         png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
         png_sequence_bytes = png_frame_bytes * 5040
-        jpeg_sequence_bytes = ((1920 * 1080 * 6 + 4) // 5) * 5040
+        jpeg_sequence_bytes = ((1920 * 1080) // 2) * 5040
         if alpha_mode == "opaque":
-            assert estimate["scratch_bytes"] >= jpeg_sequence_bytes + 256 * 1024 * 1024
+            assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.25)
             assert estimate["scratch_bytes"] < png_sequence_bytes
             # Eight timeline seconds of held media at 160 seconds keeps the
             # opaque output clock at exactly 168 seconds / 5040 frames.
             assert estimate["output_bytes"] == 344_359_936
         else:
-            assert estimate["scratch_bytes"] >= png_sequence_bytes + 256 * 1024 * 1024
+            assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.25)
+    finally:
+        service.close()
+
+
+def test_managed_render_storage_estimate_right_sizes_opaque_and_keeps_alpha_png(tmp_path, monkeypatch):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        registry = {"assets": {}}
+
+        def estimate_for(frames, *, alpha=False):
+            config = {"clips": [{"id": "picture", "at": 0, "duration": frames / 30}]}
+            if alpha:
+                config["metadata"] = {"astrid_layer": {"alpha": True}}
+            return config, service.store._derive_managed_render_storage_estimate(
+                config, registry, [],
+            )
+
+        _, opaque = estimate_for(4889)
+        total_163s = opaque["scratch_bytes"] + opaque["output_bytes"]
+        assert total_163s < 8 * 1024**3
+
+        # The transparent path still budgets PNG frames with the existing raw-frame formula.
+        alpha_config, alpha = estimate_for(4889, alpha=True)
+        png_frame_bytes = (((4 * 1920 + 1) * 1080 * 101 + 99) // 100)
+        png_sequence_bytes = png_frame_bytes * 4889
+        alpha_snapshot_bytes = len(canonical_json(alpha_config).encode()) + len(canonical_json(registry).encode())
+        alpha_raw_scratch = alpha_snapshot_bytes + png_sequence_bytes + 2 * 1024 * 1024 + 128 * 1024 * 1024
+        assert alpha["scratch_bytes"] == max(256 * 1024 * 1024, math.ceil(alpha_raw_scratch * 1.25))
+
+        _, ten_minutes = estimate_for(600 * 30)
+        ten_minute_total = ten_minutes["scratch_bytes"] + ten_minutes["output_bytes"]
+        assert ten_minute_total > 15 * 1024**3
+        monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+        monkeypatch.setattr(
+            "runtime_protocol.store.shutil.disk_usage",
+            lambda _path: SimpleNamespace(free=15 * 1024**3),
+        )
+        preflight = service.store.storage_preflight(
+            "rendering.render", storage_estimate=ten_minutes,
+        )
+        assert preflight["ok"] is False
+        assert preflight["required_bytes"] == ten_minute_total
     finally:
         service.close()
 

@@ -30,7 +30,6 @@ def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_p
     first = RuntimeDaemon(
         root,
         support_root=support,
-        production_worker_credentials=True,
     ).start()
     try:
         worker_path = first.worker_credential_path
@@ -74,7 +73,6 @@ def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_p
     second = RuntimeDaemon(
         root,
         support_root=support,
-        production_worker_credentials=True,
     ).start()
     try:
         assert second.worker_credential_path == worker_path
@@ -90,11 +88,16 @@ def test_receiptless_worker_bearer_is_rotated_before_http_start(tmp_path):
     root = tmp_path / "realm"
     support = tmp_path / "support"
     RealmStore.initialize(root).close()
-    first = RuntimeDaemon(root, support_root=support, production_worker_credentials=True)
+    first = RuntimeDaemon(root, support_root=support)
     first._provision_credentials()
     stale = first.worker_token
+    assert stale != first.token
+    assert first.credentials.load(stale) == {"actor": WORKER_ACTOR, "scopes": sorted(WORKER_SCOPES)}
+    assert first.credentials.require(first.token, "admin")["actor"] == "owner"
+    with pytest.raises(AuthorizationError):
+        first.credentials.require(stale, "admin")
 
-    second = RuntimeDaemon(root, support_root=support, production_worker_credentials=True)
+    second = RuntimeDaemon(root, support_root=support)
     second._provision_credentials()
 
     assert second.worker_token != stale
@@ -110,7 +113,7 @@ def test_pre_marker_worker_bearer_is_rotated_before_http_start(tmp_path):
     stale, path = legacy_store.provision(WORKER_ACTOR, list(WORKER_SCOPES))
     path.with_suffix(".commit").unlink()
 
-    daemon = RuntimeDaemon(root, support_root=support, production_worker_credentials=True)
+    daemon = RuntimeDaemon(root, support_root=support)
     daemon._provision_credentials()
 
     assert daemon.worker_token != stale
@@ -124,7 +127,6 @@ def test_pack_host_cannot_mutate_control_plane_or_forge_settlement_effects(tmp_p
     daemon = RuntimeDaemon(
         tmp_path / "realm",
         support_root=tmp_path / "support",
-        production_worker_credentials=True,
     ).start()
     try:
         owner = Api(daemon.endpoint, daemon.token)
