@@ -484,6 +484,25 @@ timeline semantic or adapter source change, so no Gate1/Gate3 replay was
 needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `812a609ee`,
 Composition `e7ef7a0`.
 
+Closing watch snapshot at 2026-10-20T23:35:31Z: final live heads are Agent
+`19c3cfc1c6283659c6fc864581d56c3a99e41873`, Runtime
+`9d1c43c647301da48a6e86ad82e466b501bd2418`, App
+`3ee1900621f5ae27450ce5b1b69a3b7987e4b8c8`, and Composition
+`e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332`. No further Agent semantic merge
+landed after the detached-sheet history replay; the last App update was
+viewing-only. No full/full* suite was requested.
+
+## Final incremental-watch snapshot
+
+Date: 2026-10-20T23:35:19Z
+
+No further Agent semantic merge landed after `19c3cfc1c`. The final live heads
+are Agent `19c3cfc1c`, Runtime `9d1c43c`, App `3ee190062`, and Composition
+`e7ef7a0`. The last App merge changes only viewing-parity audio controller
+behavior/tests, so no Agent Gate1/Gate3 replay was needed. The current exact
+evidence and remaining gaps are the bounded results recorded above; no full or
+full* suite was requested.
+
 At 2026-10-20T23:29:35Z App advanced to `a6fa6ff8c` with physical PCM parity
 comparison tests only. The related speech-audio intent review is App/source
 scope and remains unqualified against the known Runtime health-digest
