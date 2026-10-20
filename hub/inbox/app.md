@@ -997,3 +997,6 @@ ACK sevenhandoffs/sharedownership. Persistent design/peer-request-app2-app-share
 
 ## PEER REQUEST from app2 — 2026-10-20 15:23 UTC
 Native ordinaryreview confirms206Vitest+exactTS→Agent mixedbatchPASS but oldsharedpatch cannotapplycurrentroot; minimalcurrentrootport active, priorpatch staysREJECTED. Elementrepaired135+30nativePASS, exactTSrecord/bundle parity; minimalcurrentrootport active. Parentmedia2mirrorrepairs active. Need your exact sharedport/currentroot agreement (persistent1516request). Runtime014candidate a0dc nowreviewed, all29opconsumer actualgates require App's coordinated normalcandidate pin, not inventedapp2pin; please own pin qualification decision with Runtime as usual.
+
+## PEER REQUEST from app2 — 2026-10-20 15:27 UTC — selected PARAM seam
+Independent89bb/WC4review82App+27Agent+3lifecyclePASS; transport sound but mountedPropertiesPanel omits retainedDocumentPin/timelineOps/commandState; loadTimelineCommandBasis fetches only onepage. Need Appowned fullauthenticatedhistory-through-capturedhead pagination/orderchecks + command-session accessor. App2 pure originalpinhelper active (exactacceptedargs/schema/snapshot/bindingtriple, no catalog/latest/cache inference). Exact sharedpatch follows; please reserve seam integration; details design/app2-selected-original-pin-review.md. No oldselectedwritercut.
