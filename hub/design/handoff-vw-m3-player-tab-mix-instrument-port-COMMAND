@@ -1,0 +1,5 @@
+node --import tsx --test tests/e2e/timeline/viewing-parity/canvas.test.ts tests/e2e/timeline/viewing-parity/compare.test.ts tests/e2e/timeline/viewing-parity/directframes.test.ts tests/e2e/timeline/viewing-parity/download.test.ts tests/e2e/timeline/viewing-parity/admission.test.ts tests/e2e/timeline/viewing-parity/harness.test.ts tests/e2e/timeline/viewing-parity/source-tuple.test.ts tests/e2e/timeline/viewing-parity/tab-audio.test.ts tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs (9 passed)
+eslint tab-audio.ts cases.ts canvas.test.ts --report-unused-disable-directives --max-warnings 0 (passed)
+tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler --allowJs tab-audio.ts tab-audio.test.ts (passed)
+node tab-audio.controller.mjs --discover <worktree> (5 native-codec-chrome155 tests listed; passed)
+git diff --check (passed)

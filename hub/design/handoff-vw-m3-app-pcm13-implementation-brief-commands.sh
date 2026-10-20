@@ -10,7 +10,7 @@ node "$N/vitest/vitest.mjs" run --no-cache --configLoader=runner --maxWorkers=1 
 # exit 1: 19 passed / 5 failed (required positive and four forgeries).
 node "$P/stage.mjs"
 node "$N/vitest/vitest.mjs" run --no-cache --configLoader=runner --maxWorkers=1 --config "$W/fixture/vitest.config.mjs" > "$W/green-final-public13.log" 2>&1
-# exit 0: 3 files / 41 passed, 5.39s, verified public13 export-map resolution.
+# exit 0: 3 files / 42 passed, 4.57s, verified public13 export-map resolution.
 node "$N/eslint/bin/eslint.js" --no-cache --no-config-lookup --config "$P/eslint.config.mjs" "$P/AudioTrack.tsx" "$P/"*.test.tsx "$P/"compiledAudioSourceClock*.ts
 # exit 0: scoped TypeScript/browser/hooks rules, not the complete App lint configuration.
 # From the tiny exact-base port-check directory:

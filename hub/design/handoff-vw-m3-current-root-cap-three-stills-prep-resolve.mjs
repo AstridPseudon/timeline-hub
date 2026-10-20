@@ -9,7 +9,6 @@ const graph = '/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules';
 const root = path.resolve(process.argv[2]);
 const modules = path.join(root, 'remotion/node_modules');
 const composition = path.join(modules, '@banodoco/timeline-composition');
-const theme = path.join(modules, '@banodoco/timeline-theme-2rp');
 const peerRequire = createRequire(`${graph}/typescript/package.json`);
 const ts = peerRequire(`${graph}/typescript`);
 const {ResolverFactory, CachedInputFileSystem} = peerRequire(`${graph}/enhanced-resolve`);
@@ -25,7 +24,7 @@ const resolver = ResolverFactory.createResolver({
 const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const label = (file) => file.startsWith(`${root}/`) ? path.relative(root, file) : file;
 const owned = (file) => file.startsWith(`${root}/`) && !file.includes('/node_modules/')
-  || file.startsWith(`${composition}/`) || file.startsWith(`${theme}/`);
+  || file.startsWith(`${composition}/`);
 const registries = ['effects', 'animations', 'transitions']
   .map((name) => `${root}/remotion/src/${name}.generated.ts`);
 const queue = [`${root}/remotion/src/index.ts`, ...registries];
@@ -75,7 +74,7 @@ for (const name of Object.keys({...manifest.dependencies, ...manifest.devDepende
   try {
     const file = path.join(modules, name, 'package.json');
     const installed = JSON.parse(fs.readFileSync(file, 'utf8'));
-    if (installed.version !== lock[`node_modules/${name}`].version) throw new Error('version differs from MAIN lock');
+    if (installed.version !== lock[`node_modules/${name}`].version) throw new Error('version differs from frozen Agent lock');
     declared[name] = {version: installed.version, package_json_sha256: hash(file),
       physical_package: fs.realpathSync(path.dirname(file))};
   } catch (error) { failures.push({declared_package: name, error: error.message}); }
@@ -86,14 +85,8 @@ console.log(JSON.stringify({
   method: 'TypeScript AST + enhanced-resolve filesystem only; no compilation or peer module traversal',
   root, registry_files: registries.map((file) => ({path: label(file), sha256: hash(file)})),
   source_files: [...seen].sort().map((file) => ({path: label(file), sha256: hash(file)})),
-  generated_registry_bare_imports: generatedBare, edges, declared_main_packages: declared,
+  generated_registry_bare_imports: generatedBare, edges, declared_agent_packages: declared,
   failures, nonliteral,
-  scope: 'MAIN index plus ALL four original generated registries, recursively through every owned source import (including types); direct MAIN dependencies/devDependencies lock-version checked. External peers are resolved and hashed but their internals are not traversed.',
-  unused_legacy_declaration: {
-    package: '@banodoco/timeline-schema', version: '0.0.1',
-    declared_by: 'Composition6 package.json', referenced_by_owned_source: edges.some((e) => e.request.startsWith('@banodoco/timeline-schema')),
-    staged: fs.existsSync(`${modules}/@banodoco/timeline-schema`),
-    note: 'Not imported by this complete owned source graph; not needed for this bundle. No claim of a complete historical npm install or archive integrity for external peers.',
-  },
+  scope: 'Frozen Agent index and all three normal generated host registries; recursively resolves owned sources, types and lazy imports. Peers resolve to the full guarded f816 graph; no peer code is evaluated.',
 }, null, 2));
 if (failures.length || nonliteral.length) process.exitCode = 1;

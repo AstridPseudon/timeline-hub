@@ -1,0 +1,28 @@
+{
+  "raw": {
+    "id": "image",
+    "clipType": "image",
+    "asset": "image",
+    "track": "picture",
+    "at": 0,
+    "hold": 5,
+    "effects": [
+      {
+        "fade_out": 1
+      }
+    ]
+  },
+  "stored_cap_ms": 4000,
+  "projected_hold": 4,
+  "serialized_hold": 4,
+  "source_unchanged": true,
+  "runtime_admission": false,
+  "certified": false,
+  "claim": "UNCERTIFIED static compiled S2/currentRoot reference",
+  "helpers": [
+    "project_runtime_parent_composition",
+    "_render_compatible_projection",
+    "_resolved_theme_for_render",
+    "_serialize_timeline / Timeline.for_render"
+  ]
+}

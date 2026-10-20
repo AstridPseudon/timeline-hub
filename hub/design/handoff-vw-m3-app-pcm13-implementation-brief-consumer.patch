@@ -61,9 +61,11 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
    const reporter = useOptionalPreviewAudioFailureReporter();
    const premounting = useContext(Internals.SequenceContext)?.premounting ?? false;
    const buffer = useBufferState();
-@@ -154,6 +165,46 @@
+@@ -153,7 +164,68 @@
+   const [playable, setPlayable] = useState(false);
    const [starved, setStarved] = useState(false);
    const elementRef = useRef<HTMLAudioElement | null>(null);
++  const preparationProgress = useRef<() => void>(() => {});
    const isMounted = attempt.phase === 'mounted';
 +  const [prepared, setPrepared] = useState<{ mount: number; src: string; url: string }>();
 +  const playbackSrc = envelope
@@ -86,7 +88,27 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
 +    const prepare = async () => {
 +      const response = await fetch(src, { signal: abort.signal, credentials: mediaFetchCredentials(src) });
 +      if (!response.ok) throw new Error(`audio fetch ${response.status}`);
-+      const bytes = await response.arrayBuffer();
++      // Keep the existing progress-based hold while the original source is
++      // downloading, before there is a native WAV element to emit progress.
++      let bytes: ArrayBuffer;
++      if (response.body) {
++        const reader = response.body.getReader();
++        const chunks: Uint8Array[] = [];
++        let length = 0;
++        while (true) {
++          const { done, value } = await reader.read();
++          if (done || cancelled) break;
++          chunks.push(value);
++          length += value.byteLength;
++          preparationProgress.current();
++        }
++        const joined = new Uint8Array(length);
++        let offset = 0;
++        for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.byteLength; }
++        bytes = joined.buffer;
++      } else {
++        bytes = await response.arrayBuffer();
++      }
 +      if (cancelled) return;
 +      const context = new AudioContext();
 +      let decoded: AudioBuffer;
@@ -108,7 +130,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
  
    useEffect(() => {
      if (attempt.phase !== 'backoff') return undefined;
-@@ -188,7 +239,7 @@
+@@ -188,7 +260,7 @@
      const element = elementRef.current;
      if (!isMounted || !element) return undefined;
      return () => releaseMediaRequest(element);
@@ -117,7 +139,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
  
    useEffect(() => {
      const element = elementRef.current;
-@@ -203,7 +254,6 @@
+@@ -203,7 +275,6 @@
        dispatch('playable');
        clearFailure?.(clipId);
      };
@@ -125,7 +147,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
      updatePlayable();
      for (const type of READINESS_EVENTS) element.addEventListener(type, updatePlayable);
      element.addEventListener('error', onError);
-@@ -213,7 +263,7 @@
+@@ -213,7 +284,7 @@
        element.removeEventListener('error', onError);
        element.removeEventListener('canplay', onPlayable);
      };
@@ -134,7 +156,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
  
    // A browser that ignores `preload` (iOS Safari) leaves the element idle with
    // nothing buffered; start it once the clip is due. A request in flight is
-@@ -222,38 +272,38 @@
+@@ -222,38 +293,40 @@
      const element = elementRef.current;
      if (!isMounted || premounting || !element) return;
      if (element.networkState === element.NETWORK_IDLE && element.readyState < element.HAVE_FUTURE_DATA) element.load();
@@ -154,6 +176,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
        timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
      };
 -    element.addEventListener('progress', onProgress);
++    preparationProgress.current = onProgress;
 +    element?.addEventListener('progress', onProgress);
      return () => {
        window.clearTimeout(timer);
@@ -162,6 +185,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
 -  }, [attempt.mount, holdsPlayer, isMounted]);
 -
 -  if (!isMounted) return null;
++      preparationProgress.current = () => {};
 +      element?.removeEventListener('progress', onProgress);
 +    };
 +  }, [attempt.mount, holdsPlayer, isMounted, playbackSrc]);
@@ -184,7 +208,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
        // Buffer the whole premount window, not just metadata.
        preload="auto"
        // The hold above replaces Remotion's, which restarts requests in flight.
-@@ -292,7 +342,7 @@
+@@ -292,7 +365,7 @@
            || assetType.startsWith('video/');
          const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getSanitizedVolume(renderClip.volume);
          const playbackRate = getSanitizedPlaybackRate(renderClip.speed);
@@ -193,7 +217,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
          const clipAudio = (source: string) => (
            <ClipAudio
              clip={clip}
-@@ -346,7 +396,7 @@
+@@ -346,7 +419,7 @@
    trimAfter?: number;
    playbackRate: number;
  }> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
@@ -202,7 +226,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
    const audioIdentity = authoredAudioIdentity(clip);
    // The public compiler reads only authored audio/app/params and timing fields;
    // keep those semantic dependencies so equivalent clip objects stay stable.
-@@ -356,23 +406,23 @@
+@@ -356,23 +429,23 @@
      [authoredDuck, audioIdentity, fps],
    );
    /* eslint-enable react-hooks/exhaustive-deps */
@@ -235,7 +259,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
        />
      );
    }
-@@ -381,7 +431,7 @@
+@@ -381,7 +454,7 @@
      <PreviewAudio
        key={JSON.stringify([
          renderClip.id,
@@ -244,7 +268,7 @@ diff --git a/src/tools/video-editor/compositions/AudioTrack.tsx b/src/tools/vide
          renderClip.at,
          trimBefore,
          trimAfter,
-@@ -389,14 +439,17 @@
+@@ -389,14 +462,17 @@
          getClipDurationInFrames(renderClip, fps),
          fps,
          amplify,
@@ -356,7 +380,7 @@ diff --git a/src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
 new file mode 100644
 --- /dev/null
 +++ b/src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
-@@ -0,0 +1,327 @@
+@@ -0,0 +1,350 @@
 +// @vitest-environment jsdom
 +import React from 'react';
 +import { Blob } from 'node:buffer';
@@ -659,6 +683,29 @@ new file mode 100644
 +    expect(fetchMock).toHaveBeenCalledTimes(1);
 +    act(playable);
 +    expect(state.holds).toBe(0);
++  });
++
++  it('renews the same hold as source chunks arrive before the native WAV element exists', async () => {
++    vi.useFakeTimers();
++    let chunk = deferred<{ done: boolean; value?: Uint8Array }>();
++    const read = vi.fn(() => chunk.promise);
++    fetchMock.mockResolvedValue({ ok: true, body: { getReader: () => ({ read }) } });
++    render(<AudioTrack track={track} clips={[clip]} fps={30} />);
++    await flush();
++    for (let i = 0; i < 4; i++) {
++      const pending = chunk;
++      chunk = deferred();
++      await act(async () => {
++        vi.advanceTimersByTime(AUDIO_HOLD_LIMIT_MS / 2);
++        pending.resolve({ done: false, value: new Uint8Array([i]) });
++      });
++      expect(state.holds).toBe(1);
++    }
++    await act(async () => chunk.resolve({ done: true }));
++    expect(decode.mock.calls[0][0]).toEqual(Uint8Array.from([0, 1, 2, 3]).buffer);
++    act(playable);
++    expect(state.holds).toBe(0);
++    expect(fetchMock).toHaveBeenCalledTimes(1);
 +  });
 +
 +  it('keeps ordinary media readiness, progress, retry and teardown in the existing flow', () => {

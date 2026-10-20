@@ -1,0 +1,45 @@
+Review target: 634867fed71b4ae53acaa3c3162315527c2bdb23
+Parent: 4ef1391c2c104d5d11b3a27265035c51be296045
+Tree: e2ac895d16ab205221358aeee9b8540f57f71779
+Candidate is an exact-object sparse extract in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-root-prep-final-independent-gate/candidate; dependencies were never installed/copied into it. It is removed after review; all logs/scripts remain in the worker directory.
+
+Exact-object AST comparison:
+python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-root-prep-final-independent-gate/review_ast.py
+Result: PASS; full checks/counts in ast-review.log.
+
+Import-order probes (cwd candidate):
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python ../review_imports.py > ../imports-review.log 2>&1
+Result: PASS helper-first and run-first; subprocess.Popen forbidden in child probe. An earlier overstrong assertion that the package would not import run was corrected after reading unchanged remotion/__init__.py's eager export.
+
+Final requested key cases (cwd candidate):
+env -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/opt/node20/bin:$PATH ASTRID_NODE_EXECUTABLE=/opt/node20/bin/node ASTRID_REMOTION_PROJECT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-current-http-final-proof/audio-project /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --basetemp=../pytest-key-temp tests/packs/rendering/test_remotion_capture_scene_props.py::test_read_only_root_context_matches_capture_without_launch tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits tests/packs/rendering/test_composed_frame_capture.py::test_cache_identity_tracks_root_preparation_source tests/test_structure_contracts.py::test_validate_import_layering_flags_absolute_and_relative_core_pack_imports tests/test_structure_contracts.py::test_validate_import_layering_allows_core_subsystem_imports tests/test_structure_contracts.py::test_validate_import_layering_flags_dynamic_concrete_pack_imports_and_respects_bridge_exemptions tests/test_structure_contracts.py::test_validate_cli_domain_boundary_flags_domains_importing_cli_modules tests/test_structure_contracts.py::test_validate_import_layering_allows_core_imports_but_flags_pack_imports tests/test_structure_contracts.py::test_public_import_and_shim_smoke > ../key-tests-final.log 2>&1
+Result: 17 passed in 5.77s.
+
+Broader attempted offline lane (cwd candidate):
+env -u NODE_OPTIONS -u NODE_PATH PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" PATH=/opt/node20/bin:$PATH ASTRID_NODE_EXECUTABLE=/opt/node20/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules ASTRID_REMOTION_PROJECT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-current-http-final-proof/audio-project /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --basetemp=../pytest-final-temp tests/packs/rendering/test_remotion_capture_scene_props.py tests/packs/rendering/test_normal_audio_run.py tests/packs/rendering/test_composed_frame_capture.py tests/packs/rendering/test_remotion_native_window.py tests/packs/rendering/test_scene_source_carry.py tests/packs/rendering/test_capture_scene_labels.py tests/test_structure_contracts.py::test_validate_import_layering_flags_absolute_and_relative_core_pack_imports tests/test_structure_contracts.py::test_validate_import_layering_allows_core_subsystem_imports tests/test_structure_contracts.py::test_validate_import_layering_flags_dynamic_concrete_pack_imports_and_respects_bridge_exemptions tests/test_structure_contracts.py::test_validate_cli_domain_boundary_flags_domains_importing_cli_modules tests/test_structure_contracts.py::test_validate_import_layering_allows_core_imports_but_flags_pack_imports tests/test_structure_contracts.py::test_public_import_and_shim_smoke > ../final-offline-tests.log 2>&1
+Result: 149 passed, 28 setup errors in 20.81s; missing sparse-extract remotion/package.json in all 28 native-query fixtures. No tests changed/weakened/skipped. This was not a successful native-query rerun.
+
+Earlier setup attempts:
+- Same broad files, original recycled /tmp/vw-m3-agent-gate-node20.19.4/bin/node path, initial sparse extract: 2 collection errors (generated Runtime client and registry script omitted).
+- After those exact files restored: 64 failed, 52 passed, 61 errors in 16.28s (declared pack resources omitted); offline-incomplete-extract.log.
+- Original Node path plus restored text resources, before required font resources restored: 64 failed, 52 passed, 61 errors in 91.94s; offline-tests.log. The old Node executable is also absent now.
+- Key lifetime/fingerprint cases with /opt/node20 Node and before required fonts restored: 3 failed, 2 passed, 6 errors in 8.52s; key-incomplete-extract.log.
+- Exact declared font resources restored; final key command above passes. No fake resources or version shims used.
+
+Runtime used independently:
+/opt/node20/bin/node --version
+Result: v20.20.0.
+
+Commit whitespace:
+git -C /home/user/peteromallet/astrid-agent diff --check 4ef1391c 634867fe
+Result: exit 2; root_preparation.py:210 new blank line at EOF. Non-blocking nit.
+
+Central evidence read, not rerun:
+cat $ORCH/tests/vw-m3-root-prep-lifetime-extract-integration-viewing-normal-pcm-http-final-current-1020133642-9871/{snap,status,exit,log.txt}
+Result: exact final tree e2ac895d16ab205221358aeee9b8540f57f71779, pass, 0, 82 passed in 63.83s.
+Exact original worker test commands:
+$ORCH/design/handoff-vw-m3-root-prep-lifetime-extract-commands.txt
+Exact central command/files:
+$ORCH/tests/vw-m3-root-prep-lifetime-extract-integration-viewing-normal-pcm-http-final-current-1020133642-9871/request
+No central test request submitted by this review.
+

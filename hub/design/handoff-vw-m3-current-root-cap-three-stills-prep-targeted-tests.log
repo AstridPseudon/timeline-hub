@@ -1,0 +1,24 @@
+
+==================================== ERRORS ====================================
+_____ ERROR collecting tests/editing_conformance/test_compile_contracts.py _____
+tests/editing_conformance/test_compile_contracts.py:28: in <module>
+    VISUAL = json.loads((FIXTURES / 'visual_compile_contract.json').read_text(encoding='utf-8'))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/pathlib.py:1044: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/offline/tests/editing_conformance/fixtures/visual_compile_contract.json'
+=========================== short test summary info ============================
+ERROR tests/editing_conformance/test_compile_contracts.py - FileNotFoundError...
+1 error in 0.13s
+ERROR: found no collectors for /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/offline/tests/editing_conformance/test_compile_contracts.py::test_single_occurrence_cap_through_normal_managed_projection
+
+ERROR: found no collectors for /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/offline/tests/editing_conformance/test_compile_contracts.py::test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source
+
+ERROR: found no collectors for /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/offline/tests/editing_conformance/test_compile_contracts.py::test_cap_fade_public_source_clock_and_half_open_draw_cap
+
+.....                                                                    [100%]
+5 passed in 3.63s

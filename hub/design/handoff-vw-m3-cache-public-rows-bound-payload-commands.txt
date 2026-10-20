@@ -1,0 +1,26 @@
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_composed_frame_capture.py tests/packs/rendering/test_bounds_plumbing.py tests/packs/rendering/test_timeline_visualize_labels.py tests/packs/rendering/test_labels_overlay.py tests/sdk/test_timeline_filmstrip.py tests/packs/rendering/test_timeline_filmstrip_cards.py -k 'not pack_uses_rendered_frames and not pack_keeps_audio_navigation'
+155 passed, 3 deselected in 9.44s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py -k 'not native'
+40 passed, 19 deselected in 5.88s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/rendering/test_capture_scene_labels.py -k 'composed_capture or filmstrip_preserves_session_primary or filmstrip_successful_capture or stale_root_inputs or missing_or_guessed or only_actual or cache_only'
+17 passed, 30 deselected in 1.47s
+
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+All checks passed! (exit 0)
+
+git diff --check
+exit 0
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m mypy --no-incremental --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-cache-public-rows-bound-payload/mypy-cache --follow-imports=silent astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+exit 1; 5 errors (two frame_resolution tuple arg-type, two snapshot Mapping indexed assignments, one _effect_id_for_clip arg-type)
+
+git show HEAD:astrid/packs/rendering/actions/timeline_visualize/composed_frame.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-cache-public-rows-bound-payload/baseline-composed_frame.py
+exit 0
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m mypy --no-incremental --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-cache-public-rows-bound-payload/mypy-cache --follow-imports=silent --shadow-file astrid/packs/rendering/actions/timeline_visualize/composed_frame.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-cache-public-rows-bound-payload/baseline-composed_frame.py astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+exit 1; exactly the same 5 errors on untouched HEAD (baseline lines 440, 489, 641, 642, 730; candidate lines 533, 584, 737, 738, 826)
+
+git apply --reverse --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-cache-public-rows-bound-payload.patch
+exit 0; flat patch matches the completed worktree

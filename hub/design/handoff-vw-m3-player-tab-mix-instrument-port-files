@@ -1,0 +1,6 @@
+tests/e2e/timeline/viewing-parity/cases.ts
+tests/e2e/timeline/viewing-parity/canvas.test.ts
+tests/e2e/timeline/viewing-parity/tab-audio.ts
+tests/e2e/timeline/viewing-parity/tab-audio.test.ts
+tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs

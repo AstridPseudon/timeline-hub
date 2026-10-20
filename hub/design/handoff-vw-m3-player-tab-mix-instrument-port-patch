@@ -1,0 +1,1 @@
+Test-only App leaf: register one actual Player whole-tab capture case; add injectable stream lifecycle helper; add offline native-PTS/mock/controller tests; update only the existing case-count/order assertion.

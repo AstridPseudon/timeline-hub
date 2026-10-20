@@ -1,0 +1,109 @@
+{
+  "tracks": [
+    {
+      "id": "picture",
+      "kind": "visual",
+      "label": "Picture",
+      "fit": "cover"
+    }
+  ],
+  "clips": [
+    {
+      "id": "image-occurrence:image",
+      "clipType": "image",
+      "asset": "image-occurrence:image",
+      "track": "picture",
+      "at": 0.0,
+      "hold": 4.0,
+      "effects": [
+        {
+          "fade_out": 1
+        }
+      ],
+      "shot_id": "image-shot",
+      "shot_occurrence_id": "image-occurrence",
+      "app": {
+        "astrid_shot_composition": {
+          "project_id": "project-demo",
+          "timeline_id": "timeline-1",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "internal_timeline_revision_id": "image-internal",
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "source_offset": 0,
+          "speed": 1.0,
+          "gain": 1,
+          "muted": false,
+          "source_clip_id": "image"
+        }
+      }
+    }
+  ],
+  "output": {
+    "fps": 30,
+    "resolution": "1920x1080",
+    "file": "output.mp4"
+  },
+  "theme_overrides": {
+    "visual": {
+      "canvas": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30
+      }
+    }
+  },
+  "app": {
+    "astrid_shot_composition": {
+      "schema_version": 1,
+      "project_id": "project-demo",
+      "timeline_id": "timeline-1",
+      "parent_revision_id": "image-cap-parent",
+      "occurrences": [
+        {
+          "occurrence_id": "image-occurrence",
+          "shot_id": "image-shot",
+          "shot_revision_id": "image-shot-revision",
+          "placement": {
+            "start_ms": 0,
+            "track": "picture"
+          },
+          "track": "picture",
+          "duration_ms": 4000,
+          "source_offset": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "transform": {},
+          "provenance": {},
+          "revision_id": "image-shot-revision",
+          "project_id": "project-demo",
+          "timeline_id": "timeline-1",
+          "ordinal": 0,
+          "output_identity": "image-cap-parent:image-occurrence",
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "at": 0.0,
+          "hold": 4.0,
+          "duration_seconds": 4.0,
+          "blank": false
+        }
+      ],
+      "outputs": [
+        {
+          "occurrence_id": "image-occurrence",
+          "output_identity": "image-cap-parent:image-occurrence",
+          "stable_deep_link": "astrid://projects/project-demo/timelines/timeline-1/occurrences/image-occurrence",
+          "shot_id": "image-shot",
+          "revision_id": "image-shot-revision",
+          "internal_timeline_revision_id": "image-internal",
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "blank": false
+        }
+      ]
+    }
+  },
+  "theme": "banodoco-default"
+}
