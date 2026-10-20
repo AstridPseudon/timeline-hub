@@ -13,6 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
+import type { HistoryPage } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
@@ -851,6 +852,26 @@ describe('RuntimeDataProvider', () => {
     });
     expect(loaded).not.toHaveProperty('thumbUrl');
     expect(requests).toContain('GET /v1/generations/generation-lightbox/variants?limit=200&cursor=variants-page-2');
+  });
+
+  it.each([
+    ['the first page', (provider: RuntimeDataProvider) => {
+      vi.spyOn(provider, 'listTimelineCommits').mockResolvedValue({ items: [], next_cursor: null } as unknown as HistoryPage);
+    }],
+    ['a later page', (provider: RuntimeDataProvider) => {
+      const head = { revision_id: 'parent-r1', publication_id: 'publication-current' };
+      vi.spyOn(provider, 'listTimelineCommits')
+        .mockResolvedValueOnce({ items: [], next_cursor: 'history-page-2', head })
+        .mockResolvedValueOnce({ items: [], next_cursor: null } as unknown as HistoryPage);
+    }],
+  ])('refuses a malformed history head on %s with a visible schema error', async (_page, setup) => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    setup(provider);
+
+    const failure = provider.loadTimelineCommandBasis(TIMELINE_ID);
+    await expect(failure).rejects.toThrow(TimelineSchemaIncompatibleError);
+    await expect(failure).rejects.toThrow('malformed timeline history head');
   });
 
   it('uses the authenticated generated client for canonical read/save/readback/reload', async () => {

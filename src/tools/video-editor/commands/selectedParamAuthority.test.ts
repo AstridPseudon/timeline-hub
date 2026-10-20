@@ -95,6 +95,24 @@ describe('resolveSelectedParamAuthority', () => {
     expect(resolveSelectedParamAuthority(input)).toEqual(p1);
   });
 
+  it('uses the existing occurrence graph when its canonical materialization is not duplicated', () => {
+    const occurrenceSelect = 'occurrence:occ-a/clip:effect';
+    const root = entry('p0', 'r0', null, [], 'bootstrap');
+    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [
+      record(p1, 'clip.set-element', {}, occurrenceSelect),
+    ]);
+    const input = selectedHistory(root, selected);
+    input.select = occurrenceSelect;
+    Object.assign(input, {
+      graph: {
+        occurrences: [{ occurrence_id: 'occ-a', shot_id: 'shot-a', revision_id: 'shot-a-r1' }],
+        shot_revisions: [{ shot_id: 'shot-a', revision_id: 'shot-a-r1',
+          internal_timeline_revision: { clips: [structuredClone(input.rawClip)] } }],
+      },
+    });
+    expect(resolveSelectedParamAuthority(input)).toEqual(p1);
+  });
+
   it('refuses an occurrence pin when its concrete shot materialization is missing', () => {
     const occurrenceSelect = 'occurrence:occ-a/clip:effect';
     const root = entry('p0', 'r0', null, [], 'bootstrap');

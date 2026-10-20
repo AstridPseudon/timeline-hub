@@ -11,6 +11,8 @@ import { createTimelineCommandSession, type CommandSessionState, type TimelineCo
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
+import { resolveSelectedParamAuthority as resolveSelectedParamAuthorityFromHistory } from '../commands/selectedParamAuthority.ts';
+import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
@@ -35,6 +37,7 @@ export function useTimelineCommandSession(options: {
   const activeRef = useRef(false);
   const ownsHistoryRef = useRef(false);
   const readGenerationRef = useRef(0);
+  const basisRef = useRef<TimelineCommandBasis>();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
@@ -42,6 +45,7 @@ export function useTimelineCommandSession(options: {
   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
   useEffect(() => {
     if (!enabled || !initialReadReady) return;
+    basisRef.current = undefined;
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
@@ -69,6 +73,7 @@ export function useTimelineCommandSession(options: {
         || (initialHead?.timelineId === timelineId && initialHead.projectId !== basis.canonicalDocument.project_id)) {
         throw new Error('Initialization requires a verified closure in the current project and timeline');
       }
+      basisRef.current = basis;
       const project = async (accepted: TimelineCommandBasis, previews: TimelinePatch[], initial = false) => {
         if (disposed) return;
         const generation = initial ? projectGeneration : ++projectGeneration;
@@ -123,6 +128,7 @@ export function useTimelineCommandSession(options: {
           const fresh = await provider.loadTimelineCommandBasis!(timelineId);
           invalidateReads();
           if (disposed) throw new Error('Timeline command session is closed');
+          basisRef.current = fresh;
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
@@ -188,6 +194,7 @@ export function useTimelineCommandSession(options: {
         setState({ ...session.getState() });
       }
     })().catch((error) => {
+      basisRef.current = undefined;
       disposeSession();
       changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
         ownerId: null, recoverableOwners: [], canUndo: false });
@@ -195,6 +202,7 @@ export function useTimelineCommandSession(options: {
     return () => {
       disposed = true;
       invalidateReads();
+      basisRef.current = undefined;
       ownsHistoryRef.current = false;
       projectGeneration++;
       sessionRef.current = null;
@@ -212,14 +220,17 @@ export function useTimelineCommandSession(options: {
     void provider.loadTimelineCommandBasis!(timelineId).then((basis) => {
       if (cancelled || sessionRef.current !== session || generation !== readGenerationRef.current) return;
       const currentHead = latest.current.headRevisionRef.current;
-      if (currentHead !== priorHead && (currentHead?.headRevisionId !== basis.head.revisionId
-        || currentHead.headPublicationId !== basis.head.publicationId)) return;
+      if (!currentHead || !priorHead
+        || currentHead.headRevisionId !== priorHead.headRevisionId
+        || currentHead.headPublicationId !== priorHead.headPublicationId
+        || currentHead.headRevisionId !== basis.head.revisionId
+        || currentHead.headPublicationId !== basis.head.publicationId
+        || currentHead.projectId !== basis.canonicalDocument.project_id
+        || currentHead.timelineId !== timelineId
+        || basis.canonicalDocument.timeline_id !== timelineId) return;
       if (!cancelled) {
-        if (currentHead?.projectId === basis.canonicalDocument.project_id && currentHead.timelineId === timelineId
-          && basis.canonicalDocument.timeline_id === timelineId
-          && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
-          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
-        }
+        latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
+        basisRef.current = basis;
         session.observe(basis);
       }
     }).catch((error) => {
@@ -253,8 +264,23 @@ export function useTimelineCommandSession(options: {
   }, [requireSession]);
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+  const resolveSelectedParamAuthority = useCallback((input: {
+    select: string;
+    rawClip: Record<string, unknown> | null | undefined;
+  }): DocumentPin => {
+    const basis = basisRef.current;
+    if (!basis?.history) throw new Error('Selected PARAM authority is unavailable; draft preserved');
+    return resolveSelectedParamAuthorityFromHistory({
+      history: basis.history,
+      head: basis.head,
+      canonicalDocument: basis.canonicalDocument as unknown as Record<string, unknown>,
+      graph: basis.graph,
+      ...input,
+    });
+  }, []);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     elementPort: sessionRef.current?.elementPort,
+    resolveSelectedParamAuthority,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
