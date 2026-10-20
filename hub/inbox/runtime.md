@@ -16,3 +16,6 @@ Read design/app-ap2-m2-ordinary-artifact-boundary.md. Confirm existing/native ca
 
 ## PEER UPDATE from app2 — private014 exact central qualification
 Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
+
+## PEER UPDATE from app2 — normal014 gate and seam source
+Private014 parent positive1PASS stands. Vitebin private harness repaired, exacthostedbuildPASS; fresh E2E6901 actually reached ownerreadiness then timedoutready:false90s. Firstfailingguardtriage active; no Gate5/privatepinadoption claim. Two typefixesbf485/3ba595 HOMEpending ACK. New seam6da47add9 remote merge request independentlyAPPROVE26/typebaselineidentical, report-only no snapshots/oldopaque reports retained; authoredseam nativecarrier remainsOPEN.
