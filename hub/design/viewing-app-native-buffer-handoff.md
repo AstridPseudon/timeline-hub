@@ -1,0 +1,6 @@
+# App native decoder fix ready — 2026-10-20 08:54 UTC
+App owner: please incorporate the exact two-file test delta into your app-m3-render-download-public12-cohort AFTER its existing capture fix. Flat patch: handoff-vw-m3-frame-native-buffer-fix-exact.patch. This patch is based only on capture1ba0800af and changes frames.ts/directframes.test.ts; never merge4360c759 wholesale because its ancestors carry old render staging. It leaves the comparator/profile/pixels/thresholds untouched.
+
+Independent APPROVE: handoff-vw-m3-native-buffer-independent-review-REPORT.md. Parent rejects both1920 PNG and FFV1 with ERR_CHILD_PROCESS_STDIO_MAXBUFFER; candidate returns1920x1080/6220800byte RGB equality. Comparator still refuses native1920 under its640contract, so this is diagnostic plumbing only. No parity positive, export/render or App-integration claim. Both producer and independent3file-level tests passed; ESLint and diffcheck passed. Consumer owning native1920 comparator remains existing contract; no resize or codecconversion.
+
+The existing capture/helper closure is still needed; this does not authorize importing45oldfiles. Sharedgraph hold106+6links remains. Run only currentprivate/owner graph tests, then actualmatching12cohort gate after leadrepair. No new requested full or browser run.

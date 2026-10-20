@@ -1,0 +1,219 @@
+$ bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-native-window-resume-r1/test-targeted.sh tests/packs/rendering/test_normal_audio_run.py
+F.FFFFFFFFFFFFFFFF...                                                    [100%]
+=================================== FAILURES ===================================
+______ test_native_layer_retains_exact_clips_window_and_materialized_hash ______
+tests/packs/rendering/test_normal_audio_run.py:75: in test_native_layer_retains_exact_clips_window_and_materialized_hash
+    assert adapted.window is request.window
+E   AssertionError: assert None is FrameWindow(start_frame=15, end_frame=45, fps_rational=(30000, 1001), source_range=None, speed=None)
+E    +  where None = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-28/test_native_layer_retains_exac0/segment-i...window=None, audio=None, profile=None, backend_config={}, metadata={}, materialized_root=None, materialized_objects={}).window
+E    +  and   FrameWindow(start_frame=15, end_frame=45, fps_rational=(30000, 1001), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-28/test_native_layer_retains_exac0/timeline....speed=None), audio=None, profile=None, backend_config={}, metadata={}, materialized_root=None, materialized_objects={}).window
+_____ test_render_serialization_preserves_submillisecond_source_placement ______
+tests/packs/rendering/test_normal_audio_run.py:99: in test_render_serialization_preserves_submillisecond_source_placement
+    assert actual == raw
+E   AssertionError: assert {'clips': [{'...l': 'Other'}]} == {'clips': [{'...l': 'Other'}]}
+E     
+E     Omitting 3 identical items, use -vv to show
+E     Differing items:
+E     {'clips': [{'app': {'astrid_slice_origin': {'at': 99}, 'opaque': [1, {'keep': True}]}, 'asset': 'sound', 'at': 0.017, ...lipType': 'am-sprite', 'hold': 4, 'id': 'sprite', ...}, {'asset': 'sound', 'at': 0, 'from': 0, 'id': 'excluded', ...}]} != {'clips': [{'app': {'astrid_slice_origin': {'at': 99}, 'opaque': [1, {'keep': True}]}, 'asset': 'sound', 'at': 0.01668...lipType': 'am-sprite', 'hold': 4, 'id': 'sprite', ...}, {'asset': 'sound', 'at': 0, 'from': 0, 'id': 'excluded', ...}]}
+E     Use -v to get more diff
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[full] _
+tests/packs/rendering/test_normal_audio_run.py:232: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9d9d9d0>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_actual_normal_props_prepa0/.remotion-props.json')).paths
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[window] _
+tests/packs/rendering/test_normal_audio_run.py:232: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9e98090>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_actual_normal_props_prepa1/.remotion-props.json')).paths
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[layer] _
+tests/packs/rendering/test_normal_audio_run.py:232: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'clips': [{'app': {'astrid_slice_origin': ...7a9f46810>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_actual_normal_props_prepa2/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error0] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9af8350>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c0/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error1] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9dae0d0>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c1/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error2] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9d80350>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c2/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error0] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7aa13aa90>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c3/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error1] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9fd7310>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c4/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error2] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9f9d110>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c5/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error0] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'clips': [{'app': {'astrid_slice_origin': ...7a9fb9110>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c6/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error1] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'clips': [{'app': {'astrid_slice_origin': ...7a9be7c10>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c7/.remotion-props.json')).paths
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error2] _
+tests/packs/rendering/test_normal_audio_run.py:245: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'clips': [{'app': {'astrid_slice_origin': ...7a9df6190>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_consumer_failure_c8/.remotion-props.json')).paths
+_____________ test_normal_pcm_error_never_launches_consumer[full] ______________
+tests/packs/rendering/test_normal_audio_run.py:257: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9eb0090>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_pcm_error_never_la0/.remotion-props.json')).paths
+____________ test_normal_pcm_error_never_launches_consumer[window] _____________
+tests/packs/rendering/test_normal_audio_run.py:257: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'theme': 'banodoco-default', 'tracks': [{'...7a9ec3910>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_pcm_error_never_la1/.remotion-props.json')).paths
+_____________ test_normal_pcm_error_never_launches_consumer[layer] _____________
+tests/packs/rendering/test_normal_audio_run.py:257: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:186: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1312: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:177: in command
+    assert len(state.paths) == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = len([])
+E    +    where [] = namespace(paths=[], events=['server-enter', 'consume'], props={'timeline': {'clips': [{'app': {'astrid_slice_origin': ...7a9e37990>, props_path=PosixPath('/tmp/pytest-of-root/pytest-28/test_normal_pcm_error_never_la2/.remotion-props.json')).paths
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_native_layer_retains_exact_clips_window_and_materialized_hash
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_render_serialization_preserves_submillisecond_source_placement
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[full]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[window]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[layer]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[full]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[window]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[layer]
+17 failed, 4 passed in 4.39s
+
+exit=1

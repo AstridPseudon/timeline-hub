@@ -1,0 +1,44 @@
+[
+  {
+    "path": "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py",
+    "before": 3,
+    "after": 3,
+    "new": []
+  },
+  {
+    "path": "astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py",
+    "before": 3,
+    "after": 3,
+    "new": []
+  },
+  {
+    "path": "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py",
+    "before": 11,
+    "after": 11,
+    "new": []
+  },
+  {
+    "path": "astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py",
+    "before": 0,
+    "after": 0,
+    "new": []
+  },
+  {
+    "path": "astrid/sdk/timeline_filmstrip.py",
+    "before": 11,
+    "after": 11,
+    "new": []
+  },
+  {
+    "path": "tests/packs/rendering/test_capture_scene_labels.py",
+    "before": 0,
+    "after": 0,
+    "new": []
+  },
+  {
+    "path": "tests/packs/rendering/test_scene_source_carry.py",
+    "before": 0,
+    "after": 0,
+    "new": []
+  }
+]

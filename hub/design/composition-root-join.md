@@ -1,21 +1,21 @@
 # Composition root join — step 1 review
 
-**Verdict: BLOCK the ancestry join.** Main is **not fully represented in the original integration root**. Six main paths are absent, including both compiler configurations and both test files. Later repairs must not be attributed to that root. Current integration also lacks main's Makefile; its `clean` convenience has no explicit replacement or settled retirement rationale. No join was performed, and steps 2–3 are not qualified.
+**Verdict: ROOTJOIN READY for the accepted CURRENT-coverage criterion.** The original integration root did omit six main paths, but the 08:20 decision accepts the later M0 repairs and the two explicit test retirements. Current HEAD now contains main's Makefile byte-for-byte via the approved wrapper merge. No history join has been performed; merge-base and dry-run postconditions remain for the lead.
 
-Authority: [PLAN](../PLAN.md), especially settled decisions 1–2/9–10, M0/M3/M4, and the delivery decision; [Viewing INBOX, 07:53Z](../managers/viewing/INBOX.md). The latter requires proof against the **original root** before an `ours` merge, and escalation with the file list if proof fails. This report follows that condition rather than treating every inherited difference as intentional.
+Authority: [PLAN](../PLAN.md), especially settled decisions 1–2/9–10, M0/M3/M4, and the delivery decision; [Viewing INBOX, 08:20Z](../managers/viewing/INBOX.md). The accepted criterion is current-tree coverage after the documented M0 repairs, not the failed original-root criterion. This report preserves the original-root loss as history, while classifying every main path in the current tree.
 
 ## Exact objects and scope
 
-All objects were inspected read-only in `/home/user/work/wt/vw-m4-composition-root-coverage`. The primary repository's `origin/main` and `/home/user/work/composition`'s HEAD independently resolved to the main/current objects below.
+All objects were inspected read-only in `/home/user/work/wt/vw-m4-root-current-coverage-final`. The primary repository's `origin/main` and current `HEAD` independently resolved to the main/current objects below.
 
 | Role | Commit | Tree | Tracked paths |
 |---|---|---|---:|
 | `origin/main` (v0.0.6) | `67b8aa3d0d6831d3e3504a340ff583c3da253707` | `62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120` | 29 |
 | Integration's only original root | `f9da6c0477feb73a7d0f13f37bed3e4861254cd2` | `1d92ed9b6a1a77ee382c84205419e878cf49ef4d` | 86 |
 | Frozen R4 Composition / integration start | `c82eb7c459d0a41263954bf007071a6a0e8e0a6a` | `49975e7a54fd594e1b7fc807681fe28611d57864` | 92 |
-| Current `tl/integration` and worker HEAD | `5e06f40146573a529896cc812229eb890c53c81a` | `61d54da1d6a5b1f26132602cec49e84bded87805` | 110 |
+| Current `tl/integration` and worker HEAD | `024f69501cfceb7f80d1c0c3fd26e6dd52568784` | `628286fa4d3128d53f2fc3a37fb3402b51d3232c` | 111 |
 
-Main's only root is `a759dfe61ac93db6641aad7439e46ab38469053f`, tree `dc09c855bb3f5e543d5f2fd536bc9efd7b168ffd`. Integration has only `f9da6c0`, **not** `c82eb7c`, as its root. `git merge-base origin/main HEAD` produced no SHA and exited **1**. The histories remain unrelated.
+Main's only root is `a759dfe61ac93db6641aad7439e46ab38469053f`, tree `dc09c855bb3f5e543d5f2fd536bc9efd7b168ffd`. Integration still has only `f9da6c0`, **not** `c82eb7c`, as its root. `git merge-base origin/main HEAD` currently produces no SHA and exits **1** because the lead has not yet performed the history join. The histories remain unrelated until that authorized operation.
 
 The original-root commit body states: “This initial import contains the authenticated npm package payload only (86 members), not the former repository tests or history.” That explains the loss; it does not authorize deleting main's repository infrastructure under the forward-port plan.
 
@@ -25,20 +25,22 @@ The original-root commit body states: “This initial import contains the authen
 |---|---:|---:|---:|---:|
 | Original root | 10 | 13 | 6 | 63 |
 | Frozen R4 start | 10 | 13 | 6 | 69 |
-| Current integration | 5 | 21 | 3 | 84 |
+| Current integration | 6 | 21 | 2 | 84 |
+
+For the accepted current-coverage classification, the six equal paths are `Makefile`, `typescript/src/lib/duration.ts`, `typescript/src/lib/effect-params.ts`, `typescript/src/lib/render-bounds.ts`, `typescript/src/lib/tracks.ts`, and `typescript/src/lib/trim.ts`. The 21 changed paths are intentional, source-backed forward-port differences recorded below. The only two current absences are replaced tests, not unaccounted main content: `typescript/tests/scaffold.test.ts` and `typescript/tests/theme-api-smoke.ts`. The four-tree union remains 157 unique paths, with 157/157 represented in the flat table and 84 current additions relative to main.
 
 ## Missing content: exact list and disposition
 
 | Class | Main path absent in original root (also absent in frozen R4) | Actual current replacement / remaining gap |
 |---|---|---|
 | C1 | `.gitignore` | Restored by `6a3247d`; current ignores dependencies and generated/test output while tracking the lockfile. This is a later M0 repair, not root coverage. |
-| G1 | `Makefile` | Still absent. `install`, `build`, `test` delegated to npm and have direct equivalents. `clean` removed `typescript/dist` and `node_modules`; current build only cleans `dist`. No make compatibility wrapper or full cleanup equivalent exists. No explicit settled decision retires it. |
-| G2 | `typescript/tests/scaffold.test.ts` | Still absent. Its constant-equals-itself tag assertion fits PLAN's literal-test cut. Its other test checked generated registry existence and both exported registry symbols: real coverage, not just ceremony. Root has neither test nor replacement runner. Current `scripts/gen-registry.test.mjs`, `typescript/tests/registries.test.ts` and the package smoke exercise generation/exports instead (`6a3247d`, `ed897544`). |
-| G3 | `typescript/tests/theme-api-smoke.ts` | Still absent. Main's downstream type probe imports `composeAnimations`, `useTheme`, `EffectProps`, `AnimationReferenceList`, `RuntimeTheme`. Root retains those exports but has no executable downstream typecheck replacement. Current `scripts/smoke-package.mjs` probes public ESM and strict NodeNext declarations; `typescript/tests/theme.test.ts` exercises `useTheme`/provider identity, and the strict source build checks the retained types. Replacement source exists now; no such smoke was run in this review. |
-| G4 | `typescript/tsconfig.json` | Restored by `6a3247d`, then upgraded by `ed897544`: full strict source/declaration build, `noEmitOnError`, emitted declarations for built package, no host aliases. Root's `build`/`build:ts` reference this missing path; masked failure is not representation. |
-| G4 | `typescript/tsconfig.test.json` | Restored by `6a3247d`; current compiles full source and `*.test.ts` to `typescript/test-dist`. Root's `build:test` references this missing path. Its `test` command additionally references absent `typescript/tests/register-extensionless.mjs` (not a main file, but another dangling reference). |
+| G1 | `Makefile` | Restored by the approved `tl/vw-m4-restore-main-makefile` work and observed in current merge `024f69501`; its blob is byte-identical to main. `install`, `build`, and `test` delegate to npm, and `clean` removes `typescript/dist` and `node_modules` as main specifies. |
+| G2 | `typescript/tests/scaffold.test.ts` | Retired by the accepted current-coverage decision. Its constant-equals-itself tag assertion is the PLAN literal-test cut. Its meaningful registry existence/symbol check is replaced by `scripts/gen-registry.test.mjs` (generation/check behavior) and `typescript/tests/registries.test.ts` (runtime registry dispatch), with the public package smoke in `scripts/smoke-package.mjs` referencing the registry exports. |
+| G3 | `typescript/tests/theme-api-smoke.ts` | Retired by the accepted current-coverage decision. Its replacement names are the existing public-package consumer in `scripts/smoke-package.mjs`, `typescript/tests/theme.test.ts` for provider/runtime identity, and the strict source/declaration build. The 08:20 extension that adds explicit `useTheme`, `AnimationReferenceList`, `THEME_PACKAGE_CLIP_TYPES`, and `THEME_PACKAGE_REGISTRY` consumer references is on candidate `1ffb8d7` (runtime assertion follow-up `44e9de5`), **not current HEAD**; this report does not claim those candidate edits are merged. |
+| G4 | `typescript/tsconfig.json` | Restored by `6a3247d`, then upgraded by `ed897544`: full strict source/declaration build, `noEmitOnError`, emitted declarations for the built package, and no host aliases. Current package scripts use this config honestly. |
+| G4 | `typescript/tsconfig.test.json` | Restored by `6a3247d`; current compiles full source and `*.test.ts` to `typescript/test-dist`. The current test command uses the extensionless loader that exists in the current tree; no main path is silently omitted. |
 
-Thus even granting the documented current test replacements, the literal original-root condition fails. The Makefile deletion is also unresolved in the current-tree interpretation. Do not silently replace the requested original-root proof with “the current package builds.”
+The literal original-root condition still fails historically, and this report does not rewrite that fact. Under the explicitly accepted current-tree criterion, however, all 29 main paths are accounted for as equal, intentional, or replaced; the Makefile owner merge is present at current HEAD. This is a coverage readiness statement, not a claim that the history join already happened.
 
 ## Changed main content: intent and actual source replacement
 
@@ -76,8 +78,22 @@ git diff --name-status --no-renames origin/main HEAD
 git merge-base origin/main HEAD
 ```
 
-Results: clean worker tree; one integration root; counts and identities above; six original-root omissions / three current absent paths; merge-base exit 1. Per-file source diffs, original and replacement test/config bodies, and the cited change commits were inspected. TSV completeness/hash membership was checked against all four actual trees (157/157 rows, all 29 main paths represented in the classification; **PASS**).
+Results: clean worker tree; one integration root; counts and identities above; six original-root omissions / two current retired-test paths; Makefile blob equal to main. Per-file source diffs, original and replacement test/config bodies, and the cited change commits were inspected. TSV completeness/hash membership was independently checked against all four actual trees (157/157 rows, all 29 main paths represented; **PASS**). Current-vs-main classification is 6 equal, 21 intentional changes, and 2 replaced absences.
 
-**No product tests were run:** this is a read-only tree/source audit, with no product/test edits. No full, browser, socket, build, install, merge, ref mutation, or claim of dynamic compatibility. Existing test results elsewhere were not rerun or used as a substitute for this proof.
+**No product tests were run:** this is a read-only tree/source audit, with no product/test edits. No full, browser, socket, build, install, merge, ref mutation, or claim of dynamic compatibility. Existing targeted results from the Makefile/API-smoke workers are not re-used as this audit's test evidence.
 
-Area lead/orchestrator should resolve the failed condition before any external merge: acknowledge the six original-root omissions, decide whether later current-tree replacements satisfy a revised proof criterion, and restore or explicitly retire the uncovered Makefile interface. This worker does not alter those settled boundaries or repair product files. Only after accepted coverage proof should the authorized external executor perform INBOX steps 2–3 and verify unchanged tree plus merge-base/refresh behavior. Neither the `ours` join nor its postconditions are claimed here.
+The lead may now perform the authorized history join outside this sandbox. Required lead commands (run on `/home/user/work/composition`, on `tl/integration`; this worker did not run them):
+
+```sh
+before_tree=$(git rev-parse HEAD^{tree})
+git merge -s ours --allow-unrelated-histories 67b8aa3d0d6831d3e3504a340ff583c3da253707 \
+  -m 'join history to upstream main 67b8aa3 (tree unchanged)'
+after_tree=$(git rev-parse HEAD^{tree})
+test "$before_tree" = "$after_tree"
+test "$(git merge-base origin/main tl/integration)" = 67b8aa3d0d6831d3e3504a340ff583c3da253707
+git merge --no-commit origin/main
+test "$(git rev-parse HEAD^{tree})" = "$after_tree"
+test -z "$(git status --porcelain)"
+```
+
+The `ours` join and its tree/merge-base/dry-run postconditions are intentionally not claimed until the lead observes them.

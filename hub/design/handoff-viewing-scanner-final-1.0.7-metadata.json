@@ -1,0 +1,38 @@
+{
+  "version": "1.0.7",
+  "status": "UNPUBLISHED_REVIEW_CANDIDATE",
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/owner-film-viewing-tools-v1.0.6.tgz",
+  "source_sha256": "1df2ee0a64709b1a275fcd8aa0a8937979f7fbe6b99e341aa309ae0cb48cefa3",
+  "members": {
+    "README.md": {
+      "bytes": 5795,
+      "sha256": "ef85115a1d294ae2cc46c9ad88b1f9346508bbad065e0b11977e914915300819"
+    },
+    "owner_film_cliplook_scan.py": {
+      "bytes": 34961,
+      "sha256": "f195b21e05fc0f76f0483270ae77a3198926535f6ea83e5fb784a85be84b6480"
+    },
+    "tests/conftest.py": {
+      "bytes": 385,
+      "sha256": "ea7d84927b97d78e2eb17fa87180ce2b7591f2c53645d1799b99f2c34197e430"
+    },
+    "tests/test_owner_film_cliplook_scan.py": {
+      "bytes": 26401,
+      "sha256": "074ffcb9c140e87661aa5b82ac9e57e30776be05e29b288bc7ec956e91e1e51a"
+    }
+  },
+  "archives": {
+    "tgz": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/owner-film-viewing-tools-v1.0.7.tgz",
+      "bytes": 15630,
+      "sha256": "baf2fd28f96670b02e4dc63e21bc680e2ab0339a97671515d79ab91f9cbd3e27"
+    }
+  },
+  "tests": {
+    "preserved_1_0_6_tests": 36,
+    "added_malformed_look_cases": 4,
+    "fixed_candidate_result": "40 passed",
+    "red_before_1_0_6_result": "4 failed, 36 passed"
+  },
+  "deterministic_repeat": true
+}
