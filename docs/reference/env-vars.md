@@ -15,11 +15,10 @@ does not select a project root or open a local database/CAS.
 | `ASTRID_RUNTIME_DATA_ROOT` | Astrid launcher / operator | Absolute installation-owned support root. Defaults to `Astrid/.astrid-data` from the checkout config (or `~/.astrid-data` for a wheel install); overrides the macOS `Library/Application Support/Astrid Runtime` location. |
 | `ASTRID_COMPUTE_PROFILE` | RunPod executor / operator | Optional user compute-profile id loaded from `~/.astrid/compute-profiles/<id>.json`. |
 
-These are runtime composition variables, not project-store overrides. Product
-commands use the configured manifest to invoke
-`astrid-runtime up --profile astrid` automatically; the explicit command
-remains available for operator lifecycle work. `AstridClient.open(...)` takes
-all connection values explicitly and does not read these variables.
+These are runtime composition variables, not project-store overrides. Astrid's
+installer reads the configured manifest when it installs or repairs the local
+service. Run the install line again to apply service changes. `AstridClient.open(...)`
+takes all connection values explicitly and does not read these variables.
 
 The `ASTRID_*` registry below remains useful for pack subprocesses, tests, and
 authoring tools. Variables marked **historical/internal** are not live workspace

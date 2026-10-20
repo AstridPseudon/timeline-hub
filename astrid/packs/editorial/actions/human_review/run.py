@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from astrid.core.contracts.errors import AstridError, render_astrid_error
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint('editorial.human_review')
@@ -13,7 +14,6 @@ import hashlib  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import mimetypes  # noqa: E402
-import os  # noqa: E402
 import re  # noqa: E402
 import secrets  # noqa: E402
 import socket  # noqa: E402
@@ -28,6 +28,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer  # noqa: E40
 from pathlib import Path  # noqa: E402
 from typing import Any, Mapping  # noqa: E402
 from urllib.parse import parse_qs, unquote, urldefrag, urljoin, urlparse  # noqa: E402
+
+from runtime_protocol import platform  # noqa: E402
+from runtime_protocol.dirfd import filesystem as os  # noqa: E402
 
 from astrid.core.experiments.state import (  # noqa: E402
     StaleStateConflict,
@@ -715,11 +718,11 @@ def _managed_receiver_path(out_path: Path) -> Path | None:
         raise HumanReviewInputError("managed review paths do not match the admitted attempt")
     for directory in (progress.parent, out_path.parent):
         info = directory.lstat()
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
+        if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(directory, info, forbidden=0o022):
             raise HumanReviewInputError("managed review directory is not owner controlled")
     if progress.exists() or progress.is_symlink():
         info = progress.lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+        if not stat.S_ISREG(info.st_mode) or not owned_by_current_user(progress, info) or info.st_nlink != 1:
             raise HumanReviewInputError("managed review progress path is not a private regular file")
     return progress.parent / _RECEIVER_SESSION_NAME
 
@@ -742,6 +745,7 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
     fd, temporary = tempfile.mkstemp(prefix=".review-session-", dir=path.parent)
     try:
         with os.fdopen(fd, "wb") as stream:
+            platform.owner_only(stream.fileno())
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
@@ -749,8 +753,8 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
         # a stale or foreign observation left by another owner.
         os.link(temporary, path, follow_symlinks=False)
         os.unlink(temporary)
-        info = path.lstat()
-        directory = os.open(path.parent, os.O_RDONLY)
+        info = os.lstat(path)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
             os.fsync(directory)
         finally:
@@ -774,14 +778,13 @@ def _retire_receiver_session(owner: tuple[Path, int, int, bytes]) -> None:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
     expected = json.loads(payload)
-    if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1
+    if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1
             or (info.st_dev, info.st_ino) != (device, inode) or raw != payload
             or expected["process_pid"] != os.getpid()
             or expected["process_birth_id"] != process_birth_identity()
-            or (path.lstat().st_dev, path.lstat().st_ino) != (device, inode)):
+            or (os.lstat(path).st_dev, os.lstat(path).st_ino) != (device, inode)):
         raise HumanReviewInputError("review receiver cleanup owner mismatch")
-    path.unlink()
+    os.unlink(path)
 
 
 def _publish_saved_state(

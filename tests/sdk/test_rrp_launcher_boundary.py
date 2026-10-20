@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import fcntl
 import multiprocessing
 import subprocess
 from pathlib import Path
 
 import pytest
+from runtime_protocol import platform
 
 from astrid.sdk import autobootstrap
 
@@ -38,7 +38,7 @@ def _contend_for_acquisition_lock(data_root: str, attempted, acquired) -> None:
     lock_path = autobootstrap._acquisition_lock_path(Path(data_root))
     with lock_path.open("a+") as lock_file:
         try:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(lock_file.fileno(), blocking=False)
         except BlockingIOError:
             attempted.set()
         else:

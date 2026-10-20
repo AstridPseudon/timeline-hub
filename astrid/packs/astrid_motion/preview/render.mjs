@@ -30,12 +30,12 @@ fs.mkdirSync(OUT, {recursive: true});
 const publicDir = path.join(OUT, '.public');
 fs.mkdirSync(publicDir, {recursive: true});
 const fontsLink = path.join(publicDir, 'fonts');
-if (!fs.existsSync(fontsLink)) fs.symlinkSync(path.join(REM, 'public/fonts'), fontsLink);
-// EXTRA_PUBLIC=name=/abs/dir,... links more folders into the public dir (read-only art).
+if (!fs.existsSync(fontsLink)) fs.cpSync(path.join(REM, 'public/fonts'), fontsLink, {recursive: true});
+// EXTRA_PUBLIC=name=/abs/dir,... copies folders into the public dir (read-only art).
 for (const pair of (process.env.EXTRA_PUBLIC ?? '').split(',').filter(Boolean)) {
   const [name, dir] = pair.split('=');
   const link = path.join(publicDir, name);
-  if (!fs.existsSync(link)) fs.symlinkSync(dir, link);
+  if (!fs.existsSync(link)) fs.cpSync(dir, link, {recursive: true});
 }
 if (!fs.existsSync(path.join(publicDir, 'am'))) {
   throw new Error(`missing ${publicDir}/am: run python3 preview/make_art.py ${publicDir}/am first`);

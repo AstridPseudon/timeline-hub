@@ -8,7 +8,6 @@ workers, or releases a pod. It deliberately does not own generic RunPod
 from __future__ import annotations
 
 import asyncio
-import fcntl
 import json
 import math
 import os
@@ -20,6 +19,8 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping
+
+from runtime_protocol import platform
 
 from astrid.core.util.time import utc_now_iso
 
@@ -83,12 +84,7 @@ def write_target_record(path: Path, value: dict[str, Any]) -> None:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary_path, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        platform.durable_replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
 
@@ -141,7 +137,7 @@ def _exclusive_target_owner(function: Any) -> Any:
         fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
         try:
             try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(fd, blocking=False)
             except BlockingIOError as exc:
                 raise AcquisitionUnresolvedError(
                     f"another process currently owns RunPod target journal {path}; retry after it exits"
@@ -167,7 +163,7 @@ def _exclusive_target_owner(function: Any) -> Any:
             )
         finally:
             try:
-                fcntl.flock(fd, fcntl.LOCK_UN)
+                platform.unlock_file(fd)
             finally:
                 os.close(fd)
 

@@ -244,7 +244,7 @@ def test_backup_gateway_routes_forward_runtime_arguments_without_pack_host(monke
 def test_product_client_requires_bootstrap_with_exact_next_action(tmp_path, monkeypatch):
     monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", str(tmp_path / "missing-credential.json"))
     monkeypatch.delenv("ASTRID_RUNTIME_ENDPOINT", raising=False)
-    with pytest.raises(Exception, match=r"astrid-runtime up --profile astrid"):
+    with pytest.raises(Exception, match=r"run the Astrid install line again"):
         AstridClient.open()
 
 
@@ -637,7 +637,7 @@ def test_doctor_and_backup_never_open_local_storage(capsys, monkeypatch, tmp_pat
     assert doctor["next_action"] == "astrid-runtime up"
     assert len(calls) == 1 and calls[0][0] == "doctor"
     assert dispatch._dispatch_backup(["--json"]) == 1
-    assert "astrid-runtime up --profile astrid" in capsys.readouterr().out
+    assert "run the Astrid install line again" in capsys.readouterr().out
 
 
 def test_doctor_uses_the_read_only_runtime_observer(capsys, monkeypatch):

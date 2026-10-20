@@ -11,7 +11,6 @@ import copy
 import hashlib
 import io
 import json
-import os
 import re
 import stat
 import zipfile
@@ -20,8 +19,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import quote
 
-import astrid.sdk as sdk
+from runtime_protocol.dirfd import filesystem as os
 
+import astrid.sdk as sdk
 from astrid.core._shared.jsonio import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT
 
@@ -99,7 +99,7 @@ def _capture(root: Path, relative: str, maximum: int) -> bytes:
             if (entry_info.st_dev, entry_info.st_ino, entry_info.st_mode) != (
                     opened_info.st_dev, opened_info.st_ino, opened_info.st_mode):
                 raise ValueError("Human Review input directory was replaced during capture")
-        root_info, opened_root = root.lstat(), os.fstat(descriptors[0])
+        root_info, opened_root = os.lstat(root), os.fstat(descriptors[0])
         if (root_info.st_dev, root_info.st_ino, root_info.st_mode) != (
                 opened_root.st_dev, opened_root.st_ino, opened_root.st_mode):
             raise ValueError("Human Review capture root was replaced")

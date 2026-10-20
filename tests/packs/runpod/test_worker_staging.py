@@ -26,6 +26,7 @@ from astrid.packs.runpod.worker_staging import (
     _journal_path,
     prepare_worker,
 )
+from tests.helpers.runtime import use_runtime
 
 
 def test_child_readiness_contract_does_not_probe_cuda_or_gpu() -> None:
@@ -162,7 +163,7 @@ class LocalPreparationTransport:
             # the test venv's dependencies while probing the staged source.
             env={
                 **os.environ,
-                "PYTHONPATH": os.pathsep.join(sys.path),
+                "PYTHONPATH": os.pathsep.join([*sys.path, str(use_runtime())]),
                 "ASTRID_TEST_SELECTED_PYTHON": str(Path(selected_python).resolve()),
             },
             capture_output=True,

@@ -8,6 +8,7 @@ Broad cwd/repository/workspace env-file scavenging remains disabled.
 from __future__ import annotations
 
 import os
+import shlex
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
@@ -89,8 +90,21 @@ def load_local_api_key_with_source(
         if value := read_env_value(env_file, name).strip():
             return value, "env_file"
 
+    install_root = os.environ.get("ASTRID_INSTALL_PROGRAM_ROOT", "").strip()
+    if install_root:
+        root = Path(install_root).expanduser().resolve()
+    elif os.name == "nt":
+        root = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "Astrid"
+    else:
+        root = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "astrid"
+    if os.name == "nt":
+        launcher = root / "run-astrid.cmd"
+        launcher_command = f"& '{str(launcher).replace(chr(39), chr(39) * 2)}' credential set {name}"
+    else:
+        launcher = root / "run-astrid"
+        launcher_command = f"{shlex.quote(str(launcher))} credential set {name}"
     recovery = (
-        f"run `astrid-credential set {name}` to store it in the shared astrid.env file, "
+        f"run `{launcher_command}` to store it in the shared astrid.env file, "
         "or provide it through the process environment"
     )
     if hint := _RECOVERY_HINTS.get(name):

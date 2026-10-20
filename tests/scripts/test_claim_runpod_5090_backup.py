@@ -474,8 +474,8 @@ def test_resume_with_known_pod_id_never_substitutes_same_name_candidate(
 def test_owner_rejects_concurrent_claim_journal_before_provider_calls(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import fcntl
     import os
+    from runtime_protocol import platform
 
     from astrid.packs.runpod.worker_preparation import AcquisitionUnresolvedError
 
@@ -493,12 +493,12 @@ def test_owner_rejects_concurrent_claim_journal_before_provider_calls(
     marker = json.loads(handle_path.read_text(encoding="utf-8"))
     lock_path = handle_path.with_name(f".{handle_path.name}.owner.lock")
     fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
-    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    platform.lock_file(fd, blocking=False)
     try:
         with pytest.raises(AcquisitionUnresolvedError, match="another process currently owns"):
             asyncio.run(claim._claim(_args(handle_path, "--resume")))
     finally:
-        fcntl.flock(fd, fcntl.LOCK_UN)
+        platform.unlock_file(fd)
         os.close(fd)
 
     assert json.loads(handle_path.read_text(encoding="utf-8"))["operation_id"] == marker[

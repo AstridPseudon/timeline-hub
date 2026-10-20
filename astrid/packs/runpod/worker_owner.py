@@ -8,10 +8,8 @@ to that record; it does not create another task/result ledger or supervisor.
 from __future__ import annotations
 
 import asyncio
-import fcntl
 import hashlib
 import json
-import os
 import re
 import secrets
 import stat
@@ -21,6 +19,11 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterator, Mapping
+
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 
 from .worker_preparation import (
     _checkpoint_release_progress,
@@ -90,7 +93,7 @@ def _read_credential(path_value: str) -> bytes:
     try:
         before = os.fstat(fd)
         if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
-                or before.st_uid != os.getuid() or stat.S_IMODE(before.st_mode) != 0o600):
+                or not owned_by_current_user(fd, before, mode=0o600)):
             raise RunPodWorkerOwnerError("Runtime credential source must be an owned regular 0600 file")
         with os.fdopen(os.dup(fd), "rb") as stream:
             value = stream.read(1024 * 1024 + 1)
@@ -313,14 +316,14 @@ class RunPodRemoteWorkerPreparer:
         fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
         try:
             try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(fd, blocking=False)
             except BlockingIOError as exc:
                 raise RunPodWorkerOwnerError("another coordinator owns this P1 custody record") from exc
             current = self._read_claim()
             yield current, fd
         finally:
             try:
-                fcntl.flock(fd, fcntl.LOCK_UN)
+                platform.unlock_file(fd)
             finally:
                 os.close(fd)
 

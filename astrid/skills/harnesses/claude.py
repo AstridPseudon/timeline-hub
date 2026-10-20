@@ -6,7 +6,14 @@ from pathlib import Path
 from typing import Iterable
 
 from ..discovery import SkillDescriptor
-from .base import Action, HarnessAdapter, PlannedStep, ensure_symlink, remove_symlink
+from .base import (
+    Action,
+    HarnessAdapter,
+    PlannedStep,
+    ensure_symlink,
+    managed_target_matches,
+    remove_symlink,
+)
 
 
 class ClaudeAdapter(HarnessAdapter):
@@ -32,7 +39,7 @@ class ClaudeAdapter(HarnessAdapter):
             if action == "install":
                 steps.append(
                     PlannedStep(
-                        description=f"symlink {target} -> {descriptor.skill_dir}",
+                        description=f"install {target} from {descriptor.skill_dir}",
                         target=target,
                     )
                 )
@@ -67,14 +74,8 @@ class ClaudeAdapter(HarnessAdapter):
 
     def verify(self, descriptor: SkillDescriptor) -> tuple[bool, str]:
         target = self.target_for(descriptor)
-        if not target.is_symlink():
-            return False, f"{target} is not a symlink"
-        try:
-            resolved = target.resolve(strict=True)
-        except OSError as exc:
-            return False, f"{target} resolves to a missing path ({exc})"
-        if resolved != descriptor.skill_dir.resolve():
-            return False, f"{target} resolves to {resolved}, expected {descriptor.skill_dir}"
+        if not managed_target_matches(target, descriptor.skill_dir):
+            return False, f"{target} does not match {descriptor.skill_dir}"
         return True, "ok"
 
 

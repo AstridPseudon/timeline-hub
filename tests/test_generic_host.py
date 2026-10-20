@@ -15,10 +15,10 @@ import pytest
 from astrid.core.execution import generic_host, process_group
 from astrid.core.execution.generic_host import (
     AdapterRegistry,
+    CleanupUncertainError,
     CommandCleanupUnresolved,
     GenericPackHost,
     HostCancelled,
-    CleanupUncertainError,
     HostError,
     HostRegistrationError,
     RuntimeProtocolClient,
@@ -470,7 +470,8 @@ def test_hc04_cas_param_materializes_authorized_image_reference(tmp_path):
         cas_param_ports=("image_ref",),
     )
     staged = Path(values["image_ref"])
-    assert staged == tmp_path / "attempt" / "inputs" / "source.jpg"
+    port_digest = hashlib.sha256(b"image_ref").hexdigest()[:16]
+    assert staged == tmp_path / "attempt" / "inputs" / f"managed-{port_digest}-{digest}.jpg"
     assert staged.read_bytes() == payload
 
 
@@ -503,8 +504,10 @@ def test_hc04_multi_cas_materialization_preserves_role_order_and_names(tmp_path)
     )
     image_path = Path(values["reference_image_ref"])
     video_path = Path(values["driving_video_ref"])
-    assert image_path.name == "reference_image_ref--source.bin"
-    assert video_path.name == "driving_video_ref--source.bin"
+    image_port = hashlib.sha256(b"reference_image_ref").hexdigest()[:16]
+    video_port = hashlib.sha256(b"driving_video_ref").hexdigest()[:16]
+    assert image_path == tmp_path / "attempt-ordered" / "inputs" / f"managed-{image_port}-{image_digest}.bin"
+    assert video_path == tmp_path / "attempt-ordered" / "inputs" / f"managed-{video_port}-{video_digest}.bin"
     assert image_path.read_bytes() == image
     assert video_path.read_bytes() == video
 
@@ -1502,7 +1505,7 @@ def test_vendored_runtime_client_timeout_is_bounded_and_request_correlated(monke
         captured["request_id"] = request.get_header("X-request-id")
         raise TimeoutError("fixture timeout")
 
-    monkeypatch.setattr("urllib.request.OpenerDirector.open", timed_out)
+    monkeypatch.setattr("astrid_runtime_client.generated._urlopen_loopback", timed_out)
 
     with pytest.raises(ApiError) as failure:
         WorkspaceClient("http://127.0.0.1:8765", timeout=0.125).health()
@@ -3762,7 +3765,8 @@ def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monk
         assert context in [probe_context(environment=e, python_executable=sys.executable)
                            for e in candidates]
         assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
-        from astrid.core.execution.generic_host import _admitted_python_roots, dependency_pythonpath
+        from astrid.core.execution.generic_host import _admitted_python_roots
+        from astrid.core.generation.vibecomfy_dependency import dependency_pythonpath
         assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
         expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
             *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
@@ -4266,10 +4270,16 @@ def test_failed_worker_release_retains_original(tmp_path, monkeypatch):
     def refuse(_process):
         raise CleanupUncertainError("retained worker release failure")
     monkeypatch.setattr(generic_host, "_terminate_process_group", refuse)
-    with pytest.raises(CommandCleanupUnresolved, match="retained worker release failure") as caught:
+    with pytest.raises(
+        CommandCleanupUnresolved,
+        match="cleanup unresolved: retained worker release failure",
+    ) as caught:
         host.invoke_capability(capability_kind="executor", capability_id="test.echo", request={}, attempt=attempt)
+    assert caught.value.execution_error is None
     assert isinstance(caught.value.__cause__, CleanupUncertainError)
-    assert id(process) in host._active_processes and host._unresolved_task_scopes
+    assert str(caught.value.__cause__) == "retained worker release failure"
+    assert id(process) in host._active_processes
+    assert "retained worker release failure" in host._unresolved_task_scopes
 
 
 @pytest.mark.darwin_native

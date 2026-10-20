@@ -19,10 +19,10 @@ def test_rendering_pack_declares_both_resolvable_v3_editor_entries() -> None:
     pack = load_pack_manifest(PACK_ROOT / "pack.yaml")
 
     assert pack.schema_version == "3"
-    assert set(pack.ui) == {"live-scenes", "transcript"}
+    assert set(pack.ui) == {"threejs-live-editor", "transcript"}
     entries = _editor_entries(pack)
     assert set(entries) == {
-        PACK_ROOT / "ui/live-scenes/extension.tsx",
+        PACK_ROOT / "ui/threejs-live-editor/extension.tsx",
         PACK_ROOT / "ui/transcript/extension.tsx",
     }
     assert all(entry.is_file() for entry in entries)
@@ -35,7 +35,7 @@ def test_generated_catalog_is_current_and_pack_derived() -> None:
     actual = DEFAULT_OUTPUT.read_text(encoding="utf-8")
 
     assert actual == generated
-    assert "../ui/live-scenes/extension" in actual
+    assert "../ui/threejs-live-editor/extension" in actual
     assert "../ui/transcript/extension" in actual
     assert "packId: 'rendering', entryPath: 'ui/transcript/extension.tsx'" in actual
     assert actual.count("import editorExtension") == 2

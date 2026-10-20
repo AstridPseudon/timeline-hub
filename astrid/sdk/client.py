@@ -41,6 +41,7 @@ _HEALTH_KEYS = frozenset(
         "schema_digest",
     }
 )
+_HEALTH_SERVICE_KEYS = frozenset({"name", "state", "last_exit", "restart_count"})
 _HANDSHAKE_KEYS = frozenset(
     {
         "protocol",
@@ -56,9 +57,7 @@ _TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
 # Pairing is owned by the Runtime lifecycle.  This deliberately does not tell
 # a caller to check out a historical tree or kill a process by PID.
 RUNTIME_PAIRING_FIX = (
-    "use the owner-managed Astrid Runtime lifecycle (`astrid-runtime down --profile astrid`, "
-    "then `astrid-runtime up --profile astrid`) against the installed workspace contract; "
-    "do not switch checkouts or kill a PID"
+    "run the Astrid install line again to restore the installed workspace contract"
 )
 
 
@@ -69,7 +68,7 @@ def _protocol_error(field: str, message: str, *, actual_digest: str | None = Non
         "field": field,
         "expected_schema_digest": SCHEMA_DIGEST,
         "expected_component_manifest": COMPONENT_MANIFEST_SHA256,
-        "next_action": "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`",
+        "next_action": "run the Astrid install line again",
     }
     if actual_digest is not None:
         details["actual_schema_digest"] = actual_digest
@@ -90,7 +89,7 @@ def _identity_error(field: str, message: str) -> Any:
         message,
         {
             "field": field,
-            "next_action": "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`",
+            "next_action": "run the Astrid install line again",
         },
     )
 
@@ -119,7 +118,8 @@ def _require_mapping(value: Any, *, field: str) -> Mapping[str, Any]:
 
 def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str) -> None:
     health = _require_mapping(value, field="health")
-    if frozenset(health) != _HEALTH_KEYS:
+    keys = frozenset(health)
+    if not _HEALTH_KEYS <= keys or keys - _HEALTH_KEYS - {"services"}:
         raise _protocol_error("health", "runtime health response has an unexpected schema")
     if health.get("status") != "ok":
         raise _protocol_error("health.status", "runtime health status is not ok")
@@ -134,6 +134,30 @@ def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str
         identity = health.get(field)
         if not isinstance(identity, str) or not identity.strip():
             raise _protocol_error(f"health.{field}", f"runtime health {field} is invalid")
+    if "services" in health:
+        services = health["services"]
+        if not isinstance(services, list):
+            raise _protocol_error("health.services", "runtime health services must be an array")
+        for index, value in enumerate(services):
+            field = f"health.services[{index}]"
+            service = _require_mapping(value, field=field)
+            keys = frozenset(service)
+            if not _HEALTH_SERVICE_KEYS <= keys or keys - _HEALTH_SERVICE_KEYS - {"reason"}:
+                raise _protocol_error(field, "runtime health service has an unexpected schema")
+            name = service["name"]
+            if not isinstance(name, str) or not name:
+                raise _protocol_error(f"{field}.name", "runtime health service name is invalid")
+            if service["state"] not in ("starting", "running", "restarting", "failed"):
+                raise _protocol_error(f"{field}.state", "runtime health service state is invalid")
+            last_exit = service["last_exit"]
+            if last_exit is not None and (isinstance(last_exit, bool) or not isinstance(last_exit, int)):
+                raise _protocol_error(f"{field}.last_exit", "runtime health service last_exit is invalid")
+            restart_count = service["restart_count"]
+            if isinstance(restart_count, bool) or not isinstance(restart_count, int) or restart_count < 0:
+                raise _protocol_error(f"{field}.restart_count", "runtime health service restart_count is invalid")
+            reason = service.get("reason")
+            if reason is not None and not isinstance(reason, str):
+                raise _protocol_error(f"{field}.reason", "runtime health service reason is invalid")
 
 
 def _validate_handshake(
@@ -213,13 +237,13 @@ class AstridClient:
 
         if protocol_version != PROTOCOL:
             raise ServiceUnavailableError(
-                "unsupported runtime protocol; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "unsupported runtime protocol; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
         if not all(isinstance(value, str) and value.strip() for value in (endpoint, realm_id, actor_id, client_name, client_version)) or not isinstance(credential, (str, Path)) or (isinstance(credential, str) and not credential.strip()):
             raise ServiceUnavailableError(
-                "runtime realm, actor, and client identity are required; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "runtime realm, actor, and client identity are required; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
 
         def unavailable(exc: Exception, *, operation: str | None = None) -> ServiceUnavailableError:
@@ -247,8 +271,8 @@ class AstridClient:
             if operation is not None:
                 details["operation"] = operation
             message = (
-                f"runtime request failed ({reason}: {original}); reconfigure the Astrid runtime "
-                "with `astrid-runtime up --profile astrid`"
+                f"runtime request failed ({reason}: {original}); "
+                "run the Astrid install line again"
             )
             if reason == "protocol_error":
                 details.setdefault("expected_schema_digest", SCHEMA_DIGEST)
@@ -265,10 +289,10 @@ class AstridClient:
                 )
             elif reason == "identity_mismatch":
                 message = (
-                    f"runtime rejected the explicit client context ({original}); reconfigure the Astrid "
-                    "runtime with `astrid-runtime up --profile astrid`"
+                    f"runtime rejected the explicit client context ({original}); "
+                    "run the Astrid install line again"
                 )
-            details["next_action"] = "astrid-runtime up --profile astrid"
+            details["next_action"] = "run the Astrid install line again"
             return ServiceUnavailableError(
                 message,
                 details=details,
@@ -390,8 +414,8 @@ class AstridClient:
             credential_value = Path(str(credential_file)) if credential_file else ""
         if not credential_value:
             raise ServiceUnavailableError(
-                "runtime credential is required; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "runtime credential is required; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
         return cls.open(
             endpoint=str(result.get("endpoint", "")),
@@ -421,13 +445,12 @@ class AstridClient:
         import json
         import os
         import stat
-        import sys
 
         from astrid.runtime_cli import RuntimeCLI, RuntimeCLIError, validate_selected_workspace
         from astrid.sdk.exceptions import ServiceUnavailableError
         from astrid.sdk.storage_root import resolve_runtime_data_root
 
-        next_action = "astrid-runtime up --profile astrid"
+        next_action = "run the Astrid install line again"
 
         def unavailable(message: str, *, reason: str = "runtime_unavailable") -> ServiceUnavailableError:
             return ServiceUnavailableError(
@@ -533,15 +556,12 @@ class AstridClient:
             with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
                 if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
                     raise unavailable("Runtime Astrid credential is not a regular file", reason="credential_invalid")
-                if sys.platform == "darwin":
-                    import fcntl
-
-                    raw_path = fcntl.fcntl(handle.fileno(), fcntl.F_GETPATH, bytes(1024))
-                    opened_path = os.fsdecode(raw_path.split(b"\0", 1)[0])
-                elif sys.platform.startswith("linux"):
+                if os.name == "posix" and Path("/proc/self/fd").is_dir():
                     opened_path = os.readlink(f"/proc/self/fd/{handle.fileno()}")
                 else:
                     opened_path = str(credential_path.resolve(strict=True))
+                    if not os.path.samestat(os.fstat(handle.fileno()), credential_path.stat()):
+                        opened_path = ""
                 if opened_path != str(credential_path):
                     raise unavailable("Runtime Astrid credential path is unsafe", reason="credential_invalid")
                 metadata = json.load(handle)
@@ -560,7 +580,7 @@ class AstridClient:
             raise
         except (RuntimeCLIError, OSError, ValueError, json.JSONDecodeError) as exc:
             raise unavailable(
-                "the selected Runtime is unavailable; run `astrid-runtime up --profile astrid`",
+                "the selected Runtime is unavailable; run the Astrid install line again",
                 reason=getattr(exc, "code", "runtime_unavailable"),
             ) from exc
 
@@ -680,9 +700,9 @@ class AstridClient:
             return self._remote.health()
         except WorkspaceClientError as exc:
             raise ServiceUnavailableError(
-                "runtime unavailable; run `astrid-runtime up --profile astrid`",
+                "runtime unavailable; run the Astrid install line again",
                 details={
-                    "next_action": "astrid-runtime up --profile astrid",
+                    "next_action": "run the Astrid install line again",
                     "reason": exc.code,
                 },
             ) from exc

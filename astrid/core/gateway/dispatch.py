@@ -72,13 +72,6 @@ def _dispatch_media(args: list[str]) -> int:
     return _dispatch_product(["media", *args])
 
 
-def _dispatch_setup(args: list[str]) -> int:
-    """Use the shared setup plan/apply core; preview remains the default."""
-    from astrid.setup import main
-
-    return int(main(args))
-
-
 def _dispatch_status(args: list[str]) -> int:
     """Observe workspace/Runtime/readiness without launcher or provisioning."""
     import argparse
@@ -113,7 +106,7 @@ def _dispatch_status(args: list[str]) -> int:
             "error": str(exc),
             "effects": ["observe"],
             "authorization_required": False,
-            "next_action": "astrid setup",
+            "next_action": "run the Astrid install line again",
         }
         if parsed.diagnostic:
             from astrid.core.gateway.diagnostics import build_diagnostic, _failure_from
@@ -136,7 +129,7 @@ def _dispatch_status(args: list[str]) -> int:
         if parsed.json:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
-            print("Astrid status\nruntime: unavailable\nnext action: astrid setup")
+            print("Astrid status\nruntime: unavailable\nnext action: run the Astrid install line again")
         return 1
     if parsed.diagnostic:
         print(json.dumps(diagnostic, indent=2, sort_keys=True))
@@ -165,7 +158,7 @@ def _dispatch_status(args: list[str]) -> int:
         for key, value in payload["readiness"].items():
             print(f"{key.replace('_', ' ')}: {value}")
         if not payload["ok"]:
-            print("next action: astrid setup")
+            print("next action: run the Astrid install line again")
     return 0 if payload["ok"] else 1
 
 
@@ -187,18 +180,22 @@ def _dispatch_doctor(args: list[str]) -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--diagnostic", action="store_true", help="emit the strict C2 diagnostic document")
     parser.add_argument("--shared", action="store_true", help="redact the diagnostic for shared transport")
+    parser.add_argument("--bundle", nargs="?", const="astrid-doctor.zip", metavar="PATH",
+                        help="write a redacted support ZIP (default: astrid-doctor.zip)")
     if any(token in {"-h", "--help"} for token in args):
         parser.print_help()
         return 0
     parsed = parser.parse_args(args)
+    support_root = None
     try:
         from astrid.core.gateway.diagnostics import collect_diagnostic
         from astrid.runtime_cli import RuntimeCLI, RuntimeCLIError
         from astrid.sdk.storage_root import resolve_runtime_data_root
 
+        support_root = resolve_runtime_data_root()
         diagnostic, _workspace, observed = collect_diagnostic(
             RuntimeCLI(),
-            support_root=resolve_runtime_data_root(),
+            support_root=support_root,
             mode="shared" if parsed.shared else "local",
             command="doctor",
         )
@@ -210,11 +207,23 @@ def _dispatch_doctor(args: list[str]) -> int:
             "ok": False,
             "problem_code": getattr(exc, "code", "runtime_unavailable"),
             "state": "runtime_unavailable",
-            "next_action": "astrid-runtime up",
+            "next_action": "run the Astrid install line again",
             "effects": ["observe"],
             "authorization_required": False,
             "error": str(exc),
         }
+        if parsed.bundle:
+            from astrid.core.gateway.doctor_bundle import write_bundle
+            from astrid.sdk.storage_root import resolve_runtime_data_root
+
+            if support_root is None:
+                try:
+                    support_root = resolve_runtime_data_root()
+                except ValueError:
+                    support_root = None
+            destination = write_bundle(Path(parsed.bundle), payload, Path(support_root) if support_root else None)
+            print(f"Astrid doctor bundle: {destination}")
+            return 1
         if parsed.diagnostic:
             from astrid.core.gateway.diagnostics import build_diagnostic, _failure_from
             code, boundary = _failure_from(exc)
@@ -241,7 +250,15 @@ def _dispatch_doctor(args: list[str]) -> int:
         return 1
     report.setdefault("effects", ["observe"])
     report.setdefault("authorization_required", False)
+    report.setdefault("ok", result_code == 0)
+    report.setdefault("problem_code", diagnostic["problemCode"])
     report["diagnostic"] = diagnostic
+    if parsed.bundle:
+        from astrid.core.gateway.doctor_bundle import write_bundle
+
+        destination = write_bundle(Path(parsed.bundle), report, Path(support_root))
+        print(f"Astrid doctor bundle: {destination}")
+        return result_code
     if not parsed.shared:
         try:
             from astrid.sdk.storage_ownership import reclaim
@@ -291,6 +308,7 @@ def _dispatch_doctor(args: list[str]) -> int:
     compute_fact = diagnostic["facts"]["computeWorker"]
     if diagnostic["problemCode"] == "capability_unavailable":
         result_code = 1
+    report["ok"] = result_code == 0
     if parsed.diagnostic:
         print(json.dumps(diagnostic, indent=2, sort_keys=True))
         return 0 if diagnostic["problemCode"] is None else 1
@@ -360,7 +378,7 @@ def _dispatch_backup(args: list[str]) -> int:
         parser.error("backup export does not support --out; the SDK export API has no destination")
     json_mode = "--json" in args
     if parsed.operation is None:
-        payload = {"ok": False, "state": "unavailable", "next_action": "astrid-runtime up --profile astrid", "error": "backup operation is required"}
+        payload = {"ok": False, "state": "unavailable", "next_action": "run the Astrid install line again", "error": "backup operation is required"}
         if json_mode:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
@@ -428,7 +446,7 @@ def _dispatch_backup(args: list[str]) -> int:
             "ok": False,
             "state": "unavailable",
             "next_action": exc.details.get(
-                "next_action", "astrid-runtime up --profile astrid"
+                "next_action", "run the Astrid install line again"
             ),
             "error": str(exc),
         }
@@ -544,7 +562,7 @@ from .hivemind import PACK_COMMANDS as _PACK_COMMANDS, installed_pack_ids as _in
 # outer launcher command. This is a blocklist/precedence rule, not a second
 # hand-maintained pack allowlist.
 _PACK_ROUTE_BLOCKLIST = frozenset(
-    {"agent", "auth", "help", "login", "setup", "status", "logout", "revoke", "--help", "--version"}
+    {"agent", "auth", "help", "install", "login", "status", "logout", "revoke", "--help", "--version"}
 )
 _DYNAMIC_PACK_ROUTE_NAMES: set[str] = set()
 

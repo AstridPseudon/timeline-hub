@@ -1,0 +1,214 @@
+"""Pinned local source overrides use real Git commits, never mutable checkouts."""
+
+import io
+import json
+import os
+import subprocess
+import zipfile
+
+import pytest
+
+from astrid.installer import tools
+from astrid.installer.backend import Backend
+
+
+def test_first_tool_archive_creates_its_missing_parent(tmp_path, monkeypatch):
+    payload = io.BytesIO()
+    with zipfile.ZipFile(payload, "w") as bundle:
+        bundle.writestr("bun-linux-x64/bun", b"tool executable")
+    requests = []
+
+    def response(url, *, timeout):
+        requests.append((url, timeout))
+        return io.BytesIO(payload.getvalue())
+
+    monkeypatch.setattr(tools.urllib.request, "urlopen", response)
+    destination = tmp_path / "fresh-version" / "tools" / "bun"
+    assert not destination.parent.exists()
+
+    tools.fetch_archive("https://example.invalid/bun.zip", destination)
+
+    assert requests == [("https://example.invalid/bun.zip", 120)]
+    assert (destination / "bun-linux-x64" / "bun").read_bytes() == b"tool executable"
+    assert not destination.with_name("bun.download").exists()
+
+
+def manifest():
+    value = {
+        "schema_version": 1,
+        "agent": {"sha": "a" * 40},
+        "runtime": {"sha": "b" * 40},
+        "tools": {name: {"version": "20.19.4" if name == "node" else "1.2.3"}
+                  for name in ("uv", "python", "bun", "node", "ffmpeg")},
+    }
+    value["tools"]["omp"] = {"source": tools.DEFAULT_OMP_SOURCE}
+    return value
+
+
+def git(repo, *args):
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
+    return subprocess.run(
+        ["git", "-C", str(repo), "-c", "user.name=Installer test",
+         "-c", "user.email=installer@example.invalid", *args],
+        env=env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    ).stdout.decode().strip()
+
+
+@pytest.fixture
+def repository(tmp_path):
+    repo = tmp_path / "checkout with spaces"
+    repo.mkdir()
+    git(repo, "init", "--quiet")
+    (repo / "pyproject.toml").write_text("pinned source\n", encoding="utf-8")
+    (repo / "nested").mkdir()
+    (repo / "nested" / "file.txt").write_text("nested content\n", encoding="utf-8")
+    (repo / "launch").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "update-index", "--chmod=+x", "launch")
+    git(repo, "commit", "--quiet", "-m", "Pinned source")
+    return repo, git(repo, "rev-parse", "HEAD")
+
+
+@pytest.mark.parametrize("as_url", [False, True])
+def test_local_sources_materialize_only_the_pinned_commit(repository, tmp_path, monkeypatch, as_url):
+    repo, sha = repository
+    (repo / "pyproject.toml").write_text("later commit\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "--quiet", "-m", "Later source")
+    (repo / "nested" / "file.txt").write_text("uncommitted edit\n", encoding="utf-8")
+    (repo / "untracked").write_text("do not install", encoding="utf-8")
+    monkeypatch.setattr(tools, "download", lambda *_args, **_kwargs: pytest.fail("local source downloaded"))
+    # A caller's Git settings cannot redirect the selected repository or index.
+    monkeypatch.setenv("GIT_DIR", str(tmp_path / "wrong repository"))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(tmp_path / "wrong index"))
+
+    destination = tmp_path / "installed"
+    assert tools.source("agent", sha, destination, repo=repo.as_uri() if as_url else str(repo)) == destination
+
+    assert (destination / "pyproject.toml").read_text() == "pinned source\n"
+    assert (destination / "nested" / "file.txt").read_text() == "nested content\n"
+    assert not (destination / "untracked").exists()
+    assert not (destination / ".git").exists()
+    if os.name != "nt":
+        assert (destination / "launch").stat().st_mode & 0o111
+    assert not (tmp_path / "installed.unpack").exists()
+    assert not (tmp_path / "installed.source.tar").exists()
+    assert (repo / "nested" / "file.txt").read_text() == "uncommitted edit\n"
+
+
+@pytest.mark.parametrize("repo", ["relative/path", "https://example.invalid/repo.git", "git@example.invalid:repo",
+                                  "file://other-host/repo", "file:///repo?query=1", "file:///repo#fragment",
+                                  "", None, 12])
+def test_manifest_rejects_nonlocal_or_ambiguous_source_repositories(repo):
+    value = manifest()
+    value["agent"]["repo"] = repo
+    with pytest.raises(ValueError, match="source repo"):
+        tools.validate_manifest(value)
+
+
+@pytest.mark.parametrize("name", ["agent", "runtime"])
+@pytest.mark.parametrize("as_url", [False, True])
+def test_manifest_accepts_local_source_overrides_and_preserves_pins(tmp_path, name, as_url):
+    value = manifest()
+    repo = tmp_path / "source checkout"
+    value[name]["repo"] = repo.as_uri() if as_url else str(repo)
+    assert tools.validate_manifest(value) is value
+    assert value[name]["sha"] == ("a" if name == "agent" else "b") * 40
+
+
+@pytest.mark.parametrize("sha", ["main", "a" * 7, "A" * 40, "a" * 39 + "/"])
+def test_source_override_still_requires_full_commit_sha(tmp_path, sha):
+    value = manifest()
+    value["agent"].update(repo=str(tmp_path), sha=sha)
+    with pytest.raises(ValueError, match="full git SHA"):
+        tools.validate_manifest(value)
+    with pytest.raises(ValueError, match="full git SHA"):
+        tools.source("agent", sha, tmp_path / "installed", repo=str(tmp_path))
+
+
+@pytest.mark.parametrize("revision", ["missing", "tree", "tag"])
+def test_local_source_requires_an_available_commit_object(repository, tmp_path, revision):
+    repo, sha = repository
+    if revision == "missing":
+        sha = "0" * 40
+    elif revision == "tree":
+        sha = git(repo, "rev-parse", "HEAD^{tree}")
+    else:
+        git(repo, "tag", "-a", "tagged", "-m", "Annotated tag")
+        sha = git(repo, "rev-parse", "tagged")
+    with pytest.raises(ValueError, match="Cannot read local source|must identify a Git commit"):
+        tools.source("agent", sha, tmp_path / "installed", repo=str(repo))
+    assert not (tmp_path / "installed").exists()
+    assert not (tmp_path / "installed.unpack").exists()
+    assert not (tmp_path / "installed.source.tar").exists()
+
+
+@pytest.mark.parametrize("mode", ["120000", "160000"])
+def test_local_source_rejects_tracked_links_and_submodules(repository, tmp_path, mode):
+    repo, sha = repository
+    object_id = sha if mode == "160000" else git(repo, "rev-parse", "HEAD:pyproject.toml")
+    git(repo, "update-index", "--add", "--cacheinfo", f"{mode},{object_id},linked-entry")
+    git(repo, "commit", "--quiet", "-m", "Unsupported source entry")
+    sha = git(repo, "rev-parse", "HEAD")
+    with pytest.raises(ValueError, match="link or submodule: linked-entry"):
+        tools.source("agent", sha, tmp_path / "installed", repo=str(repo))
+    assert not (tmp_path / "installed").exists()
+
+
+def test_local_source_reports_missing_git(repository, tmp_path, monkeypatch):
+    repo, sha = repository
+
+    def missing_git(*_args, **_kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(tools.subprocess, "run", missing_git)
+    with pytest.raises(ValueError, match="require Git on PATH"):
+        tools.source("agent", sha, tmp_path / "installed", repo=str(repo))
+
+
+def test_local_source_cleans_failed_extraction(repository, tmp_path, monkeypatch):
+    repo, sha = repository
+
+    def failed_extraction(_archive, staging):
+        staging.mkdir()
+        (staging / "partial").write_text("incomplete")
+        raise ValueError("failed extraction")
+
+    monkeypatch.setattr(tools, "extract", failed_extraction)
+    with pytest.raises(ValueError, match="failed extraction"):
+        tools.source("agent", sha, tmp_path / "installed", repo=str(repo))
+    assert not (tmp_path / "installed").exists()
+    assert not (tmp_path / "installed.unpack").exists()
+    assert not (tmp_path / "installed.source.tar").exists()
+
+
+def test_stage_uses_source_overrides_and_records_manifest(tmp_path, monkeypatch):
+    value = manifest()
+    value["agent"]["repo"] = str(tmp_path / "agent")
+    value["runtime"]["repo"] = (tmp_path / "runtime").as_uri()
+    backend = Backend(tmp_path / "program", tmp_path / "log", tmp_path / "uv")
+    calls = []
+
+    def materialize(name, sha, destination, *, repo):
+        calls.append((name, sha, destination, repo))
+        if name == "agent":
+            (destination / "remotion/node_modules").mkdir(parents=True)
+            (destination / "remotion/package-lock.json").write_text("{}\n")
+        return destination
+
+    monkeypatch.setattr("astrid.installer.backend.source", materialize)
+    monkeypatch.setattr("astrid.installer.backend.install_tools", lambda *_args: {
+        "PATH": "/tools", "ASTRID_NODE_EXECUTABLE": "/tools/node", "ASTRID_BUN_EXECUTABLE": "/tools/bun",
+    })
+    monkeypatch.setattr("astrid.installer.backend.binary", lambda *_args: tmp_path / "npm-cli.js")
+    monkeypatch.setattr(backend, "run", lambda *_args, **_kwargs: "uv 1.2.3")
+    monkeypatch.setattr(backend, "existing", lambda _data: None)
+    monkeypatch.setattr(backend, "_declare_services", lambda **kwargs: kwargs["folder"] / "services.json")
+
+    version = backend.stage(value, tmp_path / "program", tmp_path / "data")
+
+    assert calls == [(name, value[name]["sha"], version.root / directory, value[name]["repo"])
+                     for name, directory in (("agent", "a"), ("runtime", "r"))]
+    assert json.loads((version.root / "manifest.json").read_text()) == value
+

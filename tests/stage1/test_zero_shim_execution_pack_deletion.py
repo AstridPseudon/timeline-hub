@@ -87,6 +87,7 @@ def test_external_executor_command_always_crosses_subprocess_boundary(
     from astrid.core.execution.executor import runner
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
+    monkeypatch.delenv("ASTRID_VIBECOMFY_CHECKOUT", raising=False)
     definition = ExecutorDefinition(
         id="demo.executor",
         name="Demo",
@@ -121,7 +122,8 @@ def test_external_executor_command_always_crosses_subprocess_boundary(
     )
 
     assert result.returncode == 0
-    assert calls and calls[0][0][0] == ["python3", "-c", "pass"]
+    assert len(calls) == 1
+    assert calls[0][0][0] == ["python3", "-c", "pass"]
 
 
 def test_python_orchestrator_always_uses_subprocess_worker(
@@ -245,35 +247,40 @@ def test_generic_host_discovers_explicit_astrid_packs_path_without_default_scan(
 
 def test_supported_cleanup_paths_use_kernel_custody_and_anchored_group_signal():
     import ast
-    paths = ("astrid/core/execution/process_group.py", "astrid/core/execution/generic_host.py",
+    paths = ("astrid/core/execution/process_group.py", "astrid/core/execution/platform_helpers.py",
+             "astrid/core/execution/generic_host.py",
              "astrid/sdk/host_bootstrap.py", "astrid/sdk/rendering.py", "astrid/core/rendering/transport.py",
              "astrid/packs/video_editing/actions/hype/runner.py")
-    killpg_calls = []
+    recovery_calls = []
     for relative in paths:
         source = ast.parse((ROOT / relative).read_text())
         for node in ast.walk(source):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Name) and node.func.id == "signal_observed_group":
+                recovery_calls.append((relative, node))
+            if not isinstance(node.func, ast.Attribute):
                 continue
             if not isinstance(node.func.value, ast.Name) or node.func.value.id != "os":
                 continue
             if node.func.attr == "kill":
                 assert len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and node.args[1].value == 0, relative
             elif node.func.attr == "killpg":
-                killpg_calls.append((relative, node))
-    assert len(killpg_calls) == 1
-    relative, call = killpg_calls[0]
+                pytest.fail(f"{relative} grants signal authority to a numeric process group")
+    assert len(recovery_calls) == 1
+    relative, call = recovery_calls[0]
     assert relative == "astrid/sdk/host_bootstrap.py"
     source = ast.parse((ROOT / relative).read_text())
     helper = next(node for node in source.body if isinstance(node, ast.FunctionDef)
                   and node.name == "_stop_group")
-    helper_killpg = [node for node in ast.walk(helper) if isinstance(node, ast.Call)
-                     and isinstance(node.func, ast.Attribute)
-                     and isinstance(node.func.value, ast.Name)
-                     and node.func.value.id == "os" and node.func.attr == "killpg"]
-    assert len(helper_killpg) == 1 and ast.dump(helper_killpg[0]) == ast.dump(call)
-    assert any(isinstance(node, ast.Name) and node.id == "leader_birth" for node in ast.walk(helper))
+    helper_recovery = [node for node in ast.walk(helper) if isinstance(node, ast.Call)
+                       and isinstance(node.func, ast.Name)
+                       and node.func.id == "signal_observed_group"]
+    assert len(helper_recovery) == 1 and ast.dump(helper_recovery[0]) == ast.dump(call)
+    assert any(keyword.arg == "leader_birth" and isinstance(keyword.value, ast.Name)
+               and keyword.value.id == "leader_birth" for keyword in call.keywords)
     assert any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
                and node.func.id == "_group_survivors" for node in ast.walk(helper))
     assert any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-               and isinstance(node.func.value, ast.Name) and node.func.value.id == "os"
-               and node.func.attr == "getpgrp" for node in ast.walk(helper))
+               and isinstance(node.func.value, ast.Name) and node.func.value.id == "platform"
+               and node.func.attr == "process_group" for node in ast.walk(helper))

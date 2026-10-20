@@ -9,16 +9,16 @@ content and reruns checks in the configured child interpreter.
 from __future__ import annotations
 
 import base64
-import fcntl
 import hashlib
 import json
 import os
 import shlex
-import stat
 import subprocess
 import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Protocol
+
+from runtime_protocol import platform
 
 
 class WorkerPreparationError(RuntimeError):
@@ -474,17 +474,12 @@ def _atomic_private_write(path: Path, value: Mapping[str, Any]) -> None:
     fd, raw_temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temporary = Path(raw_temporary)
     try:
-        os.fchmod(fd, stat.S_IRUSR | stat.S_IWUSR)
         with os.fdopen(fd, "wb") as stream:
+            platform.owner_only(stream.fileno())
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        platform.durable_replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -509,7 +504,7 @@ def _locked_journal(path: Path):
             path.parent.mkdir(parents=True, exist_ok=True)
             self.fd = os.open(path.with_suffix(path.suffix + ".lock"), os.O_CREAT | os.O_RDWR, 0o600)
             try:
-                fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(self.fd, blocking=False)
             except BlockingIOError as exc:
                 os.close(self.fd)
                 raise PreparationJournalError("another coordinator owns this preparation journal") from exc
@@ -517,7 +512,7 @@ def _locked_journal(path: Path):
 
         def __exit__(self, *_exc):
             try:
-                fcntl.flock(self.fd, fcntl.LOCK_UN)
+                platform.unlock_file(self.fd)
             finally:
                 os.close(self.fd)
 

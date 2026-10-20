@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import fcntl
 import hashlib
 import json
 import os
 from types import SimpleNamespace
 
 import pytest
+from runtime_protocol import platform
 
 from astrid.packs.runpod import worker_owner
 from astrid.packs.runpod.worker_owner import RunPodRemoteWorkerPreparer, RunPodWorkerOwnerError
@@ -73,7 +73,7 @@ def release_case(tmp_path, monkeypatch):
         fd = os.open(lock_path, os.O_RDWR)
         try:
             with pytest.raises(BlockingIOError):
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(fd, blocking=False)
         finally:
             os.close(fd)
 

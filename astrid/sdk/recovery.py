@@ -1,14 +1,16 @@
 """Local, opt-in exact admission receipt; Runtime remains task authority."""
 from __future__ import annotations
 
-import fcntl
 import hashlib
-import os
 import tempfile
 from pathlib import Path
 from typing import Any, Mapping
 
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
 from astrid.core.receipts.canonical import canonical_json, parse_json
+
 from .exceptions import CapabilityInvocationError, CapabilityValidationError
 from .results import _json_safe
 from .workspace_client import WorkspaceClientError
@@ -60,7 +62,7 @@ class AdmissionReceipt:
         try:
             self._lock = os.open(str(self.path) + ".lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
             try:
-                fcntl.flock(self._lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(self._lock, blocking=False)
             except BlockingIOError as exc:
                 raise CapabilityInvocationError("recovery receipt is already in use") from exc
             if self.path.is_symlink():
@@ -111,7 +113,7 @@ class AdmissionReceipt:
         descriptor, name = tempfile.mkstemp(prefix=f".{self.path.name}.", dir=self.path.parent)
         try:
             with os.fdopen(descriptor, "wb") as handle:
-                os.fchmod(handle.fileno(), 0o600)
+                platform.owner_only(handle.fileno())
                 handle.write(encoded)
                 handle.flush()
                 os.fsync(handle.fileno())

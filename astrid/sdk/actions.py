@@ -9,8 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
+from astrid.core.path_utils import file_uri_to_path
 from .exceptions import CapabilityValidationError
 
 
@@ -41,7 +42,7 @@ def _validate_action_schema(definition: Any, slot: str, value: Any) -> None:
         parsed = urlparse(uri)
         if parsed.scheme != "file" or parsed.netloc:
             raise CapabilityValidationError("action schemas must use local pack references")
-        path = Path(unquote(parsed.path)).resolve()
+        path = file_uri_to_path(uri).resolve()
         if not path.is_relative_to(root):
             raise CapabilityValidationError("action schema reference escapes pack root")
         return Resource.from_contents(load_manifest_payload(path, manifest_kind="JSON Schema"),

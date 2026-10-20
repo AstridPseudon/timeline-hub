@@ -3838,7 +3838,8 @@ def _invoke_bridge_child(
     from types import SimpleNamespace
     from astrid.core.foundation.hash import executor_definition_digest
     from ._child_bridge import (
-        _BridgeRejected, _ChildOutputBinding, _child_request, _valid_id, _validate_output_page,
+        _BridgeRejected, _BridgeReplyTimeout, _BridgeTimeout, _ChildOutputBinding,
+        _child_request, _valid_id, _validate_output_page,
     )
 
     digest = executor_definition_digest(registries[0].get(capability.id))
@@ -3865,8 +3866,15 @@ def _invoke_bridge_child(
         latest_status: Mapping[str, Any] = data
         protocol_error: CapabilityInvocationError | None = None
 
+        def validate_status(observed: Any) -> None:
+            nonlocal protocol_error
+            if not isinstance(observed, Mapping) or observed.get("task_id") != task_id or observed.get("run_id") != run_id:
+                bridge.close()
+                protocol_error = CapabilityInvocationError("child bridge status returned a foreign task resource")
+                raise protocol_error
+
         def status(observed_id: str) -> Any:
-            nonlocal latest_status, protocol_error
+            nonlocal latest_status
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return latest_status
@@ -3875,10 +3883,13 @@ def _invoke_bridge_child(
                                          timeout_seconds=remaining)
             except _BridgeRejected as exc:
                 return SimpleNamespace(ok=False, data=None, error=exc.error)
-            if not isinstance(observed, Mapping) or observed.get("task_id") != task_id or observed.get("run_id") != run_id:
-                bridge.close()
-                protocol_error = CapabilityInvocationError("child bridge status returned a foreign task resource")
-                raise protocol_error
+            except _BridgeTimeout as exc:
+                if isinstance(exc.__cause__, _BridgeReplyTimeout):
+                    validate_status(exc.__cause__.data)
+                if exc.observed_at >= deadline:
+                    return latest_status
+                raise
+            validate_status(observed)
             latest_status = observed
             return observed
 

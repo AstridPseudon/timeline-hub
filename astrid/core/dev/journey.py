@@ -33,6 +33,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from runtime_protocol import platform
+
 from astrid.core.dev import reference_realm
 from astrid.core.rendering.remotion_runtime import _INTERACTIVE_GIT_ENV, _UNSUPPORTED_PYTHON_STARTUP
 
@@ -83,19 +85,17 @@ class JourneyFailure(RuntimeError):
 
 
 def _interrupt_journey(signum, _frame) -> None:
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        signal.signal(sig, signal.SIG_IGN)
+    platform.install_stop_handlers(signal.SIG_IGN)
     raise JourneyFailure("interrupted", f"received {signal.Signals(signum).name}")
 
 
 @contextmanager
 def _journey_signals():
-    previous = {sig: signal.signal(sig, _interrupt_journey) for sig in (signal.SIGTERM, signal.SIGINT)}
+    restore = platform.install_stop_handlers(_interrupt_journey)
     try:
         yield
     finally:
-        for sig, handler in previous.items():
-            signal.signal(sig, handler)
+        restore()
 
 
 def select_reference_realm(reference: Path) -> tuple[str, Path]:
@@ -146,7 +146,7 @@ def _processes(root: Path) -> list[dict[str, Any]]:
 
 def _reap_owned_groups(root: Path) -> list[dict[str, Any]]:
     """Signal only groups whose every listed member is rooted in our temp realm."""
-    for signum in (signal.SIGTERM, signal.SIGKILL):
+    for signum in (platform.TERM, platform.KILL):
         rows = _processes(root)
         if not rows:
             return []
@@ -158,9 +158,11 @@ def _reap_owned_groups(root: Path) -> list[dict[str, Any]]:
             if row["pgid"] in groups and row["pid"] not in owned_pids:
                 safe.discard(row["pgid"])
         for group in safe:
-            if group != os.getpgrp():
+            if group != platform.process_group(os.getpid()):
                 try:
-                    os.killpg(group, signum)
+                    from astrid.core.execution.platform_helpers import signal_observed_group
+                    from astrid.core.execution.process_group import process_birth_identity
+                    signal_observed_group(group, signum, leader_birth=process_birth_identity(group) or "absent-leader")
                 except ProcessLookupError:
                     pass
         if wait_for(lambda: not _processes(root), 5):
@@ -462,9 +464,9 @@ class Runner:
         return result
 
     def command(self, phase: str, argv: list[str], env: dict[str, str], *, json_result: bool = True):
-        process = subprocess.Popen(argv, cwd=Path(__file__).resolve().parents[3], env=scrub_child_env(env),
+        process = platform.spawn_tree(argv, cwd=Path(__file__).resolve().parents[3], env=scrub_child_env(env),
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                   start_new_session=True)
+                                   )
         hang_limit = HANG_SECONDS[phase]
         deadline = time.monotonic() + hang_limit
         try:
@@ -478,15 +480,8 @@ class Runner:
                         raise JourneyFailure(phase, f"command hung (no exit after {hang_limit}s): {argv!r}", kind="hung")
         finally:
             if process.poll() is None:
-                try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                try:
-                    process.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    process.wait()
+                platform.stop_tree(process, grace=3)
+
         if process.returncode:
             # Both streams: stderr may hold only progress diagnostics while the refusal is on stdout.
             told = [f"{label}: {text.strip()[-1500:]}" for label, text in (("stderr", err), ("stdout", out)) if text and text.strip()]
@@ -610,7 +605,8 @@ def pid_alive(pid: int | None) -> bool:
     if not isinstance(pid, int):
         return False
     try:
-        os.kill(pid, 0)
+        if platform.process_identity(pid) is None:
+            raise ProcessLookupError(pid)
     except ProcessLookupError:
         return False
     except PermissionError:
@@ -765,7 +761,7 @@ class Journey:
 
     def kill_idle(self) -> int:
         old = self.rooted_host("kill_idle")
-        os.kill(old, signal.SIGKILL)
+        platform.signal_process(platform.process_identity(old), platform.KILL)
         if not wait_for(lambda: not pid_alive(old), 10):
             raise JourneyFailure("kill_idle", f"host {old} survived SIGKILL")
         self.open_client("kill_idle")
@@ -792,7 +788,7 @@ class Journey:
             raise JourneyFailure("kill_render", f"no render processes appeared under host {host} (render finished too early or never started): {result}")
         pids = sorted({row["pid"] for row in found} | {row["pid"] for row in descendants(_ps_rows(), host)})
         before_kill = lease_snapshot(self.runtime_get(f"/v1/tasks/{task_id}"))
-        os.kill(host, signal.SIGKILL)
+        platform.signal_process(platform.process_identity(host), platform.KILL)
         killed_at = time.monotonic()
         if not wait_for(lambda: not pid_alive(host), 10):
             raise JourneyFailure("kill_render", f"host {host} survived SIGKILL")
@@ -1018,8 +1014,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         failure = str(exc)
         hung = getattr(exc, "kind", None) == "hung"
     finally:
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            signal.signal(sig, signal.SIG_IGN)
+        platform.install_stop_handlers(signal.SIG_IGN)
         if changed:
             try:
                 current = source_probe.read_bytes()

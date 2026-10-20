@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import os
+import signal
+import subprocess
 from pathlib import Path
 
+import pytest
+
 from astrid import omp_agent
+from astrid.core.util import process as _process
 
 
 def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -> None:
@@ -15,7 +20,7 @@ def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("global launcher/cache must not run")))
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/private/installed/omp")
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     assert omp_agent.main(["--mode=acp"]) == 1
     assert captured["file"] == "/private/installed/omp"
@@ -32,7 +37,7 @@ def test_main_uses_shipped_profile_without_materializing_a_user_agent(monkeypatc
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/fake/omp")
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     assert omp_agent.main(["make a shot list"]) == 1
     assert captured["file"] == "/fake/omp"
@@ -49,7 +54,7 @@ def test_existing_project_or_user_profile_keeps_the_omp_agent_route(monkeypatch)
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     assert omp_agent.main([]) == 1
     assert captured["file"] == "/fake/agent"
@@ -62,7 +67,7 @@ def test_explicit_astrid_prompt_override_is_appended(monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     omp_agent.main(["make a shot list"])
 
@@ -139,7 +144,7 @@ def test_omp_bin_override_and_astrid_identity(monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
     omp_agent.main([])
     assert os.environ["OMP_AGENT_IDENTITY"] == "astrid"
     assert os.environ["ASTRID_AGENT_IDENTITY"] == "astrid"
@@ -154,7 +159,7 @@ def test_astrid_command_overrides_inherited_identity(monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     omp_agent.main([])
 
@@ -168,7 +173,7 @@ def test_bare_agent_subcommand_is_an_explicit_interactive_agent_route(monkeypatc
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     assert omp_agent.main(["agent"]) == 1
     assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
@@ -181,7 +186,22 @@ def test_toolkit_families_and_help_delegate_to_gateway(monkeypatch) -> None:
 
     assert omp_agent.main(["projects", "list", "--json"]) == 7
     assert omp_agent.main(["help"]) == 7
-    assert calls == [["projects", "list", "--json"], ["help"]]
+    assert omp_agent.main(["install", "--help"]) == 7
+    assert calls == [["projects", "list", "--json"], ["help"], ["install", "--help"]]
+
+
+def test_setup_is_a_conversational_message(monkeypatch) -> None:
+    captured = {}
+    monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda _argv: pytest.fail("setup has no gateway route"))
+    monkeypatch.setattr(omp_agent, "_installed_pack_families", lambda: frozenset())
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_a, **_kw: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(argv=argv))
+
+    assert omp_agent.main(["setup"]) == 1
+    assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
+    assert captured["argv"][-2:] == ["--print", "setup"]
 
 
 def test_top_level_help_describes_unified_agent_and_toolkit_surface(capsys) -> None:
@@ -199,10 +219,53 @@ def test_alternate_agent_does_not_receive_astrid_packaged_prompt(monkeypatch) ->
     captured: dict[str, object] = {}
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(file=argv[0], argv=argv))
 
     assert omp_agent.main(["--agent", "scout", "inspect this scene"]) == 1
     argv = captured["argv"]
     assert argv[:3] == ["/fake/agent", "run", "scout"]
     assert "--system-prompt" not in argv
     assert "--append-system-prompt" not in argv
+
+
+@pytest.mark.parametrize("route", ["packaged", "named", "onboard"])
+def test_windows_handoffs_wait_and_propagate_child_exit(monkeypatch, route):
+    captured = {}
+    executable = "/selected program/omp.exe" if route != "named" else "/selected program/agent.exe"
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_a, **_kw: route == "named")
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path(executable))
+    monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: executable)
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent, "_omp_supports_onboard", lambda _bin: True)
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "source")
+    monkeypatch.setenv("ASTRID_SYSTEM_PROMPT", 'extra "quoted" guidance')
+    monkeypatch.delenv("ASTRID_SYSTEM_PROMPT_FILE", raising=False)
+    monkeypatch.setattr(_process.sys, "platform", "win32")
+    for name in ("execvpe", "execvp", "execve"):
+        monkeypatch.setattr(_process.os, name, lambda *_a: pytest.fail("Windows must wait for its child"))
+
+    def run(argv, **kwargs):
+        captured.update(argv=argv, kwargs=kwargs)
+        signal.raise_signal(signal.SIGINT)
+        return subprocess.CompletedProcess(argv, 23)
+
+    monkeypatch.setattr(_process.subprocess, "run", run)
+    message = 'inspect "this scene" together'
+    args = ["--onboard"] if route == "onboard" else ["--mode=acp", message]
+    previous_handler = signal.getsignal(signal.SIGINT)
+    with pytest.raises(SystemExit) as exc:
+        omp_agent.main(args)
+    assert exc.value.code == 23
+    assert captured["argv"][0] == executable
+    assert captured["kwargs"] == {"env": None, "check": False}
+    assert signal.getsignal(signal.SIGINT) is previous_handler
+    if route == "onboard":
+        assert captured["argv"] == [executable, "onboard"]
+    else:
+        assert captured["argv"][-2:] == ["--print", message]
+        if route == "packaged":
+            assert captured["argv"][:3] == [executable, "--system-prompt", omp_agent.ASTRID_SYSTEM_PROMPT]
+        else:
+            assert captured["argv"][:3] == [executable, "run", "astrid"]
+        prompt = captured["argv"][captured["argv"].index("--append-system-prompt") + 1]
+        assert 'extra "quoted" guidance' in prompt

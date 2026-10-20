@@ -1,160 +1,255 @@
-"""Protect the local install's source and existing-data boundaries."""
-import importlib.util
-import os
+"""Shared installer transactions, including every update failure boundary."""
 from pathlib import Path
-import subprocess
-import tempfile
-import sys
-import unittest
-import zipfile
+from unittest.mock import Mock
 
-spec = importlib.util.spec_from_file_location("local_install", Path(__file__).parents[1] / "scripts/local_install.py")
-installer = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(installer)
+import pytest
+
+from astrid.installer import core
+from astrid.installer.core import Installer, Version, current, switch, write_json
 
 
-class LocalInstallBoundaries(unittest.TestCase):
-    def test_start_launcher_uses_installed_app_and_exports_its_path(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory) / "local install's root"
-            (root / "work").mkdir(parents=True)
-            app = root / "sources" / "app"
-            app.mkdir(parents=True)
-            fake_bin = root / "fake-bin"
-            fake_bin.mkdir()
-            npm = fake_bin / "npm"
-            npm.write_text('#!/bin/sh\nprintf "%s\\n%s\\n%s\\n" "$PWD" "$*" "$ASTRID_START_COMMAND"\n')
-            npm.chmod(0o700)
-
-            installer.write_launchers(root, {"PATH": f"{fake_bin}:/bin:/usr/bin"})
-
-            start = root / "start"
-            self.assertTrue(os.access(start, os.X_OK))
-            result = subprocess.run([start], check=True, text=True, capture_output=True)
-            self.assertEqual(result.stdout.splitlines(), [str(app), "run dev:local", str(start)])
-
-    def test_cleanup_eperm_requires_no_live_group_members(self):
-        from unittest.mock import patch
-        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 Z\n42 S\n"):
-            self.assertFalse(installer.owned_group_alive(9833))
-        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 S\n"):
-            self.assertTrue(installer.owned_group_alive(9833))
-
-    def test_failed_app_process_cannot_pass_startup_check(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            with self.assertRaisesRegex(RuntimeError, "app startup exited with 7"):
-                installer.check_app([sys.executable, "-c", "raise SystemExit(7)"],
-                                    cwd=root, env=dict(os.environ), root=root,
-                                    url="http://127.0.0.1:1", runtime_instance_id="proof", timeout=5)
-            self.assertFalse((root / "app-receipt.json").exists())
-
-    def test_failed_chat_check_disposes_its_connection(self):
-        import io
-        import json
-        from unittest.mock import patch
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "runtime-receipt.json").write_text(json.dumps({"project_create_readback": {"project_id": "smoke"}}))
-            replies = [{"connection_id": "owned", "initialize": {}},
-                       {"operation_session_id": "session"}, {"result": {}},
-                       {"disconnected": True, "notifications": []}, {"closed": True}]
-            with patch.object(installer.urllib.request, "urlopen", side_effect=[io.BytesIO(json.dumps(reply).encode()) for reply in replies]) as opening:
-                with self.assertRaisesRegex(RuntimeError, "ACP smoke did not complete"):
-                    installer.check_acp("http://localhost:2223", root)
-                last_request = opening.call_args.args[0]
-                self.assertEqual(last_request.method, "DELETE")
-                self.assertTrue(last_request.full_url.endswith("/acp/owned"))
-            self.assertFalse((root / "acp-receipt.json").exists())
-
-    def test_missing_media_decoder_fails_before_provision(self):
-        with self.assertRaisesRegex(ValueError, "ffmpeg is required for media import"):
-            installer.media_tools({"PATH": "/nonexistent-local-install-test"}, {})
-
-    def test_missing_agent_runtime_fails_before_provision(self):
-        with self.assertRaisesRegex(ValueError, "bun is required for Astrid chat"):
-            installer.agent_tools({"PATH": "/nonexistent-local-install-test"}, {})
-
-    def test_remotion_dependencies_follow_lockfile_marker(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            remotion = root / "source" / "remotion"
-            remotion.mkdir(parents=True)
-            lockfile = remotion / "package-lock.json"
-            lockfile.write_text('{"lockfileVersion": 3, "dependencies": {}}\n')
-            fake_bin = root / "fake-bin"
-            fake_bin.mkdir()
-            log = root / "npm.log"
-            npm = fake_bin / "npm"
-            npm.write_text(
-                f"#!{sys.executable}\n"
-                "import os\n"
-                "from pathlib import Path\n"
-                "import sys\n"
-                "with open(os.environ['FAKE_NPM_LOG'], 'a') as stream:\n"
-                "    stream.write(os.getcwd() + '|' + ' '.join(sys.argv[1:]) + '\\n')\n"
-                "Path('node_modules').mkdir(exist_ok=True)\n"
-            )
-            npm.chmod(0o700)
-            env = {"PATH": str(fake_bin), "FAKE_NPM_LOG": str(log)}
-
-            installer.install_remotion_dependencies(root / "source", env)
-            installer.install_remotion_dependencies(root / "source", env)
-            lockfile.write_text('{"lockfileVersion": 3, "dependencies": {"changed": true}}\n')
-            installer.install_remotion_dependencies(root / "source", env)
-
-            self.assertEqual(log.read_text().splitlines(), [f"{remotion.resolve()}|ci", f"{remotion.resolve()}|ci"])
-            marker = remotion / "node_modules" / ".astrid-package-lock.sha256"
-            self.assertEqual(marker.read_text(), installer.digest(lockfile) + "\n")
-
-    def test_stale_wheel_is_rejected(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "source"
-            (source / "astrid_runtime").mkdir(parents=True)
-            (source / "astrid_runtime/bootstrap.py").write_text("scopes = ['projects:read']\n")
-            wheel = root / "runtime.whl"
-            with zipfile.ZipFile(wheel, "w") as bundle:
-                bundle.writestr("astrid_runtime/bootstrap.py", "scopes = []\n")
-            with self.assertRaisesRegex(ValueError, "does not match selected source"):
-                installer.wheel_parity(wheel, source, ("astrid_runtime/",))
-
-    def test_missing_source_module_is_rejected(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "source"
-            (source / "runtime_protocol").mkdir(parents=True)
-            (source / "runtime_protocol/__init__.py").write_text("")
-            (source / "runtime_protocol/daemon.py").write_text("required = True\n")
-            wheel = root / "runtime.whl"
-            with zipfile.ZipFile(wheel, "w") as bundle:
-                bundle.writestr("runtime_protocol/__init__.py", "")
-            with self.assertRaisesRegex(ValueError, "omits source modules"):
-                installer.wheel_parity(wheel, source, ("runtime_protocol/",))
-
-    def test_existing_install_is_refused_without_running_commands(self):
-        from argparse import Namespace
-        from unittest.mock import patch
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            install = root / "install"; install.mkdir()
-            sentinel = install / "user-data"; sentinel.write_bytes(b"preserve")
-            args = Namespace(root=str(install), astrid_root=str(root / "astrid"),
-                             runtime_root=str(root / "runtime"), app_root=str(root / "app"))
-            with patch.object(installer.sys, "platform", "darwin"), patch.object(installer.sys, "version_info", (3, 11)), patch.object(installer, "run") as run:
-                with self.assertRaisesRegex(ValueError, "absent or empty"):
-                    installer.install(args)
-                run.assert_not_called()
-            self.assertEqual(sentinel.read_bytes(), b"preserve")
-
-    def test_dirty_checkout_is_not_silently_archived(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q", str(root)], check=True)
-            (root / "new-user-change.py").write_text("preserve = True\n")
-            with self.assertRaisesRegex(ValueError, "must be clean"):
-                installer.source_identity(root, dict(os.environ))
+def make_version(root: Path, name: str) -> Version:
+    folder = root / 'versions' / name
+    folder.mkdir(parents=True)
+    value = Version(folder, folder / 'py/bin/python', folder / 'profile.json', {'PATH': '/tools/bin:/usr/bin:/bin'})
+    value.python.parent.mkdir(parents=True)
+    value.python.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+    write_json(folder / 'version.json', value.document())
+    return value
 
 
-if __name__ == "__main__":
-    unittest.main()
+class FakeBackend:
+    def __init__(self, root, data, *, fail=None, existing=True):
+        self.old = make_version(root, 'old') if existing else None
+        if self.old:
+            switch(root, self.old)
+        self.candidate = make_version(root, 'new')
+        self.data = data
+        data.mkdir()
+        self.sentinel = data / 'sentinel'
+        self.sentinel.write_text('original')
+        self.calls = []
+        self.fail = fail
+        self.failed = False
+        self.legacy = None
+        self.residue = []
+
+    def step(self, name):
+        self.calls.append(name)
+        if self.fail == name and not self.failed:
+            self.failed = True
+            raise RuntimeError(name + ' failed')
+
+    def existing(self, data):
+        return self.legacy
+
+    def has_workspace(self, data):
+        return False
+
+    def reinstallable(self, data):
+        return False
+
+    def workspace(self, old, data):
+        self.step('workspace')
+        return {'realm_id': 'same-realm', 'realm_root': str(data / 'realm')}
+
+    def stop(self, version, data):
+        self.step('stop')
+
+    def backup(self, old, data, realm):
+        self.step('backup')
+        backup_root = old.root.parent.parent / 'backups' / 'test-backup'
+        backup_root.mkdir(parents=True)
+        return {'root': str(backup_root), 'kind': 'runtime', 'original': self.sentinel.read_text()}
+
+    def stage(self, manifest, root, data):
+        self.step('stage')
+        return self.candidate
+
+    def upgrade(self, version, data):
+        self.sentinel.write_text('migrated')
+        self.step('upgrade')
+
+    def create(self, version, data):
+        self.step('create')
+        return {'realm_id': 'same-realm'}
+
+    def register(self, version, data):
+        self.step('register-' + version.root.name)
+
+    def start(self, version, data):
+        self.step('start-' + version.root.name)
+
+    def verify(self, version, data, realm_id, *, timeout=90):
+        assert realm_id == 'same-realm'
+        self.step('verify-' + version.root.name)
+
+    def restart_required(self):
+        self.step('restart-required')
+        return False
+
+    def finish(self, old, new, backup):
+        self.step('finish')
+
+    def restore(self, old, data, realm, backup):
+        self.step('restore')
+        self.sentinel.write_text(backup['original'])
+
+    def open(self):
+        self.step('open')
+
+    def unregister(self):
+        self.step('unregister')
+
+    def preflight_remove(self, root, data, *, delete_data):
+        self.step('preflight')
+
+    def remove(self, root, data, *, delete_data):
+        self.step('remove-data' if delete_data else 'remove-program')
+        return self.residue
+
+
+@pytest.fixture
+def installation(tmp_path):
+    root, data = tmp_path / 'program', tmp_path / 'data'
+    backend = FakeBackend(root, data)
+    lines = []
+    return root, data, backend, Installer(root, data, backend, say=lines.append), lines
+
+
+@pytest.mark.parametrize('failure', ['stop', 'backup', 'stage', 'upgrade', 'register-new', 'start-new', 'verify-new', 'finish'])
+def test_update_rolls_back_each_failure_boundary(installation, failure):
+    root, data, backend, installer, lines = installation
+    backend.fail = failure
+    with pytest.raises(RuntimeError, match=failure + ' failed'):
+        installer.run('update', {})
+    assert current(root) == backend.old
+    assert backend.sentinel.read_text() == 'original'
+    assert backend.calls[-3:] == ['register-old', 'start-old', 'verify-old']
+    assert ('restore' in backend.calls) == (failure not in {'stop', 'backup'})
+    assert 'open' not in backend.calls
+    assert not any(line.startswith('Open ') for line in lines)
+
+
+def test_pointer_publish_failure_restores_data_before_restarting_old(installation, monkeypatch):
+    root, data, backend, installer, lines = installation
+    monkeypatch.setattr(core, 'switch', Mock(side_effect=OSError('pointer failed')))
+    with pytest.raises(OSError, match='pointer failed'):
+        installer.run('update', {})
+    assert current(root) == backend.old
+    assert backend.sentinel.read_text() == 'original'
+    assert backend.calls[-4:] == ['restore', 'register-old', 'start-old', 'verify-old']
+
+
+def test_success_keeps_old_version_and_opens_only_after_identity_verification(installation):
+    root, data, backend, installer, lines = installation
+    installer.run('update', {})
+    assert current(root) == backend.candidate
+    assert backend.old.root.is_dir()
+    assert backend.calls == ['workspace', 'stop', 'backup', 'stage', 'upgrade', 'stop',
+                             'register-new', 'start-new', 'verify-new', 'finish', 'open']
+    assert lines[-1] == 'Open https://astrid.haus'
+
+
+@pytest.mark.parametrize('mode', ['install', 'repair'])
+def test_existing_install_is_idempotent_repair_without_data_or_tool_mutations(installation, mode):
+    root, data, backend, installer, lines = installation
+    before = backend.sentinel.stat().st_mtime_ns
+    installer.run(mode, {})
+    installer.run(mode, {})
+    assert backend.calls == ['workspace', 'verify-old', 'restart-required', 'open'] * 2
+    assert current(root) == backend.old
+    assert backend.sentinel.read_text() == 'original'
+    assert backend.sentinel.stat().st_mtime_ns == before
+
+
+@pytest.mark.parametrize('reason', ['unhealthy', 'changed-settings'])
+def test_repair_restarts_after_failed_verification_or_changed_service_settings(installation, reason):
+    _, _, backend, installer, _ = installation
+
+    def verify(version, data, realm_id, *, timeout=90):
+        backend.calls.append('verify-' + version.root.name)
+        if reason == 'unhealthy' and timeout == 3:
+            raise core.VerificationError('browser door refused runtime_identity_mismatch')
+
+    backend.verify = verify
+    backend.restart_required = lambda: True
+
+    installer.run('repair', {})
+
+    assert backend.calls == [
+        'workspace', 'verify-old', 'stop', 'register-old', 'start-old', 'verify-old', 'open'
+    ]
+
+
+@pytest.mark.parametrize('failure', [TypeError('bad call'), RuntimeError('bug'), KeyboardInterrupt()])
+def test_repair_does_not_restart_after_unexpected_verification_failures(installation, failure):
+    _, _, backend, installer, _ = installation
+    backend.verify = Mock(side_effect=failure)
+
+    with pytest.raises(type(failure)):
+        installer.run('repair', {})
+
+    assert backend.calls == ['workspace']
+
+
+def test_first_install_creates_one_workspace_and_never_calls_upgrade(tmp_path):
+    root, data = tmp_path / 'program', tmp_path / 'data'
+    backend = FakeBackend(root, data, existing=False)
+    Installer(root, data, backend, say=lambda line: None).run('install', {})
+    assert current(root) == backend.candidate
+    assert backend.calls == ['stage', 'create', 'register-new', 'start-new', 'verify-new', 'finish', 'open']
+
+
+def test_unregistered_existing_data_is_never_overwritten(tmp_path):
+    root, data = tmp_path / 'program', tmp_path / 'data'
+    backend = FakeBackend(root, data, existing=False)
+    backend.has_workspace = lambda path: True
+    with pytest.raises(ValueError, match='existing workspace'):
+        Installer(root, data, backend).run('install', {})
+    assert backend.calls == []
+    assert backend.sentinel.read_text() == 'original'
+
+
+@pytest.mark.parametrize('delete_data', [False, True])
+def test_uninstall_disables_and_unregisters_before_removal_and_reports_residue(installation, delete_data):
+    root, data, backend, installer, lines = installation
+    backend.residue = [root / 'locked.dll']
+    installer.run('uninstall', {}, delete_data=delete_data)
+    assert backend.calls == ['preflight', 'stop', 'unregister', 'remove-data' if delete_data else 'remove-program']
+    assert f'Remaining: {root / "locked.dll"}' in lines
+    assert (f'Workspace kept at {data}.' in lines) is (not delete_data)
+    assert 'open' not in backend.calls
+
+
+def test_failed_rollback_is_reported_and_does_not_claim_success(installation):
+    root, data, backend, installer, lines = installation
+    backend.fail = 'verify-new'
+    backend.restore = Mock(side_effect=OSError('disk unavailable'))
+    with pytest.raises(RuntimeError, match='recovery also failed.*disk unavailable'):
+        installer.run('update', {})
+    assert 'start-old' not in backend.calls
+    assert 'open' not in backend.calls
+
+
+def test_current_is_a_small_atomic_file_and_retains_previous_version(installation):
+    root, data, backend, installer, lines = installation
+    switch(root, backend.candidate)
+    assert (root / 'current').read_text() == 'new\n'
+    assert not (root / 'current').is_symlink()
+    assert current(root) == backend.candidate
+    assert backend.old.root.is_dir()
+    (root / 'current').write_text('../outside')
+    with pytest.raises(ValueError, match='identifier'):
+        current(root)
+
+
+def test_uninstall_preflight_failure_preserves_service_and_program(installation):
+    root, data, backend, installer, lines = installation
+    backend.fail = "preflight"
+    with pytest.raises(RuntimeError, match="preflight failed"):
+        installer.run("uninstall", {})
+    assert backend.calls == ["preflight"]
+    assert current(root) == backend.old
+    assert backend.sentinel.read_text() == "original"
+    assert lines == []

@@ -37,11 +37,11 @@ _ROOT = Path(__file__).resolve().parents[2]
 # dispatch families. ``help``/``--version`` print and exit; the rest are
 # handled before dispatch.
 _LAUNCHER_ROUTES = frozenset(
-    {"help", "--help", "-h", "--version", "setup", "status", "auth", "login", "logout", "revoke"}
+    {"help", "--help", "-h", "--version", "install", "status", "auth", "login", "logout", "revoke"}
 )
 # Launcher and operational routes whose surface is flags only: the route token
 # is the whole command.
-_FLAG_ONLY_ROUTES = frozenset({"setup", "status", "login", "logout", "revoke", "doctor"})
+_FLAG_ONLY_ROUTES = frozenset({"install", "status", "login", "logout", "revoke", "doctor"})
 # ``dev_operator.main`` builds its parser inline, so its verb set is mirrored
 # here from that parser's subcommands.
 _DEV_COMMANDS = frozenset({"status", "promote", "cache", "reclaim", "journey"})

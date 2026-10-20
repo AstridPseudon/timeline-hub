@@ -13,7 +13,6 @@
     "top-level astrid module must move to a canonical package: astrid/omp_agent.py",
     "top-level astrid module must move to a canonical package: astrid/omp_invoke.py",
     "top-level astrid module must move to a canonical package: astrid/runtime_cli.py",
-    "top-level astrid module must move to a canonical package: astrid/setup.py",
     "top-level astrid module must move to a canonical package: astrid/version.py"
   ]
 }

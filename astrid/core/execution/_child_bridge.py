@@ -8,7 +8,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import re
 import socket
 import stat
@@ -16,13 +15,22 @@ import sys
 import threading
 import time
 import uuid
-from datetime import datetime, timezone
 from dataclasses import asdict, dataclass, is_dataclass
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
+from runtime_protocol.dirfd import filesystem as os
+
 from astrid.core._shared.capability_common import _validate_required_inputs
-from astrid.sdk._child_bridge import _bridge_io_failure_frame, _write_bridge_io_failure, _strict_json, _validate_output
+from astrid.core.execution.platform_helpers import owned_by_current_user
+from astrid.sdk._child_bridge import (
+    _bridge_io_failure_frame,
+    _strict_json,
+    _validate_output,
+    _write_bridge_io_failure,
+)
+
 from .generic_host import HostError, _verify_admitted_source
 
 _MAX_FRAME = 1048576
@@ -164,7 +172,7 @@ def _snapshot(root: Path, filename: str, maximum: int, *, attempt_fd: int | None
         try:
             before = os.fstat(fd)
             if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
-                    or before.st_size > maximum or before.st_uid != os.geteuid()):
+                    or before.st_size > maximum or not owned_by_current_user(fd, before)):
                 raise ChildBridgeError("producer input must be a bounded owned regular file")
             chunks = []
             total = 0
@@ -233,7 +241,7 @@ class HostChildBridge:
         self.output_root = output_root
         self._attempt_fd = os.open(output_root.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
-            self._attempt_identity = self._directory_identity(os.fstat(self._attempt_fd))
+            self._attempt_identity = self._directory_identity(os.fstat(self._attempt_fd), self._attempt_fd)
             # GenericPackHost constructs this bridge before its later output
             # setup. Create the directory through the retained attempt handle.
             try:
@@ -243,7 +251,7 @@ class HostChildBridge:
             root_fd = os.open(output_root.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
                               dir_fd=self._attempt_fd)
             try:
-                self._output_identity = self._directory_identity(os.fstat(root_fd))
+                self._output_identity = self._directory_identity(os.fstat(root_fd), root_fd)
             finally:
                 os.close(root_fd)
         except BaseException:
@@ -643,14 +651,14 @@ class HostChildBridge:
         return outputs
 
     @staticmethod
-    def _directory_identity(info: Any) -> tuple[int, int]:
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid():
+    def _directory_identity(info: Any, path_or_fd=None) -> tuple[int, int]:
+        if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(path_or_fd, info):
             raise ChildBridgeError("materialization requires owned attempt directories")
         return info.st_dev, info.st_ino
 
     @staticmethod
-    def _file_identity(info: Any) -> tuple[int, int, int, int, int]:
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.geteuid():
+    def _file_identity(info: Any, path_or_fd=None) -> tuple[int, int, int, int, int]:
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not owned_by_current_user(path_or_fd, info):
             raise ChildBridgeError("materialization requires an owned regular file")
         return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
@@ -662,7 +670,7 @@ class HostChildBridge:
             anchor = os.dup(self._attempt_fd)
         directories = [(anchor, "", anchor)]
         try:
-            if self._directory_identity(os.stat(self.output_root.parent, follow_symlinks=False)) != self._attempt_identity:
+            if self._directory_identity(os.stat(self.output_root.parent, follow_symlinks=False), self.output_root.parent) != self._attempt_identity:
                 raise ChildBridgeError("parent attempt directory changed")
             for name in (self.output_root.name, *PurePosixPath(_filename(filename)).parts[:-1]):
                 parent = directories[-1][2]
@@ -673,7 +681,7 @@ class HostChildBridge:
                         pass
                 fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
                 directories.append((parent, name, fd))
-                identity = self._directory_identity(os.fstat(fd))
+                identity = self._directory_identity(os.fstat(fd), fd)
                 if len(directories) == 2 and identity != self._output_identity:
                     raise ChildBridgeError("parent output directory changed")
             self._verify_materialization_directories(directories)
@@ -684,17 +692,17 @@ class HostChildBridge:
             raise
 
     def _verify_materialization_directories(self, directories: list[tuple[int, str, int]]) -> None:
-        if self._directory_identity(os.stat(self.output_root.parent, follow_symlinks=False)) != self._attempt_identity:
+        if self._directory_identity(os.stat(self.output_root.parent, follow_symlinks=False), self.output_root.parent) != self._attempt_identity:
             raise ChildBridgeError("parent attempt directory changed")
         for parent, name, fd in directories[1:]:
-            if self._directory_identity(os.stat(name, dir_fd=parent, follow_symlinks=False)) != self._directory_identity(os.fstat(fd)):
+            if self._directory_identity(os.stat(name, dir_fd=parent, follow_symlinks=False), fd) != self._directory_identity(os.fstat(fd), fd):
                 raise ChildBridgeError("materialization directory changed")
 
     def _verify_materialized_file(self, directory: int, filename: str,
                                   entry: dict[str, Any]) -> tuple[int, int, int, int, int]:
         fd = os.open(filename, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
         try:
-            before = self._file_identity(os.fstat(fd))
+            before = self._file_identity(os.fstat(fd), fd)
             if entry.get("file_identity") is not None and before != entry["file_identity"]:
                 raise ChildBridgeError("materialized file replaced or changed")
             descriptor = entry["output"]
@@ -709,8 +717,8 @@ class HostChildBridge:
                 if total > descriptor["size"]:
                     raise ChildBridgeError("materialized file exceeds descriptor size")
                 sha.update(chunk)
-            after = self._file_identity(os.fstat(fd))
-            current = self._file_identity(os.stat(filename, dir_fd=directory, follow_symlinks=False))
+            after = self._file_identity(os.fstat(fd), fd)
+            current = self._file_identity(os.stat(filename, dir_fd=directory, follow_symlinks=False), fd)
             if (before != after or after != current or total != descriptor["size"]
                     or "sha256:" + sha.hexdigest() != descriptor["digest"]):
                 raise ChildBridgeError("materialized file failed verification")

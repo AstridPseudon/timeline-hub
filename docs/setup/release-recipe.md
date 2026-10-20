@@ -1,5 +1,10 @@
 # Current paired-release and provisioning recipe
 
+> **Developer and release-owner reference:** this document records artifact
+> qualification and operator procedures. It is not a supported user install
+> path. Users should follow [Getting Started](../getting-started.md) and use
+> Astrid at astrid.haus.
+
 Status: **maintained recipe; final release inputs pending producer handoff**.
 
 This is the one setup recipe for the current Astrid publication tuple. It is
@@ -50,12 +55,6 @@ wheelhouse:
   astrid_wheel_sha256: PENDING_PRODUCER_HANDOFF
   runtime_wheel: PENDING_PRODUCER_HANDOFF
   runtime_wheel_sha256: PENDING_PRODUCER_HANDOFF
-workspace_setup:
-  module: python3 -m astrid.setup
-  fresh_operation: --create --apply
-  existing_operation: --attach --apply
-  readiness_check: --check --offline
-  required_args: --workspace-id --data-root --realm-root --json
 canonical_client:
   delivery_owner: astrid-wheel
   import: astrid_runtime_client
@@ -196,72 +195,6 @@ astrid-credential set runpod
 The first command is read-only and should report the missing optional input;
 the second is only run when the selected capability requires it. Agent sign-in
 does not grant provider access.
-
-## Workspace selection: create or attach in place
-
-The stable-config worker owns the selected support root and discovery recipe.
-`python3 -m astrid.setup` is the one canonical setup surface: it performs the
-explicit Runtime create/attach, persists the selected support root and realm,
-composes the packaged sources/skills, and starts Runtime only with `--apply`.
-The command is not run by this documentation pass.
-
-On macOS, the documented fresh-home support-root default is:
-
-```bash
-export ASTRID_SUPPORT_ROOT="$HOME/Library/Application Support/Astrid Runtime"
-export ASTRID_RUNTIME_DATA_ROOT="$ASTRID_SUPPORT_ROOT"
-export ASTRID_WORKSPACE_DISCOVERY="$ASTRID_SUPPORT_ROOT/runtime/discovery.json"
-```
-
-For a **fresh install only**, set `ASTRID_REALM_ROOT` to an absent or empty
-absolute directory and create a new UUID. Review the offline proposal, then
-apply the one command:
-
-```bash
-export ASTRID_REALM_ROOT=/absolute/path/to/new-empty-realm
-export ASTRID_WORKSPACE_ID="$(uuidgen | tr 'A-Z' 'a-z')"
-
-python3 -m astrid.setup --create --check --offline \
-  --workspace-id "$ASTRID_WORKSPACE_ID" \
-  --data-root "$ASTRID_SUPPORT_ROOT" \
-  --realm-root "$ASTRID_REALM_ROOT" --json
-python3 -m astrid.setup --create --apply \
-  --workspace-id "$ASTRID_WORKSPACE_ID" \
-  --data-root "$ASTRID_SUPPORT_ROOT" \
-  --realm-root "$ASTRID_REALM_ROOT" --json
-```
-
-The fresh `--check --offline` call is a noninteractive read-only proposal; it
-must not be reported as an applied setup while the workspace is still missing.
-For an **existing installation**, use its actual selected support root, exact
-realm root and exact realm ID. Attach in place and preserve that identity:
-
-```bash
-export ASTRID_REALM_ROOT=/absolute/path/to/existing-selected-realm
-export ASTRID_WORKSPACE_ID=<existing-realm-id>
-
-python3 -m astrid.setup --attach --check --offline \
-  --workspace-id "$ASTRID_WORKSPACE_ID" \
-  --data-root "$ASTRID_SUPPORT_ROOT" \
-  --realm-root "$ASTRID_REALM_ROOT" --json
-python3 -m astrid.setup --attach --apply \
-  --workspace-id "$ASTRID_WORKSPACE_ID" \
-  --data-root "$ASTRID_SUPPORT_ROOT" \
-  --realm-root "$ASTRID_REALM_ROOT" --json
-```
-
-`--check --offline` is the correctly flagged noninteractive readiness path;
-`--apply` is the state-changing path. If the producer handoff supplies an
-absolute source manifest, add `--source-manifest "$ASTRID_SOURCE_MANIFEST"`
-to the same command. Do not use bare `astrid.setup`, `workspace inspect` plus
-`up`, relocation, implicit realm selection, automatic workspace creation or
-disabled realm/actor identity checks. After apply, use the read-only checks:
-
-```bash
-python3 -m astrid doctor --json
-astrid-runtime status --profile astrid \
-  --data-root "$ASTRID_SUPPORT_ROOT" --json
-```
 
 ## Rendering prerequisites and review loop
 

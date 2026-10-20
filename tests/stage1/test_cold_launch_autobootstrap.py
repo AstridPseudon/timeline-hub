@@ -680,7 +680,7 @@ def test_diagnostics_can_remain_side_effect_free(monkeypatch):
         "astrid.sdk.autobootstrap.ensure_runtime",
         lambda: pytest.fail("diagnostic path unexpectedly bootstrapped the runtime"),
     )
-    with pytest.raises(Exception, match="astrid-runtime up --profile astrid"):
+    with pytest.raises(Exception, match="run the Astrid install line again"):
         AstridClient.open(endpoint="http://127.0.0.1:1", credential="token", realm_id="realm", actor_id="actor", client_name="test", client_version="1", protocol_version="workspace.v1")
 
 

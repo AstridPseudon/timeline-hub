@@ -232,6 +232,65 @@ def test_editor_cancel_noop_and_failure_preservation(client, monkeypatch):
     assert not r.writes
 
 
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        (r"C:\Windows\notepad.exe", [r"C:\Windows\notepad.exe"]),
+        (r'"C:\Program Files\Editor\editor.exe" --wait "file name"', [r"C:\Program Files\Editor\editor.exe", "--wait", "file name"]),
+        (r'app.exe a\\\"b', ["app.exe", 'a\\"b']),
+        (r'app.exe a\\\\"b c"', ["app.exe", r"a\\b c"]),
+        ('app.exe ""', ["app.exe", ""]),
+        ("  \t  ", []),
+        ("app.exe 'literal apostrophes'", ["app.exe", "'literal", "apostrophes'"]),
+    ],
+)
+def test_windows_editor_command_line_parsing(command, expected):
+    from astrid.sdk.documents import _split_windows_command_line
+
+    assert _split_windows_command_line(command) == expected
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["editor.exe", ""],
+        ["editor.exe", "a\"b"],
+        ["editor.exe", "ends-with-slash\\"],
+        ["editor.exe", "spaces and slash\\"],
+    ],
+)
+def test_windows_editor_command_line_roundtrips_subprocess_quoting(arguments):
+    import astrid.sdk.documents as module
+
+    command = module.subprocess.list2cmdline(arguments)
+
+    assert module._split_windows_command_line(command) == arguments
+
+
+@pytest.mark.parametrize(
+    ("command", "expected_prefix"),
+    [
+        (r"C:\Windows\notepad.exe", [r"C:\Windows\notepad.exe"]),
+        (r"C:\tools\editor.exe --wait", [r"C:\tools\editor.exe", "--wait"]),
+        (r'"C:\Program Files\Editor\editor.exe" --wait', [r"C:\Program Files\Editor\editor.exe", "--wait"]),
+        (r'"C:\Program Files\Editor\editor.exe" --wait --reuse-window', [r"C:\Program Files\Editor\editor.exe", "--wait", "--reuse-window"]),
+    ],
+)
+def test_preferences_edit_uses_windows_editor_argv(client, monkeypatch, command, expected_prefix):
+    import astrid.sdk.documents as module
+
+    c, _ = client
+    launched = []
+    monkeypatch.setattr(module, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(module.subprocess, "run", lambda args, **kwargs: (launched.append(args) or SimpleNamespace(returncode=0)))
+
+    result = c.preferences.edit(scope="user", editor=command)
+
+    assert result.ok
+    assert launched[0][:-1] == expected_prefix
+    assert launched[0][-1] == result.data["file"]
+
+
 def test_kind_filter_all_pages_and_stable_id(client):
     c, r = client
     for n in range(3):

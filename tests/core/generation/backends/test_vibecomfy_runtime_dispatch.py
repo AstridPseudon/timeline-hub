@@ -212,11 +212,12 @@ def test_still_live_incarnation_check_uses_same_native_facts_and_keeps_absence_s
     from astrid.core.execution import custody_broker
     backend, adapter, module, session, marker, _, rows, _, calls, probe = _host_composite_case(tmp_path, monkeypatch)
     probe.allow_ps = False
-    def kill(pid, signal):
-        assert (pid, signal) == (910001, 0)
-        if observation == "absent_kill": raise ProcessLookupError()
+    def identity(pid):
+        assert pid == 910001
+        if observation == "absent_kill": return None
         if observation == "denied": raise PermissionError()
-    monkeypatch.setattr(backend.os, "kill", kill)
+        return {"pid": pid}
+    monkeypatch.setattr(backend.platform, "process_identity", identity)
     if observation == "reused": rows[910001]["start_sec"] += 1
     elif observation == "absent_native": rows.clear()
     elif observation == "unavailable":

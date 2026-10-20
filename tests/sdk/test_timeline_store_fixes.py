@@ -38,6 +38,32 @@ def test_drafts_root_without_env_is_the_sdk_data_root_never_home_astrid(monkeypa
     assert not (home / ".astrid").exists()
 
 
+def test_media_seconds_closes_probe_tempfile_before_reopening_and_unlinks(monkeypatch):
+    import astrid.core.media as media
+
+    payload = b"not a wav file; ffprobe must open this path"
+    probed_paths = []
+
+    class Media:
+        def read_bytes(self, _digest):
+            return payload
+
+    class Client:
+        media = Media()
+
+    def probe(path):
+        path = Path(path)
+        probed_paths.append(path)
+        assert path.read_bytes() == payload
+        return 2.5
+
+    monkeypatch.setattr(media, "ffprobe_duration_seconds", probe)
+
+    assert store.media_seconds("project", {"media_id": "sha256:" + "a" * 64, "type": "video/mp4"}, client=Client()) == 2.5
+    assert len(probed_paths) == 1
+    assert not probed_paths[0].exists()
+
+
 # ---------------------------------------------------------------- (B) publish keeps parent-config changes
 
 def _base() -> dict:

@@ -1,8 +1,8 @@
 {
-  "$provenance": "shape from astrid/packs/rendering/editor/live-scenes/authoring.ts importPreparedScene (liveScenePatch + TimelinePatchOperation literals); values illustrative, NOT a recorded run; scope proposed",
+  "$provenance": "shape from astrid/packs/rendering/ui/threejs-live-editor/authoring.ts importPreparedScene (liveScenePatch + TimelinePatchOperation literals); values illustrative, NOT a recorded run; scope proposed",
   "instance": {
     "version": 7,
-    "source": "haus.astrid.live-scenes",
+    "source": "haus.astrid.threejs-live-editor",
     "scope": {
       "projectId": "p",
       "timelineId": "t"

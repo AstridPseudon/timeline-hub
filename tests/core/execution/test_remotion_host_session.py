@@ -446,7 +446,7 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
         manager.close()
 
 
-def test_pipe_write_deadline_restores_original_descriptor_mode(tmp_path, monkeypatch):
+def test_pipe_write_deadline_does_not_change_descriptor_mode(tmp_path, monkeypatch):
     manager, _ = owner(tmp_path)
     read_fd, write_fd = os.pipe()
     process = Process()
@@ -454,12 +454,12 @@ def test_pipe_write_deadline_restores_original_descriptor_mode(tmp_path, monkeyp
     manager.process = process
     monkeypatch.setattr(host, 'observe_tree', lambda p: {})
     monkeypatch.setattr(manager, '_guard', lambda: None)
+    monkeypatch.setattr(host.os, 'set_blocking', lambda *a: pytest.fail('pipe mode must stay unchanged'))
     ticks = iter([0.0, 301.0])
     monkeypatch.setattr(host.time, 'monotonic', lambda: next(ticks))
     try:
         with pytest.raises(TimeoutError, match='request write timed out'):
             manager._exchange({'type':'render'})
-        assert os.get_blocking(write_fd) is True
     finally:
         process.stdin.close()
         os.close(read_fd)

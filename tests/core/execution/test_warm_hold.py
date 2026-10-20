@@ -1,11 +1,13 @@
 """Idle release of warm holders, driven by explicit timers instead of sleeps."""
-import os
 import subprocess
 import sys
 import threading
+from types import SimpleNamespace
+
+import pytest
 
 from astrid.core.env_vars import ASTRID_WARM_IDLE_SECONDS
-from astrid.core.execution import generic_host
+from astrid.core.execution import generic_host, process_group
 from astrid.core.execution.generic_host import GenericPackHost
 from astrid.core.execution.guards import EVIDENCE_STATUS_NAME, read_evidence_status
 from astrid.core.execution.managed_tool_session import CapabilityDescriptor, SessionBinding
@@ -197,7 +199,6 @@ def test_idle_expiry_ends_the_warm_wan_child_through_its_session_release(tmp_pat
     # A real child that exits on the adapter's close frame, as the Wan session does.
     adapter.process = popen_owned_group([sys.executable, "-c", "import sys; sys.stdin.readline()"],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    os.set_blocking(adapter.process.stdin.fileno(), False)
     host._track_process(adapter.process)
     reasons = []
     release = adapter.release
@@ -227,6 +228,64 @@ def test_idle_expiry_ends_the_warm_wan_child_through_its_session_release(tmp_pat
             adapter.process.kill()
             adapter.process.wait()
         host.managed_tool_session.close()
+
+
+@pytest.mark.parametrize("job_released", [True, False])
+def test_windows_wan_idle_release_uses_retained_job_evidence(tmp_path, monkeypatch, job_released):
+    host = GenericPackHost(pack_roots=[tmp_path])
+    timers = Timers()
+    host.warm_holds = WarmHolds(timer=timers)
+    notes = []
+    host._latch_cleanup_uncertainty = notes.append
+    binding = SessionBinding(session_id=str(tmp_path), runtime_instance_id="runtime", process_birth_id="birth",
+                             endpoint="pipe:birth", source_digest="source", config_digest="config")
+    adapter = generic_host._ManagedWanChildAdapter(
+        spec={}, binding=binding, readiness_timeout=1.0, release_timeout=1.0,
+        track=host._track_process, untrack=host._untrack_process)
+
+    class Child:
+        pid, returncode, stdin, stdout = 4242, None, None, None
+        _runtime_job = SimpleNamespace(handle=42)
+
+        def poll(self):
+            return self.returncode
+
+        def wait(self, *, timeout):
+            self.returncode = 0
+            return self.returncode
+
+    child = adapter.process = Child()
+    host._track_process(child)
+    frames, stopped = [], []
+    adapter._write = lambda frame, deadline: frames.append(frame)
+    monkeypatch.setattr(generic_host, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(process_group, "sys", SimpleNamespace(platform="win32"))
+
+    def stop_tree(process, *, grace):
+        assert process is child and process.poll() == 0
+        stopped.append(process)
+        if job_released:
+            process._runtime_job.handle = None
+
+    monkeypatch.setattr(process_group.platform, "stop_tree", stop_tree)
+    monkeypatch.setattr(generic_host, "_process_snapshot", lambda: pytest.fail("Windows release used a POSIX census"))
+    monkeypatch.setattr(process_group, "_process_snapshot", lambda: pytest.fail("Windows cleanup used a POSIX census"))
+    monkeypatch.setattr(generic_host.subprocess, "run", lambda *a, **k: pytest.fail("Windows release launched ps"))
+    host.managed_tool_session.open(
+        capability=CapabilityDescriptor("wan2gp.generate_video", warm_reuse_expected=True),
+        binding=binding, adapter=adapter)
+    host._settle_session_hold(host._hold_session_slot())
+    timers.fire()
+
+    assert frames == [{"birth": "birth", "op": "close"}] and stopped == [child]
+    assert child.returncode == 0
+    assert host.managed_tool_session.occupied is not job_released
+    assert (child in host._active_processes) is not job_released
+    assert bool(notes) is not job_released
+    if job_released:
+        assert host.warm_holds.status() == []
+    else:
+        assert "session failed to release after idle" in notes[0]
 
 
 def test_failed_idle_release_is_recorded_and_keeps_the_slot_occupied(tmp_path):

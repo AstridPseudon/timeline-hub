@@ -15,13 +15,11 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
+from runtime_protocol import platform
+
 PROFILE = "astrid"
-RECONFIGURE_ACTION = "run `astrid-runtime up --profile astrid`"
-INSTALL_RUNTIME_ACTION = (
-    "python3 -m pip install 'astrid-runtime @ "
-    "git+https://github.com/banodoco/astrid-runtime.git@"
-    "329c9c591d9c0f74026d599ee00c14c165cb3e53'"
-)
+RECONFIGURE_ACTION = "run the Astrid install line again"
+INSTALL_RUNTIME_ACTION = "run the Astrid install line again"
 
 
 class AutoBootstrapError(RuntimeError):
@@ -183,19 +181,11 @@ def _acquisition_file_lock(
     the same admission budget as the launcher so a stuck peer cannot leave a
     caller hanging forever.
     """
-    try:
-        import fcntl
-    except ImportError as exc:  # pragma: no cover - Astrid runs on POSIX
-        raise AutoBootstrapError(
-            f"neutral runtime acquisition lock is unavailable; {RECONFIGURE_ACTION}",
-            code="runtime_acquisition_lock_unavailable",
-        ) from exc
-
     lock_path = _acquisition_lock_path(data_root)
     try:
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         handle = lock_path.open("a+")
-        os.fchmod(handle.fileno(), 0o600)
+        platform.owner_only(handle.fileno())
     except OSError as exc:
         raise AutoBootstrapError(
             f"neutral runtime acquisition lock is unavailable; {RECONFIGURE_ACTION}",
@@ -214,7 +204,7 @@ def _acquisition_file_lock(
     try:
         while True:
             try:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(handle.fileno(), blocking=False)
                 acquired = True
                 break
             except BlockingIOError:
@@ -234,7 +224,7 @@ def _acquisition_file_lock(
     finally:
         if acquired:
             try:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+                platform.unlock_file(handle.fileno())
             except OSError:
                 pass
         handle.close()

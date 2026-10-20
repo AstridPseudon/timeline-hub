@@ -13,7 +13,6 @@ import hashlib
 import json
 import os
 import re
-import select
 import signal
 import shutil
 import socket

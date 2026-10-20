@@ -15,7 +15,6 @@ import re
 import secrets
 import shlex
 import shutil
-import signal
 import socket
 import subprocess
 import sys
@@ -26,7 +25,10 @@ from numbers import Real
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from runtime_protocol import platform
+
 from astrid.core.execution.host_log import rotate_if_needed
+from astrid.core.execution.platform_helpers import signal_observed_group
 from astrid.core.execution.process_group import (
     CleanupUncertainError,
     _process_snapshot,
@@ -125,6 +127,8 @@ def _host_pid_alive(pid: Any) -> bool:
         return False
     if value <= 0:
         return False
+    if sys.platform == "win32":
+        return platform.process_identity(value) is not None
     if sys.platform == "darwin":
         from astrid.core.execution.custody_broker import ordinary_candidate_observation
         observation = ordinary_candidate_observation(value)
@@ -134,7 +138,8 @@ def _host_pid_alive(pid: Any) -> bool:
             raise PackHostBootstrapError("host native state observation unavailable")
         return True
     try:
-        os.kill(value, 0)
+        if platform.process_identity(value) is None:
+            raise ProcessLookupError(value)
     except PermissionError:
         return True
     except OSError:
@@ -210,7 +215,7 @@ def _darwin_host_command_observation(pid: int, state: Mapping[str, Any] | None =
     if state is not None:
         pin = state.get("launch_argv_sha256")
         if (not isinstance(pin, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", pin)
-                or before["pid"] != state.get("pid") or before["uid"] != os.getuid()
+                or before["pid"] != state.get("pid") or before["uid"] != platform.current_user()
                 or _ps_lstart_birth(before["start_sec"]) != state.get("process_birth_id")
                 or not isinstance(state.get("launch_native_identity"), Mapping)
                 or any(state["launch_native_identity"].get(key) != before.get(key)
@@ -287,6 +292,9 @@ def _host_birth_identity(pid: Any) -> str:
         return ""
     if value <= 0:
         return ""
+    if sys.platform == "win32":
+        identity = platform.process_identity(value)
+        return str(identity["birth_id"]) if identity is not None else ""
     try:
         info = _process_snapshot().get(value)
     except (CleanupUncertainError, OSError, ValueError):
@@ -332,7 +340,7 @@ def _parked_host_identity_matches(state: Mapping[str, Any]) -> bool:
     if not _our_host(pid):
         return False
     try:
-        if os.getpgid(int(pid)) != int(pid):
+        if platform.process_group(int(pid)) != int(pid):
             return False
     except (OSError, TypeError, ValueError):
         return False
@@ -436,7 +444,7 @@ def _write_object(path: Path, value: Mapping[str, Any]) -> None:
     temporary = Path(name)
     try:
         temporary.write_text(json.dumps(dict(value), sort_keys=True), encoding="utf-8")
-        temporary.chmod(0o600)
+        platform.owner_only(temporary)
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -613,16 +621,16 @@ def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | No
     Its birth token anchors the group. If the pid now names another incarnation,
     the whole group is refused.
     """
-    if pgid <= 1 or pgid == os.getpgrp():
+    if pgid <= 1 or pgid == platform.process_group(os.getpid()):
         raise PackHostBootstrapError("refusing to signal an unsafe process group")
     grace = _GROUP_GRACE_SECONDS if grace is None else grace
-    for sig, wait in ((signal.SIGTERM, grace), (signal.SIGKILL, 3.0)):
+    for sig, wait in ((platform.TERM, grace), (platform.KILL, 3.0)):
         if not _group_survivors(pgid, leader_birth=leader_birth):
             return
         if not leader_birth:
             raise PackHostBootstrapError("registered host group lacks a leader birth anchor")
         try:
-            os.killpg(pgid, sig)
+            signal_observed_group(pgid, sig, leader_birth=leader_birth)
         except ProcessLookupError:
             pass
         except PermissionError as exc:
@@ -655,11 +663,10 @@ def _retire_host_locked(state: Mapping[str, Any]) -> None:
 def _stop_registered_host(state: Mapping[str, Any]) -> None:
     """Retire a registered host under its lifecycle lock (any Astrid process may)."""
     try:
-        import fcntl
         lock_path = Path(str(state.get("support_root") or "")) / "generic-host.lock"
         with lock_path.open("a+") as lock:
-            os.fchmod(lock.fileno(), 0o600)
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            platform.owner_only(lock.fileno())
+            platform.lock_file(lock.fileno())
             _retire_host_locked(state)
     except (ImportError, OSError) as exc:
         raise PackHostBootstrapError("prior host registration lock is unavailable; retirement blocked") from exc
@@ -882,7 +889,7 @@ class _ParkedPackHostPreparer:
         launch_digest = _launch_argv_digest(argv)
         try:
             with log_path.open("xb") as log:
-                os.fchmod(log.fileno(), 0o600)
+                platform.owner_only(log.fileno())
                 process = popen_owned_group(
                     argv, cwd=str(reference.support_root if origins else launch.cwd), env=env, stdin=subprocess.DEVNULL,
                     stdout=log, stderr=log, close_fds=True, pass_fds=(child.fileno(),),
@@ -1091,7 +1098,7 @@ class _ParkedPackHostInspector:
                                  capture_output=True, text=True, check=True, timeout=1).stdout.strip()
         if (info is None or info.birth != handle.state["process_birth_id"]
                 or not command or not _host_executable_matches(command[0], reference.executable.path)
-                or int(uid) != os.getuid()):
+                or int(uid) != platform.current_user()):
             raise PackHostBootstrapError("parked host executable, uid or birth identity changed")
         if sys.platform == "darwin":
             known = getattr(handle.process, "_astrid_host_launch_argv", None)
@@ -1124,7 +1131,7 @@ class _ParkedPackHostInspector:
             "target": {"kind": "machine", "id": socket.gethostname()},
             "machine_identity": {"id": socket.gethostname(), "uid": int(uid)},
             "process": {"pid": info.pid, "birth_id": info.birth, "pgid": info.pgid,
-                        "sid": os.getsid(info.pid), "uid": int(uid), "executable": command[0],
+                        "sid": platform.session_id(info.pid), "uid": int(uid), "executable": command[0],
                         "artifact_digest": _host_artifact_digest(Path(command[0]))},
             "runtime_instance_id": field("runtime_instance_id"), "runtime_epoch": field("runtime_epoch"),
             "runtime_session_id": field("runtime_session_id"),
@@ -1314,6 +1321,7 @@ def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
     startup_idle_seconds: float = HOST_STARTUP_IDLE_SECONDS,
     attach_healthy: bool = False,
+    _foreground: bool = False,
 ) -> Mapping[str, Any]:
     """Ensure the runtime-issued host is ready, waiting while it makes progress.
 
@@ -1348,6 +1356,8 @@ def ensure_pack_host(
             or worker_path.stat().st_mode & 0o777 != 0o600):
         raise PackHostBootstrapError(f"generic Astrid pack host handoff is unavailable; {reconfigure_action}")
     host_python = _pack_host_python_executable()
+    if _foreground and host_python != _venv_interpreter_name(os.path.abspath(sys.executable)):
+        raise PackHostBootstrapError("foreground pack host must run with its selected Python interpreter")
     execution_origins = _installed_execution_origins(source_path, host_python) if _execution_profile() == "installed" else {}
     try:
         from astrid.core.pack.source_setup import active_source_inventory
@@ -1429,19 +1439,18 @@ def ensure_pack_host(
     endpoint = str(value["endpoint"]).rstrip("/")
     try:
         lock_handle = lock_path.open("a+")
-        os.fchmod(lock_handle.fileno(), 0o600)
+        platform.owner_only(lock_handle.fileno())
     except OSError as exc:
         raise PackHostBootstrapError(f"generic Astrid pack host lock is unavailable; {reconfigure_action}") from exc
     try:
         try:
-            import fcntl
-            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+            platform.lock_file(lock_handle.fileno())
         except (ImportError, OSError) as exc:
             raise PackHostBootstrapError(f"generic Astrid pack host lock is unavailable; {reconfigure_action}") from exc
         current = _read_object(state_path)
         ready = _read_object(ready_path)
         status = _registered_host_status(current) if current else None
-        if attach_healthy and current and ready and status == "ours":
+        if not _foreground and attach_healthy and current and ready and status == "ours":
             receipt = _attach_resident_host(
                 current, ready,
                 expected={
@@ -1490,7 +1499,7 @@ def ensure_pack_host(
             "boot_manifest_path": str(boot_manifest_path),
             "boot_manifest_hash": boot_manifest_hash,
         }
-        if (current and ready
+        if (not _foreground and current and ready
                 and all(current.get(key) == expected_value for key, expected_value in expected.items())
                 and status == "ours"
                 and str(ready.get("status")) == "ready"
@@ -1578,6 +1587,21 @@ def ensure_pack_host(
             (pack_root, *managed_inventory.roots))
         if validation_launch is not None:
             argv.extend(("--remotion-validation-launch-id", validation_launch))
+        if _foreground:
+            process_state = {
+                "execution_profile": _execution_profile(), "execution_origins": execution_origins,
+                **expected,
+                "version": 2,
+                "pid": os.getpid(),
+                "process_birth_id": _host_birth_identity(os.getpid()),
+                "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
+            }
+            if not process_state["process_birth_id"]:
+                raise PackHostBootstrapError("foreground pack host identity could not be captured")
+            _write_object(state_path, process_state)
+            # Unwind the bootstrap lock before entering the worker loop. The
+            # Runtime owns this process, including its eventual exit/restart.
+            raise _ForegroundHost(argv, child_env, runtime_support if execution_origins else source_path)
         try:
             log = log_path.open("ab")
             process = popen_owned_group(
@@ -1588,6 +1612,7 @@ def ensure_pack_host(
                 stdout=log,
                 stderr=log,
                 start_new_session=True,
+                detached=True,
                 close_fds=True,
             )
         except OSError as exc:
@@ -1707,11 +1732,34 @@ def ensure_pack_host(
         }
     finally:
         try:
-            import fcntl
-            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+            platform.unlock_file(lock_handle.fileno())
         except (ImportError, OSError):
             pass
         lock_handle.close()
 
 
-__all__ = ["PACK_HOST_ACTOR", "PACK_HOST_SCOPES", "PackHostBootstrapError", "ensure_pack_host"]
+class _ForegroundHost(Exception):
+    def __init__(self, argv: list[str], env: dict[str, str], cwd: Path):
+        self.argv, self.env, self.cwd = argv, env, cwd
+
+
+def run_pack_host_foreground(value: Mapping[str, Any]) -> int:
+    """Run the ordinary pack host in the Runtime-supervised process."""
+    try:
+        ensure_pack_host(value, reconfigure_action="restart Astrid", _foreground=True)
+    except _ForegroundHost as launch:
+        from astrid.core.execution.generic_host import _cli
+
+        os.chdir(launch.cwd)
+        os.environ.clear()
+        os.environ.update(launch.env)
+        os.environ["ASTRID_PACK_HOST_SERVICE_MODE"] = "1"
+        for path in reversed(launch.env.get("PYTHONPATH", "").split(os.pathsep)):
+            if path and path not in sys.path:
+                sys.path.insert(0, path)
+        sys.argv = launch.argv[launch.argv.index("astrid.core.execution.generic_host"):]
+        return _cli()
+    raise PackHostBootstrapError("foreground pack host requires a complete Runtime worker handoff")
+
+
+__all__ = ["PACK_HOST_ACTOR", "PACK_HOST_SCOPES", "PackHostBootstrapError", "ensure_pack_host", "run_pack_host_foreground"]

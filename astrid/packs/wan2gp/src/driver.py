@@ -12,9 +12,8 @@ interpreter, config and lifecycle deadlines explicitly; if that owner artifact
 is absent, GenericPackHost rejects admission before the child starts.
 """
 
-import json
 import hashlib
-import os
+import json
 import shutil
 import stat
 import threading
@@ -24,11 +23,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from .compiler import compile_from_inputs, portable_digest, runner_fingerprint, warmth_identity
+from runtime_protocol.dirfd import filesystem as os
+
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 
-# W1.2 selected the unmodified official Python API candidate.  Installation
-# and device qualification remain an independent owner artifact (C1 HOLD).
+from .compiler import compile_from_inputs, portable_digest, runner_fingerprint, warmth_identity
+
+# W1.2 selected the unmodified official Python API candidate. The Windows
+# candidate environment is pinned beside this pack; device qualification
+# remains held until testers confirm it.
 WAN2GP_PIN_SHA = "f3f204e50f6eeb73ce40d1dafc93bc97bfaa61e4"
 WAN2GP_PIN_REF = "deepbeepmeep/Wan2GP"
 

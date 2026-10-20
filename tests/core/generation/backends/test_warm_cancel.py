@@ -56,7 +56,7 @@ def test_owner_restart_command_uses_only_named_start_id(tmp_path) -> None:
 def test_process_absence_probe_uncertainty_fails_closed(monkeypatch) -> None:
     from vibecomfy.runtime import session as runtime_session
 
-    monkeypatch.setattr("astrid.core.generation.backends.vibecomfy.os.kill", lambda pid, sig: None)
+    monkeypatch.setattr("astrid.core.generation.backends.vibecomfy.platform.process_identity", lambda pid: {"pid": pid})
     monkeypatch.setattr(runtime_session, "_process_start_identity", lambda pid: None)
     with pytest.raises(RuntimeError, match="cannot identify"):
         _assert_process_incarnation_gone(12345, "old-incarnation")

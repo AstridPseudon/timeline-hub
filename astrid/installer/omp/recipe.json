@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "version": "17.4.0",
+  "bun_version": "1.3.14",
+  "bun_lock_sha256": "f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee",
+  "native": {
+    "linux-x64": {
+      "url": "https://registry.npmjs.org/@oh-my-pi/pi-natives-linux-x64/-/pi-natives-linux-x64-17.4.0.tgz",
+      "sha256": "f380a65df2a2487b010314872b0d543dbbdc204a97b60551c4aaa5bf0f2dbd2b",
+      "integrity": "sha512-j1qrJ28/Pkt7DuLr9FSlC7XscnAShN+KYizL+VQXaNB9iQ46M3cvxlCvHa+mgu6oRinmnugbwdGLPyPPnTtJcw==",
+      "files": [
+        "pi_natives.linux-x64-baseline.node",
+        "pi_natives.linux-x64-modern.node"
+      ]
+    },
+    "linux-arm64": {
+      "url": "https://registry.npmjs.org/@oh-my-pi/pi-natives-linux-arm64/-/pi-natives-linux-arm64-17.4.0.tgz",
+      "sha256": "6b7ded3540625a710f0c39e6224b2dbef8551126b71b5820816e530b330a39a8",
+      "integrity": "sha512-scUa8KAj01vtdcxLOtWqGeQTSEkJoRBTgccAGHF2NtIkafaiT7ewzzDD7Go7PLJ8bBR0ubXuq6ufhz+VJtu59w==",
+      "files": [
+        "pi_natives.linux-arm64.node"
+      ]
+    },
+    "macos-x64": {
+      "url": "https://registry.npmjs.org/@oh-my-pi/pi-natives-darwin-x64/-/pi-natives-darwin-x64-17.4.0.tgz",
+      "sha256": "6451b47ae1628cca1a194ee08d993d1e92774d9166735811e7e43b261a2bcb81",
+      "integrity": "sha512-sBrr3U57QdTcZ0Q8cEZQk8AQw+lEtyTDBa34ue6Zh1fKtlAyYXXghZCJdL/cMu2OuhAYipJKgr4/eALMHU9wmw==",
+      "files": [
+        "pi_natives.darwin-x64-baseline.node"
+      ]
+    },
+    "macos-arm64": {
+      "url": "https://registry.npmjs.org/@oh-my-pi/pi-natives-darwin-arm64/-/pi-natives-darwin-arm64-17.4.0.tgz",
+      "sha256": "3bc5c6e5ae0d4353e10c03975defcf60064d9d615cb2055a78c0a1d3d469d573",
+      "integrity": "sha512-kGHkQkP0a+XPCk1sk4UWbwDeHOMdYJ1+nU3l7jslM2n+b2eWM7cYUt9su9nHUUOyta6JAG7PivqPFq/VPK6qCg==",
+      "files": [
+        "pi_natives.darwin-arm64.node"
+      ]
+    },
+    "windows-x64": {
+      "url": "https://registry.npmjs.org/@oh-my-pi/pi-natives-win32-x64/-/pi-natives-win32-x64-17.4.0.tgz",
+      "sha256": "0627e0f734c463d2fd7b5a20b6dab9faa34a7d4de6f117218c63e277c965ca02",
+      "integrity": "sha512-2ua+32a9FGBU1N995TINtEdh7gknF4hajAw4HZ+lX3cSYmxzyrCNGxKSVb2oEtT56W6AZxmiyIVWKJwL93RYYQ==",
+      "files": [
+        "pi_natives.win32-x64-baseline.node"
+      ]
+    }
+  }
+}
+

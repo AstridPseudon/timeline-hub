@@ -1,8 +1,12 @@
 """Render one admitted iteration selection through the public Rendering action."""
 from __future__ import annotations
 
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.pack.entrypoint import (
-    canonical_runtime_entrypoint, guard_canonical_entrypoint, run_pack_main,
+    canonical_runtime_entrypoint,
+    guard_canonical_entrypoint,
+    run_pack_main,
 )
 
 guard_canonical_entrypoint("video_editing.iteration_video")
@@ -10,17 +14,21 @@ guard_canonical_entrypoint("video_editing.iteration_video")
 import argparse
 import hashlib
 import json
-import os
 import stat
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
 
+from runtime_protocol.dirfd import filesystem as os
+
 from astrid import invoke
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.foundation.paths import REPO_ROOT
 from astrid.packs.video_editing.shared.iteration_inputs import (
-    MAX_DOCUMENT_BYTES, assembly_inputs, parse_frozen_inputs, pathless_render_registry,
+    MAX_DOCUMENT_BYTES,
+    assembly_inputs,
+    parse_frozen_inputs,
+    pathless_render_registry,
 )
 
 # Reuse the migrated offline action, never the historical orchestrator.
@@ -37,7 +45,7 @@ def _read_regular(path: Path, *, size: int | None = None, sha256: str | None = N
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         before = os.fstat(fd)
-        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or before.st_uid != os.getuid()
+        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not owned_by_current_user(fd, before)
                 or before.st_size > maximum or size is not None and before.st_size != size):
             raise IterationVideoError("input is not an admitted regular file of the expected size")
         chunks, total = [], 0

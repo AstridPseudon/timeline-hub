@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import errno
 import hashlib
 import json
 import os
@@ -14,6 +15,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Mapping
+from unittest.mock import Mock
 
 import pytest
 
@@ -180,10 +182,10 @@ def test_stop_pins_process_and_never_signals_after_identity_drift(
     Path(owned.marker_path).write_text(json.dumps(owned.as_dict()))
     events: list[Any] = []
     monkeypatch.setattr(
-        os, "pidfd_open", lambda pid, flags: events.append(("pin", pid)) or 77, raising=False
+        subject.platform, "pidfd_open", lambda pid: events.append(("pin", pid)) or 77, raising=False
     )
     monkeypatch.setattr(
-        signal, "pidfd_send_signal", lambda *args: events.append(("signal", args)), raising=False
+        subject.platform, "pidfd_send_signal", lambda *args: events.append(("signal", args)), raising=False
     )
     monkeypatch.setattr(os, "close", lambda fd: events.append(("close", fd)))
     states = iter(["same", "different"])
@@ -193,10 +195,72 @@ def test_stop_pins_process_and_never_signals_after_identity_drift(
     assert events == [("pin", os.getpid()), ("close", 77)]
 
 
-def test_stop_has_no_pid_or_group_fallback(tmp_path: Path, monkeypatch: Any) -> None:
-    monkeypatch.delattr(os, "pidfd_open", raising=False)
+@pytest.mark.parametrize("missing", ["pidfd_open", "pidfd_send_signal"])
+@pytest.mark.parametrize("availability", ["absent", "not-callable"])
+def test_stop_has_no_pid_or_group_fallback(
+    tmp_path: Path, monkeypatch: Any, missing: str, availability: str
+) -> None:
+    if availability == "absent":
+        monkeypatch.delattr(subject.platform, missing)
+    else:
+        monkeypatch.setattr(subject.platform, missing, None)
     with pytest.raises(subject.WorkerProcessError, match="no PID fallback"):
         subject.stop_owned_process(handle(tmp_path))
+
+
+@pytest.mark.parametrize("operation", ["open", "send"])
+@pytest.mark.parametrize("error", [errno.ENOSYS, errno.EPERM, errno.ESRCH])
+def test_stop_native_pidfd_failure_keeps_exact_handle_and_closes_it(
+    tmp_path: Path, monkeypatch: Any, operation: str, error: int
+) -> None:
+    monkeypatch.delattr(os, "pidfd_open", raising=False)
+    monkeypatch.delattr(signal, "pidfd_send_signal", raising=False)
+    monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("numeric PID fallback"))
+    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric process-group fallback"), raising=False)
+    opened = Mock(side_effect=OSError(error, "native pidfd failure")) if operation == "open" else Mock(return_value=77)
+    sent = Mock(side_effect=OSError(error, "native pidfd failure"))
+    monkeypatch.setattr(subject.platform, "pidfd_open", opened)
+    monkeypatch.setattr(subject.platform, "pidfd_send_signal", sent)
+    monkeypatch.setattr(subject, "_exact_incarnation_state", lambda _: "same")
+    monkeypatch.setattr(subject, "observe_owned_process", lambda _: {"observed": True})
+    closed = Mock()
+    monkeypatch.setattr(subject.os, "close", closed)
+    if operation == "open":
+        with pytest.raises(subject.WorkerProcessError, match="could not be pinned"):
+            subject.stop_owned_process(handle(tmp_path))
+        closed.assert_not_called()
+        sent.assert_not_called()
+    else:
+        if error == errno.ESRCH:
+            # An ESRCH signal still requires exit proof on the original pidfd.
+            waited = Mock(return_value=([], [], []))
+            monkeypatch.setattr(subject.select, "select", waited)
+            with pytest.raises(subject.WorkerProcessError, match="exit remains unresolved"):
+                subject.stop_owned_process(handle(tmp_path))
+            waited.assert_called_once_with([77], [], [], 10)
+        else:
+            with pytest.raises(OSError) as failure:
+                subject.stop_owned_process(handle(tmp_path))
+            assert failure.value.errno == error
+        closed.assert_called_once_with(77)
+        sent.assert_called_once_with(77, subject.platform.TERM)
+    opened.assert_called_once_with(1234)
+
+
+def test_stop_refuses_owner_identity_failure_after_pinning(tmp_path: Path, monkeypatch: Any) -> None:
+    monkeypatch.delattr(os, "pidfd_open", raising=False)
+    monkeypatch.delattr(signal, "pidfd_send_signal", raising=False)
+    opened, sent, closed = Mock(return_value=77), Mock(), Mock()
+    monkeypatch.setattr(subject.platform, "pidfd_open", opened)
+    monkeypatch.setattr(subject.platform, "pidfd_send_signal", sent)
+    monkeypatch.setattr(subject.os, "close", closed)
+    monkeypatch.setattr(subject, "_exact_incarnation_state", lambda _: "same")
+    monkeypatch.setattr(subject, "observe_owned_process", Mock(side_effect=subject.WorkerProcessError("identity differs")))
+    with pytest.raises(subject.WorkerProcessError, match="identity differs"):
+        subject.stop_owned_process(handle(tmp_path))
+    opened.assert_called_once_with(1234)
+    sent.assert_not_called()
+    closed.assert_called_once_with(77)
 
 
 def test_observation_proves_process_but_does_not_claim_runtime_ready(
@@ -422,7 +486,9 @@ def test_secret_verifier_rejects_replacement_or_mode_drift(tmp_path: Path) -> No
 @pytest.mark.skipif(
     not Path("/proc/self/stat").exists(), reason="exact process start/stop requires Linux"
 )
-def test_linux_owned_host_survives_launcher_and_exact_stop(tmp_path: Path) -> None:
+def test_linux_owned_host_survives_launcher_and_exact_stop(tmp_path: Path, monkeypatch: Any) -> None:
+    monkeypatch.delattr(os, "pidfd_open", raising=False)
+    monkeypatch.delattr(signal, "pidfd_send_signal", raising=False)
     transport = LocalTransport()
     owner = subject.WorkerProcessOwner(
         transport, binding(), ownership_root=str(tmp_path / "owners")
@@ -631,9 +697,9 @@ def test_stop_requires_pinned_exit_proof_before_stopped_receipt(
 ) -> None:
     owned = handle(tmp_path)
     events: list[Any] = []
-    monkeypatch.setattr(os, "pidfd_open", lambda pid, flags: 77, raising=False)
+    monkeypatch.setattr(subject.platform, "pidfd_open", lambda pid: 77, raising=False)
     monkeypatch.setattr(
-        signal, "pidfd_send_signal", lambda fd, sig: events.append(("signal", fd)), raising=False
+        subject.platform, "pidfd_send_signal", lambda fd, sig: events.append(("signal", fd)), raising=False
     )
     monkeypatch.setattr(os, "close", lambda fd: events.append(("close", fd)))
     monkeypatch.setattr(subject, "observe_owned_process", lambda value: {"observed": True})

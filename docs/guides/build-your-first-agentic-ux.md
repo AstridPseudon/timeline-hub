@@ -1,5 +1,10 @@
 # Build Your First Agentic UX
 
+> **For developers:** this SDK tutorial uses an editable install from the
+> Astrid source checkout. It is for building against Astrid's Python toolkit,
+> not for setting up the Astrid product. To use Astrid, follow
+> [Getting Started](../getting-started.md) and open astrid.haus.
+
 This tutorial walks you through the complete Astrid SDK loop —
 **discover → inspect → invoke → read-events** — using only the public
 `astrid` package. By the end you will have a runnable script that

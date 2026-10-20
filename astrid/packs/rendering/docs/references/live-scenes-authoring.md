@@ -9,7 +9,7 @@ second timeline or retiming system.
 
 The reusable loader and renderer belong to Astrid's existing `rendering` pack:
 the declared editor entry is
-[`editor/live-scenes/extension.tsx`](../../editor/live-scenes/extension.tsx),
+[`ui/threejs-live-editor/extension.tsx`](../../ui/threejs-live-editor/extension.tsx),
 and the pack's `pack.yaml` remains the discovery authority. A project scene's
 HTML, source/data, immutable objects, and revisions belong to Runtime project
 storage. Changing the pack implementation follows the normal extension
@@ -126,8 +126,8 @@ package body of at most 65,536 characters, at most 16 assets, and at most
 replacement's `before` and `after` is at most 8,192 characters, and a publish
 must contain one to sixteen replacements.
 The implementation is in
-[`editor/live-scenes/authoring.ts`](../../editor/live-scenes/authoring.ts),
-[`editor/live-scenes/runtime.ts`](../../editor/live-scenes/runtime.ts), and
+[`ui/threejs-live-editor/authoring.ts`](../../ui/threejs-live-editor/authoring.ts),
+[`ui/threejs-live-editor/runtime.ts`](../../ui/threejs-live-editor/runtime.ts), and
 [`live_scenes/package.py`](../../shared/live_scenes/package.py).
 
 The underlying package types can carry immutable asset metadata, but the

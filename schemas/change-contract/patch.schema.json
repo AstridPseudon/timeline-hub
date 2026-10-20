@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://astrid.local/schemas/change-contract/patch.schema.json",
   "title": "TimelinePatch",
-  "description": "The structural evidence and transport of a change (R-1): a scoped batch of TimelinePatch operations, as the live-scene authoring code builds it (astrid/packs/rendering/editor/live-scenes/authoring.ts). DRAFT: op kinds are the three seen in that producer; scope is proposed from its capture object.",
+  "description": "The structural evidence and transport of a change (R-1): a scoped batch of TimelinePatch operations, as the live-scene authoring code builds it (astrid/packs/rendering/ui/threejs-live-editor/authoring.ts). DRAFT: op kinds are the three seen in that producer; scope is proposed from its capture object.",
   "type": "object",
   "required": ["version", "operations", "source", "scope"],
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     },
     "source": {
       "type": "string",
-      "description": "The extension id that authored the patch, e.g. haus.astrid.live-scenes."
+      "description": "The extension id that authored the patch, e.g. haus.astrid.threejs-live-editor."
     },
     "scope": {
       "type": "object",

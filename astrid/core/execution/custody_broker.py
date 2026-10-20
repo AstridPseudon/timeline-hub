@@ -1,7 +1,7 @@
 """Astrid custody consumer for Runtime's protected per-role designation ABI.
 
 The designation/reference formats and cleanup.lock contract are owned by Runtime.
-This module consumes that ABI without importing Runtime or granting authority from
+This module consumes that ABI without granting authority from
 an escrow reference. Numeric PIDs select observations; signals use kernel tokens.
 """
 from __future__ import annotations
@@ -9,14 +9,11 @@ from __future__ import annotations
 import base64
 import ctypes
 import errno
-import fcntl
 import hashlib
 import json
 import math
-import os
 import re
 import shutil
-import signal
 import socket
 import stat
 import subprocess
@@ -27,6 +24,11 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
+
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.execution.platform_helpers import owned_by_current_user
 
 SOL_LOCAL = 0
 LOCAL_PEERTOKEN = 0x006
@@ -517,9 +519,9 @@ class _AuditToken(ctypes.Structure):
 
 
 def _admitted_signals() -> set[int]:
-    admitted = {int(signal.SIGTERM), int(signal.SIGKILL)}
-    if hasattr(signal, "SIGUSR1"):
-        admitted.add(int(signal.SIGUSR1))
+    admitted = {int(platform.TERM), int(platform.KILL)}
+    if platform.USER1 is not None:
+        admitted.add(int(platform.USER1))
     return admitted
 
 
@@ -700,7 +702,8 @@ def _resume_audit_token_once(words: Sequence[int]) -> None:
     function.argtypes = [ctypes.POINTER(_AuditToken), ctypes.c_int]
     function.restype = ctypes.c_int
     ctypes.set_errno(0)
-    result = int(function(ctypes.byref(token), int(signal.SIGCONT)))
+    # This audit-token operation is Darwin-only; SIGCONT is 19 in its ABI.
+    result = int(function(ctypes.byref(token), 19))
     observed_errno = int(ctypes.get_errno())
     if result != 0:
         raise CustodyError(
@@ -772,21 +775,22 @@ def _write_all(descriptor: int, value: bytes) -> None:
 
 def _atomic_owner_json(path: Path, value: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    os.chmod(path.parent, 0o700)
+    platform.owner_only(path.parent)
     descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(name)
     try:
-        os.fchmod(descriptor, 0o600)
+        platform.owner_only(descriptor)
         _write_all(descriptor, _canonical(dict(value)) + b"\n")
         os.fsync(descriptor)
         os.close(descriptor)
         descriptor = -1
         os.replace(temporary, path)
-        directory = os.open(str(path.parent), os.O_RDONLY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
+        if sys.platform != "win32":
+            directory = os.open(str(path.parent), os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
     finally:
         if descriptor >= 0:
             os.close(descriptor)
@@ -801,8 +805,7 @@ def _open_authority_scope_lock(scope_root: Path) -> int:
     observed_root = os.lstat(root)
     if (
         not stat.S_ISDIR(observed_root.st_mode)
-        or observed_root.st_uid != os.getuid()
-        or stat.S_IMODE(observed_root.st_mode) != 0o700
+        or not owned_by_current_user(scope_root, observed_root, mode=0o700)
     ):
         raise CustodyError("custody authority scope is not owner-only")
     descriptor = os.open(
@@ -813,8 +816,7 @@ def _open_authority_scope_lock(scope_root: Path) -> int:
     observed = os.fstat(descriptor)
     if (
         not stat.S_ISREG(observed.st_mode)
-        or observed.st_uid != os.getuid()
-        or stat.S_IMODE(observed.st_mode) != 0o600
+        or not owned_by_current_user(descriptor, observed, mode=0o600)
     ):
         os.close(descriptor)
         raise CustodyError("custody authority scope lock is not owner-only")
@@ -829,8 +831,7 @@ def _read_owner_file(path: Path) -> tuple[bytes, os.stat_result]:
         observed = os.fstat(descriptor)
         if (
             not stat.S_ISREG(observed.st_mode)
-            or observed.st_uid != os.getuid()
-            or stat.S_IMODE(observed.st_mode) != 0o600
+            or not owned_by_current_user(descriptor, observed, mode=0o600)
         ):
             raise CustodyError("custody file is not an owner-only regular file")
         chunks: list[bytes] = []
@@ -957,7 +958,7 @@ class RoleCustodyAuthority:
         descriptor = os.open(self.root / "cleanup.lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
         try:
             observed = os.fstat(descriptor)
-            if not stat.S_ISREG(observed.st_mode) or observed.st_uid != os.getuid() or stat.S_IMODE(observed.st_mode) != 0o600:
+            if not stat.S_ISREG(observed.st_mode) or not owned_by_current_user(descriptor, observed, mode=0o600):
                 raise CustodyError("custody cleanup guard is unsafe")
             deadline = time.monotonic() + self.timeout
             if cleanup_deadline is not None:
@@ -966,7 +967,7 @@ class RoleCustodyAuthority:
                     raise CustodyError("retained cleanup deadline expired")
             while True:
                 try:
-                    fcntl.flock(descriptor, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | fcntl.LOCK_NB)
+                    platform.lock_file(descriptor, exclusive=exclusive, blocking=False)
                     break
                 except BlockingIOError:
                     if time.monotonic() >= deadline:
@@ -974,7 +975,7 @@ class RoleCustodyAuthority:
                     time.sleep(min(0.005, max(0.0, deadline - time.monotonic())))
             yield
         finally:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            platform.unlock_file(descriptor)
             os.close(descriptor)
 
     def _read(self) -> dict[str, object]:
@@ -1563,6 +1564,8 @@ def default_process_identity(pid: int, *, timeout: float = 1.0) -> dict[str, obj
 
     if timeout <= 0:
         raise CustodyError("process identity observation deadline expired")
+    if sys.platform == "win32":
+        return platform.process_identity(pid)
     if sys.platform == "darwin":
         rows = _darwin_process_records(pid)
         if not rows:
@@ -1619,7 +1622,7 @@ def _create_compact_socket_root() -> Path:
     ):
         raise CustodyError("custody socket parent is unsafe")
     root = Path(tempfile.mkdtemp(prefix="runtime-cb-", dir=parent))
-    os.chmod(root, 0o700)
+    platform.owner_only(root)
     if len(os.fsencode(str(root / "s"))) > DARWIN_UNIX_SOCKET_PATH_MAX_BYTES:
         try:
             root.rmdir()
@@ -1637,8 +1640,7 @@ def _append_owner_jsonl(path: Path, value: Mapping[str, object]) -> None:
     if (
         stat.S_ISLNK(parent.st_mode)
         or not stat.S_ISDIR(parent.st_mode)
-        or parent.st_uid != os.getuid()
-        or stat.S_IMODE(parent.st_mode) != 0o700
+        or not owned_by_current_user(path.parent, parent, mode=0o700)
     ):
         raise CustodyError("custody authority journal parent is not owner-only")
     encoded = _canonical(dict(value)) + b"\n"
@@ -1653,8 +1655,7 @@ def _append_owner_jsonl(path: Path, value: Mapping[str, object]) -> None:
         observed = os.fstat(descriptor)
         if (
             not stat.S_ISREG(observed.st_mode)
-            or observed.st_uid != os.getuid()
-            or stat.S_IMODE(observed.st_mode) != 0o600
+            or not owned_by_current_user(descriptor, observed, mode=0o600)
         ):
             raise CustodyError("custody authority journal is not owner-only")
         if os.write(descriptor, encoded) != len(encoded):
@@ -1669,7 +1670,7 @@ def _acquire_scope_admission(scope_root: Path, *, timeout: float) -> int:
     try:
         while True:
             try:
-                fcntl.flock(descriptor, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                platform.lock_file(descriptor, exclusive=False, blocking=False)
                 break
             except BlockingIOError:
                 if time.monotonic() >= deadline:
@@ -1680,7 +1681,7 @@ def _acquire_scope_admission(scope_root: Path, *, timeout: float) -> int:
         return descriptor
     except BaseException:
         try:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            platform.unlock_file(descriptor)
         finally:
             os.close(descriptor)
         raise
@@ -1725,7 +1726,7 @@ class RoleBoundCustodyBroker:
         self._authority_scope_guard = threading.Lock()
         self.run_id = _digest_bytes(os.urandom(32))
         ledger_root.mkdir(parents=True, exist_ok=False, mode=0o700)
-        os.chmod(ledger_root, 0o700)
+        platform.owner_only(ledger_root)
         self.root = ledger_root
         self.journal_path = ledger_root / "custody.journal.jsonl"
         self.ledger_path = ledger_root / "custody.ledger.json"
@@ -1741,7 +1742,7 @@ class RoleBoundCustodyBroker:
         try:
             listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             listener.bind(str(self.socket_path))
-            os.chmod(self.socket_path, 0o600)
+            platform.owner_only(self.socket_path)
             listener.listen(1)
             listener.settimeout(timeout)
         except BaseException:
@@ -1753,7 +1754,7 @@ class RoleBoundCustodyBroker:
             except OSError:
                 pass
             if self._authority_scope_descriptor is not None:
-                fcntl.flock(self._authority_scope_descriptor, fcntl.LOCK_UN)
+                platform.unlock_file(self._authority_scope_descriptor)
                 os.close(self._authority_scope_descriptor)
                 self._authority_scope_descriptor = None
             raise
@@ -1803,7 +1804,7 @@ class RoleBoundCustodyBroker:
             self._authority_scope_descriptor = None
         if descriptor is not None:
             try:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
+                platform.unlock_file(descriptor)
             finally:
                 os.close(descriptor)
 
@@ -2097,7 +2098,7 @@ class RoleBoundCustodyBroker:
             0o600,
         )
         try:
-            os.fchmod(descriptor, 0o600)
+            platform.owner_only(descriptor)
             _write_all(descriptor, _canonical(event) + b"\n")
             os.fsync(descriptor)
         finally:
@@ -2128,7 +2129,7 @@ class RoleBoundCustodyBroker:
                 raise CustodyError("custody registration frame is invalid")
             self._observation_phase = "peer-token"
             pre = _peer_token(connection)
-            if pre["pid"] != frame["pid"] or pre["uid"] != os.getuid():
+            if pre["pid"] != frame["pid"] or pre["uid"] != platform.current_user():
                 raise CustodyError("custody registration kernel identity differs")
             self._observation_phase = "initial-identity"
             before = self.identity_provider(int(frame["pid"]))
@@ -2185,7 +2186,7 @@ class RoleBoundCustodyBroker:
                     post = candidate
                     break
                 time.sleep(0.005)
-            if post is None or post["pid"] != frame["pid"] or post["uid"] != os.getuid():
+            if post is None or post["pid"] != frame["pid"] or post["uid"] != platform.current_user():
                 raise CustodyError("post-exec audit token did not bind the registered process")
             self._observation_phase = "post-exec-identity"
             after = self.identity_provider(int(frame["pid"]))
@@ -2258,7 +2259,13 @@ def custody_wrapper_argv(executable: str) -> list[str]:
     # sitecustomize network hook can deny the private AF_UNIX channel. These
     # flags apply only here: SETEXEC retains the original target argv/env,
     # so normal target startup still installs its admitted workload policy.
-    return [executable, "-I", "-S", "-u", str(Path(__file__).absolute()), "--custody-exec"]
+    import runtime_protocol
+
+    roots = [str(Path(__file__).resolve().parents[3]),
+             str(Path(runtime_protocol.__file__).resolve().parent.parent)]
+    bootstrap = (f"import sys,runpy; sys.path[:0]={roots!r}; "
+                 "runpy.run_module('astrid.core.execution.custody_broker', run_name='__main__')")
+    return [executable, "-I", "-S", "-u", "-c", bootstrap, "--custody-exec"]
 
 def child_exec_from_environment() -> int:
     encoded = os.environ.get("ASTRID_RUNTIME_CUSTODY_TARGET_B64", "")
@@ -2273,7 +2280,7 @@ def child_exec_from_environment() -> int:
     # further launcher execs, so this provisional token is rebound only after
     # Runtime readiness by the parent that retains the direct-child handle.
     if os.environ.get("ASTRID_RUNTIME_CUSTODY_START_SESSION") == "1":
-        os.setsid()
+        platform.start_session()
     try:
         timeout = float(os.environ.get("ASTRID_RUNTIME_CUSTODY_TIMEOUT_SECONDS", "5"))
     except ValueError as exc:
@@ -2528,8 +2535,9 @@ class _CommandInventoryOwner:
             raise CustodyError('command inventory Git artifact changed')
 
     def _execute(self, frame: Mapping[str, Any], channel: socket.socket) -> Any:
-        import selectors
+        import queue
 
+        from astrid.core.execution.pipe_io import PipeReader, close_pipe_workers
         from astrid.core.execution.process_group import (
             popen_owned_process,
             terminate_tree,
@@ -2555,6 +2563,7 @@ class _CommandInventoryOwner:
                 'owner_epoch': self.custody.owner_epoch, 'root_generation': binding['generation'],
                 'operation': frame['operation'], 'checkout_sha256': _digest_bytes(os.fsencode(frame['checkout']))})
         process = None
+        readers = []
         try:
             argv = [self.policy['git'], '-C', frame['checkout'], *_COMMAND_GIT_OPERATIONS[frame['operation']]]
             env = dict(frame['environment'])
@@ -2566,37 +2575,37 @@ class _CommandInventoryOwner:
             with self.lock:
                 self.helpers[self.pending] = process
             self.failure_stage = 'helper_stream'
-            selector = selectors.DefaultSelector()
+            events: queue.Queue[tuple[str, bytes | Exception]] = queue.Queue(maxsize=16)
             output = {'stdout': bytearray(), 'stderr': bytearray()}
             for name in output:
-                selector.register(getattr(process, name), selectors.EVENT_READ, name)
+                readers.append(PipeReader(getattr(process, name), chunk_size=8192, events=events, name=name))
+            open_pipes = set(output)
             deadline = time.monotonic() + 120
-            try:
-                while selector.get_map() or process.poll() is None:
-                    if self.cancelled.is_set() or time.monotonic() >= deadline:
-                        raise CustodyError('command inventory operation cancelled or timed out')
-                    self._authenticate(channel)
-                    self.failure_stage = 'helper_stream'
-                    try:
-                        queued = channel.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
-                        if queued == b'':
-                            raise CustodyError('command inventory caller disconnected')
-                        if queued:
-                            raise CustodyError('command inventory concurrent operation is forbidden')
-                    except BlockingIOError:
-                        pass
-                    for key, _ in selector.select(.05):
-                        value = os.read(key.fd, 8192)
-                        if not value:
-                            selector.unregister(key.fileobj)
-                        else:
-                            output[key.data].extend(value)
-                            if len(output[key.data]) > (16 * 1024 * 1024 if key.data == 'stdout' else 1024 * 1024):
-                                raise CustodyError('command inventory output exceeded its bound')
-                self.failure_stage = 'helper_original_wait'
-                code = process.wait(timeout=0)
-            finally:
-                selector.close()
+            while open_pipes or process.poll() is None:
+                if self.cancelled.is_set() or time.monotonic() >= deadline:
+                    raise CustodyError('command inventory operation cancelled or timed out')
+                self._authenticate(channel)
+                self.failure_stage = 'helper_stream'
+                try:
+                    queued = channel.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
+                    if queued == b'':
+                        raise CustodyError('command inventory caller disconnected')
+                    if queued:
+                        raise CustodyError('command inventory concurrent operation is forbidden')
+                except BlockingIOError:
+                    pass
+                try:
+                    name, value = PipeReader.receive(events, deadline=min(deadline, time.monotonic() + .05))
+                except TimeoutError:
+                    continue
+                if not value:
+                    open_pipes.remove(name)
+                else:
+                    output[name].extend(value)
+                    if len(output[name]) > (16 * 1024 * 1024 if name == 'stdout' else 1024 * 1024):
+                        raise CustodyError('command inventory output exceeded its bound')
+            self.failure_stage = 'helper_original_wait'
+            code = process.wait(timeout=0)
             observer = getattr(process._astrid_custody, '_observer', None)
             if observer is not None:
                 observer.join(2)
@@ -2630,11 +2639,17 @@ class _CommandInventoryOwner:
             self.error = self.error or error
             raise CustodyError('command inventory ownership remains uncertain') from error
         finally:
-            if process is not None:
-                for name in ('stdout', 'stderr'):
-                    stream = getattr(process, name, None)
-                    if stream is not None:
-                        stream.close()
+            try:
+                close_pipe_workers(*readers)
+            except Exception as error:
+                self._retain_first_failure(error)
+                raise CustodyError('command inventory ownership remains uncertain') from error
+            finally:
+                if process is not None:
+                    for name in ('stdout', 'stderr'):
+                        stream = getattr(process, name, None)
+                        if stream is not None:
+                            stream.close()
 
     def abort_before_release(self) -> None:
         with self.lock:
@@ -2849,8 +2864,11 @@ class ProcessCustody:
             self.actor = None
 
     def prepare_launch(self, argv: Sequence[str], *, start_new_session: bool, role: str = "command", inventory_context: Mapping[str, Any] | None = None) -> tuple[list[str], dict[str, str]]:
+        if sys.platform == "win32":
+            return list(argv), {}
         if sys.platform != "darwin":
-            if not (hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal")):
+            if not (callable(getattr(platform, "pidfd_open", None))
+                    and callable(getattr(platform, "pidfd_send_signal", None))):
                 raise CustodyError("incarnation-bound kernel custody is unavailable")
             return list(argv), {}
         policy = _inventory_launch_policy(inventory_context["environment"], inventory_context["cwd"]) if inventory_context is not None and role == "command" else None
@@ -2871,6 +2889,15 @@ class ProcessCustody:
     def bind_launch(self, process: Any) -> None:
         self.process = process  # Retain before any seal or observation can fail.
         try:
+            if sys.platform == "win32":
+                if getattr(process, "_runtime_job", None) is None:
+                    raise CustodyError("Windows child lacks retained Job custody")
+                identity = platform.process_identity(process.pid)
+                if identity is None and process.poll() is None:
+                    raise CustodyError("Windows launch identity is unavailable")
+                birth = str(identity["birth_id"]) if identity else f"exited-child:{process.pid}"
+                self._handles[process.pid] = (birth, process)
+                return
             if self._launch_broker is not None:
                 self._launch_broker._launch_pid = process.pid  # Diagnostic selector only.
                 self._launch_broker.wait_until_sealed()
@@ -3091,7 +3118,7 @@ class ProcessCustody:
                         return
                     stage = "pidfd-bind"
                     try:
-                        descriptor = os.pidfd_open(pid, 0)
+                        descriptor = platform.pidfd_open(pid)
                     except ProcessLookupError:
                         if held:
                             raise
@@ -3788,6 +3815,11 @@ class ProcessCustody:
         if entry is None or entry[0] != birth:
             raise CustodyError("signal lacks a retained exact process capability")
         handle = entry[1]
+        if sys.platform == "win32":
+            if handle is not self.process or pid != self.process.pid:
+                raise CustodyError("Windows signal lacks its retained Job owner")
+            platform.signal_tree(handle, signum)
+            return
         if isinstance(handle, RoleBoundCustodyBroker):
             try:
                 handle.signal(signum, expected_pid=pid, **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}))
@@ -3855,7 +3887,7 @@ class ProcessCustody:
             try:
                 if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
                     raise CustodyError("retained cleanup deadline expired")
-                signal.pidfd_send_signal(handle, signum, None, 0)
+                platform.pidfd_send_signal(handle, signum)
             except ProcessLookupError:
                 return
             except OSError as exc:
@@ -3967,6 +3999,9 @@ class ProcessCustody:
             self._inventory_owner.released.set()
 
     def cleanup_failed_launch(self, *, signum: int) -> None:
+        if sys.platform == "win32" and self.process is not None:
+            platform.stop_tree(self.process)
+            return
         if getattr(self, "_inventory_owner", None) is not None:
             self._inventory_owner.abort_before_release()
         # Failed admission obeys the same actor/generation fence. A pending
@@ -3992,7 +4027,7 @@ class ProcessCustody:
         # TERM cannot settle a stopped target. Never resume unadmitted code;
         # KILL still crosses the same exact-authority and actor/generation fence.
         self._launch_broker.signal_failed_admission(
-            signal.SIGKILL if suspended else signum, expected_pid=self.process.pid,
+            platform.KILL if suspended else signum, expected_pid=self.process.pid,
         )
         if suspended:
             # Only the original Popen supplies positive direct-child reap evidence.

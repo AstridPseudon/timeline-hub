@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -91,6 +92,27 @@ def _read_install_config_root() -> Path | None:
     return _safe_absolute(raw, base=CONFIG_PATH.parent.parent)
 
 
+def _read_installed_support_root() -> Path | None:
+    """Read the support root recorded by the Astrid login-service install."""
+
+    from astrid.installer.core import read_json
+    from astrid.installer.service import LABEL, install_selection
+
+    selection = install_selection(Path.home(), sys.platform)
+    if not selection.is_file() or selection.is_symlink():
+        return None
+    try:
+        value = read_json(selection)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Astrid install record is invalid: {selection}") from exc
+    if value.get("owner") != LABEL:
+        return None
+    raw = value.get("data_root")
+    if not isinstance(raw, str) or not raw.strip() or not Path(raw).expanduser().is_absolute():
+        raise ValueError(f"Astrid install record has no absolute data_root: {selection}")
+    return _safe_absolute(raw, base=selection.parent)
+
+
 def _selected_realm(root: Path) -> str | None:
     """Return a catalog's selected realm id, without opening runtime state."""
 
@@ -138,6 +160,10 @@ def resolve_runtime_data_root() -> Path:
         if not Path(configured).expanduser().is_absolute():
             raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
         return _safe_absolute(configured, base=Path(__file__).resolve().parents[2])
+
+    installed = _read_installed_support_root()
+    if installed is not None:
+        return installed
 
     persisted = _read_persisted_support_root()
     configured_root = _read_install_config_root()

@@ -6,7 +6,7 @@ Configure only what your work needs.
 
 The launcher creates the workspace connection credentials automatically. Keep them separate from creative-provider API keys and let the launcher manage them.
 
-For a source checkout, `config/astrid-runtime.json` selects `Astrid/.astrid-data` as the default Runtime support root; a wheel installation uses `~/.astrid-data`. An explicit `ASTRID_RUNTIME_DATA_ROOT` or launcher `--data-root` overrides this location. The support root contains the launcher catalog, credentials, and Runtime realm. See [Getting Started](../getting-started.md) for details.
+The installer keeps your workspace at `~/Library/Application Support/Astrid Runtime` on macOS, `${XDG_DATA_HOME:-$HOME/.local/share}/astrid-runtime` on Linux, or `%LOCALAPPDATA%\Astrid Runtime` on Windows. If you chose `--data-root` when installing, Astrid uses that folder instead. This support root contains connection credentials and the Runtime realm, including projects and media. See [Getting Started](../getting-started.md) for the install line.
 
 `ASTRID_RUNTIME_SOURCE_MANIFEST` selects an explicit source-profile file when needed. `ASTRID_RUNTIME_CREDENTIAL` identifies a Runtime credential file for connection paths that use that override. Normal launcher setup supplies its connection information automatically.
 
@@ -29,12 +29,25 @@ Enter secrets locally through the selected integration’s configuration. Keep t
 
 ## Store a provider key once
 
-Use the hidden local prompt for the provider you need:
+Use the hidden local prompt for the provider you need. Run the absolute launcher
+path shown in the missing-key message, followed by `credential set` and the
+provider name. For example, the default macOS/Linux launcher is
+`$HOME/.local/share/astrid/run-astrid` and the default Windows launcher is
+`%LOCALAPPDATA%\Astrid\run-astrid.cmd`:
 
-```bash
-astrid-credential set runpod
-astrid-credential set openai
+```sh
+"$HOME/.local/share/astrid/run-astrid" credential set runpod
+"$HOME/.local/share/astrid/run-astrid" credential set openai
 ```
+
+In PowerShell, use the command form:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" credential set openai
+```
+
+These are the default install paths. If you chose a different program folder,
+run the absolute launcher command printed in the missing-key message.
 
 The command updates that key in `~/.astrid/astrid.env`, preserves other settings, and applies owner-only permissions. This file belongs to your login on this computer and is shared across local Astrid projects and checkouts. Do not commit it or copy it to another computer.
 

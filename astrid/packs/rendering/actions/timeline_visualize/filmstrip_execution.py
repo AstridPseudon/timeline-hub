@@ -14,6 +14,8 @@ from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
 
+from runtime_protocol.platform import durable_replace
+
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 
 from .audio_analysis import AudioAnalysisError, analyze_audio, audio_analysis_identity
@@ -61,16 +63,7 @@ def _write_zip_atomic(destination: Path, source_root: Path) -> None:
                     archive.write(path, path.relative_to(source_root).as_posix())
         with temporary.open("rb") as stream:
             os.fsync(stream.fileno())
-        os.replace(temporary, destination)
-        try:
-            directory_fd = os.open(destination.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        except OSError:
-            directory_fd = None
-        if directory_fd is not None:
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
+        durable_replace(temporary, destination)
     finally:
         temporary.unlink(missing_ok=True)
 

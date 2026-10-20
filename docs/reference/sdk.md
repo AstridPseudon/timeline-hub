@@ -8,10 +8,9 @@ astrid`.
 Stage1 runtime boundary: ordinary SDK clients require an explicit endpoint,
 credential, realm id, actor id, client identity, and `workspace.v1` protocol
 version. They never infer a checkout, mutate `sys.path`, or launch a process.
-The explicit Astrid CLI launcher may invoke the installed
-`astrid-runtime up --profile astrid` command and then construct a client from
-the returned runtime identity. Set `ASTRID_RUNTIME_SOURCE_MANIFEST` and, for
-the launcher client, `ASTRID_RUNTIME_CREDENTIAL` explicitly.
+Astrid's installer owns the local Runtime service lifecycle. Set
+`ASTRID_RUNTIME_SOURCE_MANIFEST` and, for an explicitly configured client,
+`ASTRID_RUNTIME_CREDENTIAL` directly.
 The runtime is the sole authority for projects, media, timelines, tasks, runs,
 receipts, and events. `AstridClient` is a runtime client: it does not open a
 checkout-local database or content store and does not execute a pack

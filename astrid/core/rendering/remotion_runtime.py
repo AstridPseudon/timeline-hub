@@ -7,32 +7,34 @@ server-owned Remotion bundle.  No task/request value is ever consulted here.
 
 from __future__ import annotations
 
-import os
 import hashlib
 import json
+import os
+import re
 import secrets
 import stat
-import re
 import subprocess
 import sys
 import tempfile
 import time
-from functools import wraps
 from dataclasses import dataclass
+from functools import wraps
 from pathlib import Path
 from typing import Any, Mapping
+
+from runtime_protocol import platform
 
 from astrid.core.env_vars import (
     ASTRID_NODE_EXECUTABLE,
     ASTRID_PACKS_PATH,
-    ASTRID_REMOTION_VALIDATION_PATH,
-    ASTRID_REMOTION_VALIDATION_SHA256,
-    ASTRID_REMOTION_VALIDATION_LAUNCH,
-    ASTRID_REMOTION_VALIDATION_ROLE,
-
     ASTRID_REMOTION_PROJECT_DIR,
+    ASTRID_REMOTION_VALIDATION_LAUNCH,
+    ASTRID_REMOTION_VALIDATION_PATH,
+    ASTRID_REMOTION_VALIDATION_ROLE,
+    ASTRID_REMOTION_VALIDATION_SHA256,
     ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
 )
+from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.foundation.paths import REPO_ROOT
 
 REMOTION_PROJECT_DIR_ENV = ASTRID_REMOTION_PROJECT_DIR
@@ -471,7 +473,7 @@ _INTERACTIVE_GIT_ENV = frozenset({
 
 
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV
+    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
     probe_context(environment=environment, python_executable=sys.executable)
     if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
            for k in environment):
@@ -484,6 +486,8 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
     if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
         raise RemotionValidationError('registry import paths require absolute launch-known locations')
     keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    if sys.platform == 'win32':
+        keys.update(_WINDOWS_BASE_ENV)
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     context = {k: environment[k] for k in sorted(keys) if k in environment}
@@ -1039,7 +1043,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         raise RemotionValidationError('runtime validation artifact exceeds the bounded format')
     # Exclusively publish only after every original child wait and final census.
     with path.open('xb') as stream:
-        os.fchmod(stream.fileno(), 0o600)
+        platform.owner_only(stream.fileno())
         stream.write(raw)
     return {ASTRID_REMOTION_VALIDATION_PATH: str(path.absolute()),
             ASTRID_REMOTION_VALIDATION_SHA256: hashlib.sha256(raw).hexdigest(),
@@ -1071,7 +1075,7 @@ def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
             directory.mkdir(parents=True, exist_ok=True)
             evidence = directory / ('failed-validation-' + secrets.token_hex(16) + '.json')
             with evidence.open('xb') as stream:
-                os.fchmod(stream.fileno(), 0o600)
+                platform.owner_only(stream.fileno())
                 stream.write(_canonical(record))
             error.validation_evidence = str(evidence)
         except BaseException as persistence:
@@ -1094,7 +1098,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
         if not path.is_absolute() or path.is_symlink():
             raise RemotionValidationError("runtime validation reference is not a regular absolute file")
         st = path.stat()
-        if st.st_uid != os.getuid() or stat.S_IMODE(st.st_mode) != 0o600:
+        if not owned_by_current_user(path, st, mode=0o600):
             raise RemotionValidationError("runtime validation reference has a foreign owner/mode")
         if st.st_size > _VALIDATION_MAX_BYTES:
             raise RemotionValidationError("runtime validation artifact exceeds the bounded format")

@@ -1,6 +1,6 @@
 """Process-isolated generic executor host for the local runtime protocol.
 
-This module deliberately contains no runtime/database/storage imports.  It is a
+This module contains no Runtime database or storage implementation. It is a
 pack-side process: discovery and execution happen here, while admission,
 leases, reservations, and settlement remain protocol operations on the daemon.
 """
@@ -19,9 +19,7 @@ import io
 import json
 import logging
 import mimetypes
-import os
 import queue
-import select
 import re
 import secrets as secrets_module
 import shutil
@@ -40,6 +38,12 @@ from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 from urllib.parse import quote, urlsplit
+
+from runtime_protocol import platform
+from runtime_protocol.dirfd import filesystem as os
+
+from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
+from astrid.core.execution.platform_helpers import owned_by_current_user
 
 # Startup observations use only the existing private stderr sink. Regular-file
 # latency is not bounded; this diagnostic never changes descriptor flags.
@@ -64,8 +68,7 @@ def _emit_startup_phase(phase: str) -> None:
         return
     try:
         info = os.fstat(2)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or stat.S_IMODE(info.st_mode) != 0o600):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(2, info, mode=0o600)):
             return
         elapsed = max(0, int((time.monotonic() - _STARTUP_OBSERVATION_STARTED) * 1000))
         row = {"diagnostic": "astrid.host_startup_phase", "phase": phase,
@@ -171,6 +174,16 @@ from astrid.core.subprocess_env import build_child_subprocess_env
 from astrid.core.util.secrets import load_local_api_key_with_source
 from astrid.sdk.execution_request import normalize_execution_request
 from astrid.sdk.workspace_client import WorkspaceClientError, validate_runtime_endpoint
+
+
+def _managed_input_staging_name(port: str, digest: str, original_name: str | None) -> str:
+    """Build a stable managed-input path without using the supplied filename."""
+
+    suffix = Path(original_name or "").suffix
+    if not re.fullmatch(r"\.[A-Za-z0-9]{1,16}", suffix):
+        suffix = ""
+    port_digest = hashlib.sha256(port.encode("utf-8")).hexdigest()[:16]
+    return f"managed-{port_digest}-{digest}{suffix.lower()}"
 
 if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
@@ -652,9 +665,10 @@ class _ManagedWanChildAdapter:
         self._terminal_frame: dict[str, Any] | None = None
         self._owner_lock: Any = None
         self._diagnostic: Any = None
+        self._pipe_reader: PipeReader | None = None
+        self._pipe_writer: PipeWriter | None = None
 
     def start(self) -> None:
-        import fcntl
 
         owner_dir = Path(self.spec["owner_dir"])
         owner_dir.mkdir(parents=True, exist_ok=True)
@@ -671,7 +685,7 @@ class _ManagedWanChildAdapter:
         fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         self._owner_lock = os.fdopen(fd, "a+b")
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(fd, blocking=False)
         except BlockingIOError as exc:
             self._owner_lock.close()
             self._owner_lock = None
@@ -686,7 +700,8 @@ class _ManagedWanChildAdapter:
             env=environment, pass_fds=(fd,), cwd=owner_dir,
         )
         self.track(self.process)
-        os.set_blocking(self.process.stdin.fileno(), False)
+        self._pipe_reader = PipeReader(self.process.stdout)
+        self._pipe_writer = PipeWriter(self.process.stdin)
         deadline = time.monotonic() + self.readiness_timeout
         self._write({"birth": self.binding.process_birth_id, "root": self.spec["root"],
                      "init": self.spec["init"]}, deadline)
@@ -702,36 +717,35 @@ class _ManagedWanChildAdapter:
         if self.process is None or self.process.stdin is None:
             raise HostError("Wan child is absent")
         with self._write_lock:
-            fd = self.process.stdin.fileno()
-            while data:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError("Wan child write timed out")
+            def guard():
                 if self.process.poll() is not None:
                     raise HostError("Wan child exited before command")
-                if select.select([], [fd], [], min(0.05, remaining))[1]:
-                    try:
-                        data = data[os.write(fd, data):]
-                    except BlockingIOError:
-                        pass
+            if self._pipe_writer is None:
+                self._pipe_writer = PipeWriter(self.process.stdin)
+            try:
+                self._pipe_writer.write(data, deadline=deadline, guard=guard)
+            except TimeoutError as error:
+                raise TimeoutError("Wan child write timed out") from error
 
     def _read(self, deadline: float) -> dict[str, Any]:
         if self.process is None or self.process.stdout is None:
             raise HostError("Wan child is absent")
-        while b"\n" not in self._buffer:
+        if self._pipe_reader is None:
+            self._pipe_reader = PipeReader(self.process.stdout)
+        def guard():
             if self.fenced.is_set():
                 raise HostError("Wan invocation cancelled or fenced")
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise TimeoutError("Wan child observation timed out")
-            fd = self.process.stdout.fileno()
-            if select.select([fd], [], [], min(0.05, remaining))[0]:
-                data = os.read(fd, 65536)
-                if not data:
-                    raise HostError("Wan child exited without terminal evidence")
-                self._buffer.extend(data)
-                if len(self._buffer) > self.MAX_FRAME_BYTES:
-                    raise HostError("Wan child frame exceeds bound")
+        while b"\n" not in self._buffer:
+            guard()
+            try:
+                data = self._pipe_reader.read(deadline=deadline, guard=guard)
+            except TimeoutError as error:
+                raise TimeoutError("Wan child observation timed out") from error
+            if not data:
+                raise HostError("Wan child exited without terminal evidence")
+            self._buffer.extend(data)
+            if len(self._buffer) > self.MAX_FRAME_BYTES:
+                raise HostError("Wan child frame exceeds bound")
         line, _, remainder = self._buffer.partition(b"\n")
         self._buffer = bytearray(remainder)
         frame = json.loads(line)
@@ -880,35 +894,45 @@ class _ManagedWanChildAdapter:
         self.fence(reason=reason)
         process = self.process
         if process is not None:
-            if process.poll() is None:
-                try:
-                    self._write({"birth": self.binding.process_birth_id, "op": "close"},
-                                time.monotonic() + self.release_timeout)
-                    process.wait(timeout=self.release_timeout)
-                except (OSError, ValueError, HostError, TimeoutError, subprocess.TimeoutExpired):
-                    _terminate_process_group(process, grace_seconds=self.release_timeout)
-            _release_owned_group(process)
+            try:
+                if process.poll() is None:
+                    try:
+                        self._write({"birth": self.binding.process_birth_id, "op": "close"},
+                                    time.monotonic() + self.release_timeout)
+                        process.wait(timeout=self.release_timeout)
+                    except (OSError, ValueError, HostError, TimeoutError, subprocess.TimeoutExpired):
+                        _terminate_process_group(process, grace_seconds=self.release_timeout)
+                _release_owned_group(process)
+            finally:
+                if process.poll() is not None:
+                    close_pipe_workers(self._pipe_reader, self._pipe_writer, timeout=self.release_timeout)
             # Close() or a clean leader exit alone cannot prove group release.
-            snapshot = _process_snapshot()
-            if not snapshot:
-                raise HostError("Wan child release census unavailable")
-            if sys.platform == "darwin":
-                # _process_snapshot is the bounded, complete native census on
-                # Darwin. A second ps process creates an avoidable descendant.
-                group_live = any(info.pgid == process.pid for info in snapshot.values())
+            if sys.platform == "win32":
+                # The retained Job's closed handle proves tree release on
+                # Windows; a POSIX census cannot provide that evidence.
+                verify_tree_absent(process)
             else:
-                ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
-                if ps.returncode != 0:
-                    raise HostError("Wan child release census failed")
-                members = [row.split() for row in ps.stdout.decode().splitlines()]
-                group_live = any(len(row) == 2 and row[1] == str(process.pid) for row in members)
-            if process.poll() is None or group_live or any(info.pgid == process.pid for info in snapshot.values()):
-                return {"ok": False, "released": False, "reason": reason}
+                snapshot = _process_snapshot()
+                if not snapshot:
+                    raise HostError("Wan child release census unavailable")
+                if sys.platform == "darwin":
+                    # _process_snapshot is the bounded, complete native census on
+                    # Darwin. A second ps process creates an avoidable descendant.
+                    group_live = any(info.pgid == process.pid for info in snapshot.values())
+                else:
+                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
+                    if ps.returncode != 0:
+                        raise HostError("Wan child release census failed")
+                    members = [row.split() for row in ps.stdout.decode().splitlines()]
+                    group_live = any(len(row) == 2 and row[1] == str(process.pid) for row in members)
+                if process.poll() is None or group_live or any(info.pgid == process.pid for info in snapshot.values()):
+                    return {"ok": False, "released": False, "reason": reason}
             # Retire the reader before closing/reusing pipe descriptors. The
             # command may be unwinding concurrently with MTS replacement.
             if not self._command_lock.acquire(timeout=self.release_timeout):
                 return {"ok": False, "released": False, "reason": reason}
             try:
+                self._pipe_reader = self._pipe_writer = None
                 self.untrack(process)
                 for pipe in (process.stdin, process.stdout):
                     if pipe is not None:
@@ -1503,8 +1527,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     with os.fdopen(fd, "rb") as stream:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
-    if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1 or len(raw) > 8192):
+    if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1 or len(raw) > 8192):
         raise HostError("review receiver observation is not private")
     snapshot = info.st_dev, info.st_ino, raw
     if previous is not None:
@@ -1540,8 +1563,7 @@ def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes]
     with os.fdopen(fd, "rb") as stream:
         info = os.fstat(stream.fileno())
         raw = stream.read(8193)
-    if (snapshot is None or not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1
+    if (snapshot is None or not stat.S_ISREG(info.st_mode) or not owned_by_current_user(path, info, mode=0o600) or info.st_nlink != 1
             or (info.st_dev, info.st_ino, raw) != snapshot
             or (path.lstat().st_dev, path.lstat().st_ino) != snapshot[:2]):
         raise HostError("review receiver cleanup owner mismatch; attempt retained")
@@ -1575,6 +1597,9 @@ def _confined_cwd(
 
 def _preflight_unavailable_reason(record: "CapabilityRecord") -> str:
     """Return a stable, secret-free reason for a failed capability preflight."""
+    gpu = record.preflight.get("gpu")
+    if isinstance(gpu, Mapping) and gpu.get("ok") is False:
+        return str(gpu["reason"])
     failures: list[str] = []
     for check_name in sorted(record.preflight):
         check = record.preflight[check_name]
@@ -1693,10 +1718,18 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     A render in any other context is refused by ``_validated_runtime``.
     """
     from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _is_secret_name, _normalize_secret_names
+    from astrid.core.subprocess_env import (
+        _SAFE_BASE_ENV,
+        _WINDOWS_BASE_ENV,
+        _is_secret_name,
+        _normalize_secret_names,
+    )
     from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
     from astrid.core.execution.executor.schema import ExecutorValidationError
     matrix = GenericPackHost._load_matrix(capability_matrix)
+    safe_base_env = set(_SAFE_BASE_ENV)
+    if sys.platform == "win32":
+        safe_base_env.update(_WINDOWS_BASE_ENV)
     records: dict[str, CapabilityRecord] = {}
     for root in pack_roots:
         for executor_root in discover_folder_executor_roots(root):
@@ -1748,7 +1781,7 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
                  if '{' not in str(v) and '}' not in str(v)} if command is not None else {}
         fixed = _fixed_worker_environment(record, fixed, environment)
         relevant = {k: v for k, v in fixed.items()
-                    if k in set(_NODE_ENV_KEYS) | set(_SAFE_BASE_ENV) | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
+                    if k in set(_NODE_ENV_KEYS) | safe_base_env | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
                     or k.startswith(('DYLD_', 'LD_'))
                     or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
                              'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'}}
@@ -1973,11 +2006,11 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
 
 
 def _network_sandbox_argv(argv: list[str], attempt: Path, endpoint: str | None) -> list[str]:
-    """Put broker children behind the host's OS network boundary on macOS."""
+    """Keep macOS broker children behind sandbox-exec; other OSes use the Python guard."""
     if not endpoint:
         return argv
     if sys.platform != "darwin":
-        raise HostError("host-managed provider broker requires an OS network sandbox")
+        return argv
     sandbox = shutil.which("sandbox-exec")
     if not sandbox:
         raise HostError("host-managed provider broker requires macOS sandbox-exec")
@@ -2056,6 +2089,8 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
             ["git", "-C", str(checkout), "status", "--porcelain=v1"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         )
@@ -2063,6 +2098,8 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         ).stdout.strip()
@@ -4213,6 +4250,8 @@ def _vcs_revision(root: Path) -> str:
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=5,
         )
@@ -6025,8 +6064,7 @@ class GenericPackHost:
             reference = Path(configuration[runtime.ASTRID_REMOTION_VALIDATION_PATH])
             before = reference.stat()
             if (not reference.is_absolute() or reference.is_symlink()
-                    or not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
-                    or stat.S_IMODE(before.st_mode) != 0o600
+                    or not stat.S_ISREG(before.st_mode) or not owned_by_current_user(reference, before, mode=0o600)
                     or before.st_size > runtime._VALIDATION_MAX_BYTES):
                 return None
             raw = reference.read_bytes()
@@ -6061,11 +6099,18 @@ class GenericPackHost:
         return self._preflight(capability_id, full_remotion=True)
 
     def _preflight(self, capability_id: str | None = None, *, full_remotion: bool) -> tuple[CapabilityRecord, ...]:
+        from astrid.core.generation.gpu_environment import windows_gpu_status
+
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
+        gpu_detection = None
         remotion_context = self._remotion_idle_context() if any(record.adapter.requires_remotion for record in selected) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
+            gpu = windows_gpu_status(record.id, detection=gpu_detection)
+            if gpu is not None:
+                checks["gpu"] = gpu
+                gpu_detection = gpu["device"]
             adapter = record.adapter
             matrix_binaries = tuple(str(binary) for binary in record.matrix.get("required_binaries", ()))
             binary_requirements = tuple(dict.fromkeys((*record.definition.isolation.binaries, *matrix_binaries, *adapter.required_binaries)))
@@ -6153,10 +6198,10 @@ class GenericPackHost:
             else:
                 checks["network"] = {"ok": True}
             if record.definition.isolation.network and adapter.family == "provider" and _host_managed_broker(policy):
-                sandbox_available = sys.platform == "darwin" and shutil.which("sandbox-exec") is not None
+                sandbox_available = sys.platform != "darwin" or shutil.which("sandbox-exec") is not None
                 checks["sandbox"] = {
                     "ok": sandbox_available,
-                    **({} if sandbox_available else {"reason": "host-managed provider broker requires an OS network sandbox"}),
+                    **({} if sandbox_available else {"reason": "host-managed provider broker requires macOS sandbox-exec"}),
                 }
             pack_source = _hivemind_source_preflight(record)
             if pack_source is not None:
@@ -6265,6 +6310,13 @@ class GenericPackHost:
             else:
                 status = "ready" if record.ready else "unavailable"
                 unavailable_reason = None if record.ready else _preflight_unavailable_reason(record)
+                gpu = record.preflight.get("gpu")
+                if isinstance(gpu, Mapping) and not gpu.get("qualified"):
+                    label = str(gpu["reason"])
+                    unavailable_reason = (
+                        label + " " + unavailable_reason
+                        if unavailable_reason and unavailable_reason != label else label
+                    )
             executor_capabilities.append(
                 {
                     "capability_id": record.id,
@@ -6742,7 +6794,9 @@ class GenericPackHost:
             snapshot_registry_path.parent.mkdir(parents=True, exist_ok=True)
             snapshot_registry_path.write_text(json.dumps(snapshot_registry, sort_keys=True), encoding="utf-8")
             values["assets_registry"] = str(snapshot_registry_path)
-        if "materialized_root" in values or "materialized_objects" in values:
+        if any(key in values for key in (
+            "materialized_root", "materialized_objects", "materialized_input_metadata"
+        )):
             raise HostError("materialized media handoff is host-owned and cannot be caller supplied")
         input_digests = input_spec.get("input_digests", ())
         for item in input_digests if isinstance(input_digests, list) else ():
@@ -6802,6 +6856,7 @@ class GenericPackHost:
         managed_root = attempt / "managed-objects"
         managed_root.mkdir(parents=True, exist_ok=True)
         materialized_objects: dict[str, str] = {}
+        materialized_input_metadata: dict[str, dict[str, str | None]] = {}
         fetched_objects: dict[tuple[str, str], Path] = {}
         scratch_limit = (
             int(storage_estimate["scratch_bytes"])
@@ -6850,11 +6905,12 @@ class GenericPackHost:
             payload = bytes(data)
             if hashlib.sha256(payload).hexdigest() != normalized:
                 raise HostError(f"input object hash mismatch for {name}")
-            destination = managed_root / (
-                filename
-                if filename is not None
-                else f"{len(list(managed_root.iterdir())):04d}-{hashlib.sha256(reference.encode()).hexdigest()[:16]}"
+            staging_name = (
+                "theme.json"
+                if filename == "theme.json"
+                else _managed_input_staging_name(name, normalized, filename)
             )
+            destination = managed_root / staging_name
             write_scratch(destination, payload, name=name)
             fetched_objects[cache_key] = destination
             return destination
@@ -6892,6 +6948,11 @@ class GenericPackHost:
                     )
                 normalized = require_authorized(str(digest), str(name))
                 if str(name) == "theme":
+                    original_name = value.get("filename") if isinstance(value, Mapping) else None
+                    materialized_input_metadata[str(name)] = {
+                        "digest": normalized,
+                        "filename": original_name if isinstance(original_name, str) else None,
+                    }
                     destination = fetch_object(
                         str(value.get("object_id") or "theme"),
                         str(digest),
@@ -6903,32 +6964,36 @@ class GenericPackHost:
                     materialized_objects[str(digest).removeprefix("sha256:")] = str(destination)
                     continue
                 input_name = Path("theme.json") if str(name) == "theme" else Path(str(name))
-                # Preserve a managed file object's safe filename when the
-                # capability consumes it as a normal file port.  The logical
-                # port name (for example ``source_video``) is not necessarily
-                # a usable media suffix; losing ``.mp4`` here makes downstream
-                # Comfy loaders reject an otherwise valid managed object.
+                raw_filename: str | None = None
                 if str(name) in file_input_names and isinstance(value, Mapping):
-                    raw_filename = value.get("filename")
+                    candidate_filename = value.get("filename")
                     if (
-                        isinstance(raw_filename, str)
-                        and raw_filename
-                        and Path(raw_filename).name == raw_filename
-                        and not Path(raw_filename).is_absolute()
-                        and ".." not in Path(raw_filename).parts
+                        isinstance(candidate_filename, str)
+                        and candidate_filename
+                        and Path(candidate_filename).name == candidate_filename
+                        and not Path(candidate_filename).is_absolute()
+                        and ".." not in Path(candidate_filename).parts
                     ):
-                        input_name = Path(raw_filename)
+                        raw_filename = candidate_filename
                 if str(name) in cas_names:
                     filename = value.get("filename") if isinstance(value, Mapping) else None
                     if not isinstance(filename, str) or not filename or Path(filename).name != filename:
                         raise HostError(
                             f"CAS parameter {name!r} requires a safe filename"
                         )
-                    if len(ordered_cas_ports) > 1:
-                        # Preserve role identity even when two CAS objects
-                        # arrive with the same user filename.
-                        filename = f"{name}--{filename}"
-                    input_name = Path(filename)
+                    raw_filename = filename
+                materialized_input_metadata[str(name)] = {
+                    "digest": normalized,
+                    "filename": value.get("filename")
+                    if isinstance(value, Mapping) and isinstance(value.get("filename"), str)
+                    else None,
+                }
+                # User filenames remain input metadata, never path components.
+                # Keep only a conservative extension for decoders that infer
+                # media type from the staged path.
+                input_name = Path(
+                    _managed_input_staging_name(str(name), normalized, raw_filename)
+                )
                 input_root = (attempt / "inputs").resolve()
                 path = (input_root / input_name).resolve()
                 if not path.is_relative_to(input_root):
@@ -6956,7 +7021,13 @@ class GenericPackHost:
             derived_assets: dict[str, Any] = {}
             for key, raw in registry["assets"].items():
                 object_id, digest_hex = _managed_asset_identity(str(key), raw)
-                destination = fetch_object(object_id, digest_hex, str(key))
+                original_name = raw.get("filename") if isinstance(raw, Mapping) else None
+                destination = fetch_object(
+                    object_id,
+                    digest_hex,
+                    str(key),
+                    filename=original_name if isinstance(original_name, str) else None,
+                )
                 materialized_objects[object_id] = str(destination)
                 materialized_objects[digest_hex] = str(destination)
                 entry = dict(raw)
@@ -8068,7 +8139,8 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                errors="replace", pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8322,7 +8394,8 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                errors="replace", pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -9738,6 +9811,8 @@ class GenericPackHost:
                 "source_digest": record.source_digest,
                 "dependency_digest": record.dependency_digest,
             }
+            if "gpu" in record.preflight:
+                payload["gpu_qualification"] = dict(record.preflight["gpu"])
             if publication_result is not None:
                 payload["timeline_render_publication"] = dict(publication_result)
             if thumbnail_diagnostics:
@@ -9850,10 +9925,14 @@ class GenericPackHost:
             original_error = exc.execution_error if isinstance(exc, CommandCleanupUnresolved) else exc
             if isinstance(original_error, StorageEnvelopeError):
                 storage_failure_receipt = dict(original_error.diagnostic)
+            failure_message = str(exc)
+            gpu = record.preflight.get("gpu")
+            if isinstance(gpu, Mapping) and not gpu.get("qualified"):
+                failure_message += " " + str(gpu["reason"])
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
-                str(exc),
+                failure_message,
                 retryable=False,
                 attempt_id=attempt_id,
                 fence=fence,
@@ -10923,14 +11002,13 @@ def _handoff_read_protected_json(scope: Path, name: str, *, limit: int = 1_048_5
             or any(parent.is_symlink() for parent in scope.parents)):
         raise HostError("handoff evidence scope or filename is unsafe")
     scope_info = scope.stat(follow_symlinks=False)
-    if (not scope.is_dir() or scope_info.st_uid != os.getuid() or scope_info.st_mode & 0o077):
+    if (not scope.is_dir() or not owned_by_current_user(scope, scope_info, forbidden=0o077)):
         raise HostError("handoff evidence scope is not owner-only")
     path = scope / name
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         info = os.fstat(descriptor)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or info.st_mode & 0o077 or info.st_size <= 0 or info.st_size > limit):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(descriptor, info, forbidden=0o077) or info.st_size <= 0 or info.st_size > limit):
             raise HostError("handoff evidence file is not bounded owner-only state")
         chunks = bytearray()
         while len(chunks) <= limit:
@@ -10962,8 +11040,7 @@ def _handoff_read_private_bytes(path: Path, *, limit: int) -> bytes:
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         info = os.fstat(descriptor)
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                or info.st_mode & 0o077 or info.st_size <= 0 or info.st_size > limit):
+        if (not stat.S_ISREG(info.st_mode) or not owned_by_current_user(descriptor, info, forbidden=0o077) or info.st_size <= 0 or info.st_size > limit):
             raise HostError("handoff protected file is not bounded owner-only state")
         chunks = bytearray()
         while len(chunks) <= limit:
@@ -11152,24 +11229,23 @@ class LocalExecutionPreparation:
             return self._handoff_journal_ready
         lock_fd = None
         try:
-            from fcntl import LOCK_EX, LOCK_NB, flock
-
             if not scope.is_absolute() or any(parent.is_symlink() for parent in scope.parents):
                 raise HostError("host handoff custody scope contains a symlink")
             if not scope.exists():
-                os.mkdir(scope, 0o700)
+                platform.private_directory(scope)
             scope_stat = scope.stat(follow_symlinks=False)
-            if (not scope.is_dir() or scope.is_symlink() or scope_stat.st_uid != os.getuid()
-                    or scope_stat.st_mode & 0o077):
+            if (not scope.is_dir() or scope.is_symlink() or not owned_by_current_user(scope, scope_stat, forbidden=0o077)):
                 raise HostError("host handoff custody scope is not owner-only")
             journal = scope / "host-handoff-state.json"
             lock_path = scope / "host-handoff-state.lock"
             lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            if sys.platform == "win32":
+                platform.owner_only(lock_fd)
             lock_stat = os.fstat(lock_fd)
             if (not stat.S_ISREG(lock_stat.st_mode) or lock_stat.st_nlink != 1
-                    or lock_stat.st_uid != os.getuid() or lock_stat.st_mode & 0o077):
+                    or not owned_by_current_user(lock_fd, lock_stat, forbidden=0o077)):
                 raise HostError("host handoff lock file is not owner-only")
-            flock(lock_fd, LOCK_EX | LOCK_NB)
+            platform.lock_file(lock_fd, blocking=False)
             if journal.exists() or journal.is_symlink():
                 raise HostError("retained host handoff journal requires authenticated reconciliation")
             self._handoff_journal_path = journal
@@ -11900,6 +11976,8 @@ class LocalExecutionPreparation:
         descriptor = None
         try:
             descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            if sys.platform == "win32":
+                platform.owner_only(descriptor)
             view = memoryview(encoded)
             while view:
                 written = os.write(descriptor, view)
@@ -12239,6 +12317,8 @@ class LocalExecutionPreparation:
             raise HostError("local preparation profile must be an object")
         if request["profile"].get("execution_mode") == "host_only_cpu":
             return self._prepare_host_only(request)
+        if sys.platform == "win32":
+            raise HostError("Managed Comfy execution is not available on Windows yet.")
         profile = _validate_local_engine_profile(request["profile"])
         scope = Path(str(request["custody_scope"]))
         if not scope.is_absolute() or scope.is_symlink():
@@ -12963,7 +13043,7 @@ class _NativeEngineGraph:
                 or "sha256:" + hashlib.sha256((root / "config.json").read_bytes()).hexdigest() != self.profile["session_config_digest"]):
             raise HostError("owned engine readiness registry differs from selected launch")
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, timeout=2, check=False)
+        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
         if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
             raise HostError("selected listener socket ownership is uncertain")
         for broker in (self.engine, self.listener):
@@ -12996,12 +13076,12 @@ class _NativeEngineGraph:
         # Let the selected daemon execute its original listener cleanup and
         # positively await/reap that exact child before the engine exits.
         if self.process.poll() is None:
-            self._signal_owned_role(self.engine, signal.SIGTERM, expected_pid=self.process.pid)
+            self._signal_owned_role(self.engine, platform.TERM, expected_pid=self.process.pid)
         try:
             exit_code = self.process.wait(timeout=5)
         except subprocess.TimeoutExpired as exc:
             if self.listener is not None and self.listener._post_exec_authority_validated:
-                self._signal_owned_role(self.listener, signal.SIGKILL, expected_pid=int(self.listener.registration["pid"]))
+                self._signal_owned_role(self.listener, platform.KILL, expected_pid=int(self.listener.registration["pid"]))
             raise CleanupUncertainError("engine cleanup deadline expired; obligations retained") from exc
         if self._listener_exit is None:
             try:
@@ -13013,7 +13093,7 @@ class _NativeEngineGraph:
         verify_tree_absent(self.process)
         root = Path(self.profile["engine_launch"]["session_root"])
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, timeout=2, check=False)
+        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
         if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
             raise CleanupUncertainError("engine endpoint cleanup is not verified")
         # Registry files are historical evidence only; successful census and
@@ -13050,7 +13130,7 @@ class _NativeEngineGraph:
             raise CleanupUncertainError("listener cleanup lacks retained registration")
         pid = int(listener.registration["pid"])
         expected = listener.registration["identity"]
-        self._signal_owned_role(listener, signal.SIGTERM, expected_pid=pid)
+        self._signal_owned_role(listener, platform.TERM, expected_pid=pid)
         deadline = time.monotonic() + 1.0  # Existing descendant TERM grace.
         while time.monotonic() < deadline:
             # Observation and waits grant no authority and occur outside the
@@ -13061,7 +13141,7 @@ class _NativeEngineGraph:
             if any(observed.get(key) != expected.get(key) for key in ("pid", "uid", "birth_id")):
                 raise CleanupUncertainError("listener incarnation changed during cleanup")
             time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
-        self._signal_owned_role(listener, signal.SIGKILL, expected_pid=pid)
+        self._signal_owned_role(listener, platform.KILL, expected_pid=pid)
 
 
 def _retain_unresolved_owner(preparation: LocalExecutionPreparation) -> None:
@@ -13256,14 +13336,12 @@ def _await_worker_activation_socket(
     try:
         parent.mkdir(mode=0o700)
         parent_info = parent.stat()
-        if (not stat.S_ISDIR(parent_info.st_mode) or parent_info.st_uid != os.getuid()
-                or stat.S_IMODE(parent_info.st_mode) != 0o700):
+        if (not stat.S_ISDIR(parent_info.st_mode) or not owned_by_current_user(parent, parent_info, mode=0o700)):
             raise HostError("parked activation socket directory is not private")
         listener.bind(str(path))
-        os.chmod(path, 0o600)
+        platform.owner_only(path)
         created = path.lstat()
-        if (not stat.S_ISSOCK(created.st_mode) or created.st_uid != os.getuid()
-                or stat.S_IMODE(created.st_mode) != 0o600):
+        if (not stat.S_ISSOCK(created.st_mode) or not owned_by_current_user(path, created, mode=0o600)):
             raise HostError("parked activation socket identity is unsafe")
         listener.listen(1)
         listener.settimeout(timeout_seconds)
@@ -13332,12 +13410,88 @@ def _handle_host_shutdown_signal(host: GenericPackHost, signum: int) -> None:
         raise
 
 
+class _ManagedStdinShutdown:
+    """Coordinate EOF-triggered cleanup with the main host loop."""
+
+    def __init__(self, host: GenericPackHost, stream: Any = None) -> None:
+        self.host = host
+        self.stream = sys.stdin if stream is None else stream
+        self.eof_detected = threading.Event()
+        self.shutdown_requested = threading.Event()
+        self.cleanup_done = threading.Event()
+        self.cleanup_error: BaseException | None = None
+        self._request_lock = threading.RLock()
+        self.watcher: threading.Thread | None = None
+
+    def start(self) -> None:
+        def watch() -> None:
+            try:
+                while self.stream.read(1) != "":
+                    pass
+            except (OSError, ValueError):
+                # Closing the stream is the supervisor's ownership handoff too.
+                pass
+            self.eof_detected.set()
+            self.request_shutdown(signal.SIGTERM)
+
+        self.watcher = threading.Thread(target=watch, name="pack-host-stdin-eof", daemon=True)
+        self.watcher.start()
+
+    def request_shutdown(self, signum: int) -> None:
+        """Assign cleanup to one owner for concurrent EOF and signal requests."""
+        with self._request_lock:
+            if self.shutdown_requested.is_set():
+                return
+            self.shutdown_requested.set()
+
+            def clean() -> None:
+                try:
+                    _handle_host_shutdown_signal(self.host, signum)
+                except BaseException as exc:  # noqa: BLE001 - preserve cleanup failures from the owner.
+                    self.cleanup_error = exc
+                finally:
+                    self.cleanup_done.set()
+
+            self.watcher = threading.Thread(
+                target=clean, name="pack-host-shutdown-cleanup", daemon=True
+            )
+            self.watcher.start()
+
+    def wait_for_shutdown_cleanup(self) -> None:
+        # Wait for the cleanup owner, never for the stdin reader itself.
+        if not self.shutdown_requested.is_set():
+            return
+        self.cleanup_done.wait()
+        if self.cleanup_error is not None:
+            raise self.cleanup_error
+
+    def run_loop(self, run: Callable[[], Any]) -> Any:
+        try:
+            result = run()
+        except BaseException:
+            self.wait_for_shutdown_cleanup()
+            raise
+        self.wait_for_shutdown_cleanup()
+        return result
+
+
 def _log_cli_exit_failure(error: BaseException) -> None:
     """Log CLI failures without copying potentially sensitive exception text."""
     _LOGGER.error("generic host CLI exiting after failure: error_type=%s", type(error).__name__[:96])
 
 
 def _cli() -> int:
+    managed_shutdowns: list[_ManagedStdinShutdown] = []
+    try:
+        return _cli_impl(managed_shutdowns)
+    finally:
+        # Startup can fail before the worker-loop wrapper is entered. An EOF
+        # or signal cleanup already in progress still owns the host's exit.
+        for lifecycle in managed_shutdowns:
+            lifecycle.wait_for_shutdown_cleanup()
+
+
+def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
 
     parser = argparse.ArgumentParser(prog="astrid-generic-host")
     parser.add_argument("command", nargs="?", choices=("run", "supervise"), help="run the worker loop or JSONL supervisor")
@@ -13422,8 +13576,7 @@ def _cli() -> int:
                 preparation.control_error = exc
                 return  # Unresolved custody keeps this designated owner alive.
             raise SystemExit(128 + signum)
-        signal.signal(signal.SIGTERM, parked_shutdown)
-        signal.signal(signal.SIGINT, parked_shutdown)
+        platform.install_stop_handlers(parked_shutdown)
     activation = None
     if has_activation_transport:
         if not args.credential_file:
@@ -13535,6 +13688,12 @@ def _cli() -> int:
     ready_path = Path(args.ready_file).expanduser() if args.ready_file else None
     if ready_path is not None and (not ready_path.is_absolute() or ready_path.is_symlink()):
         parser.error("--ready-file must be an absolute non-symlink path")
+    service_mode = os.environ.get("ASTRID_PACK_HOST_SERVICE_MODE") == "1"
+    if service_mode and ready_path is not None:
+        try:
+            ready_path.unlink(missing_ok=True)
+        except OSError as exc:
+            parser.error(f"cannot clear stale managed readiness marker: {exc}")
     credential = None
     credential_path = None
     if args.credential_file:
@@ -13628,12 +13787,12 @@ def _cli() -> int:
         owned_output = support_root / "host-output"
         if (not output_root or Path(output_root) != owned_output
                 or owned_output.resolve() != owned_output or not owned_output.is_dir()
-                or owned_output.stat().st_uid != os.getuid()):
+                or not owned_by_current_user(owned_output, owned_output.stat())):
             parser.error("host-only output root must be the canonical owned host-output directory")
         owned_attempts = owned_output / "attempts"
         if (owned_attempts.resolve() != owned_attempts
                 or (owned_attempts.exists() and (not owned_attempts.is_dir()
-                    or owned_attempts.stat().st_uid != os.getuid()))):
+                    or not owned_by_current_user(owned_attempts, owned_attempts.stat())))):
             parser.error("host-only attempts directory must be canonical and owned")
         try:
             for directory in (owned_output, owned_attempts) if owned_attempts.exists() else (owned_output,):
@@ -13678,9 +13837,37 @@ def _cli() -> int:
             "source_closure_digest": identity_attestation["source"].get("closure_digest"),
             "ready_file": str(ready_path) if ready_path is not None else None,
         }
+    stdin_shutdown = (
+        _ManagedStdinShutdown(host)
+        if service_mode and args.command == "run"
+        else None
+    )
+    if stdin_shutdown is not None:
+        managed_shutdowns.append(stdin_shutdown)
+
+    def handle_shutdown(_signum, _frame):
+        if stdin_shutdown is not None:
+            stdin_shutdown.request_shutdown(_signum)
+        else:
+            _handle_host_shutdown_signal(host, _signum)
+
+    platform.install_stop_handlers(handle_shutdown)
+    # `kill -USR1 <pid>` writes every thread's Python stack to the host log,
+    # so a host that looks stuck can be diagnosed without stopping it.
+    if platform.USER1 is not None:
+        try:
+            faulthandler.register(platform.USER1, all_threads=True, chain=False)
+        except (OSError, ValueError, RuntimeError):
+            # stderr has no file descriptor (an embedding or test harness).
+            pass
+    if stdin_shutdown is not None:
+        stdin_shutdown.start()
     _emit_startup_phase("discovery_begin")
     host.discover()
     _emit_startup_phase("discovery_done")
+    if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+        stdin_shutdown.wait_for_shutdown_cleanup()
+        return 1
     if not args.register:
         # Registered startup performs its mandatory full preflight inside the
         # registration fence; an eager copy here repeats the same validation.
@@ -13688,19 +13875,6 @@ def _cli() -> int:
         host.preflight()
         _emit_startup_phase("preflight_done")
 
-    def handle_shutdown(_signum, _frame):
-        _handle_host_shutdown_signal(host, _signum)
-
-    signal.signal(signal.SIGTERM, handle_shutdown)
-    signal.signal(signal.SIGINT, handle_shutdown)
-    # `kill -USR1 <pid>` writes every thread's Python stack to the host log,
-    # so a host that looks stuck can be diagnosed without stopping it.
-    if hasattr(signal, "SIGUSR1"):
-        try:
-            faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
-        except (OSError, ValueError, RuntimeError):
-            # stderr has no file descriptor (an embedding or test harness).
-            pass
     registration = None
     if args.register or not args.run_task:
         _emit_startup_phase("registration_begin")
@@ -13728,9 +13902,11 @@ def _cli() -> int:
                     "message": message,
                 },
             }
-            if ready_path is not None:
+            if ready_path is not None and not service_mode:
                 _write_ready_marker(ready_path, failure)
             print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
+            if stdin_shutdown is not None:
+                stdin_shutdown.wait_for_shutdown_cleanup()
             return 1
         _emit_startup_phase("registration_done")
         # One line per start: the full registration (every capability's definition, ~0.6 MB) is in
@@ -13743,6 +13919,9 @@ def _cli() -> int:
             "unready": unready, "withdrawn": registration.get("withdrawn_capabilities") or [],
             "full_registration": str(ready_path) if ready_path is not None else None,
         }, sort_keys=True, default=_json_safe), flush=True)
+    if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+        stdin_shutdown.wait_for_shutdown_cleanup()
+        return 1
     if ready_path is not None:
         ready_payload = {
             "status": "ready",
@@ -13790,6 +13969,10 @@ def _cli() -> int:
         }
         _write_ready_marker(ready_path, ready_payload)
         _emit_startup_phase("ready_written")
+        if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
+            ready_path.unlink(missing_ok=True)
+            stdin_shutdown.wait_for_shutdown_cleanup()
+            return 1
     if args.run_task:
         if client is None or not args.lease_token:
             parser.error("--run-task requires --runtime-endpoint, --credential-file, and --lease-token")
@@ -13800,7 +13983,11 @@ def _cli() -> int:
             parser.error("run requires --runtime-endpoint and --credential-file")
         if not args.register:
             host.register()
-        print(json.dumps(host.run(once=args.once, poll_seconds=args.poll_seconds, max_tasks=args.max_tasks), indent=2, sort_keys=True, default=str))
+        def run_host_loop():
+            return host.run(once=args.once, poll_seconds=args.poll_seconds, max_tasks=args.max_tasks)
+
+        result = stdin_shutdown.run_loop(run_host_loop) if stdin_shutdown is not None else run_host_loop()
+        print(json.dumps(result, indent=2, sort_keys=True, default=str))
     if args.command == "supervise":
         if client is None:
             parser.error("supervise requires --runtime-endpoint and --credential-file")
@@ -13816,6 +14003,11 @@ def _cli() -> int:
 
 if __name__ == "__main__":
     try:
+        if sys.argv[1:2] == ["--service"]:
+            sys.modules.setdefault("astrid.core.execution.generic_host", sys.modules[__name__])
+            from astrid.services import main as service_main
+
+            raise SystemExit(service_main(["pack-host", *sys.argv[2:]]))
         raise SystemExit(_cli())
     except BaseException as exc:
         if isinstance(exc, SystemExit):
