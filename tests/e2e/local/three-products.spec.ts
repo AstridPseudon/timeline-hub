@@ -1223,13 +1223,23 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
 
   const ordinaryPost = wire.posts[0];
   const ordinaryRequest = JSON.parse(ordinaryPost.body) as CommitRequest;
-  expect(ordinaryRequest.commands).toHaveLength(4);
-  expect(ordinaryRequest.commands.map((command) => command.op)).toEqual(['clip.move', 'clip.set', 'clip.move', 'clip.set']);
+  // The production action aligns every visual clip in the displayed snapshot:
+  // the two authored parent clips plus the three projected clips owned by the
+  // seeded occurrence. Keep the full native membership explicit here; the
+  // occurrence clips are part of this normal fixture, not an unsupported
+  // subset to be filtered out of the action.
+  expect(ordinaryRequest.commands).toHaveLength(10);
   expect(ordinaryRequest.commands).toEqual([
     expect.objectContaining({ op: 'clip.move', select: `parent/clip:${seed3.appClipId}`, args: { on: 1 } }),
     expect.objectContaining({ op: 'clip.set', select: `parent/clip:${seed3.appClipId}`, args: { values: { hold: 5 }, clear: [] } }),
     expect.objectContaining({ op: 'clip.move', select: `parent/clip:${seed3.transitionClipId}`, args: { on: 6 } }),
     expect.objectContaining({ op: 'clip.set', select: `parent/clip:${seed3.transitionClipId}`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:f2-plate`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:f2-plate`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}`, args: { values: { hold: 3 }, clear: [] } }),
   ]);
   const ordinary = accepted(ordinaryPost);
   expect(position(ordinary.data.canonical_document, seed3.appClipId)).toBe(1);

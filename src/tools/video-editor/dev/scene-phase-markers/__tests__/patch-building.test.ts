@@ -1055,6 +1055,35 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
       { op: 'clip.update', target: 'clip-b', payload: { hold: 3 } },
     ]);
   });
+
+  it('keeps occurrence-projected visual clips in the ordinary membership', () => {
+    const snapshot = makeSnapshot({
+      tracks: [
+        { id: 'V1', kind: 'visual', label: 'V1' },
+        { id: 'plate', kind: 'visual', label: 'plate' },
+        { id: 'V2', kind: 'visual', label: 'V2' },
+      ],
+      clips: [
+        { id: 'parent-a', track: 'V1', at: 0, duration: 3 },
+        { id: 'parent-b', track: 'V1', at: 15, duration: 3 },
+        { id: 'occurrence:f2-occurrence/clip:f2-plate', track: 'plate', at: 0, duration: 12 },
+        { id: 'occurrence:f2-occurrence/clip:f2-agent-clip', track: 'V2', at: 3, duration: 3 },
+        { id: 'occurrence:f2-occurrence/clip:f2-agent-clear-clip', track: 'V2', at: 6, duration: 3 },
+      ],
+      app: markerApp(),
+    });
+    const { ctx, applied } = makeCtx(snapshot);
+
+    moveExistingShotsToMarkers(ctx, { trackId: 'V1', durationSeconds: 3 });
+
+    expect(applied[0]!.operations.map((operation) => operation.target)).toEqual([
+      'parent-a', 'parent-a',
+      'parent-b', 'parent-b',
+      'occurrence:f2-occurrence/clip:f2-plate', 'occurrence:f2-occurrence/clip:f2-plate',
+      'occurrence:f2-occurrence/clip:f2-agent-clip', 'occurrence:f2-occurrence/clip:f2-agent-clip',
+      'occurrence:f2-occurrence/clip:f2-agent-clear-clip', 'occurrence:f2-occurrence/clip:f2-agent-clear-clip',
+    ]);
+  });
 });
 
 describe('visual helpers', () => {
