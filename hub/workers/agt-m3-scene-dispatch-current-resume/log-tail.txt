@@ -1,17 +1,3 @@
-    
-            original_invoke = invocation._invoke_internal_result
-    
-            def capture_result(*args: Any, **kwargs: Any) -> Any:
-                result = original_invoke(*args, **kwargs)
-                last_result["value"] = result
-                return result
-    
-            monkeypatch.setattr(invocation, "_invoke_internal_result", capture_result)
->           saved_spans, saved_context = _run_one(
-                host,
-                lambda: timeline_filmstrip._invoke_scene_only(
-                    {"timeline_ref": "main"}, project=project_id, client=client
-                ),
             )
 
 tests/integrations/test_d09_managed_scene_only.py:254: 
@@ -398,3 +384,17 @@ exec
 /bin/bash -lc "grep -n '_group_survivors' tests/packs/rendering/real_pack_host.py; R="'$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-dispatch-current-resume targeted --files "tests/integrations/test_d09_managed_scene_only.py tests/packs/rendering/real_pack_host.py") && echo "$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
 codex
 The replacement run has started from the corrected worktree snapshot and is still executing the normal Runtime/pack-host path. The prior result showed the actual Scene call completed far enough to enter cleanup; this run is checking the same proof with the corrected process-group cleanup.
+exec
+/bin/bash -lc 'tail -n 8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-dispatch-current-resume-targeted-1020211942-13672/log.txt 2>/dev/null || true' in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
+ succeeded in 0ms:
+exec
+/bin/bash -lc "find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m3-scene-dispatch-current-resume-targeted-1020211942-13672 -maxdepth 1 -type f -printf '%f %s\\n' 2>/dev/null || true" in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
+ succeeded in 0ms:
+log.txt 0
+request 208
+running 5
+snap 148
+status 8
+ext 157
+runner.log 0
+
