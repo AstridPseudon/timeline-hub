@@ -772,7 +772,7 @@ describe('buildAlignShotsPatch', () => {
 
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
     ]);
   });
 
@@ -844,9 +844,9 @@ describe('buildAlignShotsPatch', () => {
 
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
     ]);
   });
 
@@ -928,9 +928,9 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     // clip-a -> marker 1 (3s), hold [3→9) = 6s; clip-b -> marker 2 (9s), tail = 2s default.
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
     ]);
   });
 
@@ -956,7 +956,7 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     const updates = patch.operations.filter((op) => op.op === 'clip.update');
     // Interval [3→9) = 6s; tail = 5s from the input.
     expect(updates.map((op) => (
-      (op.payload as { values: { hold: number } }).values.hold
+      (op.payload as { hold: number }).hold
     ))).toEqual([6, 5]);
   });
 
@@ -1050,9 +1050,38 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
     // clip-a -> m1 (0s) hold 5; clip-b -> m2 (5s) hold 3.
     expect(applied[0]!.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 0 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 5 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 5 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 5 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 3 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 3 } },
+    ]);
+  });
+
+  it('keeps occurrence-projected visual clips in the ordinary membership', () => {
+    const snapshot = makeSnapshot({
+      tracks: [
+        { id: 'V1', kind: 'visual', label: 'V1' },
+        { id: 'plate', kind: 'visual', label: 'plate' },
+        { id: 'V2', kind: 'visual', label: 'V2' },
+      ],
+      clips: [
+        { id: 'parent-a', track: 'V1', at: 0, duration: 3 },
+        { id: 'parent-b', track: 'V1', at: 15, duration: 3 },
+        { id: 'occurrence:f2-occurrence/clip:f2-plate', track: 'plate', at: 0, duration: 12 },
+        { id: 'occurrence:f2-occurrence/clip:f2-agent-clip', track: 'V2', at: 3, duration: 3 },
+        { id: 'occurrence:f2-occurrence/clip:f2-agent-clear-clip', track: 'V2', at: 6, duration: 3 },
+      ],
+      app: markerApp(),
+    });
+    const { ctx, applied } = makeCtx(snapshot);
+
+    moveExistingShotsToMarkers(ctx, { trackId: 'V1', durationSeconds: 3 });
+
+    expect(applied[0]!.operations.map((operation) => operation.target)).toEqual([
+      'parent-a', 'parent-a',
+      'parent-b', 'parent-b',
+      'occurrence:f2-occurrence/clip:f2-plate', 'occurrence:f2-occurrence/clip:f2-plate',
+      'occurrence:f2-occurrence/clip:f2-agent-clip', 'occurrence:f2-occurrence/clip:f2-agent-clip',
+      'occurrence:f2-occurrence/clip:f2-agent-clear-clip', 'occurrence:f2-occurrence/clip:f2-agent-clear-clip',
     ]);
   });
 });

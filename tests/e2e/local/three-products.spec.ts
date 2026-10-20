@@ -1138,6 +1138,147 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   await sniff.expectClean(reopened, seed3.timelineId);
 });
 
+test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart, exact retry and guarded undo', async ({ page, context, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const wire = await faultFirstCommit(page);
+  await openCommandTimeline(page, harness, seed3);
+  const realmBefore = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const original = await revisionState(harness, seed3, before.head.revision_id);
+
+  // The production-mounted Scene Phase Markers extension emits one public patch.
+  // Its ordinary members are captured by the host's generic port as one outbox intent.
+  await expect(page.getByTestId('scene-markers-summary')).toContainText('2 markers');
+  const tail = page.getByTestId('scene-markers-playhead').locator('..').locator('input[type="number"]');
+  await tail.fill('3');
+  await page.getByTestId('scene-markers-move-shots').click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+
+  const ordinaryPost = wire.posts[0];
+  const ordinaryRequest = JSON.parse(ordinaryPost.body) as CommitRequest;
+  // The production action aligns every visual clip in the displayed snapshot:
+  // the two authored parent clips plus the three projected clips owned by the
+  // seeded occurrence. Keep the full native membership explicit here; the
+  // occurrence clips are part of this normal fixture, not an unsupported
+  // subset to be filtered out of the action.
+  expect(ordinaryRequest.commands).toHaveLength(10);
+  expect(ordinaryRequest.commands).toEqual([
+    expect.objectContaining({ op: 'clip.move', select: `parent/clip:${seed3.appClipId}`, args: { on: 1 } }),
+    expect.objectContaining({ op: 'clip.set', select: `parent/clip:${seed3.appClipId}`, args: { values: { hold: 5 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `parent/clip:${seed3.transitionClipId}`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `parent/clip:${seed3.transitionClipId}`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:f2-plate`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:f2-plate`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, args: { values: { hold: 3 }, clear: [] } }),
+    expect.objectContaining({ op: 'clip.move', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}`, args: { on: 6 } }),
+    expect.objectContaining({ op: 'clip.set', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}`, args: { values: { hold: 3 }, clear: [] } }),
+  ]);
+  const ordinary = accepted(ordinaryPost);
+  expect(position(ordinary.data.canonical_document, seed3.appClipId)).toBe(1);
+  expect(position(ordinary.data.canonical_document, seed3.transitionClipId)).toBe(6);
+  expect((ordinary.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
+    .find((clip) => clip.id === seed3.appClipId)?.hold).toBe(5);
+  expect((ordinary.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
+    .find((clip) => clip.id === seed3.transitionClipId)?.hold).toBe(3);
+  expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 1);
+
+  // A disjoint Agent label lands after the ordinary batch, while its ACK is still held from the App.
+  const agentEdit = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(ordinary),
+    { kind: 'label', trackId: 'V1', label: 'F2 Agent ordinary sibling' }, 'f2-ordinary-agent-label');
+  expect(agentEdit.data.publisher).not.toBe(ordinary.data.publisher);
+  expect(position(agentEdit.data.canonical_document, seed3.appClipId)).toBe(1);
+  expect((agentEdit.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
+    .find((clip) => clip.id === seed3.appClipId)?.hold).toBe(5);
+
+  await editFirstTrackName(page, 'F2 ordinary local label');
+  await expect.poll(async () => {
+    const candidates = await commandOutboxes(page, seed3.timelineId);
+    return candidates.find((candidate) => candidate.pending?.request.key === ordinaryPost.key && candidate.intents.length === 2) ?? null;
+  }, CEILING).toBeTruthy();
+  const owner = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.pending?.request.key === ordinaryPost.key)!;
+  expect(commandsOf(owner.intents[0].payload)).toEqual(ordinaryRequest.commands);
+  expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+  expect(commandsOf(owner.intents[1].payload)).toEqual([expect.objectContaining({
+    op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'F2 ordinary local label' }, clear: [] },
+  })]);
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const afterReload = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(afterReload.pending?.request).toEqual(owner.pending?.request);
+  expect(afterReload.intents).toEqual(owner.intents);
+  expect(wire.posts).toHaveLength(1);
+  await page.close();
+
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).toBe(realmBefore.runtimeInstanceId);
+  const reopened = await context.newPage();
+  sniff.attach(reopened);
+  await wire.attach(reopened);
+  await openApp(reopened, harness);
+  await expectConnected(reopened);
+  await openSeededTimeline(reopened, harness);
+  const realmAfter = await expectSameRealm(reopened, harness, astrid);
+  expect(realmAfter.realmId).toBe(realmBefore.realmId);
+  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
+  const persisted = (await commandOutboxes(reopened, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(persisted.pending?.request).toEqual(owner.pending?.request);
+  expect(persisted.intents).toEqual(owner.intents);
+
+  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(wire.posts[1], 'client and Runtime restart preserve the exact retry body and key').toEqual(wire.posts[0]);
+  const retriedOrdinary = accepted(wire.posts[1]);
+  const localLabel = accepted(wire.posts[2]);
+  expect(localLabel.data.status).toBe('rebased');
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
+  expect(localLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 ordinary local label' })]),
+    x_f2_opaque: seed3.opaque.config,
+  });
+  expect(position(localLabel.data.canonical_document, seed3.appClipId)).toBe(1);
+  expect(position(localLabel.data.canonical_document, seed3.transitionClipId)).toBe(6);
+  expect(retriedOrdinary.data.canonical_document).toEqual(ordinary.data.canonical_document);
+  await expect.poll(async () => (await commandOutboxes(reopened, seed3.timelineId)).every((candidate) => !candidate.pending && !candidate.intents.length), CEILING).toBe(true);
+
+  // Undo the newer label first, then the grouped ordinary batch. The Agent label and opaque fields survive both inverses.
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(4);
+  const undoLabel = accepted(wire.posts[3]);
+  expect(JSON.parse(wire.posts[3].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [localLabel.receipt.receipt_id] },
+  }]);
+  expect(undoLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 Agent ordinary sibling' })]),
+  });
+
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(5);
+  const undoOrdinary = accepted(wire.posts[4]);
+  expect(JSON.parse(wire.posts[4].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [ordinary.receipt.receipt_id] },
+  }]);
+  expect(undoOrdinary.data.canonical_document).toEqual(agentEdit.data.canonical_document);
+  expect(position(undoOrdinary.data.canonical_document, seed3.appClipId)).toBe(original.parentClips[seed3.appClipId].at);
+  expect(position(undoOrdinary.data.canonical_document, seed3.transitionClipId)).toBe(original.parentClips[seed3.transitionClipId].at);
+  expect(undoOrdinary.data.canonical_document.parent_revision.payload.config.x_f2_opaque).toEqual(seed3.opaque.config);
+  expect(wire.legacy, 'the extension batch, local label, retry and inverses never use legacy snapshot traffic').toEqual([]);
+  await expectImmutableClosure(harness, seed3, undoOrdinary);
+  await expectOpaqueDataKept(harness, seed3);
+  journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), ordinary: {
+    commands: ordinaryRequest.commands, retryKey: ordinaryPost.key, agentEdit: pinOf(agentEdit), localLabel: pinOf(localLabel),
+    undo: pinOf(undoOrdinary), historyGroup: true, legacySaveCount: wire.legacy.length,
+  } };
+  await sniff.expectClean(reopened, seed3.timelineId);
+});
+
 test('M1 real dependency conflict retains B original guards and pending identity', async ({ page, harness, astrid, seed3 }) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);

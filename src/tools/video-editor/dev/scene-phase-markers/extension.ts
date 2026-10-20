@@ -713,7 +713,9 @@ export function buildAlignShotsPatch(
         op: 'clip.update',
         target: alignment.clipId,
         payload: nativeMoveBatch
-          ? { values: { hold: alignment.hold }, clear: [] }
+          // Exact hold SETs use the generic ordinary capture path, which
+          // preserves an existing transition while resizing the clip.
+          ? { hold: alignment.hold }
           : { hold: alignment.hold, mode: 'merge' },
       });
     }
