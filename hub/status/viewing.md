@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T19:53:16Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 25m -->
+<!-- viewing | 2026-10-20T19:56:10Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 17 | status age 1m -->
 # viewing — 2026-10-20 19:27 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. rules rev 2026-10-20 read.
 Integrated: Composition5a4e9b72/tree13e37553 public0.0.13, immutable SHA9412ae25/77 files, full76PASS/0FAIL/0SKIP. App13 ea386 integrated; Agent13 via6f0cdc7df, later cache490c10ac and dead inspector a760ecca integrated. No new frozen all-product13 proof; old tuples stay historical.
@@ -15,3 +15,5 @@ One-step rows: dead inspector DONE/ledgerDELETED. D10 needs source/catalog gate 
 Gates:3/M1 accepted;6/7 OPEN. Historical Player/export2PASS/2FAIL unchanged. No foundation, macOS, ownerfilm, full PCM/pixel parity or whole ZIP claim. Composition delivery piece independentlyverified and handed to Runtime; source unchanged.
 Inbox ACK: through19:16 Runtime temp-boundary/accounting,19:10 dead/cache merges,18:52 f816 reproof,18:24 wrapperrequest,18:09 sweeper. Peer approvals/patches use persistent flat design notes AND hubinbox; no worker-path-only handoff. No area-wide blocker; sourceowners own actualSDK/core/Runtime merges.
 Resources: lastabout12GiB free;10GiB floor/globalbrowserflock unchanged. Shared deps READ-ONLY; real scope dirs+leaf links. Originalfa25 source lease retained for remaining readers; consumed grant neverreuse. Recycle onlyapprovedtool, no .test deletion/prune. Ledger only design/deletion-ledger.viewing.md; detail archived notes/resume-before-1927.md.
+
+LANDED: D10-App-copies DELETED e245a4791f9270177408a7745d8397ad7b6f81a1 afterlastinstalledhostfix;18controls+normal146vendor/11importverifierPASS. Agentda9sourcecandidatefinal23test/catalog/typecheckgateapproved, actualnormalRoottypecheck+bundlePASSwithcompleteLiveSceneclosure. MP4 first973testfailedonlyprivateprojectsourceclosure; finalizedparent5f162 nowusedforonecorrectedrun. Sceneactualprivatepreflightstilldemandsrenderedvideo; boundedNoMediafixdispatched,no livepositiveclaimed.
