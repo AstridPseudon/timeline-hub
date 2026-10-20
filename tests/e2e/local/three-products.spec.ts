@@ -762,6 +762,29 @@ async function history(harness: DirectHarness, seed: ThreeProductsSeed): Promise
   return { items, head, next_cursor: null };
 }
 
+/** Return the shared worker seed to its actual zero-position precondition, if a prior case moved it. */
+async function resetAppClipToZero(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
+  const before = await history(harness, seed);
+  const state = await revisionState(harness, seed, before.head.revision_id);
+  const from = state.parentClips[seed.appClipId]?.at;
+  expect(typeof from, 'the accepted head exposes the App clip position before reset').toBe('number');
+  if (from === 0) {
+    await expect.poll(async () => (await commandOutboxes(page, seed.timelineId))
+      .every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+    return;
+  }
+
+  const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, from as number, 0, THREE_PRODUCTS_REFERENCE_AT);
+  const reset = await resetResponse;
+  expect(reset.status(), await reset.text()).toBe(200);
+  await expect.poll(async () => (await commandOutboxes(page, seed.timelineId))
+    .every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  const after = await history(harness, seed);
+  const afterState = await revisionState(harness, seed, after.head.revision_id);
+  expect(afterState.parentClips[seed.appClipId]?.at, 'the accepted reset returns the App clip to zero').toBe(0);
+}
+
 async function expectImmutableClosure(harness: DirectHarness, seed: ThreeProductsSeed, result: CommitAcceptedMutation) {
   const document = result.data.canonical_document;
   const parent = await revisionBody(harness, document.parent_revision.revision_id);
@@ -1021,11 +1044,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
   await openCommandTimeline(page, harness, seed3);
-  const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
-  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
-  const reset = await resetResponse;
-  expect(reset.status(), await reset.text()).toBe(200);
-  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  await resetAppClipToZero(page, harness, seed3);
   const { wire, before, a, owner } = await prepareAfterAckLossMoves(page, harness, seed3, async (acceptedA, commandWire) => {
     c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(acceptedA),
       { kind: 'track', id: 'f2-gate5-independent-C' }, 'f2-gate5-independent-C');
@@ -1148,11 +1167,7 @@ test('M1 real dependency conflict retains B original guards and pending identity
     if (request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname)) legacy.push(request.url());
   });
   await openCommandTimeline(page, harness, seed3);
-  const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
-  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
-  const reset = await resetResponse;
-  expect(reset.status(), await reset.text()).toBe(200);
-  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  await resetAppClipToZero(page, harness, seed3);
   let c!: CommitAcceptedMutation;
   const { wire, before, owner } = await prepareDependentMoves(page, harness, seed3, async (a) => {
     // Change the actual guard after pointerdown, before drop; B must not recapture it.
