@@ -49,7 +49,7 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
         raise CommandError('media requires a reserved raw asset alias')
     # Containers must already exist. Never replace null/opaque registry state.
-    registry = ctx.state.config(owner).get('registry')
+    registry = ctx.state.registry_holder(owner).get('registry')
     if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
         raise CommandError('media edit requires an authored asset registry')
     ref = owner + '/asset:' + identity

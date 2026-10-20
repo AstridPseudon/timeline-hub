@@ -1066,6 +1066,35 @@
           "if": {
             "properties": {
               "op": {
+                "const": "clip.add-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAddMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "occurrence.add-media"
               }
             },
@@ -1539,6 +1568,55 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ClipAddMediaArgs": {
+      "description": "Parent-owned media birth. Reserved clip id, existing active visual output track, start in seconds quantized once to a frame at the pinned rational fps (half-open). hold is SOURCE seconds; a video window [from,to) must equal it and fit the verified media, playback is hold/speed. The registry alias media.asset is created with the exact binding when absent, else must match exactly. replace names an existing populated clip on the same track that the new clip replaces; the new clip is appended to the clip list and the others keep their order.",
+      "type": "object",
+      "required": [
+        "id",
+        "track",
+        "at",
+        "hold",
+        "media"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
+        },
+        "at": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "to": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        },
+        "replace": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
         }
       },
       "additionalProperties": false

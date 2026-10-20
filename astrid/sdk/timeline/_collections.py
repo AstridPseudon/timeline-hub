@@ -156,15 +156,17 @@ class AcceptedRecords(list):
 
 
 def _ordinary_create(record, writes, owner, kind):
-    """Trusted scoped creates use append or a recorded stable boundary."""
+    """Trusted scoped creates use append or a recorded stable boundary; removals may accompany them."""
     if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
         return False
+    adds = [w for w in writes if w['before'] == ABSENT]
     created = {item['ref'] for item in record['created']
                if item['owner'] == owner and item['kind'] == kind}
-    return created == {w['ref'] for w in writes} and all(
-        w['before'] == ABSENT and w['after']['state'] == 'present'
+    return created == {w['ref'] for w in adds} and all(
+        w['after']['state'] == 'present'
         and isinstance(w['after']['value'], dict)
-        and w['after']['value'].get('id') == member(w['ref'])[2] for w in writes)
+        and w['after']['value'].get('id') == member(w['ref'])[2] for w in adds) and all(
+        w['after'] == ABSENT for w in writes if w['before'] != ABSENT)
 
 
 def insertion_boundary(ordered, members):

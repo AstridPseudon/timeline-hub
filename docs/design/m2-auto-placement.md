@@ -11,10 +11,10 @@ clip_id, media, *, ownership, verified_media, anchor=None, duration=None)` is pu
 It reads the caller's original bundle and returns
 `{'commands': [one ordinary EditCommand], 'capture': {...}}`.
 
-* `owner`: `occurrence:<raw ID>` with `ownership='occurrence'`. Parent ownership,
+* `owner`: `occurrence:<raw ID>` with `ownership='occurrence'`, or `parent` with
+  `ownership='parent'` and `track=<parent output track>` (see Parent media birth).
   `shared`, display IDs and a shot shared by another occurrence refuse
-  (`unsupported_ownership`). Parent-owned completion needs parent-media birth
-  (`clip.add-media`), which this stack does not have.
+  (`unsupported_ownership`).
 * `clip_id`: caller-reserved raw child ID (a replacement needs a new one).
 * `media`: the exact five-field pin of the **completed variant**, with its
   Runtime-verified entry in `verified_media`. The gallery primary and the latest
@@ -159,3 +159,33 @@ the new args is a follow-up.
    select `occurrence:<id>`, args `{"duration_ms": <positive number>}`, guarded on the old
    value; the builder would emit it with the birth command. Tests use a widened window.
 3. Group migration (`timeline.migrate-groups`) lives on `tl/agt-m2-group-*` branches, not in this base.
+
+## Parent media birth (`clip.add-media` v1)
+
+`select: "parent"`, `intent: {}`, closed args `{id, track, at, hold, media, from?, to?, speed?, replace?}`
+(`ClipAddMediaArgs`, additive to the schema). Evidence: `test_recipe_m2_parent_media.py`, golden
+`recipe_m2_parent_media.json`.
+
+* **Timing.** `at` is seconds, quantized once to a start frame at the pinned rational fps and written as
+  `frame / fps` (half-open, like `placement.create`). `hold` is SOURCE seconds; a video window `[from, to)` must
+  equal it and fit the verified duration; playback is `hold / speed`. An image has hold only.
+* **Row.** `{id, clipType, asset: media.asset, track, at, hold[, from, to, speed]}`. `id` is reserved by the
+  caller; an occupied id refuses and accepted history retires ids as for every other birth.
+* **Track.** Must exist and be an active visual output track. A track that any occurrence names as its lane
+  (`placement.track` / `track`) belongs to that occurrence's shot and refuses `unsupported_ownership`.
+* **Registry (create-or-require).** The alias `media.asset` is created as a recorded write with the exact
+  binding when absent, else must equal it exactly. The registry lives where `effective_parent_registry` reads it:
+  `parent.registry` when present, else `parent.config.registry`; both present refuses. Inverse removes a created
+  alias only if no clip or `asset_ref` still uses it.
+* **Replace.** `replace: <clip id>` names a populated media clip on the same track. The same command removes it
+  (same relation guards as `clip.delete`) and appends the new clip; the other clips keep their order. It is one
+  recorded unit, so undo restores the removed clip at its original position and drops the new one.
+  Slot-preserving replacement is not available: it would need a create-after proof whose anchor is then
+  removed, which the inverse cannot re-select.
+* **Inverse / rebase.** Exact and ABA-guarded like the occurrence births; replay keeps the recorded literal
+  start. Two supporting changes: the parent asset address follows the real registry location, and
+  `_ordinary_create` accepts removals beside the create so replace is invertible.
+* **Completion.** `auto_place_completion(..., ownership='parent', track=...)` uses the same anchor-after rule on
+  that track from frame 0 (absent anchor -> track end, empty track -> 0) and emits `clip.add-media`.
+* **Runtime follow-up.** Regenerate the Runtime artifact for the added `ClipAddMediaArgs` def and the
+  `clip.add-media` branch of `EditCommand`; `commit.py` already verifies its media pin.

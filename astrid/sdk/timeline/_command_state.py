@@ -110,7 +110,8 @@ def logical_address(ref, path):
     path = tuple(path)
     if '/asset:' in ref:
         owner, identity = ref.rsplit('/asset:', 1)
-        return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets', identity, *path)
+        # A parent keeps its registry beside config (effective_parent_registry prefers it).
+        return owner, (*(() if owner == 'parent' else ('source',)), 'registry', 'assets', identity, *path)
     if '/collection:' in ref:
         owner, kind = ref.rsplit('/collection:', 1)
         from ._collections import container
@@ -175,6 +176,13 @@ class State:
         row = self.occurrence(owner)
         return self.bundle["shots"][row["shot_id"]]["internal_timeline"]
 
+    def registry_holder(self, owner):
+        """The object whose `registry` key holds this owner's assets."""
+        parent = self.bundle['parent']
+        if owner == 'parent' and isinstance(parent.get('registry'), dict):
+            return parent
+        return self.config(owner)
+
     def collection(self, owner, kind):
         config = self.config(owner)
         if owner == "parent" and kind == "clip":
@@ -190,7 +198,7 @@ class State:
                 return None
         if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner).get('registry', {}).get('assets', {})
+            assets = self.registry_holder(owner).get('registry', {}).get('assets', {})
             if not isinstance(assets, dict):
                 raise CommandError('asset collection must be an object', ref=ref)
             if identity not in assets and not optional:
@@ -341,7 +349,7 @@ class State:
     def set(self, ref, path, state):
         if '/asset:' in ref and not path:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner)['registry']['assets']
+            assets = self.registry_holder(owner)['registry']['assets']
             if state['state'] == 'absent':
                 assets.pop(identity, None)
             elif isinstance(state['value'], dict):

@@ -372,6 +372,9 @@ def apply_inverse(ctx, records, intervening_records):
         for write in reversed(record['writes']):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:
+                if '/asset:' in write['ref']:
+                    # A removed parent clip must leave the config mirror before it can block its alias.
+                    staged.compile_mirrors()
                 if '/asset:' in write['ref'] and _asset_dependents(scratch, write['ref']):
                     raise CommandError('created asset has surviving dependents', kind='surviving_dependents',
                                        ref=write['ref'])

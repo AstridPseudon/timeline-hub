@@ -21,8 +21,8 @@ def _unrelated(ctx, ref, prefixes, keys):
                                    kind='unsupported_dependency', ref=ref, path=[*prefix, key])
 
 
-def delete(ctx, command):
-    ref = command['select']
+def removable(ctx, ref):
+    """Guard that one parent clip can be removed; reads only, so a caller may then create and clear."""
     if not isinstance(ref, str) or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', ref) is None:
         raise CommandError('clip.delete v1 requires one parent clip identity', kind='unsupported_ownership')
     members = ctx.select('collection.clips', 'parent')
@@ -44,4 +44,10 @@ def delete(ctx, command):
         for member in ctx.select('collection.clips', owner):
             _unrelated(ctx, member, [[]], ('transition',))
             _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
+    return row
+
+
+def delete(ctx, command):
+    ref = command['select']
+    removable(ctx, ref)
     ctx.clear(ref, [])
