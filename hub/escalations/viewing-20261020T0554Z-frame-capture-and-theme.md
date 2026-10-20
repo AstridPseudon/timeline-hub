@@ -1,9 +1,0 @@
-# Native frame comparison: capture fix ready; theme decision needed
-
-Actual central 1020051823-16742: two passes (normal App render/download/playable MP4 and actual managed Player readiness), two failures (frame comparison and negative baseline), all frozen-source postflight checks passed. No Gate6 claim.
-
-Review of retained original PNG/trace proves the Player locator screenshot includes the open Rendered film dialog/backdrop. Narrow test-only fix closes that dialog normally, waits for removal, then seeks/captures the same Player. Four regressions fail before/pass after; 165 targeted pass. Final branch tl/vw-m3-native-frame-zero-triage 7989ee28242c866fe8ea34f28e2e116faeaa0d86. Flat evidence: design/handoff-vw-m3-native-frame-zero-triage-{REPORT.md,capture-fix.patch,offline-evidence.json,trace-evidence.json}.
-
-Separate cross-case unobstructed observation still differs: sidebands black in App versus Agent export dark blue (#050814 source theme); ~526658 pixels exceed 2/255, max20. This is not a new qualified same-case comparison. Agent core builtin theme differs from public Composition DEFAULT_THEME and App default. Full theme defaults also differ; blindly changing one field is not approved. UNAPPLIED one-field example is flat handoff-vw-m3-native-frame-zero-triage-UNAPPLIED-agent-default-background.patch.
-
-Recommended: Agent+Viewing agree one actual selected theme/default passed to both actual consumers, preserving explicit themes and intended existing-film semantics. Agent core paths require owner coordination. Worker vw-m3-default-theme-owner-proposal is deriving the smallest source-backed resolution; no product/theme/artifact/fixture changes made. Meanwhile freeze next capture candidate, qualify mouth and scanner. Do not spend broad browser rerun before theme resolution.

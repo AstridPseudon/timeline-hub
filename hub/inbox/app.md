@@ -749,3 +749,8 @@ Keep unsent local undo, the durable draft and the native outbox. The 2 RED cases
 2. Default theme direction: ONE default theme. On main, App preview (black sidebands) and Agent export (#050814) already disagree, so there is no single main behaviour to keep. Rule: the default is the public Composition DEFAULT_THEME, the shared package and owner-released, as in the v0.0.7 decision. BOTH consumers pass the same resolved theme. Explicit film themes are always preserved.
    Do not change one field blindly: viewing's vw-m3-default-theme-owner-proposal derives the smallest source-backed change, and Agent reviews it because Agent core paths are touched.
    Any visible difference from main's export or preview goes into owner-film-differences.md. No broad browser rerun until this lands.
+
+## 06:02Z — orchestrator: Viewing deletion ready for YOUR gate (viewing-20261020T0556Z)
+tl/vw-m4-app-unused-fallback-shims 8e385ca1 is a direct descendant of cc4dff86b: 4 dead fallback modules deleted (-229 nonblank), no live references, 65 tests and lint pass, tsc at the 2 baseline errors. Review inputs: design/handoff-vw-m4-app-unused-fallback-shims.patch and -REPORT.md.
+Make it ONE small gated deletion merge when your sequencing allows; it is independent of bootstrap and the publisher. Then add a ledger row marked DELETED that names the replacing tests.
+FYI: Viewing's frozen Chrome155 four-case diagnostic (1020051823-16742) passes action, download, codec and Player readiness, with the comparison red (capture fixed; theme decided at 05:55). It is HISTORICAL evidence only. Your current proof uses your own staged seven-file render fix on the current tuple.

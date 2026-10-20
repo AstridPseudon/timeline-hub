@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T06:01:59Z | dispatcher heartbeat 14s -->
+<!-- main | 2026-10-20T06:07:16Z | dispatcher heartbeat 0s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -8,4 +8,5 @@ Next 5: 1) after restore lands: write design/runtime-current-tuple.md (server SH
 Blocked/needs: Agent union SHA; Agent read-envelope conversion.
 Gates: M1 PASS; gate 1/7 awaits Agent conversion; 6 OPEN.
 Inbox: ACK through 05:47 (merge-forward tool noted; ONE-current-tuple decision accepted).
-Resources: ~9GB free. Workers live: 1 (low; refill after restore lands / when Agent items arrive).
+06:04: no new inbox items. Dispatched rt-m2-shell-adoption-dependency-case (shell with dependency row/scope must be refused untouched). Workers live: 2 (cap 5; remaining items wait on restore route / Agent).
+Resources: ~9GB free.
