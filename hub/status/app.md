@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T14:01:52Z | dispatcher heartbeat 17s -->
+<!-- app | 2026-10-20T14:07:21Z | dispatcher heartbeat 6s -->
 # app — 2026-10-20 13:56 UTC
 Milestone: M1 RECORDED; M2 active, M3 ongoing. FIRST current-tuple qualification, then bounded writer retirements; automatic placement TOP writer. No M2/M3 exit.
 Integrated: App tl/integration41fff23a29f13bd9aede6343592ffba8adebe1a3/tree3340e128af4dd8fe79a8fe1016b23666c6ea8eb5, root8/client021, MAIN17 true ancestry retained. Proxy server/current safety/history/D03/CORS/Viewing701 harness retained. Root candidate b1ef4b9b910ba72375c34cf319692f90d22edc25/tree8d8a10b057ed31fed69517e18a23b8ec3811447a = normal Runtime013/public12/MAIN17/desktop label/cold4; final independent APPROVE, 73 targeted and one actual locked project tsc PASS/0 diagnostics.
@@ -12,3 +12,5 @@ Gates: current5/root release OPEN, allwriters/auto/popup/frame/audio6 OPEN, deli
 Inbox: ACK through13:45 owner direction: Luna high; Sol high only HARD; decide bounded matters locally; proportionate tests; fixturecleanup DEFERREDM4; >=2activeM2ledger workers. ACK13:15scalar conditional and13:25public13 Appfirst; prior12:35 FIRSTtuplethenretirements unchanged.
 Decided locally: isolate already-native core cases from retired legacy Agent helper; adapt helper one-to-one with every original assertion retained. ShortTMP correction is local testenvironment repair, no new permission/escalation. Stage approved public13 pin on branch while root/public12 gate remains frozen; no releaseclaim.
 Resources:9.2GiB free13:52; no install/full/tsc request. Central browser lane complete; next targetedcore scheduled. All shareddeps/venvs/runtimes/caches READONLY, private12 and standard8 assets leased. New pin worker small ownoverlay only. No manager productcode/gitmutations/push. Earlier detailedstate notes/resume-1316.md.
+
+Decided locally14:04: verified raw counterpart may be passed through existing INTERNAL serializer/draft context, preserving one scalar/no new wire or store; cap follow-up may implement this before seeking any broader contract change. First scalar worker stopped truthfully with94controlsPASS/capturedregressionRED and no productdelta.
