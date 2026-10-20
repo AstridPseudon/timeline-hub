@@ -81,10 +81,14 @@ describe('native parent clip.split capture parity', () => {
 
   it('keeps literal source windows, speed, native units, and half-open frame ownership', async () => {
     const input = await bundle();
+    const sourceIn = 2.123456789;
+    const sourceOut = 10.987654321;
+    const literalFor = (sourceOut - sourceIn) / 1.3;
     for (const clip of [clips(input)[0], ((input.parent.config as Record<string, JsonValue>).clips as Array<Record<string, JsonValue>>)[0]]) {
-      clip.from = 2.123456789;
-      clip.to = 10.987654321;
+      clip.from = sourceIn;
+      clip.to = sourceOut;
       clip.speed = 1.3;
+      ((clip.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = literalFor;
       delete clip.hold;
     }
     const captured = captureClipSplit(input, select, args);
@@ -418,7 +422,7 @@ describe('native parent clip.split capture parity', () => {
     };
     delete basis.command.reads;
     expect(() => finishClipSplit(freezeJson(basis))).toThrow('incomplete');
-    const forged = captureClipSplit(input, select, args).command;
+    const forged = detached(captureClipSplit(input, select, args).command);
     forged.created = ['parent/clip:other'];
     expect(() => executeClipSplit(input, forged)).toThrow('original capture');
   });
