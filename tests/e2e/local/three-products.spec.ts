@@ -1144,14 +1144,17 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
 
   const runtimeRequests: Array<{ method: string; path: string; body?: string }> = [];
-  context.on('request', (request) => {
-    const url = new URL(request.url());
-    if (!url.pathname.startsWith('/api/runtime/')) return;
-    runtimeRequests.push({
-      method: request.method(),
-      path: url.pathname.replace(/^\/api\/runtime/, ''),
-      body: request.postData() ?? undefined,
-    });
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Network.enable');
+  cdp.on('Network.requestWillBeSent', ({ request }: { request: { method: string; url: string; postData?: string } }) => {
+    const url = new URL(request.url);
+    if (request.method === 'POST' && url.pathname.startsWith('/api/runtime/')) {
+      runtimeRequests.push({
+        method: request.method,
+        path: url.pathname.replace(/^\/api\/runtime/, ''),
+        body: request.postData,
+      });
+    }
   });
 
   await openApp(page, harness);
@@ -1174,26 +1177,31 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible(CEILING);
   await expect(firstTrackName(page)).toBeVisible(CEILING);
 
-  const createPath = `/v1/projects/${projectId}/timelines`;
-  const commitPath = `/v1/projects/${projectId}/timelines/${timelineId}/commit`;
+  // The New Project result and the Runtime list establish the exact scope. The
+  // door audit is the server-side boundary for this browser transport; it must
+  // not choose a project or timeline from whichever POST happened to be observed.
+  const expectedScope = { projectId: projectId!, timelineId: timelineId! };
+  const createPath = `/v1/projects/${expectedScope.projectId}/timelines`;
+  const commitPath = `/v1/projects/${expectedScope.projectId}/timelines/${expectedScope.timelineId}/commit`;
   const createRequest = runtimeRequests.find((request) => request.method === 'POST' && request.path === createPath);
   expect(createRequest, 'production bootstrap must create the timeline through Runtime /v1').toBeDefined();
   const initRequest = runtimeRequests.find((request) => request.method === 'POST' && request.path === commitPath);
   expect(initRequest, 'production bootstrap must submit timeline.init through Runtime /v1 commit').toBeDefined();
-  const initBody = JSON.parse(initRequest?.body ?? '{}') as { commands?: Array<{ op?: string; version?: string }> };
-  expect(initBody.commands?.map((command) => [command.op, command.version])).toEqual([
-    ['timeline.init', '1'],
-    ['track.create', '1'],
-    ['track.create', '1'],
-  ]);
   expect(runtimeRequests.filter((request) => SAVES.test(request.path)), 'bootstrap must emit zero legacy snapshot traffic').toEqual([]);
 
   const bootstrapSeed = { ...seed3, timelineId: timelineId! };
   const bootstrapHistory = await history(harness, bootstrapSeed);
+  expect(JSON.parse(initRequest?.body ?? '{}').commands?.map((command: { op?: string; version?: string }) => [command.op, command.version])).toEqual([
+    ['timeline.init', '1'],
+    ['track.create', '1'],
+    ['track.create', '1'],
+  ]);
   expect(bootstrapHistory.items).toHaveLength(1);
   expect(bootstrapHistory.items[0]).toMatchObject({ previous: null, revision_id: bootstrapHistory.head.revision_id });
-  expect(bootstrapHistory.items[0].records?.commands.map((record) => record.command.op)).toEqual([
-    'timeline.init', 'track.create', 'track.create',
+  expect(bootstrapHistory.items[0].records?.commands.map((record) => [record.command.op, record.command.version])).toEqual([
+    ['timeline.init', '1'],
+    ['track.create', '1'],
+    ['track.create', '1'],
   ]);
 
   const originalTrackName = await firstTrackName(page).inputValue();
