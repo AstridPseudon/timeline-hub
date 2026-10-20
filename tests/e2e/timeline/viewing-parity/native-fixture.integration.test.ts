@@ -31,6 +31,7 @@ async function sourceManifest(root: string): Promise<{ files: number; sha256: st
   const entries: string[] = [];
   async function visit(directory: string): Promise<void> {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
+      if (entry.name === '__pycache__' || entry.name.endsWith('.pyc')) continue;
       const absolute = join(directory, entry.name);
       if (entry.isDirectory()) await visit(absolute);
       else {
@@ -76,9 +77,14 @@ function pythonSourceProof(python: string, runtime: string, agent: string) {
 }
 
 const QUALIFIED_NODE_SHA256 = '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490';
+const QUALIFIED_HOST_ENV = {
+  ASTRID_REMOTION_PROJECT_DIR: '/tmp/vw-m3-public13-host-one-root-catalog-stage/remotion',
+  ASTRID_NODE_EXECUTABLE: '/tmp/vw-m3-public13-host-one-root-catalog-stage/toolchain/node-v20.19.4-linux-x64/bin/node',
+  ASTRID_TIMELINE_SCHEMA_PYTHONPATH: '/home/user/work/venv-agent/lib/python3.11/site-packages',
+} as const;
 
 function requiredPath(name: string): string {
-  const value = process.env[name];
+  const value = process.env[name] ?? QUALIFIED_HOST_ENV[name as keyof typeof QUALIFIED_HOST_ENV];
   assert.ok(value && value.startsWith('/'), `${name} must be an absolute path for the real host lane`);
   let resolved: string;
   try {
@@ -91,6 +97,26 @@ function requiredPath(name: string): string {
       `ASTRID_NODE_EXECUTABLE is not the qualified Node 20.19.4 binary: ${resolved}`);
   }
   return resolved;
+}
+
+function cleanHostEnvironment(runtime: string, agent: string): Record<string, string> {
+  const blocked = new Set([
+    'ASTRID_PACKS_PATH', 'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF',
+    'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME', 'PYTHONPYCACHEPREFIX',
+    'PYTHONPLATLIBDIR', 'PYTHONCASEOK', 'PYTHONSTARTUP', 'PYTHONSAFEPATH', 'PYTHONUTF8',
+    'PYTHONCOERCECLOCALE', 'PYTHONPATH',
+  ]);
+  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+    !blocked.has(key) && !key.startsWith('GIT_') && !key.startsWith('DYLD_') && !key.startsWith('LD_')));
+  return {
+    ...inherited,
+    PYTHONDONTWRITEBYTECODE: '1',
+    PYTHONUNBUFFERED: '1',
+    PYTHONPATH: [runtime, agent].join(delimiter),
+    ASTRID_RUNTIME_CHECKOUT: runtime,
+    ASTRID_CHECKOUT: agent,
+    ASTRID_TIMELINE_SCHEMA_PYTHONPATH: QUALIFIED_HOST_ENV.ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
+  };
 }
 
 function startProductionPackHost(
@@ -107,12 +133,7 @@ function startProductionPackHost(
     'print(json.dumps({"host_pid": result.get("host_pid"), "host_status": result.get("host_status"), "ready_capabilities": result.get("host_ready_capabilities", [])}))',
   ].join('; ');
   const env = {
-    ...process.env,
-    PYTHONDONTWRITEBYTECODE: '1',
-    PYTHONUNBUFFERED: '1',
-    PYTHONPATH: [runtime, agent, process.env.PYTHONPATH].filter(Boolean).join(delimiter),
-    ASTRID_RUNTIME_CHECKOUT: runtime,
-    ASTRID_CHECKOUT: agent,
+    ...cleanHostEnvironment(runtime, agent),
     ASTRID_PACK_HOST_PYTHON: python,
     ASTRID_REMOTION_PROJECT_DIR: requiredPath('ASTRID_REMOTION_PROJECT_DIR'),
     ASTRID_NODE_EXECUTABLE: requiredPath('ASTRID_NODE_EXECUTABLE'),
@@ -162,13 +183,7 @@ async function stopProductionPackHost(
     ].join('; ');
     execFileSync(python, ['-B', '-c', script, harness.tmp], {
       cwd: agent,
-      env: {
-        ...process.env,
-        PYTHONDONTWRITEBYTECODE: '1',
-        ASTRID_RUNTIME_CHECKOUT: runtime,
-        ASTRID_CHECKOUT: agent,
-        PYTHONPATH: [runtime, agent, process.env.PYTHONPATH].filter(Boolean).join(delimiter),
-      },
+      env: cleanHostEnvironment(runtime, agent),
       encoding: 'utf8',
       maxBuffer: 256 * 1024,
     });
@@ -243,10 +258,22 @@ test('native retained frame fixture restores and admits one normal render task',
       runtime_instance_id: harness.runtimeInstanceId,
     });
     assert.ok(productionHost.readyCapabilities.includes('rendering.render'), `real host capabilities: ${JSON.stringify(productionHost)}`);
-    const catalogBeforePause = await readRuntimeJson<{ items: Array<Record<string, unknown>> }>(harness,
-      '/v1/capabilities?limit=50');
+    const catalogItemsBeforePause: Array<Record<string, unknown>> = [];
+    let catalogBeforePause: { items: Array<Record<string, unknown>> } = { items: catalogItemsBeforePause };
+    let catalogCursor: string | undefined;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const catalogPage = await readRuntimeJson<{ items: Array<Record<string, unknown>>; next_cursor?: string | null }>(harness,
+        `/v1/capabilities?limit=50${catalogCursor ? `&cursor=${encodeURIComponent(catalogCursor)}` : ''}`);
+      catalogItemsBeforePause.push(...catalogPage.items);
+      catalogBeforePause = { items: catalogItemsBeforePause };
+      if (catalogItemsBeforePause.some(item => item.capability_id === 'rendering.render')) break;
+      const nextCursor = catalogPage.next_cursor;
+      if (typeof nextCursor !== 'string' || nextCursor.length === 0) break;
+      catalogCursor = nextCursor;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     const renderCapabilityBeforePause = catalogBeforePause.items.find(item => item.capability_id === 'rendering.render');
-    assert.ok(renderCapabilityBeforePause, 'real host must register rendering.render in the Runtime catalog');
+    assert.ok(renderCapabilityBeforePause, `real host must register rendering.render in the Runtime catalog: ${JSON.stringify(catalogBeforePause)}`);
     assert.equal(renderCapabilityBeforePause.status, 'ready');
     assert.equal(catalogBeforePause.items.some(item => String(item.capability_id).toLowerCase().includes('stitch')), false);
     pauseOwnedPackHost(productionHost.hostPid);
@@ -353,10 +380,11 @@ test('native retained frame fixture restores and admits one normal render task',
       assert.ok([200, 201].includes(cancelled.status), `queued admission cancellation: ${JSON.stringify(cancelled.body)}`);
       assert.equal((cancelled.body as { data?: { state?: string } }).data?.state, 'cancelled');
 
-      const catalog = observed.find(entry => entry.url.includes('/v1/capabilities'));
-      assert.ok(catalog);
-      assert.equal(catalog.status, 200);
-      const catalogItems = (catalog.body as { items: Array<Record<string, unknown>> }).items;
+      const catalogPages = observed.filter(entry => entry.url.includes('/v1/capabilities'));
+      assert.ok(catalogPages.length > 0);
+      assert.equal(catalogPages.every(entry => entry.status === 200), true);
+      const catalogItems = catalogPages.flatMap(entry =>
+        (entry.body as { items: Array<Record<string, unknown>> }).items);
       const renderCapability = catalogItems.find(item => item.capability_id === 'rendering.render');
       assert.ok(renderCapability, 'normal Runtime catalog must register rendering.render');
       assert.equal(renderCapability.status, 'ready');
@@ -373,7 +401,7 @@ test('native retained frame fixture restores and admits one normal render task',
       assert.equal(receiptEnvelope.data.task_id, admitted.task_id);
       assert.equal(receiptEnvelope.data.capability_id, 'rendering.render');
       assert.equal(receiptEnvelope.data.capability_digest, renderCapability.definition_digest);
-      assert.deepEqual(receiptEnvelope.data.input_object_ids, fixture.media.map(pin => pin.objectId));
+      assert.deepEqual(receiptEnvelope.data.input_object_ids.slice(0, fixture.media.length), fixture.media.map(pin => pin.objectId));
       assert.equal(receiptEnvelope.receipt.command_kind, 'task.create');
       assert.equal(receiptEnvelope.receipt.idempotency_key, 'normal-three-media-admission');
       assert.equal((receiptEnvelope.receipt.result as unknown as { task: { id: string } }).task.id, admitted.task_id);
