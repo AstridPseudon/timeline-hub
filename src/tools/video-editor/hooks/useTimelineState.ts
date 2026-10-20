@@ -902,6 +902,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
+    clipSplit: save.commands.clipSplitPort,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,

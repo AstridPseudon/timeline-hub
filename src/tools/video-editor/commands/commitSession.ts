@@ -5,10 +5,11 @@ import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataPro
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
+import type { JsonObject } from './types.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
 import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
 import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
-import { clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
+import { supportsParentClipSplit, clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
@@ -321,6 +322,18 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   const clipSplitPort: ClipSplitCapturePort = {
+    supports({ clipId, current }) {
+      // Use the session's raw closure, never opaque app metadata or display-ID parsing.
+      const state = new AuthoredState(bundle);
+      const config = state.config('parent');
+      const rows = Array.isArray(bundle.parent.clips) && bundle.parent.clips.length
+        ? bundle.parent.clips : config.clips ?? bundle.parent.clips;
+      return Array.isArray(rows) && supportsParentClipSplit(rows as JsonObject[],
+        state.entity('parent/registry') as JsonObject, clipId)
+        && current.config.clips.filter((clip) => clip.id === clipId).length === 1
+        && current.resolvedConfig.clips.filter((clip) => clip.id === clipId).length === 1
+        && !current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId));
+    },
     capture({ clipId, on, rightId, current }) {
       assertReady();
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId

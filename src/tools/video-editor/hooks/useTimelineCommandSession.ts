@@ -175,6 +175,7 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before splitting');
         };
         session.clipSplitPort = {
+          supports: splitPort.supports,
           capture(input) { requireCleanSplit(); return splitPort.capture(input); },
           finish(basis) { requireCleanSplit(); return splitPort.finish(basis); },
           submit(input) { requireCleanSplit(); splitPort.submit(input); },

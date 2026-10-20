@@ -1,13 +1,56 @@
 import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { assembleTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+import { createSplitClipId } from '../lib/editor-utils.ts';
 import { equal, freezeJson, object } from './clipMovePrimitives.ts';
 import type { JsonObject } from './types.ts';
 
 export interface ClipSplitCapturePort {
+  /** Routing only: known raw parent binding and supported shape, before capture. */
+  supports?(input: { clipId: string; current: TimelineData }): boolean;
   capture(input: { clipId: string; on: number; rightId: string; current: TimelineData }): JsonObject;
   finish(basis: JsonObject): { command: EditCommand; preview: TimelinePatch };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+}
+
+/** Conservative ingress cohort; unsupported shapes retain their established writer. */
+export function supportsParentClipSplit(rows: readonly JsonObject[], registry: JsonObject, clipId: string): boolean {
+  const matches = rows.filter((row) => row.id === clipId);
+  if (matches.length !== 1 || clipId.includes('/') || clipId.includes('::')) return false;
+  const row = matches[0];
+  const assets = registry.assets;
+  const source = object(assets) && typeof row.asset === 'string' ? assets[row.asset] : undefined;
+  if (row.clipType !== 'media' || !object(source) || typeof source.type !== 'string'
+    || !['image', 'video', 'audio'].includes(source.type.trim().toLowerCase().split(';', 1)[0].split('/', 1)[0].split('-', 1)[0])) return false;
+  if (['clip_type', 'asset_id', 'media_id', 'object_id', 'at_ms', 'from_ms', 'to_ms',
+    'duration', 'duration_ms', 'time_map', 'timeMap', 'clips', 'children', 'transition', 'effects',
+    'animation', 'animations', 'keyframes', 'enter', 'exit', 'continuous'].some((key) => row[key] != null)) return false;
+  const params = row.params;
+  if (object(params) && ['keyframes', 'animation', 'animations', 'effects', 'fade_in', 'fade_out',
+    'volume_curve', 'fadeIn', 'fadeOut', 'fadeInCurve', 'fadeOutCurve'].some((key) => params[key] != null)) return false;
+  const relations = ['on', 'until', 'until_film_end', 'cut', 'sequence', 'sequence_index', 'sequence_fit',
+    'orphan', 'formulas', 'anchor', 'standin', 'standin_intent', 'words', 'beats'];
+  const speed = row.speed ?? 1;
+  const window = row.from != null || row.to != null;
+  if (typeof row.at !== 'number' || row.at < 0 || typeof speed !== 'number' || speed <= 0
+    || (window && (typeof row.from !== 'number' || typeof row.to !== 'number' || row.from < 0 || row.to <= row.from))
+    || (!window && (source.type !== 'image' || typeof row.hold !== 'number' || row.hold <= 0))) return false;
+  const duration = (typeof row.hold === 'number' ? row.hold : (row.to as number) - (row.from as number)) / speed;
+  if (window && row.hold != null && Math.abs((row.hold as number) - ((row.to as number) - (row.from as number))) > 1e-9) return false;
+  for (const container of [row, row.app, object(row.app) ? row.app.astrid : undefined]) {
+    if (container == null) continue;
+    if (!object(container) || relations.some((key) => container[key] != null)
+      || (container.fixed_start != null && container.fixed_start !== true)
+      || (container.for != null && (typeof container.for !== 'number' || Math.abs(container.for - duration) > 1e-9))) return false;
+  }
+  return rows.every((other) => other.id === clipId || other.transition == null);
+}
+
+/** Reserve once at the existing ID seam; the session persists this exact ID for retries. */
+export function splitParentClip(port: ClipSplitCapturePort, current: TimelineData, clipId: string, on: number): string {
+  const rightId = createSplitClipId([...current.config.clips, ...current.resolvedConfig.clips].map((clip) => clip.id), clipId);
+  submitClipSplitEdit(captureClipSplitEdit(port, current, clipId, on, rightId));
+  return rightId;
 }
 
 export interface CapturedClipSplitEdit {
