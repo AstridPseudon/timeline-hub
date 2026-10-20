@@ -19,7 +19,7 @@ def _equal(left, right, message):
         raise ConflictError(message)
 
 
-def _candidate_document(commits, base, preview, ref):
+def _candidate_document(commits, base, preview, ref, provider):
     candidate = preview["candidate"]
     publication = preview["publication"]
     binding = ref["working_copy"]
@@ -37,6 +37,46 @@ def _candidate_document(commits, base, preview, ref):
             publication["parent_revision_id"], publication["expected_head"]],
            [binding["candidate_digest"], binding["publication_digest"],
             ref["revision_id"], binding["base_revision_id"]], "candidate differs from capture binding")
+    method = getattr(provider, "capture_candidate_inputs", None)
+    if not callable(method):
+        raise ValidationError("canonical capture candidate provider is unavailable")
+    # Agent owns construction; Runtime compares against the retained saved base.
+    try:
+        inputs = detached(method(detached(base), candidate=detached(candidate)))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValidationError("capture candidate inputs are invalid") from exc
+    baseline = inputs["base"]
+    for key in ("project_id", "timeline_id", "base_parent", "base_parent_payload"):
+        _equal(candidate[key], baseline[key], "candidate " + key + " differs from saved base")
+    source = candidate["source_mapping"]
+    _equal(candidate["base_placements"], baseline["base_placements"],
+           "candidate placement base differs from saved base")
+    retained_placements = {canonical_json(row) for row in baseline["base_placements"].values()}
+    for row in source["placements"].values():
+        _equal(canonical_json(row) in retained_placements, True,
+               "candidate placement source differs from saved base")
+    for row in candidate["placements"]:
+        identity = row["occurrence_id"]
+        if identity in baseline["base_placements"]:
+            _equal(source["placements"].get(identity), baseline["base_placements"][identity],
+                   "candidate placement source differs from saved base")
+    if "_runtime_document" in source:
+        _equal(source["_runtime_document"], base, "candidate document base differs from saved base")
+    # Authoring keys can change on a clone/rename. Match the complete retained
+    # source, including its item mapping, even for sources no longer authored.
+    retained = {canonical_json(row): baseline["shots"][identity]
+                for identity, row in baseline["source_mapping"]["shots"].items()}
+    for row in source["shots"].values():
+        _equal(canonical_json(row) in retained, True,
+               "candidate child source differs from saved base")
+    for identity, shot in candidate["shots"].items():
+        origin = source["shots"].get(identity)
+        original = retained[canonical_json(origin)] if origin is not None else {}
+        for key in ("base_payload", "base_internal_timeline"):
+            _equal(shot.get(key, {}), original.get(key, {}),
+                   "candidate child base differs from saved base")
+    for key in ("kind", "head", "candidate_digest", "publication_digest", "publication"):
+        _equal(preview[key], inputs["preview"][key], "candidate " + key + " is not derived from candidate")
     document = copy.deepcopy(base)
     document["parent_revision"] = {
         "revision_id": publication["parent_revision_id"], "content_digest": publication["content_digest"],
@@ -90,7 +130,7 @@ def validate_capture(service, snapshot, ref, inputs):
             revision = ref["working_copy"]["base_revision_id"]
         document = commits.revision_closure(ref["project_id"], ref["timeline_id"], revision)
         if preview is not None:
-            _candidate_document(commits, document, preview, ref)
+            _candidate_document(commits, document, preview, ref, service._timeline_commit_provider)
         projection = detached(method(detached(document), authoring_preview=preview))
         for key in ("config", "registry"):
             _equal(snapshot[key], projection[key], "capture differs from authoritative " + key)
