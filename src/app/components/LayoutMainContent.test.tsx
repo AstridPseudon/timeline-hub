@@ -134,6 +134,27 @@ describe('LayoutMainContent', () => {
     });
   });
 
+  it('reserves the locked Tasks pane width for the header so its Settings control is not covered', () => {
+    const { container } = render(
+      <LayoutMainContent isMobileSplitView={false} />
+    );
+
+    const headerSlot = screen.getByTestId('global-header-slot');
+    expect(headerSlot).toHaveStyle({ marginRight: '320px' });
+    expect(container.querySelector('.content-container')).toHaveStyle({ marginRight: '320px' });
+  });
+
+  it('does not reserve header space when the Tasks pane is not locked', () => {
+    panesState.state = {
+      ...defaultPanesState,
+      isTasksPaneLocked: false,
+    };
+
+    render(<LayoutMainContent isMobileSplitView={false} />);
+
+    expect(screen.getByTestId('global-header-slot')).toHaveStyle({ marginRight: '0px' });
+  });
+
   it('does not mount the Supabase-backed warning in default Astrid authority', () => {
 
     render(
