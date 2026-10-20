@@ -126,22 +126,34 @@ describe('AstridElementParams', () => {
     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2, futureParam: 'keep-me' } });
     fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
     await waitFor(() => expect(port.submit).toHaveBeenCalledTimes(1));
+    expect(port.finish).toHaveBeenCalledWith(expect.anything(), {
+      values: { selectedSegmentIndex: 1, futureParam: 'keep-me' },
+      clear: [],
+      schema_source: command.args.schema_source,
+    });
+    expect(port.submit).toHaveBeenCalledWith({ command, preview: null });
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  // The legacy fallback writer is intentionally removed; this preserves the former behavior contract
-  // until every host supplies the selected native carrier.
-  it.fails('keeps selected-pack edits on the existing producer without native capture', () => {
+  it('refuses selected-pack edits without a native carrier while preserving the dirty draft', () => {
     const capture = vi.fn(() => { throw new Error('selected-pack native capture must not run'); });
+    const finish = vi.fn();
+    const submit = vi.fn();
     editorState.data = { data: {} };
     editorState.selectedParam = undefined;
-    editorState.element = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ElementCapturePort;
+    editorState.element = { capture, finish, submit } as unknown as ElementCapturePort;
     const { onChange } = renderForm({ params: { selectedSegmentIndex: 2 } });
 
     fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
 
     expect(capture).not.toHaveBeenCalled();
-    expect(onChange).toHaveBeenLastCalledWith({ params: { selectedSegmentIndex: 1 } });
+    expect(finish).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Selected Segment Index')).toHaveValue('1');
+    expect(screen.getByTestId('astrid-selected-param-error')).toHaveTextContent(
+      'Selected PARAM schema carrier is unavailable; Agent retained-read support is required',
+    );
   });
 
   it('routes a literal existing-clip edit through the mounted native port without legacy onChange', () => {
