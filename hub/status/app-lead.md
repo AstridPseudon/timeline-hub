@@ -12,3 +12,6 @@
 
 ## Lead 11:22Z: dispatcher restarted for the kit FIFO change
 - Restarted dispatcher-daemon (310 -> 23286) with the APP-MACHINE command, so the 10:18Z kit FIFO queue order (oldest request first) is now live. Pending queue was empty; running workers are detached and kept running (none lost; app-m2-selected-param-mounted-batched-fix finished normally with DONE at 11:22:16Z). Heartbeat OK.
+
+## Lead 12:19Z: upstream 17e46de99 refresh ancestry verified
+- tl/app-m2-main17-true-refresh = 751f7703d, parents 35820a603 (App integration) + 17e46de99 (banodoco/reigh-app main). `merge-base --is-ancestor 17e46de99` OK. Its diff against the first parent (8 files, +317/-135) has the same files and the same changed lines as upstream 44f0b9ca9..17e46de99, so no extra edits. Not merged into integration yet; that waits on the manager tests and the gate.

@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T12:13:41Z | dispatcher heartbeat 1s -->
+<!-- app | 2026-10-20T12:19:07Z | dispatcher heartbeat 8s -->
 # app — 2026-10-20 12:12 UTC
 Milestone: M1 RECORDED; M2 active. No M2/M3 exit. App product full GREEN; automatic placement TOP writer priority.
 Integrated: App tl/integration35820a603a623e83c16a59cc397dd3079b228011/treeee34b6a1b24ccb76133edc9223d5030c3be4310e CLEAN, root8/client021. Main44f true ancestry86c, approved CORS7bb, Viewing701 TEST/CONFIG-ONLY32paths6ff. Product/package/pin bytes6ff==7bb.
@@ -19,3 +19,5 @@ Inbox: ACK through11:54(newMAINtransferrequested,905qualificationpending,proxyse
 Resources:16GiBfree last; shareddeps/runtimes/venvs/caches READONLY. Private12/standard8 asset leases; finalroot/normalpin/Runtime013keeper KEEP retained forimminentgate. Oldhistoricalsourceleasesreleased afterfull25523, exactrefs/reportskept; anyNEW historicalgate needs exactrestoration. No managerproductcode/gitmutations/push.
 
 12:12: owner11:59 MAINpixels SETTLED opacity0.5 at105,90control240. renderConfig approval WITHDRAWN; no field/producer/consumer work. Half-golden diagnostic/test correction worker active, original clamp kept. Proxy server six-path source697 MERGED35820, exacttestedtreeee34 equal:19central+136neighbor+7pure; actualVite negatives preserved, browser/requester inactive, realRuntimeproof pending. No full on358 yet; batch with imminentMAIN/root then ONEfull. Original selectedPARAMpin authority gap escalated1211: canonical empty/two-pin ambiguity; same-clientbridge independent.
+
+12:14: lead transferred MAIN17 fullSHA17e46de99b7cef52fe494de1703a9865a8d4be24; source block CLOSED. True refresh worker active on current35820 with --merge-parent17. New ownerMain17 TOUCH TRACK SHEET rename/settings/add/delete supersedes44f touch-Agent-only shape; nextRootlabel port must preserve17 positives and capture actual rename inputs, no old no-input assumption/markers. Auto callback independentreview finished (see report); same-client readbridge315+8 sourcefinished, reviewactive.
