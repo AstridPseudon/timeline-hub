@@ -2,45 +2,141 @@
 
 The test-only recipe/provider adapter admits its declared selection using ABI 1.
 This qualifies manifest subset acceptance, not any production popup operation.
+The historical fixture keeps numeric 24 fps and its original window scope.
 """
 from __future__ import annotations
 
 import copy
+import hashlib
+import io
+from types import SimpleNamespace
 
 import pytest
+from PIL import Image
 
 from tests.helpers.runtime import use_runtime
+from tests.helpers.trusted_seed import seed_trusted_parent
 
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture
+def manifest_media(tmp_path):
+    """Build a complete native closure in a fresh realm through trusted setup.
+
+    The archived 7f6dd89 film is read only for its canonical 55/29-shaped
+    source. The test realm is new, so the setup crosses Runtime's current
+    bootstrap/commit-store boundary instead of calling retired shot or parent
+    writers.
+    """
+    runtime = use_runtime(commit='7f6dd89')
+    import sys
+    sys.path.insert(0, str(runtime / 'tests'))
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from timeline_commit_film_fixture import build_film_fixture, read_object_from_realm
+
+    source_root = tmp_path / 'source'
+    source_root.mkdir()
+    source_fixture = build_film_fixture(source_root)
+    source = RuntimeService(source_fixture.duplicate_root)
+    try:
+        source_document = source._timeline_commits()[0].revision_closure(
+            source_fixture.project_id, source_fixture.timeline_id,
+            source_fixture.parent_revision_id,
+        )
+        source_objects = [
+            (row['digest'], row['media_type'], row['original_name'])
+            for row in source.store.conn.execute(
+                'SELECT digest, media_type, original_name FROM objects'
+            )
+        ]
+    finally:
+        source.close()
+
+    root = tmp_path / 'manifest-realm'
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    project = service.create_project(
+        {'slug': 'manifest-fixture', 'name': 'Manifest fixture'},
+        idempotency_key='manifest-project',
+    )['id']
+    service.create_timeline(project, 'film', idempotency_key='manifest-timeline')
+    authorize = lambda: None  # noqa: E731 - trusted test setup only
+
+    for digest, media_type, original_name in source_objects:
+        # Preserve the canonical fixture's complete dependency closure in the
+        # fresh realm without using a retired timeline writer.
+        data = read_object_from_realm(source_fixture.duplicate_root, 'sha256:' + digest)
+        service.ingest(
+            project, data, media_type=media_type, original_name=original_name,
+            idempotency_key='manifest-source-' + digest,
+        )
+
+    def imported(name, colour):
+        payload = io.BytesIO()
+        Image.new('RGB', (16, 12), colour).save(payload, format='PNG')
+        data = payload.getvalue()
+        digest = 'sha256:' + hashlib.sha256(data).hexdigest()
+        result = service.import_media(
+            project, data, media_type='image/png', original_name=name + '.png',
+            expected_digest=digest, actor_id='trusted-test-setup', width=16,
+            height=12, idempotency_key='manifest-' + name,
+        )['data']
+        return service.get_project_media_selection(
+            project,
+            {'asset': 'picture-1', 'generation_id': result['generation_id'],
+             'variant_id': result['variant_id']},
+            authorize=authorize,
+        )
+
+    old, new = imported('old', 'red'), imported('new', 'blue')
+    parent = copy.deepcopy(source_document['parent_revision']['payload'])
+    shots = copy.deepcopy(source_document['shot_revisions'])
+    internals = copy.deepcopy(source_document['internal_timeline_revisions'])
+    first = next(row for row in shots if row['shot_id'] == 'shot-1')
+    internal_id = first['internal_timeline_revision_id']
+    internal = next(row for row in internals if row['revision_id'] == internal_id)
+    entry = internal['payload']['registry']['assets']['picture-1']
+    entry.update(
+        media_id=old['object_id'], type='image',
+        generationId=old['generation_id'], variantId=old['variant_id'],
+        opaque={'keep': True},
+    )
+    first_occurrence = next(row for row in parent['occurrences'] if row['shot_id'] == 'shot-1')
+    owner = 'occurrence:' + first_occurrence['occurrence_id']
+    clip = internal['payload']['clips'][0]['id']
+    first['payload']['internal_timeline_revision_id'] = internal_id
+    baseline_head = service.get_project_timeline(project, 'film')['head_revision_id']
+    seed_trusted_parent(
+        service,
+        {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': baseline_head,
+            'parent_revision_id': 'media-baseline', 'parent_composition': parent,
+            'shot_revisions': shots, 'internal_timeline_revisions': internals,
+        },
+        idempotency_key='media-baseline',
+    )
+    commits, _ = service._timeline_commits()
+    baseline = commits.revision_closure(project, 'film', 'media-baseline')
+    return SimpleNamespace(
+        root=root, service=service, project=project, authorize=authorize,
+        old=old, new=new, owner=owner, clip=clip, baseline=baseline,
+    )
+
+
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeypatch, operation):
-    runtime = use_runtime()
-    monkeypatch.syspath_prepend(str(runtime / 'tests'))
-    from runtime_protocol.auth import CredentialStore
+def test_real_media_manifest_inverse_retry_restart_and_history(monkeypatch, operation, manifest_media):
+    use_runtime()
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
-    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
-    from timeline_commit_film_fixture import _binding_descriptor
 
     from astrid.sdk.timeline import commands
     from astrid.sdk.timeline.commit import RuntimeCommitService, create_runtime_commit_service
-    from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
 
-    def effect(project):
-        return _effect(project, groups=[{'group_key': 'main', 'selectors': [
-            {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': 'image'}
-            for index, name in enumerate(('old', 'new'))]}])
-
-    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
-    project = project['id']
-    credentials = CredentialStore(tmp_path / 'credentials')
-    token, _ = credentials.provision('media-editor', ['projects:read', 'projects:write'])
-
-    def authorize():
-        return credentials.require(token, 'projects:write')
+    service, project, authorize = manifest_media.service, manifest_media.project, manifest_media.authorize
+    old, new = manifest_media.old, manifest_media.new
 
     def introduce(ctx, command):
         pin = command['args']['media']
@@ -54,8 +150,8 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
             ctx.create(owner, 'clip', {'id': 'reserved-child', 'track': 'picture', 'asset': 'new',
                                        'clipType': 'image', 'at': .125, 'hold': 1.25, 'params': None})
         else:
-            ctx.read(owner + '/clip:clip-a')
-            ctx.write(owner + '/clip:clip-a', ['asset'], 'new')
+            ctx.read(owner + '/clip:' + manifest_media.clip)
+            ctx.write(owner + '/clip:' + manifest_media.clip, ['asset'], 'new')
 
     installed = commands.operations()
     installed['test.media-provenance'] = commands.Operation({'type': 'object'}, introduce, {})
@@ -63,8 +159,7 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
 
     class RecipeProvider(RuntimeCommitService):
         def commit(self, context, port):
-            # The base worker predates the held native-media admission seam.
-            # Use its exact ABI read; never replace captures or prepared output.
+            # Test-only recipe ABI adapter, not a production popup operation.
             for call in context['request']['commands']:
                 if call['op'] == 'test.media-provenance':
                     port.selected_media(call['args']['media'])
@@ -98,57 +193,17 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
                 'args': {'publications': [result['receipt']['receipt_id']]}}
 
     try:
-        outputs = [_output(name.encode(), output_port='image', group_key='main', variant_key=name,
-                           ordinal=index, filename=name + '.png', media_type='image/png')
-                   for index, name in enumerate(('old', 'new'))]
-        _settle(service, attempt, outputs, effect=admitted)
-        selections = {row['variant_key']: service.get_project_media_selection(project, {
-            'association_id': row['association_id'], 'object_id': row['object_id'],
-            'version': row['lifecycle']['version']}, authorize=authorize)
-            for row in service.managed_outputs(task['task']['id'])}
-        old, new = selections['old'], selections['new']
-
-        def replace(value):
-            if value == MEDIA:
-                return old['object_id']
-            if isinstance(value, dict):
-                return {key: replace(child) for key, child in value.items()}
-            if isinstance(value, list):
-                return [replace(child) for child in value]
-            return value
-
-        document = replace(document_fixture())
-        internal = document['internal_timeline_revisions'][0]
-        internal['payload'].pop('source_window')
-        internal['timeline_id'] = 'film'
-        # Legacy seed publication's visual seam accepts numeric fps only.
-        # Rational fps/source preservation remains in the detached proof.
-        document['parent_revision']['payload']['config']['output']['fps'] = 24
-        internal['payload']['output']['fps'] = 24
-        for occurrence in document['parent_revision']['payload']['occurrences']:
-            occurrence.update(source_offset=0, speed=1)
-        document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
-                                    idempotency_key='chapter-shot')
-        binding = service.set_project_shot_text_binding(project, {
-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
-        }, idempotency_key='chapter-text')['data']
-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
-        service.publish_parent_composition(project, 'film', {
-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-            'parent_revision_id': 'media-baseline', 'parent_composition': document['parent_revision']['payload'],
-            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
-                               for row in document['shot_revisions']],
-            'internal_timeline_revisions': [{key: value for key, value in internal.items()
-                                             if key != 'content_digest'}],
-        }, idempotency_key='media-baseline')
         register()
         request = body([{'schema_version': 1, 'op': 'test.media-provenance', 'version': '1',
-                         'select': 'occurrence:occ-a', 'args': {'media': new}}])
+                         'select': manifest_media.owner, 'args': {'media': new}}])
         created = submit(request, 'introduce')
         baseline = next(row for row in captured if row['parent_revision']['revision_id'] == 'media-baseline')
+        assert baseline == manifest_media.baseline
+        assert old['object_id'] in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
         assert new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
         assert new['object_id'] in {pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
+        assert ({pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
+                - {pin['media_id'] for pin in baseline['dependency_manifest']['media']}) == {new['object_id']}
         undo_request = body([inverse(created)])
         preview = submit(dict(undo_request, dry_run=True), 'undo-preview')
         assert preview['data']['canonical_document'] == baseline
@@ -159,7 +214,7 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
         # closure, while its result manifest omits it. History remains immutable.
         assert created['data']['canonical_document'] in captured
         before_restart = service.list_timeline_commits(project, 'film', authorize=authorize)
-        root = tmp_path / 'publish'
+        root = manifest_media.root
         service.close()
         service = RuntimeService(root)
         register()

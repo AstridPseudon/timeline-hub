@@ -290,6 +290,19 @@ def _legacy_inverse_sites(records, record):
 def _validate_inputs(state, record, records):
     sites = None
 
+    def own_materialized_read(read):
+        """Prove an absent ancestor read from this command's durable child write."""
+        if read['state'] != ABSENT:
+            return False
+        prefix = tuple(read['path'])
+        for write in record['writes']:
+            path = tuple(write['path'])
+            if (write['ref'] == read['ref'] and path[:len(prefix)] == prefix
+                    and write['after'] != ABSENT
+                    and state.matches(write['ref'], write['path'], write['after'])):
+                return True
+        return False
+
     def proven_sites():
         if record['command']['op'] == 'timeline.inverse':
             return (*_legacy_inverse_sites(records, record), set())
@@ -326,7 +339,7 @@ def _validate_inputs(state, record, records):
             continue
         if sites is None:
             sites = proven_sites()
-        if not any(equal(read, site) for site in sites[0]):
+        if not any(equal(read, site) for site in sites[0]) and not own_materialized_read(read):
             raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
                                ref=read['ref'], path=read['path'])
     for selected in record['selections']:

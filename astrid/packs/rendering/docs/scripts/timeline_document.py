@@ -340,7 +340,8 @@ def main():
         }
     else:
         publication = session.commit_many(
-            native["commands"], idempotency_key=args.idempotency_key, via="document",
+            native["commands"], idempotency_key=args.idempotency_key, via="script",
+            verified_media=verified_media,
             base={"revision_id": candidate["base_parent"]["revision_id"],
                   "publication_id": base_publication_id},
         )
