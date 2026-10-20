@@ -158,6 +158,57 @@ def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
     assert loaded.clip(REF).data == original
 
 
+def test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo(
+    tmp_path, trim_film, wire, real_runtime,
+):
+    fixture, _, _ = trim_film
+    observed, lose = wire
+    support = tmp_path / 'support'
+    outbox = tmp_path / 'owned-asset-clear.json'
+
+    def start(port=0):
+        return real_runtime(fixture.duplicate_root, support_root=support,
+                            port=port, authoring_profile='astrid')
+
+    daemon = start()
+    client = m1.open_client(daemon)
+    tl = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=client, outbox_path=outbox))
+    original = copy.deepcopy(tl.clip('parent/clip:music-bed').data)
+    tl.clip('parent/clip:music-bed').clear_asset()
+    captured = json.loads(outbox.read_bytes())['pending']
+    assert captured[0]['op'] == 'clip.set'
+    assert captured[0]['select'] == 'parent/clip:music-bed'
+    assert captured[0]['args'] == {'values': {}, 'clear': ['asset']}
+    assert 'asset' not in tl.clip('parent/clip:music-bed').data
+
+    lose.add('owned-asset-clear')
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Clear the source', idempotency_key='owned-asset-clear')
+    first = copy.deepcopy(observed[-1])
+    durable = json.loads(outbox.read_bytes())
+    assert json.loads(first['body'])['commands'] == captured
+    assert json.loads(first['body'])['rationale'] == 'Clear the source'
+    assert durable['flight']['body'].encode() == first['body']
+    assert durable['flight']['key'] == 'owned-asset-clear'
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = start(port)
+    loaded = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=m1.open_client(daemon),
+        outbox_path=outbox))
+    retried = loaded.publish()
+    assert observed[-1]['body'] == first['body']
+    assert observed[-1]['key'] == first['key']
+    assert retried['receipt'] == first['response']['receipt']
+    assert retried['message'] == 'Clear the source'
+    assert 'asset' not in loaded.clip('parent/clip:music-bed').data
+
+    loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:music-bed').data == original
+
+
 def test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo(
     tmp_path, trim_film, wire, real_runtime,
 ):

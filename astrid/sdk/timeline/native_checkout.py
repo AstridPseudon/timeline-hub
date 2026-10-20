@@ -46,8 +46,9 @@ def _publishable_parent_command(command):
         return True
     values = args.get('values') if isinstance(args, dict) else None
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
-            and args.get('clear') == [] and isinstance(values, dict)
-            and set(values) == {'hold'} and values['hold'] is not None)
+            and ((args.get('clear') == [] and isinstance(values, dict)
+                  and set(values) == {'hold'} and values['hold'] is not None)
+                 or (args.get('values') == {} and args.get('clear') == ['asset'])))
 
 
 class AttachedCheckout(Checkout):
