@@ -39,7 +39,22 @@ class HistoricalAudioCaptureGap(AssertionError):
 @pytest.fixture
 def journey_film(request, film, astrid_importable, tmp_path):
     if request.param == "historical-audio":
-        return prepare_pcm_historical_audio_film(film, tmp_path)
+        prepared = prepare_pcm_historical_audio_film(film, tmp_path)
+        # Exercise the normal door and SDK read path after the fixture's
+        # read-only startup-admission control. This is not a second setup
+        # path: open_bundle only reads the immutable prepared closure.
+        world = _start_door(prepared, tmp_path)
+        try:
+            opened = _client(world.daemon).timelines.open_bundle(
+                prepared.fixture.project_id,
+                prepared.fixture.timeline_id,
+                revision_id=prepared.fixture.parent_revision_id,
+            )
+            assert opened.ok, opened.as_dict()
+            assert opened.data["revision_id"] == prepared.fixture.parent_revision_id
+        finally:
+            world.stop()
+        return prepared
 
     # Reuse the approved first-import builder on a NEW film with its own
     # child identities. The historical audio film remains entirely untouched.

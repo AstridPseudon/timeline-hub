@@ -27,7 +27,6 @@ _BOOTSTRAP_TIMELINE_ID = "historical-audio-pcm-child-bootstrap"
 _SEED_PARENT_REVISION_ID = "historical-audio-pcm-parent-v1"
 _PARENT_REVISION_ID = "historical-audio-pcm-parent-v2"
 _BOOTSTRAP_PARENT_REVISION_ID = "historical-audio-pcm-child-bootstrap-v1"
-_BOOTSTRAP_FINAL_PARENT_REVISION_ID = "historical-audio-pcm-child-bootstrap-v2"
 _AUDIO_NAME = "music-bed.wav"
 _AUDIO_IDEMPOTENCY_KEY = "historical-audio-pcm-source"
 _SEED_PUBLICATION_IDEMPOTENCY_KEY = "historical-audio-pcm-publication-v1"
@@ -267,13 +266,15 @@ def prepare_pcm_historical_audio_film(film, tmp_path):
                 "internal_timeline_revisions": copy.deepcopy(
                     body["internal_timeline_revisions"]
                 ),
-                # The private seed is only an unplaced child-owner bootstrap;
-                # keep it outside timeline dependency history. The subsequent
-                # public publication records the complete manifest.
+                # The private seed is only an unplaced child-owner bootstrap.
+                # Its parent payload still carries the immutable media pins,
+                # so retain those real edges in the bootstrap graph. Child
+                # revision edges belong to the subsequent authored publication
+                # once the occurrences are placed.
                 "dependency_manifest": {
                     "shots": [],
                     "internal_timelines": [],
-                    "media": [],
+                    "media": copy.deepcopy(body["dependency_manifest"]["media"]),
                 },
             }
             # Seed the complete child closure while it is still unplaced. The
@@ -312,15 +313,6 @@ def prepare_pcm_historical_audio_film(film, tmp_path):
                     assert created["data"]["binding_id"] == binding_identities[
                         (source["shot_id"], descriptor["binding_id"])
                     ]["binding_id"]
-            bootstrap_body = copy.deepcopy(body)
-            bootstrap_body["timeline_id"] = _BOOTSTRAP_TIMELINE_ID
-            bootstrap_body["parent_revision_id"] = _BOOTSTRAP_FINAL_PARENT_REVISION_ID
-            service.publish_parent_composition(
-                film.fixture.project_id,
-                _BOOTSTRAP_TIMELINE_ID,
-                bootstrap_body,
-                idempotency_key=f"{_BOOTSTRAP_TIMELINE_ID}-publication",
-            )
             expected_document = {
                 "schema_version": 1,
                 "project_id": film.fixture.project_id,
@@ -450,6 +442,29 @@ def prepare_pcm_historical_audio_film(film, tmp_path):
 
             if root == film.fixture.duplicate_root:
                 receipt = sibling["entries"][-1]["receipt"]
+                original_events = [
+                    tuple(row)
+                    for row in service.store.conn.execute(
+                        "SELECT * FROM timeline_events ORDER BY id"
+                    )
+                ]
+                # Reopen the caller-owned realm through Runtime's ordinary
+                # startup admission after all setup writes. This is a
+                # read-only control for the graph that the next door startup
+                # will consume; it does not repair or rewrite the realm.
+                service.close()
+                service = RuntimeService(root)
+                try:
+                    assert service.store.admission_report["ok"]
+                    reopened = verify_baseline(
+                        service.store.conn,
+                        film.fixture.project_id,
+                        _TIMELINE_ID,
+                        read_object=service.cas.read,
+                    )
+                    assert reopened["canonical_document"] == sibling_document
+                finally:
+                    service.close()
                 prepared = SimpleNamespace(
                     fixture=FilmFixture(
                         source_root=film.fixture.source_root,
@@ -462,12 +477,7 @@ def prepare_pcm_historical_audio_film(film, tmp_path):
                         text_binding_id=film.fixture.text_binding_id,
                     ),
                     publication={"data": receipt["result"], "receipt": receipt},
-                    original_events=[
-                        tuple(row)
-                        for row in service.store.conn.execute(
-                            "SELECT * FROM timeline_events ORDER BY id"
-                        )
-                    ],
+                    original_events=original_events,
                 )
         finally:
             service.close()
