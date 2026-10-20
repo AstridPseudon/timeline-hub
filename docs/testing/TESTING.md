@@ -20,7 +20,8 @@ in the logs and tool details stay, so they can show your user name.
 |---|---|---|---|
 | Program files | `~/.local/share/astrid` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` | `%LOCALAPPDATA%\Astrid` |
 | Your workspace (projects, media) | `~/Library/Application Support/Astrid Runtime` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid-runtime` | `%LOCALAPPDATA%\Astrid Runtime` |
-| The log (install and running Astrid) | `~/Library/Logs/Astrid Runtime/install.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\install.log` |
+| Installer log | `~/Library/Logs/Astrid Runtime/install.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\install.log` |
+| Runtime service log | `~/Library/Logs/Astrid Runtime/runtime-service.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/runtime-service.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\runtime-service.log` |
 | What keeps Astrid running | LaunchAgent `haus.astrid.runtime` | systemd user unit `astrid.service` | Task Scheduler task `Astrid Runtime` |
 | Optional service settings | `~/.local/share/astrid/service-env.json` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid/service-env.json` | `%LOCALAPPDATA%\Astrid\service-env.json` |
 
@@ -177,6 +178,9 @@ Good: `State` is `Running`.
   **Set up Astrid on this computer**; this profile has not connected to Astrid before.
 - Step 6: the browser that connected before says **Astrid isn't running**, with the same line.
 - Step 6: the line prints `Restarting Astrid with the installed version.` Both pages open the editor by themselves.
+- Windows: while Astrid is healthy and running, run the copied repair line again. Confirm the page opens and the
+  Runtime process keeps the same PID; the repair should not interrupt active work. Then stop the scheduled task and
+  run the line once more. Confirm Astrid starts and the page reconnects.
 
 **It's a failure if**
 
@@ -353,6 +357,10 @@ Record its title and a sentence you can find again.
    ```powershell
    & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update
    ```
+
+   Windows qualification: Astrid must still be running when you run this line. Confirm the update succeeds while its
+   service is writing `runtime-service.log`, then check that `install.log` and `runtime-service.log` both remain in
+   the log folder. The doctor bundle should include both logs.
 
 2. Watch the page while it runs, and reload it if it asks.
 3. List the program versions and backups:

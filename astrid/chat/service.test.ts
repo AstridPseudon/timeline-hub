@@ -18,9 +18,10 @@ for (const bindFails of [false, true]) {
   test(`chat publishes only after binding, cleans up its registration, and preserves another owner (bindFails=${bindFails})`, async () => {
     const directory = mkdtempSync(join(tmpdir(), 'astrid-chat-service-'));
     const path = join(directory, 'chat.json');
-    const previous = { endpoint: 'http://127.0.0.1:17335', token: 'other-owner' };
+    const previous = { endpoint: 'http://127.0.0.1:17528', token: 'other-owner' };
     writeFileSync(path, JSON.stringify(previous));
     const server = new EventEmitter() as EventEmitter & Record<string, unknown>;
+    server.address = () => ({ port: 17526, address: '127.0.0.1', family: 'IPv4' });
     let closed = false;
     server.listen = (_port: number, host: string, ready: () => void) => {
       expect(host).toBe('127.0.0.1');
@@ -40,7 +41,7 @@ for (const bindFails of [false, true]) {
         expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual(previous);
       } else {
         await new Promise(resolve => setTimeout(resolve, 0));
-        expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({ ...previous, token: 'ours' });
+        expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({ endpoint: 'http://127.0.0.1:17526', token: 'ours' });
         server.emit('close');
         await running;
         expect(existsSync(path)).toBe(false);
@@ -50,11 +51,42 @@ for (const bindFails of [false, true]) {
   });
 }
 
+test('chat defaults to an ephemeral port and registers the actual loopback listener', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-chat-port-'));
+  const path = join(directory, 'chat.json');
+  const stdin = new PassThrough();
+  try {
+    const running = runChatService({
+      ASTRID_WORKSPACE_DISCOVERY: join(directory, 'discovery.json'),
+      ASTRID_ACP_CWD: directory,
+      ASTRID_ACP_BRIDGE_TOKEN: 'ephemeral-token',
+    }, undefined, stdin);
+    let registration: { endpoint: string; token: string } | undefined;
+    for (let attempt = 0; attempt < 100 && !registration; attempt++) {
+      try { registration = JSON.parse(readFileSync(path, 'utf8')); } catch {}
+      if (!registration) await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    expect(registration).toBeDefined();
+    const endpoint = new URL(registration!.endpoint);
+    expect(endpoint.hostname).toBe('127.0.0.1');
+    expect(Number(endpoint.port)).toBeGreaterThan(0);
+    expect(registration!.token).toBe('ephemeral-token');
+    const response = await fetch(endpoint);
+    expect(response.status).toBe(401);
+    stdin.end();
+    await running;
+    expect(existsSync(path)).toBe(false);
+  } finally {
+    stdin.destroy();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 for (const alreadyEnded of [false, true]) {
   test(`Runtime stdin EOF stops chat, removes its registration and waits for ACP cleanup (alreadyEnded=${alreadyEnded})`, async () => {
     const directory = mkdtempSync(join(tmpdir(), 'astrid-chat-eof-'));
     const path = join(directory, 'chat.json');
-    const previous = { endpoint: 'http://127.0.0.1:17335', token: 'other-owner' };
+    const previous = { endpoint: 'http://127.0.0.1:17528', token: 'other-owner' };
     writeFileSync(path, JSON.stringify(previous));
     const stdin = new PassThrough();
     if (alreadyEnded) {
@@ -64,6 +96,7 @@ for (const alreadyEnded of [false, true]) {
       await ended;
     }
     const server = new EventEmitter() as EventEmitter & Record<string, unknown>;
+    server.address = () => ({ port: 17527, address: '127.0.0.1', family: 'IPv4' });
     let stopped = 0;
     let closedConnections = 0;
     let cleanup = 0;

@@ -28,7 +28,7 @@ import {
   ASTRID_BRIDGE_PROTOCOL_VERSION,
 } from './astridBridgeWire.ts';
 
-const DEFAULT_PORT = 17_335;
+const DEFAULT_PORT = 0;
 const MAX_BODY_BYTES = 128 * 1024;
 const MAX_NOTIFICATION_BYTES = 1024 * 1024;
 const CLIENT_VERSION = 'astrid-r1-consumer-20260911';
@@ -126,10 +126,10 @@ function asRecord(value: unknown): JsonRecord | null {
 
 function parsePort(value: string | undefined): number {
   const candidate = value ?? String(DEFAULT_PORT);
-  if (!/^\d{1,5}$/.test(candidate)) throw new Error('ASTRID_ACP_BRIDGE_PORT must be an integer from 1 to 65535');
+  if (!/^\d{1,5}$/.test(candidate)) throw new Error('ASTRID_ACP_BRIDGE_PORT must be an integer from 0 to 65535');
   const port = Number(candidate);
-  if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
-    throw new Error('ASTRID_ACP_BRIDGE_PORT must be an integer from 1 to 65535');
+  if (!Number.isSafeInteger(port) || port < 0 || port > 65_535) {
+    throw new Error('ASTRID_ACP_BRIDGE_PORT must be an integer from 0 to 65535');
   }
   return port;
 }

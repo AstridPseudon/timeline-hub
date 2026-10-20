@@ -128,6 +128,7 @@ def test_bundle_keeps_bounded_log_tail_and_discovers_managed_logs(tmp_path, monk
     (runtime_logs / "astrid-runtime.log").write_text("runtime current\n")
     (runtime_logs / "astrid-runtime.log.1").write_text("runtime previous\n")
     (runtime_logs / "install.log").write_text("install current\n")
+    (runtime_logs / "runtime-service.log").write_text("service current\n")
     (runtime_logs / "private.txt").write_text("must not include\n")
     monkeypatch.setattr(runtime_protocol.platform, "log_dir", lambda: runtime_logs)
     support = tmp_path / "support"
@@ -137,7 +138,7 @@ def test_bundle_keeps_bounded_log_tail_and_discovers_managed_logs(tmp_path, monk
     (support / "generic-host.log.1").write_text("host previous\n")
 
     discovered = doctor_bundle._logs(support)
-    assert {"astrid-runtime.log", "astrid-runtime.log.1", "install.log", "generic-host.log", "generic-host.log.1"} <= {
+    assert {"astrid-runtime.log", "astrid-runtime.log.1", "install.log", "runtime-service.log", "generic-host.log", "generic-host.log.1"} <= {
         path.name for path in discovered
     }
     assert not any(path.name == "private.txt" for path in discovered)

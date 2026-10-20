@@ -22,10 +22,6 @@ For help, see [Troubleshooting](setup/troubleshooting.md).
 Astrid Runtime runs on this computer and owns workspace projects, media,
 timelines, tasks, and run records. Use Astrid at astrid.haus to work with them.
 
-If an operator needs to restart the installed Runtime manually, use
-`astrid-runtime up --profile astrid`. This is an operator recovery command, not
-an alternative installation path.
-
 ## Developer reference
 
 The rest of this repository contains source code and developer documentation

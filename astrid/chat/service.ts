@@ -18,8 +18,10 @@ export async function runChatService(env = process.env, createServer = createAst
     modelStateFile: join(dirname(discovery), `chat-models-${chatStoreIdentity(config)}.json`),
   } });
   const path = chatRegistrationPath(discovery);
-  const registration = chatRegistration(config.port, config.token);
-  const release = () => removeChatRegistration(path, value => value?.endpoint === registration.endpoint && value?.token === registration.token);
+  let registration: ReturnType<typeof chatRegistration> | undefined;
+  const release = () => {
+    if (registration) removeChatRegistration(path, value => value?.endpoint === registration?.endpoint && value?.token === registration?.token);
+  };
   let stopping: Promise<void> | undefined;
   const stop = () => stopping ??= (async () => {
     release();
@@ -32,6 +34,9 @@ export async function runChatService(env = process.env, createServer = createAst
       server.once('error', reject);
       server.listen(config.port, '127.0.0.1', resolve);
     });
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('chat bridge did not bind a TCP port');
+    registration = chatRegistration(address.port, config.token);
     const closed = new Promise<void>((resolve, reject) => {
       server.once('close', resolve);
       server.once('error', reject);
@@ -47,7 +52,7 @@ export async function runChatService(env = process.env, createServer = createAst
       // including native ACP hosts and terminals in the service's group.
       stdin.once('end', stop);
       stdin.resume();
-      console.log(`Astrid chat listening on 127.0.0.1:${config.port}`);
+      console.log(`Astrid chat listening on 127.0.0.1:${address.port}`);
     }
     await closed;
   } finally {

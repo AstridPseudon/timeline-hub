@@ -24,7 +24,9 @@ The scripts get pinned uv and Python, then invoke the shared `astrid install`
 core. It installs user-local tools and registers a login service. No administrator
 access is needed. Without a systemd user service on Linux, run the line to restart.
 Installation ends with `Open https://astrid.haus` and opens the connection page.
-On failure, report the sentence and the `Details:` log path.
+On failure, report the sentence and the `Details:` path to `install.log`. The
+login service writes its output to the neighboring `runtime-service.log`; a
+doctor bundle includes both logs.
 
 The installer reuses FFmpeg and FFprobe from `PATH` when both run and FFmpeg has
 all required encoders and filters. Otherwise it downloads the pinned build.
