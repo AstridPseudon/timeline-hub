@@ -10,8 +10,8 @@
  *
  * Cases
  *   1  agent -> open App   an Astrid task and the agent's publication show up in the open App with no reload
- *   2  concurrent edit     legacy track/transition saves retain a conflicting draft and offer resolution
- *   3  Runtime restart     an unsent legacy draft survives the open page and explicit recovery
+ *   2  concurrent edit     retained transition/media coverage awaits widened Agent capture (see case comment)
+ *   3  Runtime restart     an unsent label command survives the open page and explicit recovery
  *   4  M1 move/restart     real pointer gestures, lost durable ACK, dependent intent, exact retry and UI inverse
  *   5  relevant conflict   a real dependency change retains B instead of rewriting its guards
  * Every case first proves the three products share one realm, one Runtime instance and one contract, and ends with the
@@ -31,7 +31,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
+import { commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -320,7 +320,10 @@ async function plantNoReloadFlag(page: Page) {
 // ---------------------------------------------------------------------------------------------
 // 1. agent -> open App
 
+// Bundle 1 blocker: the original Agent swap below still needs native asset + registry/task-output capture.
+// Keep the task/adoption/media assertions until that operation ships; the final App label uses commands now.
 test('agent -> open App: an Astrid task and its publication appear in the open App without a reload', async ({ page, harness, astrid, seed3 }) => {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const agent = agentOf(astrid, seed3);
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
@@ -373,12 +376,16 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
   expect(state.shotRegistry[seed3.markerAssetKey].media_id).toBe(output!.object_id);
   expect(state.shotClips[seed3.agentClipId].asset).toBe(seed3.markerAssetKey);
   expect((await agent.show()).head_revision_id, 'the agent reads the head it published').toBe(published.new_head);
+  const agentHead = (await history(harness, seed3)).head;
+  expect(agentHead.revision_id).toBe(published.new_head);
   // The App's next save is built on the agent's head, and the Runtime accepts it (the parent-head check of the retired handoff case).
-  const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
+  const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
   await editFirstTrackName(page, 'F2 App after agent');
   const appSave = await appSaved;
   expect(appSave.status(), 'the Runtime accepts the App\'s save on the agent\'s head').toBe(200);
-  expect(appSave.request().postDataJSON().expected_head, 'the App built its save on the agent\'s head').toBe(published.new_head);
+  expect(appSave.request().postDataJSON()).toMatchObject({ base_revision_id: published.new_head,
+    base_publication_id: agentHead.publication_id,
+    commands: [{ op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'F2 App after agent' }, clear: [] } }] });
   await expect.poll(() => currentHead(harness), CEILING).not.toBe(published.new_head);
   const appRevision = await currentHead(harness);
   expect(await noReloadFlag(page), 'the page was still not reloaded after its own save').toBe(true);
@@ -396,7 +403,9 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 // Legacy concurrent edit
 
 /**
- * Track/transition writers remain whole-document CAS saves until M2. Replaying A must not let C overwrite B's changed shot
+ * Migration blocker: Bundle 1 lacks child hold extension, child asset clear and parent transition clear capture.
+ * Preserve this entire original ordering and its positive Keep/Use latest assertions until those operations ship.
+ * Track/transition writers originally used whole-document CAS saves. Replaying A must not let C overwrite B's changed shot
  * pins, extension and explicit clear. Either the provider notices B before accepting A's receipt or C receives stale_head;
  * both must retain A+C and offer an explicit resolution. Command rebase is exercised separately by the M1 move cases.
  */
@@ -568,12 +577,13 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
 });
 
 // ---------------------------------------------------------------------------------------------
-// Legacy Runtime restart with both attached
+// Command Runtime restart with both attached
 
 test('Runtime restart with the App open: the draft survives, saves after the relaunch, and the agent follows', async ({ page, harness, astrid, seed3 }) => {
   const agent = agentOf(astrid, seed3);
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
 
   await openApp(page, harness);
   await expectConnected(page);
@@ -583,16 +593,17 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   const revisionsBefore = (await allRevisions(harness, seed3)).length;
 
   // A draft that was never sent: the save is held, so the edit is a draft by construction.
-  const releaseSaves = await holdTimelineSaves(page);
-  const unsent = page.waitForRequest((request) => request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname), CEILING);
+  const hold = await holdCommandRequests(page);
   await editFirstTrackName(page, 'F2 kept across restart');
-  await unsent;
-  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft.config?.tracks
-    ?.find((track: any) => track.id === 'V1')?.label, CEILING).toBe('F2 kept across restart');
-  const draftBefore = await timelineDraft(page, seed3.timelineId);
-  expect(draftBefore?.baseHeadRevisionId).toBe(headBefore);
-  expect(draftBefore?.baseHeadProjectId).toBe(harness.seed.projectId);
-  expect(draftBefore?.baseHeadTimelineId).toBe(seed3.timelineId);
+  await expect.poll(() => hold.requests.length, CEILING).toBe(1);
+  const request = hold.requests[0];
+  const draftBefore = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.pending?.request.key === request.headers()['idempotency-key'])!;
+  expect(draftBefore.scope).toMatchObject({ realmId: harness.realmId, projectId: harness.seed.projectId, timelineId: seed3.timelineId });
+  expect(draftBefore.pending?.request.body).toBe(request.postData());
+  expect(draftBefore.pending?.outcome).toBeUndefined();
+  expect(request.postDataJSON()).toMatchObject({ base_revision_id: headBefore,
+    commands: [{ op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'F2 kept across restart' }, clear: [] } }] });
+  expect(await currentHead(harness)).toBe(headBefore);
   await plantNoReloadFlag(page);
 
   // The Runtime restarts on a new port; the page says so and does not reload itself.
@@ -603,7 +614,7 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   expect(await noReloadFlag(page), 'the page does not reload by itself').toBe(true);
   await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'restarted');
   await expect(firstTrackName(page)).toHaveValue('F2 kept across restart');
-  expect((await timelineDraft(page, seed3.timelineId))?.draft).toEqual(draftBefore?.draft);
+  expect((await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === draftBefore.ownerId)?.intents).toEqual(draftBefore.intents);
 
   // The agent follows discovery to the new endpoint: same realm and contract, a new instance, and the draft is not in the Runtime.
   const after = await astrid.identity();
@@ -620,20 +631,24 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toHaveCount(0);
   await openSeededTimeline(page, harness);
   journey.facts.sameRealmAfterRestart = await expectSameRealm(page, harness, astrid);
-  const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
-  await expect(recovered).toBeVisible(CEILING);
-  await expect(recovered.getByRole('button', { name: 'Save them' })).toBeEnabled();
-  expect((await timelineDraft(page, seed3.timelineId))?.draft).toEqual(draftBefore?.draft);
+  const recovered = page.getByRole('button', { name: /^Recover saved edits/ })
+    .and(page.locator(`[data-owner-id="${draftBefore.ownerId}"]`));
+  await expect(recovered).toBeEnabled(CEILING);
+  const persisted = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === draftBefore.ownerId)!;
+  expect(persisted.intents).toEqual(draftBefore.intents);
+  expect(persisted.pending?.request).toEqual(draftBefore.pending!.request);
   expect(await currentHead(harness), 'reconnection alone never sends the draft').toBe(headBefore);
-  await releaseSaves();
-  const recoveredSave = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
-  await recovered.getByRole('button', { name: 'Save them' }).click();
+  await hold.release();
+  const recoveredSave = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await recovered.click();
   const saved = await recoveredSave;
   expect(saved.status(), 'the Runtime accepts the recovered draft').toBe(200);
-  expect(saved.request().postDataJSON().expected_head).toBe(headBefore);
+  expect(saved.request().postData()).toBe(draftBefore.pending!.request.body);
+  expect(saved.request().headers()['idempotency-key']).toBe(draftBefore.pending!.request.key);
+  const result = await saved.json() as CommitAcceptedMutation;
   const keyAfter = saved.request().headers()['idempotency-key'];
   await expect(recovered).toHaveCount(0, CEILING);
-  await expect.poll(() => timelineDraft(page, seed3.timelineId), CEILING).toBeNull();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
   await expect.poll(() => currentHead(harness), CEILING).not.toBe(headBefore);
   await expect(firstTrackName(page)).toHaveValue('F2 kept across restart');
 
@@ -643,8 +658,10 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   expect((await agent.show()).head_revision_id).toBe(headAfter);
   const state = await revisionState(harness, seed3, headAfter);
   expect(state.trackLabel, 'the saved revision is the draft').toBe('F2 kept across restart');
-  expect(headAfter, 'the post-restart save is stored under its idempotency key').toBe(keyAfter);
+  expect(result.receipt.receipt_id, 'the post-restart publication keeps its persisted retry identity').toBe(keyAfter);
+  expect(headAfter).toBe(result.data.accepted_revision_id);
   expect((await allRevisions(harness, seed3)).length, 'recover/save creates exactly one revision').toBe(revisionsBefore + 1);
+  await expectImmutableClosure(harness, seed3, result);
   await expectOpaqueDataKept(harness, seed3);
 
   journey.facts = { ...journey.facts, instanceBefore: before.runtimeInstanceId, instanceAfter: after.runtime_instance_id, headBefore, headAfter };
@@ -1013,7 +1030,8 @@ test('M1 real dependency conflict retains B original guards and pending identity
   await sniff.expectClean(page, seed3.timelineId);
 });
 
-test('M1 mixed editing: an accepted pointer move followed by a refused legacy rename keeps an exact recoverable draft', async ({ page, harness, astrid, seed3 }) => {
+// Complements track-label-command.spec.ts: Unicode + disjoint undo there; exact retained-label recovery here.
+test('M2 mixed editing: accepted pointer move and rename survive lost ACK, reload, exact recovery and guarded undo', async ({ page, harness, astrid, seed3 }) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
@@ -1043,69 +1061,95 @@ test('M1 mixed editing: an accepted pointer move followed by a refused legacy re
   expect(moved.items).toHaveLength(before.items.length + 1);
   const revisions = await allRevisions(harness, seed3);
   const trackLabel = 'F2 mixed editing retained rename';
-  const legacyResponse = () => page.waitForResponse((answer) => answer.request().method() === 'POST'
-    && SAVES.test(new URL(answer.url()).pathname), CEILING);
-  const refusedResponse = legacyResponse();
+  const wire = await faultFirstCommit(page);
   await editFirstTrackName(page, trackLabel);
-  const refused = await refusedResponse;
-  expect(refused.status(), await refused.text()).toBe(409);
-  expect(await refused.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
-  const request = refused.request();
-  expect(request.postDataJSON()).toMatchObject({ expected_head: moved.head.revision_id,
-    parent_composition: { config: { tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: trackLabel })]) } } });
-  const refusalNotice = page.getByRole('alert').filter({
-    hasText: 'The timeline could not be saved because the payload is incompatible with the server schema.',
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const rename = accepted(wire.posts[0]);
+  expect(JSON.parse(wire.posts[0].body)).toMatchObject({
+    base_revision_id: moved.head.revision_id, base_publication_id: moved.head.publication_id,
+    commands: [{ op: 'track.set', select: 'parent/track:V1', args: { values: { label: trackLabel }, clear: [] } }],
   });
-  await expect(refusalNotice).toBeVisible(CEILING);
-  await expect(firstTrackName(page)).toHaveValue(trackLabel);
-  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft.config?.tracks
-    ?.find((track: any) => track.id === 'V1')?.label, CEILING).toBe(trackLabel);
-  const kept = (await timelineDraft(page, seed3.timelineId))!;
-  expect(kept).toMatchObject({ baseHeadRevisionId: moved.head.revision_id,
-    baseHeadProjectId: harness.seed.projectId, baseHeadTimelineId: seed3.timelineId });
-  expect(kept.draft.config?.clips?.find((clip: any) => clip.id === seed3.appClipId)?.at).toBe(to);
-  expect(kept.draft.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
-  const authoredBase = move.data.canonical_document;
-  expect(kept.baseHeadRevisionId).toBe(authoredBase.parent_revision.revision_id);
-  expect(authoredBase.parent_revision.payload.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
-  expect(request.postDataJSON().parent_composition.config).toMatchObject({ x_f2_opaque: seed3.opaque.config });
-  expect(request.postDataJSON().parent_composition.occurrences).toEqual(authoredBase.parent_revision.payload.occurrences);
+  expect(position(rename.data.canonical_document, seed3.appClipId)).toBe(to);
+  expect(rename.data.canonical_document.parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: trackLabel })]),
+    x_f2_opaque: seed3.opaque.config,
+  });
+  expect(rename.data.canonical_document.parent_revision.payload.occurrences)
+    .toEqual(move.data.canonical_document.parent_revision.payload.occurrences);
+  expect(rename.data.canonical_document.shot_revisions).toEqual(move.data.canonical_document.shot_revisions);
+  expect(rename.data.canonical_document.internal_timeline_revisions).toEqual(move.data.canonical_document.internal_timeline_revisions);
   await expectImmutableClosure(harness, seed3, move);
-  const pinned = await revisionState(harness, seed3, kept.baseHeadRevisionId!);
-  expect(pinned.shotClips[seed3.agentClipId].app?.f2Opaque).toEqual(seed3.opaque.clip);
-  expect(await history(harness, seed3)).toEqual(moved);
-  expect(await allRevisions(harness, seed3)).toEqual(revisions);
+  await expectImmutableClosure(harness, seed3, rename);
 
-  // AUDIT 2216Z permits visible refusal only for M1. M2 must save, reload and undo this rename through commands.
+  const kept = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.pending?.request.key === wire.posts[0].key)!;
+  expect(kept.scope).toMatchObject({ realmId: harness.realmId, projectId: harness.seed.projectId, timelineId: seed3.timelineId });
+  expect(kept.pending?.request).toEqual({ method: 'POST', path: `${timelineBase(harness, seed3)}/commit`,
+    body: wire.posts[0].body, key: wire.posts[0].key });
+  expect(commandsOf(kept.intents[0].payload)).toEqual(JSON.parse(wire.posts[0].body).commands);
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === kept.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  const renamed = await history(harness, seed3);
+  expect(renamed.head).toEqual(pinOf(rename));
+  expect(renamed.items).toHaveLength(moved.items.length + 1);
+  expect(await allRevisions(harness, seed3)).toHaveLength(revisions.length + 1);
+
   await page.reload();
   await expectConnected(page);
   await openSeededTimeline(page, harness);
-  const recovery = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
-  await expect(recovery).toBeVisible(CEILING);
-  await expect(recovery.getByRole('button', { name: 'Save them' })).toBeEnabled();
-  expect(await timelineDraft(page, seed3.timelineId), 'reload preserves the entire native IndexedDB record').toEqual(kept);
-  await expectImmutableClosure(harness, seed3, move);
-  expect(await history(harness, seed3)).toEqual(moved);
-  const retryResponse = legacyResponse();
-  await recovery.getByRole('button', { name: 'Save them' }).click();
-  const retry = await retryResponse;
-  expect(retry.status(), await retry.text()).toBe(409);
-  expect(await retry.json()).toMatchObject({ details: { status: 'refused', reason: 'timeline_commit_required' } });
-  expect(retry.request().postData(), 'recovery keeps the original CAS and authored payload').toBe(request.postData());
-  expect(retry.request().headers()['idempotency-key'], 'recovery keeps the same request identity')
-    .toBe(request.headers()['idempotency-key']);
-  await expect(refusalNotice).toBeVisible(CEILING);
+  const reloaded = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === kept.ownerId)!;
+  expect(reloaded.pending?.request).toEqual(kept.pending!.request);
+  expect(reloaded.intents).toEqual(kept.intents);
+  expect(wire.posts).toHaveLength(1);
+  expect(await history(harness, seed3)).toEqual(renamed);
+  await page.getByRole('button', { name: /^Recover saved edits/ })
+    .and(page.locator(`[data-owner-id="${kept.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(2);
+  expect(wire.posts[1], 'recovery preserves exact command bytes, guards, retry key and accepted result').toEqual(wire.posts[0]);
   await expect(firstTrackName(page)).toHaveValue(trackLabel);
-  await expect.poll(async () => (await timelineDraft(page, seed3.timelineId))?.draft, CEILING).toEqual(kept.draft);
-  expect((await timelineDraft(page, seed3.timelineId))?.baseHeadRevisionId).toBe(kept.baseHeadRevisionId);
-  expect(await history(harness, seed3)).toEqual(moved);
-  expect(await allRevisions(harness, seed3)).toEqual(revisions);
-  await expectImmutableClosure(harness, seed3, move);
-  await expectAgentRevision(astrid, harness, seed3, moved.head.revision_id);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  expect(await history(harness, seed3)).toEqual(renamed);
+  await expectImmutableClosure(harness, seed3, rename);
+  const pinned = await revisionState(harness, seed3, pinOf(rename).revision_id);
+  expect(pinned.shotClips[seed3.agentClipId].app?.f2Opaque).toEqual(seed3.opaque.clip);
+  await expectPreviewRevision(page, pinOf(rename).revision_id);
+  await expectAgentRevision(astrid, harness, seed3, pinOf(rename).revision_id);
+
+  const independent = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(rename),
+    { kind: 'track', id: 'f2-mixed-independent' }, 'f2-mixed-independent');
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect(firstTrackName(page)).toHaveValue(trackLabel);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [pinOf(rename).publication_id] },
+  }]);
+  const undone = accepted(wire.posts[2]);
+  expect(position(undone.data.canonical_document, seed3.appClipId)).toBe(to);
+  expect(undone.data.canonical_document.parent_revision.payload.config).toMatchObject({
+    x_f2_opaque: seed3.opaque.config,
+    tracks: expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: original.trackLabel }),
+      expect.objectContaining({ id: 'f2-mixed-independent' }),
+    ]),
+  });
+  expect(undone.data.canonical_document.shot_revisions).toEqual(independent.data.canonical_document.shot_revisions);
+  expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(independent.data.canonical_document.internal_timeline_revisions);
+  expect(undone.data.canonical_document.dependency_manifest).toEqual(independent.data.canonical_document.dependency_manifest);
+  await expect(firstTrackName(page)).toHaveValue(original.trackLabel!);
+  const finalHistory = await history(harness, seed3);
+  expect(finalHistory.head).toEqual(pinOf(undone));
+  expect(finalHistory.items).toHaveLength(before.items.length + 4);
+  expect(finalHistory.items.find((entry) => entry.publication_id === pinOf(undone).publication_id)?.records?.undo_of)
+    .toEqual([pinOf(rename).publication_id]);
+  await expectImmutableClosure(harness, seed3, independent);
+  await expectImmutableClosure(harness, seed3, undone);
+  await expectAgentRevision(astrid, harness, seed3, pinOf(undone).revision_id);
   await expectOpaqueDataKept(harness, seed3);
-  journey.facts = { ...journey.facts, acceptedMove: pinOf(move), legacyRefusal: await refused.json(),
-    retainedDraftOwner: kept.ownerId, originalCas: kept.baseHeadRevisionId,
-    legacyRequestKey: request.headers()['idempotency-key'], recovery: 'Save them restores the rename and visibly refuses again',
-    renderer: 'not started' };
+  expect(wire.legacy).toEqual([]);
+  journey.facts = { ...journey.facts, acceptedMove: pinOf(move), acceptedRename: pinOf(rename),
+    retainedOwner: kept.ownerId, retryKey: wire.posts[0].key, guardedUndo: pinOf(undone), renderer: 'not started' };
   await sniff.expectClean(page, seed3.timelineId);
 });

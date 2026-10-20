@@ -11,6 +11,7 @@ import { createTimelineCommandSession } from '../commitSession.ts';
 import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
+import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -47,6 +48,7 @@ export async function environment(initialDocument = document()) {
   let pause: ReturnType<typeof deferred> | null = null;
   const calls: { path: string; method: string; body?: CommitRequest; key?: string }[] = [];
   const accepted = new Map<string, CommitAcceptedMutation>();
+  const previousDocuments = new Map<string, CanonicalDocument>();
   const transport: Transport = async (method, path, headers, body) => {
     const request = body ? JSON.parse(new TextDecoder().decode(body)) as CommitRequest : undefined;
     const key = headers['Idempotency-Key'];
@@ -86,9 +88,16 @@ export async function environment(initialDocument = document()) {
       const next = `r${accepted.size + 1}`, publication = `p${accepted.size + 1}`;
       response = acceptedCommit({ revision_id: next, publication_id: publication },
         { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { commands: request.commands });
-      if (request.commands[0].op === 'clip.move') {
+      response.data.previous_revision_id = serverHead.revisionId;
+      response.data.previous_publication_id = serverHead.publicationId;
+      const before = structuredClone(serverDocument);
+      if (request.commands[0].op === 'clip.move' || request.commands[0].op === 'track.set') {
         let result;
-        try { result = executeClipMove(await authoringBundleFromDocument(serverDocument), request.commands[0]); }
+        try {
+          const bundle = await authoringBundleFromDocument(serverDocument);
+          result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
+            : finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs);
+        }
         catch (error) {
           if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
           // Guard failures cross the HTTP boundary as typed conflicts, not uncertain transport errors.
@@ -98,7 +107,13 @@ export async function environment(initialDocument = document()) {
         const payload = { ...result.bundle.parent, occurrences: [] };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
-      } else serverDocument = document(1, next);
+      } else if (request.commands[0].op === 'timeline.inverse') {
+        const publications = request.commands[0].args.publications as string[];
+        const restored = structuredClone(previousDocuments.get(publications[0])!);
+        restored.parent_revision.revision_id = next;
+        serverDocument = restored;
+      } else throw new Error(`Unsupported test command ${request.commands[0].op}`);
+      previousDocuments.set(publication, before);
       response.data.accepted_revision_id = serverDocument.parent_revision.revision_id;
       response.data.canonical_document = serverDocument;
       response.data.document_digest = fixtureDigest(serverDocument);
@@ -118,6 +133,7 @@ export async function environment(initialDocument = document()) {
   const previews = vi.fn();
   const { outbox: outboxes, factory } = storage();
   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
+    loadLatest: () => provider.loadTimelineCommandBasis(timelineId),
     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
     project: async (basis) => {
       projected.push(basis);
@@ -130,5 +146,12 @@ export async function environment(initialDocument = document()) {
   return { provider, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
     setFault: (value: typeof fault) => { fault = value; },
     pause: () => { pause = deferred(); return pause; },
+    external: async (change: (document: CanonicalDocument) => void) => {
+      change(serverDocument);
+      serverDocument.parent_revision.revision_id = `external-${serverHead.revisionId}`;
+      serverDocument.parent_revision.content_digest = fixtureDigest(serverDocument.parent_revision.payload);
+      serverHead = { revisionId: serverDocument.parent_revision.revision_id, publicationId: `external-${serverHead.publicationId}` };
+      return provider.loadTimelineCommandBasis(timelineId);
+    },
     commits: () => calls.filter((call) => call.path.endsWith('/commit')) };
 }

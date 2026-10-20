@@ -36,7 +36,9 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { BIG_DOWNLOAD_BYTES, BIG_UPLOAD_BYTES, DirectHarness, DOOR_PORT, harnessUnavailableReason, rawRequest, sha256Hex, compositionPublication } from './support/harness.ts';
-import { APP_ENTRY_ROUTE, UI, currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test, waitForAudit } from './support/app.ts';
+import { APP_ENTRY_ROUTE, UI, commandOutboxes, currentHead, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test, waitForAudit } from './support/app.ts';
+import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
+import type { CommitAcceptedMutation, CommitRequest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { SpeedTable } from './support/measure.ts';
 import { LOCAL_NETWORK_PERMISSION, readLocalNetworkState, setLocalNetworkPermission } from './support/permission.ts';
 
@@ -44,6 +46,8 @@ import { LOCAL_NETWORK_PERMISSION, readLocalNetworkState, setLocalNetworkPermiss
 const RUNTIME_RSS_GROWTH_LIMIT = 100 * 1024 * 1024;
 /** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the Runtime reports it, the page no longer shows it. */
 const REALM_DISPLAY_NAME = 'Direct Journey';
+const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+const CEILING = { timeout: 90_000 };
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(() => {
@@ -336,11 +340,18 @@ test.describe('probe through the door (door)', () => {
 
 test.describe('core journey', () => {
   test('App: open the seeded project, edit, save, reload byte-identical', async ({ page, harness }) => {
+    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
     await openApp(page, harness);
     await expectConnected(page);
     await openSeededTimeline(page, harness);
     const headBefore = await currentHead(harness);
+    const saving = page.waitForResponse((response) => response.request().method() === 'POST'
+      && COMMITS.test(new URL(response.url()).pathname), CEILING);
     await editFirstTrackName(page, 'Edited in the App');
+    const saved = await saving;
+    expect(saved.status(), await saved.text()).toBe(200);
+    expect(saved.request().postDataJSON()).toMatchObject({ base_revision_id: headBefore,
+      commands: [{ op: 'track.set', args: { values: { label: 'Edited in the App' }, clear: [] } }] });
     // The editor saves by itself: the Runtime's head moves to the revision the App published.
     await expect.poll(() => currentHead(harness), { timeout: 20_000 }).not.toBe(headBefore);
     const before = await revisionBody(harness, await currentHead(harness));
@@ -353,23 +364,84 @@ test.describe('core journey', () => {
   });
 
   test('App: a second writer saves first, the App shows the conflict and keeps the draft', async ({ page, harness }) => {
+    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+    const astrid = await AstridCli.create(harness);
+    await astrid.preflight();
     await openApp(page, harness);
     await expectConnected(page);
     await openSeededTimeline(page, harness);
-    const head = await currentHead(harness);
-    const second = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions`, compositionPublication(harness.seed, head, 'Second writer', 24));
-    expect(second.status).toBe(200);
-    await editFirstTrackName(page, 'Draft from the first writer');
-    const conflict = page.getByRole('alertdialog', { name: 'This timeline changed somewhere else' });
-    await expect(conflict).toBeVisible({ timeout: 20_000 });
-    await expect(conflict.getByText('Keep your changes, or switch to the latest version.')).toBeVisible();
-    await expect(conflict.getByRole('button', { name: 'Keep my changes' })).toBeVisible();
-    await expect(conflict.getByRole('button', { name: 'Use latest version' })).toBeVisible();
-    // The dialog is modal, so the editor behind it is hidden from the accessibility tree but still holds the draft.
-    const draftField = page.getByRole('textbox', { name: 'Track name', includeHidden: true }).first();
-    await expect(draftField).toHaveValue('Draft from the first writer');
-    // The stale save was refused, not applied: the second writer's revision is still the head.
-    expect(await currentHead(harness)).toBe(second.body.data.new_head);
+    const { projectId, timelineId } = harness.seed;
+    const conflict = page.getByTestId('timeline-command-recovery');
+    const rejectLabel = async (label: string, remoteLabel: string, key: string) => {
+      const hold = await holdCommandRequests(page);
+      await editFirstTrackName(page, label);
+      await expect.poll(() => hold.requests.length, CEILING).toBe(1);
+      const request = hold.requests[0];
+      const body = request.postDataJSON() as CommitRequest;
+      const command = body.commands[0];
+      expect(command).toMatchObject({ op: 'track.set', args: { values: { label }, clear: [] } });
+      // The App has already captured its original guards; another author changes that exact label before delivery.
+      const second = await astrid.commitCaptured(projectId, timelineId,
+        { revision_id: body.base_revision_id, publication_id: body.base_publication_id },
+        { kind: 'label', trackId: command.select!.slice('parent/track:'.length), label: remoteLabel }, key);
+      const refusing = page.waitForResponse((response) => response.request() === request, CEILING);
+      await hold.release(true);
+      const refused = await refusing;
+      expect(refused.status(), await refused.text()).toBe(409);
+      expect((await refused.json()).details.status).toBe('conflict');
+      await expect(conflict).toContainText('Your changes are retained and need resolution');
+      await expect(conflict.getByRole('button', { name: 'Keep my changes', exact: true })).toBeEnabled();
+      await expect(conflict.getByRole('button', { name: 'Use latest version', exact: true })).toBeEnabled();
+      await expect(firstTrackName(page)).toHaveValue(label);
+      const retained = (await commandOutboxes(page, timelineId)).find((owner) => owner.pending?.request.key === request.headers()['idempotency-key'])!;
+      expect(retained.pending?.outcome?.kind).toBe('rejected');
+      expect(retained.pending?.request.body).toBe(request.postData());
+      expect((retained.intents[0].payload as { commands: unknown[] }).commands).toEqual(body.commands);
+      expect(await currentHead(harness)).toBe(second.data.accepted_revision_id);
+      return { retained, second, request };
+    };
+
+    const first = await rejectLabel('Draft from the first writer', 'Second writer', 'direct-label-conflict');
+    await page.reload();
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+    const reloaded = (await commandOutboxes(page, timelineId)).find((owner) => owner.ownerId === first.retained.ownerId)!;
+    expect(reloaded.pending).toEqual(first.retained.pending);
+    expect(reloaded.intents).toEqual(first.retained.intents);
+    await page.getByRole('button', { name: /^Recover saved edits/ })
+      .and(page.locator(`[data-owner-id="${reloaded.ownerId}"]`)).click();
+    await expect(conflict).toContainText('Your changes are retained and need resolution');
+    const keeping = page.waitForResponse((response) => response.request().method() === 'POST'
+      && COMMITS.test(new URL(response.url()).pathname), CEILING);
+    await conflict.getByRole('button', { name: 'Keep my changes', exact: true }).click();
+    const kept = await keeping;
+    expect(kept.status(), await kept.text()).toBe(200);
+    expect(kept.request().headers()['idempotency-key']).not.toBe(first.request.headers()['idempotency-key']);
+    expect(kept.request().postDataJSON()).toMatchObject({
+      base_revision_id: first.second.data.accepted_revision_id,
+      base_publication_id: first.second.receipt.receipt_id,
+      commands: [{ op: 'track.set', args: { values: { label: 'Draft from the first writer' }, clear: [] } }],
+    });
+    const keptResult = await kept.json() as CommitAcceptedMutation;
+    await expect.poll(async () => (await commandOutboxes(page, timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+    await expect(firstTrackName(page)).toHaveValue('Draft from the first writer');
+    expect(await currentHead(harness)).toBe(keptResult.data.accepted_revision_id);
+
+    // A separate definitive rejection exercises explicit discard; Keep above authored a fresh intent successfully.
+    const next = await rejectLabel('Another local draft', 'Latest writer', 'direct-label-use-latest');
+    const historyPath = `/v1/projects/${projectId}/timelines/${timelineId}/commits?limit=50`;
+    const beforeDiscard = await harness.runtimeJson('GET', historyPath);
+    expect(beforeDiscard.status).toBe(200);
+    await conflict.getByRole('button', { name: 'Use latest version', exact: true }).click();
+    await expect(firstTrackName(page)).toHaveValue('Latest writer');
+    await expect.poll(async () => (await commandOutboxes(page, timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+    expect(await currentHead(harness)).toBe(next.second.data.accepted_revision_id);
+    await page.reload();
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+    await expect(firstTrackName(page)).toHaveValue('Latest writer');
+    expect(await currentHead(harness)).toBe(next.second.data.accepted_revision_id);
+    expect((await harness.runtimeJson('GET', historyPath)).body).toEqual(beforeDiscard.body);
   });
 
   test('through the hosted origin: open, read the timeline, save with the expected head, reload byte-identical', async ({ page, harness }) => {
@@ -603,11 +675,20 @@ test.describe('restarts', () => {
   });
 
   test('App: an Astrid restart on a new port shows the restart card, and Reload reconnects with the draft kept', async ({ page, harness }) => {
+    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
     await openApp(page, harness);
     await expectConnected(page);
     await openSeededTimeline(page, harness);
-    const releaseSaves = await holdTimelineSaves(page);
+    const headBefore = await currentHead(harness);
+    const hold = await holdCommandRequests(page);
     await editFirstTrackName(page, 'Draft kept across the restart');
+    await expect.poll(() => hold.requests.length, CEILING).toBe(1);
+    const request = hold.requests[0];
+    const owner = (await commandOutboxes(page, harness.seed.timelineId)).find((item) => item.pending?.request.key === request.headers()['idempotency-key'])!;
+    expect(owner.pending?.request.body).toBe(request.postData());
+    expect(owner.pending?.outcome).toBeUndefined();
+    expect(request.postDataJSON().base_revision_id).toBe(headBefore);
+    expect(await currentHead(harness)).toBe(headBefore);
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
     // The Runtime comes back on a new port, and its door on the same fixed one.
@@ -618,19 +699,30 @@ test.describe('restarts', () => {
     await expect(page.getByText('Workspace connection unavailable')).toHaveCount(0);
     await expect(page.getByText('Reload needed')).toHaveCount(0);
     await expect(page.getByText('Not saved', { exact: true })).toBeVisible();
+    await expect(firstTrackName(page)).toHaveValue('Draft kept across the restart');
+    expect((await commandOutboxes(page, harness.seed.timelineId)).find((item) => item.ownerId === owner.ownerId)?.intents).toEqual(owner.intents);
 
     await page.getByRole('button', { name: UI.reload }).click();
     await expectConnected(page);
     await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toHaveCount(0);
-    // The draft survives the reload: the editor offers it back as a recovered draft, and Save them saves it.
+    // Reconnect alone never sends retained work; explicitly recover the original command owner.
     await openSeededTimeline(page, harness);
-    const recovered = page.getByRole('alert').filter({ hasText: 'You have unsaved changes' });
-    await expect(recovered).toBeVisible();
-    const headBefore = await currentHead(harness);
-    await releaseSaves();
-    await recovered.getByRole('button', { name: 'Save them' }).click();
+    const persisted = (await commandOutboxes(page, harness.seed.timelineId)).find((item) => item.ownerId === owner.ownerId)!;
+    expect(persisted.pending?.request).toEqual(owner.pending!.request);
+    expect(persisted.intents).toEqual(owner.intents);
+    expect(await currentHead(harness)).toBe(headBefore);
+    await hold.release();
+    const saving = page.waitForResponse((response) => response.request().method() === 'POST'
+      && COMMITS.test(new URL(response.url()).pathname), CEILING);
+    await page.getByRole('button', { name: /^Recover saved edits/ })
+      .and(page.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
+    const saved = await saving;
+    expect(saved.status(), await saved.text()).toBe(200);
+    expect(saved.request().postData()).toBe(owner.pending!.request.body);
+    expect(saved.request().headers()['idempotency-key']).toBe(owner.pending!.request.key);
     await expect.poll(() => currentHead(harness), { timeout: 20_000 }).not.toBe(headBefore);
     await expect(firstTrackName(page)).toHaveValue('Draft kept across the restart');
+    await expect.poll(async () => (await commandOutboxes(page, harness.seed.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
   });
 
   test('App: Astrid stopping while the page is connected shows "Astrid stopped", and the card clears by itself when it is back', async ({ page, harness }) => {
