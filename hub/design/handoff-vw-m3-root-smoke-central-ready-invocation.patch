@@ -1,0 +1,47 @@
+--- committed/remotion/__smoke__/bundle.mjs
++++ ORCH-stage/remotion/__smoke__/bundle.mjs
+@@ -6,6 +6,7 @@
+ import {bundle} from '@remotion/bundler';
+ import {selectComposition} from '@remotion/renderer';
+ import {remotionPrimitiveAliasesFor} from '../webpack-alias.mjs';
++import {sharedBrowserExecutable} from '../shared-browser.mjs';
+ import ts from 'typescript';
+ 
+ const __filename = fileURLToPath(import.meta.url);
+@@ -177,8 +178,16 @@
+ };
+ 
+ const main = async () => {
++  const browserExecutable = sharedBrowserExecutable({projectRoot: projectDir});
++  if (!browserExecutable) fail('An explicit existing browser is required');
++  const browserOptions = {
++    browserExecutable,
++    chromeMode: 'chrome-for-testing',
++    onBrowserDownload: () => fail('Browser download is prohibited'),
++  };
+   const bundleLocation = await bundle({
+     entryPoint,
++    enableCaching: false,
+     onProgress: () => undefined,
+     webpackOverride: remotionPrimitiveAliasesFor(projectDir),
+   });
+@@ -192,9 +201,19 @@
+       serveUrl: bundleLocation,
+       id: compositionId,
+       inputProps,
++      ...browserOptions,
+     });
+     assertPositiveMetadata(fixture.name, composition);
+   }
++
++  const empty = await selectComposition({
++    serveUrl: bundleLocation,
++    id: compositionId,
++    ...browserOptions,
++  });
++  assertPositiveMetadata('empty', empty);
++  if (empty.durationInFrames !== 1) fail('Empty timeline must select exactly one frame');
++  console.log('Empty timeline metadata OK: ' + JSON.stringify(empty));
+ 
+   console.log(`Smoke bundle OK for ${FIXTURES.map((fixture) => fixture.name).join(', ')} fixtures`);
+ };

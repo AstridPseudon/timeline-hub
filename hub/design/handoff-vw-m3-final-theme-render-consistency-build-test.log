@@ -1,0 +1,4 @@
+
+> @banodoco/timeline-composition@0.0.11 build:test
+> tsc -p typescript/tsconfig.test.json
+

@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: public scene names full cover in actual same-track painter order without re-evaluating callbacks
+ok 1 - public scene names full cover in actual same-track painter order without re-evaluating callbacks
+  ---
+  duration_ms: 3.387582
+  type: 'test'
+  ...
+# Subtest: fractional thresholds use fixed rectangular support areas and include the threshold
+ok 2 - fractional thresholds use fixed rectangular support areas and include the threshold
+  ---
+  duration_ms: 0.921257
+  type: 'test'
+  ...
+# Subtest: track order and frontmost qualifying single layer determine the named occluder
+ok 3 - track order and frontmost qualifying single layer determine the named occluder
+  ---
+  duration_ms: 0.570977
+  type: 'test'
+  ...
+# Subtest: unknown uppers and glyph holes stay unknown; transparent uppers cannot become opaque
+ok 4 - unknown uppers and glyph holes stay unknown; transparent uppers cannot become opaque
+  ---
+  duration_ms: 0.6753
+  type: 'test'
+  ...
+# Subtest: absence, opacity zero and offscreen targets are distinct from occlusion; known-none differs from unknown
+ok 5 - absence, opacity zero and offscreen targets are distinct from occlusion; known-none differs from unknown
+  ---
+  duration_ms: 0.462374
+  type: 'test'
+  ...
+# Subtest: partial offscreen target denominator is its clipped output rectangle, not full bounds or glyph pixels
+ok 6 - partial offscreen target denominator is its clipped output rectangle, not full bounds or glyph pixels
+  ---
+  duration_ms: 0.188154
+  type: 'test'
+  ...
+# Subtest: animation and undeclared modifier geometry cannot manufacture opaque occlusion
+ok 7 - animation and undeclared modifier geometry cannot manufacture opaque occlusion
+  ---
+  duration_ms: 0.403468
+  type: 'test'
+  ...
+# Subtest: opaque occlusion uses the actual transition and track opacity, modifier support and blend facts
+ok 8 - opaque occlusion uses the actual transition and track opacity, modifier support and blend facts
+  ---
+  duration_ms: 0.953722
+  type: 'test'
+  ...
+# Subtest: declared face/mouth/text and intrinsic motion share the actual component clock at speed 2, preroll and rational fps
+ok 9 - declared face/mouth/text and intrinsic motion share the actual component clock at speed 2, preroll and rational fps
+  ---
+  duration_ms: 18.282984
+  type: 'test'
+  ...
+# Subtest: missing diagnostic declarations stay unknown instead of implying static motion or empty regions
+ok 10 - missing diagnostic declarations stay unknown instead of implying static motion or empty regions
+  ---
+  duration_ms: 0.45423
+  type: 'test'
+  ...
+# Subtest: explicit unknown diagnostics and component-owned fact objects survive queries without mutation
+ok 11 - explicit unknown diagnostics and component-owned fact objects survive queries without mutation
+  ---
+  duration_ms: 0.359237
+  type: 'test'
+  ...
+# Subtest: unknown transforms and even preserved outer bounds invalidate final semantic regions, retaining intrinsic motion
+ok 12 - unknown transforms and even preserved outer bounds invalidate final semantic regions, retaining intrinsic motion
+  ---
+  duration_ms: 0.442657
+  type: 'test'
+  ...
+# Subtest: nonfinite diagnostic scalars, sizes and invalid rectangles stay unknown with findings
+ok 13 - nonfinite diagnostic scalars, sizes and invalid rectangles stay unknown with findings
+  ---
+  duration_ms: 0.21955
+  type: 'test'
+  ...
+# Subtest: malformed motion stays unknown without accepting scalars or throwing on null
+ok 14 - malformed motion stays unknown without accepting scalars or throwing on null
+  ---
+  duration_ms: 0.265893
+  type: 'test'
+  ...
+# Subtest: plain, null-prototype and explicit empty motion records remain valid
+ok 15 - plain, null-prototype and explicit empty motion records remain valid
+  ---
+  duration_ms: 0.204422
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37.319564

@@ -1,0 +1,3 @@
+PASS: original closed snapshots, fixtures, metadata assertions, success/failure paths preserved; empty uses actual Root defaults
+PASS: READY/controller binding; all tracked source, complete borrowed graph, browser installation and Node unchanged
+PASS: noncentral invocation refused; missing manager grant refused before source/browser work; no attempt consumed; staging cleaned; repository clean

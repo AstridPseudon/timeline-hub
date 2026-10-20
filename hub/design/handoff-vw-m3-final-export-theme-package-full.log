@@ -1,0 +1,426 @@
+
+> @banodoco/timeline-composition@0.0.11 test
+> npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/gen-registry.test.mjs
+
+
+> @banodoco/timeline-composition@0.0.11 build:test
+> tsc -p typescript/tsconfig.test.json
+
+TAP version 13
+# Subtest: package generation ignores installed host themes and checks all local registries
+ok 1 - package generation ignores installed host themes and checks all local registries
+  ---
+  duration_ms: 1320.830709
+  type: 'test'
+  ...
+# Subtest: registration declares easing for new and overridden IDs, for hooks and wrappers
+ok 2 - registration declares easing for new and overridden IDs, for hooks and wrappers
+  ---
+  duration_ms: 5.248527
+  type: 'test'
+  ...
+# Subtest: replacing only a built-in component keeps the generic progress clock
+ok 3 - replacing only a built-in component keeps the generic progress clock
+  ---
+  duration_ms: 0.198528
+  type: 'test'
+  ...
+# Subtest: explicit easing requires declared support, and defaults do not author a curve
+ok 4 - explicit easing requires declared support, and defaults do not author a curve
+  ---
+  duration_ms: 1.815501
+  type: 'test'
+  ...
+# Subtest: two mounted registry scopes keep custom support, params and progress isolated
+ok 5 - two mounted registry scopes keep custom support, params and progress isolated
+  ---
+  duration_ms: 0.93865
+  type: 'test'
+  ...
+# Subtest: bundled wrappers preserve normal motion and consume explicit progress themselves
+ok 6 - bundled wrappers preserve normal motion and consume explicit progress themselves
+  ---
+  duration_ms: 3.011311
+  type: 'test'
+  ...
+# Subtest: type-on owns its reveal window under every ID and retains caret and hidden tail
+ok 7 - type-on owns its reveal window under every ID and retains caret and hidden tail
+  ---
+  duration_ms: 4.268775
+  type: 'test'
+  ...
+# Subtest: generic curves retain aliases, clamping, zero duration and explicit spelling validation
+ok 8 - generic curves retain aliases, clamping, zero duration and explicit spelling validation
+  ---
+  duration_ms: 0.268718
+  type: 'test'
+  ...
+# Subtest: public clip opacity is the existing function and matches normal look and real scene clocks
+ok 9 - public clip opacity is the existing function and matches normal look and real scene clocks
+  ---
+  duration_ms: 21.471875
+  type: 'test'
+  ...
+# Subtest: overlapping fades multiply, zero alpha survives, and invalid or subframe fades are ignored
+ok 10 - overlapping fades multiply, zero alpha survives, and invalid or subframe fades are ignored
+  ---
+  duration_ms: 1.644977
+  type: 'test'
+  ...
+# Subtest: fade-out follows rounded native duration with a one-frame minimum
+ok 11 - fade-out follows rounded native duration with a one-frame minimum
+  ---
+  duration_ms: 1.358017
+  type: 'test'
+  ...
+# Subtest: transition handles use content frames and compose track and transition alpha once
+ok 12 - transition handles use content frames and compose track and transition alpha once
+  ---
+  duration_ms: 1.034949
+  type: 'test'
+  ...
+# Subtest: track queries use half-open draw bounds and retain mounted zero-opacity layers
+ok 13 - track queries use half-open draw bounds and retain mounted zero-opacity layers
+  ---
+  duration_ms: 2.269041
+  type: 'test'
+  ...
+# Subtest: audio envelope evaluation accepts representative fade input and applies gain in place
+ok 14 - audio envelope evaluation accepts representative fade input and applies gain in place
+  ---
+  duration_ms: 0.663074
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve trim rounding and strict half-open source bounds
+ok 15 - public media clock helpers preserve trim rounding and strict half-open source bounds
+  ---
+  duration_ms: 0.21812
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+ok 16 - public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+  ---
+  duration_ms: 0.111907
+  type: 'test'
+  ...
+# Subtest: incoming preroll policy advances content without changing own frames or half-open mounts
+ok 17 - incoming preroll policy advances content without changing own frames or half-open mounts
+  ---
+  duration_ms: 0.616478
+  type: 'test'
+  ...
+# Subtest: policy is per boundary, preserves cut admission, and composes overlapping transition windows
+ok 18 - policy is per boundary, preserves cut admission, and composes overlapping transition windows
+  ---
+  duration_ms: 0.209003
+  type: 'test'
+  ...
+# Subtest: App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+ok 19 - App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+  ---
+  duration_ms: 0.738103
+  type: 'test'
+  ...
+# Subtest: public incoming vector represents first clips and leaves audio envelope gain unchanged
+ok 20 - public incoming vector represents first clips and leaves audio envelope gain unchanged
+  ---
+  duration_ms: 0.257267
+  type: 'test'
+  ...
+# Subtest: native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+ok 21 - native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+  ---
+  duration_ms: 0.374989
+  type: 'test'
+  ...
+# Subtest: bundled core and selected theme effects use the same scoped dispatch and stay conservative
+ok 22 - bundled core and selected theme effects use the same scoped dispatch and stay conservative
+  ---
+  duration_ms: 3.924561
+  type: 'test'
+  ...
+# Subtest: host effects, aliases and capabilities are instance scoped, including default overrides
+ok 23 - host effects, aliases and capabilities are instance scoped, including default overrides
+  ---
+  duration_ms: 0.668365
+  type: 'test'
+  ...
+# Subtest: component capability receives the exact renderer-selected asset, including explicit absence
+ok 24 - component capability receives the exact renderer-selected asset, including explicit absence
+  ---
+  duration_ms: 8.733773
+  type: 'test'
+  ...
+# Subtest: host animation maps keep defaults, phase validation and unknown errors scoped
+ok 25 - host animation maps keep defaults, phase validation and unknown errors scoped
+  ---
+  duration_ms: 0.796742
+  type: 'test'
+  ...
+# Subtest: host transition resolution reaches preparation without changing another instance
+ok 26 - host transition resolution reaches preparation without changing another instance
+  ---
+  duration_ms: 0.477509
+  type: 'test'
+  ...
+# Subtest: default animations retain real motion and type-on output
+ok 27 - default animations retain real motion and type-on output
+  ---
+  duration_ms: 2.274809
+  type: 'test'
+  ...
+# Subtest: packaged effect internal animations and clip animations honor the rendering scope
+ok 28 - packaged effect internal animations and clip animations honor the rendering scope
+  ---
+  duration_ms: 3.660876
+  type: 'test'
+  ...
+# Subtest: public scene names full cover in actual same-track painter order without re-evaluating callbacks
+ok 29 - public scene names full cover in actual same-track painter order without re-evaluating callbacks
+  ---
+  duration_ms: 3.108232
+  type: 'test'
+  ...
+# Subtest: fractional thresholds use fixed rectangular support areas and include the threshold
+ok 30 - fractional thresholds use fixed rectangular support areas and include the threshold
+  ---
+  duration_ms: 0.959511
+  type: 'test'
+  ...
+# Subtest: track order and frontmost qualifying single layer determine the named occluder
+ok 31 - track order and frontmost qualifying single layer determine the named occluder
+  ---
+  duration_ms: 0.540081
+  type: 'test'
+  ...
+# Subtest: unknown uppers and glyph holes stay unknown; transparent uppers cannot become opaque
+ok 32 - unknown uppers and glyph holes stay unknown; transparent uppers cannot become opaque
+  ---
+  duration_ms: 0.678958
+  type: 'test'
+  ...
+# Subtest: absence, opacity zero and offscreen targets are distinct from occlusion; known-none differs from unknown
+ok 33 - absence, opacity zero and offscreen targets are distinct from occlusion; known-none differs from unknown
+  ---
+  duration_ms: 0.345933
+  type: 'test'
+  ...
+# Subtest: partial offscreen target denominator is its clipped output rectangle, not full bounds or glyph pixels
+ok 34 - partial offscreen target denominator is its clipped output rectangle, not full bounds or glyph pixels
+  ---
+  duration_ms: 0.168811
+  type: 'test'
+  ...
+# Subtest: animation and undeclared modifier geometry cannot manufacture opaque occlusion
+ok 35 - animation and undeclared modifier geometry cannot manufacture opaque occlusion
+  ---
+  duration_ms: 0.376882
+  type: 'test'
+  ...
+# Subtest: opaque occlusion uses the actual transition and track opacity, modifier support and blend facts
+ok 36 - opaque occlusion uses the actual transition and track opacity, modifier support and blend facts
+  ---
+  duration_ms: 0.838921
+  type: 'test'
+  ...
+# Subtest: declared face/mouth/text and intrinsic motion share the actual component clock at speed 2, preroll and rational fps
+ok 37 - declared face/mouth/text and intrinsic motion share the actual component clock at speed 2, preroll and rational fps
+  ---
+  duration_ms: 19.379047
+  type: 'test'
+  ...
+# Subtest: missing diagnostic declarations stay unknown instead of implying static motion or empty regions
+ok 38 - missing diagnostic declarations stay unknown instead of implying static motion or empty regions
+  ---
+  duration_ms: 0.396302
+  type: 'test'
+  ...
+# Subtest: explicit unknown diagnostics and component-owned fact objects survive queries without mutation
+ok 39 - explicit unknown diagnostics and component-owned fact objects survive queries without mutation
+  ---
+  duration_ms: 0.313508
+  type: 'test'
+  ...
+# Subtest: unknown transforms and even preserved outer bounds invalidate final semantic regions, retaining intrinsic motion
+ok 40 - unknown transforms and even preserved outer bounds invalidate final semantic regions, retaining intrinsic motion
+  ---
+  duration_ms: 0.330214
+  type: 'test'
+  ...
+# Subtest: nonfinite diagnostic scalars, sizes and invalid rectangles stay unknown with findings
+ok 41 - nonfinite diagnostic scalars, sizes and invalid rectangles stay unknown with findings
+  ---
+  duration_ms: 0.224575
+  type: 'test'
+  ...
+# Subtest: malformed motion stays unknown without accepting scalars or throwing on null
+ok 42 - malformed motion stays unknown without accepting scalars or throwing on null
+  ---
+  duration_ms: 0.25237
+  type: 'test'
+  ...
+# Subtest: plain, null-prototype and explicit empty motion records remain valid
+ok 43 - plain, null-prototype and explicit empty motion records remain valid
+  ---
+  duration_ms: 0.210913
+  type: 'test'
+  ...
+# Subtest: proven opaque visual media reports visible covered content
+ok 44 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 2.739816
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 45 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.383026
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 46 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.63472
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 47 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.508026
+  type: 'test'
+  ...
+# Subtest: scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+ok 48 - scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+  ---
+  duration_ms: 0.565277
+  type: 'test'
+  ...
+# Subtest: public default preserves the complete existing export style
+ok 49 - public default preserves the complete existing export style
+  ---
+  duration_ms: 11.459925
+  type: 'test'
+  ...
+# Subtest: explicit full stays intact through provider, evaluator and SSR
+ok 50 - explicit full stays intact through provider, evaluator and SSR
+  ---
+  duration_ms: 2.7828
+  type: 'test'
+  ...
+# Subtest: explicit partial nested override without optional mono stays intact through provider, evaluator and SSR
+ok 51 - explicit partial nested override without optional mono stays intact through provider, evaluator and SSR
+  ---
+  duration_ms: 1.627215
+  type: 'test'
+  ...
+# Subtest: actual native render inputs use preroll source clock, unchanged trims/rate/gain, and no extra mount
+ok 52 - actual native render inputs use preroll source clock, unchanged trims/rate/gain, and no extra mount
+  ---
+  duration_ms: 122.746276
+  type: 'test'
+  ...
+# Subtest: public scene capability and actual element clock share preroll plus speed remap at rational fps
+ok 53 - public scene capability and actual element clock share preroll plus speed remap at rational fps
+  ---
+  duration_ms: 5.853134
+  type: 'test'
+  ...
+# Subtest: public render keeps plain image cuts/crossfades and default dip, refusing unknown opt-in implementations
+ok 54 - public render keeps plain image cuts/crossfades and default dip, refusing unknown opt-in implementations
+  ---
+  duration_ms: 6.268197
+  type: 'test'
+  ...
+# Subtest: overlapping windows use the same per-boundary clocks in the public scene and render
+ok 55 - overlapping windows use the same per-boundary clocks in the public scene and render
+  ---
+  duration_ms: 4.255525
+  type: 'test'
+  ...
+# Subtest: explicit incoming adjacent: real registered component, Sequence mount, opacity and scene agree
+ok 56 - explicit incoming adjacent: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 9.510316
+  type: 'test'
+  ...
+# Subtest: explicit incoming first: real registered component, Sequence mount, opacity and scene agree
+ok 57 - explicit incoming first: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 4.718895
+  type: 'test'
+  ...
+# Subtest: explicit incoming gap: real registered component, Sequence mount, opacity and scene agree
+ok 58 - explicit incoming gap: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 5.938841
+  type: 'test'
+  ...
+# Subtest: explicit incoming overlap: real registered component, Sequence mount, opacity and scene agree
+ok 59 - explicit incoming overlap: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 6.058815
+  type: 'test'
+  ...
+# Subtest: explicit incoming oversized: real registered component, Sequence mount, opacity and scene agree
+ok 60 - explicit incoming oversized: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 5.809882
+  type: 'test'
+  ...
+# Subtest: explicit incoming capped oversized: real registered component, Sequence mount, opacity and scene agree
+ok 61 - explicit incoming capped oversized: real registered component, Sequence mount, opacity and scene agree
+  ---
+  duration_ms: 5.645177
+  type: 'test'
+  ...
+# Subtest: explicit incoming occurrence cap excludes its endpoint and can mount nothing
+ok 62 - explicit incoming occurrence cap excludes its endpoint and can mount nothing
+  ---
+  duration_ms: 0.555995
+  type: 'test'
+  ...
+# Subtest: canonical compiler rejects malformed/conflicting input, duration, parameters and unsupported registry implementations
+ok 63 - canonical compiler rejects malformed/conflicting input, duration, parameters and unsupported registry implementations
+  ---
+  duration_ms: 3.748621
+  type: 'test'
+  ...
+# Subtest: explicit incoming rational fps shares speed-remapped registered clock and native trim/gain
+ok 64 - explicit incoming rational fps shares speed-remapped registered clock and native trim/gain
+  ---
+  duration_ms: 5.04966
+  type: 'test'
+  ...
+# Subtest: canonical conversion of [a,b(fade),c] is deterministic and both public entry points consume its same result
+ok 65 - canonical conversion of [a,b(fade),c] is deterministic and both public entry points consume its same result
+  ---
+  duration_ms: 1.796942
+  type: 'test'
+  ...
+# Subtest: transition windows use half-open placement and preserve frozen source frames
+ok 66 - transition windows use half-open placement and preserve frozen source frames
+  ---
+  duration_ms: 1.598283
+  type: 'test'
+  ...
+# Subtest: start and center transitions extend draw spans without shifting own spans
+ok 67 - start and center transitions extend draw spans without shifting own spans
+  ---
+  duration_ms: 0.202516
+  type: 'test'
+  ...
+# Subtest: explicit incoming vectors preserve oversized windows and refuse conflicting or unsafe inputs
+ok 68 - explicit incoming vectors preserve oversized windows and refuse conflicting or unsafe inputs
+  ---
+  duration_ms: 0.605312
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1514.895896

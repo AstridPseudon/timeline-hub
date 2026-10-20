@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: typescript/test-dist/tests/registries.test.js
+ok 1 - typescript/test-dist/tests/registries.test.js
+  ---
+  duration_ms: 624.811147
+  type: 'test'
+  ...
+# Subtest: typescript/test-dist/tests/scene-diagnostics.test.js
+ok 2 - typescript/test-dist/tests/scene-diagnostics.test.js
+  ---
+  duration_ms: 510.723882
+  type: 'test'
+  ...
+# Subtest: typescript/test-dist/tests/theme.test.js
+ok 3 - typescript/test-dist/tests/theme.test.js
+  ---
+  duration_ms: 604.630415
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 632.600942

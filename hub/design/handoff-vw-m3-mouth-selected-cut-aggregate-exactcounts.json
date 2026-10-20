@@ -1,0 +1,184 @@
+{
+  "source": "54b9c1feeae01037fac64594824d2d3fd748a250",
+  "scope": "UNAPPLIED test adapter; exact retained public10 fixture; no production admission",
+  "crop": [
+    298,
+    202,
+    345,
+    219
+  ],
+  "crop_pixels": 799,
+  "actual_selected_cut_private_equals_public": {
+    "changed_pixels": [
+      336,
+      336,
+      336
+    ],
+    "changes": 3,
+    "cut": {
+      "clip_id": "presenter",
+      "end": 2.0,
+      "index": 1,
+      "occurrence_id": "",
+      "shot_id": "",
+      "start": 0.0,
+      "track": "overlay"
+    },
+    "denominator": 3,
+    "finding": "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs",
+    "fractions": [
+      0.42052565707133915,
+      0.42052565707133915,
+      0.42052565707133915
+    ],
+    "pairs": [
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        5
+      ]
+    ],
+    "reads": [
+      0,
+      3,
+      4,
+      5
+    ],
+    "selected": [
+      0,
+      3,
+      4,
+      5
+    ]
+  },
+  "asserted_negative_controls": {
+    "order_5_0_4_3": {
+      "same_as_actual": true
+    },
+    "request_5_3_0_3_4": {
+      "unique_frame_keys": [
+        0,
+        3,
+        4,
+        5
+      ],
+      "same_as_actual": true
+    },
+    "missing_key_3": {
+      "selected": [
+        0,
+        4,
+        5
+      ],
+      "pairs": [
+        [
+          0,
+          4
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "changed_pixels": [
+        0,
+        336
+      ],
+      "changes": 1,
+      "denominator": 2
+    },
+    "missing_image_3": {
+      "selected": [
+        0,
+        3,
+        4,
+        5
+      ],
+      "pairs": [
+        [
+          4,
+          5
+        ]
+      ],
+      "changed_pixels": [
+        336
+      ],
+      "changes": 1,
+      "denominator": 3
+    },
+    "missing_image_4": {
+      "selected": [
+        0,
+        3,
+        4,
+        5
+      ],
+      "pairs": [
+        [
+          0,
+          3
+        ]
+      ],
+      "changed_pixels": [
+        336
+      ],
+      "changes": 1,
+      "denominator": 3
+    },
+    "selection_window_end_5_over_30": {
+      "selected": [
+        0,
+        3,
+        4
+      ],
+      "changes": 2,
+      "denominator": 2
+    },
+    "selection_window_start_3_over_30": {
+      "selected": [
+        3,
+        4,
+        5
+      ],
+      "changes": 2,
+      "denominator": 2
+    },
+    "selection_window_start_4_over_30": {
+      "selected": [
+        4,
+        5
+      ],
+      "aggregate": null
+    },
+    "selection_window_end_3_over_30": {
+      "selected": [
+        0
+      ],
+      "aggregate": null
+    },
+    "missing_file_for_present_key": "FileNotFoundError, both paths",
+    "cut_selectors_2_and_foreign_colon_presenter": "ValueError",
+    "root_selection": [
+      "missing-compiled-id refused",
+      "ambiguous-compiled-id refused",
+      "foreign-owner refused",
+      "stale-params refused"
+    ],
+    "memory_only_15_pixel_control": {
+      "fraction": 0.01877346683354193,
+      "strict_greater_than_2_percent": false
+    },
+    "memory_only_16_pixel_control": {
+      "fraction": 0.02002503128911139,
+      "strict_greater_than_2_percent": true
+    }
+  },
+  "final_pytest": "25 passed in 4.71s"
+}

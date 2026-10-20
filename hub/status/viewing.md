@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T06:28:57Z | dispatcher heartbeat 8s -->
+<!-- viewing | 2026-10-20T06:34:11Z | dispatcher heartbeat 4s -->
 # viewing — 2026-10-20 06:07:55 UTC
 Milestone: M0 COMPLETE; M1 RECORDED in PLAN. M3 active; frame/audio parity and M4 delivery remain OPEN.
 Integrated: Composition ff0536bb, immutable0.0.11, build/repeat pack/ESM+SSR/strictNodeNext PASS; central composition-full-1020040915-15314 npm test65PASS. Artifact58344B dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601. Public10 c04ada57/cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7 remains immutable; Agent adopted10, App paired root still pending. Each version needs its own coordinated pair.
