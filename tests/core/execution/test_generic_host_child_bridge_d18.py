@@ -4741,6 +4741,7 @@ def private_nonblocking_diagnostic_sink():
 
 
 @pytest.mark.parametrize("sink_failed", [False, True])
+@pytest.mark.posix_native
 def test_host_bridge_dispatch_diagnostic_preserves_redacted_reply(
         world, monkeypatch, capsys, sink_failed, private_nonblocking_diagnostic_sink):
     with private_nonblocking_diagnostic_sink() as private_nonblocking_diagnostic_sink:
@@ -4798,6 +4799,7 @@ def test_host_bridge_dispatch_diagnostic_preserves_redacted_reply(
 
 
 @pytest.mark.parametrize("sink_failed", [False, True])
+@pytest.mark.posix_native
 def test_host_bridge_outer_send_diagnostic_preserves_revoke_close(
         world, monkeypatch, capsys, sink_failed, private_nonblocking_diagnostic_sink):
     with private_nonblocking_diagnostic_sink() as private_nonblocking_diagnostic_sink:

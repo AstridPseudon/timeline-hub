@@ -33,6 +33,7 @@ LANE_MARKERS = {
     "darwin_native": "needs native macOS APIs; skipped elsewhere",
     "live": "needs real provider credentials",
     "opt_in": "explicitly opt-in; never in the default lane",
+    "posix_native": "needs POSIX-only process or file descriptor APIs",
 }
 
 
@@ -126,3 +127,5 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if sys.platform != "darwin" and item.get_closest_marker("darwin_native"):
             item.add_marker(pytest.mark.skip(reason="darwin_native: needs macOS"))
+        if os.name != "posix" and item.get_closest_marker("posix_native"):
+            item.add_marker(pytest.mark.skip(reason="posix_native: needs POSIX process or descriptor APIs"))

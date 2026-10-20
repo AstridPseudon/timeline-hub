@@ -1828,6 +1828,7 @@ def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, 
     assert runtime.settlements == [] and runtime.failures == []
 
 
+@pytest.mark.posix_native
 def test_startup_phase_row_is_fixed_numeric_and_preserves_fd_flags(tmp_path, monkeypatch):
     import fcntl
     from astrid.core.execution import generic_host as module
@@ -1858,6 +1859,7 @@ def test_startup_phase_row_is_fixed_numeric_and_preserves_fd_flags(tmp_path, mon
 
 
 @pytest.mark.parametrize('case', ['disabled', 'phase', 'mode', 'owner', 'full_pipe', 'socket'])
+@pytest.mark.posix_native
 def test_startup_phase_skips_unadmitted_sink_without_flag_changes(tmp_path, monkeypatch, case):
     import fcntl
     from types import SimpleNamespace

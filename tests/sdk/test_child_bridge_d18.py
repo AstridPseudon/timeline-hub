@@ -1365,6 +1365,7 @@ def private_nonblocking_diagnostic_sink():
     ("envelope", "envelope", "ValueError"),
     ("data", "data", "ValueError"),
 ])
+@pytest.mark.posix_native
 def test_bridge_failure_diagnostic_is_redacted_and_preserves_revocation(
         failure, phase, exception_class, capsys, private_nonblocking_diagnostic_sink):
     with private_nonblocking_diagnostic_sink() as private_nonblocking_diagnostic_sink:
@@ -1423,6 +1424,7 @@ def test_bridge_failure_diagnostic_is_redacted_and_preserves_revocation(
                             "dispatch_elapsed_seconds"}
 
 
+@pytest.mark.posix_native
 def test_bridge_failure_diagnostic_never_emits_custom_class_or_untrusted_operation(private_nonblocking_diagnostic_sink):
     with private_nonblocking_diagnostic_sink() as private_nonblocking_diagnostic_sink:
         class PrivateTokenCustomError(OSError):
@@ -1439,6 +1441,7 @@ def test_bridge_failure_diagnostic_never_emits_custom_class_or_untrusted_operati
         assert row["operation"] == "unknown" and row["phase"] == "send"
 
 
+@pytest.mark.posix_native
 def test_bridge_diagnostic_sink_failure_cannot_mask_error_or_skip_close(monkeypatch, private_nonblocking_diagnostic_sink):
     with private_nonblocking_diagnostic_sink() as private_nonblocking_diagnostic_sink:
         from astrid.sdk.exceptions import CapabilityInvocationError
@@ -1478,6 +1481,7 @@ def test_bridge_diagnostic_sink_failure_cannot_mask_error_or_skip_close(monkeypa
 
 
 @pytest.mark.parametrize("concurrent_writer", [False, True])
+@pytest.mark.posix_native
 def test_full_stderr_pipe_diagnostic_never_blocks_cleanup_and_restores_flags(monkeypatch, concurrent_writer):
     import fcntl
     import os

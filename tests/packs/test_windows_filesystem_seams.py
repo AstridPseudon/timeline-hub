@@ -12,6 +12,8 @@ import pytest
 
 from runtime_protocol.dirfd import _WindowsFilesystem, filesystem
 
+pytestmark = pytest.mark.posix_native
+
 
 class WindowsFilesystemSeam:
     O_DIRECTORY = _WindowsFilesystem.O_DIRECTORY
@@ -43,8 +45,6 @@ class WindowsFilesystemSeam:
 
 @pytest.fixture
 def windows_filesystem(monkeypatch):
-    if os.name != "posix":
-        pytest.skip("Windows-on-POSIX filesystem seam")
     seam = WindowsFilesystemSeam()
 
     def install(module):
