@@ -363,15 +363,62 @@ def test_generated_domains_preserve_project_media_and_task_listing(tmp_path):
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: legacy timeline publication, timeline archive/recover and direct shot/reference writes are retired (410); restored by their /v1 commit replacements")
-def test_generated_timeline_recovery_is_retired_pending_commit_replacement(tmp_path):
+def test_generated_timeline_visibility_is_project_catalog_state(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
+        created = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
+        before = client.get_project_timeline(project.project_id, "timeline")
+        history_before, _ = client.list_timeline_history("timeline")
+        archived = client.archive_timeline("timeline", expected_version=created["version"], idempotency_key="archive")
+        assert archived["archived"] is True
+        assert archived["shots"] == before["shots"] and archived["references"] == before["references"]
+        recovered = client.recover_timeline("timeline", expected_version=archived["version"], version=archived["version"], idempotency_key="recover")
+        assert recovered["archived"] is False and recovered["shots"] == before["shots"]
+        assert recovered["references"] == before["references"]
+        after = client.get_project_timeline(project.project_id, "timeline")
+        assert {key: after[key] for key in ("head_revision_id", "head_publication_id", "shots", "references")} == {
+            key: before[key] for key in ("head_revision_id", "head_publication_id", "shots", "references")}
+        history_after, _ = client.list_timeline_history("timeline")
+        assert history_after == history_before
+        assert client.archive_timeline("timeline", expected_version=created["version"], idempotency_key="archive") == archived
+        assert client.recover_timeline("timeline", expected_version=archived["version"], version=archived["version"], idempotency_key="recover") == recovered
+    finally:
+        daemon.stop()
+
+
+def test_generated_historical_timeline_recover_refuses_before_writes(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
+        created = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
+        archived = client.archive_timeline("timeline", expected_version=created["version"], idempotency_key="archive")
+        before = client.get_project_timeline(project.project_id, "timeline")
+        with pytest.raises(ApiError) as error:
+            client.recover_timeline("timeline", expected_version=archived["version"], version=created["version"], idempotency_key="historical-recover")
+        assert error.value.status == 410
+        assert error.value.code == "retired_route"
+        assert "timeline.restore" in error.value.message
+        assert error.value.details["replacement"] == "timeline.restore"
+        assert client.get_project_timeline(project.project_id, "timeline") == before
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="direct timeline, shot and reference writers remain retired")
+def test_generated_direct_timeline_shot_reference_writers_remain_retired(tmp_path):
+    """Keep the former direct-writer expectations until their command paths land."""
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
     try:
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
         object_row = client.ingest_project_object(project.project_id, b"managed", media_type="application/octet-stream", idempotency_key="media", filename="managed.bin")
-        timeline = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
+        client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
         saved = legacy_call(client, "PATCH", "/v1/timelines/timeline", {"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}, key="timeline-update")
         history, _ = client.list_timeline_history("timeline")
         assert [item["version"] for item in history] == [1, 2]

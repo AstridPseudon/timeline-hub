@@ -24,7 +24,7 @@ from test_shot_composition_runtime import restore_provider as actual_provider  #
 
 FAMILIES = (
     "update_timeline", "replace_timeline_clip", "create_timeline_document",
-    "replace_parent_composition_media", "archive_timeline", "recover_timeline",
+    "replace_parent_composition_media",
 )
 STATES = ("tracked", "fresh", "unused")
 
@@ -192,6 +192,57 @@ def test_http_publish_parent_composition_refuses_tracked_timeline_without_writes
     assert error.value.details["reason"] == "timeline_commit_required"
     assert snapshot(case.service) == before
     assert case.service.store.conn.total_changes == changes
+
+
+def test_service_catalog_visibility_unarchives_current_or_absent_version(service_case):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    commits = service._timeline_commits()[0]
+    closure_before = commits.revision_closure(case.project, "tracked", created["head_revision_id"])
+    history_count = service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0]
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="visibility-archive",
+    )
+    archived_data = archived["data"]
+    absent = service.recover_timeline(
+        "tracked", {"expected_version": archived_data["version"]}, idempotency_key="visibility-recover-absent",
+    )
+    absent_data = absent["data"]
+    assert absent_data["archived"] is False
+    current = service.recover_timeline(
+        "tracked", {"expected_version": absent_data["version"], "version": absent_data["version"]},
+        idempotency_key="visibility-recover-current",
+    )
+    assert current["data"]["archived"] is False
+    assert commits.revision_closure(case.project, "tracked", created["head_revision_id"]) == closure_before
+    assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == history_count
+
+
+def test_service_historical_recover_refuses_before_legacy_replay_or_writes(service_case, monkeypatch):
+    case = service_case
+    service = case.service
+    created = service.create_timeline(case.project, "historical", idempotency_key="historical-create")
+    created_data = created["data"]
+    archived = service.archive_timeline(
+        "historical", {"expected_version": created_data["version"]}, idempotency_key="historical-archive",
+    )
+    archived_data = archived["data"]
+    before = snapshot(service)
+
+    def replay(*args, **kwargs):
+        pytest.fail("historical recover consulted a legacy idempotency replay")
+
+    monkeypatch.setattr(service, "_command_replay", replay)
+    with pytest.raises(RetiredRouteError) as error:
+        service.recover_timeline(
+            "historical", {"expected_version": archived_data["version"], "version": created_data["version"]},
+            idempotency_key="historical-recover",
+        )
+    assert error.value.status == 410
+    assert "timeline.restore" in str(error.value)
+    assert error.value.details["replacement"] == "timeline.restore"
+    assert snapshot(service) == before
 
 
 def command_body(case, commands):

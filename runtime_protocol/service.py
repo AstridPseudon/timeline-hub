@@ -3845,11 +3845,121 @@ class RuntimeService:
 
     @_durable_mutation
     def archive_timeline(self, timeline_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        expected = self._expected_version(body)
+        current = self._timeline_resource(timeline_id)
+        project_id = str(current["project_id"])
+        request_hash = hashlib.sha256(canonical_json({
+            "timeline_id": timeline_id, "body": body, "action": "archive",
+        }).encode()).hexdigest()
+        replay = self._command_replay(
+            "timeline.archive", timeline_id, idempotency_key, request_hash,
+            project_id=project_id,
+        )
+        if replay is not None:
+            return replay
+        if current["version"] != expected:
+            raise ConflictError(
+                "timeline version conflict",
+                details={"expected": expected, "actual": current["version"]},
+            )
+        self.store.conn.execute(
+            "UPDATE timelines SET archived_at=?, version=? WHERE id=?",
+            (now(), expected + 1, timeline_id),
+        )
+        resource = self._timeline_resource(timeline_id)
+        event_id = self.store._append_timeline_event(
+            timeline_id, "timeline.archived", {
+                "project_id": project_id, "version": resource["version"],
+            },
+        )
+        event_seq = self.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?",
+            (timeline_id,),
+        ).fetchone()[0]
+        return self._command_record(
+            "timeline.archive", timeline_id, idempotency_key, request_hash,
+            resource, project_id=project_id, event_ids=(event_id,),
+            primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
+        )
 
     @_durable_mutation
     def recover_timeline(self, timeline_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        expected = self._expected_version(body)
+        target = body.get("version")
+        if "version" in body and (isinstance(target, bool) or not isinstance(target, int) or target < 1):
+            raise ValidationError("version must be a positive integer when provided")
+        current = self._timeline_resource(timeline_id)
+        project_id = str(current["project_id"])
+        request_hash = hashlib.sha256(canonical_json({
+            "timeline_id": timeline_id, "body": body, "action": "recover",
+        }).encode()).hexdigest()
+        # This operation is catalog visibility only.  A historical target is
+        # the retired flat-projection writer; canonical history is restored by
+        # the recorded timeline.restore command instead.  An exact receipt
+        # from this visibility-only implementation remains replayable, but a
+        # legacy historical receipt must not be allowed to resurrect its
+        # flat-projection write.
+        if target is not None and target != current["version"]:
+            safe_receipt = self.store.conn.execute(
+                "SELECT event_ids_json FROM command_idempotency "
+                "WHERE command_kind=? AND aggregate_id=? AND idempotency_key=? "
+                "AND request_hash=?",
+                ("timeline.recover", timeline_id, idempotency_key, request_hash),
+            ).fetchone() if idempotency_key is not None else None
+            if safe_receipt:
+                event_ids = json.loads(safe_receipt["event_ids_json"] or "[]")
+                event = self.store.conn.execute(
+                    "SELECT kind, payload_json FROM timeline_events "
+                    "WHERE id=? AND timeline_id=?",
+                    (event_ids[0], timeline_id),
+                ).fetchone() if event_ids else None
+                if event and event["kind"] == "timeline.recovered" and "target_version" not in json.loads(event["payload_json"]):
+                    replay = self._command_replay(
+                        "timeline.recover", timeline_id, idempotency_key,
+                        request_hash, project_id=project_id,
+                    )
+                    if replay is not None:
+                        return replay
+            raise RetiredRouteError(
+                "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
+                details={
+                    "status": "refused", "reason": "timeline_restore_required",
+                    "replacement": "timeline.restore", "requested_version": target,
+                    "current_version": current["version"],
+                },
+            )
+        replay = self._command_replay(
+            "timeline.recover", timeline_id, idempotency_key, request_hash,
+            project_id=project_id,
+        )
+        if replay is not None:
+            return replay
+        if current["version"] != expected:
+            raise ConflictError(
+                "timeline version conflict",
+                details={"expected": expected, "actual": current["version"]},
+            )
+        self.store.conn.execute(
+            "UPDATE timelines SET archived_at=NULL, version=? WHERE id=?",
+            (expected + 1, timeline_id),
+        )
+        resource = self._timeline_resource(timeline_id)
+        event_id = self.store._append_timeline_event(
+            timeline_id, "timeline.recovered", {
+                "project_id": project_id, "version": resource["version"],
+            },
+        )
+        event_seq = self.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?",
+            (timeline_id,),
+        ).fetchone()[0]
+        return self._command_record(
+            "timeline.recover", timeline_id, idempotency_key, request_hash,
+            resource, project_id=project_id, event_ids=(event_id,),
+            primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
+        )
 
     def get_shot(self, shot_id):
         row = self.store.conn.execute("SELECT * FROM timeline_shots WHERE id=?", (shot_id,)).fetchone()
