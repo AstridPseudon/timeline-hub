@@ -30,3 +30,6 @@ Make no installs, pushes or integration changes. Use the existing venvs. Tell yo
 
 ## 2026-10-20 00:55Z — lead: QUIET WINDOW for the final M1 full retry
 Your manager will run ONE bounded full (maxWorkers=2) on the final tree. While it runs (~35 minutes), keep the machine quiet: no other heavy jobs, tsc serialised or paused, no installs. Watch load, and record peak load and memory in STATUS. This is the last M1 gate.
+
+## 2026-10-20 00:50Z — lead: release the held jobs right after the M1 full
+Once full 12729 finishes, move app-m2-clip-params-session, app-m2-params-discrete-ui and app-m2-render-requester-map from queue/held back to queue/pending, and post the full's final counts to STATUS.

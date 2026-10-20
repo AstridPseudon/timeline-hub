@@ -3,8 +3,9 @@ Status: design-only; Runtime base `9f9b25c`; never edit generated artifacts by h
 1. Canonical contract and ownership
 - Runtime owns `contract/openapi/workspace-v1.yaml`, `contract/schemas/task.json`,
   `contract/schemas/handshake-response.json`, and `runtime_protocol/store.py:_freeze_managed_render_inputs`.
-- Add a closed five-field `canonical_revision` under render `spec.params`
-  (project_id, timeline_id, revision_id, publication_id, content_digest); retain
+- Add the approved `selector` plus a closed five-field `canonical_revision` under
+  render `spec.params` (project_id, timeline_id, revision_id, publication_id,
+  content_digest; publication_id is the accepted receipt_id); retain
   Runtime authority under `Task.spec.spec.inputs.timeline_authority`. No new route
   or top-level AdmitTask field.
 - Agent owns `astrid/packs/rendering/pack.yaml` and
@@ -32,8 +33,8 @@ Status: design-only; Runtime base `9f9b25c`; never edit generated artifacts by h
 4. Release order and checks
 - `0.2.2` is FROZEN. Release ordinary root bundle 2 first; historical bundle 3 only
   if needed, with its own coordinated contract version.
-- Change canonical inputs, run `python generators/generate.py`, the documented
-  `node tools/generate_typescript_conformance.mjs ... --check ...`, and
+- Change canonical inputs, run `python generators/generate.py`,
+  `node tools/generate_typescript_conformance.mjs --contract contract/openapi/workspace-v1.yaml --schema-manifest contract/manifest.json --component-manifest contract/component-manifest.json --fixture-root conformance/fixtures --check`, and
   `python scripts/artifact_manifest.py`; verify `generate.py --check` and
   `python scripts/artifact_manifest.py --check`. Agent then updates/checks `runtime.lock.json`.
 5. Response and conformance
