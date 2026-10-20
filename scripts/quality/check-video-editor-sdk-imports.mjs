@@ -19,7 +19,6 @@ const tsconfigPath = path.join(repoRoot, 'tsconfig.json');
 const tscPath = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
 const videoEditorDir = path.join(repoRoot, 'src', 'tools', 'video-editor') + path.sep;
 const extensionExamplesDir = path.join(videoEditorDir, 'examples', 'extensions') + path.sep;
-const creativeLabTestingDir = path.join(extensionExamplesDir, 'creative-lab', 'testing') + path.sep;
 const isRelease = process.argv.includes('--release');
 const isAudit = process.argv.includes('--audit') || !isRelease;
 
@@ -306,8 +305,7 @@ const files = consumerRoots.flatMap((root) => fs.existsSync(root) && fs.statSync
 function consumerKind(filePath) {
   const relativePath = normalizeConfigPath(relativeToRepo(filePath));
   if (relativePath.startsWith(`src${path.sep}examples${path.sep}`)
-    || (relativePath.startsWith(`src${path.sep}tools${path.sep}video-editor${path.sep}examples${path.sep}extensions${path.sep}`)
-      && !relativePath.includes(`${path.sep}creative-lab${path.sep}testing${path.sep}`))) {
+    || relativePath.startsWith(`src${path.sep}tools${path.sep}video-editor${path.sep}examples${path.sep}extensions${path.sep}`)) {
     return 'extension';
   }
   if (relativePath.startsWith(`examples${path.sep}embed-demo${path.sep}src${path.sep}`)
@@ -344,9 +342,7 @@ function collectFailuresForFile(filePath, content) {
     }
 
     const target = relativeToRepo(resolvedTarget);
-    if (kindOfConsumer === 'extension'
-      && resolvedTarget.startsWith(extensionExamplesDir)
-      && !resolvedTarget.startsWith(creativeLabTestingDir)) {
+    if (kindOfConsumer === 'extension' && resolvedTarget.startsWith(extensionExamplesDir)) {
       continue;
     }
     if (kindOfConsumer === 'extension' && specifier === '@astrid/editor-sdk') {
@@ -662,19 +658,14 @@ function runNegativeFixtures() {
     allOk = false;
   }
 
-  const extensionPackagePath = path.join(repoRoot, 'src', 'tools', 'video-editor', 'examples', 'extensions', 'creative-lab', 'branching-cut', 'index.ts');
+  const extensionPackagePath = path.join(repoRoot, 'src', 'tools', 'video-editor', 'examples', 'extensions', 'flagship-local', 'index.ts');
   if (collectFailuresForFile(extensionPackagePath, forbiddenImport).length !== 1) {
     console.error(`${NEGATIVE_LABEL} FAILED: bundled extension examples must reject host implementation imports.`);
     allOk = false;
   }
-  const sharedExampleHelper = "import { x } from '../timelineMarkerClusters';\nvoid x;\n";
+  const sharedExampleHelper = "import { x } from './FlagshipEffectComponent';\nvoid x;\n";
   if (collectFailuresForFile(extensionPackagePath, sharedExampleHelper).length !== 0) {
     console.error(`${NEGATIVE_LABEL} FAILED: bundled extension examples should allow helpers within their owned examples tree.`);
-    allOk = false;
-  }
-  const hostHarnessImport = "import { createCreativeLabSnapshot } from '../testing/createCreativeLabHarness';\nvoid createCreativeLabSnapshot;\n";
-  if (collectFailuresForFile(extensionPackagePath, hostHarnessImport).length !== 1) {
-    console.error(`${NEGATIVE_LABEL} FAILED: bundled extensions must not depend on host testing harnesses.`);
     allOk = false;
   }
 

@@ -998,6 +998,49 @@ describe('T5.1 — geometry and cadence through the real host', () => {
     expect(legend).toHaveTextContent('Layers 7–9/10');
   });
 
+  it.each([
+    // The layer budget flips at 640 px: three below, six from there up.
+    { viewportWidth: 639, capacity: 3, pageCount: 3, firstPage: 'Layers 1–3/7', secondPage: 'Layers 4–6/7' },
+    { viewportWidth: 640, capacity: 6, pageCount: 2, firstPage: 'Layers 1–6/7', secondPage: 'Layers 7–7/7' },
+    { viewportWidth: 1600, capacity: 6, pageCount: 2, firstPage: 'Layers 1–6/7', secondPage: 'Layers 7–7/7' },
+  ])(
+    'pages seven layers $capacity at a time at a $viewportWidth px viewport',
+    async ({ viewportWidth, capacity, pageCount, firstPage, secondPage }) => {
+      const controllers = Array.from({ length: 7 }, (_, index) => markerExtension(
+        overlayManifest({
+          id: `haus.astrid.timeline-overlay-layer-${index}`,
+          contributionId: `layer-${index}`,
+        }),
+        { markers: [{ id: `coincident-${index}`, time: 4, label: `Layer ${index}` }] },
+      ));
+      // The desktop track column (144px) holds the full pager this test steps through.
+      const host = renderOverlayHost(
+        controllers.map((controller) => controller.extension),
+        {
+          viewport: { viewportWidth },
+          geometry: createTimelineOverlayGeometry({ scale: 1, scaleWidth: 100, startLeft: 144, extentStart: 0, extentEnd: 10_000 }),
+        },
+      );
+
+      await waitFor(() => {
+        expect(host.rulerStripRoot.querySelectorAll('[data-marker-id]')).toHaveLength(capacity);
+      });
+      const legend = host.rulerPortalRoot.querySelector<HTMLElement>('[data-testid="timeline-marker-layer-legend"]')!;
+      expect(legend).toHaveAttribute('data-marker-layer-page-count', String(pageCount));
+      expect(legend).toHaveTextContent(firstPage);
+      expect(host.rulerStripRoot.querySelectorAll('[data-testid="timeline-marker-layer"]')).toHaveLength(capacity);
+
+      fireEvent.click(within(legend).getByRole('button', { name: 'Next marker layers' }));
+      await waitFor(() => {
+        expect(legend).toHaveTextContent(secondPage);
+      });
+      const secondPageIds = [...host.rulerStripRoot.querySelectorAll('[data-marker-id]')]
+        .map((marker) => marker.getAttribute('data-marker-id'));
+      expect(secondPageIds).toHaveLength(Math.min(capacity, 7 - capacity));
+      expect(secondPageIds.some((id) => id === 'coincident-0')).toBe(false);
+    },
+  );
+
   it('fits the pager into the 56px touch track column as one button that steps through the pages', async () => {
     const controllers = Array.from({ length: 10 }, (_, index) => markerExtension(
       overlayManifest({

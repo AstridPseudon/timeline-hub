@@ -1099,14 +1099,14 @@ Contract details:
 
 #### Seeing a lane
 
-Lanes assemble from host-adapted transcript segments. The fastest way to see
-one: run the DEV editor with `?transcriptLaneFixture=1` in the URL. That
-installs a fixture provider (DEV-only, `dev/transcript-lane/fixtureProvider.ts`)
-that answers every media asset with two fixture transcript segments — any
-project with a sound-bearing media clip paints the transcript lane, and chips
-are clickable.
+Lanes assemble from transcript source items. The fastest way to see one: give a
+timeline's persisted bundle (`bundle.itemsBySchemaRef['astrid.transcript_segment/v1']`)
+`source_seconds` interval items whose `sourceArtifactRef.assetId` is the id of a
+sound-bearing media clip's asset. The lane maps them onto every clip that plays
+that asset, and chips are clickable. Browser specs seed exactly this through
+`publishTranscriptSegments` in `tests/e2e/timeline/support.ts`.
 
-Without the flag, lanes assemble only from real profiles: the embed host's
+Besides persisted source items, lanes assemble from real profiles: the embed host's
 resolver branch (`EditorRuntimeProvider.tsx`) forwards your `assetResolver`,
 and a resolver whose `onProfileLoad` returns `{ transcript: { segments } }`
 feeds the lane pipeline for sound-bearing media clips. Stock prod-backed

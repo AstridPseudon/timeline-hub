@@ -173,9 +173,9 @@ and a corresponding entry in the supported/deferred matrix.
 
 ## 5. Ship-quality checklist
 
-This is the release-hardening reference for the 13 dev-local extensions: the
-ten Creative Lab extensions, Scene Phase Markers, Transcript Caption Foundry,
-and the Astrid Runaway typed-timeline viewer. It turns the exploratory
+This is the release-hardening reference for the dev-local extensions: Scene Phase
+Markers, Transcript Caption Foundry, and the Astrid Runaway typed-timeline viewer
+(the ten Creative Lab extensions it once covered were removed 2026-10-19). It turns the exploratory
 implementation into a measurable production release.
 
 For the implementation history and concrete frictions already found, see

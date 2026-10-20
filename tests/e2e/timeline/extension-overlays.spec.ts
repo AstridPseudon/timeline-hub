@@ -1,23 +1,24 @@
 /**
- * Extension timeline overlays — the `?timelineOverlayCanary=1` DEV canary,
- * across desktop (mouse), tablet (touch), and phone (touch).
+ * Extension timeline overlays and keybindings, across desktop (mouse) and tablet (touch).
  *
- * This is the real-browser half of T9.1 (plan step 22 + rollout
- * qualification). The jsdom suites bind the host, marker layer, pointer
- * arbitration and pinch refusal to DOM contracts; this spec drives the REAL
- * scene-phase-markers canary end to end against a live dev server:
+ * This is the real-browser half of the overlay contract. The jsdom suites bind the host, marker
+ * layer, pointer arbitration and pinch refusal to DOM contracts; this spec drives the REAL
+ * scene-phase-markers fixture extension end to end against a live dev server:
  *
- *   - the overlay stays dark without the canary query and mounts with it,
- *   - passive timeline gestures (clip select/drag, ruler scrub) behave
- *     identically while overlays are mounted but unclaimed,
+ *   - the overlay mounts while the extension is enabled and unmounts when it is disabled,
+ *   - passive timeline gestures (clip select/drag, ruler scrub) behave identically while
+ *     overlays are mounted but unclaimed,
  *   - marker drag commits exactly once and lands on the frame grid,
- *   - marker content geometry tracks `startLeft + time * pps` across zoom
- *     and scroll (the ruler-strip translateX(-scrollLeft) contract),
+ *   - marker content geometry tracks `startLeft + time * pps` across zoom and scroll (the
+ *     ruler-strip translateX(-scrollLeft) contract),
  *   - drag-to-edge auto-scrolls the edit area,
- *   - a second-finger pinch is refused while a marker owns the gesture and
- *     works again once the claim is released (touch marker-versus-pinch),
- *   - disabling the extension MID-DRAG terminates the session cleanly
- *     (no commit, no stuck gesture owner, editor stays interactive).
+ *   - disabling the extension MID-DRAG terminates the session cleanly (no commit, no stuck
+ *     gesture owner, editor stays interactive), by mouse on desktop only (the tablet touch-teardown
+ *     step went with upstream 8efc4cd6, which retired the dock and the mode bar it drove),
+ *   - a second-finger pinch is refused while a marker owns the gesture and works again once the
+ *     claim is released (touch marker-versus-pinch), and a tap on a clip then opens its sheet,
+ *   - a keybinding and the command palette both run the extension's command against the live
+ *     playhead and the write survives the Runtime round trip.
  *
  * One command: `npm run test:e2e:timeline` (boots the dev server + fake Runtime
  * via `playwright.config.ts` webServer entries).
@@ -25,7 +26,7 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { CLIP_BODY_SELECTOR } from '../../../src/tools/video-editor/lib/timeline-dom.ts';
 import {
-  EDITOR_SETTLE_MS,
+  EDITOR_URL,
   collectPageLogs,
   countSelectedClips,
   createTouchInput,
@@ -35,7 +36,6 @@ import {
   readFakeRuntimeComposition,
   resetFakeRuntimeBaseline,
   type TouchInput,
-  editorUrl,
 } from './support';
 
 // ---------------------------------------------------------------------------
@@ -43,14 +43,14 @@ import {
 // ---------------------------------------------------------------------------
 
 const SCENE_PHASE_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
-const CANARY_URL = editorUrl({ params: { timelineOverlayCanary: '1' } });
+const MARK_PHASE_COMMAND_LABEL = 'Mark Scene Phase at Playhead';
 const EDIT_AREA_SELECTOR = '.timeline-canvas-edit-area';
 const STRIP_SELECTOR = '[data-testid="timeline-extension-ruler-overlay-strip"]';
 const DISABLE_TOGGLE_SELECTOR = `[data-video-editor-dev-local-toggle="${SCENE_PHASE_EXTENSION_ID}"]`;
 const SCENE_MARKER_LAYER_SELECTOR =
   `[data-testid="timeline-marker-layer"][data-marker-layer-key="${SCENE_PHASE_EXTENSION_ID}:scene-markers-overlay"]`;
 
-/** Stable marker fixture — the canary renders these on the ruler. */
+/** Stable marker fixture rendered on the ruler by the scene-phase-markers extension. */
 const MARKERS = [
   { id: 'e2e-marker-a', time: 1 },
   { id: 'e2e-marker-b', time: 3 },
@@ -61,39 +61,9 @@ function sceneMarkerLayer(page: Page) {
   return page.locator(SCENE_MARKER_LAYER_SELECTOR);
 }
 
-async function expectMarkerLayerComposition(page: Page, expectedTotal: number): Promise<void> {
-  const legend = page.getByTestId('timeline-marker-layer-legend');
-  await expect(legend).toBeVisible();
-  await expect(legend).toContainText(`/${expectedTotal}`);
-  const previous = legend.getByRole('button', { name: 'Previous marker layers' });
-  const next = legend.getByRole('button', { name: 'Next marker layers' });
-
-  for (let guard = 0; guard < expectedTotal && !(await previous.isDisabled()); guard += 1) {
-    await previous.click();
-  }
-  await expect(previous).toBeDisabled();
-
-  const seenLayerKeys = new Set<string>();
-  for (let guard = 0; guard < expectedTotal; guard += 1) {
-    await expect(legend).toContainText(`/${expectedTotal}`);
-    const layerKeys = await page.locator('[data-testid="timeline-marker-layer"]')
-      .evaluateAll((layers) => layers.map((layer) => layer.getAttribute('data-marker-layer-key')));
-    expect(layerKeys.length).toBeGreaterThan(0);
-    for (const key of layerKeys) {
-      expect(key).not.toBeNull();
-      seenLayerKeys.add(key!);
-    }
-
-    if (await next.isDisabled()) break;
-    const oldLabel = await legend.textContent();
-    await next.click();
-    await expect.poll(() => legend.textContent()).not.toBe(oldLabel);
-  }
-
-  expect(seenLayerKeys.size).toBe(expectedTotal);
-  while (!(await previous.isDisabled())) {
-    await previous.click();
-  }
+/** The seeded scene markers, wherever they render; other extensions' layers carry markers of their own. */
+function seededSceneMarkers(page: Page) {
+  return page.locator(MARKERS.map((marker) => `[data-marker-id="${marker.id}"]`).join(', '));
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +71,7 @@ async function expectMarkerLayerComposition(page: Page, expectedTotal: number): 
 // ---------------------------------------------------------------------------
 
 /**
- * Seed the canary's marker data on top of the seeded timeline, as a second writer would: a new head
+ * Seed the scene-phase-markers data on top of the seeded timeline, as a second writer would: a new head
  * published to the Runtime with `config.app[<extension id>].sceneMarkers` set. The shared hard reset
  * replaces the whole composition (dropping `app`), so seeding must always happen after it.
  */
@@ -120,12 +90,11 @@ async function seedSceneMarkers(markers: Array<{ id: string; time: number }> = M
 }
 
 /**
- * Open the editor with the canary query. Clears the dev-local disable store
- * and editor zoom preference once per page session so each test starts from a
- * known state while a later Vite reload preserves the disabled state that the
- * test intentionally established.
+ * Open the editor. Clears the dev-local disable store and editor zoom preference once per page
+ * session so each test starts from a known state while a later Vite reload preserves the disabled
+ * state that the test intentionally established.
  */
-async function openCanaryEditor(page: Page): Promise<void> {
+async function openMarkerEditor(page: Page): Promise<void> {
   await page.addInitScript(() => {
     try {
       // This helper creates a fresh route visit independently of openEditor.
@@ -141,8 +110,8 @@ async function openCanaryEditor(page: Page): Promise<void> {
       // storage unavailable — defaults apply
     }
   });
-  await page.goto(CANARY_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await page.waitForTimeout(EDITOR_SETTLE_MS);
+  await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await page.getByRole('button', { name: 'Render', exact: true }).waitFor({ state: 'visible', timeout: 45_000 });
 }
 
 interface RulerMetrics {
@@ -200,32 +169,6 @@ async function rulerMetrics(page: Page): Promise<RulerMetrics> {
   }, EDIT_AREA_SELECTOR);
 }
 
-/**
- * Ensure the ruler shows at least `min` major time labels so rulerMetrics can
- * derive pps. Narrow viewports (phone) may show only one label at default
- * zoom. Zoom OUT at most 3 steps (keeps pps > 10 for the spec's assertion),
- * then scroll the edit area right to reveal later labels without changing pps.
- */
-async function ensureRulerLabels(page: Page, min = 2): Promise<void> {
-  const zoomOut = page.getByRole('button', { name: 'Zoom out timeline' });
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const count = await rulerLabelCount(page);
-    if (count >= min) return;
-    if (await zoomOut.count()) {
-      await zoomOut.first().click();
-      await page.waitForTimeout(250);
-    }
-  }
-  for (let scroll = 0; scroll < 4; scroll += 1) {
-    if ((await rulerLabelCount(page)) >= min) return;
-    await page.evaluate((selector) => {
-      const area = document.querySelector(selector) as HTMLElement | null;
-      if (area) area.scrollLeft += area.clientWidth / 2;
-    }, EDIT_AREA_SELECTOR);
-    await page.waitForTimeout(200);
-  }
-}
-
 /** Count of major `m:ss.ff` labels currently visible on the ruler. */
 async function rulerLabelCount(page: Page): Promise<number> {
   return page.evaluate(() => {
@@ -235,6 +178,18 @@ async function rulerLabelCount(page: Page): Promise<number> {
       .filter((el) => /^\d+:\d\d(?:\.\d\d)?$/.test(el.textContent?.trim() ?? ''))
       .length;
   });
+}
+
+/**
+ * Resolve after the browser has painted `count` more frames. Gesture streams and settle checks wait
+ * on the browser's own frame clock instead of a wall-clock sleep.
+ */
+async function nextFrames(page: Page, count = 2): Promise<void> {
+  await page.evaluate(async (frames) => {
+    for (let index = 0; index < frames; index += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+  }, count);
 }
 
 /**
@@ -264,24 +219,22 @@ async function markerTime(page: Page, markerId: string): Promise<number | null> 
   return value === null ? null : Number(value);
 }
 
-/** Poll the DOM marker attribute until it reaches `expected` (± tolerance). */
-async function waitForDomMarkerTime(
-  page: Page,
-  markerId: string,
+/** Wait until `observe()` reports a time within `tolerance` of `expected`; a miss reports the last value. */
+async function expectTimeToReach(
+  observe: () => Promise<number | null>,
   expected: number,
+  message: string,
   tolerance = 0.06,
 ): Promise<void> {
-  const deadline = Date.now() + 15_000;
-  for (;;) {
-    const current = await markerTime(page, markerId);
-    if (current !== null && Math.abs(current - expected) <= tolerance) {
-      return;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(`marker ${markerId} DOM time did not reach ${expected} (last=${current})`);
-    }
-    await page.waitForTimeout(200);
-  }
+  await expect.poll(async () => {
+    const current = await observe();
+    return current !== null && Math.abs(current - expected) <= tolerance ? expected : current;
+  }, { message, timeout: 15_000 }).toBe(expected);
+}
+
+/** The marker's rendered `data-marker-time` reaches `expected` (± tolerance). */
+function waitForDomMarkerTime(page: Page, markerId: string, expected: number): Promise<void> {
+  return expectTimeToReach(() => markerTime(page, markerId), expected, `marker ${markerId} DOM time`);
 }
 
 /** The scene markers in the Runtime's persisted head composition (`config.app`), not the editor's copy. */
@@ -301,25 +254,12 @@ async function readPlayheadTransformX(page: Page): Promise<number | null> {
   });
 }
 
-async function waitForPersistedMarkerTime(
-  markerId: string,
-  expected: number,
-  tolerance = 0.06,
-): Promise<void> {
-  const deadline = Date.now() + 15_000;
-  for (;;) {
-    const markers = await readPersistedSceneMarkers();
-    const marker = markers.find((entry) => entry.id === markerId);
-    if (marker && Math.abs(marker.time - expected) <= tolerance) {
-      return;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(
-        `persisted marker ${markerId} did not reach ${expected} (last=${JSON.stringify(markers)})`,
-      );
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
+function waitForPersistedMarkerTime(markerId: string, expected: number): Promise<void> {
+  return expectTimeToReach(
+    async () => (await readPersistedSceneMarkers()).find((entry) => entry.id === markerId)?.time ?? null,
+    expected,
+    `persisted marker ${markerId} time`,
+  );
 }
 
 /** Mouse drag on a ruler marker: down at its center, move `dx`, release. */
@@ -356,11 +296,41 @@ async function touchDragMarker(
   await touch.touchDrag(x, y, x + dx, y, { steps: 14 });
 }
 
+type CdpSession = Awaited<ReturnType<BrowserContext['newCDPSession']>>;
+
 /**
- * Touch marker-versus-pinch: finger 1 claims a marker drag (crossing the
- * 4 px activation threshold), then finger 2 attempts a two-finger pinch on
- * the edit area. The host's claim must make the pinch handler refuse to
- * initialize/continue, so the scale must not change.
+ * Finger 1: touchStart on the marker, then cross the 4 px activation threshold so the marker owns
+ * the gesture. Returns the point the finger rests at; the finger stays down until the caller ends it.
+ */
+async function touchClaimMarker(
+  cdp: CdpSession,
+  page: Page,
+  markerId: string,
+): Promise<{ x: number; y: number }> {
+  const marker = page.locator(`[data-marker-id="${markerId}"]`);
+  await marker.waitFor({ state: 'visible', timeout: 15_000 });
+  const box = await marker.boundingBox();
+  if (!box) {
+    throw new Error(`marker ${markerId} has no bounding box`);
+  }
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 1; i <= 3; i += 1) {
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: x + i * 6, y }],
+    });
+    await nextFrames(page, 1);
+  }
+  await expect(marker).toHaveAttribute('data-marker-dragging', 'true', { timeout: 5_000 });
+  return { x: x + 18, y };
+}
+
+/**
+ * Touch marker-versus-pinch: finger 1 claims a marker drag, then finger 2 attempts a two-finger
+ * pinch on the edit area. The host's claim must make the pinch handler refuse to initialize or
+ * continue, so the scale must not change.
  */
 async function touchDragMarkerThenPinch(
   context: BrowserContext,
@@ -382,48 +352,27 @@ async function touchDragMarkerThenPinch(
     }
   }, [EDIT_AREA_SELECTOR, markerId] as const);
   await page.waitForTimeout(200);
-  const box = await page.locator(`[data-marker-id="${markerId}"]`).boundingBox();
-  if (!box) {
-    throw new Error(`marker ${markerId} has no bounding box`);
-  }
-  const mx = box.x + box.width / 2;
-  const my = box.y + box.height / 2;
+  const finger1 = await touchClaimMarker(cdp, page, markerId);
   const areaCenterX = await page.evaluate((selector) => {
     const rect = document.querySelector(selector)?.getBoundingClientRect();
     return rect ? rect.x + rect.width / 2 : 0;
   }, EDIT_AREA_SELECTOR);
 
-  // Finger 1: touchStart on the marker, then cross the activation threshold.
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: mx, y: my }] });
-  for (let i = 1; i <= 3; i += 1) {
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchMove',
-      touchPoints: [{ x: mx + i * 6, y: my }],
-    });
-    await page.waitForTimeout(16);
-  }
-
   // Finger 2: a pinch attempt on the edit area while the marker owns the claim.
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
-    touchPoints: [
-      { x: mx + 18, y: my },
-      { x: areaCenterX - 40, y: editAreaCenterY },
-    ],
+    touchPoints: [finger1, { x: areaCenterX - 40, y: editAreaCenterY }],
   });
   for (let i = 1; i <= 8; i += 1) {
     const spread = 40 + i * 8;
     await cdp.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
-      touchPoints: [
-        { x: mx + 18, y: my },
-        { x: areaCenterX - spread, y: editAreaCenterY },
-      ],
+      touchPoints: [finger1, { x: areaCenterX - spread, y: editAreaCenterY }],
     });
-    await page.waitForTimeout(20);
+    await nextFrames(page, 1);
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await page.waitForTimeout(400);
+  await nextFrames(page, 2);
 }
 
 /** Scroll the edit area back to the left edge (content origin). */
@@ -432,64 +381,71 @@ async function resetScrollLeft(page: Page): Promise<void> {
     const area = document.querySelector(selector);
     if (area) area.scrollLeft = 0;
   }, EDIT_AREA_SELECTOR);
-  await page.waitForTimeout(300);
+  await expect.poll(() => page.evaluate(
+    (selector) => document.querySelector(selector)?.scrollLeft ?? -1,
+    EDIT_AREA_SELECTOR,
+  )).toBe(0);
+}
+
+/** The scene-phase-markers row's enable/disable toggle in the Extension Manager dialog. */
+function sceneExtensionToggle(page: Page) {
+  return page.locator(DISABLE_TOGGLE_SELECTOR);
 }
 
 /**
- * Disable the canary extension mid-drag via the ExtensionManager's dev-local
- * toggle. A real second pointer cannot reach the toggle — the dragging mouse
- * holds pointer capture on the marker button, which retargets every pointer
- * event — so this uses DOM-level clicks, which still exercise the real
- * store → page memo → lifecycle → host teardown path. The Extensions tab is
- * activated first because Radix mounts its TabsContent only when active (the
- * panel may be hidden entirely on phone, but the tab trigger is always in
- * the DOM).
+ * Open the Extension Manager the way a user does: the right dock's Extensions tab, then Manage. The
+ * dock must be open (it is by default on desktop widths). The tab only becomes selectable while an
+ * enabled extension contributes a panel, which the fixture catalog's overlay-layers extension does.
  */
-async function disableExtensionMidDrag(page: Page): Promise<void> {
-  async function openExtensionsTab(): Promise<boolean> {
-    return page.evaluate(() => {
-      const tab = Array.from(document.querySelectorAll('[role="tab"]'))
-        .find((el) => (el.textContent ?? '').trim() === 'Extensions');
-      if (!tab) return false;
-      (tab as HTMLElement).click();
-      return true;
-    });
-  }
-  let extensionsTabOpened = await openExtensionsTab();
+async function openExtensionManager(page: Page): Promise<void> {
+  const tab = page.getByRole('tab', { name: 'Extensions' });
+  await tab.click({ timeout: 8_000 });
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('button', { name: 'Manage extensions' }).click({ timeout: 8_000 });
+  await sceneExtensionToggle(page).waitFor({ state: 'attached', timeout: 10_000 });
+}
 
-  if (!extensionsTabOpened) {
-    // The phone has no right-hand dock (and no Inspector button). The shell's
-    // Extensions dialog opens from an extension-owned lane's info button, so use
-    // that when the toggle is not already in the DOM.
-    const ownerInfo = page.locator('[data-testid="data-lane-owner-info"]').first();
-    try {
-      await ownerInfo.click({ timeout: 3_000 });
-      await page.waitForTimeout(500);
-    } catch {
-      // No owned lane in this layout.
-    }
-    extensionsTabOpened = (await page.locator(DISABLE_TOGGLE_SELECTOR).count()) > 0;
-  }
+/** Close the Extension Manager dialog and give the editor back its pointer events. */
+async function closeExtensionManager(page: Page): Promise<void> {
+  await page.getByRole('dialog', { name: 'Extensions' }).getByRole('button', { name: 'Close' }).click({ timeout: 8_000 });
+  await expect(sceneExtensionToggle(page)).toHaveCount(0);
+}
 
-  if (!extensionsTabOpened) {
-    throw new Error('Extensions tab or manager not found in DOM');
-  }
-  await page.waitForTimeout(300);
-  // The dev-local toggle is a plain button whose state contract is its
-  // aria-label: "Disable <id>" when enabled, "Enable <id>" when disabled.
-  // Click exactly ONCE — retrying a toggle is state-reversing — then verify
-  // the flipped label. The marker-layer count assertion that follows verifies
-  // the actual page/runtime teardown path.
-  const toggle = page.locator(DISABLE_TOGGLE_SELECTOR);
+/** Flip the scene-phase-markers toggle exactly once: retrying a toggle is state-reversing. */
+async function flipSceneExtensionToggle(page: Page, expectedLabel: string): Promise<void> {
+  const toggle = sceneExtensionToggle(page);
   await toggle.evaluate((element) => {
     (element as HTMLElement).click();
   });
-  await expect(toggle).toHaveAttribute(
-    'aria-label',
-    `Enable ${SCENE_PHASE_EXTENSION_ID}`,
-    { timeout: 5_000 },
-  );
+  await expect(toggle).toHaveAttribute('aria-label', expectedLabel, { timeout: 5_000 });
 }
+
+/**
+ * Disable the scene-phase-markers extension while a marker owns the pointer. A real second pointer
+ * cannot reach the manager: the dragging pointer holds capture on the marker button (which retargets
+ * every pointer event) and the manager is a modal dialog, so this walks the same path with DOM-level
+ * clicks (dock tab -> Manage -> toggle). That still exercises the real store -> page memo ->
+ * lifecycle -> host teardown path. Desktop only: the touch editor mounts no dock.
+ */
+async function disableExtensionMidDrag(page: Page): Promise<void> {
+  const domClick = (selector: string) => page.locator(selector).evaluate((element) => {
+    (element as HTMLElement).click();
+  });
+  await domClick('[role="tab"][data-surface-tab="extensions"]');
+  const manage = page.locator('button[aria-label="Manage extensions"]');
+  await manage.waitFor({ state: 'attached', timeout: 10_000 });
+  await manage.evaluate((element) => {
+    (element as HTMLElement).click();
+  });
+  await sceneExtensionToggle(page).waitFor({ state: 'attached', timeout: 10_000 });
+  await flipSceneExtensionToggle(page, `Enable ${SCENE_PHASE_EXTENSION_ID}`);
+}
+
+// The shared reset hook in support.ts registers for the first spec file a worker loads only, so this spec
+// resets after each test itself: its saved markers and seeded heads must not reach the next spec.
+test.afterEach(async () => {
+  expect(await resetFakeRuntimeBaseline()).toBeNull();
+});
 
 // ---------------------------------------------------------------------------
 // Desktop (mouse)
@@ -498,7 +454,7 @@ async function disableExtensionMidDrag(page: Page): Promise<void> {
 test.describe('timeline extension overlays (desktop)', () => {
   test.use({ viewport: { width: 1600, height: 1000 } });
 
-  test('canary gate, passive parity, geometry, drag, auto-scroll, disable mid-drag', async ({ page }, testInfo) => {
+  test('overlay lifecycle, passive parity, geometry, drag, auto-scroll, disable mid-drag', async ({ page }, testInfo) => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
@@ -514,55 +470,35 @@ test.describe('timeline extension overlays (desktop)', () => {
       timeout: 20_000,
     });
 
-    // --- 1. DEV gate follows the EXTENSION's enablement, not a URL param ---
-    // The overlay host mounts whenever an enabled dev-local extension declares
-    // a `timelineOverlay` contribution — no ?timelineOverlayCanary=1 needed in
-    // DEV. Disabling that extension unmounts the host (marker layer gone).
+    // --- 1. the overlay follows the EXTENSION's enablement, not a URL param ---
+    // The overlay host mounts whenever an enabled dev-local extension declares a `timelineOverlay`
+    // contribution. Disabling that extension unmounts its layer.
     await openEditor(page);
-    await test.step('host mounts in DEV with an enabled overlay extension (no URL param)', async () => {
+    await test.step('host mounts with an enabled overlay extension (no URL param)', async () => {
       const markerLayer = sceneMarkerLayer(page);
       await expect(markerLayer).toBeVisible({ timeout: 20_000 });
       await expect(markerLayer).toHaveAttribute('data-marker-count', '3');
-      // The canary owns one stable layer while the ten Creative Lab marker
-      // extensions remain independently mounted and reachable.
-      await expectMarkerLayerComposition(page, 11);
     });
 
-    await test.step('disabling the overlay extension unmounts the host', async () => {
-      // Open the Extensions tab and flip the dev-local toggle off.
-      await page.locator('[role="tab"]', { hasText: 'Extensions' }).first().click({ timeout: 8_000 });
-      const toggle = page.locator(DISABLE_TOGGLE_SELECTOR);
-      await toggle.evaluate((element) => {
-        (element as HTMLElement).click();
-      });
-      await expect(toggle).toHaveAttribute(
-        'aria-label',
-        `Enable ${SCENE_PHASE_EXTENSION_ID}`,
-        { timeout: 5_000 },
-      );
+    await test.step('disabling the overlay extension unmounts its layer', async () => {
+      await openExtensionManager(page);
+      await flipSceneExtensionToggle(page, `Enable ${SCENE_PHASE_EXTENSION_ID}`);
       await expect(sceneMarkerLayer(page)).toHaveCount(0, { timeout: 10_000 });
-      await expectMarkerLayerComposition(page, 10);
-      await expect(sceneMarkerLayer(page).locator('[data-marker-id]')).toHaveCount(0);
-      // Re-enable so the canary-on step below starts from a known state.
-      await toggle.evaluate((element) => {
-        (element as HTMLElement).click();
-      });
-      await expect(toggle).toHaveAttribute(
-        'aria-label',
-        `Disable ${SCENE_PHASE_EXTENSION_ID}`,
-        { timeout: 5_000 },
-      );
+      await expect(seededSceneMarkers(page)).toHaveCount(0);
+      // Re-enable so the next step starts from a known state.
+      await flipSceneExtensionToggle(page, `Disable ${SCENE_PHASE_EXTENSION_ID}`);
+      await closeExtensionManager(page);
     });
 
     // --- 2. enabled extension + seeded markers mount on the ruler ---------
-    await openCanaryEditor(page);
+    await openMarkerEditor(page);
     const markerLayer = sceneMarkerLayer(page);
     await expect(markerLayer).toBeVisible({ timeout: 20_000 });
     await expect(markerLayer).toHaveAttribute('data-marker-count', '3');
     await expect(page.locator('[data-marker-id="e2e-marker-a"]')).toBeVisible();
     await expect(page.locator('[data-marker-id="e2e-marker-b"]')).toBeVisible();
     await expect(page.locator('[data-marker-id="e2e-marker-c"]')).toBeVisible();
-    await shot('canary-mounted');
+    await shot('mounted');
 
     // --- 3. passive parity: no overlay claim, gestures unchanged ----------
     await test.step('clip select works while overlays are mounted but unclaimed', async () => {
@@ -583,9 +519,10 @@ test.describe('timeline extension overlays (desktop)', () => {
       await page.mouse.down();
       await page.mouse.move(before.x + before.width / 2 + 48, before.y + before.height / 2, { steps: 6 });
       await page.mouse.up();
-      await page.waitForTimeout(1_000);
-      const after = await clip.boundingBox();
-      expect(after && Math.abs(after.x - before.x), `${before.x} -> ${after?.x}`).toBeGreaterThan(25);
+      await expect.poll(
+        async () => Math.abs(((await clip.boundingBox())?.x ?? before.x) - before.x),
+        { message: `clip x moved from ${before.x}`, timeout: 15_000 },
+      ).toBeGreaterThan(25);
     });
 
     await test.step('ruler scrub (playhead drag) works while overlays are mounted but unclaimed', async () => {
@@ -596,9 +533,10 @@ test.describe('timeline extension overlays (desktop)', () => {
       await page.mouse.down();
       await page.mouse.move(ruler.x + 340, ruler.y + 15, { steps: 5 });
       await page.mouse.up();
-      await page.waitForTimeout(300);
-      const afterTransform = await page.getAttribute('[data-testid="timeline-playhead"]', 'style');
-      expect(afterTransform, `${beforeTransform} -> ${afterTransform}`).not.toBe(beforeTransform);
+      await expect.poll(
+        () => page.getAttribute('[data-testid="timeline-playhead"]', 'style'),
+        { message: 'playhead moved by the ruler scrub', timeout: 15_000 },
+      ).not.toBe(beforeTransform);
     });
     await shot('passive');
 
@@ -635,10 +573,12 @@ test.describe('timeline extension overlays (desktop)', () => {
       const zoomIn = page.locator('button[aria-label="Zoom in timeline"]').first();
       for (let i = 0; i < 4; i += 1) {
         await zoomIn.click({ timeout: 5_000 });
-        await page.waitForTimeout(250);
       }
+      await expect.poll(
+        async () => (await rulerMetrics(page)).pps,
+        { message: `pps after zooming in from ${metrics0.pps}`, timeout: 15_000 },
+      ).toBeGreaterThan(metrics0.pps * 2);
       const metrics1 = await rulerMetrics(page);
-      expect(metrics1.pps, `pps ${metrics0.pps} -> ${metrics1.pps}`).toBeGreaterThan(metrics0.pps * 2);
       for (const marker of MARKERS) {
         const currentTime = await markerTime(page, marker.id);
         const contentX = await markerContentX(page, marker.id);
@@ -661,19 +601,24 @@ test.describe('timeline extension overlays (desktop)', () => {
         const area = document.querySelector(selector);
         if (area) area.scrollLeft = delta;
       }, { selector: EDIT_AREA_SELECTOR, delta: scrollDelta });
-      await page.waitForTimeout(400);
-
-      const afterContent = await markerContentX(page, 'e2e-marker-b');
-      const metrics2 = await rulerMetrics(page);
-      expect(metrics2.scrollLeft, `scrollLeft=${metrics2.scrollLeft}`).toBeGreaterThanOrEqual(scrollDelta - 2);
-      // Content x is scroll-independent.
-      expect(afterContent !== null && Math.abs(afterContent - (before ?? 0)), `${before} -> ${afterContent}`).toBeLessThan(2);
-      // Viewport x moved left by the scroll delta.
-      const viewportAfter = await markerViewportX(page, 'e2e-marker-b');
-      expect(
-        viewportAfter !== null && viewportBefore !== null && Math.abs(viewportAfter - viewportBefore + scrollDelta),
-        `viewportX ${viewportBefore} -> ${viewportAfter} (delta ${scrollDelta})`,
+      await expect.poll(
+        async () => (await rulerMetrics(page)).scrollLeft,
+        { message: 'edit area scrollLeft', timeout: 15_000 },
+      ).toBeGreaterThanOrEqual(scrollDelta - 2);
+      // The marker strip is translated on the same frame the scroll lands.
+      await expect.poll(
+        async () => {
+          const viewportAfter = await markerViewportX(page, 'e2e-marker-b');
+          return viewportAfter !== null && viewportBefore !== null
+            ? Math.abs(viewportAfter - viewportBefore + scrollDelta)
+            : null;
+        },
+        { message: `marker viewport x ${viewportBefore} shifts by -${scrollDelta}`, timeout: 15_000 },
       ).toBeLessThan(4);
+
+      // Content x is scroll-independent.
+      const afterContent = await markerContentX(page, 'e2e-marker-b');
+      expect(afterContent !== null && Math.abs(afterContent - (before ?? 0)), `${before} -> ${afterContent}`).toBeLessThan(2);
     });
 
     // --- 7. drag-to-edge auto-scroll ---------------------------------------
@@ -694,17 +639,17 @@ test.describe('timeline extension overlays (desktop)', () => {
       await page.mouse.down();
       // Drag into the 40px right-edge zone, then hold while rAF auto-scrolls.
       await page.mouse.move(area.right - 10, startY, { steps: 10 });
-      await page.waitForTimeout(1_400);
-      const duringScroll = await page.evaluate((selector) => document.querySelector(selector)?.scrollLeft ?? 0, EDIT_AREA_SELECTOR);
-      await page.mouse.up();
-      await page.waitForTimeout(400);
-
-      expect(
-        duringScroll,
-        `scrollLeft ${beforeScroll} -> ${duringScroll} while held at the edge`,
+      await expect.poll(
+        () => page.evaluate((selector) => document.querySelector(selector)?.scrollLeft ?? 0, EDIT_AREA_SELECTOR),
+        { message: `scrollLeft from ${beforeScroll} while held at the edge`, timeout: 15_000 },
       ).toBeGreaterThan(beforeScroll + 20);
-      // And the marker followed the scrolled content (commit happened).
-      await expect.poll(() => markerTime(page, 'e2e-marker-c'), { timeout: 10_000 }).not.toBeNull();
+      await page.mouse.up();
+
+      // The marker followed the scrolled content and the release committed it past its start.
+      await expect.poll(
+        async () => (await readPersistedSceneMarkers()).find((entry) => entry.id === 'e2e-marker-c')?.time ?? null,
+        { message: 'persisted marker-c time after the edge drag', timeout: 15_000 },
+      ).toBeGreaterThan(5);
     });
     await shot('autoscroll');
 
@@ -724,13 +669,7 @@ test.describe('timeline extension overlays (desktop)', () => {
       const marker = page.locator('[data-marker-id="e2e-marker-b"]');
       await expect(marker).toBeVisible({ timeout: 10_000 });
 
-      // Open the Extensions tab so the toggle is the real manager surface.
-      const extensionsTab = page.locator('[role="tab"]', { hasText: 'Extensions' }).first();
-      await extensionsTab.click({ timeout: 8_000 });
-      await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
-      // The tab can change the shell layout. Resolve the marker geometry only
-      // after that transition, then prove the intended marker owns the hit.
-      await page.waitForTimeout(300);
+      await nextFrames(page, 3);
       await resetScrollLeft(page);
       const box = await marker.boundingBox();
       if (!box) throw new Error('marker-b has no bounding box');
@@ -748,9 +687,7 @@ test.describe('timeline extension overlays (desktop)', () => {
       await page.mouse.move(cx, cy);
       await page.mouse.down();
       await page.mouse.move(cx + 12, cy, { steps: 3 }); // cross the 4px activation threshold
-      await expect
-        .poll(async () => page.getAttribute(`[data-marker-id="e2e-marker-b"]`, 'data-marker-dragging'), { timeout: 5_000 })
-        .toBe('true');
+      await expect(marker).toHaveAttribute('data-marker-dragging', 'true', { timeout: 5_000 });
 
       // Disable while the marker owns the claim → host teardown cancels the session.
       await disableExtensionMidDrag(page);
@@ -758,11 +695,13 @@ test.describe('timeline extension overlays (desktop)', () => {
       await page.mouse.up();
 
       await expect(sceneMarkerLayer(page)).toHaveCount(0, { timeout: 10_000 });
-      await expectMarkerLayerComposition(page, 10);
-      await expect(sceneMarkerLayer(page).locator('[data-marker-id]')).toHaveCount(0);
+      await expect(seededSceneMarkers(page)).toHaveCount(0);
       expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
+      // The torn-down session committed nothing: the Runtime still holds the seeded markers.
+      expect(await readPersistedSceneMarkers()).toEqual(MARKERS);
 
       // The editor itself is still interactive — the gesture owner was released.
+      await closeExtensionManager(page);
       await page.locator(`${EDIT_AREA_SELECTOR} ${CLIP_BODY_SELECTOR}`).first().click({ timeout: 8_000 });
       expect(await countSelectedClips(page)).toBeGreaterThanOrEqual(1);
     });
@@ -789,9 +728,9 @@ test.describe('timeline extension overlays (desktop)', () => {
       timeout: 20_000,
     });
 
-    // Start clean: the canary URL with NO seeded markers. The overlay host is
-    // mounted (canary), so the marker layer exists but carries 0 markers.
-    await openCanaryEditor(page);
+    // Start clean: no seeded markers. The overlay host is mounted, so the
+    // marker layer exists but carries 0 markers.
+    await openMarkerEditor(page);
     const markerLayer = sceneMarkerLayer(page);
     await expect(markerLayer).toBeVisible({ timeout: 20_000 });
     await expect(markerLayer).toHaveAttribute('data-marker-count', '0');
@@ -827,11 +766,12 @@ test.describe('timeline extension overlays (desktop)', () => {
     await page.mouse.down();
     await page.mouse.move(ruler.x + initialPlayheadX + 380, scrubY, { steps: 8 });
     await page.mouse.up();
-    await page.waitForTimeout(400);
-    const scrubbedPlayheadX = await readPlayheadTransformX(page);
-    expect(
-      scrubbedPlayheadX === null ? null : scrubbedPlayheadX - initialPlayheadX,
-      `playhead transform ${initialPlayheadX}px -> ${scrubbedPlayheadX}px`,
+    await expect.poll(
+      async () => {
+        const scrubbed = await readPlayheadTransformX(page);
+        return scrubbed === null ? null : scrubbed - initialPlayheadX;
+      },
+      { message: `playhead transform from ${initialPlayheadX}px after the scrub`, timeout: 15_000 },
     ).toBeGreaterThan(40);
 
     // Press B: the command must read the playhead from the provider-owned
@@ -849,12 +789,24 @@ test.describe('timeline extension overlays (desktop)', () => {
     const persisted = await readPersistedSceneMarkers();
     expect(persisted[0]!.time, JSON.stringify(persisted)).toBeGreaterThan(0);
 
-    // Reload: the marker must survive the round trip and re-render.
+    // The same command from the command palette: it lists the extension's command by its label and
+    // runs it against the same live playhead, so a second marker lands at the same time.
+    await page.keyboard.press('ControlOrMeta+Shift+P');
+    const commandInput = page.getByPlaceholder('Type a command…');
+    await expect(commandInput).toBeVisible();
+    await commandInput.fill(MARK_PHASE_COMMAND_LABEL);
+    await page.getByRole('option', { name: new RegExp(MARK_PHASE_COMMAND_LABEL) }).click();
+    await expect(markerLayer).toHaveAttribute('data-marker-count', '2', { timeout: 10_000 });
+    await expect.poll(async () => (await readPersistedSceneMarkers()).length, { timeout: 15_000 }).toBe(2);
+    const afterPalette = await readPersistedSceneMarkers();
+    expect(afterPalette.map((marker) => marker.time), JSON.stringify(afterPalette))
+      .toEqual([persisted[0]!.time, persisted[0]!.time]);
+
+    // Reload: the markers must survive the round trip and re-render.
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 45_000 });
-    await page.waitForTimeout(EDITOR_SETTLE_MS);
     await expect(sceneMarkerLayer(page)).toBeVisible({ timeout: 20_000 });
-    await expect(sceneMarkerLayer(page)).toHaveAttribute('data-marker-count', '1');
-    await expect(sceneMarkerLayer(page).locator('[data-marker-id]')).toHaveCount(1);
+    await expect(sceneMarkerLayer(page)).toHaveAttribute('data-marker-count', '2');
+    await expect(sceneMarkerLayer(page).locator('[data-marker-id]')).toHaveCount(2);
     await shot('reloaded');
 
     expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
@@ -875,7 +827,7 @@ test.describe('timeline extension overlays (tablet)', () => {
       + ' (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
   });
 
-  test('touch marker drag and marker-versus-pinch arbitration', async ({ context, page }, testInfo) => {
+  test('touch marker drag, marker-versus-pinch arbitration, then the clip sheet', async ({ context, page }, testInfo) => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
@@ -885,7 +837,7 @@ test.describe('timeline extension overlays (tablet)', () => {
     if (seedError) logs.push(seedError);
     logs.push(...collectPageLogs(page));
 
-    await openCanaryEditor(page);
+    await openMarkerEditor(page);
     const touch = await createTouchInput(context, page);
 
     const shot = (name: string) => page.screenshot({
@@ -901,15 +853,9 @@ test.describe('timeline extension overlays (tablet)', () => {
 
     // --- 1. touch marker drag commits once ---------------------------------
     await test.step('touch marker drag commits a frame-snapped time', async () => {
-      await ensureRulerLabels(page);
+      await expect.poll(() => rulerLabelCount(page), { message: 'ruler labels to derive pps from' })
+        .toBeGreaterThanOrEqual(2);
       const metrics = await rulerMetrics(page);
-      // ensureRulerLabels may have scrolled the edit area to reveal ruler
-      // labels; the marker drag needs markers visible, so reset scroll.
-      await page.evaluate((selector) => {
-        const area = document.querySelector(selector) as HTMLElement | null;
-        if (area) area.scrollLeft = 0;
-      }, EDIT_AREA_SELECTOR);
-      await page.waitForTimeout(150);
       expect(metrics.pps, `pps=${metrics.pps}`).toBeGreaterThan(10);
       // +2.5s at the live pps → 5.5s, frame-exact at any fps.
       const dx = Math.round(2.5 * metrics.pps);
@@ -959,77 +905,25 @@ test.describe('timeline extension overlays (tablet)', () => {
       expect(after, `clip width ${before} -> ${after}`).toBeGreaterThan(before * 1.2);
     });
 
-    expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
-    await shot('final');
-  });
-});
+    // --- 5. the editor is still the touch editor after the drags -------------
+    await test.step('after the marker drags the editor rests in browse: a tap on a clip opens its sheet', async () => {
+      // Earlier steps moved markers b and c and zoomed the timeline. Reseed and reload so the tap
+      // lands on a clip at the content origin.
+      const reseedError = await seedSceneMarkers();
+      if (reseedError) throw new Error(reseedError);
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 45_000 });
+      await expect(markerLayer).toBeVisible({ timeout: 20_000 });
+      await expect(markerLayer).toHaveAttribute('data-marker-count', '3');
+      await resetScrollLeft(page);
 
-// ---------------------------------------------------------------------------
-// Phone (touch)
-// ---------------------------------------------------------------------------
-
-test.describe('timeline extension overlays (phone)', () => {
-  test.use({
-    viewport: { width: 420, height: 820 },
-    hasTouch: true,
-    isMobile: true,
-    deviceScaleFactor: 2,
-  });
-
-  test('touch marker drag, then the clip sheet, on phone', async ({ context, page }, testInfo) => {
-    test.setTimeout(240_000);
-
-    const logs: string[] = [];
-    const resetError = await resetFakeRuntimeBaseline();
-    if (resetError) logs.push(resetError);
-    const seedError = await seedSceneMarkers();
-    if (seedError) logs.push(seedError);
-    logs.push(...collectPageLogs(page));
-
-    await openCanaryEditor(page);
-    const touch = await createTouchInput(context, page);
-
-    const shot = (name: string) => page.screenshot({
-      path: testInfo.outputPath(`phone-${name}.png`),
-      animations: 'disabled',
-      timeout: 20_000,
-    });
-
-    const markerLayer = sceneMarkerLayer(page);
-    await expect(markerLayer).toBeVisible({ timeout: 20_000 });
-    await expect(markerLayer).toHaveAttribute('data-marker-count', '3');
-    await shot('mounted');
-
-    // --- 1. touch marker drag commits once ---------------------------------
-    await test.step('touch marker drag commits a frame-snapped time', async () => {
-      await ensureRulerLabels(page);
-      const metrics = await rulerMetrics(page);
-      // ensureRulerLabels may have scrolled the edit area to reveal ruler
-      // labels; the marker drag needs markers visible, so reset scroll.
-      await page.evaluate((selector) => {
-        const area = document.querySelector(selector) as HTMLElement | null;
-        if (area) area.scrollLeft = 0;
-      }, EDIT_AREA_SELECTOR);
-      await page.waitForTimeout(150);
-      expect(metrics.pps, `pps=${metrics.pps}`).toBeGreaterThan(10);
-      const dx = Math.round(2 * metrics.pps);
-      await touchDragMarker(touch, page, 'e2e-marker-a', dx);
-      await waitForDomMarkerTime(page, 'e2e-marker-a', 3);
-      await waitForPersistedMarkerTime('e2e-marker-a', 3);
-    });
-    await shot('dragged');
-
-    // --- 2. the editor is still the phone's after a marker drag --------------
-    // Disabling an extension mid-drag needs the extension manager, which the touch editor leaves to
-    // the desk (extensions are a desk surface; the desktop variant covers disable-mid-drag).
-    await test.step('after a marker drag the phone rests in browse: a tap on a clip opens its sheet', async () => {
-      expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
       const clip = await page.locator(`${EDIT_AREA_SELECTOR} ${CLIP_BODY_SELECTOR}`).first().boundingBox();
       if (!clip) throw new Error('no clip to tap');
       await touch.tap(clip.x + clip.width / 2, clip.y + clip.height / 2);
       expect(await countSelectedClips(page)).toBeGreaterThanOrEqual(1);
       await expect(page.getByTestId('timeline-clip-sheet')).toBeVisible({ timeout: 5_000 });
     });
+
+    expect(logs.filter((line) => line.startsWith('[pageerror]')), [...new Set(logs)].join(' | ')).toEqual([]);
     await shot('sheet');
   });
 });

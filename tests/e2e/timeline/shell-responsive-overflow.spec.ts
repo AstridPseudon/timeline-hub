@@ -1,12 +1,18 @@
 import { expect, test, type Page } from "@playwright/test";
 import { browserEvidencePath, openEditor, resetFakeRuntimeBaseline } from "./support";
 
+/**
+ * `markerLayerCapacity` is the host's layers-per-page budget: 6 from 640 px up, 3 below it
+ * (`markerLayerCapacity` in TimelineExtensionOverlayHost.tsx). The fixture catalog contributes more
+ * overlay layers than either budget, so every viewport has a second page to walk.
+ */
 const VIEWPORTS = [
   {
     name: "desktop",
     width: 1600,
     height: 1000,
     touch: false,
+    markerLayerCapacity: 6,
     screenshot: "25-shell-desktop-node20.png",
   },
   {
@@ -14,6 +20,7 @@ const VIEWPORTS = [
     width: 834,
     height: 1194,
     touch: true,
+    markerLayerCapacity: 6,
     screenshot: "26-shell-tablet-portrait-node20.png",
   },
   {
@@ -21,18 +28,24 @@ const VIEWPORTS = [
     width: 420,
     height: 820,
     touch: true,
+    markerLayerCapacity: 3,
     screenshot: "27-shell-phone-node20.png",
   },
 ] as const;
 
 async function auditMarkerLayerPages(
   page: Page,
+  capacity: number,
 ): Promise<{ total: number; keys: string[] }> {
   const legend = page.getByTestId("timeline-marker-layer-legend");
   await expect(legend).toBeVisible();
   // On touch the pager is one corner button that steps to the next page and wraps
   // ("Marker layers 1–3 of 11: show the next layers"); at a desk it has Next/Previous.
   const compact = await legend.evaluate((element) => element.tagName === "BUTTON");
+  if (!compact) {
+    // The first page shows exactly one budget of layers.
+    await expect(legend).toContainText(new RegExp(`Layers 1[–-]${capacity}/`));
+  }
   const next = legend.getByRole("button", { name: "Next marker layers" });
   const previous = legend.getByRole("button", {
     name: "Previous marker layers",
@@ -167,10 +180,12 @@ for (const viewport of VIEWPORTS) {
           ),
           phoneTopRow: rect('[data-toolbar-layout="touch"]'),
           phonePlaybackRow: rect('[data-testid="touch-playback-row"]'),
+          touchAgentBar: rect('[data-testid="touch-agent-bar"]'),
           removedModeUi: document.querySelectorAll(
             '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
           ).length,
           markerPager: rect('[data-testid="timeline-marker-layer-legend"]'),
+          sceneMarkersPanel: rect('[data-testid="scene-markers-panel"]'),
           editArea: rect(".timeline-canvas-edit-area"),
           preview: rect('[data-testid="video-editor-preview-surface"]'),
           selectors: Array.from(
@@ -181,7 +196,7 @@ for (const viewport of VIEWPORTS) {
             const box = element.getBoundingClientRect();
             return { left: Math.round(box.left), right: Math.round(box.right) };
           }),
-          // The scene-markers extension panel's own controls (its outer panel has no test id).
+          // The scene-markers extension panel's own controls (the panel itself is measured above).
           sceneMarkerControls: Array.from(
             document.querySelectorAll(
               'button[data-testid^="scene-markers-"], select[data-testid^="scene-markers-"], input[data-testid^="scene-markers-"]',
@@ -223,26 +238,35 @@ for (const viewport of VIEWPORTS) {
           viewport.width,
         );
       }
-      // Extension panels are a desk surface: the touch editor (phone and tablet) leaves that
-      // work to the agent and draws no extension footer.
-      expect(geometry.sceneMarkerControls, JSON.stringify(geometry)).toHaveLength(viewport.touch ? 0 : 5);
-      for (const control of geometry.sceneMarkerControls) {
-        expect(control.left, JSON.stringify(geometry)).toBeGreaterThanOrEqual(
-          0,
-        );
-        expect(control.top, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
-        expect(control.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
+      // The scene-markers panel is a desk surface: its box lies inside the viewport width.
+      if (!viewport.touch) {
+        const panel = geometry.sceneMarkersPanel;
+        expect(panel, JSON.stringify(geometry)).not.toBeNull();
+        expect(panel!.x, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+        expect(panel!.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
           viewport.width,
         );
-        expect(control.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(
-          viewport.height,
-        );
+      }
+      // Extension panels are a desk surface: the touch editor (phone and tablet) leaves that
+      // work to the agent and draws no extension footer.
+      if (viewport.touch) {
+        expect(geometry.sceneMarkerControls, JSON.stringify(geometry)).toHaveLength(0);
       }
       for (const selector of geometry.selectors) {
         expect(selector.left, JSON.stringify(geometry)).toBeGreaterThanOrEqual(
           0,
         );
         expect(selector.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
+          viewport.width,
+        );
+      }
+
+      // The touch editor's thumb bar (gallery, Text, Ask Astrid…) must fit the viewport width: a button
+      // pushed off the right edge is a button nobody can tap.
+      if (viewport.touch) {
+        expect(geometry.touchAgentBar, JSON.stringify(geometry)).not.toBeNull();
+        expect(geometry.touchAgentBar!.x, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+        expect(geometry.touchAgentBar!.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
           viewport.width,
         );
       }
@@ -258,8 +282,39 @@ for (const viewport of VIEWPORTS) {
           );
         }
       }
-      const layerComposition = await auditMarkerLayerPages(page);
-      expect(layerComposition.total).toBe(11);
+
+      // The status-bar chrome scrolls sideways inside its own box; whatever it holds stays
+      // reachable inside the viewport once scrolled into view (the page-width checks above prove it
+      // never widens the page).
+      // Desk sizes only: the touch editor draws no extension footer (asserted above).
+      if (!viewport.touch) {
+        const panelControls = page.locator(
+          '[data-testid="scene-markers-panel"] button, [data-testid="scene-markers-panel"] select, [data-testid="scene-markers-panel"] input',
+        );
+        expect(await panelControls.count()).toBeGreaterThan(0);
+        for (const control of await panelControls.all()) {
+          await control.scrollIntoViewIfNeeded();
+          const box = await control.boundingBox();
+          expect(box, "status-bar control has a box").not.toBeNull();
+          expect(box!.x, JSON.stringify(box)).toBeGreaterThanOrEqual(0);
+          // One CSS pixel of slack: a control scrolled flush to the box edge lands on a fractional px.
+          expect(box!.x + box!.width, JSON.stringify(box)).toBeLessThanOrEqual(
+            viewport.width + 1,
+          );
+          expect(box!.y, JSON.stringify(box)).toBeGreaterThanOrEqual(0);
+          expect(box!.y + box!.height, JSON.stringify(box)).toBeLessThanOrEqual(
+            viewport.height + 1,
+          );
+        }
+      }
+
+      const layerComposition = await auditMarkerLayerPages(
+        page,
+        viewport.markerLayerCapacity,
+      );
+      expect(layerComposition.total).toBeGreaterThan(
+        viewport.markerLayerCapacity,
+      );
 
       await page.screenshot({
         path: browserEvidencePath(testInfo, `chrome-acceptance/${viewport.screenshot}`),

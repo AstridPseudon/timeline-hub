@@ -6,16 +6,6 @@ export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'haus.astrid.live-scenes',
   'haus.astrid.scene-phase-markers',
   'haus.astrid.transcript-lane',
-  'haus.astrid.creative-lab.pulse-map',
-  'haus.astrid.creative-lab.soundtrack-cartographer',
-  'haus.astrid.creative-lab.caption-safe-zone-orchestra',
-  'haus.astrid.creative-lab.emotional-weather-map',
-  'haus.astrid.creative-lab.timeline-faultline',
-  'haus.astrid.creative-lab.foley-constellation',
-  'haus.astrid.creative-lab.branching-cut',
-  'haus.astrid.creative-lab.chromatic-constellation',
-  'haus.astrid.creative-lab.recall-pulse',
-  'haus.astrid.creative-lab.lockline-inspector',
 ] as const);
 const REVIEWED_PRODUCTION_EXTENSION_ID_SET = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
 

@@ -522,6 +522,12 @@ describe('ACP chat reads', () => {
     assert.equal((await json(`/projects/${PROJECT_ID}/chat`)).draft.revision, 0);
   });
 
+  test('the chat menu\'s agent and model catalogs are canned reads, and setting a model is not served', async () => {
+    assert.deepEqual(await json('/agents'), { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null }] });
+    assert.deepEqual(await json('/models'), { providers: [], currentModel: null });
+    assert.equal((await postJson('/model', { model: 'any' })).status, 404);
+  });
+
   test('connect, session/list and events are canned; a prompt is not served', async () => {
     assert.deepEqual(await (await postJson('/connect', {})).json(), { connection_id: 'local-test-connection', initialize: {} });
     assert.deepEqual(await (await postJson('/local-test-connection/rpc', { method: 'session/list', params: {} })).json(), { result: { sessions: [] } });

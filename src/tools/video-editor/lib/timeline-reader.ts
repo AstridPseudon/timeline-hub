@@ -592,7 +592,7 @@ export function createTimelineReader(
   // are replaced (never mutated) on every commit/undo/poll adoption, and the
   // live `configVersion` source can advance between data objects, so both
   // form the cache key. Callers treat snapshots as immutable reads — none
-  // mutate the returned object (verified across creative-lab + dev lanes).
+  // mutate the returned object (verified across the dev extensions).
   let cachedData: TimelineData | null = null;
   let cachedConfigVersion: number | null = null;
   let cachedComposition: PreparedShotComposition | null = null;

@@ -1,5 +1,10 @@
 # Creative Extension Lab: Authoring Frictions
 
+> **Status 2026-10-19:** the ten Creative Lab extensions and their `examples/extensions/creative-lab`
+> harness were deleted. No browser spec needed them beyond ten marker layers and one palette command, which
+> `src/test/overlayLayersFixtureExtension.ts` and the scene-phase-markers fixture now supply. This document
+> is kept as the design and authoring-friction record; the implementations are in git history.
+
 Date started: 2026-08-23
 
 This is a live report. Each sequential implementation records what made a

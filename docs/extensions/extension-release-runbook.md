@@ -203,7 +203,7 @@ with the RC. A child flag never bypasses its parent.
 | --- | --- | --- | --- |
 | `EXTENSION_HOST_ENABLED` | Activation and rendering of the bundled extension host | None | Prevent new extension activation and remove host surfaces after a safe reload |
 | `TRANSCRIPT_CAPTION_FOUNDRY_ENABLED` | Transcript Caption Foundry registration, commands, and writes | `EXTENSION_HOST_ENABLED` | Stop Foundry commands/writes while leaving unrelated host extensions available |
-| `RUNAWAY_TYPED_TIMELINE_ENABLED` | Astrid App-side Astrid Runaway source request/projection, commands, and viewer registration | `EXTENSION_HOST_ENABLED` | Stop new editor-side Runaway bridge requests, projection, commands, and viewer activation while leaving unrelated host extensions available |
+| `RUNAWAY_TYPED_TIMELINE_ENABLED` | Astrid App-side Astrid Runaway projection, commands, and viewer registration | `EXTENSION_HOST_ENABLED` | Stop new editor-side Runaway projection, commands, and viewer activation while leaving unrelated host extensions available |
 
 The Astrid App server-side proxy and `astrid serve` must share one randomly generated
 `ASTRID_BRIDGE_TOKEN`; never expose it through a `VITE_` variable or browser
@@ -216,26 +216,17 @@ committed deterministic stub is the only unauthenticated mode and must be
 enabled explicitly by its owning test/dev launcher.
 
 `EXTENSION_HOST_ENABLED` is deliberately the shared rollback boundary for this
-reviewed 13-extension release inventory. Production selection fails closed for
+reviewed release inventory. Production selection fails closed for
 any ID not in this list:
 
 - `haus.astrid.scene-phase-markers`
 - `haus.astrid.transcript-lane` (also gated by the Transcript child switch)
 - `haus.astrid-runaway-timeline` (also gated by the Runaway child switch)
-- `haus.astrid.creative-lab.pulse-map`
-- `haus.astrid.creative-lab.soundtrack-cartographer`
-- `haus.astrid.creative-lab.caption-safe-zone-orchestra`
-- `haus.astrid.creative-lab.emotional-weather-map`
-- `haus.astrid.creative-lab.timeline-faultline`
-- `haus.astrid.creative-lab.foley-constellation`
-- `haus.astrid.creative-lab.branching-cut`
-- `haus.astrid.creative-lab.chromatic-constellation`
-- `haus.astrid.creative-lab.recall-pulse`
-- `haus.astrid.creative-lab.lockline-inspector`
 
-The ten Luna-originated Creative Lab extensions and Scene Markers do not have
-independent production switches in this candidate. Enabling the parent enables
-all eleven together; emergency containment turns the parent off and safely
+The ten Creative Lab extensions that once shared this list were removed (2026-10-19): the
+shipped catalog could not produce their IDs. Scene Markers does not have an
+independent production switch in this candidate. Enabling the parent enables
+it together with the others; emergency containment turns the parent off and safely
 reloads. That coarse rollback is an explicit release decision, not an implied
 per-extension control. The compatibility, composition, visual, persistence,
 render, and device evidence must therefore cover the complete enabled set.
@@ -243,9 +234,9 @@ render, and device evidence must therefore cover the complete enabled set.
 The Runaway child switch does not remove the shared `data_bundle` column or
 `bundle` member from the generic timeline read: that envelope can also contain
 Transcript or future typed data and is fetched atomically with the timeline.
-With Runaway disabled, its kind is not registered, persisted Runaway items are
-not projected, and the optional `/runaway-transitions` source request is never
-issued. This is the tested containment boundary; operators must not describe
+With Runaway disabled, its kind is not registered and persisted Runaway items are
+not projected. (The DEV-only `/runaway-transitions` bridge loader was removed, so no
+Runaway source request exists to suppress.) This is the tested containment boundary; operators must not describe
 the switch as suppressing unrelated shared-envelope transport, stopping an
 already-running Astrid migration, or disabling Astrid service writers. Those
 service/data operations require their own Astrid-side containment procedure.
@@ -309,10 +300,10 @@ persistence conflict, migration outcome, render/export outcome, and
 lane-density/performance budget outcome. All of those sources are now wired
 locally through the bounded `astrid:extension-operational-event` browser
 boundary. This includes page-level bridge health/project/timeline discovery,
-core Astrid timeline load/save, Runaway-source requests, terminal
+core Astrid timeline load/save, terminal
 local-to-installed migration outcomes, and browser render/export completion.
 Bridge reads have a fixed deadline and classify timeout, HTTP/transport, and
-invalid-response failures; cached Runaway reads do not inflate request counts.
+invalid-response failures.
 Migration telemetry reports only the current host-owned extension identity,
 target schema version, duration, a settings-count bucket, outcome, and a fixed
 validation/write error class; settings, diagnostics, exception messages,

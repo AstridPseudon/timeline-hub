@@ -1,10 +1,16 @@
 import { expect, test } from '@playwright/test';
-import { PROJECT_SLUG, editorUrl } from './support';
+import { collectNetworkIssues, collectPageLogs, editorUrl, resetFakeRuntimeBaseline } from './support';
 
 const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'dense' } });
-const CAPABILITY_PROBE_PATH = `/api/astrid/projects/${PROJECT_SLUG}/media/__astrid_capability_probe__/content`;
 
-test.setTimeout(60_000);
+// Hang ceiling, not a timing bound: the first load of a cold dev server compiles the whole editor route.
+test.setTimeout(120_000);
+
+// The shared reset hook in support.ts registers for the first spec file a worker loads only, so a spec resets
+// for itself and starts pristine.
+test.beforeEach(async () => {
+  expect(await resetFakeRuntimeBaseline()).toBeNull();
+});
 
 test('dense data lane paints late viewport items with bounded DOM and real geometry', async ({ page }, testInfo) => {
   // At the 100px/s zoom ceiling a 900px viewport spans the whole four-second
@@ -12,42 +18,13 @@ test('dense data lane paints late viewport items with bounded DOM and real geome
   // origin and late scroll around the same 128 items. Keep the viewport narrow
   // enough that the two source windows are genuinely different.
   await page.setViewportSize({ width: 500, height: 760 });
-  const issues: string[] = [];
-  page.on('pageerror', (error) => issues.push(`[pageerror] ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) {
-      issues.push(`[console.error] ${message.text()}`);
-    }
-  });
-  page.on('response', (response) => {
-    let expectedProbe = false;
-    try {
-      expectedProbe = response.status() === 404 && new URL(response.url()).pathname === CAPABILITY_PROBE_PATH;
-    } catch {
-      // Keep malformed URLs actionable below.
-    }
-    if (response.status() >= 400 && !expectedProbe) {
-      issues.push(`[http ${response.status()}] ${response.url()}`);
-    }
-  });
-  page.on('requestfailed', (request) => {
-    const failure = request.failure()?.errorText ?? 'unknown';
-    let expectedProbeAbort = false;
-    try {
-      expectedProbeAbort = failure === 'net::ERR_ABORTED'
-        && new URL(request.url()).pathname === CAPABILITY_PROBE_PATH;
-    } catch {
-      // Keep malformed URLs actionable below.
-    }
-    if (!expectedProbeAbort) {
-      issues.push(`[requestfailed] ${request.url()} — ${failure}`);
-    }
-  });
+  const logs = collectPageLogs(page);
+  const networkIssues = collectNetworkIssues(page);
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
   await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
 
   const row = page.locator('[data-lane-kind="astrid.transcript"]');
-  await expect(row).toBeVisible({ timeout: 20_000 });
+  await expect(row).toBeVisible({ timeout: 30_000 });
   const scroller = page.locator('.timeline-canvas-edit-area');
   const zoomIn = page.getByRole('button', { name: 'Zoom in timeline' }).first();
   for (let index = 0; index < 30; index += 1) await zoomIn.click();
@@ -123,5 +100,8 @@ test('dense data lane paints late viewport items with bounded DOM and real geome
     body: await page.screenshot(),
     contentType: 'image/png',
   });
-  expect(issues).toEqual([]);
+  // A failed load shows up twice: as the browser's generic console line (filtered here) and as the
+  // http / requestfailed entry, which is asserted below with no exception.
+  expect(logs.filter((line) => !line.includes('Failed to load resource:')), [...new Set(logs)].join(' | ')).toEqual([]);
+  expect(networkIssues, [...new Set(networkIssues)].join(' | ')).toEqual([]);
 });

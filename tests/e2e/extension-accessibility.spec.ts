@@ -1,5 +1,10 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
-import { PROJECT_SLUG, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './timeline/support';
+import {
+  PROJECT_SLUG,
+  TIMELINE_SLUG,
+  editorPath,
+  resetFakeRuntimeBaseline,
+} from './timeline/support';
 
 const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1' } });
 // The harness mounts no data provider. `localProject` is kept only because Layout's sessionless auth gate keys off it.
@@ -9,11 +14,6 @@ const EXTENSION_COUNT = 2;
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];
-  const expectedCapabilityProbe = (url: string, status: number) => {
-    const parsed = new URL(url);
-    return status === 404
-      && /^\/api\/astrid\/projects\/[^/]+\/media\/__astrid_capability_probe__\/content$/.test(parsed.pathname);
-  };
   page.on('pageerror', (error) => issues.push(`[pageerror] ${error.message}`));
   page.on('console', (message) => {
     // Failed-resource console messages do not carry a reliable URL across
@@ -24,14 +24,12 @@ function collectIssues(page: Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400 && !expectedCapabilityProbe(response.url(), response.status())) {
+    if (response.status() >= 400) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });
   page.on('requestfailed', (request) => {
-    if (!expectedCapabilityProbe(request.url(), 404)) {
-      issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
-    }
+    issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
   });
   return issues;
 }
@@ -42,31 +40,26 @@ async function openComposedEditor(page: Page): Promise<string[]> {
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
-  await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
+  // Hang ceiling, not a timing bound: the first test of a run is the first load of a cold dev server, which
+  // compiles the whole editor route before it mounts (Chromium runs first and sat on the boot screen past 20 s;
+  // the same test passes in ~24 s with a longer ceiling, and Firefox and WebKit pass on the warm server).
+  await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 90_000 });
   return issues;
 }
 
 async function openExtensionsPanel(page: Page): Promise<Locator> {
-  let extensionsTab = page.getByRole('tab', { name: 'Extensions' });
-  if (!(await extensionsTab.isVisible())) {
-    const inspector = page.getByRole('button', { name: 'Inspector', exact: true }).first();
-    if (await inspector.count()) {
-      await inspector.click();
-      extensionsTab = page.getByRole('tab', { name: 'Extensions' });
-    } else {
-      // The phone has no Inspector button or dock: the Extensions dialog opens
-      // from an extension-owned lane's info button.
-      await page.getByTestId('data-lane-owner-info').first().click();
-    }
-  }
-  if (await extensionsTab.count()) {
-    await expect(extensionsTab).toBeVisible();
-    await extensionsTab.click();
-    await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
-  }
+  // Desktop's dock and the touch editor's picture-area tabs share one Video | Inspector | Extensions tab list.
+  const extensionsTab = page.getByRole('tab', { name: 'Extensions' });
+  await expect(extensionsTab).toBeVisible();
+  await extensionsTab.click();
+  await expect(extensionsTab).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('button', { name: 'Manage extensions' }).click();
   const inventory = page.getByRole('region', { name: 'Local extensions' });
   await expect(inventory).toBeVisible();
   await expect(inventory.locator('[data-video-editor-dev-local-extension]')).toHaveCount(EXTENSION_COUNT);
+  // The dialog zooms in on open, so a box measured mid-animation is scaled (23.99 px for a 24 px
+  // control). Target sizes are measured only once every animation has finished.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished)));
   return inventory;
 }
 
@@ -109,7 +102,7 @@ async function saveScreenshot(page: Page, testInfo: TestInfo, name: string): Pro
 }
 
 test('the bundled extensions expose state and retain keyboard focus through disable and re-enable', async ({ page }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const issues = await openComposedEditor(page);
   const inventory = await openExtensionsPanel(page);
@@ -162,15 +155,25 @@ for (const viewport of [
   });
 }
 
-test('200% CSS page-content zoom, reduced motion, names, expanded state, and contrast remain accessible', async ({ page }, testInfo) => {
+// The app's palette follows the sky unless a time is chosen (useAppTheme's APP_THEME_TIME_KEY), so each
+// palette is chosen here rather than left to the wall clock: noon is the light palette, midnight the dark one.
+for (const palette of [
+  { name: 'light (midday)', hour: 12, dark: false },
+  { name: 'dark (midnight)', hour: 0, dark: true },
+] as const) {
+test(`200% CSS page-content zoom, reduced motion, names, expanded state, and contrast remain accessible in the ${palette.name} palette`, async ({ page }, testInfo) => {
+  // Hang ceilings, not timing bounds: the first harness load of a run is a cold dev server compiling the route.
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const issues = collectIssues(page);
+  await page.addInitScript((hour) => localStorage.setItem('theme-hour', String(hour)), palette.hour);
   await page.goto(HARNESS_URL, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveClass(palette.dark ? /\bdark\b/ : /^(?!.*\bdark\b)/);
   await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
 
   const manager = page.locator('[data-video-editor-harness-scenario="populated"]');
-  await expect(manager).toBeVisible();
+  await expect(manager).toBeVisible({ timeout: 90_000 });
   const diagnostics = manager.locator('[data-video-editor-extension-diagnostics-toggle="ext.inspector-tools"]');
   await diagnostics.focus();
   await expect(diagnostics).toBeFocused();
@@ -230,6 +233,11 @@ test('200% CSS page-content zoom, reduced motion, names, expanded state, and con
     const selectors = [
       '[data-video-editor-extension-toggle] span',
       '[data-video-editor-extension-diagnostics-toggle] span:first-of-type',
+      '[data-video-editor-extension-state-badge]',
+      '[aria-label^="Extension summary"] span',
+      '[data-video-editor-extension-diag-count]',
+      // The expanded diagnostic row: message, [code] and "in <contribution>".
+      '[role="log"] [data-video-editor-extension-diag-item] span',
     ];
     return selectors.flatMap((selector) => Array.from(root.querySelectorAll(selector)).map((element) => {
       const background = backgroundFor(element);
@@ -238,6 +246,9 @@ test('200% CSS page-content zoom, reduced motion, names, expanded state, and con
     }));
   });
   expect(contrast.length).toBeGreaterThan(0);
+  // The coloured diagnostic text is in the sample, not just the neutral chrome around it.
+  const sampled = contrast.map((sample) => sample.text);
+  expect(sampled).toEqual(expect.arrayContaining(['All systems operational.', '[inspector/ready]', 'in inspector.sections']));
   for (const sample of contrast) {
     expect(sample.ratio, JSON.stringify(sample)).toBeGreaterThanOrEqual(4.5);
   }
@@ -251,5 +262,6 @@ test('200% CSS page-content zoom, reduced motion, names, expanded state, and con
   expect(geometry.width).toBeGreaterThan(0);
   expect(issues).toEqual([]);
   await diagnostics.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: testInfo.outputPath('zoom-200-reduced-motion.png') });
+  await page.screenshot({ path: testInfo.outputPath(`zoom-200-reduced-motion-${palette.dark ? 'dark' : 'light'}.png`) });
 });
+}

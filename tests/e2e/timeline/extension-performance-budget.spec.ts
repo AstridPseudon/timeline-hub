@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from '@playwright/test';
-import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline, showDataLanes } from './support';
+import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './support';
 
 const EDITOR_URL = editorPath({
   params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix' },
@@ -10,13 +10,9 @@ const PROJECT_DATA_PATH = new RegExp(
   `^/api/runtime/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_SLUG}/composition-revisions/[^/]+$`,
 );
 const DATA_REQUEST_PATH = PROJECT_DATA_PATH;
-const CAPABILITY_PROBE_PATH = /^\/api\/astrid\/projects\/[^/]+\/media\/__astrid_capability_probe__\/content$/;
 
 function collectIssues(page: import('@playwright/test').Page): string[] {
   const issues: string[] = [];
-  const expectedCapabilityProbe = (url: string, status: number) => (
-    status === 404 && CAPABILITY_PROBE_PATH.test(new URL(url).pathname)
-  );
   page.on('pageerror', (error) => issues.push(`[pageerror] ${error.message}`));
   page.on('console', (message) => {
     // Failed-resource console messages have no portable URL. HTTP and failed
@@ -26,16 +22,12 @@ function collectIssues(page: import('@playwright/test').Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400 && !expectedCapabilityProbe(response.url(), response.status())) {
+    if (response.status() >= 400) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });
   page.on('requestfailed', (request) => {
-    const pathname = new URL(request.url()).pathname;
-    const failure = request.failure()?.errorText ?? 'unknown';
-    if (!CAPABILITY_PROBE_PATH.test(pathname)) {
-      issues.push(`[requestfailed] ${request.url()} — ${failure}`);
-    }
+    issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
   });
   return issues;
 }
@@ -73,10 +65,10 @@ test.describe('extension performance and resource budgets', () => {
   test.use({ viewport: { width: 1_440, height: 900 } });
 
   test('bounds startup, activation, command search, virtualization, DOM, and heap', async ({ context, page }, testInfo) => {
-    test.setTimeout(120_000);
+    // Hang ceiling, not a timing bound: the first load of a cold dev server compiles the whole editor route.
+    test.setTimeout(180_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
     await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
-    await showDataLanes(page);
 
     const issues = collectIssues(page);
     const dataRequests: string[] = [];
@@ -95,7 +87,7 @@ test.describe('extension performance and resource budgets', () => {
 
     const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     expect(response?.ok()).toBe(true);
-    await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 90_000 });
     await expect.poll(() => projectDataBodies.length, {
       message: 'the Runtime must serve a serialized timeline payload',
       timeout: 5_000,

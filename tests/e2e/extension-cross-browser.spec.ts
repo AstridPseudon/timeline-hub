@@ -11,11 +11,6 @@ const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcript
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];
-  const expectedCapabilityProbe = (url: string, status: number) => {
-    const parsed = new URL(url);
-    return status === 404
-      && /^\/api\/astrid\/projects\/[^/]+\/media\/__astrid_capability_probe__\/content$/.test(parsed.pathname);
-  };
   page.on('pageerror', (error) => issues.push(`[pageerror] ${error.message}`));
   page.on('console', (message) => {
     // Chromium/Firefox/WebKit emit a generic console.error for any failed
@@ -26,16 +21,13 @@ function collectIssues(page: Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400 && !expectedCapabilityProbe(response.url(), response.status())) {
+    if (response.status() >= 400) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });
   page.on('requestfailed', (request) => {
-    // A failed capability probe is an expected degraded local-bridge result;
-    // unexpected transport failures remain release-gate failures.
-    if (!expectedCapabilityProbe(request.url(), 404)) {
-      issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
-    }
+    // Transport failures are release-gate failures.
+    issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
   });
   return issues;
 }
@@ -50,7 +42,9 @@ async function openCombinedEditor(page: Page): Promise<string[]> {
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
-  await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
+  // Hang ceiling, not a timing bound: a run that starts here (one test selected) is the first load of a cold dev
+  // server, which compiles the whole editor route before it mounts.
+  await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 90_000 });
   return issues;
 }
 
@@ -62,7 +56,8 @@ test('extension inventory host renders active and diagnostic state', async ({ pa
   });
 
   const cards = page.locator('[data-video-editor-extension-package-id]');
-  await expect(cards).toHaveCount(3);
+  // Hang ceiling, not a timing bound: the first load of a cold dev server compiles the harness route.
+  await expect(cards).toHaveCount(3, { timeout: 45_000 });
   await expect(page.locator('[data-video-editor-extension-package-state="loaded"]')).toHaveCount(3);
   await expect(page.getByLabel('Extension summary: 3 packages, 3 loaded')).toBeVisible();
   await expect(page.locator('[data-video-editor-activity-event]')).toHaveCount(3);
@@ -100,7 +95,10 @@ test('combined extension surfaces compose and expose keyboard semantics', async 
 });
 
 test('combined extension controls remain visible and operable at phone width', async ({ page }, testInfo) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
+  // A phone gets the touch editor: no dock, mode bar or floating rails, and a 56 px track column. The extension
+  // manager is a desk surface (proven by the desktop case above and by extension-accessibility.spec.ts); what the
+  // phone still offers from extensions is the transcript lane.
   await page.setViewportSize({ width: 390, height: 844 });
   const issues = await openCombinedEditor(page);
 

@@ -275,6 +275,46 @@ export async function publishFakeRuntimeComposition(
   return { headRevisionId: revisionId, config, registry, payload: { config, registry, clips: config.clips ?? [], occurrences: [] } };
 }
 
+/** Schema ref of the persisted transcript source items the transcript lane renders. */
+export const TRANSCRIPT_SEGMENT_SCHEMA_REF = 'astrid.transcript_segment/v1';
+
+export interface SeededTranscriptSegment { start: number; end: number; text: string }
+
+/**
+ * Seed a transcript for one media asset the way a saved project carries it: persisted bundle source items
+ * (`config.bundle.itemsBySchemaRef[astrid.transcript_segment/v1]`, `source_seconds` against the asset),
+ * published as a new head. The lane maps them onto every clip that plays the asset. Call after the shared
+ * reset (it replaces the whole bundle); the editor under test sees it as an external change.
+ */
+export function publishTranscriptSegments(
+  segments: readonly SeededTranscriptSegment[],
+  assetId: string = 'demo-clip',
+  timelineId: string = TIMELINE_SLUG,
+): Promise<FakeRuntimeComposition> {
+  return publishFakeRuntimeComposition(({ config }) => {
+    config.bundle = transcriptBundle(segments, assetId);
+  }, timelineId);
+}
+
+/** The persisted bundle carrying `segments` as transcript source items of `assetId`. */
+export function transcriptBundle(segments: readonly SeededTranscriptSegment[], assetId: string) {
+  return {
+    schema_version: 1,
+    itemsBySchemaRef: {
+      [TRANSCRIPT_SEGMENT_SCHEMA_REF]: segments.map((segment, index) => ({
+        id: `transcript-source:${assetId}:segment:${index}`,
+        shape: 'interval',
+        domain: 'source_seconds',
+        extent: { start: segment.start, end: segment.end },
+        schemaRef: TRANSCRIPT_SEGMENT_SCHEMA_REF,
+        payload: { text: segment.text },
+        sourceArtifactRef: { assetId },
+        provenance: { adapterId: 'astrid.adaptTranscript', adapterVersion: '2' },
+      })),
+    },
+  };
+}
+
 // Playwright can invoke hooks from multiple projects/pages in the same worker.
 // Queue resets so two reset-and-verify sequences cannot interleave and silently
 // verify an intermediate world.
@@ -332,6 +372,21 @@ export function collectPageLogs(page: Page): string[] {
     }
   });
   return logs;
+}
+
+/**
+ * Collect every HTTP response with status >= 400 and every failed request, with no exception list.
+ * Pair it with `collectPageLogs` in specs that open the editor with `page.goto` instead of `openEditor`.
+ */
+export function collectNetworkIssues(page: Page): string[] {
+  const issues: string[] = [];
+  page.on('response', (response) => {
+    if (response.status() >= 400) issues.push(`[http ${response.status()}] ${response.url()}`);
+  });
+  page.on('requestfailed', (request) => {
+    issues.push(`[requestfailed] ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`);
+  });
+  return issues;
 }
 
 export function assertNoUnexpectedPageErrors(logs: readonly string[]): void {
@@ -493,20 +548,9 @@ export async function openEditor(page: Page): Promise<void> {
   if (backendCalls > 0) {
     throw new Error(`local-mode editor made ${backendCalls} backend request(s); local mode must be backend-free`);
   }
-  // The local Astrid capability probe intentionally asks the bridge for a
-  // sentinel media row and receives 404. Keep that expected negative probe
-  // visible in the network audit, while refusing every other missing asset.
-  const unexpectedNotFound = notFoundResponses.filter(
-    (url) => !url.includes('/api/astrid/projects/demo-project/media/__astrid_capability_probe__/content'),
-  );
-  if (unexpectedNotFound.length > 0) {
-    throw new Error(`local-test editor made unexpected 404 request(s):\n${[...new Set(unexpectedNotFound)].join('\n')}`);
-  }
-  const expected404ConsoleText = '[console.error] Failed to load resource: the server responded with a status of 404 (Not Found)';
-  for (let i = 0; i < notFoundResponses.length - unexpectedNotFound.length; i += 1) {
-    const index = issues.indexOf(expected404ConsoleText);
-    if (index < 0) break;
-    issues.splice(index, 1);
+  // Every missing asset is a failure: nothing in the editor issues a deliberate negative probe.
+  if (notFoundResponses.length > 0) {
+    throw new Error(`local-test editor made unexpected 404 request(s):\n${[...new Set(notFoundResponses)].join('\n')}`);
   }
   assertNoUnexpectedPageErrors(issues);
 }

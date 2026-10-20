@@ -21,24 +21,37 @@ import {
   type TimelineOps,
   type TimelinePatch,
   type TimelineReader,
+  type TimelineSnapshot,
 } from '@astrid/editor-sdk';
-import { createExtensionContext } from '@/tools/video-editor/runtime/extensionContextFactory';
+import { createExtensionContext } from './extensionContextFactory';
 import {
   createExtensionLifecycle,
   createExtensionLifecycleHost,
-} from '@/tools/video-editor/runtime/extensionLifecycle';
-import { HostContributionErrorBoundary } from '@/tools/video-editor/runtime/ContributionErrorBoundary';
-import { createCommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
+} from './extensionLifecycle';
+import { HostContributionErrorBoundary } from './ContributionErrorBoundary';
+import { createCommandRegistry } from './commandRegistry';
 import { transcriptLaneExtension } from '@/tools/video-editor/dev/transcript-lane/extension';
 import { scenePhaseMarkersExtension } from '@/tools/video-editor/dev/scene-phase-markers/extension';
-import { creativeLabExtensions } from './index';
-import { createCreativeLabSnapshot } from './testing/createCreativeLabHarness';
 
-const compatibilityCatalog = Object.freeze([
-  ...creativeLabExtensions,
+const compatibilityCatalog: readonly AstridExtension[] = Object.freeze([
   scenePhaseMarkersExtension,
   transcriptLaneExtension,
 ]);
+
+/** One track and one clip, so command and renderer probes read a populated timeline. */
+function createSnapshot(overrides: Partial<TimelineSnapshot> = {}): TimelineSnapshot {
+  return {
+    projectId: 'compatibility-fixture',
+    baseVersion: 1,
+    currentVersion: 1,
+    extensionRequirements: [],
+    clips: [{ id: 'clip-1', track: 'V1', at: 0, duration: 4, clipType: 'media', assetKey: 'demo-clip', assetKind: 'video' }],
+    tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
+    assetKeys: ['demo-clip'],
+    app: {},
+    ...overrides,
+  };
+}
 
 function allPairs<T>(items: readonly T[]): readonly (readonly [T, T])[] {
   return items.flatMap((left, leftIndex) => (
@@ -55,7 +68,7 @@ function createPairContextFactory() {
     inspector?: (props: DataItemInspectorProps) => unknown;
   }>();
   const contextCreations = new Map<string, number>();
-  const reader: TimelineReader = { snapshot: () => createCreativeLabSnapshot() };
+  const reader: TimelineReader = { snapshot: () => createSnapshot() };
   const timeline = {
     apply(_patch: TimelinePatch): TimelineDiff { return {} as TimelineDiff; },
   } as TimelineOps;
@@ -105,11 +118,11 @@ function createPairContextFactory() {
   return { commands, renderers, dataKinds, contextCreations, contextFactory };
 }
 
-describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
-  it('generates the complete 12-extension / 66-pair matrix', () => {
-    expect(compatibilityCatalog).toHaveLength(12);
-    expect(new Set(compatibilityCatalog.map((extension) => extension.manifest.id)).size).toBe(12);
-    expect(allPairs(compatibilityCatalog)).toHaveLength(66);
+describe('bundled editor-extension compatibility matrix and host contract', () => {
+  it('generates the complete 2-extension / 1-pair matrix', () => {
+    expect(compatibilityCatalog).toHaveLength(2);
+    expect(new Set(compatibilityCatalog.map((extension) => extension.manifest.id)).size).toBe(2);
+    expect(allPairs(compatibilityCatalog)).toHaveLength(1);
   });
 
   it.each(compatibilityCatalog)(
@@ -149,7 +162,7 @@ describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
     },
   );
 
-  it('activates all 12 together and survives reorder, disable, and re-enable without churn or leaks', () => {
+  it('activates all 2 together and survives reorder, disable, and re-enable without churn or leaks', () => {
     const harness = createPairContextFactory();
     const host = createExtensionLifecycleHost();
     const ids = compatibilityCatalog.map((extension) => extension.manifest.id as string);
@@ -158,7 +171,7 @@ describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
     const disabledId = disabled.manifest.id as string;
 
     host.synchronize(compatibilityCatalog, harness.contextFactory);
-    expect(host.lifecycles.size).toBe(12);
+    expect(host.lifecycles.size).toBe(2);
     expect([...host.lifecycles.values()].every((lifecycle) => lifecycle.state === 'active')).toBe(true);
     expect(host.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([]);
     expect(Object.fromEntries(harness.contextCreations)).toEqual(
@@ -242,7 +255,7 @@ describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
     });
 
     const registry = createCommandRegistry();
-    const reader: TimelineReader = { snapshot: () => createCreativeLabSnapshot() };
+    const reader: TimelineReader = { snapshot: () => createSnapshot() };
     const timeline = { apply: () => ({} as TimelineDiff) } as TimelineOps;
     for (const extension of [slow, healthy]) {
       const extensionId = extension.manifest.id as string;

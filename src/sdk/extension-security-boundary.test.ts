@@ -8,14 +8,12 @@ import {
   type ExtensionManifest,
   type InstalledExtensionPackage,
 } from '@/sdk/manifest';
-import { creativeLabExtensions } from '@/tools/video-editor/examples/extensions/creative-lab';
 import { scenePhaseMarkersExtension } from '@/tools/video-editor/dev/scene-phase-markers/extension';
 import { transcriptLaneExtension } from '@/tools/video-editor/dev/transcript-lane/extension';
 
 const bundledExtensions = [
   scenePhaseMarkersExtension,
   transcriptLaneExtension,
-  ...creativeLabExtensions,
 ];
 
 function checkedManifestFiles(directory: string): string[] {
@@ -55,9 +53,9 @@ function installedPack(overrides: Partial<InstalledExtensionPackage> = {}): Inst
 }
 
 describe('extension security boundary', () => {
-  it('keeps the 12 reviewed bundled extensions valid and least-privileged', () => {
-    expect(bundledExtensions).toHaveLength(12);
-    expect(new Set(bundledExtensions.map((extension) => extension.manifest.id)).size).toBe(12);
+  it('keeps the 2 reviewed bundled extensions valid and least-privileged', () => {
+    expect(bundledExtensions).toHaveLength(2);
+    expect(new Set(bundledExtensions.map((extension) => extension.manifest.id)).size).toBe(2);
 
     for (const extension of bundledExtensions) {
       const result = validateManifest(extension.manifest);
@@ -74,10 +72,10 @@ describe('extension security boundary', () => {
     }
   });
 
-  it('runtime-validates all 18 checked JSON manifests under the security policy', () => {
+  it('runtime-validates all 8 checked JSON manifests under the security policy', () => {
     const directory = path.resolve(import.meta.dirname, '../tools/video-editor/examples/extensions');
     const files = checkedManifestFiles(directory);
-    expect(files).toHaveLength(18);
+    expect(files).toHaveLength(8);
 
     for (const file of files) {
       const envelope = JSON.parse(fs.readFileSync(file, 'utf8')) as { manifest: ExtensionManifest };

@@ -315,7 +315,7 @@ function parseExtensionManifests() {
 
   /**
    * Discover extension directories recursively so curated collections such as
-   * `creative-lab/pulse-map` are valid. A directory is considered an authored
+   * `<collection>/<extension>` are valid. A directory is considered an authored
    * extension (and therefore manifest-required) only when it contains an
    * extension entrypoint. Pure grouping directories are traversed silently.
    *
