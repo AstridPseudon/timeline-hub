@@ -1787,6 +1787,10 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         _extract(video_path, cards, out_root, options.get('resolution'))
     else:
         capture_info = frame_provider.capture(cards, out_root, options.get('resolution'))
+        captured_label = getattr(frame_provider, 'revision_label', None)
+        if captured_label is not None:
+            revision_label = captured_label
+            index['provenance']['revision'] = revision_label
         index['frame_capture'] = capture_info
         index['provenance']['frame_capture'] = capture_info
     capture_ended_at = time.time()

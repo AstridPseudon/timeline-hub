@@ -584,6 +584,15 @@ class RemotionFrameProvider:
         self.materialized_root = Path(materialized_root) if materialized_root else None
         self.materialized_objects = materialized_objects
         self.theme_path = Path(theme_path) if theme_path else None
+        from astrid.core.rendering.verified_source import inherited_source
+
+        from .provenance import snapshot_label
+
+        self._verified_source = inherited_source(self.timeline_path, self.assets_path)
+        self._label_snapshot = copy.deepcopy(dict(snapshot))
+        if self._verified_source is not None:
+            snapshot_label(self._label_snapshot, source=self._verified_source)
+        self.revision_label: dict[str, Any] | None = None
         self.scene_capture: CaptureSceneLabels | None = None
         self.fresh_scene_frames: set[int] = set()
         self._pending_scene: CaptureSceneLabels | None = None
@@ -626,7 +635,13 @@ class RemotionFrameProvider:
                 }:
                     raise ValueError("capture projected source/occurrence mapping mismatch")
             self._registry = _load_registry_mapping(self.assets_path)
-            if self._registry != self.snapshot["registry"]:
+            retained_registry = copy.deepcopy(self.snapshot["registry"])
+            # Host materialization adds attempt-local locators. The callback
+            # verifies their paths and bytes; retained asset meaning is exact.
+            for registry in (self._registry, retained_registry):
+                for entry in registry["assets"].values():
+                    entry.pop("file", None)
+            if self._registry != retained_registry:
                 raise ValueError("materialized registry differs from retained capture source")
             self.profile = _canonical_profile(self.timeline_path, self._registry, self.theme_path)
             self._theme = _resolved_theme_for_render(self.timeline_path, self.theme_path)
@@ -753,6 +768,7 @@ class RemotionFrameProvider:
 
     def close(self, *, force: bool = False) -> None:
         if force:
+            self.revision_label = None
             self.scene_capture = self._pending_scene = None
             self.fresh_scene_frames.clear()
         self.worker.close(force=force)
@@ -763,6 +779,7 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        self.revision_label = None
         self.scene_capture = self._pending_scene = None
         self.fresh_scene_frames.clear()
         out_root = Path(out_root)
@@ -809,6 +826,11 @@ class RemotionFrameProvider:
                     self._pending_scene.retain(produced)
                     self.scene_capture = self._pending_scene
                     self.fresh_scene_frames = set(produced)
+                    if self._verified_source is not None and cached == 0:
+                        from .provenance import snapshot_label
+
+                        self._verified_source.validate(self.timeline_path, self.assets_path)
+                        self.revision_label = snapshot_label(self._label_snapshot, source=self._verified_source)
                 for _frame, key, destination in misses:
                     self.cache.write(key, destination.read_bytes())
         except BaseException as operation_error:

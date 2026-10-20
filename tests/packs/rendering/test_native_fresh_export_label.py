@@ -1,0 +1,207 @@
+"""Native source -> one fresh PNG -> exported revision label.
+
+Only the explicitly selected physical test launches the normal host command.
+The offline cases never manufacture successful capture or public scene rows.
+"""
+from __future__ import annotations
+
+import hashlib
+import io
+import json
+import os
+import sys
+import uuid
+import zipfile
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from astrid.core.rendering.verified_source import PreparedTimelineInputs
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
+    FrameCaptureCache,
+    RemotionFrameProvider,
+    frame_cache_key,
+)
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import build_filmstrip_pack
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import filmstrip_options
+from tests.packs.rendering import test_live_source_label_native as native_fixture
+from tests.packs.rendering.test_live_source_label_native import canonical, snapshot
+
+pytestmark = pytest.mark.integration
+ROOT = Path(__file__).resolve().parents[3]
+native_runtime = native_fixture.native_runtime
+
+
+def handoff(runtime, original, tmp_path, monkeypatch, *, certified=True):
+    task = runtime.admit(original, inline=certified, uncertified=not certified)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    environment = {}
+    PreparedTimelineInputs.handoff_source(values, environment)
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    return task, values
+
+
+def provider(original, values, tmp_path, renderer):
+    return RemotionFrameProvider(
+        original, timeline_path=Path(values["timeline"]), assets_path=Path(values["assets_registry"]),
+        project_dir=tmp_path, materialized_root=Path(values["materialized_root"]),
+        materialized_objects=values["materialized_objects"],
+        cache=FrameCaptureCache(tmp_path / "cache"), renderer=renderer,
+    )
+
+
+@pytest.mark.parametrize("certified", [False, True])
+def test_png_only_cache_does_not_certify_export(native_runtime, tmp_path, monkeypatch, certified):
+    original = snapshot(native_runtime)
+    _, values = handoff(native_runtime, original, tmp_path, monkeypatch, certified=certified)
+
+    def no_capture(*args):
+        pytest.fail("PNG-only cache must not launch a renderer")
+
+    owner = provider(original, values, tmp_path, no_capture)
+    # Reuse real ingested PNG bytes as a PNG-only cache entry, not a capture.
+    pin = original["registry"]["assets"]["occ-1:old-picture"]["media_id"]
+    owner.cache.write(frame_cache_key(owner.snapshot, 0, None), native_runtime.get_object(pin))
+    assert owner.revision_label is None
+    result = build_filmstrip_pack(
+        out_root=tmp_path / "export", snapshot=original,
+        options=filmstrip_options({"frame": 0, "show": ["output"], "frame_extension": "png"}),
+        frame_provider=owner,
+    )
+    assert result["snapshot_label"]["status"] == "uncertified"
+    assert result["snapshot_label"]["actual_revision_id"] is None
+    assert result["frame_index"]["provenance"]["revision"] == result["snapshot_label"]
+    assert result["frame_index"]["frame_capture"]["fresh_frames"] == 0
+    assert "UNCERTIFIED" in Path(result["paths"]["markdown"]).read_text()
+    assert owner.scene_for_frame(0) is None and owner.revision_label is None
+    owner.close()
+
+
+def test_failed_fresh_capture_has_no_certified_label(native_runtime, tmp_path, monkeypatch):
+    original = snapshot(native_runtime)
+    _, values = handoff(native_runtime, original, tmp_path, monkeypatch)
+
+    def unavailable(*args):
+        raise RuntimeError("renderer unavailable")
+
+    owner = provider(original, values, tmp_path, unavailable)
+    assert owner.revision_label is None
+    with pytest.raises(RuntimeError, match="renderer unavailable"):
+        owner.capture([{"frame": 0, "image": "frames/frame-000000000.png"}], tmp_path / "export")
+    assert owner.revision_label is None and owner.scene_for_frame(0) is None
+    assert not list((tmp_path / "export").rglob("*.png"))
+
+
+def test_replaced_label_snapshot_refuses_before_capture(native_runtime, tmp_path, monkeypatch):
+    original = snapshot(native_runtime)
+    _, values = handoff(native_runtime, original, tmp_path, monkeypatch)
+    replaced = deepcopy(original)
+    replaced["metadata"]["parent_revision_id"] = "invented-current-head"
+    with pytest.raises(ValueError, match="differs from verified source snapshot"):
+        provider(replaced, values, tmp_path, lambda *args: pytest.fail("replaced source capture"))
+
+
+def test_locator_normalization_keeps_asset_metadata_guards(native_runtime, tmp_path, monkeypatch):
+    original = snapshot(native_runtime)
+    _, values = handoff(native_runtime, original, tmp_path, monkeypatch, certified=False)
+    registry = Path(values["assets_registry"])
+    altered = json.loads(registry.read_bytes())
+    altered["assets"]["occ-1:old-picture"]["type"] = "audio"
+    registry.write_bytes(canonical(altered))
+    with pytest.raises(ValueError, match="materialized registry differs"):
+        provider(original, values, tmp_path, lambda *args: pytest.fail("changed asset metadata capture"))
+
+
+def test_one_fresh_saved_frame_exports_retained_revision(native_runtime, tmp_path):
+    """Central only: genuine host dispatch, launch admission and renderer lease."""
+    from astrid.core.execution.generic_host import (
+        GenericPackHost,
+        _launch_worker_probe_environments,
+    )
+    from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+
+    runtime = native_runtime
+    original = snapshot(runtime)
+    raw = canonical(original)
+    task = runtime.admit(original, inline=True)
+    head = runtime.commits.head(runtime.project_id, "main")
+    newer = runtime.service.commit_timeline(runtime.project_id, "main", {
+        "api_version": 1, "project_id": runtime.project_id, "timeline_id": "main",
+        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+        "commands": [{"schema_version": 1, "op": "track.create", "version": "1", "select": "parent",
+                      "args": {"row": {"id": "new-head-track", "kind": "visual"}}}],
+    }, idempotency_key="advance-r2", publisher="fixture-owner-test",
+        invocation_path=f"/v1/projects/{runtime.project_id}/timelines/main/commit",
+        authorize=runtime.service._assert_mutation_admitted)
+    r2 = newer["data"]["accepted_revision_id"]
+    assert r2 != runtime.r1
+    host = GenericPackHost(pack_roots=[ROOT / "astrid/packs/rendering"], client=runtime, attempt_base=tmp_path)
+    try:
+        host.discover()
+        record = host.capabilities["rendering.timeline_visualize"]
+        attempt = tmp_path / "attempt"
+        values = host._materialize_inputs(task["spec"], attempt)
+        assert canonical(values.timeline_source.read()["snapshot"]) == raw
+        values.update(project_slug=original["project_slug"], frame=0, show=["output"], columns=5)
+        environment = dict(os.environ)
+        validation = prepare_remotion_validation(
+            artifact_directory=tmp_path / "runtime-admission", host_environment=environment,
+            python_executable=sys.executable, launch_id=uuid.uuid4().hex,
+            contexts={"host": environment, "worker": _launch_worker_probe_environments(
+                host.pack_roots, environment, remotion_only=True)},
+        )
+        # The normal launcher emits these bindings; no readiness fact is replaced.
+        with pytest.MonkeyPatch.context() as patch:
+            for key, value in validation.items():
+                patch.setenv(key, value)
+            completed = host._run_command_definition(
+                record, values, attempt / "outputs", attempt,
+                authority_context=task["spec"]["spec"]["authority_context"],
+                allow_runtime_connection=False,
+            )
+        assert completed.returncode == 0
+        with zipfile.ZipFile(attempt / "outputs/filmstrip-bundle.zip") as archive:
+            index = json.loads(archive.read("frame-index.json"))
+            label = index["provenance"]["revision"]
+            assert label == {"status": "committed", "label": f"committed revision {runtime.r1}",
+                             "actual_revision_id": runtime.r1, "base_revision_id": None}
+            capture = index["provenance"]["frame_capture"]
+            assert capture["requested_frames"] == [0]
+            assert capture["fresh_frames"] == 1 and capture["cached_frames"] == 0
+            assert capture["evidence_source"] == "fresh_capture"
+            assert "c08.picture-1" in index["cards"][0]["addresses"]
+            png = archive.read("frames/frame-000000000.png")
+            with Image.open(io.BytesIO(png)) as frame:
+                assert frame.format == "PNG"
+                frame.load()
+                assert frame.size == (200, 100)
+            assert label["label"] in archive.read("filmstrip.md").decode()
+            assert r2 not in archive.read("filmstrip.md").decode()
+            from PIL import ImageDraw
+
+            from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
+                _png_draw_text,
+                _png_font,
+            )
+
+            with Image.open(io.BytesIO(archive.read("filmstrip-001.png"))) as page:
+                heading = page.convert("RGB").crop((0, 0, page.width, 32))
+                expected = Image.new("RGB", heading.size, "#111827")
+                title = f'{original.get("timeline_name") or original["timeline_id"]} · page 1 · rendered frames · '
+                _png_draw_text(ImageDraw.Draw(expected), (16, 10), title + label["label"], _png_font(20), fill="white")
+                assert heading.tobytes() == expected.tobytes()
+                stale = Image.new("RGB", heading.size, "#111827")
+                _png_draw_text(ImageDraw.Draw(stale), (16, 10), title + f"committed revision {r2}", _png_font(20), fill="white")
+                assert heading.tobytes() != stale.tobytes()
+            manifest = json.loads(archive.read("manifest.json"))
+            for name in ("frame-index.json", "frames/frame-000000000.png", "filmstrip-001.png"):
+                data = archive.read(name)
+                row = next(row for row in manifest["outputs"] if row["path"] == name)
+                assert row["content_hash"] == "sha256:" + hashlib.sha256(data).hexdigest()
+        assert runtime.commits.head(runtime.project_id, "main")["revision_id"] == r2
+        assert canonical(values.timeline_source.read()["snapshot"]) == raw
+    finally:
+        host.shutdown()

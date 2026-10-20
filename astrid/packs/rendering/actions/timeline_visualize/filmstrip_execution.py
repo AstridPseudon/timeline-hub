@@ -1850,6 +1850,7 @@ def execute_filmstrip(args, *, authority=None):
             # Release the provider's lease while the shared owner remains
             # paused behind its bounded idle-expiry timer.
             frame_provider.close()
+    revision_label = result.get('snapshot_label') or revision_label
     if capture_mode and video is not None:
         media_record = result.get('frame_index', {}).get('media')
         if isinstance(media_record, dict):
