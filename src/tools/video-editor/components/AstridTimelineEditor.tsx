@@ -183,12 +183,14 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     registerGenerationAsset,
     shotSet,
     occurrenceDuplicate,
+    occurrenceMedia: occurrenceMediaPort,
   } = useTimelineOpsSelector((ops) => ({
     applyEdit: ops.applyEdit,
     prepareGenerationAsset: ops.prepareGenerationAsset,
     registerGenerationAsset: ops.registerGenerationAsset,
     shotSet: ops.shotSet,
     occurrenceDuplicate: ops.occurrenceDuplicate,
+    occurrenceMedia: ops.occurrenceMedia,
   }), shallow);
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
@@ -712,6 +714,10 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
                 initialComposition={publishedCanonicalComposition?.composition ?? runtime.shots.canonicalComposition ?? undefined}
                 onClose={() => setCanonicalShotEditor(null)}
                 shotSetPort={shotSet}
+                occurrenceMediaPort={occurrenceMediaPort}
+                mediaSelectionReader={runtime.provider}
+                mediaImportProvider={runtime.provider}
+                hostTimelineDataRef={dataRef}
                 onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
                 onCanonicalDraftSessionChange={(scope, active) => {
                   if (active) runtime.shots?.beginCanonicalDraftSession?.(scope);

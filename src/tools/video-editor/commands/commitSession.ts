@@ -43,7 +43,11 @@ import { captureShotSet, finishShotSet } from './shotSetCapture.ts';
 import type { ShotSetCapturePort } from './shotSetGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
+import { captureOccurrenceAddMedia, captureOccurrenceSwapMedia, executeOccurrenceMedia } from './occurrenceMediaCapture.ts';
+import { occurrenceMediaPreview, type OccurrenceMediaCapturePort, type OccurrenceMediaRequest, type VerifiedMediaRead } from './occurrenceMediaGesture.ts';
+import { OccurrenceMediaState, rawIdentity } from './occurrenceMediaPrimitives.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
+import type { JsonObject } from './types.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
 export type ParentClipAddMediaCaptureBasis = {
@@ -95,6 +99,7 @@ type Options = {
   initial: TimelineCommandBasis;
   outboxes?: ReturnType<typeof createCommitOutbox>;
   loadLatest?(): Promise<TimelineCommandBasis>;
+  getProjectVerifiedMedia?: VerifiedMediaRead;
   send(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
   preview(patch: TimelinePatch): void;
   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
@@ -118,6 +123,7 @@ export async function createTimelineCommandSession(options: Options) {
   let known = options.initial;
   let acceptedBasis = options.initial;
   let displayHead = options.initial.head;
+  let displayBasis = options.initial;
   let projecting = false;
   let projectionGeneration = 0;
   let resolving = false;
@@ -217,6 +223,7 @@ export async function createTimelineCommandSession(options: Options) {
       await options.project(basis, previews);
       if (stopped || generation !== projectionGeneration) return;
       displayHead = basis.head;
+      displayBasis = basis;
       if (projectionPending === basis) projectionPending = undefined;
     } finally { projecting = false; }
   }
@@ -440,6 +447,90 @@ export async function createTimelineCommandSession(options: Options) {
         || !equal(preparation.bundle, bundle) || !equal(preparation.localBasis, currentBasis)) {
         throw new Error('Timeline changed during parent clip.swap-media preparation');
       }
+    },
+  };
+  const mediaCaptures = new WeakSet<object>();
+  const occurrenceMediaPort: OccurrenceMediaCapturePort = {
+    capture({ request, current }) {
+      assertReady();
+      if (!options.getProjectVerifiedMedia) throw new Error('Runtime verified-media read is unavailable');
+      if (!displayBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayBasis.head.revisionId || current.head.headPublicationId !== displayBasis.head.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (!/^occurrence:[^/]+$/.test(request.ownerRef) || !rawIdentity(request.ownerRef.slice(11))
+        || request.trackRef !== `${request.ownerRef}/track:${request.trackRef.slice(`${request.ownerRef}/track:`.length)}`
+        || !rawIdentity(request.trackRef.slice(`${request.ownerRef}/track:`.length))) {
+        throw new Error('Media edit requires explicit matching occurrence and raw track refs');
+      }
+      assertFiniteJson(request);
+      const raw = new OccurrenceMediaState(bundle);
+      raw.occurrence(request.ownerRef);
+      raw.entity(request.trackRef);
+      if (request.kind === 'add') {
+        if (!rawIdentity(request.row.id) || request.row.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
+          throw new Error('Media add requires caller-reserved child and matching raw track');
+        }
+      } else if (request.kind === 'swap') {
+        if (!request.clipRef.startsWith(`${request.ownerRef}/clip:`)
+          || !rawIdentity(request.clipRef.slice(`${request.ownerRef}/clip:`.length))
+          || raw.entity(request.clipRef)!.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
+          throw new Error('Media swap requires an explicit matching raw child and track');
+        }
+        const rawClipId = request.clipRef.slice(`${request.ownerRef}/clip:`.length);
+        const matches = current.resolvedConfig.clips.filter((clip) => clip.id === `${request.ownerRef.slice(11)}:${rawClipId}`);
+        const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+        const occurrence = raw.occurrence(request.ownerRef);
+        const source = bundle.source_mapping.shots[String(occurrence.shot_id)];
+        if (matches.length !== 1 || !identity || identity.clipRef !== request.clipRef || identity.rawClipId !== rawClipId
+          || identity.ownerRef !== request.ownerRef || identity.occurrenceId !== request.ownerRef.slice(11)
+          || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId
+          || identity.shotId !== source?.shot_id || identity.revisionId !== source?.revision_id
+          || identity.internalTimelineRevisionId !== source?.internal_timeline_revision_id
+          || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
+          throw new Error('Media swap requires an explicit matching projected owner');
+        }
+      } else throw new Error('Unsupported occurrence media request');
+      const basis = freezeJson(json({ request, bundle, graph: displayBasis.graph, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as JsonObject;
+      mediaCaptures.add(basis);
+      return basis;
+    },
+    async finish(basis) {
+      assertReady();
+      if (!mediaCaptures.has(basis) || basis.localGeneration !== localGeneration) throw new Error('Media edit was not captured by this session or the timeline changed');
+      const before = bundle;
+      const request = basis.request as unknown as OccurrenceMediaRequest;
+      const pins = request.kind === 'swap' ? [request.oldMedia, request.media] : [request.media];
+      try {
+        const inputs = await Promise.all(pins.map((pin) => options.getProjectVerifiedMedia!(copy(pin))));
+        assertReady();
+        if (basis.localGeneration !== localGeneration || before !== bundle) throw new Error('Timeline changed during the media read');
+        if (inputs.some((input, index) => !equal(input.selection, pins[index]))) throw new Error('Runtime verified-media selection differs from the original immutable pin');
+        const captured = request.kind === 'add'
+          ? captureOccurrenceAddMedia(basis.bundle as AuthoredBundle, request.ownerRef, request.row, request.media, inputs)
+          : captureOccurrenceSwapMedia(basis.bundle as AuthoredBundle, request.clipRef, request.oldMedia, request.media, inputs);
+        const result = executeOccurrenceMedia(bundle, captured.command, inputs);
+        const preview = occurrenceMediaPreview(result.bundle as AuthoredBundle, basis.graph as Record<string, unknown>);
+        prepared.set(JSON.stringify(result.command), { payload: {
+          commands: [result.command], before: bundle, after: result.bundle, preview, displayBasis,
+        }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+        return { command: result.command, preview };
+      } catch (error) {
+        if (!stopped) publish('error', message(error));
+        throw error;
+      }
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const entry = prepared.get(JSON.stringify(command));
+      if (!['occurrence.add-media', 'occurrence.swap-media'].includes(command.op) || !entry
+        || entry.generation !== localGeneration || entry.payload.before !== bundle || !equal(preview, entry.payload.preview)) {
+        throw new Error('Media edit requires this session’s prepared command and complete closure preview');
+      }
+      enqueue(entry.payload, preview, entry.basis);
+      prepared.delete(JSON.stringify(command));
     },
   };
   const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
@@ -1085,6 +1176,7 @@ export async function createTimelineCommandSession(options: Options) {
     shotSetPort,
     parentClipAddMediaPort,
     parentClipSwapMediaPort,
+    occurrenceMediaPort,
     occurrenceDuplicatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),

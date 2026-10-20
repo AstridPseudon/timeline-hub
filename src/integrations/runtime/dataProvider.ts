@@ -7,6 +7,7 @@ import type {
   EditCommand,
   HistoryPage,
   MediaSelection,
+  MediaSelectionQuery,
   VerifiedMedia,
 } from './generated.ts';
 import {
@@ -786,10 +787,28 @@ export class RuntimeDataProvider implements DataProvider {
     return this.resolveAssetUrlFromRegistry(file, registry);
   }
 
+  async getProjectMediaSelection(query: MediaSelectionQuery): Promise<MediaSelection> {
+    const selection = await this.client.getProjectMediaSelection(this.projectId, query);
+    if ('asset' in query && (selection.asset !== query.asset
+      || selection.generation_id !== query.generation_id
+      || selection.variant_id !== query.variant_id)) {
+      throw new Error('Workspace Runtime media selection returned a mismatched asset generation variant');
+    }
+    if ('association_id' in query && selection.object_id !== query.object_id) {
+      throw new Error('Workspace Runtime media selection returned a mismatched association object');
+    }
+    return selection;
+  }
+
+  async getProjectVerifiedMedia(selection: MediaSelection): Promise<VerifiedMedia>;
+  async getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia>;
   async getProjectVerifiedMedia(
-    projectId: string,
-    selection: MediaSelection,
+    projectOrSelection: string | MediaSelection,
+    maybeSelection?: MediaSelection,
   ): Promise<VerifiedMedia> {
+    const projectId = typeof projectOrSelection === 'string' ? projectOrSelection : this.projectId;
+    const selection = typeof projectOrSelection === 'string' ? maybeSelection : projectOrSelection;
+    if (!selection) throw new Error('Workspace Runtime verified media requires a selection');
     const originalSelection = Object.freeze({
       asset: selection.asset,
       generation_id: selection.generation_id,

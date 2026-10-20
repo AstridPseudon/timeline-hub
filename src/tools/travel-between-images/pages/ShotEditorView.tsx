@@ -46,6 +46,9 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineDataRef } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import {
   enqueueCanonicalShotPublish,
   updateCanonicalShotSettings,
@@ -75,6 +78,11 @@ interface ShotEditorViewProps {
   canonicalShotComposition?: ShotCompositionAdapter;
   /** Mounted parent command-session authority for canonical shot name edits. */
   shotSetPort?: ShotSetCapturePort;
+  /** Mounted parent command-session authority for popup occurrence media. */
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  mediaSelectionReader?: Pick<DataProvider, 'getProjectMediaSelection' | 'getProjectVerifiedMedia'>;
+  mediaImportProvider?: Pick<DataProvider, 'prepareMediaImport'>;
+  hostTimelineDataRef?: TimelineDataRef;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -106,6 +114,10 @@ export function ShotEditorView({
   canonicalOccurrence,
   canonicalShotComposition,
   shotSetPort,
+  occurrenceMediaPort,
+  mediaSelectionReader,
+  mediaImportProvider,
+  hostTimelineDataRef,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -453,6 +465,10 @@ export function ShotEditorView({
             composition={canonicalComposition}
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
+            occurrenceMediaPort={occurrenceMediaPort}
+            mediaSelectionReader={mediaSelectionReader}
+            mediaImportProvider={mediaImportProvider}
+            hostTimelineDataRef={hostTimelineDataRef}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}

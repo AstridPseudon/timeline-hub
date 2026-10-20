@@ -25,6 +25,10 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineDataRef } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+import { ShotTimelineMediaControls } from './ShotTimelineMediaControls.tsx';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -39,6 +43,10 @@ type ShotTimelinePreviewProps = {
   composition: PreparedShotComposition;
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  mediaSelectionReader?: Pick<DataProvider, 'getProjectMediaSelection' | 'getProjectVerifiedMedia'>;
+  mediaImportProvider?: Pick<DataProvider, 'prepareMediaImport'>;
+  hostTimelineDataRef?: TimelineDataRef;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -144,11 +152,21 @@ function ShotTimelineEditorSurface({
   hardDurationSeconds,
   editorHeadState,
   onActiveConfigChange,
+  occurrenceMediaPort,
+  occurrenceId,
+  mediaSelectionReader,
+  mediaImportProvider,
+  hostTimelineDataRef,
 }: {
   config: ResolvedTimelineConfig;
   hardDurationSeconds?: number;
   editorHeadState: { current: ShotTimelineEditorHeadState };
   onActiveConfigChange?: (config: ResolvedTimelineConfig) => void;
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  occurrenceId: string;
+  mediaSelectionReader?: Pick<DataProvider, 'getProjectMediaSelection' | 'getProjectVerifiedMedia'>;
+  mediaImportProvider?: Pick<DataProvider, 'prepareMediaImport'>;
+  hostTimelineDataRef?: TimelineDataRef;
 }) {
   const chrome = useTimelineChromeContext();
   const { previewRef, playerContainerRef, currentTime, onPreviewTimeUpdate } = useTimelinePlaybackContext();
@@ -258,6 +276,13 @@ function ShotTimelineEditorSurface({
       data-shot-timeline-current-time={currentTime}
     >
       <ShotTimelineRecoveryControls />
+      <ShotTimelineMediaControls
+        occurrenceId={occurrenceId}
+        occurrenceMediaPort={occurrenceMediaPort}
+        mediaSelectionReader={mediaSelectionReader}
+        mediaImportProvider={mediaImportProvider}
+        hostTimelineDataRef={hostTimelineDataRef}
+      />
       {isAdoptingCanonicalHead ? (
         <div role="status" data-shot-timeline-head-adoption="pending" className="text-xs text-muted-foreground">
           Updating canonical shot; editing is paused.
@@ -386,6 +411,10 @@ export function ShotTimelinePreview({
   composition,
   occurrenceId,
   shotCompositionAdapter,
+  occurrenceMediaPort,
+  mediaSelectionReader,
+  mediaImportProvider,
+  hostTimelineDataRef,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -646,6 +675,11 @@ export function ShotTimelinePreview({
           hardDurationSeconds={hardDurationSeconds}
           editorHeadState={editorHeadStateRef}
           onActiveConfigChange={handleActiveConfigChange}
+          occurrenceMediaPort={occurrenceMediaPort}
+          occurrenceId={occurrenceId}
+          mediaSelectionReader={mediaSelectionReader}
+          mediaImportProvider={mediaImportProvider}
+          hostTimelineDataRef={hostTimelineDataRef}
         />
       </VideoEditorProvider>
     </section>
