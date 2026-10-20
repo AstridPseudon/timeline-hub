@@ -75,7 +75,6 @@ _EXPORTS = {
     "authoring_media_inventory": ("authoring_bundle", "authoring_media_inventory"),
     "publish_authoring_candidate": ("authoring_bundle", "publish_authoring_candidate"),
     "approve_authoring_candidate": ("authoring_bundle", "approve_authoring_candidate"),
-    "promote_approved_authoring_candidate": ("authoring_bundle", "promote_approved_authoring_candidate"),
     "GenerationFacade": ("generation", "GenerationFacade"),
     "generate": ("generation", "generate"),
     "discover": ("invocation", "discover"),
