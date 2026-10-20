@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 
+import pytest
 import yaml
 
 from astrid.core.element import project_packs
@@ -20,7 +21,7 @@ from tests.sdk.test_timeline_selected_schema import (  # noqa: F401
 )
 
 
-def admitted_transition(configured):
+def transition_pack():
     root, directory, manifest = test_project_packs.seed('project-1')
     definition_path = directory / 'element.yaml'
     definition = yaml.safe_load(definition_path.read_text())
@@ -38,15 +39,29 @@ def admitted_transition(configured):
         path.rename(transition_dir / path.name)
     directory.rmdir()
     (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+    return transition_dir
+
+
+def admitted_transition(configured):
+    transition_pack()
     result = project_packs.admit_project_pack('realm', 'project-1')
     selected = next(item['descriptor'] for item in result['elements']
                     if item['descriptor']['kind'] == 'transition')
     return result, {key: selected[key] for key in ('id', 'kind', 'revision', 'packId')}
 
 
+def adjacent_app_document():
+    document = app_document()
+    rows = document['parent_revision']['payload']['clips']
+    rows[1]['at'] = 3
+    document['parent_revision']['payload']['config']['clips'] = copy.deepcopy(rows)
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    return document
+
+
 def test_provider_selected_transition_validates_exact_schema_and_redoes(configured_project_pack):  # noqa: F811
     _, selected = admitted_transition(configured_project_pack)
-    realm = DetachedRealm(app_document())
+    realm = DetachedRealm(adjacent_app_document())
     options = schema_options(configured_project_pack, selected)
     verified, realm.snapshot_objects = options['schema_inputs'][0]
     realm.live_sources[_digest(verified['pin'])] = verified
@@ -75,7 +90,7 @@ def test_provider_selected_transition_validates_exact_schema_and_redoes(configur
 
 def test_first_selected_transition_exact_document_inverse(configured_project_pack):  # noqa: F811
     _, selected = admitted_transition(configured_project_pack)
-    realm = DetachedRealm(app_document())
+    realm = DetachedRealm(adjacent_app_document())
     options = schema_options(configured_project_pack, selected)
     verified, realm.snapshot_objects = options['schema_inputs'][0]
     realm.live_sources[_digest(verified['pin'])] = verified
@@ -85,3 +100,39 @@ def test_first_selected_transition_exact_document_inverse(configured_project_pac
     accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
     undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
     assert undone['data']['canonical_document'] == before
+
+
+def test_selected_transition_update_retains_first_pin_for_same_reference(configured_project_pack):  # noqa: F811
+    transition_dir = transition_pack()
+    first_result = project_packs.admit_project_pack('realm', 'project-1')
+    first_descriptor = next(item['descriptor'] for item in first_result['elements']
+                            if item['descriptor']['kind'] == 'transition')
+    definition_path = transition_dir / 'element.yaml'
+    definition = yaml.safe_load(definition_path.read_text())
+    definition['schema']['properties']['seed']['maximum'] = 20
+    definition_path.write_text(yaml.safe_dump(definition))
+    second_result = project_packs.admit_project_pack('realm', 'project-1')
+    second_descriptor = next(item['descriptor'] for item in second_result['elements']
+                             if item['descriptor']['kind'] == 'transition')
+    first = {key: first_descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+    second = {key: second_descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+    p1 = schema_options(configured_project_pack, first)
+    p2 = schema_options(configured_project_pack, second)
+    realm = DetachedRealm(adjacent_app_document())
+    for options in (p1, p2):
+        verified, objects = options['schema_inputs'][0]
+        realm.live_sources[_digest(verified['pin'])] = verified
+        realm.snapshot_objects.update(objects)
+
+    def values(element, seed):
+        return {'elementRef': element, 'transition': {
+            'type': element['id'], 'duration': .5, 'revision': element['revision'],
+            'params': {'seed': seed}}}
+
+    first_command = capture_clip_set(current(realm), PARENT, values=values(first, 8), **p1)
+    commit(realm, [first_command])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    later = capture_clip_set(current(realm), PARENT, values=values(second, 16), **p2)
+    with pytest.raises(CommitRejected, match='source changed|authority|selected'):
+        commit(realm, [later])
+    assert (realm.head, realm.entries, realm.documents) == before

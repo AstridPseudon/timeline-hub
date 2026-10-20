@@ -71,6 +71,14 @@ def app_bundle():
     return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
 
 
+def adjacent_transition_bundle():
+    original = app_bundle()
+    rows = original['parent']['clips']
+    rows[1]['at'] = 3
+    original['parent']['config']['clips'] = copy.deepcopy(rows)
+    return original
+
+
 def app_calls(original):
     return [capture_clip_set(original, CHILD, values={'hold': 4}),
             capture_clip_set(original, CLEAR, clear=['asset']),
@@ -375,7 +383,7 @@ def test_private_transition_set_update_remove_pairs_element_ref_and_roundtrips()
     descriptor = next(item for item in list_element_descriptors('transitions')
                       if item['id'] == 'cross-fade')
     element = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
-    original = app_bundle()
+    original = adjacent_transition_bundle()
     original_clip = clip(original, PARENT)
     original_clip['element_ref'] = {'id': 'legacy', 'kind': 'transition', 'revision': 'old'}
     original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
@@ -475,3 +483,26 @@ def test_explicit_transition_remove_refuses_unsafe_identity_and_keeps_draft(valu
 def test_private_transition_set_refuses_unpaired_or_invalid_values(values):
     with pytest.raises(CommandError):
         capture_clip_set(app_bundle(), PARENT, values=values)
+
+
+@pytest.mark.parametrize('change', ['gap', 'track', 'oversize'])
+def test_transition_set_enforces_main_adjacency_and_shortest_clip_fit(change):
+    from astrid.core.element.catalog import list_element_descriptors
+
+    descriptor = next(item for item in list_element_descriptors('transitions')
+                      if item['id'] == 'cross-fade')
+    element = {key: descriptor[key] for key in ('id', 'kind', 'revision', 'packId')}
+    original = adjacent_transition_bundle()
+    target = clip(original, PARENT)
+    if change == 'gap':
+        target['at'] = 3.002
+    elif change == 'track':
+        target['track'] = 'S1'
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    duration = 3.1 if change == 'oversize' else .5
+    with pytest.raises(CommandError, match='adjacent|shorter'):
+        capture_clip_set(original, PARENT, values={
+            'elementRef': element,
+            'transition': {'type': element['id'], 'duration': duration,
+                           'revision': element['revision']},
+        })

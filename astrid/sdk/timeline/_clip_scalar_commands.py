@@ -4,7 +4,7 @@ from __future__ import annotations
 import copy
 import math
 
-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
 
 from ._command_state import CommandError, equal, present
 from ._scalar_commands import (
@@ -139,7 +139,33 @@ def _transition_set(ctx, command, ref, values, identity):
     if owner != 'parent':
         for path in MAP_FIELDS:
             ctx.read(owner, path)
-    for neighbor in [ref, *ctx.select('transition.predecessor', ref)]:
+    predecessors = ctx.select('transition.predecessor', ref)
+    if len(predecessors) != 1:
+        raise CommandError('transition requires an adjacent predecessor on the same track', ref=ref)
+    predecessor = predecessors[0]
+    predecessor_row = ctx.state.entity(predecessor)
+    target_row = ctx.state.entity(ref)
+
+    def authored_start(row):
+        if 'at' in row:
+            return number(row['at'], 'clip.at')
+        if 'at_ms' in row:
+            return number(row['at_ms'], 'clip.at_ms') / 1000
+        raise CommandError('transition requires explicit clip starts', ref=ref)
+
+    try:
+        predecessor_duration = clip_timeline_duration(predecessor_row)
+        target_duration = clip_timeline_duration(target_row)
+    except (TypeError, ValueError) as exc:
+        raise CommandError('transition requires valid adjacent clip durations',
+                           kind='unsupported_timing', ref=ref) from exc
+    if abs(authored_start(predecessor_row) + predecessor_duration - authored_start(target_row)) >= .001:
+        raise CommandError('transition requires adjacent clips on the same track', ref=ref)
+    shortest_clip_frames = min(predecessor_duration, target_duration) * float(fps)
+    if shortest_clip_frames <= 0 or frames > shortest_clip_frames + .0001:
+        raise CommandError('transition duration exceeds the shorter adjacent clip', ref=ref)
+
+    for neighbor in [ref, predecessor]:
         basis = _clip_basis(ctx, neighbor)
         asset = basis['asset'] or basis['asset_id']
         if isinstance(asset, str):

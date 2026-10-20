@@ -510,10 +510,16 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
         command = ctx.record['command']
         required = []
         authority = None
-        if command['op'] == 'clip.set-params':
+        if command['op'] in ('clip.set-params', 'clip.set'):
             row = ctx.state.entity(command['select'])
             selected = row.get('elementRef') or row.get('element_ref')
-            if isinstance(selected, dict) and selected.get('packId'):
+            requested = (command['args']['values'].get('elementRef')
+                         if command['op'] == 'clip.set' else selected)
+            same_reference = (isinstance(selected, dict) and isinstance(requested, dict)
+                              and all(selected.get(key) == requested.get(key)
+                                      for key in ('packId', 'id', 'kind')))
+            if isinstance(selected, dict) and selected.get('packId') and (
+                    command['op'] == 'clip.set-params' or same_reference):
                 from ._selected_param_authority import resolve_selected_param_source
 
                 authority = resolve_selected_param_source(
