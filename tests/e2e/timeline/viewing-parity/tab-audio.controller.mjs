@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { closeSync, lstatSync, mkdtempSync, openSync, readFileSync, readlinkSync, readdirSync, realpathSync, rmSync, statfsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 
 export const APP13 = Object.freeze({
   source: 'ea38656fe62950440b36cafee780698cff2c3f9c',
@@ -10,18 +11,46 @@ export const APP13 = Object.freeze({
   status: 'adopted',
 });
 export const AGENT13 = Object.freeze({
-  source: '6f0cdc7df95fe3c9b2d491d6fcb39b754fa212bd',
-  tree: '6e3d8589537d581e65e1da21be3e6a7d83022a01',
-  status: 'verified',
+  source: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
+  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
+  status: 'verified-runtime-freeze',
 });
 export const RUNTIME13 = Object.freeze({
+  source: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
+  tree: 'b7f456d5135cba6049980ebc43a91c7a72ab8f7e',
+  status: 'qualified-viewing',
+  ownerAck: 'acknowledged',
+});
+export const RUNTIME13_ARTIFACT = Object.freeze({
+  producer: 'astrid-runtime',
   source: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   tree: '7ab412cc4bcbe517efcfa806e092336390312e18',
-  status: 'qualified-viewing',
+  version: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
+  schema: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
+  componentManifest: 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5',
+  artifactCount: 75,
+});
+export const AGENT13_RUNTIME = Object.freeze({
+  project: '/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b',
+  lock: 'c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
+  graph: '4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c',
+  graphFileCount: 21455,
+  node: 'v20.19.4',
+  npm: '10.8.2',
+  composition: RUNTIME13_ARTIFACT,
+  peers: Object.freeze({
+    'node_modules/remotion/dist/cjs/audio/shared-audio-tags.js': '471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c',
+    'node_modules/remotion/dist/esm/index.mjs': '9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8',
+    'node_modules/@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
+    'node_modules/@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
+    'node_modules/@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
+    'node_modules/@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
+  }),
 });
 export const COMPOSITION13 = Object.freeze({
   source: '5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8',
   artifact: '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
+  regularMembers: 77,
 });
 export const CHROME155 = Object.freeze({
   version: '155.0.8059.84',
@@ -39,6 +68,10 @@ export const NODE20 = Object.freeze({
 });
 export const MIN_FREE_BYTES = 10 * 1024 ** 3;
 export const SHORT_TEMP_PREFIX = 'timeline-tab-audio-';
+export const APP_SOURCE_ENV = 'TIMELINE_VIEWING_APP_SOURCE';
+export const APP_TREE_ENV = 'TIMELINE_VIEWING_APP_TREE';
+
+const FULL_SHA = /^[a-f0-9]{40}$/;
 
 export const CONTROL = Object.freeze({
   ownLeafOnly: true,
@@ -98,6 +131,37 @@ function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+function tarRegularMembers(archive) {
+  const bytes = gunzipSync(readFileSync(archive));
+  const members = [];
+  for (let offset = 0; offset + 512 <= bytes.length;) {
+    const header = bytes.subarray(offset, offset + 512);
+    if (header.every(byte => byte === 0)) break;
+    const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+    const sizeText = header.subarray(124, 136).toString('ascii').replace(/\0.*$/, '').trim();
+    const size = sizeText ? Number.parseInt(sizeText, 8) : 0;
+    const type = header[156];
+    if (type === 0 || type === 48) members.push(name);
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+  return members;
+}
+
+/** Keep the historical APP13 default while requiring an explicit complete
+ * source/tree pair for a later current App checkout. */
+export function readAppSourceSelection(env = process.env) {
+  const sourcePresent = Object.prototype.hasOwnProperty.call(env, APP_SOURCE_ENV);
+  const treePresent = Object.prototype.hasOwnProperty.call(env, APP_TREE_ENV);
+  if (!sourcePresent && !treePresent) return APP13;
+  const source = env[APP_SOURCE_ENV]?.trim();
+  const tree = env[APP_TREE_ENV]?.trim();
+  if (!source || !tree) throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be supplied together`);
+  if (!FULL_SHA.test(source) || !FULL_SHA.test(tree)) {
+    throw new Error(`${APP_SOURCE_ENV} and ${APP_TREE_ENV} must be full 40-character lowercase SHAs`);
+  }
+  return Object.freeze({ source, tree, status: 'externally-pinned' });
+}
+
 export function hashTree(root) {
   const entries = [];
   function visit(directory, prefix = '') {
@@ -146,8 +210,11 @@ export function assertPhysicalPrivateGraph(root) {
   return hashTree(root);
 }
 
-export function assertCandidateTuple(tuple = { app: APP13, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }) {
-  for (const [name, expected] of Object.entries({ app: APP13, agent: AGENT13, runtime: RUNTIME13 })) {
+export function assertCandidateTuple(
+  tuple = { app: readAppSourceSelection(), agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 },
+  app = readAppSourceSelection(),
+) {
+  for (const [name, expected] of Object.entries({ app, agent: AGENT13, runtime: RUNTIME13 })) {
     if (tuple[name]?.source !== expected.source || tuple[name]?.tree !== expected.tree) {
       throw new Error(`${name}13 candidate tuple changed; expected ${expected.source}/${expected.tree}`);
     }
@@ -158,16 +225,29 @@ export function assertCandidateTuple(tuple = { app: APP13, agent: AGENT13, runti
   return tuple;
 }
 
-export function assertAppOwnLeaf(appRoot, base = APP13.source) {
+export function assertRuntimeArtifact(facts = RUNTIME13_ARTIFACT) {
+  if (facts.producer !== RUNTIME13_ARTIFACT.producer
+    || facts.source !== RUNTIME13_ARTIFACT.source
+    || facts.tree !== RUNTIME13_ARTIFACT.tree
+    || facts.version !== RUNTIME13_ARTIFACT.version
+    || facts.schema !== RUNTIME13_ARTIFACT.schema
+    || facts.componentManifest !== RUNTIME13_ARTIFACT.componentManifest
+    || facts.artifactCount !== RUNTIME13_ARTIFACT.artifactCount) {
+    throw new Error('official Runtime artifact producer facts changed');
+  }
+  return facts;
+}
+
+export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection().source) {
   const changed = git(appRoot, ['diff', '--name-only', `${base}...HEAD`]).split('\n').filter(Boolean);
   const forbidden = changed.filter(file => !OWN_LEAF.has(file));
   if (forbidden.length) throw new Error(`App product/root/pin/DTO/source changes are not owned by this leaf: ${forbidden.join(', ')}`);
   return changed;
 }
 
-export function assertExactGraph({ appRoot, agentRoot, runtimeRoot }) {
-  const appBase = git(appRoot, ['merge-base', APP13.source, 'HEAD']);
-  if (appBase !== APP13.source) throw new Error(`App is not based on pending App13 candidate ${APP13.source}`);
+export function assertExactGraph({ appRoot, agentRoot, runtimeRoot, app = readAppSourceSelection() }) {
+  const appBase = git(appRoot, ['merge-base', app.source, 'HEAD']);
+  if (appBase !== app.source) throw new Error(`App is not based on selected App source ${app.source}`);
   if (git(agentRoot, ['rev-parse', 'HEAD']) !== AGENT13.source) throw new Error('Agent13 source is not the approved keeper');
   if (git(runtimeRoot, ['rev-parse', 'HEAD']) !== RUNTIME13.source) throw new Error('Runtime13 source is not the approved producer');
   if (git(agentRoot, ['rev-parse', 'HEAD^{tree}']) !== AGENT13.tree) throw new Error('Agent13 tree is not the approved keeper');
@@ -175,8 +255,33 @@ export function assertExactGraph({ appRoot, agentRoot, runtimeRoot }) {
   for (const [name, root] of Object.entries({ app: appRoot, agent: agentRoot, runtime: runtimeRoot })) {
     if (git(root, ['status', '--porcelain'])) throw new Error(`${name} source must be clean before capture`);
   }
-  assertAppOwnLeaf(appRoot);
+  assertAppOwnLeaf(appRoot, app.source);
   return { app: git(appRoot, ['rev-parse', 'HEAD']), agent: AGENT13.source, runtime: RUNTIME13.source };
+}
+
+export function assertFrozenRuntimeGraph(project = AGENT13_RUNTIME.project) {
+  if (realpathSync(project) !== path.resolve(AGENT13_RUNTIME.project)) {
+    throw new Error(`Runtime project must be ${AGENT13_RUNTIME.project}`);
+  }
+  const lock = sha256(readFileSync(path.join(project, 'package-lock.json')));
+  if (lock !== AGENT13_RUNTIME.lock) throw new Error(`Runtime lock changed: ${lock}`);
+  const graph = assertPhysicalPrivateGraph(path.join(project, 'node_modules'));
+  if (graph.sha256 !== AGENT13_RUNTIME.graph || graph.fileCount !== AGENT13_RUNTIME.graphFileCount) {
+    throw new Error(`Runtime dependency graph changed: ${graph.sha256}/${graph.fileCount}`);
+  }
+  for (const [relative, expected] of Object.entries(AGENT13_RUNTIME.peers)) {
+    const actual = sha256(readFileSync(path.join(project, relative)));
+    if (actual !== expected) throw new Error(`Runtime peer changed: ${relative}`);
+  }
+  const artifact = path.join(project, 'artifacts', 'banodoco-timeline-composition-0.0.13.tgz');
+  if (sha256(readFileSync(artifact)) !== COMPOSITION13.artifact) {
+    throw new Error('Runtime public13 Composition artifact changed');
+  }
+  const members = tarRegularMembers(artifact);
+  if (members.length !== COMPOSITION13.regularMembers || new Set(members).size !== members.length) {
+    throw new Error(`Runtime public13 Composition artifact must contain ${COMPOSITION13.regularMembers} regular members`);
+  }
+  return { lock, graph, peers: AGENT13_RUNTIME.peers, artifact: COMPOSITION13.artifact, regularMembers: members.length };
 }
 
 export function assertNode20(executable = process.execPath) {
@@ -225,12 +330,12 @@ export function assertOwnedShortTemp() {
   }
 }
 
-export function assertCompletedAppConsumer(appRoot) {
-  if (APP13.status !== 'adopted') {
+export function assertCompletedAppConsumer(appRoot, app = readAppSourceSelection()) {
+  if (app.status !== 'adopted' && app.status !== 'externally-pinned') {
     throw new Error('App public13 consumer is not adopted; --ready remains refused');
   }
-  if (git(appRoot, ['rev-parse', 'HEAD']) !== APP13.source || git(appRoot, ['rev-parse', 'HEAD^{tree}']) !== APP13.tree) {
-    throw new Error('App public13 consumer source/tree is not the integrated candidate');
+  if (git(appRoot, ['rev-parse', 'HEAD']) !== app.source || git(appRoot, ['rev-parse', 'HEAD^{tree}']) !== app.tree) {
+    throw new Error('App public13 consumer source/tree is not the selected exact source');
   }
 }
 
@@ -334,16 +439,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.stdout.write(discover(appRoot));
   } else if (command === '--ready') {
     if (!agentRoot || !runtimeRoot) throw new Error('--ready requires app, agent, and runtime roots');
-    assertCandidateTuple();
+    const app = readAppSourceSelection();
+    assertCandidateTuple({ app, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }, app);
+    assertRuntimeArtifact();
     assertOwnerPorts();
-    assertCompletedAppConsumer(appRoot);
-    assertExactGraph({ appRoot, agentRoot, runtimeRoot });
+    assertCompletedAppConsumer(appRoot, app);
+    assertExactGraph({ appRoot, agentRoot, runtimeRoot, app });
     assertResources(appRoot);
     assertOwnedShortTemp();
     const remotionProject = process.env.ASTRID_REMOTION_PROJECT_DIR;
     if (!remotionProject) throw new Error('ASTRID_REMOTION_PROJECT_DIR must select the frozen private graph');
     assertPhysicalPrivateGraph(path.join(appRoot, 'node_modules'));
-    assertPhysicalPrivateGraph(path.join(remotionProject, 'node_modules'));
+    assertFrozenRuntimeGraph(remotionProject);
     assertNode20();
     assertChrome155();
     discover(appRoot);

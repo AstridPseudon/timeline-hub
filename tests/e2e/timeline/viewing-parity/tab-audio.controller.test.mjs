@@ -1,18 +1,23 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  APP13, AGENT13, RUNTIME13, COMPOSITION13, CHROME155, CONTROL, NODE20,
+  APP13, AGENT13, RUNTIME13, RUNTIME13_ARTIFACT, AGENT13_RUNTIME, COMPOSITION13, CHROME155, CONTROL, NODE20,
   VIEWING_QUALIFICATIONS,
   MISSING_OWNER_PORTS, OWNER_PORTS,
-  assertCandidateTuple, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+  assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+  assertRuntimeArtifact, readAppSourceSelection,
 } from './tab-audio.controller.mjs';
 
 test('READY controller identifies the integrated App13 and verified normal13 tuple', () => {
   assertCandidateTuple({ app: APP13, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 });
   assert.equal(APP13.source, 'ea38656fe62950440b36cafee780698cff2c3f9c');
   assert.equal(APP13.status, 'adopted');
-  assert.equal(AGENT13.status, 'verified');
+  assert.equal(AGENT13.status, 'verified-runtime-freeze');
   assert.equal(RUNTIME13.status, 'qualified-viewing');
+  assert.equal(RUNTIME13.ownerAck, 'acknowledged');
+  assertRuntimeArtifact();
+  assert.notEqual(RUNTIME13.source, RUNTIME13_ARTIFACT.source);
+  assert.equal(AGENT13_RUNTIME.graphFileCount, 21455);
   assert.equal(CONTROL.physicalMixClaim, false);
   assert.equal(CONTROL.app13Consumer, 'adopted');
   assert.equal(CONTROL.ownLeafOnly, true);
@@ -20,6 +25,42 @@ test('READY controller identifies the integrated App13 and verified normal13 tup
 });
 test('controller rejects a changed source tuple before capture', () => {
   assert.throws(() => assertCandidateTuple({ app: { ...APP13, tree: 'changed' }, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }), /app13 candidate tuple changed/);
+  assert.throws(() => assertCandidateTuple({ app: APP13, agent: AGENT13,
+    runtime: { ...RUNTIME13, source: RUNTIME13_ARTIFACT.source, tree: RUNTIME13_ARTIFACT.tree }, composition: COMPOSITION13 }),
+  /runtime13 candidate tuple changed/);
+  assert.throws(() => assertRuntimeArtifact({ ...RUNTIME13_ARTIFACT, version: 'sha256:wrong' }), /artifact producer facts changed/);
+});
+
+test('controller accepts an explicitly selected current App source/tree', () => {
+  const app = readAppSourceSelection({
+    TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    TIMELINE_VIEWING_APP_TREE: '83cfad527f8b2264085571316cede1c6ae482b5f',
+  });
+  assert.deepEqual(app, {
+    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
+    status: 'externally-pinned',
+  });
+  assertCandidateTuple({ app, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }, app);
+});
+
+test('controller refuses empty, whitespace-only, and partial current App selections', () => {
+  for (const env of [
+    { TIMELINE_VIEWING_APP_SOURCE: '', TIMELINE_VIEWING_APP_TREE: '' },
+    { TIMELINE_VIEWING_APP_SOURCE: '   ', TIMELINE_VIEWING_APP_TREE: '\t\n' },
+    { TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc' },
+    { TIMELINE_VIEWING_APP_TREE: '83cfad527f8b2264085571316cede1c6ae482b5f' },
+  ]) assert.throws(() => readAppSourceSelection(env), /must be supplied together/);
+});
+
+test('immutable d0 Runtime graph retains its lock, whole graph, and six peers', () => {
+  const result = assertFrozenRuntimeGraph();
+  assert.equal(result.lock, AGENT13_RUNTIME.lock);
+  assert.equal(result.graph.sha256, AGENT13_RUNTIME.graph);
+  assert.equal(result.graph.fileCount, AGENT13_RUNTIME.graphFileCount);
+  assert.equal(result.artifact, COMPOSITION13.artifact);
+  assert.equal(result.regularMembers, COMPOSITION13.regularMembers);
+  assert.deepEqual(Object.keys(result.peers).sort(), Object.keys(AGENT13_RUNTIME.peers).sort());
 });
 
 test('readiness reports the current flat owner-port status', () => {
@@ -27,7 +68,7 @@ test('readiness reports the current flat owner-port status', () => {
   assert.equal(OWNER_PORTS.find(({ port }) => port === 'complete-cap-current-join')?.source, 'a8283307a7a5537a95988031b385ef28df7524ea');
   assert.equal(OWNER_PORTS.find(({ port }) => port === 'native-frame-fixture')?.source, 'f084855eff0c40a464a166297d43536458ee4ca4');
   assert.equal(OWNER_PORTS.find(({ port }) => port === 'player-tab-audio-instrument')?.source, '379c19509ddb4f100d192c0e52d1307abc3c7a00');
-  assert.equal(OWNER_PORTS.find(({ port }) => port === 'public13-normal-pin')?.source, '6f0cdc7df95fe3c9b2d491d6fcb39b754fa212bd');
+  assert.equal(OWNER_PORTS.find(({ port }) => port === 'public13-normal-pin')?.source, AGENT13.source);
   assert.equal(OWNER_PORTS.some(({ port }) => port === 'track-inspector-preservation'), true);
   assert.deepEqual(assertOwnerPorts(), OWNER_PORTS);
 });
