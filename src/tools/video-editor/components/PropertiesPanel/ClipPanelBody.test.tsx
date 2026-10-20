@@ -96,19 +96,59 @@ describe('ClipPanelBody timing value commits', () => {
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
-  // D01-app-parent-source-window: the native parent trim control replaces this legacy writer.
-  it.fails('does not retain the removed legacy source-window snapshot writer', () => {
+  it('reapplies Source In through the native trim port if the controlled clip resets before blur', () => {
     const onChange = vi.fn();
-    const clip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
-    render(<ClipPanelBody {...bodyProps()} clip={clip} activeTab="timing" onChange={onChange} />);
+    const initialClip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
+    const basis = { original: { from: 0, to: 5, hold: 0 } };
+    const preview = { version: 1 as const, source: 'clip.trim' as const, operations: [
+      { op: 'clip.update' as const, target: 'clip-1', payload: { from: 1, to: 5, hold: 0 } },
+    ] };
+    const command = {
+      schema_version: 1 as const,
+      op: 'clip.trim',
+      version: '1',
+      select: 'parent/clip:clip-1',
+      args: { in_s: 1, out_s: null },
+    };
+    const clipTrimPort = {
+      capture: vi.fn(() => basis),
+      finish: vi.fn(() => ({ command, preview })),
+      submit: vi.fn(),
+    } as unknown as ClipTrimCapturePort;
+    const current = { config: {}, resolvedConfig: { clips: [initialClip] } } as unknown as TimelineData;
+    const props = {
+      ...bodyProps(),
+      clip: initialClip,
+      current,
+      clipTrimPort,
+      activeTab: 'timing' as const,
+      onChange,
+    };
+    const { rerender } = render(<ClipPanelBody {...props} />);
     const input = screen.getByLabelText('Source In').querySelector('input:not([aria-hidden="true"])');
     expect(input).not.toBeNull();
 
     input!.focus();
+    expect(document.activeElement).toBe(input);
     fireEvent.change(input!, { target: { value: '1' } });
+    expect(onChange).not.toHaveBeenCalled();
+
+    // The timeline first adopts the edit, then an external refresh restores the
+    // old controlled clip while the native trim field preserves the typed draft.
+    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, from: 1 }} />);
+    expect(document.activeElement).toBe(input);
+    rerender(<ClipPanelBody {...props} />);
+    expect(document.activeElement).toBe(input);
+    expect(input).toHaveValue('1');
     fireEvent.blur(input!);
 
-    expect(onChange).toHaveBeenCalledWith({ from: 1 });
+    expect(clipTrimPort.capture).toHaveBeenCalledOnce();
+    expect(clipTrimPort.capture).toHaveBeenCalledWith({ clipId: 'clip-1', current });
+    expect(clipTrimPort.finish).toHaveBeenCalledOnce();
+    expect(clipTrimPort.finish).toHaveBeenCalledWith(expect.objectContaining({ original: { from: 0, to: 5, hold: 0 } }), { in_s: 1 });
+    expect(clipTrimPort.submit).toHaveBeenCalledOnce();
+    expect(clipTrimPort.submit).toHaveBeenCalledWith({ command, preview });
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('refuses a source edit without the displayed timeline and keeps the dirty draft', () => {
