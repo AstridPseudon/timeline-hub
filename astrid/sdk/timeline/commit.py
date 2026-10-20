@@ -357,6 +357,10 @@ def _hydrate(port, bundle, calls=()):
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
+        if call['op'] == 'clip.anchor' and call.get('args', {}).get('choice') is not None:
+            pin = _document_pin(call['args']['choice']['document'])
+            if pin not in pins:
+                pins.append(pin)
     for pin in pins:
         transcript = pin["document_id"].startswith("transcript:")
         verified = (port.transcript_source(pin) if transcript else port.config_source(pin))

@@ -46,7 +46,9 @@ def operations():
         placement_unplace,
     )
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
+    from .native_word_anchor import declare
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
@@ -167,6 +169,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:
+            from .native_word_anchor import guard_basis
+
+            guard_basis(ctx, command)
             from .capture import move_intent
             intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
             supplied_intent = {**intent, **command.get('intent', {})}
@@ -186,6 +191,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.record['command']['resolved'] = []
         if ordinal == len(commands) - 1:
             ctx.compile_inputs()
+            from .native_word_anchor import compile_recorded
+
+            compile_recorded(ctx, inverse_records=inverse_records)
         ctx.compile_mirrors()
         record = ctx.finish(capture=True)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):

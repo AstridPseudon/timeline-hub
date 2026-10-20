@@ -1460,6 +1460,41 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.anchor"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^parent/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAnchorArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "anchor": {
+                    "const": "follow"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1799,6 +1834,99 @@
       "type": "object",
       "properties": {},
       "additionalProperties": false
+    },
+    "WordAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "document",
+        "word_ids"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "document_id",
+            "version",
+            "content_digest"
+          ],
+          "properties": {
+            "document_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^transcript:[0-9a-f]{64}$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "content_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "word_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^word:[0-9a-f]{64}(?::[1-9][0-9]*)?$"
+          }
+        },
+        "edge": {
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "offset_s": {
+          "type": "number"
+        },
+        "offset_frames": {
+          "type": "integer"
+        }
+      }
+    },
+    "ClipAnchorArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "declaration",
+        "choice"
+      ],
+      "properties": {
+        "field": {
+          "enum": [
+            "on",
+            "until"
+          ]
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "choice": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/WordAnchor"
+            }
+          ]
+        }
+      }
     }
   }
 }
