@@ -17,8 +17,20 @@ def selection(state, key, owner, members=()):
     boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'migration.groups':
+        if owner != 'parent' or len(set(members)) != len(members) or any(
+                not ref.startswith('occurrence:') or '/' in ref for ref in members):
+            raise CommandError('invalid migration group selection')
+        result = list(members)
     elif key == 'element.targets':
         result = order(state, owner, 'clip', check_mirrors=False)
+    elif key == 'lane.members':
+        from .occurrence_commands import lane
+        target = state.entity(owner)['id']
+        result = [ref for ref in order(state, 'parent', 'clip')
+                  if state.entity(ref).get('track') == target]
+        result += [ref for ref in order(state, 'parent', 'occurrence')
+                   if lane(state.entity(ref)) == target]
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))
@@ -287,7 +299,7 @@ class Recording:
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
                                    or b['key'].startswith(('shot:', 'materialization.owner:'))
-                                   or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
+                                   or (b['ref'].startswith(('occurrence:', 'shot:')) and '/' not in b['ref'])}
             command['created'] = [item['ref'] for item in self.record['created']]
             command['expect'], command['authorship'] = {}, {}
             for write in self.record['writes']:

@@ -28,6 +28,19 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
+    commands.update({
+        'timeline.migrate-groups': {
+            'schema_version': 1, 'op': 'timeline.migrate-groups', 'version': '1',
+            'select': 'parent', 'args': {'groups': [
+                {'legacy_shot_id': 'legacy', 'shot_id': 'shot', 'occurrence_id': 'occ'}]},
+        },
+        'occurrence.move': {
+            'schema_version': 1, 'op': 'occurrence.move', 'version': '1',
+            'select': 'occurrence:occ', 'args': {
+                'on': 1, 'track': 'parent/track:V1',
+                'child_track': 'occurrence:occ/track:V1'},
+        },
+    })
     conditions = {condition['if']['properties']['op']['const']: condition['then']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():

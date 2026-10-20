@@ -15,11 +15,18 @@ from tests.sdk.command_schema_compatibility import compatibility_errors
 REFERENCES = ('ScopedId', 'EntityRef', 'TargetKey')
 ORDINARY_SHA256 = '6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d'
 PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
+PRIVATE_GROUP_SHA256 = '428a396acba00dd872b3480a9d7dbdc9ef268d72e2e7be8607941f8b90f54e65'
 
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
     candidate = copy.deepcopy(_SCHEMA)
+    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
+        del candidate['$defs'][name]
+    candidate['$defs']['EditCommand']['allOf'] = [
+        clause for clause in candidate['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] not in
+        ('timeline.migrate-groups', 'occurrence.move')]
     for name in REFERENCES:
         branches = candidate['$defs'][name]['anyOf']
         assert len(branches) == 4
@@ -51,9 +58,22 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     ordinary = ordinary_schema()
     raw = (json.dumps(ordinary, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
-    assert len(ordinary['$defs']) == len(_SCHEMA['$defs']) == 55
+    assert len(ordinary['$defs']) == 55
+    assert len(_SCHEMA['$defs']) == 57
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
     assert compatibility_errors(ordinary, _SCHEMA) == []
+
+
+def test_private_group_proposal_is_exactly_two_closed_additions_on_current_floor():
+    assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == PRIVATE_GROUP_SHA256
+    assert len(_SCHEMA['$defs']) == 57
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 31
+    assert {
+        clause['if']['properties']['op']['const']
+        for clause in _SCHEMA['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] in ('timeline.migrate-groups', 'occurrence.move')
+    } == {'timeline.migrate-groups', 'occurrence.move'}
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
