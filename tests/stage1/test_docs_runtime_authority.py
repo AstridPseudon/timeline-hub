@@ -48,12 +48,13 @@ def test_live_docs_do_not_publish_retired_local_authority() -> None:
 
 
 def test_live_docs_name_runtime_bootstrap_and_authority() -> None:
-    # README.md is a landing page that routes setup to docs/setup/README.md;
-    # the Runtime is named in that setup guide, not in the landing page.
+    # The hosted guide is canonical; the former setup path remains a redirect.
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "docs/setup/README.md" in readme
+    assert "[Set up Astrid →](docs/getting-started.md)" in readme
     setup_guide = (ROOT / "docs" / "setup" / "README.md").read_text(encoding="utf-8")
-    assert re.search(r"(?:astrid|workspace)\s+runtime", setup_guide, re.I), "docs/setup/README.md"
+    assert re.search(r"\[Getting Started\]\(\.\./getting-started\.md\)", setup_guide)
+    assert "curl -fsSL https://astrid.haus/install | sh" not in setup_guide
+    assert "irm https://astrid.haus/install.ps1 | iex" not in setup_guide
     for path in LIVE_DOCS:
         if path == ROOT / "README.md":
             continue
