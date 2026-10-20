@@ -201,5 +201,6 @@ def test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_previ
         )
 
     assert not preview.ok
-    detail = str(preview.error).lower()
-    assert 'unavailable' in detail
+    assert preview.error['sdk_error'] == 'CapabilityValidationError'
+    assert preview.error['sdk_category'] == 'validation'
+    assert 'element resource binding requires exact clip/element/kind identities' in preview.error['message']
