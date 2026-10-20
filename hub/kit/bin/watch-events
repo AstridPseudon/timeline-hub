@@ -16,6 +16,18 @@ while true; do
     t=$(head -1 $ORCH/managers/$m/STATUS.md 2>/dev/null | sed -n 's/^<!-- [a-z]* | \([^ ]*\) |.*/\1/p'); [ -n "$t" ] || continue
     age=$(( now - $(date -d "$t" +%s 2>/dev/null || echo $now) )); [ $age -gt 1200 ] && emit "REMOTE_STALE $m since $t"
   done
+  # speed and stall alarms (2026-10-20): read the measured header that hub-sync writes for every area
+  for m in runtime agent app viewing app2; do
+    h=$( { [ -e $ORCH/managers/$m/REMOTE ] && head -1 $ORCH/managers/$m/STATUS.md; } 2>/dev/null )
+    [ -e $ORCH/managers/$m/REMOTE ] || h=$(head -1 /home/user/timeline-hub/hub/status/$m.md 2>/dev/null)
+    sage=$(echo "$h" | sed -n 's/.*status age \([0-9]*\)m.*/\1/p'); live=$(echo "$h" | sed -n 's/.*| live \([0-9]*\) .*/\1/p')
+    [ -n "$sage" ] && [ "$sage" -gt 45 ] && emit "MANAGER_QUIET $m status ${sage}m old $(date -u +%Y%m%dT%H)"
+    [ -n "$live" ] && [ "$live" -lt 4 ] && emit "LOW_CAPACITY $m live $live $(date -u +%Y%m%dT%H)"
+  done
+  # M2 burndown: alarm when no ledger row became DELETED for 2 hours
+  dc=$(grep -cE '^\|[^|]*\|.*\| *DELETED' $ORCH/design/deletion-ledger.md 2>/dev/null); dc=${dc:-0}
+  [ "$dc" != "$(cat $ORCH/.ledger_deleted 2>/dev/null)" ] && { echo "$dc" > $ORCH/.ledger_deleted; touch $ORCH/.ledger_deleted_changed; }
+  [ $(( now - $(stat -c %Y $ORCH/.ledger_deleted_changed 2>/dev/null || echo $now) )) -gt 7200 ] && emit "NO_DELETIONS_2H at $dc $(date -u +%Y%m%dT%H)"
   last=$(cat $ORCH/.last_tick 2>/dev/null || echo 0)
   if [ $((now-last)) -ge 3600 ]; then emit "TICK_DUE $last"; fi
   sleep 20

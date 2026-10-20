@@ -68,8 +68,13 @@ elif [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ]; then
 fi
 
 hb=$(( $(date +%s) - $(stat -c %Y $ORCH/dispatcher.heartbeat 2>/dev/null || echo 0) ))
+declare -A WPFX=( [agent]=agt [runtime]=rt [app]=app [viewing]=vw [app2]=ap2 )
 for a in $AREAS; do
-  { echo "<!-- $M | $now | dispatcher heartbeat ${hb}s -->"; cat $ORCH/managers/$a/STATUS.md 2>/dev/null; } > hub/status/$a.md
+  # measured, not self-reported: live workers with a running marker, their models, and how old the manager's STATUS.md is
+  live=0; sol=0; luna=0; other=0; for d in $ORCH/workers/${WPFX[$a]}-*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] || continue; live=$((live+1))
+    case $(sed -n 's/^model=//p' $d/meta 2>/dev/null) in *sol*) sol=$((sol+1));; *luna*) luna=$((luna+1));; *) other=$((other+1));; esac; done
+  sage=$(( ($(date +%s) - $(stat -c %Y $ORCH/managers/$a/STATUS.md 2>/dev/null || date +%s)) / 60 ))
+  { echo "<!-- $M | $now | dispatcher heartbeat ${hb}s | live $live (sol $sol, luna $luna, other $other) | status age ${sage}m -->"; cat $ORCH/managers/$a/STATUS.md 2>/dev/null; } > hub/status/$a.md
   for f in $ORCH/escalations/$a-*.md; do [ -e "$f" ] && cp -n "$f" hub/escalations/; done
   # closed escalations of my own areas: if the orchestrator closed them on the hub, close locally too
   for f in hub/escalations/closed/$a-*.md; do [ -e "$f" ] && [ -e $ORCH/escalations/$(basename $f) ] && mv $ORCH/escalations/$(basename $f) $ORCH/escalations/closed/; done

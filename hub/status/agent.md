@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T14:11:46Z | dispatcher heartbeat 8s -->
+<!-- main | 2026-10-20T14:14:10Z | dispatcher heartbeat 13s | live 5 (sol 1, luna 4, other 0) | status age 2m -->
 # agent — 2026-10-20 14:11:22 UTC
 Milestone: M1 RECORDED; M2 active, no exit; Gates1/6/7 OPEN.
 Integrated: agent tl/integration8e310785 — F1 staged-write inverse guard fa156464 merged; verified-source extraction4ef, fixturesce363, S2pin d874, duplicate reload9cb and stored4000cap140e retained.
