@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from astrid.core.timeline.authoring_bundle import _identity
+from astrid.core.timeline.authoring_bundle import _identity, compile_authoring_candidate
 from astrid.core.timeline.shot_composition import (
     stable_occurrence_deep_link,
     stable_output_identity,
@@ -15,7 +15,7 @@ from astrid.core.timeline.shot_composition import (
 from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import _SCHEMA, execute
-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, _json, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.fixture_loader import load_fixture
@@ -81,6 +81,112 @@ def test_duplicate_reload_exact_guarded_inverse_redo(count, index):
     redone = inverse(restored, accepted(undone.records, copied, restored))
     assert document_from_bundle(redone.bundle, source_bundles=(original, copied)) == copied_document
     assert replay(plan, original).records == plan.records
+
+
+def identity_document(count, fields, document_id):
+    document = duplicate_document(count)
+    source = document['parent_revision']['payload']['occurrences'][0]
+    derived = {
+        'stable_deep_link': stable_occurrence_deep_link(
+            'project-1', document_id or 'film', source['shot_id'], source['shot_revision_id'], 'occ-0'),
+        'output_identity': stable_output_identity('project-1', document_id or 'film', 'occ-0'),
+    }
+    source.update({field: derived[field] for field in fields})
+    if document_id is not None:
+        source['parent_document_id'] = document_id
+    opaque = {'stable_deep_link': 'deep:occ-0', 'output_identity': 'out:occ-0',
+              'shot_id': 'chapter-shot', 'occurrence_id': 'occ-0',
+              'ordered': [None, False, 0, 1.0, {}, []]}
+    source.update(output_records=[copy.deepcopy(opaque)], task=copy.deepcopy(opaque),
+                  associations=[copy.deepcopy(opaque)], unknown=copy.deepcopy(opaque),
+                  app={'org.example': copy.deepcopy(opaque)}, metadata=None)
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    return document
+
+
+@pytest.mark.parametrize('count', [1, 2], ids=['single-source', 'shared-source'])
+@pytest.mark.parametrize('fields', [(), ('stable_deep_link',), ('output_identity',),
+                                   ('stable_deep_link', 'output_identity')])
+@pytest.mark.parametrize('document_id', [None, 'doc /?%'])
+def test_root_identities_raw_compile_reload_guarded_undo_redo(count, fields, document_id):
+    document = identity_document(count, fields, document_id)
+    original = bundle_from_document(document)
+    before = copy.deepcopy(original)
+    plan = execute(original, [duplicate(original, 'occ-0')])
+    preview = copy.deepcopy(State(plan.bundle).entity('occurrence:occ-copy'))
+    compiled = document_from_bundle(plan.bundle)
+    rows = compiled['parent_revision']['payload']['occurrences']
+    copied = rows[-1]
+    revision = copied['shot_revision_id']
+    derived = {
+        'stable_deep_link': stable_occurrence_deep_link(
+            'project-1', document_id or 'film', 'shot-copy', revision, 'occ-copy'),
+        'output_identity': stable_output_identity('project-1', document_id or 'film', 'occ-copy'),
+    }
+    assert _json(copied) == _json({**document['parent_revision']['payload']['occurrences'][0],
+                                 'occurrence_id': 'occ-copy', 'shot_id': 'shot-copy',
+                                 'shot_revision_id': revision, **{key: derived[key] for key in fields}})
+    raw = compile_authoring_candidate(plan.bundle).publication
+    assert _json(raw['parent_composition']['occurrences'][-1]) == _json(copied)
+    assert _json(rows[:-1]) == _json(document['parent_revision']['payload']['occurrences'])
+    assert _json(original) == _json(before)
+    assert original['source_mapping']['_runtime_document'] == document
+    shot = next(row for row in compiled['shot_revisions'] if row['shot_id'] == 'shot-copy')
+    assert shot['revision_id'] == revision
+    assert shot['payload']['internal_timeline_revision_id'] == shot['internal_timeline_revision_id']
+    internal = next(row for row in compiled['internal_timeline_revisions']
+                    if row['revision_id'] == shot['internal_timeline_revision_id'])
+    assert internal['payload'] == document['internal_timeline_revisions'][0]['payload']
+    assert compiled['dependency_manifest']['media'] == document['dependency_manifest']['media']
+    reloaded = bundle_from_document(compiled)
+    undone = inverse(reloaded, accepted(plan.records, original, reloaded))
+    assert document_from_bundle(undone.bundle, source_bundles=(original, reloaded)) == document
+    restored = reload(undone.bundle, (original, reloaded))
+    redone = inverse(restored, accepted(undone.records, reloaded, restored))
+    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == compiled
+    recorded = next(write['after']['value'] for write in plan.records[0]['writes']
+                    if write['ref'] == 'occurrence:occ-copy' and not write['path'])
+    assert _json(recorded) == _json(preview) == _json(State(reloaded).entity('occurrence:occ-copy'))
+    assert replay(plan, original).records == plan.records
+
+
+@pytest.mark.parametrize('change', [
+    'stable_deep_link', 'output_identity', 'unknown', 'output_records', 'task', 'associations', 'app',
+    'identity-aba', 'opaque-aba', 'source-aba', 'source-order', 'dependent',
+])
+def test_reloaded_identity_duplicate_keeps_strict_inverse_guards(change):
+    original = bundle_from_document(identity_document(2, ('stable_deep_link', 'output_identity'), None))
+    plan = execute(original, [duplicate(original, 'occ-0')])
+    copied = reload(plan.bundle)
+    head = copy.deepcopy(copied)
+    state = State(head)
+    intervening = []
+    if change.endswith('-aba'):
+        ref, path = {
+            'identity-aba': ('occurrence:occ-copy', ['output_identity']),
+            'opaque-aba': ('occurrence:occ-copy', ['output_records']),
+            'source-aba': ('occurrence:occ-0', []),
+        }[change]
+        intervening = [later(ref, path, state.get(ref, path)['value'])]
+    elif change == 'source-order':
+        state.config('occurrence:occ-0')['clips'].reverse()
+    elif change == 'dependent':
+        head['placements'].append({**copy.deepcopy(state.entity('occurrence:occ-copy')),
+                                   'occurrence_id': 'dependent'})
+    elif change in ('stable_deep_link', 'output_identity'):
+        state.entity('occurrence:occ-copy')[change] = 'changed'
+    else:
+        nested = state.entity('occurrence:occ-copy')[change]
+        nested = nested[0] if isinstance(nested, list) else nested
+        nested = nested['org.example'] if change == 'app' else nested
+        nested['output_identity'] = 'changed'
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError) as error:
+        inverse(head, accepted(plan.records, original, copied), intervening)
+    assert error.value.kind == ('intervening_write' if change.endswith('-aba') else
+                                'inverse_dependency_changed' if change == 'source-order' else
+                                'surviving_dependents' if change == 'dependent' else 'inverse_conflict')
+    assert head == before
 
 
 def test_copy_preserves_exact_source_content_and_only_identity_changes():
@@ -167,8 +273,9 @@ def test_changed_source_or_identity_refuses_atomically(change):
 @pytest.mark.parametrize('occurrence_id,shot_id', [
     ('occ-1', 'shot-copy'), ('occ-copy', 'chapter-shot'),
 ])
-def test_reserved_identity_collisions_refuse(occurrence_id, shot_id):
-    original = bundle_from_document(duplicate_document())
+@pytest.mark.parametrize('fields', [(), ('stable_deep_link', 'output_identity')])
+def test_reserved_identity_collisions_refuse(occurrence_id, shot_id, fields):
+    original = bundle_from_document(identity_document(2, fields, None))
     with pytest.raises(CommandError) as error:
         execute(original, [capture_occurrence_duplicate(original, 'occurrence:occ-0', occurrence_id, shot_id)])
     assert error.value.kind == 'identity_collision'
