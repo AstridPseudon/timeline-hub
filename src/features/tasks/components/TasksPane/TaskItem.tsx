@@ -23,6 +23,7 @@ import { TaskItemActions } from './components/TaskItemActions';
 import { TaskItemTooltip } from './components/TaskItemTooltip';
 import { TaskItemPreview } from './components/TaskItemPreview';
 import type { TaskLightboxHandlers } from './types';
+import { getLegacyAutoPlacementPresentation } from './utils/legacyAutoPlacementPresentation';
 
 interface TaskItemProps extends TaskLightboxHandlers {
   task: Task;
@@ -171,6 +172,23 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
     onMobileActiveChange,
   });
 
+  const legacyAutoPlacement = useMemo(() => getLegacyAutoPlacementPresentation({
+    id: task.id,
+    status: task.status,
+    params: task.params,
+    hasAsset: Boolean(task.outputLocation || generationData || videoOutputs?.length),
+  }), [generationData, task.id, task.outputLocation, task.params, task.status, videoOutputs]);
+
+  const handlePlaceLegacyAssetManually = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    if (taskInfo.isImageTask) {
+      handleViewImage(event);
+      return;
+    }
+    if (taskInfo.isCompletedVideoTask) {
+      void handleViewVideo(event);
+    }
+  }, [handleViewImage, handleViewVideo, taskInfo.isCompletedVideoTask, taskInfo.isImageTask]);
+
   const handleSwitchProject = (projectId: string) => {
     setSelectedProjectId(projectId);
     navigate('/');
@@ -236,6 +254,26 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
         cascadedTask={cascadedTask}
         isCascadedTaskLoading={isCascadedTaskLoading}
       />
+
+      {legacyAutoPlacement && (
+        <div
+          className="mt-2 flex items-center justify-between gap-2 rounded border border-amber-400/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-100"
+          data-legacy-auto-placement="not-placed"
+          data-task-id={legacyAutoPlacement.taskId}
+          role="status"
+        >
+          <span>{legacyAutoPlacement.label}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto px-2 py-0.5 text-amber-200 hover:bg-amber-400/20 hover:text-amber-100"
+            onClick={handlePlaceLegacyAssetManually}
+            aria-label={`Place ${abbreviatedTaskType} manually`}
+          >
+            Place manually
+          </Button>
+        </div>
+      )}
 
       <div className="flex items-center text-[11px] text-muted-foreground">
         <span className="flex-1">
