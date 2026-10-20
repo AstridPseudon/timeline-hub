@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+"""Build the Timeline delivery ZIP.
+
+For each repo: a git bundle and a format-patch series of origin/main..tl/integration,
+a README from delivery/README.template.md, and a verification step that re-applies the
+series with git am to a fresh clone of origin/main, checks the bundle, and compares each
+resulting tree with tl/integration's tree. Work repos are only read; all writes go to
+delivery/ (staging, tmp-verify, the ZIP).
+
+  build-delivery [--dry-run] [--repos "agent runtime"]
+
+The ZIP is not written if any repo fails verification.
+"""
+import argparse
+import datetime
+import glob
+import hashlib
+import os
+import shutil
+import subprocess
+import time
+import zipfile
+
+ORCH = "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
+DELIVERY = os.path.join(ORCH, "delivery")
+TEMPLATE = os.path.join(DELIVERY, "README.template.md")
+GATE_RESULTS = os.path.join(DELIVERY, "gate-results.md")
+WORK = "/home/user/work"
+ALL_REPOS = ["agent", "runtime", "app", "composition"]
+BRANCH = "tl/integration"
+BASE = "origin/main"
+TEST_DIRS = {"tests", "test", "__tests__", "e2e", "spec"}
+AM_ENV = {
+    **os.environ,
+    "GIT_COMMITTER_NAME": "delivery-verify",
+    "GIT_COMMITTER_EMAIL": "delivery-verify@localhost",
+}
+
+
+def git(repo, *args, env=None):
+    proc = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, env=env)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args[:2])}: {(proc.stderr or proc.stdout).strip()[-600:]}")
+    return proc.stdout.strip()
+
+
+def git_ok(repo, *args):
+    return subprocess.run(["git", "-C", repo, *args], capture_output=True).returncode == 0
+
+
+def is_test(path):
+    parts = path.split("/")
+    name = parts[-1]
+    return (any(p in TEST_DIRS for p in parts[:-1])
+            or name.startswith("test_") or name.endswith("_test.py")
+            or ".test." in name or ".spec." in name)
+
+
+def line_split(repo):
+    """{'product': [files, added, deleted], 'tests': [...]} for origin/main -> tl/integration."""
+    totals = {"product": [0, 0, 0], "tests": [0, 0, 0]}
+    for line in git(repo, "diff", "--numstat", "--no-renames", BASE, BRANCH).splitlines():
+        added, deleted, path = line.split("\t", 2)
+        total = totals["tests" if is_test(path) else "product"]
+        total[0] += 1
+        total[1] += 0 if added == "-" else int(added)
+        total[2] += 0 if deleted == "-" else int(deleted)
+    return totals
+
+
+def verify(name, repo, bundle, patches, ranged, tmp):
+    """Re-apply the series to a fresh clone of origin/main and fetch the bundle tip.
+
+    Both trees must equal tl/integration's tree. Problems are collected rather than raised,
+    so the README can say what failed.
+    """
+    want = git(repo, "rev-parse", f"{BRANCH}^{{tree}}")
+    problems = []
+
+    def step(label, *args, env=None):
+        try:
+            return git(*args, env=env)
+        except RuntimeError as e:
+            problems.append(f"{label}: {e}")
+            return None
+
+    main = os.path.join(tmp, name, "main")
+    os.makedirs(main)
+    git(main, "init", "-q")
+    git(main, "fetch", "-q", "--no-tags", repo, f"refs/remotes/{BASE}:refs/heads/main")
+    git(main, "checkout", "-q", "main")
+
+    # A ranged bundle needs origin/main as a prerequisite, so it is checked in the main clone.
+    # A full bundle is checked in an empty repo, which proves it stands alone.
+    bundle_dir = main
+    if not ranged:
+        bundle_dir = os.path.join(tmp, name, "bundle-only")
+        os.makedirs(bundle_dir)
+        git(bundle_dir, "init", "-q")
+    step("bundle verify", bundle_dir, "bundle", "verify", bundle)
+    step("bundle fetch", bundle_dir, "fetch", "-q", "--no-tags", bundle,
+         f"refs/heads/{BRANCH}:refs/delivery/tip")
+    bundle_tree = step("bundle tree", bundle_dir, "rev-parse", "refs/delivery/tip^{tree}")
+
+    series = sorted(glob.glob(os.path.join(patches, "*.patch")))
+    applied = 0
+    if series:
+        step("git am", main, "am", "-q", *series, env=AM_ENV)
+        applied = len(series)
+    applied_tree = step("applied tree", main, "rev-parse", "HEAD^{tree}")
+
+    if applied_tree != want:
+        problems.append(f"applied tree {applied_tree} != {BRANCH} tree {want}")
+    if bundle_tree != want:
+        problems.append(f"bundle tree {bundle_tree} != {BRANCH} tree {want}")
+    return {
+        "status": "PASS" if not problems else "FAIL",
+        "problems": problems,
+        "want_tree": want,
+        "applied_tree": applied_tree,
+        "bundle_tree": bundle_tree,
+        "applied": applied,
+    }
+
+
+def repo_result(name, staging, tmp):
+    repo = os.path.join(WORK, name)
+    result = {
+        "name": name,
+        "tip": git(repo, "rev-parse", BRANCH),
+        "base": git(repo, "rev-parse", BASE),
+        "ahead": int(git(repo, "rev-list", "--count", f"{BASE}..{BRANCH}")),
+        "ranged": git_ok(repo, "merge-base", "--is-ancestor", BASE, BRANCH),
+        "shortstat": git(repo, "diff", "--shortstat", f"{BASE}..{BRANCH}"),
+        "split": line_split(repo),
+    }
+
+    bundle = os.path.join(staging, "bundles", f"{name}.bundle")
+    os.makedirs(os.path.dirname(bundle), exist_ok=True)
+    args = ["bundle", "create", bundle, BRANCH]
+    if result["ranged"]:
+        args.append(f"^{BASE}")
+    git(repo, *args)
+    result["bundle"] = bundle
+
+    patches = os.path.join(staging, "patches", name)
+    os.makedirs(patches, exist_ok=True)
+    if result["ahead"]:
+        git(repo, "format-patch", "-q", "--binary", "-o", patches, f"{BASE}..{BRANCH}")
+    result["patches"] = patches
+
+    result.update(verify(name, repo, bundle, patches, result["ranged"], tmp))
+    return result
+
+
+def short(sha):
+    return sha[:12] if sha else "(missing)"
+
+
+def summary_row(r):
+    p, t = r["split"]["product"], r["split"]["tests"]
+    kind = "ranged" if r["ranged"] else "full"
+    return (f"| {r['name']} | {r['ahead']} | {kind} | {r['applied']} "
+            f"| {p[0]} files, +{p[1]} / -{p[2]} | {t[0]} files, +{t[1]} / -{t[2]} | **{r['status']}** |")
+
+
+def repo_section(r):
+    name = r["name"]
+    lines = [
+        f"### {name}",
+        "",
+        f"- `{BRANCH}`: `{r['tip']}`",
+        f"- `{BASE}`: `{r['base']}`",
+        f"- Diff (`git diff --shortstat {BASE}..{BRANCH}`): {r['shortstat'] or 'no changes'}",
+        f"- Product: {r['split']['product'][0]} files, +{r['split']['product'][1]} / -{r['split']['product'][2]}. "
+        f"Tests: {r['split']['tests'][0]} files, +{r['split']['tests'][1]} / -{r['split']['tests'][2]}.",
+    ]
+    if r["ranged"]:
+        lines.append(f"- Bundle: `bundles/{name}.bundle`, ranged: {r['ahead']} commits after `{BASE}`. "
+                     f"It needs `{BASE}` present.")
+    else:
+        lines.append(f"- **Warning:** `{BRANCH}` shares no history with `{BASE}`. The patch series will not apply "
+                     f"to `{BASE}`. Use the full bundle, `bundles/{name}.bundle`, which holds all "
+                     f"{r['ahead']} commits.")
+    lines.append(f"- Patches: {r['applied']} in `patches/{name}/`.")
+    lines.append(f"- Verify: **{r['status']}**")
+    lines.append(f"  - tree from `git am` on `{BASE}`: `{short(r['applied_tree'])}`")
+    lines.append(f"  - tree from the bundle: `{short(r['bundle_tree'])}`")
+    lines.append(f"  - `{BRANCH}` tree: `{short(r['want_tree'])}`")
+    for problem in r["problems"]:
+        lines.append(f"  - problem: {problem}")
+    if r["ranged"]:
+        lines.append(f"- Apply: `git switch -c {BRANCH} origin/main` then "
+                     f"`git am patches/{name}/*.patch`, or fetch the bundle as described under Applying.")
+    else:
+        lines.append(f"- Apply: `git clone -b {BRANCH} bundles/{name}.bundle {name}`.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_readme(results):
+    with open(TEMPLATE) as f:
+        template = f.read()
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    summary = "\n".join([
+        "| Repo | Commits | Bundle | Patches | Product | Tests | Verify |",
+        "|---|---|---|---|---|---|---|",
+        *[summary_row(r) for r in results],
+    ])
+    if os.path.exists(GATE_RESULTS):
+        with open(GATE_RESULTS) as f:
+            gates = f.read().strip()
+    else:
+        gates = (f"_Not recorded yet. Paste the gate results here before handing over, or put them in "
+                 f"`{GATE_RESULTS}` and rebuild._")
+    return (template
+            .replace("{{UTC}}", now)
+            .replace("{{REPO_SUMMARY}}", summary)
+            .replace("{{REPO_SECTIONS}}", "\n".join(repo_section(r) for r in results))
+            .replace("{{GATE_RESULTS}}", gates))
+
+
+def write_checksums(staging):
+    lines = []
+    for root, _, files in os.walk(staging):
+        for name in files:
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, staging)
+            if rel == "SHA256SUMS":
+                continue
+            with open(path, "rb") as f:
+                lines.append(f"{hashlib.sha256(f.read()).hexdigest()}  {rel}")
+    with open(os.path.join(staging, "SHA256SUMS"), "w") as f:
+        f.write("\n".join(sorted(lines)) + "\n")
+
+
+def staged_files(staging):
+    return sorted(os.path.relpath(os.path.join(root, name), staging)
+                  for root, _, files in os.walk(staging) for name in files)
+
+
+def mib(n):
+    return f"{n / 1048576:.1f} MiB"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--dry-run", action="store_true",
+                        help="build and verify everything, print sizes, do not write the ZIP")
+    parser.add_argument("--repos", default=" ".join(ALL_REPOS),
+                        help='space-separated subset of: %(default)s')
+    args = parser.parse_args()
+    names = args.repos.split()
+    unknown = [n for n in names if n not in ALL_REPOS]
+    if unknown:
+        parser.error(f"unknown repo(s): {', '.join(unknown)}")
+
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    staging = os.path.join(DELIVERY, f"build-{stamp}")
+    tmp_root = os.path.join(DELIVERY, "tmp-verify", stamp)
+    os.makedirs(staging)
+    os.makedirs(tmp_root)
+
+    results = []
+    try:
+        for name in names:
+            started = time.monotonic()
+            result = repo_result(name, staging, tmp_root)
+            result["seconds"] = time.monotonic() - started
+            results.append(result)
+            print(f"{name}: {result['status']} in {result['seconds']:.0f}s; "
+                  f"{result['applied']} patches; trees "
+                  f"{short(result['applied_tree'])} / {short(result['bundle_tree'])} / "
+                  f"{short(result['want_tree'])}", flush=True)
+            for problem in result["problems"]:
+                print(f"  problem: {problem}", flush=True)
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+    with open(os.path.join(staging, "README.md"), "w") as f:
+        f.write(render_readme(results))
+    write_checksums(staging)
+
+    failed = [r["name"] for r in results if r["status"] != "PASS"]
+    files = staged_files(staging)
+    total = sum(os.path.getsize(os.path.join(staging, f)) for f in files)
+    print(f"staging: {staging} ({len(files)} files, {mib(total)} uncompressed)")
+    for f in files:
+        if f.startswith("bundles/"):
+            print(f"  {f}: {mib(os.path.getsize(os.path.join(staging, f)))}")
+
+    if args.dry_run:
+        print("dry run: ZIP not written")
+        return 1 if failed else 0
+    if failed:
+        print(f"not writing ZIP: verification failed for {', '.join(failed)}; staging kept at {staging}")
+        return 1
+
+    zip_path = os.path.join(DELIVERY, f"timeline-delivery-{stamp}.zip")
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in files:
+            z.write(os.path.join(staging, f), arcname=f)
+    shutil.rmtree(staging)
+    print(f"wrote {zip_path} ({mib(os.path.getsize(zip_path))})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

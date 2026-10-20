@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T07:47:53Z | dispatcher heartbeat 11s -->
+<!-- main | 2026-10-20T07:53:10Z | dispatcher heartbeat 0s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -32,5 +32,7 @@ Running: scope-deny, retired-ops-removal, verified-read-consolidate, text-select
 Running: scope-deny (parked), retired-ops-removal, text-selection-port, capture-verifier-trim, history-api-audit.
 07:52: MERGED verified-read-consolidate 03c68f7. DONE+merge queued: history-api-audit (3 added tests: inverse refuses after overwrite/return, undo dry-run+exact retry, read-scope dry-run 401; all history/undo/restore/revision caps covered incl. two-project isolation), text-selection-port (P1 text_selection + P2 binding projection, 36 pass, MIME must be exactly "text/plain; charset=utf-8"; clear/removal schema open -> orchestrator). Agent told via runtime-coordination. Dispatched rt-m4-delivery-script (build-delivery tool, dry-run, verify by fresh-clone git am) and rt-m2-size-census (design/runtime-size-census.md, top-10 deletion candidates). Full 1020072856 still queued.
 Running: scope-deny (parked), retired-ops-removal, capture-verifier-trim, delivery-script, size-census.
-Workers live: 5. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
+08:00 (clock 07:53) ACK 07:50: ONE final tuple; TIMEBOX 08:50Z — if retired-ops regen not merged by then, publish current tuple (+--check results) and do removal as the next tuple. Dispatched rt-m2-tuple-fill (fills TBDs, runs artifact checks via test service, writes PUBLISHED doc). MERGED text-selection-port ef731cb; capture-verifier-trim DONE (-8 lines only, three dedup helpers, central 127+18+17 pass) merge queued. delivery-script BLOCKED on python3 approval -> added suite `runtime delivery-dryrun` (python3 bin/build-delivery --dry-run for runtime+composition), requested central run runtime-delivery-dryrun-1020075259-6. FINDING (read-only): composition tl/integration 5e06f40 has an UNRELATED root from origin/main 67b8aa3, so a patch series cannot apply; needs rebuild on origin/main or bundle-only delivery — orchestrator to decide before M4. Runtime: format-patch omits merges (58 patches for 103 commits) -> delivery needs linearized series.
+Running: scope-deny (parked), retired-ops-removal, size-census, tuple-fill.
+Workers live: 4. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
 Resources: ~9GB free.

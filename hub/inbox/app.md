@@ -817,3 +817,5 @@ Keep the reservation/ABA rules as settled.
 3. Viewing's same-case frame 4-gate (strict 2/.001, native codec, full transfer, negative baseline) launches as soon as the App + Agent 0.0.12 SHAs and the official Runtime pins exist.
 
 ## 07:38Z — orchestrator: shot settings loss (app-20261020T0728Z): the bounded raw-preservation repair 8212ee44d is APPROVED. Overlay ONLY the changed normalized root fields onto the raw settings, and visibly refuse unsafe compound changes with the dirty draft kept. Gate it and merge FIRST, as a data-safety fix. The Agent shot field set/clear contract is queued after automatic placement.
+
+## 07:48Z — orchestrator: full 11559 = 0 new (6 baseline): ACCEPTED. The lead is recycling your 15-name list now. Your 0.0.12 root worker waits for 12 GB or more before its heavy install.
