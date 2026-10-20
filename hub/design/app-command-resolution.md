@@ -1,0 +1,8 @@
+# Explicit App conflict resolution (M2 branch contract)
+Original failed commands/guards and unknown-flight retry identities are immutable. Existing positive Keep my changes / Use latest version behavior must move to the command path.
+- Only an authoritative, definitive rejection permits resolution. Uncertain/lost-ACK/5xx flights retain their exact request; retry is the only send action.
+- Use latest explicitly discards the chosen retained local work after durable owner-fenced storage change and projects a scoped normal Runtime closure. Never drop dependent work implicitly.
+- First Keep slice is ONE rejected parent track.set label intent with no suffix. The user's explicit click authors a NEW intent from a fresh verified Runtime closure, keeping the original semantic label/clear and stable target. New capture/new outbox identity/key; the old command is never rewritten/retried with refreshed guards. Missing/changed ownership refuses and keeps work.
+- Keep is unavailable for dependent suffixes or unsupported op types until a deliberate resolution exists. They remain retained; Use latest may explicitly discard all displayed local work. No snapshot writer/provider/wire fields added.
+- Storage/poll/dispose/project-switch races must preserve durable work and avoid repinning old pixels. Existing editProjection fact and session/outbox machinery remain the single path.
+App-local API for parallel workers: hook surface optional useLatest():Promise<void>, keepLabelChanges():Promise<void>; state optional canDiscardRejected:boolean, canReapplyLabel:boolean. Core owns raw/storage/hook; UI consumes only these capabilities. No new Runtime DTO or command schema.

@@ -1,43 +1,35 @@
-# app lead — 2026-10-19T23:20Z (hourly check-in)
+# app lead - 2026-10-20T00:33Z (hourly check-in)
 
 ## Health
-- Dispatcher heartbeat 4s old. hub-syncd alive (pid 4743); last "hub-sync app" commit on origin/main 23:10:16Z (394beb3), sync heartbeat <5 min; no rebase-merge in the hub clone; no rebase aborts logged. Lead watcher (lead-watch.sh) alive. Codex: "Logged in using ChatGPT". Disk: 17G free on /home/user (58% used, above the 8G floor).
-- Manager: alive (codex exec pid 13287/13298, round 20261019T2229Z, started 22:29Z), model gpt-6.1-sol / high, no fallback. Round log 23:14Z, ~1.1 MB; grep hits for rate-limit/401/429 are fixture or test text only, no real CLI limit/auth errors. No manager restarts needed this hour (watcher restart log absent = none).
-- Manager state: ACTIVE, not idle. 5 workers running (all app-m2-*): media-read-integration (23:09Z), edge-retained-gates, purge-completion-writes, purge-edge-agent, purge-edge-import (all 23:14Z), plus central e2e-m2-history-conflict queued/running. Slots used for the owner PURGE decision within about 4 minutes of it landing in the INBOX.
-- Integration sha (/home/user/work/app tl/integration): bdc9dcd9b (merge of app-m1-mixed-safety-qualify, tree a6d1a0c6).
-- Milestone (STATUS.md, 23:08Z): "M1 APP SAFETY/RESTORE PROVEN; overall M1 waits orchestrator record/cross-repo closure"; M0 COMPLETE; M2 branches authorized, MERGES HELD until M1 recorded. PLAN.md gate record: no M1/M2/M4 entry, hard stop NOT YET.
+- Dispatcher heartbeat 1s. hub-syncd alive (pid 4743); last "hub-sync app" commit on origin/main 00:14:16Z (sync runs every ~5 min); no rebase-merge in the hub clone. Lead watcher (lead-watch.sh) alive. Codex: "Logged in using ChatGPT". Disk: 15G free on /home/user (63% used; floor 8G). Mem 15G total, ~11-14G available; cgroup OOM kills of worker tsc (node ~1.7G RSS) seen 23:57-00:04Z.
+- Manager: alive and ACTIVE (codex exec pid 13287, round 20261019T2229Z log still growing, writing briefs at 00:22Z), model gpt-6.1-sol/high, no fallback, no real CLI rate-limit/auth errors. No restarts this hour (no lead-manager-restarts.log entries).
+- Workers running at 00:29Z: 1 (app-m1-full-extra-classify, started 00:18Z). Target is 5-7. Seven workers were active at 00:10Z; most finished at 00:15-00:27Z (clip-params-parity, history-retirement-map, label-client-pin, recorder-primitives all exit 0). Manager has just written 3 more briefs (label-browser-qualify, bundle1-agent-source, bundle1-runtime-source) not yet dispatched. Not idle (no restart); the watcher restarts it if <5 for 30 min (~00:45Z) with no external blocker. Failed 0, stuck 0. Queue refused: only the two old app-m1-recovery-*-local items.
+- Integration sha (/home/user/work/app tl/integration): 2bfde69ea (tree dd1fe6a725cf20015f7b8cb4a966bdf507319653), clean. No new merges since 23:42:37Z (app-m1-draft-opaque-roots). M2 merges held.
+- Milestone (STATUS.md 00:18Z): M1 App preservation fixes COMPLETE on integration; M1 awaits orchestrator record; M0 COMPLETE; M2 on branches (bundle #1 label qualification, clip delete/params/parent add/swap capture, edge PURGE composed). PLAN.md gate record: still no M1/M2/M4 entry; hard stop NOT reached.
 
-## Workers
-- Running 5 (above). Failed 0. Stuck 0 (all within the 3h timeout). Done since 22:15Z, all exit 0: m1-restore-head-pair, restore-proof-health/handshake, mixed-edit-safety, mixed-safety-qualify, m2-conflict-details, conflict-real-journey, history-real-journey, group-lossless-clones, media-selection-port, native-close-drain, runtime-history, ui-batch-compose, unused-query-writer; commits=0 (reports only): edge-producer-boundary, ordinary-edit-ingress, writer-cut-map. Queue/refused: nothing new.
-- Merges since 22:15Z (merges.log): app-m1-restore-proof-handshake 9d0a383a1 (22:40Z), app-m1-mixed-safety-qualify bdc9dcd9b (23:05Z). No M2 merges (held).
+## Final full run
+- app-full-source-integration-1019234330-24066: FAIL exit=1 in 2097s on tree dd1fe6a7 (started 23:56Z, ended ~00:29Z). Test Files 6 failed|1451 passed (1457); Tests 9 failed|18280 passed|3 expected fail (18292).
+- Classification: 6 original baseline nodes (examples-governance x2, HoverScrubVideo.gateway x2, AuthContext.gated x1, useAgentSession.proposal-vertical x1) = same as app-full-1019224105-27715. New vs baseline: 3 nodes: PublicAstridSite.lifecycle x2 and EmptyWorkspaceGuidance x1. All three ran under heavy load (54.9s file); lead isolated rerun on the exact tree (--maxWorkers=1): both files PASS, 16/16, 11s. So: baseline 6 + 3 load-flaky nodes that pass in isolation; no product failure shown. Manager classifier worker app-m1-full-extra-classify is running. Orchestrator judgment needed (escalation app-20261020T0032Z-lead-m1-final-full-classification).
+- app-m1-draft-opaque-roots-full-source-integration-1019233523-9530: status=error "could not compute tree of wt/app-m1-draft-opaque-roots" (worktree recycled while it waited); same tree and cache key as 24066, so 24066 is the evidence. Not requeued. The classification is also appended to App STATUS.md (Lead 00:31Z line).
+- Old app-full-1019230552-26792: cancelled 23:55Z by the lead at the orchestrator's request (process group killed, status=cancelled, markers and snapshot removed).
 
 ## Lead instructions and inbox
-- hub/lead/app.md: no new items (empty diff). hub/kit changed (PLAN.md, bin/hub-sync, inbox-merge, progress-json/publish, test-run): auto-copied by hub-sync, no local patching.
-- hub/inbox/app.md vs managers/app/INBOX.md: in sync through the newest item (owner PURGE ALL edge writers decision); manager acted on it (purge-* workers at 23:14Z). New items seen since 22:15Z and acknowledged in STATUS "Inbox:" line: restore-head-pair decision, M2 groups option A, KEEP PUSHING (M2 branches now), AUDIT 2216Z mixed-edit exit check + M2 priority 1 all writers, edge-producer OWNERHOLD then OWNER PURGE decision, transition INCOMING ratified, ordinary-edit handoff, Runtime/Agent notes.
-- Escalations: app-20261019T225957Z-ordinary-edit-command-handoff already closed on the hub. app-...-edge-producer-disposition was answered by the owner decision in the INBOX; I moved the local copy to $ORCH/escalations/closed/ (not on the hub closed folder yet; main may move it). Manager has no open escalation to the lead.
+- hub/lead/app.md new since last check: 23:30Z MAX SPEED (keep 5-7 workers, heavy cap 2, nudge/restart if idle). Acted: the watcher + this check; manager has acked MAX SPEED in STATUS. Nothing else.
+- hub/inbox/app.md (92729 bytes) == managers/app/INBOX.md (92732, hub-sync copies when larger): reached the manager. New items since 23:20Z: 23:15 close M1, 23:18 data-loss guard FYI, 23:30 MAX SPEED, Runtime 23:42, 23:55 BUNDLE #1, Runtime 23:49/00:00, 23:53 M1 safety accepted, 23:58 deletion ledger, 00:05 popup-native-contract DECISION (bundle #2). STATUS (00:18Z) acks through the 23:58 ledger and the 23:55 bundle; the 00:05 decision is reflected (docs-only popup audit, bundle 2 sources) but its explicit ACK is not yet in the Inbox line.
+- hub/kit/PLAN.md changed (M1 destination-occupancy exit item; owner deletion-ledger intent): auto-copied by hub-sync. design/ updates mirrored by hub-sync.
+- Escalations: popup-native-contract answered by the 00:05 inbox decision (already in hub closed). Lead handled two infra escalations (moved to $ORCH/escalations/closed with responses): (1) tsc-memory-pressure: inspected host, full 24066 was healthy and not killed; manager's flock/4 GB cap mitigation endorsed. (2) bundle1-checkouts: created detached read-only-use worktrees /home/user/work/wt/app-bundle1-runtime = Runtime 6be970633cc82ab412428151e6bf42f3e7fc3081 and /home/user/work/wt/app-bundle1-agent = Agent tl/agt-m2-bundle1-pin 3bf9e5368a956ef562c77e1beb0a745addf23daf (tree b6e56b9f == prepared tested tree). Please move both from hub/escalations/ to closed once synced.
 
-## Infra changes this hour
-- None required. Moved the answered edge-producer escalation to local closed. Updated $ORCH/.lead-last-seen to e09d77b.
+## Infra changes made
+- Two worktrees above (mirrors' integration branches untouched: runtime 9f9b25c, agent fc324e83). Isolated read-only vitest run of 2 test files in /home/user/work/app (no file edits). STATUS.md note appended. .lead-last-seen updated. No bin/ patches, no test cancelled/requeued.
 
 ## Open blockers and attempted fixes
-- None infrastructural. Manager's external dependency: Agent ordinary track-rename op/capture/goldens (requested via the closed handoff escalation; orchestrator says Agent has it as M2 priority 1). M1 overall record waits on the orchestrator (final full classification, deep audit).
+- None infrastructural. Memory pressure from concurrent tsc is the one risk: worker typechecks serialized by manager (flock + 4 GB). Worker count dipped below 5 as batch workers finished while briefs were being written; watching.
+- Dependencies (not lead-owned): Agent bundle1 pin worker commit landed (3bf9e53); App label browser qualification brief written; popup bundle #2 contracts pending on Agent.
 
 ## Questions for the orchestrator
-- Open proposal (low priority): commit a root .gitattributes line 'hub/design/*.md merge=union' on origin/main. Kit hub-sync's fallback 'merge -X theirs' can silently drop another machine's appended section on a same-hunk conflict; this clone has the rule only in .git/info/attributes.
-- Please move hub/escalations/app-20261019T224918Z-edge-producer-disposition.md to closed (decision delivered via inbox).
-- Reminder: M1 is still unrecorded in PLAN.md. App reports its M1 items proven (restore, mixed-edit safety, 5 journeys, full classification pending the final postmixed full run); App needs your record to start M2 merges. Viewing M3 batch dispatch (base c7a98922e) also waits on that record.
+- M1 record: is "6 baseline + 3 load-flaky nodes, isolated PASS" acceptable as 0 new for M1, or rerun at low load? (escalation app-20261020T0032Z-lead-m1-final-full-classification)
+- Carried forward (low priority): commit a root .gitattributes line 'hub/design/*.md merge=union' on origin/main (kit hub-sync's fallback 'merge -X theirs' can drop another machine's appended section; this clone has the rule only in .git/info/attributes). Not acknowledged yet.
 
-## Lead 23:32Z: re orchestrator 23:28Z (max speed, 30-minute checks)
-- Scheduled check-ins can't run more often than hourly, so the 30-minute checks run in the lead watcher, a local loop that polls every minute. It covers the dispatcher heartbeat, the hub-sync push actually landing, stuck rebases, disk (<10 GB alerts), and manager liveness. If the manager is idle, or has fewer than 5 App workers for 30 min with no external blocker, the watcher restarts it, and the restart reloads INBOX priorities. The hourly check-in subagent runs as well.
-- Nudges are restarts, not local INBOX appends: hub-sync only replaces the local INBOX when the hub copy is larger, so a local append could hide a later, shorter orchestrator item.
-- At 23:14Z the manager had 5 App M2 workers running; heavy cap stays at 2 (dispatcher-enforced).
-
-## Lead 23:58Z: re orchestrator 23:53Z (last M1 blocker)
-- DONE 23:55Z: cancelled only app-full-1019230552-26792. Killed its process group, status=cancelled with a supersession summary, removed its running and cache-running markers and its snapshot worktree.
-- The final-product full is now running as app-full-source-integration-1019234330-24066 (started 23:56Z, heavy). app-m1-draft-opaque-roots-full-source-integration-1019233523-9530 shares its cache key, so it will be served from 24066's result when that finishes. Neither was cancelled or requeued.
-- The lead will make sure the classification (pass / original baseline failures / new = ?) reaches App STATUS and this file when the run ends.
-
-## Lead 00:16Z: re orchestrator 00:14Z (OOM risk to final full 24066)
-- Checked 00:14:43Z: app-full-source-integration-1019234330-24066 is ALIVE and progressing (20.5 min elapsed; vitest workers at 33–60% CPU; log.txt last written 00:14:37Z, ~300 KB). Left untouched, as instructed; no retry needed.
-- dmesg: one memcg OOM kill of a node process (pid 7153, ~1.8 GB RSS; consistent with a concurrent tsc), not part of 24066. The memcg is the shared Claude bash cgroup, so dispatcher, workers and test runs all draw on one limit. The machine has 15 GB RAM; 11 GB was available at 00:14Z.
-- Suggestion: count full-project tsc/typecheck runs as heavy (or serialize them) while a full suite runs; the heavy cap of 2 does not cover worker-local tsc.
+## Lead 00:36Z: final full addendum
+- Independent isolated rerun by the lead: app-targeted-1020003017-9364 on the same tree dd1fe6a7 (integration:app), PublicAstridSite.lifecycle + EmptyWorkspaceGuidance: PASS 16/16 in 11s (--maxWorkers=2). This matches the check-in's 16/16 at --maxWorkers=1. Neither file changed since 60aa26b95.
+- 9530 status=error was caused by the lead's disk cleanup at ~00:22Z, which recycled its worker worktree while the run was queued. The worktree is restored, and auto-recycle now skips any worker with a queued or running test. 9530's cache key equals 24066's, so 24066 is the result for that tree.
