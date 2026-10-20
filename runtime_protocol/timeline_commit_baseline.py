@@ -345,6 +345,8 @@ def _verify(connection, project_id, timeline_id, read_object):
         kind = command["command_kind"]
         if kind == "timeline.rename":
             continue
+        if kind == "timeline.create" and _json(command["event_ids_json"]) == [str(latest["id"])]:
+            continue  # Empty-shell adoption: the create receipt names the publication it installed.
         try:
             result = _json(command["result_json"])
         except (TypeError, ValueError):

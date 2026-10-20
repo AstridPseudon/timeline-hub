@@ -103,6 +103,7 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
         page = client.list_timeline_commits(project, "film", limit=100)
         assert page["head"]["revision_id"] and page["head"]["publication_id"]
         assert len(page["items"]) == 1 and page["items"][0]["records"] is None
+
         for field, value in (
             ("config", {"clips": []}), ("canonical_document", {}),
             ("project_id", "foreign-project"), ("unknown", None),
@@ -151,5 +152,65 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
             write_owner_only(credential, product_credential)
         assert tuple(daemon.service.store.conn.iterdump()) == before
 
+        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+        from astrid.sdk.timeline._clip_commands import capture_clip_add
+        from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+        from astrid.sdk.timeline._command_state import CommandError
+        from astrid.sdk.timeline.capture import capture_track_create
+
+        parent = client.get_project_parent_composition_revision(
+            project, "film", page["head"]["revision_id"],
+        )
+        bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
+        assert bundle["parent"]["clips"] == []
+
+        def commit(command, key):
+            assert {"reads", "selections", "bindings", "created", "expect", "authorship"} <= command.keys()
+            head = client.list_timeline_commits(project, "film", limit=100)["head"]
+            accepted = client.commit_timeline(project, "film", {
+                "api_version": 1, "project_id": project, "timeline_id": "film",
+                "base_revision_id": head["revision_id"],
+                "base_publication_id": head["publication_id"], "commands": [command],
+            }, idempotency_key=key)
+            document = accepted["data"]["canonical_document"]
+            assert accepted["receipt"]["result"] == accepted["data"]
+            assert document["project_id"] == project and document["timeline_id"] == "film"
+            assert document["shot_revisions"] == document["internal_timeline_revisions"] == []
+            assert document["dependency_manifest"] == parent["dependency_manifest"]
+            stored = client.get_project_parent_composition_revision(
+                project, "film", accepted["data"]["accepted_revision_id"],
+            )
+            assert {key: stored[key] for key in document["parent_revision"]} == document["parent_revision"]
+            assert stored["dependency_manifest"] == document["dependency_manifest"]
+            history = client.list_timeline_commits(project, "film", limit=100)
+            assert history["items"][-1]["records"]["commands"][0]["command"] == command
+            return document
+
+        track = {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]}
+        tracked = commit(capture_track_create(bundle, "parent", track), "track-create")
+        assert tracked["parent_revision"]["payload"]["config"]["tracks"] == [track]
+        row = {"id": "title", "clipType": "text", "track": "picture", "at": 0, "hold": 4,
+               "params": {"text": "Ordinary HTTP"}, "opaque": [None, False, 0, {}, []]}
+        created = commit(capture_clip_add(agent.bundle_from_document(tracked), "parent", row), "clip-add")
+        assert created["parent_revision"]["payload"]["clips"] == [row]
+        assert created["parent_revision"]["payload"]["config"]["clips"] == [row]
+        held = commit(capture_clip_set(agent.bundle_from_document(created), "parent/clip:title",
+                                       values={"hold": 3}), "hold-set")
+        assert held["parent_revision"]["payload"]["clips"] == [{**row, "hold": 3}]
+
+        # Continue on the film created through the public API. A source or
+        # registry seeded through a legacy writer would hide this boundary.
+        before = tuple(daemon.service.store.conn.iterdump())
+        clear_error = None
+        try:
+            cleared = capture_clip_set(agent.bundle_from_document(held), "parent/clip:title", clear=["hold"])
+        except CommandError as error:
+            clear_error = error
+        assert tuple(daemon.service.store.conn.iterdump()) == before
+        assert clear_error is None, (
+            "ordinary_http_hold_clear_after_native_creation_must_be_capturable: "
+            f"public empty timeline -> track.create -> clip.add -> hold set -> hold clear: {clear_error}"
+        )
+        commit(cleared, "hold-clear")
     finally:
         world.stop()
