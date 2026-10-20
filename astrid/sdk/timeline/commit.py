@@ -308,22 +308,75 @@ def _hydrate(port, bundle, calls=()):
                          bundle["project_id"], content.get("media_id"), content.get("source_id")),
                      "invalid transcript source identity")
         elif source.get('kind') == 'astrid.project-pack':
-            objects = {}
-            for admission in source.get('content', {}).get('admissions', []):
-                descriptor = admission.get('snapshot_object')
-                if descriptor is not None:
-                    _require(callable(getattr(port, 'document_object', None)),
-                             'Runtime document_object support is required for pack snapshots')
-                    object_id = descriptor['object_id']
-                    if object_id not in objects:
-                        objects[object_id] = port.document_object(pin, object_id)
-            schema_inputs.append((copy.deepcopy(verified), objects))
+            schema_inputs.append((copy.deepcopy(verified), {}))
         else:
             _require(isinstance(source.get("kind"), str) and source["kind"].endswith(".config"),
                      "unregistered config source kind")
         captures.append(copy.deepcopy(verified))
     bundle["source_mapping"]["pinned_documents"] = captures
     return schema_inputs
+
+
+def _schema_resolver(port, inputs, inverse_records):
+    """Resolve bytes at the real command stage, never by simulating handlers."""
+    from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
+
+    from ._command_state import CommandError
+
+    def resolve(ctx):
+        command = ctx.record['command']
+        required = []
+        if command['op'] == 'clip.set-params' and 'schema_source' in command['args']:
+            row = ctx.state.entity(command['select'])
+            selected = row.get('elementRef') or row.get('element_ref')
+            if isinstance(selected, dict) and selected.get('packId'):
+                required.append((command['args']['schema_source'], selected))
+        elif command['op'] == 'timeline.inverse':
+            for record in inverse_records:
+                snapshots = [dep['pin'] for dep in record['dependencies']
+                             if dep['key'] == 'params.snapshot']
+                required.extend((pin['source'], pin['element']) for pin in snapshots)
+                # Older accepted PARAM records already contain exact source and identity reads.
+                if not snapshots and record['command']['op'] == 'clip.set-params':
+                    pin = record['command']['args'].get('schema_source')
+                    identity = {read['path'][0]: read['state'].get('value')
+                                for read in record['reads']
+                                if read['ref'] == record['command']['select']
+                                and read['path'] in (['elementRef'], ['element_ref'])}
+                    selected = identity.get('elementRef') or identity.get('element_ref')
+                    if pin and isinstance(selected, dict) and selected.get('packId'):
+                        required.append((pin, selected))
+        for pin, selected in required:
+            matches = [(verified, objects) for verified, objects in inputs
+                       if verified['pin'] == pin and verified['document']['content'].get(
+                           'pack_id') == selected.get('packId')]
+            if len(matches) != 1:
+                raise CommandError('selected pack snapshot input unavailable')
+            verified, objects = matches[0]
+            admissions = [item for item in verified['document']['content']['admissions']
+                          if all(item.get(key) == selected.get(key)
+                                 for key in ('id', 'kind', 'revision'))]
+            descriptor = admissions[0].get('snapshot_object') if len(admissions) == 1 else None
+            snapshot = None
+            if descriptor is not None:
+                _require(callable(getattr(port, 'document_object', None)),
+                         'Runtime document_object support is required for pack snapshots')
+                object_id = descriptor['object_id']
+                if object_id not in objects:
+                    objects[object_id] = port.document_object(pin, object_id)
+                snapshot = objects[object_id]
+            if command['op'] == 'timeline.inverse':
+                try:
+                    admitted_element_snapshot_descriptor(
+                        ctx.realm_id, ctx.state.bundle['project_id'], selected, verified, snapshot)
+                except ValueError as exc:
+                    raise CommandError(str(exc)) from exc
+                ctx.dependency('params.schema', 'source', pin)
+                ctx.dependency('params.snapshot', 'entity', {
+                    'source': pin, 'element': selected, 'object': descriptor})
+        return inputs
+
+    return resolve
 
 
 def _history(port, through, after, rejected, base):
@@ -550,9 +603,10 @@ class RuntimeCommitService:
                 schema_inputs.extend(_hydrate(port, source))
             if not closures:
                 schema_inputs = _hydrate(port, bundle, calls)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
-                               schema_inputs=schema_inputs, realm_id=context['realm_id'])
+                               realm_id=context['realm_id'], resolve_inputs=resolve_inputs)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -566,10 +620,11 @@ class RuntimeCommitService:
                     head_bundle = _load(port, context, current["revision_id"])
                     if not closures:
                         schema_inputs = _hydrate(port, head_bundle, calls)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures,
-                                  schema_inputs=schema_inputs, realm_id=context['realm_id'])
+                                  realm_id=context['realm_id'], resolve_inputs=resolve_inputs)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {

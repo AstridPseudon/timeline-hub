@@ -115,7 +115,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None, schema_inputs=(), realm_id=None):
+            closures=None, schema_inputs=(), realm_id=None, resolve_inputs=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -136,6 +136,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         ctx = Recording(candidate, command, ordinal, closures=closures,
                         schema_inputs=schema_inputs, realm_id=realm_id)
         _verify_claims(ctx, command)
+        if resolve_inputs is not None:
+            ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:
             from .capture import move_intent
