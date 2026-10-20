@@ -169,15 +169,15 @@ The original policy findings above remain unchanged.
 | --- | --- |
 | P: `src/tools/image-generation/hooks/useImageGenSubmit.ts::useImageGenSubmit` → `src/shared/lib/taskCreation/imageGeneration.ts::createImageGenerationTasks` | Image submission composes a producer-owned admission at `/generation/compose`, then calls `createTask`. Travel uses `src/tools/travel-between-images/components/ShotEditor/services/generateVideoService.ts::generateVideo` → `src/shared/lib/taskCreation/travelGeneration.ts::createTravelGenerationTask` → the same boundary. These carry generation/shot lineage, not an approved canonical timeline placement. |
 | P: `src/shared/lib/taskCreation/createTask.ts::createTask`, `src/integrations/astrid/taskRoutes.ts::AstridLocalTaskRoutes.admit` | Despite stale comments mentioning `/projects/:slug/tasks`, the actual POST is `/v1/tasks`. `createTask` validates capability/input authority, allocates a UUID **idempotency key**, retries twice with that in-memory key, and returns task IDs/status. It does not allocate a task ID or persist the request/key/run locator. `admit` normalizes the closed envelope before serialization and projects away the mutation receipt. A reload/new call allocates a different key. Recovery must replay the already prepared bytes/key, without repeating fresh-admission validation/composition. |
-| R: `runtime_protocol/service.py::RuntimeService.create_task`; `runtime_protocol/store.py::RuntimeStore.create_task` | Runtime allocates `run_id` and `task_id` with `new_id()` inside admission, records `task.create` identity/receipt atomically, and compares persisted admission identity on replay. The requester must store the admission reservation **before knowing either ID**, then persist returned IDs. Expired/missing replay evidence is a visible refusal, never permission to allocate a new key automatically. |
+| R: `runtime_protocol/service.py::RuntimeService.create_task`; `runtime_protocol/store.py::RealmStore.create_task` | Runtime allocates `run_id` and `task_id` with `new_id()` inside admission, records `task.create` identity/receipt atomically, and compares persisted admission identity on replay. The requester must store the admission reservation **before knowing either ID**, then persist returned IDs. Expired/missing replay evidence is a visible refusal, never permission to allocate a new key automatically. |
 | A: `astrid/sdk/invocation.py::invoke`, `_kernel_invoke`, `_generation_publish_effect`; `astrid/sdk/remote.py::RemoteTasks.create/prepare_admission/dispatch_admission`; `astrid/sdk/workspace_client.py::WorkspaceClient.prepare_task_admission/dispatch_task_admission` | SDK/agent generation requests already use ordinary Runtime admission, with producer-declared generation selectors and settlement effects. `invoke(recovery_path=..., resume=True)` reuses `astrid/sdk/recovery.py::AdmissionReceipt.freeze/locate/recover_task`: frozen prepared arguments before send, then exact task/run locator, authenticated realm and one local lock. This existing SDK recovery is not an App owner or automatic-placement grant. No current Python author of `placement_intent`/`timeline_placement` was found. A standalone agent remains its own requester; App must not adopt its tasks by scanning a project. |
-| P: `src/tools/video-editor/hooks/useAgentSession.ts::useSendAgentMessage` | Agent chat captures project/timeline context and retries the captured message in memory; `agentStore.prompt` and view-lifetime fencing do not persist an automatic-placement task continuation. Chat context, gallery add links and `shotId` cannot supply missing auto-approval/owner/raw references. |
+| P: `src/tools/video-editor/hooks/useAgentSession.ts::useSendMessage/useProjectAgentTaskLinks`, `AstridAgentSessionStore.get`; `src/tools/video-editor/runtime/agentTaskLinks.ts::readAstridTaskRefs` | Agent chat captures project/timeline context; task joins come only from tool-result `details.astridTaskRefs` with `{project_id,run_id,task_id,capability_id}`. `session/load` rehydrates persisted tool results and project links even with chat closed; `liveObserved` distinguishes live versus replay. This is an existing durable **locator source**, not pre-admission placement approval/head/owner/anchor storage. Chat context, gallery add links and `shotId` cannot fill that gap. |
 | P: `src/tools/video-editor/hooks/useTimelineCommandSession.ts::useTimelineCommandSession`; `commands/commitSession.ts::createTimelineCommandSession`; `commands/commitOutbox.ts::createCommitOutbox` (the latter two under `src/tools/video-editor/`) | The real command owner uses authenticated `getRecoverableIdentity()` plus the canonical document's project/timeline and head pair. IndexedDB `astrid.command-outbox` / `owners`, browser exclusive lock and claim generation already retain original captures, reserved commit bytes/key and ACK. Recovery currently lists only owners with `intents` or `pending`; a task-only or accepted-only continuation would be invisible. |
 | P: `src/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts::createTaskEventPoller/readyRuntimeTaskEvents`; adjacent `useRuntimeTasks.ts::pollRuntimeTasks` | Events are wakeups; the cursor/pending IDs and QueryClient task cache are in memory. Startup establishes a feed cursor then reads the full list; visibility/reconnect/list refresh repairs display state. `src/shared/realtime/RealtimeConnection.ts::RealtimeConnection` also keeps snapshot maps in memory. Neither path persists requester authority or resumes an edit. Reopen must reread **saved task IDs**, independently of a historical event being delivered again. |
 
 **Exact completion discovery, without a new provenance carrier.** At R,
 `RuntimeService.settle_attempt` checks task/attempt/lease/fence/epoch;
-`RuntimeStore._settle_attempt` atomically persists result, managed associations,
+`RealmStore._settle_attempt` atomically persists result, managed associations,
 generation publication and `task.completed`. `_apply_settlement_effect` returns
 exact IDs in `result.generation_publish_v1.publications[*].variants[*]`, or
 `result.generation_variant` for create/append effects. Decode that normal task
@@ -200,6 +200,18 @@ Do not create an App hash, synthetic attempt fence or render-proposal DTO.
 P's `src/integrations/astrid/runtimeReadModels.ts::runtimeOutputs` maps output
 `digest` into `media_id`; `bridgeTaskOutputs.ts::readBridgeTaskOutputs` then calls
 that `_variant_id`. That display projection is **not a canonical variant ID**.
+
+The actual agent-tool ingress is A:
+`astrid/omp_extensions/astrid-invoke.ts` → `astrid/omp_invoke.py::invoke_tool`
+→ `AstridClient.invoke_result(..., wait=False)` → the SDK admission chain above.
+`invoke_tool` emits those exact `astridTaskRefs` only **after** admission, using
+Runtime-returned canonical IDs. Its closed input permits capability/kind/project/
+inputs/execution request, not recovery-path or requester-placement metadata.
+Therefore replayed task links can reconnect an **already approved and reserved**
+request; they cannot retroactively authorize all tool-created tasks. Agent-owned
+wiring must bind/freeze the actual invocation before send, using its existing
+prepare/dispatch/recovery seam; App cannot close an admission-ACK loss inside
+that tool by adding a post-result observer. No new tool/wire field is specified.
 
 **Smallest reuse: extend the existing owner record, not another queue.** D's
 `commitOutbox.ts::append/dispatch/reserveRenderAdmission/recordRenderTask` proves
@@ -242,9 +254,9 @@ this source investigation ran no behavior tests.
 
 **Local door versus Supabase origin:** P's
 `supabase/functions/create-task/index.ts` is a 410 tombstone, although unused
-resolver `resolvers/shared/lineage.ts::applyLineageFields` still copies old intent
+resolver `resolvers/shared/lineage.ts::setTaskLineageFields` still copies old intent
 shapes. `supabase/functions/complete_task/generation.ts::createGenerationFromTask`
-can create legacy Supabase generations/variants; `handler.ts::handleCompleteTask`
+can create legacy Supabase generations/variants; `handler.ts::completeTaskHandler`
 does not persist its `completionAsset` as a Runtime association/requester link,
 and its HTTP success body has URLs/follow-up status, not a canonical variant pin.
 A Supabase task UUID, URL or `source_task_id` is not a Runtime task/run/managed

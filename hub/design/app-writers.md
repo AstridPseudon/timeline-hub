@@ -1,174 +1,39 @@
-> Owner update 2026-10-19 ~23:11Z: PURGE every Supabase canonical writer in ai-timeline-agent, timeline-import, complete_task append+registry upsert and shared astridAppendService; delete retired write tests/docs, keep completion/billing/media preparation/relational metadata and make retained edge tests import/pass. The reviewed purge is composed on this worker branch; this supersedes the earlier owner-HOLD and conversion-vs-retirement uncertainty below.
-
 # App M2 durable writer map
 
-Status: **HELD — docs-only groundwork, 2026-10-19.** This map is audited against
-App `tl/integration` at `9d0a383a1` (including the M1 restore-proof merge). It
-replaces the stale M0 inventory; it does not authorize a product or schema
-change. The target remains one `/v1` Runtime commit door from [PLAN](../PLAN.md).
+## CURRENT — exact source census (2026-10-20)
 
-Useful design evidence is retained in [edit-recipe.md](edit-recipe.md),
-[m2-move-draft.md](m2-move-draft.md), [app-contract-consumption.md](app-contract-consumption.md),
-[app-m1-coordination.md](app-m1-coordination.md), and
-[commit-contract.md](commit-contract.md). PLAN wins if any wording here differs.
+This section is audited against App `HEAD 1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff`, tree `21cf7c3b47ec1fc5e6f3b65525342b8ac2899712`. It counts production source callers only; tests, mocks, generated method declarations, previews, and local drafts do not count. The staged `55e5` / root-public-10 material is not integrated here.
 
-## Proven M1 boundary
+The M1 command-session move/inverse/outbox path remains the existing native replacement for its narrow proven slice. It does not close Gate 6. Every row below is OPEN until its producer has an accepted native command/proposal path, or the producer is deleted with a zero-traffic proof. Runtime returning `410` for an old route is not App evidence for deleting a still-writable caller.
 
-The following is proven for the narrow same-track absolute `clip.move` slice;
-it is not a claim that all App writers have migrated:
-
-* `useClipDrag` / `useTimelineCommandsService.moveClip` capture through
-  `commands/{semanticGestures,clipMoveCapture,authoringBundle}.ts` and the
-  `useTimelineCommandSession` port.
-* `commands/commitSession.ts` seals the original reads, selections, bindings,
-  writes, immutable media/source pins and created IDs; `commands/commitOutbox.ts`
-  persists the exact request/body/key and unsent suffix. The provider sends
-  `POST /v1/projects/{project}/timelines/{timeline}/commit` through
-  `RuntimeDataProvider.commitTimeline`, not a snapshot publication.
-* Accepted undo emits the Agent-defined `timeline.inverse` command with the
-  accepted publication ID. It is guarded server-side; local inverse state is
-  not accepted history.
-
-Evidence on the integrated source: `tests/e2e/local/three-products.spec.ts`
-(`M1 real gesture...` and `M1 real dependency conflict...`) passed 2/2 in the
-central `app-m1-journey-python-basis-e2e-m1-gesture-1019210718-13326` run;
-`tests/e2e/timeline/command-outbox.spec.ts` passed 1/1 in
-`app-m1-outbox-browser-full-e2e-timeline-1019191816-103`; and
-`tests/integration/runtimeRestore.test.ts` passed 1/1 in
-`app-m1-restore-proof-handshake-restore-integration-1019223958-23422`.
-The five-case M1 closure also passed centrally on its final tuple. These prove
-move/inverse/outbox/restart mechanics. They do **not** close Gate 6.
-
-The following App-owned writers remain **OPEN** until their own producer emits
-an Agent command through `commitTimeline`, or the producer is deleted:
-ordinary editor snapshot save, add/update/trim/split/delete/track edits,
-asset/registry writes, popup add/swap, duplicate/group writes, placement,
-element/standalone adapters, and visual seam/transcript/project-data writes.
-The retired Supabase canonical-writer lane is closed below and is not a
-remaining UI-writer dependency.
-
-## Reachable writer census
-
-Paths below are current App paths, not filenames inferred from the M0 search.
-
-| Reachable surface | Current call chain and durable effect | Status and removal boundary |
+| Current boundary / production ingress | Durable effect now | Existing native replacement or deletion row |
 |---|---|---|
-| **Editor snapshot funnel** | `hooks/useTimelineCommit.ts` → `hooks/useTimelinePersistence.ts:399-403` → `DataProvider.saveTimelineAtHead`; `integrations/runtime/dataProvider.ts:891-1008` calls `publishParentComposition` at `/v1/.../composition-revisions`. The numeric `saveTimeline` branch is still at `useTimelinePersistence.ts:403`. | **OPEN except M1 move.** Keep command-session preview/outbox separate from snapshot recovery. Delete numeric selection and the snapshot save branch only after every editor producer below has command coverage and zero-traffic tests. |
-| **Editor producers** | `hooks/useTimelineCommandsService.ts:442-1083`, `hooks/useTimelineOps.ts`, `commands/{runner,media}.ts`, `hooks/useTimelineState.ts:929-995`, `hooks/useTimelineTrackManagement.ts`, `hooks/useExternalDrop.ts`, `lib/{keyboard-delete,shot-group-commands}.ts`. These build local rows/config/registry and still feed the snapshot funnel. | **OPEN.** M1 `moveClip` is the only command-backed gesture. Add/update/delete/trim/split/track and prepared-media operations wait for Agent-published schemas and capture rules; never serialize local `TimelineCommand`, `TimelinePatch`, `add-media`, or `swap` names as wire opnames. |
-| **Popup add/swap** | `travel-between-images/components/shotTimelineDataProvider.ts:435-590` implements `saveTimeline`; it calls `enqueueCanonicalShotPublish` and `shotCompositionAdapter.publish`, which reaches `publishParentComposition`. Recovery is persisted through `saveTimelineDraftIfOwner` at `:516-537`. | **OPEN.** Remove this `saveTimeline` compatibility publisher only after add and swap each have independent command-door tests; refusal must make no snapshot/legacy call. |
-| **Canonical duplicate/group** | `components/AstridTimelineEditor.tsx:390-445` directly calls `runtime.shots.shotComposition.publish` for canonical duplication. The fallback `lib/shot-group-pack-commands.ts:379-418` / `:444-477` calls `mutateTimelineDocument`; `shared/lib/placement/placementService.ts:78-147` saves through `saveTimelineAtHead`. | **OPEN.** Duplicate must become a command/proposal or be deleted. The M2 group migration and occurrence moves below are the only approved route for legacy-group behavior; no direct graph publication or whole-parent replacement survives. |
-| **Shared placement** | `shared/lib/placement/placementService.ts:119-239` loads, mutates and CAS-saves the document. Callers include `placeGeneration`, `unplaceGeneration`, `batchUpdatePlacementFrames`, and `lib/shot-group-pack-commands.ts:410,469`. | **OPEN.** Convert canonical placement/unplacement/frame edits to Agent commands with server rebase, or delete the writer. Its bounded client CAS loop is not semantic migration proof. |
-| **Retired Supabase canonical writers** | The `ai-timeline-agent` and `timeline-import` functions, `_shared/astridAppendService.ts`, `complete_task` canonical append, and `complete_task` registry upsert were removed by the owner-authorized M2 purge. | **CLOSED — zero active canonical writers and zero supported append/registry commands.** Retained `complete_task` continues task completion, billing, media preparation, and relational metadata only. Do not add an edge-to-Runtime relay or replacement whole-document writer. |
-| **Other durable adapters** | `hooks/useTimeline.ts:31-50`, `runtime/element-adapter.ts:66-105`, `useTimelineState.persistVisualSeamConfig`, persisted transcript/project-data paths, and asset registration through `useTimelineCommit.patchRegistry` / `useAssetOperations.ts`. | **OPEN.** Convert each bounded producer or remove its provider save branch. Relational `shot_generations.timeline_frame` and `metadata.end_frame` remain outside canonical M2 scope and cannot count as command coverage. |
+| **Whole-parent snapshot** — `RuntimeDataProvider.saveTimelineAtHead` / `saveTimelineInOrder` rebuilds parent config/registry and calls `publishParentComposition` (`src/integrations/runtime/dataProvider.ts:891-1021`). `useTimelinePersistence` has one production save owner (`:401-405`); recovery, element-adapter, placement, group-pack, visual seam, transcript, data-kind, and generic command paths still reach this family. Numeric `saveTimeline` remains a live contract but throws the version-conflict error. | Durable whole-parent authored state and registry publication; this is still the broad legacy write boundary. | `D01-app-whole-parent`; retain until all listed producers are native or deleted and zero parent traffic is proved. Existing native `commitTimeline` / command session is the replacement door, not a snapshot serializer. |
+| **Popup shot graph** — `shotTimelineDataProvider.saveTimeline` builds a canonical graph, writes draft state, and calls `shotCompositionAdapter.publish` (`src/tools/travel-between-images/components/shotTimelineDataProvider.ts:435-590`); one production provider construction at `ShotTimelinePreview.tsx:516`. | Popup add and swap can publish canonical shot/occurrence graph state through the legacy provider. | `D01-app-popup-add`, `D01-app-popup-swap`, plus `D01-app-shot-graph`; keep both boundaries until independent native add and swap proofs exist. |
+| **Shot-graph settings/name and canonical duplicate** — `ShotEditorView.tsx:153-173,295-311` has two direct `canonicalShotComposition.publish` ingress sites; `AstridTimelineEditor.tsx:390-419` has one direct `runtime.shots.shotComposition.publish` duplicate ingress. | Direct canonical shot graph publication for settings, name, and independent duplicate. | `D01-app-shot-graph`, `D01-app-duplicate`; `shotCompositionEditor` is a graph builder, not itself a writer. |
+| **Bootstrap / repair** — `createDefaultTimeline.ts:41-115` calls `publishParentComposition` for empty creation and headless repair. Production callers are `useProjectCRUD.ts:165`, `VideoEditorPage.tsx:1009`, and `:1096` (three external ingress sites). | Explicit setup can publish an empty/default parent; this is not ordinary authored editing. | `D01-app-bootstrap`; retain until the legal native empty bootstrap, repair, reload, retry, and no-output/default invariants are qualified. Do not treat generated `createTimeline` declaration alone as App integration. |
+| **Split** — public `useTimelineCommandsService.splitClip` (`:781-824`) plus selected, explicit, and intersecting multi-split actions in `useClipSplitting.ts:28-81` (four production call sites) compile local edits and use snapshot persistence. | Clip/track structure is rebuilt through the snapshot path. | `D01-app-split`; replace with one captured native edit/batch or delete the producer. |
+| **Duplicate / group / prepared media** — canonical duplicate above; legacy `duplicateShotGroup` and promote-primary paths use `shot-group-pack-commands.ts:379-477` → `mutateTimelineDocument`; generation duplicate (`AstridTimelineEditor.tsx:576-598`) and public/media `buildDuplicateClipEdit` paths (`useTimelineCommandsService.ts:525-548`, `commands/media.ts:609`) feed the snapshot funnel. | Group and duplicate operations can rewrite parent/registry state; asset duplication alone is not canonical command coverage. | `D01-app-duplicate`; use native occurrence/parent media operations only when their published identity, opaque-data, inverse, and retry contracts qualify. |
+| **Placement** — `placementService.ts:119-147,172-234` CAS-writes parent state for `placeGeneration`, `unplaceGeneration`, and `batchUpdatePlacementFrames`. Production ingress counts: 4 place callers, 1 unplace caller, 3 batch callers. Group-pack has two additional direct `mutateTimelineDocument` writes. | Placement and frame changes can rewrite canonical parent state. Relational `shot_generations.timeline_frame` and generation metadata projections remain outside canonical M2. | `D01-app-placement`; native placement policy and server rebase remain OPEN. D03 removed completion-time automatic placement and must not be restored by an edge relay. |
+| **Ordinary batch / project data** — `useTimelineOps.ts:226-307` compiles valid patches and sends all ordinary patches to snapshot `commitData(...,{save:true})`; accepted proposals delegate to it. Source-map writes, compiler-canary patches, persisted data-kind replacement, transcript association, seam config, and command-runner save options are additional ingress families. | Local patch, data-kind, transcript, seam, and registry/config changes can persist through the broad snapshot boundary. | `D01-app-ordinary-batch`; replace with one generic native batch capture/submit through the existing command session, preserving refusal as one batch. Do not convert compiler-canary’s sequential calls into independent native submissions. |
+| **Element routes** — `runtime/element-adapter.ts:65-112,487-523` exposes element mutations and direct save; one provider construction at `VideoEditorProvider.tsx:320`, with two UI operation ingress sites in `ElementsLibraryPanel.tsx:72,86`. | Element edits, fades, transitions, and related mutations can use direct CAS/snapshot persistence. | `D01-app-element-routes`; requires exact element identity/revision, overlay IDs, params, inverse/rebase, and published Agent operation contracts. Generic clip commands are not a substitute. |
+| **Resolved-edit serializer / internal validation** — `serializeResolvedTimelineEdit` is called in `commands/runner.ts:245`, `useTimelineCommit.ts:536`, and `timeline-mutation-engine.ts:210` (three production callers). `serializeForDisk` validates via `assertValidTimelineConfigSnapshot` before stripping derived output. | Root-preserving serialization and validation prevent data loss while snapshot writers remain. They do not publish native commands. | `D01-app-resolved-edit-serializer` and new `D01-app-internal-validation`; keep as safety boundaries until every consumer is covered by native captures and validation is no longer an implicit snapshot admission guard. |
+| **Render producer continuations** — `useRenderState.ts:741-933` admits/polls tasks, reads outputs, flushes pending saves, and enqueues `renderRouter` admission. App has no production caller of generated `publishTimelineRender`, `settleAttempt`, or `publishRecoverableSnapshot`. | Render admission/output continuation is read/queue work; there is currently no App canonical timeline write continuation. | New `D01-app-render-producer-continuation`; keep producer admission/read paths, and later submit an accepted revision/receipt/target through the command session/outbox. Do not count generated declarations as writers or add a worker commit. |
 
-Local preview, IndexedDB recovery drafts and test providers are not accepted
-writers. `createDefaultTimeline.ts:41-71` is explicit setup/bootstrap only.
-`restoreHistory` remains the guarded `timeline.restore` adapter; it is not a
-replacement for ordinary command undo.
+### D03 safety boundary
 
-## Current priority override — orchestrator AUDIT2216Z, received 22:50Z
+The D03 edge canonical writers are actually deleted in this tree: `supabase/functions/ai-timeline-agent`, `supabase/functions/timeline-import`, `supabase/functions/_shared/astridAppendService.ts`, and the `complete_task` canonical append/registry-upsert paths are absent. The current retirement and placement tests remain. `complete_task` still performs task completion, billing/cost follow-up, media generation/storage preparation, relational `add_generation_to_shot`, and task/generation metadata writes. Those retained effects are not canonical authored timeline writers and are not a native replacement for the rows above.
 
-M1 now additionally requires command move → ordinary legacy edit → save → reload,
-with either success or a visible refusal plus durable, recoverable local work.
-app-m1-mixed-edit-safety owns that real browser proof/minimal safety fix; no
-Runtime compatibility writer. M2 PRIORITY #1 is every remaining writer converted
-to EditCommands, then deletion of the legacy publisher; the same mixed journey
-must then end in successful accepted reload and guarded undo. This supersedes
-calling group moves the first App implementation item. The group dependency
-sequence below remains valid within that slice, not the current global priority.
+Zero legacy traffic remains OPEN for parent, popup, automatic-completion, media, and group routes. No writable App legacy route is retired merely because Runtime currently returns `410`; retirement requires the corresponding native replacement plus accepted reload/retry/inverse and direct zero-traffic evidence.
 
-Current Next5: (1) ordinary editor track/clip producers, beginning the mixed
-track-rename case, on official Agent operations/capture; (2) popup add/swap with
-immutable media/occurrence pins; (3) placement; (4) remaining
-adapters/registry/transcript/data producers and delete the last snapshot
-publisher once all callers pass; (5) canonical group migration/occurrence/
-retrack/new-track/free-multi sequence and its three original positives.
-Accepted-history and conflict UI/clone branches proceed independently; M2 merges
-still wait for the recorded M1 gate. Missing command schemas are Agent handoff
-dependencies, never permission to invent local wire names.
+### Manager-owned D01 recommendations
 
-## Group dependency sequence and popup slice details
+The ledger owner should add or reconcile these exact subrows; this document does not edit the ledger or owner-film/other manager docs:
 
-Each slice is small enough to branch independently where its Agent artifact
-dependency is available. “Remove” means remove the named old writer after the
-slice’s accepted-reload and negative zero-traffic tests pass; until then it is
-visibly **OPEN**.
+`D01-app-whole-parent`, `D01-app-shot-graph`, `D01-app-bootstrap`, `D01-app-popup-add`, `D01-app-popup-swap`, `D01-app-split`, `D01-app-duplicate`, `D01-app-placement`, `D01-app-ordinary-batch`, `D01-app-element-routes`, `D01-app-render-producer-continuation`, `D01-app-resolved-edit-serializer`, and `D01-app-internal-validation`.
 
-| Order | Slice, current App seam, and Agent dependency | Binding/immutability requirements; App exit and writer removal |
-|---|---|---|
-| **1** | **Lossless legacy-group migration plus read view.** App seams: `hooks/usePinnedShotGroups.ts`, `data/shotCompositionProjection.ts`, `components/AstridTimelineEditor.tsx:370-380`, and compatibility observations in `hooks/useClipDrag.test.tsx`. Agent must publish the migration command/capture/recorder and shot/occurrence root-create semantics described in `m2-move-draft.md`; its proposed `timeline.migrate-groups` name is not an App-installed schema. | Capture all original group membership/order, opaque metadata, source/media/transcript pins and exact legacy-to-canonical bindings. Allocate shot/occurrence IDs once before outbox sealing. Do not infer ownership from display IDs, tuples or load-time conversion. Derive the read view from accepted canonical occurrence/child state plus migration provenance. This slice removes no durable writer and does **not** close Gate 6; it unblocks occurrence editing. It may run independently of the later free-set slice. |
-| **2** | **Existing-lane occurrence move and atomic child retrack.** App seams: `hooks/{useClipDrag,useClipDrag.helpers,useTimelineCommandsService}.ts`, `commands/{semanticGestures,clipMoveCapture,authoringBundle}.ts`, `data/shotCompositionProjection.ts`, and `hooks/useShotGroups.ts`. Agent must publish occurrence-root resolution, occurrence member/order selections, exact source-shot mapping, blocker queries and occurrence placement writes; `occurrence.move` in the draft is provisional until the Agent artifact lands. | Pointerdown capture binds `occurrence:O`, source shot/revision and every owned child in authored order; read exact source windows, speed/hold/duration, lane predicates, consumed registry/media pins and immutable occurrence closure. Move must update occurrence placement **and every owned raw child track** atomically, preserving sibling occurrences/shared shots and opaque data. Keep the three current `it.fails` assertions unchanged. When accepted reload/undo passes, remove the legacy pinned-group drag mutation/snapshot path for this slice; do not remove general snapshot saving. |
-| **3** | **New-track occurrence move composed with `track.create`.** App seams are the same drag/session files plus `hooks/useTimelineTrackManagement.ts:349-617` and `commands/commitSession.ts`. Agent’s existing `track.create` is settled; the new occurrence child-lane creation and staged inverse must be published before App wiring. | Capture the parent lane ID once, reserve it, and use that same ID for the occurrence child lane; no replay allocation. Submit create + move as one group/undo unit. Read and bind exact media/source/occurrence membership and destination-lane occupancy; inverse must reverse consumers before deleting the created lane and redo the same IDs. The second existing `it.fails` test remains until this succeeds. Remove only the new-track legacy group/whole-config mutation path; the rest stays OPEN. |
-| **4** | **Independent free multi-clip move.** App seams: `lib/multi-drag-utils.ts`, `lib/clip-drag-planner.ts`, `hooks/useClipDrag.ts`, `hooks/useTimelineTrackManagement.ts`, and the public command service. Agent must publish the explicit multi-member command/capture/query schema (the draft’s `clip.move-set` is provisional). | Bind a nonempty ordered set of exact parent or occurrence clip refs, one anchor, original lane membership/order, all source/media selections and collision/extent predicates. Apply one quantized delta, preserve relative offsets/source windows/opaque fields, and refuse mixed owners, shared ownership, blockers or missing immutable pins as one transaction. The third `it.fails` test remains until accepted reload/inverse/redo passes. This slice does not edit group provenance or remove popup/placement writers. |
-| **5** | **Popup add/swap command conversion.** App seam: `travel-between-images/components/shotTimelineDataProvider.ts:321-590`; tests: `ShotTimelinePreview.test.ts`, popup provider tests, and the command-session/outbox tests. Agent must publish exact add and replacement/clear operations; local `add-media` and `swap` are not wire names. Runtime must provide the immutable media-selection read and accepted canonical closure needed by the command. | Add captures the exact occurrence owner, canonical head pair, source/media selection, asset identity, duration/type and all created IDs. Swap captures the exact occurrence/clip identity, old membership/source pin and replacement media selection; it must not select by display ID or refresh guards after authoring. Test add and swap separately, including missing occurrence/media pins, mixed batches, lost ACK and exact retry. On proof, remove popup `saveTimeline`, `shotCompositionAdapter.publish`, and its whole-graph fallback; retain draft recovery as command outbox recovery. |
+Retain/reconcile existing rows for parent media, selected params, transition-none serialization, root normalization, and the already-deleted unused query writer. Root normalization is a safety fix, not writer migration; its retirement remains OPEN.
 
-Placement remains a parallel **OPEN** conversion lane. The Supabase canonical
-writer lane is already closed by the owner-authorized purge; no App UI writer or
-future command may restore its snapshot/config append paths.
+## Historical M0 baseline (archived; not current)
 
-## Supabase canonical-writer status (2026-10-19 owner purge)
-
-Status is exact: **zero active Supabase canonical timeline writers and zero
-supported append/registry commands** in the reviewed purge tree. The removed
-writer set is:
-
-* `ai-timeline-agent` canonical timeline editing and registry paths;
-* `timeline-import` canonical import publication;
-* `_shared/astridAppendService.ts` and its whole-document routes;
-* `complete_task` canonical append and `upsert_asset_registry_entry` mutation.
-
-The retained `complete_task` boundary is completion, billing, media
-preparation, and relational shot metadata. It does not publish canonical
-timeline state or automatically place a result. Proposal records using the
-stable `ai-timeline-agent` extension identifier are unrelated active proposal
-storage and remain supported as data; they are not a writer.
-
-No replacement edge command, schema, relay, or canonical scope is introduced.
-Remaining work is the App UI writer census above: each remaining UI producer
-must use a published Agent command through the normal Runtime door or be
-deleted. This status does not claim deployment state.
-
-## Backend reachability and negative matrix
-
-The App-only Supabase targets
-`/v1/timelines/{t}/config-replaced` and `/v1/timelines/create-with-config` are
-not Runtime routes. Delete their callers; do not add Runtime aliases. Direct
-authenticated negative tests must use the Runtime-owned rejection matrix in
-`commit-contract.md` and assert unchanged head pair, history/publication and
-authored bytes. The relevant mapping is:
-
-| Legacy reachable surface | Runtime disposition and required App proof |
-|---|---|
-| External `publishParentComposition` / authored `config-replaced` / snapshot overwrite | Reject, including first publication; only constrained `createTimeline` bootstrap and private commit transaction may publish. App gesture spy must show zero calls. |
-| `updateTimeline`, `replaceTimelineClip`, `replaceParentCompositionMedia`, archive/recover timeline | Reject; use commands. Direct authenticated request returns the matrix error and leaves head/history/bytes unchanged. |
-| Direct shot, shot-item, occurrence-like, reference, association/primary/link and text-binding routes | Reject, including unused resources and same-value writes; use command captures with exact occurrence/media/source bindings. |
-| Render/task admission or settlement carrying canonical timeline/shot/reference effects | Reject canonical mutation at admission and settlement. Commit first, then use the existing revision-pinned render/task APIs. |
-| `restoreProjectParentCompositionRevision` | Keep only behind guarded `timeline.restore` with the observed head pair and revision/content digest; old revision-only calls are negative cases. |
-| `createTimeline` / ordinary Documents / media preparation | Keep narrow atomic empty bootstrap, ordinary noncanonical Documents and immutable media preparation. None may replace authored canonical state or act as a fallback writer. |
-
-For each migrated App producer, add a direct spy/traffic assertion that
-`saveTimeline`, `saveTimelineAtHead`, gesture `publishParentComposition`,
-`config-replaced`, and any legacy Astrid save route are not called. Keep the
-Runtime direct-negative matrix separate so a zero client-traffic test cannot
-pretend to prove server reachability. Placement relational writes remain a
-separate projection candidate and do not satisfy Gate 6.
-
-## Concrete next-worker checks
-
-* App command/session slices: targeted Vitest for the touched files plus
-  `src/tools/video-editor/hooks/useClipDrag.test.tsx`; keep all three original
-  `it.fails` tests until their canonical migration/occurrence-retrack/new-track/
-  free-multi requirements pass. Add zero-legacy spies at the producer seam.
-* Popup: targeted `src/tools/travel-between-images/components/ShotTimelinePreview.test.ts`
-  and `ShotTimelinePreview.integration.test.tsx` tests for add and swap independently, then the
-  command outbox/restart test; no snapshot fallback is an accepted substitute.
-* Placement: targeted placement tests must assert command proposal/commit calls
-  and preserve the relational metadata boundary; they do not broaden M2 to
-  canonical placement projections.
-* Agent owns unpublished operation schemas, capture queries, recorder effects,
-  immutable media/occurrence binding rules and conformance tests; App must pin
-  the published artifact rather than guess an opname. Runtime owns the route,
-  generated DTO/artifact refresh and direct-negative rejection tests.
-
-No full or socket suite was run for this docs-only map. Gate 6 proof remains
-open, and no first group slice is represented as closing it.
+Earlier M0 inventories and the prior M1 boundary description are retained only as history. They may describe the old `9d0a383a1` source or staged work and must not be used as evidence that the current HEAD has integrated staged `55e5` / root-public-10, closed Gate 6, or migrated every App writer. The current section above is the sole App writer census for this tree.

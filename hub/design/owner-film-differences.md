@@ -23,3 +23,8 @@ Explicit film themes are preserved; no film rewrite or hidden fixture override. 
 ## App automatic placement — temporarily missing on integration (2026-10-20 06:49 UTC)
 
 D03 removed the Supabase canonical writers as directed. Generated media is retained, but complete_task now records automatic_timeline_placement_retired and does not automatically place the asset on the timeline. This user-visible behavior remains temporarily missing on integration until D01-app-placement restores automatic placement through native EditCommands and the requesting App durable session. It is the top M2 App writer priority. No edge writer will be restored. Manual placement and every old image/video/auto/pool/shift variant require individual native coverage before their existing writers can be retired. The native-gap worker is tracing the precise trigger and unsupported contracts; no automatic-placement qualification is claimed.
+
+
+## Known pre-existing App clear bug — 2026-10-20 07:10 UTC
+
+Clearing a transition does not stick on main/integration until the native clear lands. The current legacy None callback removes the local field, but legacy publication restores the prior raw transition. This is a known pre-existing bug, not an intended semantic change. Native single and atomic bulk clear are staged; D01-app-transition-none-serialization remains OPEN until actual current-tuple accepted reload, inverse, retry and zero-legacy proof. The transition revision/opaque-field safety repair does not fix publication removal. Owner decision07:00.
