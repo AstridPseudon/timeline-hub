@@ -421,21 +421,27 @@ class Clip(_Suggest):
                 f"but it is only {limit:g} s long (the most this clip can fill is {(limit - source_in) / speed:.3f} s; "
                 f"slip or trim-in the source window first)")
 
-    def _source_duration(self) -> float:
+    def _source_duration(self) -> int | float:
         entry = self._tl._registry(self.shot_id).get(str(self.data.get("asset"))) or {}
-        duration = _num(entry.get("duration")) or _store.media_seconds(
+        raw_duration = entry.get("duration")
+        duration = (raw_duration if type(raw_duration) is int else _num(raw_duration)) or _store.media_seconds(
             str(self._tl.bundle.get("project_id") or ""), entry)
         if duration is None or duration <= 0:
             raise TimelineEditError(f"{self.address}: cannot read the source file's duration to validate this edit")
-        return float(duration)
+        return duration
 
     def trim(self, in_s: float | None = None, out_s: float | None = None) -> "Clip":
         """Set the source in/out in seconds. The film start stays put and its length follows the source window."""
         if not self.is_audio and self.element != "media":
             raise TimelineEditError(f"{self.address}: trim applies to media clips")
         limit = self._source_duration()
-        source_in = _num(self.data.get("from")) if in_s is None else float(in_s)
-        source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
+        source_in = self.data.get("from") if in_s is None else in_s
+        source_out = self.data.get("to") if out_s is None else out_s
+        # Preserve raw numbers for range checks, especially integers above 2**53.
+        if not isinstance(source_in, int):
+            source_in = _num(source_in) if in_s is None else float(source_in)
+        if not isinstance(source_out, int):
+            source_out = _num(source_out, limit) if out_s is None else float(source_out)
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
         try:

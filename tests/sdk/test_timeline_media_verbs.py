@@ -70,6 +70,38 @@ def test_trim_unrepresentable_or_raw_overrange_window_leaves_model_unchanged(in_
     assert clip.data == before
 
 
+@pytest.mark.parametrize("duration,current_out,out_s,expected", [
+    (9007199254740995, None, None, 9007199254740994),
+    (9007199254740995, 9007199254740995, None, 9007199254740994),
+    (9007199254740995, 6, 9007199254740995, 9007199254740994),
+    (9007199254740995, 6, 9007199254740996, None),
+    (9007199254740995, 9007199254740996, None, None),
+    (9007199254740992.0, 9007199254740993, None, None),
+    (9007199254740992, 6, 9007199254740993, None),
+    (9007199254740996.0, None, None, 9007199254740996),
+])
+def test_trim_preserves_raw_integer_bound_and_explicit_current_or_default_end(
+        duration, current_out, out_s, expected):
+    tl = tiny()
+    registry = tl.bundle["shots"]["A"]["internal_timeline"]["registry"]
+    registry["assets"]["Q"]["duration"] = duration
+    clip = tl.clip("a-music")
+    clip.data.update(speed=2, **{"from": None, "to": current_out})
+    before_registry, before = copy.deepcopy(registry), copy.deepcopy(clip.data)
+    if expected is None:
+        with pytest.raises(TimelineEditError, match="must fit inside the file"):
+            clip.trim(out_s=out_s)
+        assert clip.data == before
+    else:
+        clip.trim(out_s=out_s)
+        assert clip.data["from"] == 0
+        assert clip.data["to"] == clip.data["hold"] == expected
+        assert json.loads(json.dumps(clip.data))["to"] <= duration
+        assert clip.data["speed"] == 2
+        assert clip.duration == pytest.approx(expected / 2)
+    assert registry == before_registry
+
+
 @pytest.mark.parametrize("method", [lambda clip: clip.trim(in_s=-1), lambda clip: clip.trim(out_s=11), lambda clip: clip.slip(-1), lambda clip: clip.slip(7)])
 def test_source_bounds_name_the_clip_and_file_limit(method):
     tl = tiny()

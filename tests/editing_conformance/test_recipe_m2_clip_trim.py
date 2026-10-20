@@ -321,8 +321,8 @@ def test_portable_boundary_vectors_match_model_and_preserve_native_guards(monkey
     original = bundle_from_document(document)
     row = copy.deepcopy(clip(original))
     model_before = copy.deepcopy(row)
-    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged')
-    monkeypatch.setattr(Clip, '_source_duration', lambda self: case['duration'])
+    tl = SimpleNamespace(_is_audio=lambda *args: False, _mcache='unchanged',
+                         _registry=lambda *args: payload['registry']['assets'])
     model = Clip(tl, None, row)
     if 'error' in case:
         def unexpected_write(*args):
@@ -341,6 +341,8 @@ def test_portable_boundary_vectors_match_model_and_preserve_native_guards(monkey
         assert clip(plan.bundle) == row
         assert {key: row[key] for key in case['applied']} == case['applied']
         assert 0 <= row['from'] < row['to'] <= case['duration']
+        serialized = json.loads(json.dumps(row, allow_nan=False))
+        assert 0 <= serialized['from'] < serialized['to'] <= case['duration']
         assert clip_timeline_duration(row) == pytest.approx(row['hold'] / row['speed'])
         # Exact retry/replay and guarded undo/redo still use the raw source pin.
         assert execute(original, [command]).records == plan.records
