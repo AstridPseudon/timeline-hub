@@ -106,17 +106,16 @@ def discover_plugins(
             element for element in registry.list(kind=kind)
             if element.source != "pack:local"
         )
-    # The public Composition package owns the bundled wrapper implementations.
-    # Their descriptors remain in the normal element registry so authored
-    # defaults, metadata and validation stay discoverable, but a source-less
-    # descriptor must not produce a host import for a file that was retired.
-    elements = tuple(
-        element
-        for element in elements
-        if _component_is_host_importable(element)
-    )
     for element in elements:
-        plugins[element.id] = _plugin_from_element(element)
+        # The public Composition package owns the bundled wrapper
+        # implementations. Their descriptors remain in the normal element
+        # registry so authored defaults, metadata and validation stay
+        # discoverable, but a source-less public descriptor must not produce a
+        # host import for a file that was retired.
+        if _component_is_host_importable(element):
+            plugins[element.id] = _plugin_from_element(element)
+        elif element.id in _public_registry_ids()[element.kind]:
+            plugins[element.id] = _plugin_from_element(element)
     return plugins
 
 
@@ -389,17 +388,37 @@ def generate_element_registry(
     meta_type = "AnimationMeta" if kind == "animations" else "Record<string, unknown>"
     plugins = discover_plugins(kind, include_local=include_local)
     plugin_ids = sorted(plugins)
+    public_plugins = {
+        plugin_id: plugin
+        for plugin_id, plugin in plugins.items()
+        if plugin.scope == "pack:rendering"
+        and not plugin.root.joinpath("component.tsx").is_file()
+    }
+    public_registry_name = f"PUBLIC_{_constant_prefix(kind)}_REGISTRY"
     imports = [
         f"import {_component_name(plugin_id)} from '{_import_path(plugins[plugin_id])}';"
         for plugin_id in plugin_ids
+        if plugin_id not in public_plugins
     ]
     registry_entries = [
-        f"  '{plugin_id}': {_component_name(plugin_id)},"
+        f"  '{plugin_id}': "
+        f"{public_registry_name}[{_ts_string(plugin_id)}],"
+        if plugin_id in public_plugins
+        else f"  '{plugin_id}': {_component_name(plugin_id)},"
         for plugin_id in plugin_ids
     ]
+    defaults = {plugin_id: plugins[plugin_id].defaults for plugin_id in plugin_ids}
+    if kind == "transitions":
+        # Catalog defaults still own bundled transitions whose implementations
+        # moved to Composition. Omitting their imports must not drop defaults.
+        defaults = {
+            element.id: element.defaults
+            for element in _element_registry().list(kind=kind)
+            if include_local or element.source != "pack:local"
+        }
     defaults_entries = [
-        f"  '{plugin_id}': {_ts_json(plugins[plugin_id].defaults)},"
-        for plugin_id in plugin_ids
+        f"  '{plugin_id}': {_ts_json(value)},"
+        for plugin_id, value in sorted(defaults.items())
     ]
     meta_entries = [
         f"  '{plugin_id}': {_ts_json(plugins[plugin_id].meta)},"
@@ -421,6 +440,16 @@ def generate_element_registry(
         f"import type {{{component_type}, {meta_type}}} from '@banodoco/timeline-composition/theme-api';"
         if kind == "animations"
         else f"import type {{{component_type}}} from '@banodoco/timeline-composition/theme-api';",
+        *(
+            [
+                "import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';",
+                "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
+                "",
+                f"const {public_registry_name} = resolveElementRegistries(DEFAULT_THEME).{kind};",
+            ]
+            if public_plugins
+            else []
+        ),
         *imports,
         "",
         f"export const {ids_name} = [{ids}] as const;",
@@ -428,7 +457,7 @@ def generate_element_registry(
         f"export const {registry_name}: Record<{type_name}, {component_type}> = {{",
         *registry_entries,
         "};",
-        f"export const {defaults_name}: Record<{type_name}, Record<string, unknown>> = {{",
+        f"export const {defaults_name}: Record<{'string' if kind == 'transitions' else type_name}, Record<string, unknown>> = {{",
         *defaults_entries,
         "};",
         f"export const {meta_name}: Record<{type_name}, {meta_type}> = {{",
@@ -455,11 +484,11 @@ def _generate_effect_registry(
     # owner selector can route the qualified local reference without changing
     # canonical registry precedence.
     for element in all_elements:
-        if element.id in effects or (not include_local and element.source == "pack:local"):
+        if element.id in effects:
+            continue
+        if not include_local and element.source == "pack:local":
             continue
         winner = registry.get("effects", element.id)
-        if element is winner:
-            continue
         if (
             winner.source == "pack:rendering"
             and not winner.component.is_file()
@@ -480,9 +509,15 @@ def _generate_effect_registry(
         for effect_id in effect_ids
         if effect_id not in public_effects
     ]
+    public_symbols = {
+        effect_id: _component_name(effect_id)
+        for effect_id in public_effects
+    }
     winner_symbols = {
         effect_id: (
-            f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
+            public_symbols[effect_id]
+            if effect_id in public_effects and not include_local
+            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
             if effect_id in public_effects
             else _component_name(effect_id)
         )
@@ -494,7 +529,11 @@ def _generate_effect_registry(
     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
     for effect_id, effect in public_effects.items():
         pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
-        owners[effect_id][pack_id] = winner_symbols[effect_id]
+        owners[effect_id][pack_id] = (
+            winner_symbols[effect_id]
+            if not include_local
+            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
+        )
     for element in all_elements:
         if not include_local and element.source == "pack:local":
             continue
@@ -540,6 +579,10 @@ def _generate_effect_registry(
                 "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
                 "",
                 "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
+                *(
+                    f"const {public_symbols[effect_id]} = PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}];"
+                    for effect_id in sorted(public_effects)
+                ),
             ]
             if public_effects
             else []
