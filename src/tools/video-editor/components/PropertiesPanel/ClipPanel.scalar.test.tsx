@@ -355,22 +355,44 @@ describe('mounted scalar controls → Runtime provider → durable command outbo
     fireEvent.blur(holdInput());
     await waitFor(() => expect(host.latest().commands.state.status).toBe('retry'));
     const first = (await host.records())[0];
+    expect(first.intents).toHaveLength(1);
+    expect(host.env.commits()).toHaveLength(1);
+    expect(screen.getByRole('alert')).toHaveTextContent('save result is uncertain');
+    expect(holdInput()).toHaveValue(8);
+    const originalBytes = Array.from(new TextEncoder().encode(first.pending!.request.body));
+    expect(host.env.commits()[0].bodyBytes).toEqual(originalBytes);
+    // Appending B pumps uncertain A automatically. Hold that exact retry at the
+    // transport boundary so its ACK cannot drain the outbox before inspection.
+    const retry = host.env.pause();
     fireEvent.change(holdInput(), { target: { value: '9' } });
     fireEvent.blur(holdInput());
     await waitFor(async () => expect((await host.records())[0].intents).toHaveLength(2));
+    await waitFor(() => expect(host.env.commits()).toHaveLength(2));
     const queued = (await host.records())[0];
     expect(queued.ownerId).toBe(first.ownerId);
+    expect(queued.intents[0]).toEqual(first.intents[0]);
     expect(queued.pending!.request).toEqual(first.pending!.request);
     expect(queued.intents[1].basis).toEqual({ after: queued.intents[0].id });
     expect((queued.intents[1].payload as Payload).commands[0]).toMatchObject({
       args: { values: { hold: 9 }, clear: [] }, expect: { 'parent/clip:x::hold': { state: 'present', value: 8 } } });
-    expect(host.env.commits()).toHaveLength(1);
-    fireEvent.click(screen.getByTestId('timeline-command-retry'));
+    expect(host.env.commits()[1]).toEqual(host.env.commits()[0]);
+    expect(host.env.commits()[1].bodyBytes).toEqual(originalBytes);
+    expect(host.latest().dataRef.current!.config.clips[0].hold).toBe(9);
+    expect(holdInput()).toHaveValue(9);
+    await act(async () => { retry.resolve(); await host.latest().commands.flush(); });
     await waitFor(() => expect(host.latest().commands.state.status).toBe('saved'));
     expect(host.env.commits()).toHaveLength(3);
     expect(JSON.stringify(host.env.commits()[1].body)).toBe(first.pending!.request.body);
     expect(host.env.commits()[1].key).toBe(first.pending!.request.key);
     expect(host.env.commits()[2].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1' });
+    expect(host.env.commits()[2].key).not.toBe(first.pending!.request.key);
+    expect(host.env.commits()[2].body!.commands).toEqual((queued.intents[1].payload as Payload).commands);
+    expect(host.env.commits()[2].bodyBytes).toEqual(Array.from(new TextEncoder().encode(JSON.stringify(host.env.commits()[2].body))));
+    expect((await host.records())[0].intents).toEqual([]);
+    const accepted = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    expect(accepted.head).toEqual({ revisionId: 'r2', publicationId: 'p2' });
+    expect((accepted.canonicalDocument.parent_revision.payload.clips as Array<Record<string, JSON>>)[0])
+      .toMatchObject({ hold: 9, speed: 2, app: { opaque }, extension: opaque });
     expect(holdInput()).toHaveValue(9);
     host.noSnapshots();
   });
