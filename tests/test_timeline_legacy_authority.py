@@ -8,6 +8,7 @@ Agent checkout. Only the HTTP cases need sockets; service cases run directly.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from types import SimpleNamespace
 
@@ -19,12 +20,13 @@ from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.util import canonical_json
 from test_shot_composition_runtime import restore_provider as actual_provider  # noqa: F401 (fixture)
 
 
 FAMILIES = (
     "update_timeline", "replace_timeline_clip", "create_timeline_document",
-    "replace_parent_composition_media", "archive_timeline", "recover_timeline",
+    "replace_parent_composition_media",
 )
 STATES = ("tracked", "fresh", "unused")
 
@@ -68,6 +70,33 @@ def snapshot(service):
         objects = {str(path.relative_to(service.store.cas_root)): path.read_bytes()
                    for path in service.store.cas_root.rglob("*") if path.is_file()}
     return database, objects
+
+
+def _recover_request_hash(timeline_id, body):
+    return hashlib.sha256(canonical_json({
+        "timeline_id": timeline_id, "body": body, "action": "recover",
+    }).encode()).hexdigest()
+
+
+def _inject_recover_receipt(service, project, timeline_id, body, key, *, event_payload=None):
+    """Inject review-only receipt evidence through the existing store helper."""
+    result = service._timeline_resource(timeline_id)
+    result["archived"] = False
+    with service.store._mutex, service.store._transaction():
+        event_ids = ()
+        if event_payload is not None:
+            event_ids = (service.store._append_timeline_event(
+                timeline_id, "timeline.recovered", event_payload,
+            ),)
+        event_seq = service.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?",
+            (timeline_id,),
+        ).fetchone()[0]
+        service.store._record_command_receipt(
+            "timeline.recover", timeline_id, key, _recover_request_hash(timeline_id, body),
+            result, project_id=project, event_ids=event_ids,
+            primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
+        )
 
 
 def legacy_request(case, family, timeline):
@@ -192,6 +221,121 @@ def test_http_publish_parent_composition_refuses_tracked_timeline_without_writes
     assert error.value.details["reason"] == "timeline_commit_required"
     assert snapshot(case.service) == before
     assert case.service.store.conn.total_changes == changes
+
+
+def test_service_catalog_visibility_unarchives_current_or_absent_version(service_case):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    commits = service._timeline_commits()[0]
+    closure_before = commits.revision_closure(case.project, "tracked", created["head_revision_id"])
+    history_count = service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0]
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="visibility-archive",
+    )
+    archived_data = archived["data"]
+    absent = service.recover_timeline(
+        "tracked", {"expected_version": archived_data["version"]}, idempotency_key="visibility-recover-absent",
+    )
+    absent_data = absent["data"]
+    assert absent_data["archived"] is False
+    current = service.recover_timeline(
+        "tracked", {"expected_version": absent_data["version"], "version": absent_data["version"]},
+        idempotency_key="visibility-recover-current",
+    )
+    assert current["data"]["archived"] is False
+    assert commits.revision_closure(case.project, "tracked", created["head_revision_id"]) == closure_before
+    assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == history_count
+
+
+@pytest.mark.parametrize("evidence", [
+    "missing_event", "empty_payload", "malformed_payload", "wrong_project",
+    "bool_version", "missing_version", "wrong_version", "legacy_target_version",
+])
+def test_service_visibility_receipt_proof_refuses_malformed_evidence(service_case, monkeypatch, evidence):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="proof-archive",
+    )
+    body = {"expected_version": archived["data"]["version"]}
+    if evidence == "legacy_target_version":
+        body["version"] = archived["data"]["version"]
+    event_version = archived["data"]["version"] + 1
+    payloads = {
+        "missing_event": None,
+        "empty_payload": {},
+        "malformed_payload": [],
+        "wrong_project": {"project_id": "different-project", "version": event_version},
+        "bool_version": {"project_id": case.project, "version": True},
+        "missing_version": {"project_id": case.project},
+        "wrong_version": {"project_id": case.project, "version": event_version + 1},
+        "legacy_target_version": {
+            "project_id": case.project, "version": event_version, "target_version": 1,
+        },
+    }
+    _inject_recover_receipt(
+        service, case.project, "tracked", body, "proof-recover",
+        event_payload=payloads[evidence],
+    )
+    before = snapshot(service)
+
+    def replay(*args, **kwargs):
+        pytest.fail("legacy current-target recover consulted idempotency replay")
+
+    monkeypatch.setattr(service, "_command_replay", replay)
+    with pytest.raises(RetiredRouteError) as error:
+        service.recover_timeline("tracked", body, idempotency_key="proof-recover")
+    assert error.value.status == 410
+    assert error.value.details["reason"] == "timeline_restore_required"
+    assert error.value.details["replacement"] == "timeline.restore"
+    assert snapshot(service) == before
+
+
+def test_service_exact_new_visibility_replay_survives_catalog_version_change(service_case):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="new-current-archive",
+    )
+    body = {"expected_version": archived["data"]["version"], "version": archived["data"]["version"]}
+    accepted = service.recover_timeline("tracked", body, idempotency_key="new-current-recover")
+    service.archive_timeline(
+        "tracked", {"expected_version": accepted["data"]["version"]}, idempotency_key="later-archive",
+    )
+    before = snapshot(service)
+
+    replayed = service.recover_timeline("tracked", body, idempotency_key="new-current-recover")
+    assert replayed == accepted
+    assert snapshot(service) == before
+
+
+def test_service_historical_recover_refuses_before_legacy_replay_or_writes(service_case, monkeypatch):
+    case = service_case
+    service = case.service
+    created = service.create_timeline(case.project, "historical", idempotency_key="historical-create")
+    created_data = created["data"]
+    archived = service.archive_timeline(
+        "historical", {"expected_version": created_data["version"]}, idempotency_key="historical-archive",
+    )
+    archived_data = archived["data"]
+    before = snapshot(service)
+
+    def replay(*args, **kwargs):
+        pytest.fail("historical recover consulted a legacy idempotency replay")
+
+    monkeypatch.setattr(service, "_command_replay", replay)
+    with pytest.raises(RetiredRouteError) as error:
+        service.recover_timeline(
+            "historical", {"expected_version": archived_data["version"], "version": created_data["version"]},
+            idempotency_key="historical-recover",
+        )
+    assert error.value.status == 410
+    assert "timeline.restore" in str(error.value)
+    assert error.value.details["replacement"] == "timeline.restore"
+    assert snapshot(service) == before
 
 
 def command_body(case, commands):
