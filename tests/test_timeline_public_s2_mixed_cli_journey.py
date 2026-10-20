@@ -39,7 +39,22 @@ class HistoricalAudioCaptureGap(AssertionError):
 @pytest.fixture
 def journey_film(request, film, astrid_importable, tmp_path):
     if request.param == "historical-audio":
-        return prepare_pcm_historical_audio_film(film, tmp_path)
+        prepared = prepare_pcm_historical_audio_film(film, tmp_path)
+        # Exercise the normal door and SDK read path after the fixture's
+        # read-only startup-admission control. This is not a second setup
+        # path: open_bundle only reads the immutable prepared closure.
+        world = _start_door(prepared, tmp_path)
+        try:
+            opened = _client(world.daemon).timelines.open_bundle(
+                prepared.fixture.project_id,
+                prepared.fixture.timeline_id,
+                revision_id=prepared.fixture.parent_revision_id,
+            )
+            assert opened.ok, opened.as_dict()
+            assert opened.data["revision_id"] == prepared.fixture.parent_revision_id
+        finally:
+            world.stop()
+        return prepared
 
     # Reuse the approved first-import builder on a NEW film with its own
     # child identities. The historical audio film remains entirely untouched.
@@ -191,7 +206,15 @@ def _views(client, fixture, capsys, document, clip_id):
     assert_json_equal(projected["track"], expected_track)
     assert projected["source_from"] == expected_clip.get("from")
     assert projected["source_to"] == expected_clip.get("to")
-    assert projected["source_object_id"] == parent["registry"]["assets"][expected_clip["asset"]]["media_id"]
+    asset = parent["registry"]["assets"][expected_clip["asset"]]
+    # The old assertion assumed every registered asset exposed media_id.
+    expected_source = asset["media_id"] if "media_id" in asset else asset["object_id"]
+    assert expected_source is not None
+    expected_pin, = [
+        pin["media_id"] for pin in document["dependency_manifest"]["media"]
+        if pin["media_id"] == expected_source
+    ]
+    assert projected["source_object_id"] == expected_pin
     inputs = _ok_cli(client, fixture, capsys, "visualize", fixture.timeline_id,
                      "--published", "--revision-id", revision,
                      "--mode", "inputs", "--format", "md")
