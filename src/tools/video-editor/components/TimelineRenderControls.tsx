@@ -33,6 +33,7 @@ export function TimelineRenderControls({
   const [playerOpen, setPlayerOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const downloadAttemptRef = useRef(0);
   const { renderResultUrl, renderResultInfo } = chrome;
   const completedAt = renderResultInfo?.completedAt ?? null;
   const seenCompletion = useRef(completedAt);
@@ -44,17 +45,24 @@ export function TimelineRenderControls({
     }
     seenCompletion.current = completedAt;
   }, [completedAt, renderResultUrl]);
-  useEffect(() => { setDownloadError(null); }, [completedAt, renderResultUrl]);
+  useEffect(() => {
+    setDownloading(false);
+    setDownloadError(null);
+    return () => { downloadAttemptRef.current += 1; };
+  }, [renderResultInfo, renderResultUrl]);
 
   const download = async () => {
+    const attempt = ++downloadAttemptRef.current;
     setDownloading(true);
     setDownloadError(null);
     try {
       await chrome.downloadRenderResult();
     } catch (error) {
-      setDownloadError(error instanceof Error ? error.message : 'Could not download render. Please try again.');
+      if (attempt === downloadAttemptRef.current) {
+        setDownloadError(error instanceof Error ? error.message : 'Could not download render. Please try again.');
+      }
     } finally {
-      setDownloading(false);
+      if (attempt === downloadAttemptRef.current) setDownloading(false);
     }
   };
 

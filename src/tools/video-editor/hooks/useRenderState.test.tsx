@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { Blob as NodeBlob } from 'node:buffer';
 import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -858,6 +858,7 @@ describe('useRenderState render routing', () => {
       size?: number;
       taskId?: string;
       projectId?: string;
+      start?: boolean;
     } = {}) {
       const task = {
         ...renderTaskDetail('succeeded'),
@@ -867,7 +868,7 @@ describe('useRenderState render routing', () => {
       };
       const fetchMock = vi.fn(async () => new Response(JSON.stringify(task), { status: 200 }));
       vi.stubGlobal('fetch', fetchMock);
-      const runtimeValue = {
+      let runtimeValue = {
         project: { projectId: 'demo-project' },
         timelineId: 'timeline-1',
         provider: { projectObjects: options.read ? { read: options.read } : undefined },
@@ -879,8 +880,17 @@ describe('useRenderState render routing', () => {
         buildConfig({ id: 'native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
         null, undefined, undefined, async () => 7,
       ), { wrapper });
-      await act(async () => { await hook.result.current.startRender(); });
-      return { ...hook, fetchMock };
+      if (options.start !== false) await act(async () => { await hook.result.current.startRender(); });
+      const changeScope = (scope: 'project' | 'timeline' | 'provider') => {
+        runtimeValue = {
+          ...runtimeValue,
+          ...(scope === 'project' ? { project: { ...runtimeValue.project, projectId: 'another-project' } } : {}),
+          ...(scope === 'timeline' ? { timelineId: 'another-timeline' } : {}),
+          ...(scope === 'provider' ? { provider: { ...runtimeValue.provider } } : {}),
+        };
+        hook.rerender();
+      };
+      return { ...hook, fetchMock, changeScope };
     }
 
     it('downloads the exact completed output through project storage with its filename and full bytes', async () => {
@@ -955,6 +965,43 @@ describe('useRenderState render routing', () => {
       expect(result.current.renderStatus).toBe('done');
       expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
       expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not download a pending read after %s disposal', async (scope) => {
+      let finishRead!: (value: Uint8Array) => void;
+      const read = vi.fn(() => new Promise<Uint8Array>((resolve) => { finishRead = resolve; }));
+      const { result, unmount, changeScope } = await completedRender({ read });
+      const downloading = result.current.downloadRenderResult();
+      const refused = expect(downloading).rejects.toThrow('render result changed');
+      if (scope === 'unmount') unmount();
+      else {
+        changeScope(scope);
+        expect(result.current.renderResultUrl).toBeNull();
+        expect(result.current.renderResultInfo).toBeNull();
+      }
+      finishRead(bytes);
+      await refused;
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
+      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not publish a pending admission after %s disposal', async (scope) => {
+      let finishAdmission!: (value: { status: string; task_id: string }) => void;
+      renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockReturnValueOnce(new Promise((resolve) => { finishAdmission = resolve; }));
+      const { result, unmount, changeScope, fetchMock } = await completedRender({ start: false });
+      let rendering!: Promise<void>;
+      await act(async () => { rendering = result.current.startRender(); });
+      await waitFor(() => expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledOnce());
+      if (scope === 'unmount') unmount();
+      else changeScope(scope);
+
+      await act(async () => {
+        finishAdmission({ status: 'queued', task_id: 'render-task-1' });
+        await rendering;
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.renderResultUrl).toBeNull();
+      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
     });
 
     it.each([{ projectId: 'another-project' }, { taskId: 'another-task' }])('refuses another task/project output %j', async (binding) => {

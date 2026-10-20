@@ -532,6 +532,7 @@ export function useRenderState(
   const [renderResultInfo, setRenderResultInfo] = useState<RenderResultInfo | null>(null);
   const [activeRenderTaskId, setActiveRenderTaskId] = useState<string | null>(null);
   const [renderDestination, setRenderDestination] = useState<RenderExportDestination>('download');
+  const renderScopeGenerationRef = useRef(0);
   const renderPollGenerationRef = useRef(0);
   const renderPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderRevisionRef = useRef<number | null>(null);
@@ -570,6 +571,22 @@ export function useRenderState(
   const diagnosticCollection = runtimeContext?.diagnosticCollection;
   const processStatuses = runtimeContext?.processStatuses;
   const processResultAttachRecords = runtimeContext?.processResultAttachRecords;
+
+  useEffect(() => {
+    setRenderResultUrl(null);
+    setRenderResultFilename(null);
+    setRenderResultInfo(null);
+    setRenderStatus('idle');
+    setRenderProgress(null);
+    setActiveRenderTaskId(null);
+    return () => {
+      renderScopeGenerationRef.current += 1;
+      managedRenderDownloadRef.current = null;
+      renderOperationIdRef.current = null;
+      renderPollGenerationRef.current += 1;
+      if (renderPollTimerRef.current) clearTimeout(renderPollTimerRef.current);
+    };
+  }, [runtimeContext?.project?.projectId, runtimeContext?.provider, runtimeContext?.timelineId]);
 
   useEffect(() => {
     return () => {
@@ -870,6 +887,7 @@ export function useRenderState(
   }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.project?.projectId, runtimeContext?.provider?.projectObjects, runtimeContext?.timelineId]);
 
   const startAstridRender = useCallback(async (): Promise<boolean> => {
+    const scope = renderScopeGenerationRef.current;
     const projectId = runtimeContext?.project?.projectId;
     const timelineId = runtimeContext?.timelineId;
     if (!projectId || !timelineId || !renderConfig) return false;
@@ -891,11 +909,13 @@ export function useRenderState(
     try {
       expectedVersion = await flushPendingSave();
     } catch (error) {
+      if (scope !== renderScopeGenerationRef.current) return true;
       setRenderStatus('error');
       setRenderProgress(null);
       setRenderLog(`Could not save the exact timeline version for rendering: ${error instanceof Error ? error.message : String(error)}`);
       return true;
     }
+    if (scope !== renderScopeGenerationRef.current) return true;
     if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) {
       setRenderStatus('error');
       setRenderProgress(null);
@@ -920,11 +940,13 @@ export function useRenderState(
     setRenderLog('Admitting render to Astrid…');
 
     const { AstridLocalClient: AstridLocalClientModule } = await import('@/integrations/astrid/client.ts');
+    if (scope !== renderScopeGenerationRef.current) return true;
     // The product bridge owns the ready catalog; the timeline provider's
     // Runtime alias deliberately does not expose that route.
     const client = new AstridLocalClientModule({ projectSlug: projectId });
     renderClientRef.current = client;
     const renderRouter = await import('@/tools/video-editor/lib/renderRouter.ts');
+    if (scope !== renderScopeGenerationRef.current) return true;
     const request = {
       timelineId,
       // R1 resolves the canonical timeline document + registry itself; these
@@ -961,6 +983,7 @@ export function useRenderState(
       expectedVersion,
       operationId,
     });
+    if (scope !== renderScopeGenerationRef.current) return true;
     if (admission.status === 'error' || !admission.task_id) {
       visualSeamReportConfigRef.current = renderConfigFingerprint(renderConfig);
       setVisualSeamReport(admission.seamReport ?? null);
@@ -1074,6 +1097,7 @@ export function useRenderState(
   }, [activeRenderTaskId]);
 
   const startRender = useCallback(async () => {
+    const scope = renderScopeGenerationRef.current;
     if (runtimeContext?.renderExportEnabled === false) {
       setRenderStatus('error');
       setRenderProgress(null);
@@ -1093,6 +1117,7 @@ export function useRenderState(
           import('@/tools/video-editor/lib/renderRouter'),
           import('@/tools/video-editor/runtime/renderPlanner.ts'),
         ]);
+        if (scope !== renderScopeGenerationRef.current) return;
         importedDecision = decideRenderRoute(
           renderConfig,
           undefined,
@@ -1104,6 +1129,7 @@ export function useRenderState(
           },
         );
       } catch (error) {
+        if (scope !== renderScopeGenerationRef.current) return;
         setRenderStatus('error');
         setRenderProgress(null);
         setRenderDirty(false);
@@ -1132,6 +1158,7 @@ export function useRenderState(
     if (!await runExportGuard(managedRuntimeAdmission)) {
       return; // blocked by export guard
     }
+    if (scope !== renderScopeGenerationRef.current) return;
 
     if (decision.route === 'preview-only') {
       setRenderStatus('error');
