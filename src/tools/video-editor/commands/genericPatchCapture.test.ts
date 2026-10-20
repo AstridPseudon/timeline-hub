@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
+import trimFixture from './fixtures/recipe_m2_clip_trim.json';
 import {
   captureGenericPatch,
   classifyGenericPatch,
@@ -15,6 +16,10 @@ const nativePatch = (hold = 1.25): TimelinePatch => ({ version: 1, operations: [
   { op: 'track.update', target: 'V1', payload: { label: '', mode: 'merge' }, order: 2 },
   { op: 'clip.update', target: 'x', payload: { hold }, order: 1 },
 ] });
+
+const trimOperation = (target = 'clip-a', payload: Record<string, unknown> = { in_s: 1, out_s: 5 }, order?: number) => ({
+  op: 'clip.trim', target, payload, ...(order === undefined ? {} : { order }),
+} as unknown as TimelinePatch['operations'][number]);
 
 async function authoredBundle() {
   const env = await environment();
@@ -71,6 +76,45 @@ describe('bounded native generic patch capture', () => {
     expect(input).toEqual(originalPatch);
     expect(Object.isFrozen(result.patch.operations[0].payload)).toBe(true);
     expect(Object.isFrozen(result.commands[0].expect)).toBe(true);
+  });
+
+  it('dispatches a supported trim member through the native command and record builders', async () => {
+    const bundle = await authoringBundleFromDocument(structuredClone(trimFixture.input));
+    const result = captureGenericPatch(bundle, {
+      version: 1,
+      operations: [trimOperation()],
+    }, () => 'parent/clip:clip-a');
+
+    expect(result.commands).toHaveLength(1);
+    expect(result.commands[0]).toMatchObject({ op: 'clip.trim', select: 'parent/clip:clip-a',
+      args: { in_s: 1, out_s: 5 } });
+    expect(result.records[0]).toEqual(expect.objectContaining({ ordinal: 0,
+      command: result.commands[0], writes: expect.arrayContaining([
+        expect.objectContaining({ path: ['from'] }),
+        expect.objectContaining({ path: ['to'] }),
+        expect.objectContaining({ path: ['hold'] }),
+      ]) }));
+    expect(executeGenericPatch(structuredClone(bundle), result.commands)).toEqual({
+      bundle: result.bundle, records: result.records,
+    });
+  });
+
+  it('refuses a mixed unsupported batch before owner resolution or any authored write', async () => {
+    const { bundle } = await authoredBundle();
+    const patch: TimelinePatch = { version: 1, operations: [
+      trimOperation('x', { in_s: 1, out_s: 5 }),
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] };
+    const before = copy(bundle);
+    let resolved = false;
+
+    expect(classifyGenericPatch(patch)).toBe('mixed');
+    expect(() => captureGenericPatch(bundle, patch, () => {
+      resolved = true;
+      return 'parent/clip:x';
+    })).toThrow(GenericPatchRefusal);
+    expect(resolved).toBe(false);
+    expect(bundle).toEqual(before);
   });
 
   it('composes hold/clear, label, and absolute move into one replayable batch', async () => {
