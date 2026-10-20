@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T00:50:34Z | dispatcher heartbeat 6s -->
+<!-- app | 2026-10-20T00:55:43Z | dispatcher heartbeat 15s -->
 # app — 2026-10-20 00:48 UTC
 Milestone: M1 App preservation fixes/proofs accepted; final full classification ACTIVE. Firstfinalfull9FAIL+1startup, strict3newreadinessfailures UNCLASSIFIED; ONEresource-bounded retry running. All M2 merges remain held. Overall M1 still awaits orchestrator record. M0 COMPLETE. M2 implementation on branches authorized; all M2 merges HELD until PLAN records M1.
 Integrated: app tl/integration 2bfde69ea, CLEAN; exact tree dd1fe6a725cf20015f7b8cb4a966bdf507319653. Includes authoritative restore head-pair fix and scoped raw opaque config roots retained INSIDE native recovery draft. Direct draft assertion restored, no display/schema widening. Runtime0.2.1/schema4e52/artifact9b18 and Composition0.0.8/hash93bc/exact peers unchanged. Exact3 original group/multi/retrack it.fails remain.
