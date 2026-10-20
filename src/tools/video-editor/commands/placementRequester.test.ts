@@ -1,3 +1,5 @@
+// This suite remains large because placement behavior spans these cohorts: admission/recovery, task/output selection,
+// claim/microtask handoff, lifecycle fences, interruption/retry, durable conflicts, and residual counterexamples.
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { WorkspaceClient, type Task, type ManagedOutput, type Transport } from '@/integrations/runtime/generated.ts';
