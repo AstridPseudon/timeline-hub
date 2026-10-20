@@ -30,6 +30,22 @@ class CommitUnavailable(RuntimeErrorBase):
 TEXT_MEDIA_TYPE = "text/plain; charset=utf-8"
 TEXT_MAX_BYTES = 1_048_576
 _OBJECT_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
+# The authority-only guard has no authored reads, selections or writes. Agent
+# may capture these defaults, but no nonempty claim grants producer authority.
+_PRODUCER_GUARD_RECORD_METADATA = {
+    "intent": {}, "resolved": [], "reads": [], "selections": [],
+    "bindings": {}, "created": [], "expect": {}, "authorship": {},
+}
+
+
+def _producer_guard_matches(recorded, original):
+    from .timeline_commit_producer import value_equal
+    added = recorded.keys() - original.keys()
+    if any(key not in _PRODUCER_GUARD_RECORD_METADATA
+           or not value_equal(recorded[key], _PRODUCER_GUARD_RECORD_METADATA[key]) for key in added):
+        return False
+    # Preserve the typed guard envelope and pin, including integer fences.
+    return canonical_json({key: value for key, value in recorded.items() if key not in added}) == canonical_json(original)
 
 
 def validate_provider(provider):
@@ -321,11 +337,15 @@ class RequestCommitPort:
 
     def producer_attempt(self, pin):
         from .timeline_commit_producer import ProducerReads, request_pin, validate_pin
+        from .timeline_commit_producer_checkpoint import check_producer_consumption
         validate_pin(pin)
         def read():
             if request_pin(self.__request) != pin:
                 raise refused("producer_dependency_unavailable", "producer pin was not declared")
             captured = ProducerReads(self.__service).capture(self.__context, pin)
+            # Exact ledger retries precede this port; a new key must refuse
+            # consumption before the provider tries to replay stale edit guards.
+            check_producer_consumption(self.__service.store, pin["task_id"])
             key = canonical_json(pin)
             if key in self.__producers and self.__producers[key] != captured:
                 raise refused("producer_attempt_mismatch", "captured producer authority changed")
@@ -349,10 +369,12 @@ class RequestCommitPort:
                 raise refused("producer_dependency_unavailable", "producer capture and authority records disagree")
             if pin is not None:
                 guard = prepared["records"]["commands"][0]
-                if (canonical_json(guard["command"]) != canonical_json(self.__request["commands"][0])
+                if (not _producer_guard_matches(guard["command"], self.__request["commands"][0])
                         or canonical_json(guard["dependencies"]) != canonical_json(wanted)
-                        or not value_equal([record["command"] for record in prepared["records"]["commands"]],
-                                           self.__request["commands"])
+                        or any(guard[field] for field in ("writes", "reads", "selections", "bindings",
+                                                        "created", "derived_writes"))
+                        or not value_equal([record["command"] for record in prepared["records"]["commands"][1:]],
+                                           self.__request["commands"][1:])
                         or prepared["records"]["undo_of"] or prepared["records"]["restored_from"] is not None):
                     raise refused("producer_dependency_unavailable", "producer authority requires its guard record")
             for captured in self.__producers.values():
