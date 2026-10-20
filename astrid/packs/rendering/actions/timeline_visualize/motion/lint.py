@@ -14,6 +14,7 @@ on without opening an image:
 """
 from __future__ import annotations
 
+import math
 from typing import Any, Iterable, Mapping, Sequence
 
 from ..layers.base import Finding
@@ -113,55 +114,250 @@ def _data_faces(tracks: Sequence[Any], t: float) -> list[model.Box]:
     return found
 
 
+def _scene_cover(
+    elements: Sequence[model.Element], t: float, fps: float, shared: Mapping[str, Any],
+) -> tuple[list[tuple[model.Element, model.Element]], list[str]]:
+    """Join public .98 answers by exact compiled ID, never by label or suffix."""
+    frame = int(round(t * fps))
+    frames = shared.get("scene_frames")
+    row = frames.get(str(frame)) if isinstance(frames, Mapping) else None
+    if not isinstance(row, Mapping) or row.get("frame") != frame:
+        return [], [f"COVER unavailable at frame {frame}: "
+                    f"{shared.get('scene_unavailable') or 'exact scene frame is missing'}"]
+    layers = row.get("layers")
+    if not isinstance(layers, list) or any(not isinstance(layer, Mapping) or not isinstance(layer.get("clipId"), str) for layer in layers):
+        return [], [f"COVER unavailable at frame {frame}: invalid public scene layers"]
+    occlusions = shared.get("scene_occlusions")
+    policy = occlusions.get("0.98") if isinstance(occlusions, Mapping) else None
+    answers = policy.get(str(frame)) if isinstance(policy, Mapping) else None
+    answers = answers if isinstance(answers, Mapping) else {}
+    identities = shared.get("scene_clip_identities")
+    identities = identities if isinstance(identities, Mapping) else {}
+    visual = [element for element in elements if not element.audio]
+    layer_ids = [layer["clipId"] for layer in layers]
+    joined: dict[str, list[model.Element]] = {}
+    public_matches: set[int] = set()
+    for clip_id in layer_ids:
+        identity = identities.get(clip_id)
+        matches = []
+        for element in visual:
+            # Compiled snapshot IDs already identify their occurrence. Raw
+            # source IDs require the captured Root's explicit occurrence join.
+            exact = element.id == clip_id and sum(e.id == element.id for e in visual) == 1
+            if isinstance(identity, Mapping):
+                exact = exact and identity.get("occurrence_id") == element.occurrence_id
+                mapped = (identity.get("clip_id") == element.clip.get("id", element.id)
+                          and identity.get("occurrence_id") == element.occurrence_id)
+            else:
+                mapped = False
+            if exact or mapped:
+                matches.append(element)
+                public_matches.add(id(element))
+        joined[clip_id] = matches if layer_ids.count(clip_id) == 1 else []
+    covers, unavailable = [], []
+    for lower in visual:
+        candidates = [clip_id for clip_id, matches in joined.items() if len(matches) == 1 and matches[0] is lower]
+        if len(candidates) != 1:
+            # An authored window may suppress an unavailable-fact advisory
+            # outside that window, but it cannot suppress a qualified public
+            # layer. Public frame presence is the source of truth here.
+            if id(lower) not in public_matches and not lower.start <= t < lower.end:
+                continue
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: exact compiled clip identity is missing or ambiguous")
+            continue
+        answer = answers.get(candidates[0])
+        if (not isinstance(answer, Mapping) or answer.get("status") != "known" or "occluderId" not in answer
+                or (answer["occluderId"] is not None and not isinstance(answer["occluderId"], str))):
+            reason = answer.get("reason") if isinstance(answer, Mapping) else None
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: {reason or 'public 0.98 occlusion answer is missing'}")
+            continue
+        upper_id = answer["occluderId"]
+        if upper_id is None:
+            continue
+        if len(joined.get(upper_id, [])) != 1:
+            unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: occluder compiled clip identity is missing or ambiguous")
+            continue
+        covers.append((joined[upper_id][0], lower))
+    # Preserve the existing upper-then-lower finding order at the same time.
+    order = {id(element): index for index, element in enumerate(elements)}
+    covers.sort(key=lambda pair: (order[id(pair[0])], order[id(pair[1])]))
+    return covers, unavailable
+
+
+def _scene_boxes(
+    elements: Sequence[model.Element], t: float, fps: float, shared: Mapping[str, Any],
+) -> tuple[list[model.Box], dict[int, tuple[float, float, float, float]], tuple[float, float], list[str]]:
+    """Adapt evaluated canvas rectangles, without evaluating component clocks/layout.
+
+    REGION advisories describe missing semantic facts independently of COVER's
+    SCENE availability. A layout rectangle is check-policy input, not glyph alpha.
+    """
+    frame = int(round(t * fps))
+    frames = shared.get("scene_frames")
+    row = frames.get(str(frame)) if isinstance(frames, Mapping) else None
+    unavailable: list[str] = []
+
+    def number(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    if (not isinstance(row, Mapping) or row.get("frame") != frame
+            or not all(number(row.get(axis)) and row[axis] > 0 for axis in ("width", "height"))):
+        return [], {}, model.CANVAS, [f"composition regions unavailable at frame {frame}: "
+                                  f"{shared.get('scene_unavailable') or 'exact scene canvas is missing or invalid'}"]
+    canvas = (row["width"], row["height"])
+    layers = row.get("layers")
+    if not isinstance(layers, list) or any(not isinstance(layer, Mapping) or not isinstance(layer.get("clipId"), str) for layer in layers):
+        return [], {}, canvas, [f"composition regions unavailable at frame {frame}: invalid public scene layers"]
+    identities = shared.get("scene_clip_identities")
+    identities = identities if isinstance(identities, Mapping) else {}
+    visual = [element for element in elements if not element.audio]
+    joined: dict[int, list[Mapping[str, Any]]] = {id(element): [] for element in visual}
+    public_matches: set[int] = set()
+    for layer in layers:
+        clip_id = layer["clipId"]
+        identity = identities.get(clip_id)
+        matches = []
+        for element in visual:
+            exact = element.id == clip_id and sum(e.id == element.id for e in visual) == 1
+            mapped = False
+            if isinstance(identity, Mapping):
+                exact = exact and identity.get("occurrence_id") == element.occurrence_id
+                mapped = (identity.get("clip_id") == element.clip.get("id", element.id)
+                          and identity.get("occurrence_id") == element.occurrence_id)
+            if exact or mapped:
+                matches.append(element)
+                public_matches.add(id(element))
+        if len(matches) == 1:
+            joined[id(matches[0])].append(layer)
+
+    boxes = []
+    text_regions = {}
+    for element in visual:
+        def missing(reason: str) -> None:
+            unavailable.append(f"composition regions unavailable for {element.label} at frame {frame}: {reason}")
+
+        candidates = joined[id(element)]
+        if not candidates and id(element) not in public_matches and not element.start <= t < element.end:
+            continue
+        if len(candidates) != 1 or sum(layer["clipId"] == candidates[0]["clipId"] for layer in layers) != 1:
+            missing("exact compiled clip identity is missing or ambiguous")
+            continue
+        layer = candidates[0]
+        if layer.get("visible") is False:
+            continue
+        if layer.get("visible") is not True:
+            missing("public visibility is unknown")
+            continue
+
+        def rect(value: Any, name: str) -> tuple[float, float, float, float] | None:
+            if isinstance(value, Mapping) and value.get("status") == "known":
+                raw = value.get("rect")
+                if (isinstance(raw, Mapping) and all(number(raw.get(k)) for k in ("x", "y", "width", "height"))
+                        and raw["width"] >= 0 and raw["height"] >= 0):
+                    return (raw["x"], raw["y"], raw["x"] + raw["width"], raw["y"] + raw["height"])
+            reason = value.get("reason") if isinstance(value, Mapping) else None
+            missing(f"{name}: {reason or 'missing or invalid public bounds'}")
+            return None
+
+        bounds = rect(layer.get("bounds"), "output bounds")
+        diagnostics = layer.get("diagnostics")
+        diagnostics = diagnostics if isinstance(diagnostics, Mapping) else {}
+        face = rect(diagnostics.get("face"), "component face")
+        if face is not None:
+            boxes.append(model.Box(element, "face", face, "presenter face"))
+        text = diagnostics.get("text")
+        text = text if isinstance(text, Mapping) else {}
+        text_bounds = rect(text.get("bounds"), "component text")
+        if text_bounds is not None:
+            text_regions[id(element)] = text_bounds
+        text_px = text.get("minPx")
+        if not number(text_px) or text_px <= 0:
+            missing("component text minPx is missing or invalid")
+            text_px = None
+        elif text_bounds is None:
+            text_px = None
+        else:
+            text_px *= 1080 / canvas[1]
+        # These are existing check categories, never an identity or layout guess.
+        kind = ("plate" if element.type in model.PLATE_TYPES or element.type == "am-presenter" else
+                "sprite" if element.type == "am-sprite" else
+                "card" if element.type == "am-callout" else
+                "text" if element.type in ("am-type", "am-flap") or text_bounds is not None else "panel")
+        if bounds is not None:
+            boxes.append(model.Box(element, kind, bounds, element.label, text_px=text_px))
+    return boxes, text_regions, canvas, unavailable
+
+
 def composition(
     cut: Mapping[str, Any], elements: Sequence[model.Element], fps: float, *,
     track_order: Sequence[str] = (), min_text_px: float | None = None,
     params: Mapping[str, Any] | None = None, tracks: Sequence[Any] = (),
+    shared: Mapping[str, Any] | None = None,
+    scene_elements: Sequence[model.Element] | None = None,
 ) -> list[Finding]:
     """FACE / FRAME / SAFE / SMALL / COVER / EDGE for one cut.
 
-    A ``face`` boxes data track (real footage) wins over faces derived from
-    presenter anchors.
+    A ``face`` boxes data track is an observation on real footage. Exact public
+    scene frames supply evaluated component regions; omitted/unknown regions
+    are advisory. COVER retains its public .98 policy. Bundle-only callers
+    without scene frames retain the unsupported private region path until their
+    owner supplies admitted facts.
+
+    ``scene_elements`` is the complete frozen identity universe for public
+    joins, including incoming preroll. ``elements`` still selects samples.
     """
     index = int(cut["index"])
-    title = model.safe_rect(model.TITLE_SAFE)
     min_text_px = float(min_text_px) if min_text_px is not None else _p(params, "min_text_px")
     face_fraction = _p(params, "face_fraction")
+    public_elements = scene_elements if scene_elements is not None else elements
     found: dict[tuple[str, str, str], Finding] = {}
 
     def add(code: str, key: str, t: float, message: str, severity: str = "warn", fix: dict | None = None) -> None:
         found.setdefault((code, key, message.split(" (")[0]), Finding(code, index, t, message, severity, fix, "composition"))
 
     for t in _sample_times(cut, elements, fps):
-        boxes = [box for element in elements for box in model.boxes_at(element, t, fps)]
+        public_regions = shared is not None and "scene_frames" in shared
+        if public_regions:
+            boxes, text_regions, canvas, unavailable = _scene_boxes(public_elements, t, fps, shared)
+            for message in unavailable:
+                add("REGION", message, t, message, "info")
+            mx, my = canvas[0] * (1 - model.TITLE_SAFE) / 2, canvas[1] * (1 - model.TITLE_SAFE) / 2
+            title = (mx, my, canvas[0] - mx, canvas[1] - my)
+        else:
+            boxes = [box for element in elements for box in model.boxes_at(element, t, fps)]
+            text_regions = {}
+            canvas, title = model.CANVAS, model.safe_rect(model.TITLE_SAFE)
         tracked = _data_faces(tracks, t)
         faces = tracked or [box for box in boxes if box.kind == "face"]
         for box in boxes:
             if box.kind in ("plate", "face"):
                 continue
             for face in faces:
+                if public_regions and box.element is face.element:
+                    continue
                 overlap = model.intersection(box.rect, face.rect)
                 share = overlap / max(1.0, model.area(face.rect))
                 if share >= face_fraction:
                     x0, y0, x1, y1 = face.rect
-                    hint, fix = _clear_face(box, face)
+                    hint, fix = ("", None) if public_regions else _clear_face(box, face)
                     whose = "tracked face" if face.label == "tracked face" else "presenter face"
                     add("FACE", box.element.id, t,
                         f"{box.label} covers {share:.0%} of the {whose} "
-                        f"(face {x0:.0f},{max(0, y0):.0f}–{x1:.0f},{min(1080, y1):.0f}; {box.kind} "
+                        f"(face {x0:.0f},{max(0, y0):.0f}–{x1:.0f},{min(canvas[1], y1):.0f}; {box.kind} "
                         f"{box.rect[0]:.0f},{box.rect[1]:.0f}–{box.rect[2]:.0f},{box.rect[3]:.0f}){hint}", fix=fix)
             if box.kind in ("text", "card"):
-                off = max(-box.rect[0], -box.rect[1], box.rect[2] - model.CANVAS[0], box.rect[3] - model.CANVAS[1])
+                rect = text_regions.get(id(box.element), box.rect) if box.kind == "text" else box.rect
+                off = max(-rect[0], -rect[1], rect[2] - canvas[0], rect[3] - canvas[1])
                 if off > 2:
                     add("FRAME", box.element.id, t, f"{box.label} is cut off: {off:.0f} px past the frame edge "
-                        f"(box {box.rect[0]:.0f},{box.rect[1]:.0f}–{box.rect[2]:.0f},{box.rect[3]:.0f})")
+                        f"(box {rect[0]:.0f},{rect[1]:.0f}–{rect[2]:.0f},{rect[3]:.0f})")
                 out = {
-                    "left": title[0] - box.rect[0], "top": title[1] - box.rect[1],
-                    "right": box.rect[2] - title[2], "bottom": box.rect[3] - title[3],
+                    "left": title[0] - rect[0], "top": title[1] - rect[1],
+                    "right": rect[2] - title[2], "bottom": rect[3] - title[3],
                 }
                 worst = max(out, key=lambda side: out[side])
                 if out[worst] > 2:
-                    hint, fix = _fit_hint(box, worst, out[worst])
+                    hint, fix = ("", None) if public_regions else _fit_hint(box, worst, out[worst])
                     add("SAFE", box.element.id, t, f"{box.label} is {out[worst]:.0f} px outside title-safe ({worst})"
                         f"{hint}", fix=fix)
             if box.text_px is not None and box.text_px < min_text_px:
@@ -170,12 +366,22 @@ def composition(
             if box.kind == "sprite":
                 over = {
                     "left": -box.rect[0], "top": -box.rect[1],
-                    "right": box.rect[2] - model.CANVAS[0], "bottom": box.rect[3] - model.CANVAS[1],
+                    "right": box.rect[2] - canvas[0], "bottom": box.rect[3] - canvas[1],
                 }
                 worst = max(over, key=lambda side: over[side])
                 if over[worst] > 6:
                     add("EDGE", box.element.id, t, f"{box.label} runs {over[worst]:.0f} px past the {worst} edge "
                         "(a crop; fine if intended)", "info")
+        if shared is not None:
+            covers, unavailable = _scene_cover(public_elements if public_regions else elements, t, fps, shared)
+            for upper, lower in covers:
+                add("COVER", str((lower.occurrence_id, lower.id, upper.occurrence_id, upper.id)), t,
+                    f"{upper.label} fully covers {lower.label}")
+            for message in unavailable:
+                add("SCENE", message, t, message, "info")
+            continue
+        # Kept for unmigrated bundle-only callers; delete with their exact-fact
+        # handoff and named public equivalents for the legacy overlap behavior.
         opaque = [b for b in boxes if b.kind in ("card", "panel") and b.rect != (0, 0, model.CANVAS[0], model.CANVAS[1])]
         for upper in opaque:
             for lower in boxes:

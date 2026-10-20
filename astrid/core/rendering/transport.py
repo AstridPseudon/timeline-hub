@@ -426,6 +426,10 @@ def _absolute_path(path: str | os.PathLike[str]) -> Path:
 def _build_environment(env: Mapping[str, str] | None) -> dict[str, str]:
     base = dict(os.environ)
     if env is not None:
+        from .verified_source import SOURCE_ENV
+
+        if SOURCE_ENV in env:
+            raise ValueError("verified timeline source environment is parent-owned")
         base.update({str(key): str(value) for key, value in env.items()})
     return build_child_subprocess_env(base=base, parent=base)
 

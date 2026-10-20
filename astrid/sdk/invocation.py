@@ -4074,6 +4074,13 @@ def invoke(
 
     intent_modality = _generation_capability_modality(capability)
     request_inputs = dict(inputs or {})
+    if capability.id in {"rendering.render", "rendering.timeline_visualize"}:
+        from astrid.core.rendering.verified_source import reject_source_keys
+
+        try:
+            reject_source_keys(request_inputs)
+        except ValueError as exc:
+            raise CapabilityValidationError(str(exc)) from exc
     if capability.id == "rendering.render":
         # Apply caller/mode checks before delegated child dispatch as well as
         # top-level preflight. Child file custody still belongs to the bridge.
@@ -4277,11 +4284,17 @@ def invoke(
                 # and the admission receipt. Store the authority and the
                 # snapshot's timeline and registry as managed objects instead;
                 # the host materializes them as the executor's input files.
-                stored = _store_visualize_objects(
+                # A canonical capture must reach the existing snapshot-ref
+                # publisher below. Objectifying its authority first discards
+                # the revision/working-copy binding before Runtime admission.
+                capture_authority = authority_snapshot.get("metadata", {}).get("capture_authority", {})
+                canonical_capture = (invocation_authority_context.get("mode") == "composed_capture"
+                                     and bool(capture_authority.get("parent_revision_id")))
+                stored = None if canonical_capture else _store_visualize_objects(
                     _client, project, authority_json, authority_snapshot,
                 )
                 if stored is None:
-                    inputs["filmstrip_authority"] = authority_json  # a client without import_bytes
+                    inputs["filmstrip_authority"] = authority_json  # kernel publishes canonical snapshot refs
                 else:
                     inputs.update(stored)
                     invocation_authority_context = {

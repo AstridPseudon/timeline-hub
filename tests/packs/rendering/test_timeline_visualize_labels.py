@@ -4,8 +4,6 @@ from pathlib import Path
 
 from PIL import Image
 
-from astrid.core.timeline.onscreen import Visible
-
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
 from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
@@ -16,10 +14,14 @@ from astrid.packs.rendering.actions.timeline_visualize.layers import discover, r
 from astrid.packs.rendering.actions.timeline_visualize.layers.builtin import render_strip
 from astrid.packs.rendering.actions.timeline_visualize.motion.sheet import build_context
 from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
+    Visible,
     addresses_at,
     draw_labels,
     labels_for,
 )
+from tests.packs.rendering.test_host_scene import capture_label_inputs as capture_label_inputs
+from tests.packs.rendering.test_host_scene import host_project as host_project
+from tests.packs.rendering.test_host_scene import native_host as native_host
 
 FPS = 10.0
 CANVAS = {"width": 200, "height": 100}
@@ -56,8 +58,9 @@ def test_addresses_follow_visible_order_and_frame_time():
     assert [item.address for item in labels_for(CONFIG, 16, FPS)] == ["c03.late", "c02.card", "c01.field"]
 
 
-def test_declared_boxes_and_full_frame_layers_are_drawn_differently():
-    out = draw_labels(_blank(), labels_for(CONFIG, 3, FPS), canvas=CANVAS, tile_size=(200, 100))
+def test_declared_boxes_and_full_frame_layers_are_drawn_differently(native_label_inputs):
+    _snapshot, batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
+    out = draw_labels(_blank(), batches[3], canvas=CANVAS, tile_size=(200, 100))
     assert out.getpixel((20, 60)) == CONTENT_RGB
     assert out.getpixel((3, 3)) == BACKING_RGB
     strip = [out.getpixel((x, y)) for x in range(4, 120) for y in range(4, 18)]
@@ -74,12 +77,13 @@ def test_labels_layer_is_opt_in_for_motion_and_contact():
     assert "labels" in {item.name for item in resolve_layers(["labels"], view="contact")}
 
 
-def test_motion_strip_adds_addresses_to_a_display_tile(tmp_path: Path):
+def test_motion_strip_adds_addresses_to_a_display_tile(tmp_path: Path, native_label_inputs):
     source = tmp_path / "frame.png"
     _blank().save(source)
-    snapshot = {"config": CONFIG, "clips": [], "occurrences": [], "registry": {"assets": {}}, "metadata": {}}
+    snapshot, batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
     cut = {"index": 1, "start": 0.0, "end": 2.0, "duration": 2.0, "clip_id": "c02", "shot": "demo"}
-    ctx = build_context(snapshot, cut, {3: source}, fps=FPS, frame_size=(200, 100), layer_names=("labels",))
+    ctx = build_context(snapshot, cut, {3: source}, fps=FPS, frame_size=(200, 100), layer_names=("labels",),
+                        label_batches=batches, label_canvas=CANVAS)
     ctx.width = 220
     ctx.shared.update({"window": {"preset": "frame"}, "columns": 1, "tile_w": 200})
 
@@ -88,8 +92,10 @@ def test_motion_strip_adds_addresses_to_a_display_tile(tmp_path: Path):
     assert result.image.getpixel((30, 70)) == CONTENT_RGB
 
 
-def test_contact_tiles_apply_labels_without_replacing_the_source_image():
-    overlay = _contact_overlay_for_layers({"config": CONFIG}, ("labels",), FPS)
+def test_contact_tiles_apply_labels_without_replacing_the_source_image(native_label_inputs):
+    snapshot, batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
+    overlay = _contact_overlay_for_layers(snapshot, ("labels",), FPS, frames=[3],
+                                          label_batches=batches, label_canvas=CANVAS)
     assert overlay is not None
     original = _blank()
     labelled = overlay(original, 0.3)
@@ -107,8 +113,8 @@ def test_compact_frame_index_rows_include_visible_addresses():
     assert receipt["cards"][1]["addresses"] == ["c03.late", "c02.card", "c01.field"]
 
 
-def test_verify_labels_use_display_copies_and_keep_decoded_frames_unchanged(tmp_path: Path, monkeypatch):
-    snapshot = {"config": CONFIG, "fps_rational": [10, 1]}
+def test_verify_labels_use_display_copies_and_keep_decoded_frames_unchanged(tmp_path: Path, monkeypatch, native_label_inputs):
+    snapshot, _batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
     pair = {
         "base_snapshot": snapshot,
         "working_snapshot": snapshot,

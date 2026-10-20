@@ -25,7 +25,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
@@ -64,6 +64,7 @@ from astrid.core.rendering.remotion_runtime import (
 from astrid.core.rendering.storage import h264_encoder_bitrates
 from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
 from astrid.core.subprocess_env import build_child_subprocess_env
+from astrid.core.rendering.verified_source import inherited_source
 from astrid.packs.rendering.shared import rendering_backend as _shared
 from astrid.packs.rendering.shared.rendering_backend import (
     _alpha_output_name,
@@ -1032,10 +1033,12 @@ def _execute_remotion_locked(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
     window: FrameWindow | None = None,
 ) -> _ExecutionDetails:
     """Execute one render while the caller owns the non-recursive outer lock."""
 
+    source = inherited_source(timeline_path, assets_path)
     if window is not None and frame_numbers is not None:
         raise ValueError("native render windows cannot be combined with frame_numbers")
     window_argument = None
@@ -1163,8 +1166,19 @@ def _execute_remotion_locked(
                 composition_clip_types=composition_clip_types,
                 asset_registry=resolved_registry,
             )
+            if source is not None:
+                from astrid.packs.rendering.rendering.renderers.remotion.canonical_transitions import (
+                    compile_canonical_root_props,
+                )
+
+                source.validate(timeline_path, assets_path)
+                merged_props = compile_canonical_root_props(
+                    merged_props, project_dir=project_dir, runtime_tools=runtime_tools,
+                )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
+            if on_scene_props is not None and frame_mode:
+                on_scene_props(merged_props, frame_numbers)
             remotion_env_additions: dict[str, str] = {
                 # Keep Remotion's pre-encode files on the admitted attempt
                 # filesystem and let the lifecycle remove them on every exit.
@@ -1381,6 +1395,7 @@ def capture_remotion_frames(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
 ) -> dict[int, Path]:
     """Capture selected composition frames through the trusted Remotion path.
 
@@ -1415,6 +1430,7 @@ def capture_remotion_frames(
                 frame_resolution=frame_resolution,
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
+                **({"on_scene_props": on_scene_props} if on_scene_props is not None else {}),
             )
     finally:
         marker.unlink(missing_ok=True)

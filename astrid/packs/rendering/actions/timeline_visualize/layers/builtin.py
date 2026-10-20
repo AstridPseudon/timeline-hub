@@ -1,7 +1,7 @@
 """Built-in visualize layers (the first entries in the registry).
 
-Data layers read only the timeline: ``sync``, ``curves``, ``lipsync``,
-``lint``. Pixel layers read the bounded frames the motion planner captured:
+Data layers read the timeline and captured public scene facts: ``sync``,
+``curves``, ``lipsync``, ``lint``. Pixel layers read the bounded frames the motion planner captured:
 ``strip``, ``onion``, ``diff``, ``still``. ``bounds`` draws declared element
 bounds and safe areas over frames; ``labels`` adds visible clip addresses to
 motion and contact tiles.
@@ -9,7 +9,8 @@ motion and contact tiles.
 from __future__ import annotations
 
 import math
-from typing import Any, Sequence
+from fractions import Fraction
+from typing import Any, Mapping, Sequence
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -275,22 +276,79 @@ def _zoom_finding(element, values, ctx: LayerContext) -> str | None:
             f"{ctx.rel(changes[0])} ({source})")
 
 
+def _scene_motion(ctx: LayerContext, element: model.Element, frame: int) -> tuple[dict[str, float], str | None]:
+    """Read intrinsic scalars through the captured Root's explicit source/occurrence join."""
+    if ctx.shared.get("scene_unavailable"):
+        return {}, str(ctx.shared["scene_unavailable"])
+    frames = ctx.shared.get("scene_frames")
+    row = frames.get(str(frame)) if isinstance(frames, Mapping) else None
+    if not isinstance(row, Mapping) or row.get("frame") != frame:
+        return {}, "exact scene frame is missing or stale"
+    layers = row.get("layers")
+    if not isinstance(layers, list) or any(not isinstance(layer, Mapping) for layer in layers):
+        return {}, "invalid public scene layers"
+    identities = ctx.shared.get("scene_clip_identities")
+    if not isinstance(identities, Mapping):
+        return {}, "exact compiled clip identities are missing"
+
+    def identity(e):
+        provenance = (e.clip.get("app") or {}).get("astrid_shot_composition") or {}
+        return {"clip_id": provenance.get("source_clip_id") or e.clip.get("id", e.id),
+                "occurrence_id": e.occurrence_id}
+
+    expected = identity(element)
+    if sum(identity(e) == expected for e in ctx.all_elements if not e.audio) != 1:
+        return {}, "source clip/occurrence identity is ambiguous"
+    compiled = [clip_id for clip_id, source in identities.items() if source == expected]
+    if len(compiled) != 1:
+        return {}, "exact compiled clip identity is missing or ambiguous"
+    candidates = [layer for layer in layers if layer.get("clipId") == compiled[0]]
+    if len(candidates) != 1:
+        return {}, "exact public layer is missing or ambiguous"
+    layer = candidates[0]
+    diagnostics = layer.get("diagnostics")
+    motion = diagnostics.get("motion") if isinstance(diagnostics, Mapping) else None
+    if not isinstance(motion, Mapping) or any(
+        not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, (int, float))
+        or not math.isfinite(value) for key, value in motion.items()
+    ):
+        return {}, "public intrinsic motion is missing or invalid"
+    return dict(motion), None
+
+
 def render_curves(ctx: LayerContext) -> LayerResult:
-    """Each element's animated properties per frame: the element's own motion.ts, else the visualize model."""
-    elements = [e for e in ctx.elements if not e.audio and not e.sequence]
+    """Captured intrinsic scalars, or legacy element models without a scene handoff."""
+    public = "curve_frames" in ctx.shared or bool(ctx.shared.get("scene_frames"))
+    elements = [e for e in ctx.elements if not e.audio and (public or not e.sequence)]
     rows = []
+    unavailable = []
     start, end = ctx.window
-    frames = range(int(math.floor(start * ctx.fps)), int(math.ceil(end * ctx.fps)))
+    rate = Fraction(*ctx.shared.get("fps_rational", float(ctx.fps).as_integer_ratio())) if public else ctx.fps
+    if public:
+        from ..motion.sheet import curve_sample_frames
+
+        frames = ctx.shared.get("curve_frames", curve_sample_frames(ctx.window, rate))
+    else:
+        frames = range(int(math.floor(start * ctx.fps)), int(math.ceil(end * ctx.fps)))
     for element in elements:
-        samples = [(f / ctx.fps, model.props_at(element, f / ctx.fps + 1e-6, ctx.fps)) for f in frames]
+        samples = []
+        for frame in frames:
+            t = float(frame / rate)
+            if public:
+                props, reason = _scene_motion(ctx, element, frame)
+                if reason:
+                    unavailable.append(f"CURVE  {element.label} unavailable at frame {frame}: {reason}")
+            else:
+                props = model.props_at(element, t + 1e-6, ctx.fps)
+            samples.append((t, props))
         keys = sorted({k for _t, props in samples for k in props})
         moving = [k for k in keys if len({round(props.get(k, math.nan), 3) for _t, props in samples if k in props}) > 1]
         moving.sort(key=lambda k: (CURVE_ORDER.index(k) if k in CURVE_ORDER else len(CURVE_ORDER), k))
-        rows.append((element, samples, moving or (["visible"] if "visible" in keys else [])))
+        rows.append((element, samples, moving or (keys if public else (["visible"] if "visible" in keys else []))))
     # one row per sequence: which step is on screen (its steps are one picture cut)
     sequences: dict[str, list] = {}
     for element in ctx.elements:
-        if element.sequence and not element.audio:
+        if element.sequence and not element.audio and not public:
             sequences.setdefault(element.sequence, []).append(element)
     for name, steps in sequences.items():
         steps.sort(key=lambda e: e.start)
@@ -307,7 +365,8 @@ def render_curves(ctx: LayerContext) -> LayerResult:
                           f"{min(holds) * ctx.fps:.0f}–{max(holds) * ctx.fps:.0f} frames each")
         ctx.shared.setdefault("sequence_findings", []).append(findings_steps)
     row_h = 40
-    image = ctx.panel(30 + row_h * max(1, len(rows)) + 8, title="curves (from data)")
+    image = ctx.panel(30 + row_h * max(1, len(rows)) + 8,
+                      title="curves (sampled public intrinsic motion)" if public else "curves (from data)")
     draw = ImageDraw.Draw(image)
     findings = []
     for index, (element, samples, keys) in enumerate(rows):
@@ -323,15 +382,26 @@ def render_curves(ctx: LayerContext) -> LayerResult:
             span = (high - low) or 1.0
             colour = SERIES[series_index % len(SERIES)]
             points = []
-            for t, v in values:
+            for t, props in samples:
+                if key not in props:
+                    points.append(None)
+                    continue
+                v = props[key]
                 y = top + row_h - 6 - (v - low) / span * (row_h - 12) if high != low else top + row_h / 2
                 points.append((ctx.x_of(t), y))
             # step drawing: horizontal then vertical, so stepped motion reads as stairs
-            for (x0, y0), (x1, y1) in zip(points, points[1:]):
+            for a, b in zip(points, points[1:]):
+                if a is None or b is None:
+                    continue  # unknown samples must leave a gap
+                (x0, y0), (x1, y1) = a, b
                 draw.line((x0, y0, x1, y0), fill=colour, width=2)
                 if y1 != y0:
                     draw.line((x1, y0, x1, y1), fill=colour, width=1)
-            changes = sum(1 for (_x0, y0), (_x1, y1) in zip(points, points[1:]) if abs(y1 - y0) > 0.01)
+            if public:
+                findings.append(f"CURVE  {element.label} intrinsic {key}: {low:g}…{high:g} "
+                                f"({len(values)} public samples; component units)")
+                continue
+            changes = sum(1 for a, b in zip(points, points[1:]) if a is not None and b is not None and abs(b[1] - a[1]) > 0.01)
             distance = high - low
             if key == "zoom":
                 line = _zoom_finding(element, values, ctx)
@@ -348,7 +418,11 @@ def render_curves(ctx: LayerContext) -> LayerResult:
                                 else f"CURVE  {element.label} {key}: {distance:.0f} px in {changes} steps from "
                                 f"{ctx.rel(min(moving_frames))}")
         if not keys:
-            draw_text(draw, (ctx.plot_left + 4, top + 12), "static (no animated property in its model)", 11, PALETTE["muted"])
+            draw_text(draw, (ctx.plot_left + 4, top + 12),
+                      "no public intrinsic motion samples" if public else "static (no animated property in its model)",
+                      11, PALETTE["muted"])
+    if public:
+        return LayerResult(image, list(dict.fromkeys(unavailable))[:4] + findings[:8], "curves")
     findings.extend(ctx.shared.pop("sequence_findings", []))
     stamps = [e.label for e in elements if e.type == "am-sprite" and (e.params.get("enter") == "stamp")
               and float(ctx.cut["start"]) + 1 / ctx.fps < e.start < float(ctx.cut["end"])]
@@ -504,7 +578,9 @@ def render_strip(ctx: LayerContext) -> LayerResult:
         if labels_config:
             from ..overlays.labels import overlay_labels_frame
 
-            thumb = overlay_labels_frame(thumb, labels_config, frame, ctx.fps)
+            thumb = overlay_labels_frame(thumb, labels_config, frame, ctx.fps,
+                                         layers=ctx.shared.get("label_batches", {}).get(frame),
+                                         canvas=ctx.shared.get("label_canvas"))
         image.paste(thumb, (x, y))
         t = frame / ctx.fps
         inside = float(ctx.cut["start"]) <= t < float(ctx.cut["end"])
@@ -828,7 +904,7 @@ def render_labels(ctx: LayerContext) -> LayerResult:
 
 register(Layer("sync", "words, music beats/hits, sfx, element events and cuts on one axis, with offsets",
                render_sync, needs=("doc", "words", "beats"), order=10))
-register(Layer("curves", "x/y/scale/reveal/mouth of every element per frame, from the element models",
+register(Layer("curves", "sampled public intrinsic motion, or element models without a scene handoff",
                render_curves, needs=("doc",), order=20))
 register(Layer("still", "holds: share of the cut with ~zero pixel change, longest frozen run",
                render_still, needs=("frames",), order=30, checks=(FROZEN_CHECK,)))

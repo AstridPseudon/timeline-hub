@@ -5,17 +5,20 @@ from pathlib import Path
 
 from PIL import Image
 
-from astrid.core.timeline.onscreen import Visible
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
 from astrid.packs.rendering.actions.timeline_visualize.contact_sheet import cut_tile_label
-from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
 from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
 from astrid.packs.rendering.actions.timeline_visualize.layers.base import discover, resolve_layers
 from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
+    Visible,
     addresses_at,
     draw_labels,
     labels_for,
 )
+from tests.packs.rendering.test_host_scene import capture_label_inputs as capture_label_inputs
+from tests.packs.rendering.test_host_scene import host_project as host_project
+from tests.packs.rendering.test_host_scene import native_host as native_host
 
 FPS = 10.0
 CANVAS = {"width": 200, "height": 100}
@@ -44,16 +47,18 @@ def _draw(layers):
     return draw_labels(_blank(), layers, canvas=CANVAS, tile_size=(200, 100))
 
 
-def test_a_declared_box_is_outlined_in_its_role_colour_and_labelled_beside_it():
-    out = _draw(labels_for(CONFIG, 3, FPS))
+def test_a_declared_box_is_outlined_in_its_role_colour_and_labelled_beside_it(native_label_inputs):
+    _snapshot, batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
+    out = _draw(batches[3])
     assert out.getpixel((20, 60)) == CONTENT_RGB  # the box's left edge
     assert out.getpixel((19, 22)) == BACKING_RGB  # the address's dark backing, above the box's top-left
     assert out.getpixel((70, 70)) == (0, 0, 0)  # inside the box: outline only, not filled
     assert out.getpixel((150, 80)) == (0, 0, 0)  # far from any label
 
 
-def test_a_full_frame_picture_is_listed_in_the_legend_and_not_boxed():
-    out = _draw(labels_for(CONFIG, 3, FPS))
+def test_a_full_frame_picture_is_listed_in_the_legend_and_not_boxed(native_label_inputs):
+    _snapshot, batches = native_label_inputs(CONFIG, [3], FPS, CANVAS)
+    out = _draw(batches[3])
     assert out.getpixel((0, 50)) == (0, 0, 0)  # no outline round the whole frame
     assert out.getpixel((3, 3)) == BACKING_RGB  # the legend strip, top-left
     strip = [out.getpixel((x, y)) for x in range(4, 120) for y in range(4, 18)]
