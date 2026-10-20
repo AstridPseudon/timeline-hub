@@ -6,9 +6,11 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { AuthoredState, MoveRecording, assertFiniteJson, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
+import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -284,6 +286,81 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const clipParamsPort: ClipParamsCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1 || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
+        throw new Error('Clip parameters require one unambiguous raw clip identity');
+      }
+      const identity = matches[0].app?.canonical;
+      let select = `parent/clip:${clipId}`;
+      if (identity !== undefined) {
+        if (!object(identity) || typeof identity.occurrenceId !== 'string' || typeof identity.rawClipId !== 'string'
+          || identity.ownerRef !== `occurrence:${identity.occurrenceId}`
+          || identity.clipRef !== `${identity.ownerRef}/clip:${identity.rawClipId}`
+          || clipId !== `${identity.occurrenceId}:${identity.rawClipId}`) {
+          throw new Error('Clip parameters require an addressable canonical clipRef');
+        }
+        select = identity.clipRef;
+      } else if (Object.values(bundle.shots).some((shot) => Array.isArray(shot.internal_timeline.clips)
+        && shot.internal_timeline.clips.some((clip) => object(clip) && clip.id === clipId))) {
+        throw new Error('Clip parameters require explicit occurrence ownership');
+      }
+      if (!/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')) {
+        throw new Error('Clip parameters require a stable scoped clip identity');
+      }
+      new AuthoredState(bundle).entity(select);
+      const basis = { bundle: copy(bundle), select, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } };
+      assertFiniteJson(basis);
+      return freezeJson(json(basis)) as ReturnType<ClipParamsCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the parameters edit');
+      const original = basis.bundle as AuthoredBundle;
+      const result = finishClipParams(captureClipParams(original, basis.select as string, args), args);
+      const next = new MoveRecording(bundle, result.command);
+      // Final keys and all native claims come only from the original snapshot.
+      if (!result.command.reads!.every((read) => next.state.matches(read.ref, read.path, read.state))) {
+        throw new Error('Clip parameters changed during the parameters edit');
+      }
+      for (const write of result.record.writes) {
+        if (!next.state.matches(write.ref, write.path, write.before)) {
+          throw new Error('Clip parameters changed during the parameters edit');
+        }
+        next.state.set(write.ref, write.path, write.after);
+      }
+      next.compile();
+      const previewParams = next.state.entity(result.command.select!)!.params as Record<string, JSON>;
+      const preview: TimelinePatch = { version: 1, operations: [{ op: 'clip.update', target: basis.clipId as string,
+        payload: { params: copy(previewParams) } }] };
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: next.state.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, previewParams: copy(previewParams) };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.set-params' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Clip parameters were not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Clip parameters require one params-only preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
   async function claim(owner?: string) {
     if (stopped) throw new Error('Timeline command session is closed');
     if (lifetime) throw new Error('An outbox is already claimed');
@@ -340,6 +417,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    clipParamsPort,
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');

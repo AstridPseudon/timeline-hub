@@ -138,6 +138,15 @@ export function useTimelineCommandSession(options: {
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
+        const paramsPort = session.clipParamsPort;
+        const requireCleanParamsEdit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing clip parameters');
+        };
+        session.clipParamsPort = {
+          capture(input) { requireCleanParamsEdit(); return paramsPort.capture(input); },
+          finish(basis, args) { requireCleanParamsEdit(); return paramsPort.finish(basis, args); },
+          submit(input) { requireCleanParamsEdit(); paramsPort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -192,6 +201,7 @@ export function useTimelineCommandSession(options: {
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipParamsPort: sessionRef.current?.clipParamsPort,
     retry, undo, flush, recover };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;

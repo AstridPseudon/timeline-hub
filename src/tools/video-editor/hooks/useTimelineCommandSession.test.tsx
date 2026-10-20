@@ -21,6 +21,7 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
+import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -98,6 +99,91 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences discrete params capture, finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipParamsPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: { optional: null }, clear: ['old'] };
+    setLegacyClean(false);
+    expect(() => captureClipParamsEdit(port, current, 'x')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipParamsEdit(port, current, 'x');
+    setLegacyClean(false);
+    expect(() => submitClipParamsEdit(captured, args)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command, previewParams } = port.finish(captured.basis, args);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { params: previewParams } },
+    ] } })).toThrow('earlier timeline saves');
+    expect(args).toEqual({ values: { optional: null }, clear: ['old'] });
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('previews only raw params with save:false and awaits acknowledgement through the same flush', async () => {
+    const raw = commandDocument();
+    for (const clips of [raw.parent_revision.payload.clips, raw.parent_revision.payload.config.clips]) {
+      (clips as Array<Record<string, unknown>>)[0].params = { old: null, opaque: { keep: [false, {}, ''] } };
+    }
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(raw));
+    const before = hook.result.current.commit.dataRef.current!;
+    const gate = env.pause();
+    const acknowledged = vi.fn();
+    let flushing!: Promise<void>;
+    act(() => {
+      submitClipParamsEdit(captureClipParamsEdit(hook.result.current.commands.clipParamsPort, before, 'x'),
+        { values: { 'literal.key': null }, clear: ['old'] });
+      flushing = hook.result.current.commands.flush().then(acknowledged);
+    });
+    await waitFor(() => expect(env.commits()).toHaveLength(1));
+    const preview = hook.result.current.commit.dataRef.current!;
+    expect(preview.config.clips[0]).toEqual({ ...before.config.clips[0],
+      params: { 'literal.key': null, opaque: { keep: [false, {}, ''] } } });
+    expect(preview.editProjection).toMatchObject({ kind: 'local', base: { revisionId: 'r0', publicationId: 'p0' } });
+    expect(acknowledged).not.toHaveBeenCalled();
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set-params',
+      args: { values: { 'literal.key': null }, clear: ['old'] } });
+    await act(async () => { gate.resolve(); await flushing; });
+    expect(acknowledged).toHaveBeenCalledOnce();
+    expect(hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'accepted', head: { publicationId: 'p1' } });
+    await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+    expect(hook.result.current.commit.data!.config.clips[0]).toEqual(before.config.clips[0]);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('recovers queued move → discrete params with exact pending bytes and no snapshot save', async () => {
+    const env = await environment();
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => {
+      expect(first.service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      submitClipParamsEdit(captureClipParamsEdit(first.hook.result.current.commands.clipParamsPort,
+        first.hook.result.current.commit.dataRef.current!, 'x'), { values: { optional: null }, clear: ['missing'] });
+    });
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    expect(first.hook.result.current.commit.data!.config.clips[0]).toMatchObject({ at: 5, params: { optional: null } });
+    first.hook.unmount();
+    const second = await mounted(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.status).toBe('recovery'));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(env.commits()[1]).toEqual(original);
+    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ op: 'clip.set-params',
+      args: { values: { optional: null }, clear: ['missing'] }, expect: { 'parent/clip:x::params': { state: 'absent' } } }] });
+    expect(second.hook.result.current.commit.data!.config.clips[0]).toMatchObject({ at: 5, params: { optional: null } });
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    for (const mountedHook of [first, second]) {
+      expect(mountedHook.snapshotSaves).not.toHaveBeenCalled();
+      expect(mountedHook.saveTimeline).not.toHaveBeenCalled();
+      expect(mountedHook.saveTimelineAtHead).not.toHaveBeenCalled();
+    }
+    second.hook.unmount();
+  });
   it('fences track-label capture, completion and submission behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.trackLabelPort!;
