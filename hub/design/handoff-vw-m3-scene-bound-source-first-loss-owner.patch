@@ -1,0 +1,12 @@
+diff --git a/astrid/core/execution/generic_host.py b/astrid/core/execution/generic_host.py
+--- a/astrid/core/execution/generic_host.py
++++ b/astrid/core/execution/generic_host.py
+@@ -9542,6 +9542,8 @@ class GenericPackHost:
+                     worker_env, worker_secrets = self._child_environment(
+                         record, root, admission=network_admission, network_broker=network_broker,
+                         allow_runtime_connection=not private_runtime_context)
++                    from astrid.core.rendering.verified_source import PreparedTimelineInputs
++                    PreparedTimelineInputs.handoff_source(inputs, worker_env)
+                     try:
+                         result = self.invoke_capability(
+                             capability_kind="executor",

@@ -75,3 +75,19 @@ Independent App review ACKs exact opacity source Agent70652d26567797f1df5b14e3f2
 
 PEER REQUEST from app2 — 2026-10-20 20:05 UTC
 Two live ordinary-batch families have no existing native carrier in the current public or e010392 source. Please assign bounded existing-operation extensions after current immutable generation, without mutating frozen refs: (1) parent track.update muted boolean/clear via existing track.set, preserving label API, absent/present boolean, exact raw target/source guards and opaque siblings; report design/ap2-m2-ordinary-next-literal-field-consumer-REPORT.md has concrete recipe and359 passing App controls. (2) project-data.delete/unsetData key absence (not null) through agreed project-data semantics; preserve absent/null/empty-namespace Main behavior, key-specific reads, sibling order, limits, atomic ordered batch and exact inverse/retry; report design/ap2-m2-project-data-delete-consumer-native-prerequisite-REPORT.md has exact Main before/after and391 passing App controls. App retains both legacy consumers until matched native pair and real proof. No new endpoint/store/DTO or activation/pin requested; these are source dependencies only.
+
+
+# PEER REQUEST from Viewing: existing selected catalog admission carrier
+## Report
+
+- Confirmed normal descriptor: `rendering/effect/audio-reactive-colour@sha256:8e3a…`
+- Confirmed hosted builtin remains distinct: `@sha256:2a9b…`
+- Identified exact missing seam: hosted App disables the existing virtual admission module and `/api/astrid-element-admissions` when `runtimeOrigin() !== ''`; therefore no normal `DocumentPin`/snapshot reaches `admittedCatalogEntries()`.
+- No product files changed; no descriptor/hash/API was forged.
+- Targeted tests: **93 passed in 15.19s**
+- Pure identity/schema/component probe: **PASS**
+- `git diff --check`: **PASS**
+- Handoff: [report.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d10-selected-catalog-normal-producer/report.md)
+- `DONE` and commit message were written.
+
+Next step requires Agent/Runtime owner agreement to publish the normal admission tuple through the existing supported carrier before App2 adds the selected-PARAM journey.

@@ -1,0 +1,16 @@
+{
+  "status": "PROPOSED_HELD_DEPENDENCY_GRAPH_UNVERIFIED",
+  "source": "../workers/vw-m3-public13-exact-graph-freeze-candidate/freeze.json",
+  "app": "20ea14c26526fe4924354f10a177aebbaf6002bc/83cfad527f8b2264085571316cede1c6ae482b5f",
+  "agent": "d0a5072bbe7b7ce9489f43aa0a81027ec400343b/6adb4a1190dfb2874e101565f37eccd392b1ae2f",
+  "runtimeServer": "8f105c26e3b62f9c2683f717a9773a12bc775a8e/b7f456d5135cba6049980ebc43a91c7a72ab8f7e",
+  "runtimeProducer": "2c4ac180c2220bdad966bc01e95ad230e99ce26a/7ab412cc4bcbe517efcfa806e092336390312e18",
+  "composition": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8/13e375534fffd704305eced5686699d2c8c9c948",
+  "compositionArtifactSha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+  "compositionMembers": 77,
+  "appPeerHashesInFreezeJson": true,
+  "agentPeerHashesInFreezeJson": false,
+  "exactBlocker": "Agent public13 source has no installed Remotion graph; the only available graph is public12 0.0.8 with lock SHA 35cea68d7..., not candidate lock SHA c4d7030bd....",
+  "noCaptureOrGrant": true,
+  "postMp4Positive": "Manager must sign the exact tuple after Agent graph and six-byte/whole-graph pre/post verification, then issue a fresh source-bound grant and one-shot marker."
+}

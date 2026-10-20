@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T20:13:06Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 1m -->
+<!-- viewing | 2026-10-20T20:18:42Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 7m -->
 # viewing — 2026-10-20 20:10 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Rules rev 2026-10-20 read.
 Integrated: Composition 5a4e9b72 / tree 13e37553, public 0.0.13, immutable archive SHA 9412ae25 (77 files), npm test 76 PASS / 0 FAIL / 0 SKIP. App public13 ea386 and Agent public13 6f0cdc7df integrated. Later Agent cache 490c10ac and dead inspector a760ecca integrated. No new frozen all-product physical parity proof.

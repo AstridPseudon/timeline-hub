@@ -1,61 +1,82 @@
 # Viewing M4 conditional size-cut plan
 
-Status: docs-only measurement handoff, 2026-10-20. This refines the frozen
-cut plan; it does not change the M4 boundary or claim that the target has been
-met. Counts are nonblank physical UTF-8 lines unless a function-body count is
-called out explicitly.
+Status: docs-only measurement handoff, 2026-10-20. This refreshes the cut plan
+after actual integrated cuts; it does not change the M4 boundary or claim that
+the target has been met. Census tables report physical and nonblank UTF-8
+lines; function-body counts are called out explicitly.
 
 ## Result first
 
-The only currently qualified reduction remains Composition's six nonblank
-lines in `typescript/src/lib/fade.ts` (Q1). The frozen confirmed Viewing slice
-therefore remains **48,337 lines after Q1**, not 20–26k. D09 and D08 are still
-conditional: the source map finds more private visibility/evaluator logic than
-the previous `375 + 31` summary, but the public-query caller and parity gates
-are not complete.
+The refreshed canonical slice is **49,103 nonblank / 53,452 physical lines**.
+Already-landed deletions are recorded below, but excluded vendor/fallback work
+does not reduce that canonical total. The remaining D09 and broad D08 cuts are
+still conditional: the source map finds more private visibility/evaluator logic
+than the previous `375 + 31` summary, but the public-query caller and parity
+gates are not complete. Q1 (`typescript/src/lib/fade.ts`) remains a proposed
+six-nonblank-line local deletion; it is still present in the current tree and
+is not credited as landed.
 
 The measured conditional arithmetic is:
 
 | conditional unit | deduplicated body/source count | current confirmed net | measured after range, if the named gates pass |
 | --- | ---: | ---: | ---: |
-| Q1: `typescript/src/lib/fade.ts` inline | 6 NB source lines | **-6** | 48,337 |
-| D09 core: `astrid/core/timeline/onscreen.py` | 375 NB whole file; 69 NB role/coverage seam must remain or move (`element_coverage`, `_coverage_of`, `_has_value`, `role_of`) | 0 until callers and the seam are qualified | **47,962–48,031** (−375 to −306) |
-| D09a: `motion/model.py::mouth_state` | 24 NB direct body; `hash_unit` is a separate 9 NB helper; `presenter_words` is shared and is not creditable | 0 | subtract **31–40** only after both lipsync callers and the helper are replaced; combined **47,922–48,000** |
+| Q1: `typescript/src/lib/fade.ts` inline | 6 NB source lines | **0 (present)** | 49,097 if the named local proof lands |
+| D09 core: `astrid/core/timeline/onscreen.py` | 375 NB whole file; 69 NB role/coverage seam must remain or move (`element_coverage`, `_coverage_of`, `_has_value`, `role_of`) | 0 until callers and the seam are qualified | **48,728–48,797** (−375 to −306) after Q1 |
+| D09a: `motion/model.py::mouth_state` | 24 NB direct body; `hash_unit` is a separate 9 NB helper; `presenter_words` is shared and is not creditable | 0 | subtract **31–40** only after both lipsync callers and the helper are replaced; combined **48,688–48,766** after Q1 |
 | D09b: `motion/model.py::mouth_box` | 7 NB direct body; shared `presenter_view` is retained | 0 | included in the combined range above only after the pixel caller/aggregate gate |
 | D09c: private mouth crop | excluded | 0 | 0; pixel crop/statistics remain KEEP |
-| D08: App `lib/audioFade.ts` | 60 NB module / 27 NB executable function bodies | 0 to the confirmed slice (outside its manifest row) | App-local source can fall by at most 60 NB; confirmed Viewing total unchanged |
+| D08: App `lib/audioFade.ts` | 60 NB module / 27 NB executable function bodies | **Landed outside the confirmed slice** (`887f26265`); no canonical credit | App-local source is already lower by this excluded helper; broader audio parity remains open |
 | D08: App `VisualClip`/`TimelineRenderer` host | `VisualClip.tsx` 648 NB; `TimelineRenderer.tsx` 1,656 NB | 0 | 0 until a complete public host replacement exists; do not count mixed adapters |
 
 The D09 ranges are a conditional arithmetic envelope, not a forecast of a
-landing. With the current evidence the honest expected total is still
-48,337. A public replacement may add a thin adapter, and a source-qualified
+landing. With the current evidence the honest current total is 49,103
+nonblank. A public replacement may add a thin adapter, and a source-qualified
 caller may retain more of the old helpers. No vendor, archive, fallback, stale
 `dist`, pixel, timing, custom-loader, or unknown-diagnostic deletion is added
 to these numbers.
 
-## Frozen accounting boundary and current growth
+## Refreshed accounting boundary and current growth
 
-This table is preserved from the frozen census. It is the accounting base and
-must not be silently rewritten using the later Agent head.
+This table uses the same manifest and the refreshed current heads pinned in the
+census. Physical and nonblank lines are both shown so the deletion arithmetic
+does not mix measures.
 
-| manifest row | baseline files / bytes / NB lines | current files / bytes / NB lines | growth files / bytes / NB lines |
+| manifest row | baseline files / bytes / physical / NB | current files / bytes / physical / NB | growth files / bytes / physical / NB |
 | --- | ---: | ---: | ---: |
-| Composition authored `typescript/src/**` | 16 / 45,621 / 1,398 | 79 / 190,523 / 4,097 | +63 / +144,902 / +2,699 |
-| Agent `timeline_visualize/**` authored subset | 54 / 1,253,951 / 24,911 | 55 / 1,270,190 / 25,256 | +1 / +16,239 / +345 |
-| Agent explicit render/evaluator adapters + elements | 29 / 375,489 / 10,993 | 29 / 366,756 / 10,744 | 0 / −8,733 / −249 |
-| Agent `onscreen.py`, `scene_answers.py` | 1 / 18,156 / 375 | 2 / 24,116 / 469 | +1 / +5,960 / +94 |
-| Agent Remotion host, adjacent execution excluded | 11 / 24,264 / 573 | 10 / 27,058 / 613 | −1 / +2,794 / +40 |
-| App active PreviewPanel/compositions/render source | 29 / 282,934 / 6,932 | 30 / 293,804 / 7,164 | +1 / +10,870 / +232 |
-| **confirmed canonical total** | **140 / 2,000,415 / 45,182** | **205 / 2,172,447 / 48,343** | **+65 / +172,032 / +3,161** |
+| Composition authored `typescript/src/**` | 16 / 45,621 / 1,550 / 1,398 | 79 / 190,569 / 4,442 / 4,097 | +63 / +144,948 / +2,892 / +2,699 |
+| Agent `timeline_visualize/**` authored subset | 54 / 1,253,951 / 27,700 / 24,911 | 54 / 1,292,896 / 28,504 / 25,663 | 0 / +38,945 / +804 / +752 |
+| Agent explicit render/evaluator adapters + elements | 29 / 375,489 / 11,381 / 10,993 | 29 / 363,113 / 11,053 / 10,680 | 0 / −12,376 / −328 / −313 |
+| Agent `onscreen.py`, `scene_answers.py` | 1 / 18,156 / 452 / 375 | 2 / 24,162 / 568 / 470 | +1 / +6,006 / +116 / +95 |
+| Agent Remotion host, adjacent execution excluded | 11 / 24,264 / 631 / 573 | 10 / 28,084 / 690 / 630 | −1 / +3,820 / +59 / +57 |
+| App active PreviewPanel/compositions/render source | 29 / 282,934 / 7,533 / 6,932 | 32 / 314,411 / 8,195 / 7,563 | +3 / +31,477 / +662 / +631 |
+| **confirmed canonical total** | **140 / 2,000,415 / 49,247 / 45,182** | **206 / 2,203,235 / 53,452 / 49,103** | **+66 / +202,820 / +4,205 / +3,921** |
 
-Frozen refs are Composition `46bd700b`, Agent `931d7ec`, and App `18becfb`,
-with the full SHAs and reproducible manifest in
-`handoff-vw-m4-current-core-census-freeze.json`. The read-only live source map
-was also checked against Composition `e80c46b` (same tree), App `18becfb`, and
-Agent `df2739f`; the later Agent head measures 25,442 NB lines in the authored
-visualize subset and 11,213 NB lines in the explicit adapter/elements subset.
-Those two live numbers are inspection facts, not a replacement baseline: the
-frozen 48,343 total and its growth columns remain authoritative.
+Current refs are Composition `5a4e9b72`, Agent `d0a5072b`, and App `20ea14c2`,
+with full SHAs in `viewing-size-census.md`. The previous frozen 48,343-line
+result remains historical evidence; it is not mixed into the refreshed total.
+
+## What actually landed versus what remains held
+
+Merged cuts: App private trim math (`93cd2f7d4`/`9d518546d`) and
+`lib/audioFade.ts` plus its test (`887f26265`); the dead HTML inspector
+(`c1a1d4fdb`, integrated by `a760ecca0`) including its CSS/JS/test; App
+fallback shims; and App vendored Composition/static copies (`1b4ac8b68` plus
+the bounded D10 App landing). The vendor/fallback rows are outside the
+canonical total, and the audio helper is outside the manifest row, so none is
+double-credited as a fresh canonical reduction.
+
+Held cuts: D08 `VisualClip`/`TimelineRenderer` host replacement and full audio
+parity; D09 `onscreen.py`, private motion/mouth/ROI/crop/statistics callers,
+and source-identity/parity gates; and the remaining Agent D10 source-adapter
+copies pending corrected custom-winner/catalog proof. Q1 is also still
+present, so its six nonblank lines are not credited. The dead inspector is a
+separate retired path, not D09 closure.
+
+Delivery disclosure: main infrastructure touched but outside this census
+includes Agent process-custody/PID-reuse guards, short-lived Remotion
+attempt-temp accounting and owner-root cleanup, and retained source-carry,
+source-identity, and verified-source request guards. These are accounted
+infrastructure changes, not Viewing product cuts.
 
 ## What the public replacement actually is
 
@@ -174,13 +195,14 @@ categories.
 
 | state | confirmed Viewing NB | what is actually credited | remaining gap to 26k |
 | --- | ---: | --- | ---: |
-| frozen current | 48,343 | none | 22,343 |
-| Q1 qualified | **48,337** | Composition fade helper, −6 | 22,337 |
-| Q1 + D09 core, thin role seam | **48,031–47,962** | only if trusted source/caller/parity gates pass; −306 to −375 | 22,031–21,962 |
-| also D09a + D09b | **48,000–47,922** | only if public motion and selected-cut ROI gates pass; additional −31 to −40 | 22,000–21,922 |
-| D08 audio helper | **unchanged** | App-local −60 maximum is outside the confirmed row; no slice credit | unchanged |
+| refreshed current | 49,103 | none beyond already-landed excluded cuts | 23,103 |
+| Q1 qualified | **49,097** | Composition fade helper, −6 | 23,097 |
+| Q1 + D09 core, thin role seam | **48,791–48,722** | only if trusted source/caller/parity gates pass; −306 to −375 | 22,791–22,722 |
+| also D09a + D09b | **48,760–48,682** | only if public motion and selected-cut ROI gates pass; additional −31 to −40 | 22,760–22,682 |
+| D08 audio helper | **already landed outside row** | App-local −60 maximum; no canonical slice credit | unchanged |
 
-The best measured conditional envelope is still roughly 47.9k, far above the
+The best measured conditional envelope is roughly 48.7k from this refreshed
+current tree, far above the
 26k upper target, and the true four-repo core is larger because Runtime and
 editing paths are outside this Viewing census. Closing that gap requires
 precise owner choices: qualify the D09 source/caller join and accept the
@@ -189,4 +211,3 @@ host parity, or consciously revise the global size target. It does not permit
 cutting the retained viewer, pixel lane, diagnostics, generic host, or owner
 film behavior, and it does not permit re-crediting vendor/archive/fallback
 deletions that were already excluded.
-
