@@ -74,6 +74,20 @@ async function expectReadback(harness: DirectHarness, seed: ThreeProductsSeed, r
   expect(entry?.revision_id).toBe(result.data.accepted_revision_id);
 }
 
+async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
+  const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  // The canvas can finish loading before the command session exposes its native ports.
+  await expect.poll(async () => ({
+    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
+      !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
+    notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
+  }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' })
+    .toMatchObject({ ready: true });
+}
+
 type CommitPost = { method: string; path: string; body: string; key: string; status: number; response: CommitAcceptedMutation };
 
 /** Only the network ACK is faulted, using the existing M1 route.fetch/abort pattern. */
@@ -195,11 +209,7 @@ test('M2 current013 real parent DELETE: lost ACK, reload, Runtime restart, exact
   expect(clipsOf(original)).toEqual((original.parent_revision.payload.config as Record<string, any>).clips);
 
   const wire = await faultFirstCommit(page);
-  await openApp(page, harness);
-  await expectConnected(page);
-  await openSeededTimeline(page, harness);
-  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
-    .some((owner) => !owner.pending && owner.intents.length === 0), CEILING).toBe(true);
+  await openCommandTimeline(page, harness, seed3);
   const clip = page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first();
   await expect(clip).toBeVisible();
   await clip.click();
@@ -365,9 +375,7 @@ test('M2 current013 parent DELETE conflict: same-property Agent move wins while 
   const original = await canonicalAt(harness, seed3, before.head);
   const originalClip = clipsOf(original).find((clip) => clip.id === seed3.appClipId)!;
   const wire = await holdFirstCommit(page);
-  await openApp(page, harness);
-  await expectConnected(page);
-  await openSeededTimeline(page, harness);
+  await openCommandTimeline(page, harness, seed3);
   const clip = page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first();
   await expect(clip).toBeVisible();
   await clip.click();
