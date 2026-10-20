@@ -85,7 +85,7 @@ export async function createTimelineCommandSession(options: Options) {
       if (projectionPending === basis) projectionPending = undefined;
     } finally { projecting = false; }
   }
-  async function pump() {
+  async function pump(retryPending = true) {
     if (sending) return sending;
     sending = (async () => {
       await chain;
@@ -100,6 +100,12 @@ export async function createTimelineCommandSession(options: Options) {
       }
       if (publishRefusal()) return;
       while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
+        if (record.pending && !retryPending) {
+          const outcome = record.pending.outcome;
+          publish('retry', outcome && outcome.kind !== 'accepted'
+            ? String((outcome.error as { message?: string } | null)?.message ?? 'Commit outcome is unknown; retry the exact request') : null);
+          return;
+        }
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => ({
@@ -192,7 +198,7 @@ export async function createTimelineCommandSession(options: Options) {
     pendingAppends.push({ localId, predecessor, head: capturedBasis && 'head' in capturedBasis ? capturedBasis.head : known.head, generation,
       payload: { ...payload, displayBasis: acceptedBasis } });
     chain = chain.then(persistAppends);
-    void chain.then(() => pump());
+    void chain.then(() => pump(false));
   }
   const intentIds = new Map<string, string>();
   const port: ClipMoveCapturePort = {
