@@ -57,8 +57,17 @@ def timeline_scope_is_empty(conn, timeline_id, *, project_id=None):
     if project_id is not None:
         document = conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?",
                                 (f"timeline:{timeline_id}", project_id)).fetchone()
-        if document is not None and has_authored_content(json.loads(document["content_json"])):
-            return False
+        if document is not None:
+            # Baseline verification already rejects duplicate/non-finite JSON.
+            # Use the same parser here so corrupt legacy bytes cannot hide
+            # authored content behind a last-key-wins decode.
+            from .timeline_commit_baseline import _json
+            try:
+                content = _json(document["content_json"])
+            except (TypeError, ValueError):
+                return False
+            if has_authored_content(content):
+                return False
     # Any row keyed to the timeline is authored data.
     for table in _SHELL_SCOPE_TABLES:
         if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \

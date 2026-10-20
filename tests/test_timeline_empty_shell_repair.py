@@ -77,10 +77,14 @@ def _cas_dump(service):
 
 
 def _retain_document(service, project, content):
+    _retain_document_bytes(service, project, canonical_json(content))
+
+
+def _retain_document_bytes(service, project, content):
     with service.store._mutex, service.store._transaction():
         service.store.conn.execute(
             "INSERT INTO project_documents VALUES (?, ?, ?, ?, 1, ?, ?)",
-            ("timeline:main", project, "timeline", canonical_json(content), "t", "t"),
+            ("timeline:main", project, "timeline", content, "t", "t"),
         )
 
 
@@ -205,6 +209,51 @@ def test_non_empty_legacy_document_is_refused_before_empty_shell_adoption(servic
     ).fetchone()[0]) == content
     assert _head(runtime, project)["head_publication_id"] is None
     assert runtime.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("raw", [
+    '{"clips":[{"id":"keep"}],"clips":[]}',
+    '{"opaque":{"clips":[{"id":"keep"}],"clips":[]},"clips":[]}',
+    r'{"clips":[{"id":"keep"}],"\u0063lips":[]}',
+    '{"clips":[],"clips":[]}',
+])
+@pytest.mark.parametrize("parent", ["absent", "null"])
+def test_duplicate_legacy_json_is_refused_before_missing_head_bootstrap(service, parent, raw):
+    runtime, project = service
+    if parent == "null":
+        with runtime.store._mutex, runtime.store._transaction():
+            runtime.store.conn.execute(
+                "INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)",
+                ("main", project, "t"),
+            )
+    _retain_document_bytes(runtime, project, raw)
+    before, cas_before, changes = _dump(runtime), _cas_dump(runtime), runtime.store.conn.total_changes
+
+    _refused_untouched(runtime, lambda: runtime.create_timeline(project, "main", idempotency_key="repair"))
+    assert _dump(runtime) == before and _cas_dump(runtime) == cas_before
+    assert runtime.store.conn.total_changes == changes
+    assert runtime.store.conn.execute(
+        "SELECT content_json FROM project_documents WHERE id='timeline:main'"
+    ).fetchone()[0] == raw
+
+
+@pytest.mark.parametrize("raw", [
+    '{"clips":[],"opaque":{"first":[],"second":{}}}',
+    '{"references":[],"shots":[]}',
+])
+@pytest.mark.parametrize("parent", ["absent", "null"])
+def test_distinct_empty_legacy_json_still_repairs_missing_head(service, parent, raw):
+    runtime, project = service
+    if parent == "null":
+        with runtime.store._mutex, runtime.store._transaction():
+            runtime.store.conn.execute(
+                "INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)",
+                ("main", project, "t"),
+            )
+    _retain_document_bytes(runtime, project, raw)
+
+    repaired = runtime.create_timeline(project, "main", idempotency_key="repair")
+    assert repaired["data"]["head_revision_id"]
 
 
 @pytest.mark.parametrize("sql, args", [
