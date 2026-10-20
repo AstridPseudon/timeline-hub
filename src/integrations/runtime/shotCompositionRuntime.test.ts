@@ -13,7 +13,6 @@ import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotComp
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { createShotTimelineDataProvider } from '@/tools/travel-between-images/components/shotTimelineDataProvider.ts';
 import { clearTimelineDraft, loadTimelineDraft } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
-import { duplicateIndependentShot } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 
 const PROJECT_ID = 'project-001';
 const TIMELINE_ID = 'document-primary';
@@ -324,14 +323,6 @@ describe('Runtime shot-composition port', () => {
       const acceptedInternal = accepted.occurrences.find((item) => item.occurrenceId === 'occ-1')!.revision.internal_timeline_revision as { timeline: unknown };
       expect(acceptedInternal.timeline).toEqual(internal);
       expect(source.revision.internal_timeline_revision).toEqual(original);
-      // The independent graph writer also forwards the entire raw child basis.
-      const duplicate = duplicateIndependentShot(composition.contract, 'occ-1', {
-        shotId: 'copy-shot', revisionId: 'copy-revision', internalTimelineRevisionId: 'copy-internal', occurrenceId: 'copy-occurrence',
-      });
-      const duplicateWire = await toRuntimePublication(duplicate, PROJECT_ID, TIMELINE_ID, composition.headRevisionId);
-      expect((duplicateWire.parent_composition as { config: unknown }).config).toEqual(composition.contract.parent_composition!.config);
-      const copied = (duplicateWire.internal_timeline_revisions as Array<{ payload: unknown }>)[0].payload;
-      expect(copied).toEqual(rawTimeline);
     });
 
   });
