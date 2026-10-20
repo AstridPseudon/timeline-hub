@@ -1,5 +1,7 @@
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
+import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
+import { clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
 import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
 import { stableOutputIdentity } from '../data/shotComposition.ts';
@@ -521,6 +523,55 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue(entry.payload, preview, entry.basis);
     },
   };
+  const clipSplitPort: ClipSplitCapturePort = {
+    capture({ clipId, on, rightId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      const identity = matches[0]?.app?.canonical as { clipRef?: string; occurrenceId?: string } | undefined;
+      if (matches.length !== 1 || identity?.occurrenceId !== undefined
+        || (identity?.clipRef !== undefined && identity.clipRef !== `parent/clip:${clipId}`)
+        || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))
+        || current.config.clips.some((clip) => clip.id === rightId)
+        || current.resolvedConfig.clips.some((clip) => clip.id === rightId)) {
+        throw new Error('Split requires one literal parent clip identity');
+      }
+      return freezeJson(json({ ...captureClipSplit(bundle, `parent/clip:${clipId}`, { on, right_id: rightId }),
+        localGeneration, localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipSplitCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the split');
+      const original = finishClipSplit(basis);
+      // Re-execute the original guarded capture on current raw bytes; never recapture after an ACK.
+      const result = executeClipSplit(bundle, original.command);
+      const select = result.command.select!;
+      const left = new AuthoredState(result.bundle).entity(select)!;
+      const rightId = (result.command.args as { right_id: string }).right_id;
+      const right = new AuthoredState(result.bundle).entity(`parent/clip:${rightId}`)!;
+      const preview = clipSplitPreview(select.slice('parent/clip:'.length), left, right);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.split' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Split was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Split requires its exact native preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -628,6 +679,7 @@ export async function createTimelineCommandSession(options: Options) {
     clipTrimPort,
     clipScalarPort,
     clipParamsPort,
+    clipSplitPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
