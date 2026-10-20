@@ -38,7 +38,7 @@ export function useTimelineSave(
   store: TimelineStoreApi,
   initialData?: TimelineData,
 ) {
-  const { timelineId, assetResolver, timelineEditability, shots } = useVideoEditorRuntime();
+  const { timelineId, assetResolver, timelineEditability, shots, imagePlacementHost } = useVideoEditorRuntime();
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (assetResolver) {
       return await assetResolver.resolveAssetUrl(file);
@@ -97,6 +97,7 @@ export function useTimelineSave(
     onCanonicalReloadStart: invalidateRecoveryAction,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    imagePlacementHost,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
       && !recoveryActiveRef.current,
     snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });
