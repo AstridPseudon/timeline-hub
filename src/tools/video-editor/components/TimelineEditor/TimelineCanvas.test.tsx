@@ -2502,11 +2502,8 @@ it('paints clip-empty row bands across the viewport without leaking grid below t
 
 
 describe('track label command capture forwarding', () => {
-  for (const deviceClass of ['desktop', 'phone', 'tablet'] as const) {
-    // MAIN leaves touch track edits to the agent. The positive command-capture
-    // assertion needs an upstream touch label input before it can pass.
-    const labelTest = deviceClass === 'desktop' ? it : it.fails;
-    labelTest(`forwards the ${deviceClass} name edit through the canvas and memoized row`, () => {
+  for (const deviceClass of ['desktop'] as const) {
+    it(`forwards the ${deviceClass} name edit through the canvas and memoized row`, () => {
       const finish = vi.fn();
       const onTrackLabelEditStart = vi.fn(() => finish);
       renderCanvas({ deviceClass, onTrackLabelEditStart });
@@ -2520,4 +2517,20 @@ describe('track label command capture forwarding', () => {
       expect(finish).toHaveBeenCalledExactlyOnceWith('Captured name');
     });
   }
+
+  it.each(['phone', 'tablet'] as const)('keeps %s track selection agent-owned without forwarding label capture', (deviceClass) => {
+    const onTrackLabelEditStart = vi.fn(() => vi.fn());
+    const onSelectTrack = vi.fn();
+    renderCanvas({
+      deviceClass,
+      inputModality: 'touch',
+      onTrackLabelEditStart,
+      onSelectTrack,
+    });
+
+    fireEvent.click(screen.getByText(track.label));
+
+    expect(onSelectTrack).toHaveBeenCalledExactlyOnceWith(track.id);
+    expect(onTrackLabelEditStart).not.toHaveBeenCalled();
+  });
 });

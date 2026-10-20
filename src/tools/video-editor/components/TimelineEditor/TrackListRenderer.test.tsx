@@ -385,6 +385,30 @@ describe('TrackListRenderer', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it.each(['phone', 'tablet'] as const)('keeps %s track selection agent-owned without starting label capture', (deviceClass) => {
+    const onSelect = vi.fn();
+    const onLabelEditStart = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <TrackLabelContent
+        track={tracks[0]}
+        isSelected={false}
+        hasClips={false}
+        deviceClass={deviceClass}
+        onSelect={onSelect}
+        onChange={onChange}
+        onLabelEditStart={onLabelEditStart}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText(tracks[0].label));
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(tracks[0].id);
+    expect(onLabelEditStart).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('keeps the desktop hover overlay with its three inline actions', () => {
     render(
       <TrackLabelContent
@@ -677,11 +701,8 @@ describe('track source/output settings', () => {
 
 
 describe('captured track names', () => {
-  for (const deviceClass of ['desktop', 'phone', 'tablet'] as const) {
-    // MAIN leaves touch track edits to the agent. These positive assertions need
-    // an upstream touch label input before the command-capture cases can pass.
-    const labelTest = deviceClass === 'desktop' ? it : it.fails;
-    labelTest(`captures the ${deviceClass} edit before typing and retains it across a remote label change`, async () => {
+  for (const deviceClass of ['desktop'] as const) {
+    it(`captures the ${deviceClass} edit before typing and retains it across a remote label change`, async () => {
       const originalFinish = vi.fn();
       const laterFinish = vi.fn();
       const begin = vi.fn(() => originalFinish);
@@ -707,7 +728,7 @@ describe('captured track names', () => {
       expect(onChange).not.toHaveBeenCalled();
     });
 
-    labelTest(`submits an empty ${deviceClass} name on blur as a value`, () => {
+    it(`submits an empty ${deviceClass} name on blur as a value`, () => {
       const finish = vi.fn();
       render(<TrackLabelContent track={tracks[0]} isSelected={false} hasClips={false}
         deviceClass={deviceClass} onSelect={vi.fn()} onChange={vi.fn()} onRemove={vi.fn()}
@@ -720,7 +741,7 @@ describe('captured track names', () => {
       expect(finish).toHaveBeenCalledExactlyOnceWith('');
     });
 
-    labelTest(`keeps ${deviceClass} input and a visible reason after command refusal`, () => {
+    it(`keeps ${deviceClass} input and a visible reason after command refusal`, () => {
       const finish = vi.fn(() => { throw new Error('The original track label changed.'); });
       const begin = vi.fn(() => finish);
       const onChange = vi.fn();
