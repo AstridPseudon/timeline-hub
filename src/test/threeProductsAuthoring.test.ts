@@ -2,6 +2,12 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import type { TimelineSnapshot } from '@astrid/editor-sdk';
+import { readMarkers, SCENE_PHASE_EXTENSION_ID } from '@/tools/video-editor/dev/scene-phase-markers/extension';
+import {
+  THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID,
+  THREE_PRODUCTS_SCENE_MARKERS,
+} from '../../tests/e2e/local/support/harness.ts';
 
 const journey = vi.hoisted(() => ({
   cases: new Map<string, (fixtures: unknown) => Promise<void>>(),
@@ -66,4 +72,15 @@ it('does not open the editor when authoring startup refuses the cohort', async (
   await expect(run({ page, harness: fixtureHarness(enableTimelineAuthoring),
     astrid: {}, seed3: {} })).rejects.toBe(refused);
   expect(journey.openApp).not.toHaveBeenCalled();
+});
+
+it('keeps the ordinary seed markers in the panel reader shape', () => {
+  expect(THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID).toBe(SCENE_PHASE_EXTENSION_ID);
+  const snapshot = {
+    app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } },
+  } as unknown as TimelineSnapshot;
+  expect(readMarkers(snapshot, SCENE_PHASE_EXTENSION_ID)).toEqual([
+    { id: 'ordinary-marker-a', time: 1 },
+    { id: 'ordinary-marker-b', time: 6 },
+  ]);
 });
