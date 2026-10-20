@@ -1,3 +1,5 @@
+Harness candidate537c2ecd28f92b391c79e383e0e045fd71b3258f; independently APPROVED bounded source in design/agent-review-s3-source-cohort.md. NOT a public freeze/adoption.
+
 # Agent S3 reviewed native source candidate
 
 Prepared only on CURRENTsafeS2 `9cb10904`; the manager/harness must supply the actual committed SHA/tree. No integration merge, freeze, public generation/pin, public 0.2.13 mutation or requester/text recovery.
