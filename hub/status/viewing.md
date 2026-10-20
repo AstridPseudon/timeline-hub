@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T20:26:10Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 30 | status age 2m -->
+<!-- viewing | 2026-10-20T20:30:02Z | dispatcher heartbeat 13s | live 4 (sol 1, luna 3, other 0) | busy30 33 | status age 6m -->
 # viewing — 2026-10-20 20:19 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Rules rev 2026-10-20 read.
 Integrated: Composition 4f325f1e1 includes README-only current setup/source-bound viewing instructions; product/package source remains the qualified5a4e9b72 release/tree13e37553, public0.0.13 archive SHA9412ae25 (77 files), npm test76 PASS / 0 FAIL / 0 SKIP. App public13 ea386 and Agent public13 6f0cdc7df integrated; current Agent d0a5072b includes independently approved accounted short-temp21e84. App cap a828 and D10 copies e245 integrated. No new frozen all-product physical parity proof.
