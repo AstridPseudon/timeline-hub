@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:24:05Z | dispatcher heartbeat 9s -->
+<!-- main | 2026-10-20T10:29:30Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-20 10:09 UTC
 Milestone: M1 RECORDED; M2 active, M3 source/viewing active. Gates1/6/7 OPEN; no current-tuple release, normalPCM or foundation-complete claim.
 Integrated: Agent tl/integrationdf2739f9. Public12ed60bf15 (47owner+292readinessPASS, exact0a7b6152/58444B/sharedlock/runtime941pin unchanged); identity5c3f0c99 (3pinned+3current regressionsPASS); auto timing/owner correctionefb96034 (1911targeted+173review/matrix); ordinarydeleteequalstate26c3b0a8 (269PASS; inverseABAstrictkept); D07deleted76737ca2 (-206helpers, unitsrelocated, native/compiler+facadereplacements36/90/4PASS); pool+legacyoriginalreadguardsdf2739f9 (348PASS/36redbefore).
@@ -30,3 +30,7 @@ Resources:17Gfree; target5–7ACTUALmodels. Optionalemptymerge-parentfilesharmle
 2026-10-20 10:16 UTC: inactivePCMcentral103PASS/2existingxfail (privatehelperlane), normalactivationstillheld; b85eb057mergeQUEUED afterreview10-pathdiffonly. S2canonical26ef2bbb/a6f1aaa9 explicitFREEZEfornormalgeneration nowpublished, onlyexistingClipSetElementArgs optionalDocumentPin widens; S1unchanged. No consumerpin/productsourceunionmerge/producergreenclaim.
 
 2026-10-20 10:19 UTC: native trim sourceDONE281+168PASS (17interiorvectors), kernelDONE201+97+2V1V2+93D07PASS, viewsourcesDONE31+26+2unit(currenttuplepairheld), SDKsourceguardDONE72+3+importfencePASS. Refilledjobs: agt-review-trim-interior; agt-m2-timing-kernel-gate(review+rootdesignhygiene/shareddocfix); agt-m2-parent-media-real-proof(actualordinarymedia separateproducerhold). InactivePCM MERGEDe2ad5958 (103central/2oldxfail), stillNOactivation. Sevenactualrequested/live.
+
+2026-10-20 10:25 UTC: historyfinalreview stillP2post-targetreplace hiddenreversepromotiongap(two originalprobesRED); publicationfencesapproved. agt-m2-history-crash-reconcile dispatched on3f1ac982 tofinishboundedlocalrecovery. agt-m2-checkout-native-ordinary advancesrealM2Python/CLIcapture/outboxbridge (move/trim/scalars/params) ratherthanonlysupportingtests; no wholewriterremovalclaimuntilallfamilies. Coreexistingfourmodels+twojobs=6actualtarget.
+
+2026-10-20 10:26 UTC: cda4d18c auto+fixturecombined APPROVED/mergequeued. Rootindependently reconstructed12fixtures and comparedCANONICALJSONbytes (bool/number AND int/floatdistinguished), allexacttodb982intendeddata; sourcefieldreadhelperexact, pinunchanged. 571+556consumerchecks,23cases,160274bytes/5729linesremoved. Inventory6f688c47 APPROVED1testfile restoresEXACT1or2readsperlaunch+exactidentitysequence,80centralPASS; queueaftercdaresult. No productionchange/countloosening.

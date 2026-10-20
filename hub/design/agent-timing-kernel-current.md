@@ -88,3 +88,5 @@ entire result; `TimingCycleError` adds `code="CYCLE"` and a deterministic closed
   Existing working default paths stay in place pending their dedicated adapters.
 - No Runtime default-acceptance, renderer/frame/audio parity, one-writer migration,
   full-suite or cross-product claim follows from these targeted compiler tests.
+
+Native consumer final evidence: 50 real current/regenerated Runtime cases + 12 portable cases pass, zero xfails; 441 neighbors pass. Exact old two-file ports remain unchanged. Owned adapter persists only parent anchor-derived at/hold values, records/removes the echo plus reference, refuses external source timing dependencies/maps/inactive source ownership, and restores literal caches when guarded inverse removes the final reference. Full report: workers/agt-m2-word-anchor-native/notes/report.md. Schema a058aa6e is additive to this worker's base only; manager must compose complete S1/current before freezing or normally generating a release. Private normal generation and --check passed; no release pin changed.
