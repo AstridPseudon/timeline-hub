@@ -204,3 +204,19 @@ def test_birth_inverse_preserves_later_disjoint_rebind(original):
     restored = inverse(changed.bundle, voice.records, changed.records)
     expected = apply(original, PROMPT, b'new prompt')
     assert restored.bundle == expected.bundle
+
+
+@pytest.mark.parametrize('clear', [False, True])
+def test_trusted_inverse_restores_exact_legacy_descriptor_and_position(original, clear):
+    base = apply(apply(apply(original, TRANSCRIPT).bundle).bundle, PROMPT).bundle
+    legacy = State(base).entity(REF)
+    legacy.update(mime_type='text/plain', text='legacy cached text', opaque=[None, False])
+    before = copy.deepcopy(base)
+    plan = apply(base, data=b'replacement', clear=clear)
+    assert inverse(plan.bundle, plan.records).bundle == before
+    assert payload(before)['text_bindings'][1] == legacy
+    # New selections still use the closed canonical MIME schema, even when the
+    # provider's captured inputs claim otherwise. Only accepted inverse is trusted.
+    pin = {**descriptor(b'new legacy'), 'media_type': 'text/plain'}
+    with pytest.raises(CommandError):
+        capture_text_binding_set(base, OWNER, VOICE, text=pin, verified_text=[{**pin, 'utf8': True}])

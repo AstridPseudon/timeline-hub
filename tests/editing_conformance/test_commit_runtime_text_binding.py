@@ -41,20 +41,6 @@ def call(binding=VOICE, text=None, *, clear=False):
             'intent': {'ownership': 'occurrence'}}
 
 
-class TextBindingRemovalGap(Exception):
-    pass
-
-
-def remove(editing, request, key):
-    from runtime_protocol.errors import RuntimeErrorBase
-
-    try:
-        return submit(editing, request, key)
-    except RuntimeErrorBase as exc:
-        assert exc.details['reason'] == 'text_binding_clear_unsupported'
-        raise TextBindingRemovalGap(exc.message) from exc
-
-
 def inverse(result):
     return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
             'args': {'publications': [result['receipt']['receipt_id']]}}
@@ -149,8 +135,7 @@ def test_rebind_retains_v1_after_v2_restart_exact_inverse_and_redo(editing):
     two = submit(editing, body(editing, [call(text=second)]), 'v2')
     document = two['data']['canonical_document']
     assert {first['object_id'], second['object_id']} <= {row['media_id'] for row in document['dependency_manifest']['media']}
-    # Removal of the mutable text selection is covered separately by clear's
-    # positive gap. Retained V1 bytes remain available after its row is rebound.
+    # Retained V1 bytes remain available after its live row is rebound.
     restart(editing)
     undone = submit(editing, body(editing, [inverse(two)]), 'undo-v2')
     assert undone['data']['canonical_document'] == one['data']['canonical_document']
@@ -162,32 +147,43 @@ def test_rebind_retains_v1_after_v2_restart_exact_inverse_and_redo(editing):
     assert live(editing)['head'] == 4
 
 
-# Runtime must project a present->absent edge using its existing binding tables/events.
-# Keep the positive contract: first birth undo removes the row; EMPTY is still present.
-@pytest.mark.xfail(strict=True, raises=TextBindingRemovalGap, reason=(
-    'Runtime _project_text_binding refuses absent after-state: text_binding_clear_unsupported; '
-    'Runtime owner must implement removal in existing binding tables/events'))
+# Qualified against Runtime's clear projection: first-birth undo removes the row;
+# EMPTY remains present until an explicit clear or inverse.
 def test_first_birth_undo_restores_absence(editing):
     pin = put(editing, b'')
     accepted = submit(editing, body(editing, [call(text=pin)]), 'empty-birth')
     baseline = editing.closures[0]
-    undone = remove(editing, body(editing, [inverse(accepted)]), 'undo-birth')
+    undone = submit(editing, body(editing, [inverse(accepted)]), 'undo-birth')
     assert undone['data']['canonical_document'] == baseline
     assert not editing.service.list_project_shot_text_bindings(editing.project, kind='voiceover_script')['items']
 
 
-@pytest.mark.xfail(strict=True, raises=TextBindingRemovalGap, reason=(
-    'Runtime _project_text_binding refuses explicit clear: text_binding_clear_unsupported; '
-    'Runtime owner must implement removal in existing binding tables/events'))
 def test_clear_removes_row_and_undo_restores_empty_exactly(editing):
+    from runtime_protocol.errors import NotFoundError
+
     pin = put(editing, b'')
-    accepted = submit(editing, body(editing, [call(text=pin)]), 'empty')
-    cleared = remove(editing, body(editing, [call(clear=True)]), 'clear')
+    submit(editing, body(editing, [call(text=pin)]), 'empty')
+    accepted = submit(editing, body(editing, [call(PROMPT, put(editing, b'prompt'))]), 'prompt')
+    prior = live(editing)
+    shot = next(row for row in accepted['data']['canonical_document']['shot_revisions'] if row['shot_id'] == 'shot-1')
+    assert [row['kind'] for row in shot['payload']['text_bindings']] == ['transcript', 'voiceover_script', 'prompt']
+    request = body(editing, [call(clear=True)])
+    cleared = submit(editing, request, 'clear')
     assert not editing.service.list_project_shot_text_bindings(editing.project, kind='voiceover_script')['items']
+    with pytest.raises(NotFoundError):
+        editing.service.get_project_shot_text_binding(editing.project, prior['binding_id'])
     restart(editing)
+    assert submit(editing, request, 'clear') == cleared
+    historical = editing.service.get_project_shot_revision(editing.project, 'shot-1', shot['revision_id'])
+    assert historical['payload'] == shot['payload']
     restored = submit(editing, body(editing, [inverse(cleared)]), 'undo-clear')
     assert restored['data']['canonical_document'] == accepted['data']['canonical_document']
     assert live(editing)['byte_size'] == 0
+    assert live(editing)['head'] == 3
+    events = [row for row in editing.service.export_structured()['shot_text_binding_events']
+              if row['binding_id'] == prior['binding_id']]
+    assert [row['payload']['state'] for row in events] == ['present', 'absent', 'present']
+    assert editing.service.store.integrity_report()['ok']
 
 
 @pytest.mark.parametrize('damage', ['foreign', 'missing', 'size', 'digest', 'mime', 'stored-mime', 'utf8', 'limit'])
@@ -259,7 +255,12 @@ def test_rebind_existing_main_descriptor_undo_is_exact(editing):
     pin = put(editing, b'replacement transcript')
     accepted = submit(editing, body(editing, [call(binding, pin)]), 'replace-main-transcript')
     baseline = editing.closures[0]
+    original = baseline['shot_revisions'][0]['payload']['text_bindings'][0]
+    assert original['mime_type'] == 'text/plain'
+    before_bytes = editing.service.object(original['media_id'])[1]
+    assert len(before_bytes) == original['byte_size']
     restart(editing)
+    before = list(editing.service.store.conn.iterdump())
     from runtime_protocol.errors import ValidationError
 
     try:
@@ -268,24 +269,36 @@ def test_rebind_existing_main_descriptor_undo_is_exact(editing):
         assert 'text selection requires object_id == digest' in exc.message
         assert 'text/plain; charset=utf-8' in exc.message
         assert baseline['shot_revisions'][0]['payload']['text_bindings'][0]['mime_type'] == 'text/plain'
+        assert list(editing.service.store.conn.iterdump()) == before
+        assert len(editing.selected) == 1
+        assert editing.service.object(original['media_id'])[1] == before_bytes
         raise LegacyTextMimeGap(exc.message) from exc
     assert undone['data']['canonical_document'] == baseline
 
 
-@pytest.mark.xfail(strict=True, raises=TextBindingRemovalGap, reason=(
-    'Runtime clear refuses text_binding_clear_unsupported; retained V1 inverse after V2/clear/restart '
-    'requires the Runtime owner to implement removal in existing binding tables/events'))
 def test_retained_v1_after_v2_clear_restart_group_inverse_is_exact(editing):
     first, second = put(editing, b'V1 retained\r\n'), put(editing, b'V2')
     one = submit(editing, body(editing, [call(text=first)]), 'retained-v1')
     two = submit(editing, body(editing, [call(text=second)]), 'retained-v2')
-    cleared = remove(editing, body(editing, [call(clear=True)]), 'retained-clear')
+    prior = live(editing)
+    cleared = submit(editing, body(editing, [call(clear=True)]), 'retained-clear')
     restart(editing)
+    assert not editing.service.list_project_shot_text_bindings(editing.project, kind='voiceover_script')['items']
+    assert editing.service.object(first['object_id'])[1] == b'V1 retained\r\n'
     undo = inverse(two)
     undo['args']['publications'].append(cleared['receipt']['receipt_id'])
     restored = submit(editing, body(editing, [undo]), 'undo-v2-and-clear')
     assert restored['data']['canonical_document'] == one['data']['canonical_document']
     assert editing.service.object(first['object_id'])[1] == b'V1 retained\r\n'
+    assert live(editing)['media_id'] == first['object_id']
+    assert live(editing)['head'] == 4
+    shot = next(row for row in one['data']['canonical_document']['shot_revisions'] if row['shot_id'] == 'shot-1')
+    assert editing.service.get_project_shot_revision(editing.project, 'shot-1', shot['revision_id'])['payload'] == shot['payload']
+    events = [row for row in editing.service.export_structured()['shot_text_binding_events']
+              if row['binding_id'] == prior['binding_id']]
+    assert [row['payload']['state'] for row in events] == ['present', 'present', 'absent', 'present']
+    assert events[0]['payload']['media_id'] == first['object_id']
+    assert editing.service.store.integrity_report()['ok']
 
 
 def test_runtime_declares_and_captures_exact_text_port(editing):
@@ -337,3 +350,33 @@ def test_disjoint_first_birth_rebase_keeps_captured_intent_and_actual_order(edit
     selected = next(row for row in record['selections'] if row['key'].endswith('.append'))
     assert selected['order'] == [OWNER + '/text-binding:transcript', OWNER + '/text-binding:prompt:hero']
     assert prompt['data']['canonical_document'] != accepted['data']['canonical_document']
+
+
+# Requirement: clear validates a retained descriptor, not a newly selected input.
+@pytest.mark.xfail(strict=True, raises=LegacyTextMimeGap, reason=(
+    'Runtime clear revalidates retained text/plain through the canonical new-selection validator; '
+    'Runtime owner must distinguish exact retained descriptors from new text inputs'))
+def test_clear_existing_main_descriptor_and_inverse_are_exact(editing):
+    from runtime_protocol.errors import ValidationError
+
+    binding = {'kind': 'transcript', 'slot': None}
+    prior = live(editing, binding)
+    assert prior['mime_type'] == 'text/plain'
+    data = editing.service.object(prior['media_id'])[1]
+    assert len(data) == prior['byte_size']
+    before = list(editing.service.store.conn.iterdump())
+    try:
+        cleared = submit(editing, body(editing, [call(binding, clear=True)]), 'clear-main-transcript')
+    except ValidationError as exc:
+        assert 'text selection requires object_id == digest' in exc.message
+        assert 'text/plain; charset=utf-8' in exc.message
+        assert list(editing.service.store.conn.iterdump()) == before
+        assert editing.selected == []
+        raise LegacyTextMimeGap(exc.message) from exc
+    original = editing.closures[0]
+    assert not editing.service.list_project_shot_text_bindings(editing.project, kind='transcript')['items']
+    restart(editing)
+    restored = submit(editing, body(editing, [inverse(cleared)]), 'undo-clear-main-transcript')
+    assert restored['data']['canonical_document'] == original
+    assert live(editing, binding)['mime_type'] == 'text/plain'
+    assert editing.service.object(prior['media_id'])[1] == data

@@ -31,12 +31,44 @@ Occurrence ownership is explicit and exclusive for this slice. The recorded `tex
 
 Order remains authored. Rebind replaces a row in place. Clear records the full guarded collection order, and inverse reinstalls the original position. Birth appends and records `collection.text-bindings.append` using the existing `include-concurrent` policy: replay permits only additions after the original ordered prefix. The public command retains its original claims while the authoritative accepted record captures the actual rebased input order. Disjoint births and disjoint existing-key rebinds can rebase; changed original membership/order or a changed target guard refuses. Missing versus empty collections retain tagged presence through inverse. Undo checks intervening writes, including unchanged writes and A→B→A, and resolves whole-payload aliases against the source owner. Redo uses accepted history/boundaries.
 
-## Runtime pairing still required
+## Private Runtime pairing; public successor still required
 
-1. **Frozen schema**: unchanged integration Runtime rejects the generated `text-binding` guard with `invalid_prepared`, before acceptance. The manager must compose this additive operation and ref patterns into its current full superset (including S2/future operations), then use normal contract/client generation. This worker does not publish a partial public freeze.
-2. **Removal**: `_project_text_binding` rejects every absent after-state with `text_binding_clear_unsupported`. Strict positive tests retain first-birth undo, explicit EMPTY clear/undo, and V1→V2→clear→restart→group inverse. Runtime owner must resolve removal using its existing binding tables/events. EMPTY is never used as clear.
-3. **Actual retained main MIME**: the committed main-API film backup has a transcript object/descriptor with `mime_type: text/plain`. A new native rebind succeeds, but inverse of that rebind fails in `verify_text_object`, which requires `text/plain; charset=utf-8`. Its positive exact-inverse test is a separate strict xfail, scoped to that specific validation error. The descriptor is not rewritten or normalized. Runtime owner must reconcile old exact retained descriptors with P1 validation before old writers can be retired.
+Agent ACK for Runtime's exact clear representation is granted in the orchestrator's
+`design/agent-text-binding-clear-ack.md` (2026-10-20 10:58 UTC). The existing binding
+stream remains a retention anchor. Existing created/rebound events carry hash-covered
+present/absent state; omitted legacy state means present. Empty UTF-8 stays present.
 
-Qualification uses the real `RuntimeService` and restored committed main-API film/CAS backup (`timeline_commit_film_fixture.build_film_fixture`), never direct SQL writes or a fake prepared provider. The worker-private `runtime-schema-overlay` copies integration Runtime behavior unchanged and adds only this schema clause/definitions using Runtime's normal `timeline_commit_resources.render`; only the generated runtime schema bundle differs in `runtime_protocol`. It proves the prospective schema pair, not unchanged integration Runtime. The reproducible generator and commands are in the worker directory and `notes/report.md`.
+Private acceptance uses Runtime S2 base `2c4ac18` plus the approved clear unit
+`bfec49af4e2bcb82ae2beed922dda99a977b7d72`. Its complete S2 schema is extended only
+with the native text operation and reference definitions, preserving the complete
+legacy and S2 reference branches. Runtime's normal Python/TypeScript/schema and
+conformance generators and artifact manifest generation/checks run on that private
+candidate. This is neither an in-memory schema override nor a published tuple;
+public pins remain unchanged.
 
-Old writers remain. No full suite, socket/browser suite, App journey, shared-source authoring, public generated-client release, or qualified removal is claimed here.
+The three original strict clear positives now pass against that real RuntimeService
+and the restored committed main-API film/CAS backup: first-birth inverse restores
+absence; empty-text clear/inverse restores the descriptor at its original list
+position; V1 remains retained through V2, clear, restart and grouped inverse.
+Tests also assert GET/list absence, exact retry, historical shot payloads, event
+presence transitions and store integrity. They no longer carry expected failures.
+
+Exact retained legacy MIME remains blocked in Runtime. Agent's inverse already
+loads accepted history/boundaries and restores the entire recorded row verbatim;
+unit tests prove legacy `text/plain`, cached text, opaque fields and position for
+both clear and rebind. Newly selected text still requires canonical
+`text/plain; charset=utf-8`. Runtime `_project_text_binding` instead calls the same
+`verify_text_object` new-selection validator for all after descriptors, and even
+for the retained current descriptor when clearing. The original legacy rebind
+inverse positive and an added legacy clear/inverse positive remain strict xfails
+for that exact error. Their failed attempts preserve the entire SQLite state and
+retained CAS bytes. Runtime needs a bounded distinction between new selection and
+authenticated retained descriptor verification, preserving scope/hash/size/UTF-8
+and exact recorded MIME; arbitrary MIME admission or normalization is not a fix.
+No Runtime product code is changed by this Agent worker.
+
+Reproduction, private candidate source/generation inventory and exact test commands
+are outside the repository under orchestrator worker
+`agt-m2-text-clear-retained-pair/notes/report.md`. Old writers and App cutover stay
+held. No public generated-client release, full suite, browser/socket/App journey,
+legacy restoration completion or writer retirement is claimed.
