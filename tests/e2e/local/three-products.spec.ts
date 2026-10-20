@@ -802,6 +802,8 @@ async function ownerWithTwoMoves(page: Page, seed: ThreeProductsSeed) {
 }
 
 async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
+  // A case selected alone must establish its own verified authoring baseline.
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
   await openApp(page, harness);
   await expectConnected(page);
