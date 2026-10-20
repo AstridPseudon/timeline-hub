@@ -767,6 +767,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     commitData: save.commitData,
     dataRef: save.dataRef,
     trackLabelPort: save.commands.trackLabelPort,
+    clipDeletePort: save.commands.clipDeletePort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,
@@ -891,6 +892,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
+    clipDeletePort: save.commands.clipDeletePort,
+    editability: runtime.timelineEditability,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,
@@ -1163,6 +1166,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
+    clipDelete: save.commands.clipDeletePort,
     trackLabel: save.commands.trackLabelPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
@@ -1222,7 +1226,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipDeletePort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
