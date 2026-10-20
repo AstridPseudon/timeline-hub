@@ -88,6 +88,25 @@ export function projectedClipCounterparts(composition: PreparedShotComposition, 
   return counterparts;
 }
 
+/** Raw child IDs already owned by the verified retained shot-revision closure. */
+export function verifiedRetainedRawClipIds(composition: PreparedShotComposition): Set<string> {
+  const ids = new Set<string>();
+  for (const revision of composition.contract.shot_revisions) {
+    const internal = revision.internal_timeline_revision;
+    if (!internal || typeof internal !== 'object' || Array.isArray(internal)) continue;
+    const timeline = (internal as Record<string, unknown>).timeline;
+    if (!timeline || typeof timeline !== 'object' || Array.isArray(timeline)) continue;
+    const clips = (timeline as Record<string, unknown>).clips;
+    if (!Array.isArray(clips)) continue;
+    for (const clip of clips) {
+      if (!clip || typeof clip !== 'object' || Array.isArray(clip)) continue;
+      const id = (clip as Record<string, unknown>).id;
+      if (typeof id === 'string') ids.add(id);
+    }
+  }
+  return ids;
+}
+
 /** Only explicitly projected callers use the verified graph to remove the new view hint. */
 export function serializeProjectedTimelineConfig<T extends TimelineConfig>(
   config: T,
@@ -97,14 +116,18 @@ export function serializeProjectedTimelineConfig<T extends TimelineConfig>(
   if (new Set(config.clips.map((clip) => clip.id)).size !== config.clips.length) {
     throw new Error('Projected serialization requires unambiguous clip identities; keep the draft');
   }
+  const retainedRawClipIds = verifiedRetainedRawClipIds(composition);
+  for (const clip of config.clips) {
+    if (retainedRawClipIds.has(clip.id)) {
+      throw new Error(`The projected clip ${clip.id} collides with a retained raw clip ID; keep the draft`);
+    }
+  }
   const counterparts = projectedClipCounterparts(composition, config.clips);
-  const parent = composition.contract.parent_composition as Record<string, unknown>;
-  const parentConfig = parent.config as { clips?: TimelineClip[] } | undefined;
-  const parentClips = (Array.isArray(parent.clips) ? parent.clips : parentConfig?.clips ?? []) as TimelineClip[];
   return { ...config, clips: config.clips.map((clip) => {
     if (!counterparts.has(clip.id)) {
-      if (parentClips.filter((raw) => raw.id === clip.id).length === 1) return clip;
-      throw new Error(`The projected clip ${clip.id} has no verified raw counterpart; keep the draft`);
+      // A clip outside the retained projection is a new editor-authored clip;
+      // it has no raw graph counterpart to restore and must pass through as-is.
+      return clip;
     }
     const raw = counterparts.get(clip.id);
     if (!raw) throw new Error('The projected clip has no unambiguous raw counterpart');

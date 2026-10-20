@@ -1,4 +1,8 @@
-import { projectedClipCounterparts, serializeProjectedTimelineConfig } from '@/tools/video-editor/lib/serialize.ts';
+import {
+  projectedClipCounterparts,
+  serializeProjectedTimelineConfig,
+  verifiedRetainedRawClipIds,
+} from '@/tools/video-editor/lib/serialize.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
 import {
@@ -134,10 +138,26 @@ export function createShotTimelineInitialData(
 }
 
 function createCanonicalTimeline(config: TimelineConfig, composition: PreparedShotComposition): Record<string, unknown> {
+  const retainedRawClipIds = verifiedRetainedRawClipIds(composition);
+  for (const clip of config.clips) {
+    if (retainedRawClipIds.has(clip.id)) {
+      throw new Error(`The shot draft clip ${clip.id} collides with a retained raw clip ID; keep the draft`);
+    }
+  }
   const counterparts = projectedClipCounterparts(composition, config.clips);
   const clips = (config.clips ?? []).map((clip) => {
     const raw = counterparts.get(clip.id);
-    if (!raw) throw new Error('The shot draft has no unambiguous raw clip counterpart');
+    // A clip absent from the verified identity map is a newly authored editor
+    // clip (existing projected clips are present with either a raw match or a
+    // null value when their identity is ambiguous). Keep it intact so popup
+    // add remains a normal authoring operation.
+    if (!raw && counterparts.has(clip.id)) {
+      throw new Error('The shot draft has no unambiguous raw clip counterpart');
+    }
+    if (!raw) {
+      const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
+      return persistedClip;
+    }
     const rawApp = raw.app as Record<string, unknown> | undefined;
     const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
       ? { ...clip.app } : clip.app;
