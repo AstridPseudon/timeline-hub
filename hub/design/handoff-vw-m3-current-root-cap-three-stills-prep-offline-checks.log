@@ -1,0 +1,1 @@
+PASS: missing-grant refusal; exact 3-PNG all-pixel positive; +2 accepted; one pixel +3 rejected; wrong dimensions rejected. No browser/render.

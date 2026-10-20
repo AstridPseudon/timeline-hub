@@ -1,0 +1,5 @@
+src/tools/video-editor/compositions/AudioTrack.test.tsx
+src/tools/video-editor/compositions/AudioTrack.tsx
+src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx
+src/tools/video-editor/compositions/continuousPCM.contract.test.tsx
+src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx

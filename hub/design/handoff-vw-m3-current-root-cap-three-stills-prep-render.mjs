@@ -3,10 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
-import {pathToFileURL} from 'node:url';
+import {pathToFileURL, fileURLToPath} from 'node:url';
 const orch = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch';
 const worker = 'vw-m3-current-root-cap-three-stills-prep';
 const prefix = `${orch}/design/handoff-${worker}-`;
+checkRendererPath();
+function checkRendererPath() {
+  if (fileURLToPath(import.meta.url) !== `${prefix}render.mjs`) throw new Error('unapproved renderer path');
+}
 const own = `${orch}/workers/${worker}`;
 const graph = '/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules';
 const stage = process.argv[2];

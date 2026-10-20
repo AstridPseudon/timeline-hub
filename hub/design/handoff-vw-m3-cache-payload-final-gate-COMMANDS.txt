@@ -1,0 +1,13 @@
+Read-only review:
+git -C /home/user/work/agent show --stat --oneline 17a13fcfc
+git -C /home/user/work/agent show 17a13fcfc -- astrid/packs/rendering/actions/timeline_visualize/composed_frame.py tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_scene_source_carry.py
+nl -ba /home/user/work/agent/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py | sed -n '1758,1783p;1840,1854p'
+git -C /home/user/work/agent diff --name-only 17a13fcfc^ 17a13fcfc
+git status --short
+
+Independent isolated reruns (temporary archive cleaned with find/rmdir-safe cleanup):
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$scratch" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "$scratch/tests/packs/rendering/test_scene_cache_payload.py" -k 'planted_stale_or_forged_entry_renders_fresh or payload_bindings_checked_after_owner_integrity or failed_batch_never_mints_cache_payload or payload_counts_toward_existing_cache_caps'
+# 22 passed, 15 deselected in 4.88s
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$scratch" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "$scratch/tests/packs/rendering/test_scene_source_carry.py" -k 'mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames and transport'
+# 1 passed, 58 deselected in 3.36s

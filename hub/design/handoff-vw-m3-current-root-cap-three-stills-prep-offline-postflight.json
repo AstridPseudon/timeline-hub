@@ -1,6 +1,7 @@
 {
   "valid": true,
   "error": null,
+  "post_errors": [],
   "before": {
     "entries": 21488,
     "sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
@@ -35,6 +36,7 @@
       "fileCount": 255
     }
   },
+  "source_outputs_unchanged": true,
   "capture_run": false,
-  "temp_removed_on_exit": "/tmp/vw-cap-o4w2f9vn"
+  "temp_removed_on_exit": "/tmp/vw-cap-x2der3rp"
 }

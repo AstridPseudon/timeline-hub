@@ -1,2 +1,3 @@
-UTC: 2026-10-20T13:44:07Z (area lead, disk)
-Free 13703643136 bytes (>13 GB). bin/recycle: tab-minimal-capability, tab-discovery-fix, main-cap-controller-repair, main-cap-locked-theme-stage. Removed 1.9 GB stale worker scratch under /tmp (>2 h, no process, no shared-graph link into it, no result/evidence/capture names; lead/tmp-cleanup.log). Kept f816 graph, private12 clean-project graph (tab-clean-install-source-compose), short-owned-tmp KEEP, scene-host graph, active work. Manager told heavy runs may resume; course correction + Sol/Luna rule relayed; kit dispatch already has the Sol/Luna downgrade.
+UTC: 2026-10-20T13:55:24Z (area lead)
+Lead decided: manager told via INBOX to re-read MANAGER-COMMON.md (owner direction 13:46Z) and confirm in STATUS; it will be restarted at the next check-in if it hasn't adopted the rules (keeps in-flight context meanwhile).
+Disk ~13.7 GB; link repairs awaiting the owner in this session.

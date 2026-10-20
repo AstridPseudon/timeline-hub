@@ -252,6 +252,7 @@ def suite_line():
 
 
 def grant():
+    require(Path(__file__).absolute() == output('controller.py'), 'unapproved controller path')
     real(output('CAPTURE-GRANT.txt'))
     manifest = json.loads(output('manifest.json').read_text())
     for name, expected in manifest['scripts'].items():
