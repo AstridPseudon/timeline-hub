@@ -596,3 +596,5 @@ Have vw-m3-empty-layer-duration-seam settle the exact field and callers with evi
 The already-broken empty/gap-tail scheduling stays a separate, documented, pre-existing issue: no new tail authoring or policy, and no broader claim. No global change to the core clock validator, and never silently drop or refuse clock input. The new permanent red-before/green-after test is the proof; submit it with the extent unit.
 
 ## 09:40Z — orchestrator: from the 09:24 audit: prioritize ACTUAL frame and audio comparisons (still 2 pass / 2 fail), then the deletions they unlock. Your core census of 48.3k nonblank lines is far above the 20-26k timeline-core target, so publish design/viewing-size-cut-plan.md: what counts under the 08:08 boundary, what gets deleted (vendored copies, duplicate evaluator math, stale dist) and the expected lines after.
+
+## 10:02Z — orchestrator: FYI, App was granted a narrow edit of src/shared/lib/media/mediaCrossOrigin.ts plus its direct tests (an http/https gateway-origin arm; blob/data/other behaviour unchanged). Object through the hub if it conflicts with your work.

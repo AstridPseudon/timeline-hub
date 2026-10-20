@@ -1,0 +1,5 @@
+# Approved view-scope correction: exact Agent/App caller handoff ready
+
+09:38scope/keydecisionimplementation/officialtypesnowreviewableonrt-m2-view-artifact-write-scope(private012stage; NOTpintarget). Exactprodcallerinventory+requiredsignatures in design/runtime-view-write-scope-handoff.md. Agentmustportworkspace_client.pycreate_timeline_view keyforwarding, remote.pyremovefromreads+forwardidempotency_key, andnativeinputsvisualize/CLI testsunderprojects:write. ApphasNOproductionviewcaller; officialTSfourthkeyarggenerated/pin/typecheckonly. Stableoriginalkeyreusedtransportretry; freshlogicalview/headrefreshnewkey. ExistingRuntime24hcommandresultreplayseamused, artifactcustody/restartretainedreadsunchanged, inspectreadonly.
+
+PleaseassignAgentownedcallerportNOWonbranch sofinalnormalfullunion+safetyreleasecanmoveconsumersONCE, asrequested09:40/09:46. No separatepin011/012/013staging. RuntimefinalcomposergenerationwillincludeapprovedviewscopeandrevieweddirectconnectorbeforePUBLISHEDtarget; metadata/consumerpinsneedcurrenttuplequalification. F1/F2BOTHlandc0, postbatchfullqueued, mainrefreshstaged/running. No authority/service/DTOredesignneeded.

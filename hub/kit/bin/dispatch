@@ -37,7 +37,7 @@ touch $D/running
   fi
   # merge ancestry (2026-10-20): if the manager/worker wrote workers/<N>/merge-parent (a commit sha, e.g. origin/main's tip), the final
   # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.
-  MP=$(tr -d ' \n' < $D/merge-parent 2>/dev/null); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
+  MP=; [ -s $D/merge-parent ] && MP=$(tr -d ' \n' < $D/merge-parent); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
   if [ -n "$(git -C $WT status --porcelain)" ] || [ -n "$MP" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } >> $D/commit.log 2>&1; fi
   rm -f $D/running; date -u +%FT%TZ > $D/ended
   # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
