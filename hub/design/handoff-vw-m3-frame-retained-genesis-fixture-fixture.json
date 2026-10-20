@@ -1,0 +1,152 @@
+{
+  "setup": "synthetic initial retained source; NOT an edit-writer or capture qualification",
+  "canonical_document": {
+    "schema_version": 1,
+    "project_id": "project-demo",
+    "timeline_id": "timeline-1",
+    "parent_revision": {
+      "revision_id": "image-cap-parent",
+      "payload": {
+        "config": {
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual",
+              "label": "Picture",
+              "fit": "cover"
+            }
+          ],
+          "clips": [],
+          "output": {
+            "fps": 30,
+            "resolution": "1920x1080",
+            "file": "output.mp4"
+          },
+          "theme_overrides": {
+            "visual": {
+              "canvas": {
+                "width": 1920,
+                "height": 1080,
+                "fps": 30
+              }
+            }
+          }
+        },
+        "registry": {
+          "assets": {}
+        },
+        "clips": [],
+        "occurrences": [
+          {
+            "occurrence_id": "image-occurrence",
+            "shot_id": "image-shot",
+            "shot_revision_id": "image-shot-revision",
+            "placement": {
+              "start_ms": 0,
+              "track": "picture"
+            },
+            "track": "picture",
+            "duration_ms": 4000,
+            "source_offset": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "transform": {},
+            "provenance": {}
+          }
+        ]
+      },
+      "content_digest": "sha256:944b16e44a478edbf43604acbaf8dbc529c13fb168b7b81ead4d3c9bb0705d7b"
+    },
+    "shot_revisions": [
+      {
+        "shot_id": "image-shot",
+        "revision_id": "image-shot-revision",
+        "internal_timeline_revision_id": "image-internal",
+        "payload": {
+          "name": "Image cap analog",
+          "text_bindings": [],
+          "internal_timeline_revision_id": "image-internal"
+        },
+        "content_digest": "sha256:d13b62cdcec2030ff97716ae5637ff6ea49a3d7beccf263bba43ff302be2b48e"
+      }
+    ],
+    "internal_timeline_revisions": [
+      {
+        "timeline_id": "timeline-1",
+        "revision_id": "image-internal",
+        "payload": {
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual",
+              "label": "Picture",
+              "fit": "cover"
+            }
+          ],
+          "clips": [
+            {
+              "id": "image",
+              "clipType": "image",
+              "asset": "image",
+              "track": "picture",
+              "at": 0,
+              "hold": 5,
+              "effects": [
+                {
+                  "fade_out": 1
+                }
+              ]
+            }
+          ],
+          "registry": {
+            "assets": {
+              "image": {
+                "media_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+                "content_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+                "type": "image",
+                "resolution": "16x16"
+              }
+            }
+          }
+        },
+        "content_digest": "sha256:9c48e51eaa62d090b254427ff6611e1798a8d564529964b191eaa6f94920f3bb"
+      }
+    ],
+    "dependency_manifest": {
+      "shots": [
+        {
+          "shot_id": "image-shot",
+          "revision_id": "image-shot-revision",
+          "internal_timeline_revision_id": "image-internal",
+          "content_digest": "sha256:d13b62cdcec2030ff97716ae5637ff6ea49a3d7beccf263bba43ff302be2b48e"
+        }
+      ],
+      "internal_timelines": [
+        {
+          "timeline_id": "timeline-1",
+          "revision_id": "image-internal",
+          "content_digest": "sha256:9c48e51eaa62d090b254427ff6611e1798a8d564529964b191eaa6f94920f3bb"
+        }
+      ],
+      "media": [
+        {
+          "media_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+          "content_digest": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6"
+        }
+      ],
+      "documents": []
+    }
+  },
+  "document_digest": "sha256:63432db90f608eeff62426f66ca934d64c3ce653c7d994addf0741ff9194cf85",
+  "media": [
+    {
+      "object_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "digest": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
+      "size": 77,
+      "media_type": "image/png",
+      "original_name": "image-cap.png",
+      "bytes_base64": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFElEQVR4nGP4QCJgGNUwqmH4agAAw6LQH2lQdaIAAAAASUVORK5CYII="
+    }
+  ]
+}
