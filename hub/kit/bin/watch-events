@@ -22,7 +22,8 @@ while true; do
     [ -e $ORCH/managers/$m/REMOTE ] || h=$(head -1 /home/user/timeline-hub/hub/status/$m.md 2>/dev/null)
     sage=$(echo "$h" | sed -n 's/.*status age \([0-9]*\)m.*/\1/p'); live=$(echo "$h" | sed -n 's/.*| live \([0-9]*\) .*/\1/p')
     [ -n "$sage" ] && [ "$sage" -gt 45 ] && emit "MANAGER_QUIET $m status ${sage}m old $(date -u +%Y%m%dT%H)"
-    [ -n "$live" ] && [ "$live" -lt 4 ] && emit "LOW_CAPACITY $m live $live $(date -u +%Y%m%dT%H)"
+    busy=$(echo "$h" | sed -n 's/.*busy30 \([0-9]*\).*/\1/p'); [ -n "$busy" ] || busy=$live   # busy30 = running now or finished in the last 30 min
+    [ -n "$busy" ] && [ "$busy" -lt 4 ] && emit "LOW_CAPACITY $m live $live busy30 $busy $(date -u +%Y%m%dT%H)"
   done
   # M2 burndown: alarm when no ledger row became DELETED for 2 hours
   dc=$(grep -cE '^\|[^|]*\|.*\| *DELETED' $ORCH/design/deletion-ledger.md 2>/dev/null); dc=${dc:-0}

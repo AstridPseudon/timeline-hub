@@ -156,3 +156,10 @@ npm run check:docs-maturity-sync
 ```
 
 The cross-repo scan should be run with an allowlist only if the naming-plan owner deliberately retains its historical R4 prose; no code or test should be allowlisted. No full suite, browser, localhost, ZIP, publish, checkout, branch mutation, or product-file deletion was performed.
+
+Architecture replacement landed: Agent130b4937 (401words +guide link), docrefs0errors/0warnings. Four currentintegration docs/projects/timeline-r4 inventories remain empty:
+- agent 130b4937856872b7abac35128cdf66222cf67165: 0 paths
+- runtime 16acbb6ef94a6d8e226ccdc351ba0d96e0b09ea5: 0 paths
+- app 41fff23a29f13bd9aede6343592ffba8adebe1a3: 0 paths
+- composition 5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8: 0 paths
+D11 is removed from the integration surface by non-port; the historical control archive remains unchanged. This is not a fictitious deletion commit or M4 completion.
