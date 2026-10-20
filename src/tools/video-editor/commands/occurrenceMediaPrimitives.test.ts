@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
-import { copy } from './clipMovePrimitives.ts';
-import { OccurrenceMediaRecording, OccurrenceMediaState } from './occurrenceMediaPrimitives.ts';
+import { copy, has } from './clipMovePrimitives.ts';
+import { OccurrenceMediaRecording, OccurrenceMediaState, rawIdentity } from './occurrenceMediaPrimitives.ts';
 import fixture from './fixtures/recipe_m2_occurrence_media.json';
 
 const owner = 'occurrence:occ-a', ref = `${owner}/asset:reserved-new`;
@@ -16,6 +16,55 @@ const recording = async () => {
 };
 
 describe('scoped authored media primitives', () => {
+  it.each(['__proto__', 'constructor', 'toString'])('births valid raw alias %s as own dictionary data', async (identity) => {
+    const ctx = await recording(), ref = `${owner}/asset:${identity}`;
+    const registry = ctx.state.config(owner).registry as { assets: Record<string, unknown> };
+    const prototype = Object.getPrototypeOf(registry.assets);
+    expect(rawIdentity(identity)).toBe(true);
+    expect(has(registry.assets, identity)).toBe(false);
+    expect(ctx.state.entity(ref, true)).toBeUndefined();
+    expect(() => ctx.state.entity(ref)).toThrow('missing asset identity');
+    expect(ctx.state.get(ref, [])).toEqual({ state: 'absent' });
+    ctx.createAsset(owner, identity, binding);
+    expect(Object.getPrototypeOf(registry.assets)).toBe(prototype);
+    expect(Object.getOwnPropertyDescriptor(registry.assets, identity)).toEqual({
+      value: binding, enumerable: true, configurable: true, writable: true,
+    });
+    expect(ctx.state.get(ref, [])).toEqual({ state: 'present', value: binding });
+    expect(JSON.parse(JSON.stringify(registry.assets))[identity]).toEqual(binding);
+    expect(ctx.command.created).toEqual([ref]);
+    expect(ctx.record.created).toEqual([{ ref, kind: 'asset', owner }]);
+    expect(ctx.command.expect).toEqual({ [`${ref}::`]: { state: 'absent' } });
+    expect(ctx.command.authorship).toEqual({ [`${ref}::`]: 'direct' });
+    expect(ctx.record.writes).toEqual([{ ref, path: [], before: { state: 'absent' }, after: { state: 'present', value: binding } }]);
+    const captured = copy(ctx.record);
+    expect(() => ctx.createAsset(owner, identity, binding)).toThrow('occupied');
+    expect(ctx.record).toEqual(captured);
+  });
+
+  it.each(['__proto__', 'constructor', 'toString'])('overwrites, clones and deletes own alias %s without changing its dictionary prototype', async (identity) => {
+    const ctx = await recording(), ref = `${owner}/asset:${identity}`;
+    const registry = ctx.state.config(owner).registry as { assets: Record<string, unknown> };
+    const before = copy(registry.assets), prototype = Object.getPrototypeOf(registry.assets);
+    const value = JSON.parse(`{"${identity}":{"opaque":[null,false,{}],"nullable":null}}`)[identity];
+    registry.assets = JSON.parse(JSON.stringify({ ...registry.assets, [identity]: binding }));
+    expect(() => ctx.createAsset(owner, identity, binding)).toThrow('occupied');
+    ctx.state.set(ref, [], { state: 'present', value });
+    value.opaque.push('caller mutation');
+    expect(ctx.state.get(ref, [])).toEqual({ state: 'present', value: { opaque: [null, false, {}], nullable: null } });
+    expect(ctx.state.get(ref, ['nullable'])).toEqual({ state: 'present', value: null });
+    expect(ctx.state.get(ref, ['missing'])).toEqual({ state: 'absent' });
+    expect(Object.getPrototypeOf(registry.assets)).toBe(prototype);
+    expect(Object.getOwnPropertyDescriptor(registry.assets, identity)).toEqual({
+      value: { opaque: [null, false, {}], nullable: null }, enumerable: true, configurable: true, writable: true,
+    });
+    ctx.state.set(ref, [], { state: 'absent' });
+    expect(has(registry.assets, identity)).toBe(false);
+    expect(ctx.state.get(ref, [])).toEqual({ state: 'absent' });
+    expect(registry.assets).toEqual(before);
+    expect(Object.getPrototypeOf(registry.assets)).toBe(prototype);
+  });
+
   it('records whole-entity absent/present writes and one ordinary asset birth', async () => {
     const ctx = await recording(), before = copy(ctx.state.bundle);
     ctx.createAsset(owner, 'reserved-new', binding);

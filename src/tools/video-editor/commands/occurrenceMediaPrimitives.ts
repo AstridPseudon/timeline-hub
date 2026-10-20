@@ -53,7 +53,9 @@ export class OccurrenceMediaState extends AuthoredState {
       const registry = this.config(owner).registry;
       if (!object(registry) || !object(registry.assets)) throw new ClipMoveError('asset collection must be an object');
       if (state.state === 'absent') delete registry.assets[identity];
-      else if (object(state.value)) registry.assets[identity] = copy(state.value);
+      else if (object(state.value)) Object.defineProperty(registry.assets, identity, {
+        value: copy(state.value), enumerable: true, configurable: true, writable: true,
+      });
       else throw new ClipMoveError('asset binding must be an object');
       return;
     }
