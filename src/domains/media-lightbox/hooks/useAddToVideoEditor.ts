@@ -8,6 +8,7 @@ import { getClipTimelineDuration } from '@/tools/video-editor';
 import { videoEditorPathWithTimeline } from '@/tools/video-editor/lib/video-editor-path';
 import { videoEditorSettings } from '@/tools/video-editor/settings/videoEditorDefaults';
 import {
+  getGenerationAssetDisplayMetadata,
   getPlayableAssetKind,
   planGenerationAssetRegistration,
 } from '@/tools/video-editor/lib/timeline-asset-plans';
@@ -93,6 +94,10 @@ export function useAddToVideoEditor(media: GenerationRow | undefined): UseAddToV
         variantType: media.type === 'video' ? 'video' : 'image',
         imageUrl: media.location ?? media.imageUrl ?? '',
         thumbUrl: media.thumbUrl ?? media.imageUrl ?? media.location ?? '',
+        metadata: {
+          content_type: media.type,
+          ...getGenerationAssetDisplayMetadata(media),
+        },
       });
       if (!registrationPlan.ok) {
         toast.error('Could not register asset');

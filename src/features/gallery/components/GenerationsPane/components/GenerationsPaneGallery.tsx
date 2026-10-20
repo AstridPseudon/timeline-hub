@@ -58,6 +58,7 @@ interface GenerationsPaneGalleryModel {
   onAddGenerationToTimeline?: (generationId: string) => void;
   config?: Partial<GalleryConfig>;
   readOnly?: boolean;
+  emptyStateMessage?: string;
 }
 
 interface GenerationsPaneGalleryProps {
@@ -289,7 +290,7 @@ export function GenerationsPaneGallery({
 
         {gallery.items.length === 0 && !loading.isLoading && !error && (
           <div className="flex-1 flex items-center justify-center text-zinc-500">
-            No generations found for this project.
+            {gallery.emptyStateMessage}
           </div>
         )}
       </div>

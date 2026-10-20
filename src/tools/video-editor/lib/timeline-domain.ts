@@ -227,6 +227,12 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
 
 const ASSET_REGISTRY_ENTRY_FIELDS = [
   'file',
+  'original_name',
+  'original_filename',
+  'filename',
+  'name',
+  'title',
+  'prompt',
   'media_id',
   'url',
   'etag',

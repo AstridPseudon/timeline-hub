@@ -37,6 +37,20 @@ function bodyProps(hasActiveAstridElementParams?: boolean): ClipPanelBodyProps {
 }
 
 describe('ClipPanelBody Astrid form ownership', () => {
+  it('uses the resolved human-readable clip label in the Inspector header', () => {
+    render(<ClipPanelBody {...bodyProps()} clip={{
+      id: 'clip-1',
+      clipType: 'media',
+      at: 0,
+      track: 'V1',
+      asset: 'asset-1',
+      label: 'first take.mp4',
+      assetEntry: { file: '/opaque-asset-id', src: '/opaque-asset-id', type: 'video/mp4' },
+    }} />);
+    expect(screen.getByText('first take.mp4')).toBeInTheDocument();
+    expect(screen.queryByText('asset-1')).not.toBeInTheDocument();
+  });
+
   it('forwards active form ownership to the effects tab', () => {
     render(<ClipPanelBody {...bodyProps(true)} />);
     expect(screen.getByTestId('effects-astrid-form-state').textContent).toBe('true');

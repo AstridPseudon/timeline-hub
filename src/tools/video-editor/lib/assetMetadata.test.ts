@@ -611,6 +611,24 @@ describe('sanitizeAssetRegistryEntry', () => {
     expect(result.origin).toBe('immutable-public');
   });
 
+  it('preserves human-readable names used by timeline clip labels', () => {
+    const result = sanitizeAssetRegistryEntry({
+      ...baseEntry,
+      original_name: 'camera/first take.mp4',
+      original_filename: 'first take.mp4',
+      name: 'Mountain pass',
+      title: 'Opening shot',
+      prompt: 'A slow pan over a valley',
+    });
+    expect(result).toMatchObject({
+      original_name: 'camera/first take.mp4',
+      original_filename: 'first take.mp4',
+      name: 'Mountain pass',
+      title: 'Opening shot',
+      prompt: 'A slow pan over a valley',
+    });
+  });
+
   it('sanitizes metadata through validateAssetMetadata', () => {
     const entry: AssetRegistryEntry = {
       ...baseEntry,

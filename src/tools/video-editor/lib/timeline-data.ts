@@ -38,6 +38,7 @@ import {
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
 import { snapToFrameGrid } from '@/tools/video-editor/lib/time-grid.ts';
+import { deriveTimelineClipDisplayNames } from '@/tools/video-editor/lib/clipDisplayNames.ts';
 
 export interface ClipMeta {
   asset?: string;
@@ -458,14 +459,27 @@ export const assembleTimelineData = ({
   const canonicalResolvedConfig = outputMissingResolution
     ? { ...resolvedConfig, output: canonicalOutput }
     : resolvedConfig;
+  const displayNames = deriveTimelineClipDisplayNames(
+    canonicalResolvedConfig.clips,
+    canonicalResolvedConfig.registry,
+    canonicalResolvedConfig.tracks,
+  );
+  const resolvedClips = canonicalResolvedConfig.clips.map((clip) => ({
+    ...clip,
+    label: displayNames.get(clip.id),
+  }));
   const rowData = configToRows(canonicalConfig);
+  for (const [clipId, label] of displayNames) {
+    const clipMeta = rowData.meta[clipId];
+    if (clipMeta) rowData.meta[clipId] = { ...clipMeta, label };
+  }
 
   return {
     config: canonicalConfig,
     configVersion,
     ...(head ? { head } : {}),
     registry,
-    resolvedConfig: canonicalResolvedConfig,
+    resolvedConfig: { ...canonicalResolvedConfig, clips: resolvedClips },
     rows: rowData.rows,
     meta: rowData.meta,
     effects: rowData.effects,

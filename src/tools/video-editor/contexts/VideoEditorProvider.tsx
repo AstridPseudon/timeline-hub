@@ -78,6 +78,7 @@ import {
   writePendingAdds,
 } from '@/domains/media-lightbox/hooks/addToVideoEditorConstants.ts';
 import {
+  getGenerationAssetDisplayMetadata,
   getPlayableAssetKind,
   planGenerationAssetRegistration,
 } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
@@ -582,7 +583,10 @@ export function VideoEditorRuntimeContent({
             thumbUrl: generation.thumbUrl ?? generation.imageUrl ?? generation.location ?? '',
             // A Runtime generation's type is its MIME type (`video/mp4`), not the word `video`:
             // without it a Runtime video registers as a still image and plays black.
-            metadata: { content_type: generation.type },
+            metadata: {
+              content_type: generation.type,
+              ...getGenerationAssetDisplayMetadata(generation),
+            },
           });
           if (!registrationPlan.ok) {
             runtime.toast.error('Could not register asset');

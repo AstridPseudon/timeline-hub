@@ -234,7 +234,7 @@ export function ClipPanelBody({
                 ? (clipDescriptor?.label ?? clip.clipType ?? clip.id)
                 : supportsInlineTextEdit
                   ? (clip.text?.content || clipDescriptor?.label || clip.id)
-                  : (clip.asset || clipDescriptor?.label || clip.id)}
+                  : (clip.label || clip.asset || clipDescriptor?.label || clip.id)}
           </div>
           <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             {clip.clipType ?? 'media'} · {track?.label ?? clip.track}
