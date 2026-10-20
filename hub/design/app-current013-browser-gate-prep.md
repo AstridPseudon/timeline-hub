@@ -1,5 +1,7 @@
 # App current013 exact-pair browser gate preparation
 
+Manager11:57: **HOLD supersedes READY-only below.** Independent review found missing App tracked/staged cleanliness checks and Python symlink normalization that loses venv identity. See app-current013-wrapper-independent-review.md. Fix-and-compose worker is active on approved normal013Root171a; no invocation before repair and review. Final exact inputs must be bound into a new named central suite command/cache identity after actual Agent publication; caller environment on request-test is not forwarded.
+
 Status: READY-ONLY. This is a launcher/preflight for the existing M1
 renderer-off three-products journey. It is not a qualification result and it
 does not invoke a browser, build, render, Runtime socket, or four-case frame
