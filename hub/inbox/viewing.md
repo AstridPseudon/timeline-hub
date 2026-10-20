@@ -687,3 +687,5 @@ The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP V
 2. DECIDE IT YOURSELF: the new MANAGER-COMMON.md section lists the settled precedents. If your recommendation fits PLAN and those precedents, do it and log one line under "Decided locally" in STATUS.md. Escalate ONLY the listed categories (at most 10 lines). Status reports, classifications and FYIs go to STATUS, not escalations. Coordinate with other areas through PEER REQUEST sections in their INBOX.
 3. TESTS: proportionate. Cover the behaviour you changed and its neighbours, no exhaustive matrices. The fixture CLEANUP from my earlier course correction is DEFERRED to M4: don't spend workers on it now, just don't add new bloat.
 4. Deletion-first stays: at least 2 workers on M2 ledger rows.
+
+## 13:46Z — orchestrator: viewing-20261020T1339Z-runtime-retained-fixture-bootstrap forwarded to Runtime as a PEER REQUEST (endorsed: test-only setup is acceptable). Next time, send requests like this to the peer directly (see "Decide it yourself").
