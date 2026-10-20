@@ -1,3 +1,4 @@
+import { finishClipParams, type ClipParamsArgs } from '../clipParamsCapture.ts';
 import { vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
@@ -12,6 +13,9 @@ import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
+import { executeClipTrim } from '../clipTrimCapture.ts';
+import type { AssetRegistry } from '../../types/index.ts';
+import trimFixture from '../fixtures/recipe_m2_clip_trim.json';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -28,6 +32,18 @@ export function document(at = 1, revision = 'r0'): CanonicalDocument {
   raw.parent_revision.payload = { config: { output: { fps: 30, resolution: '1920x1080' },
     tracks: [{ id: 'V1', kind: 'visual' }], clips: structuredClone(clips), bundle: null },
   tracks: [{ id: 'V1', kind: 'visual' }], registry: { assets: {} }, clips, occurrences: [], opaque: { absent: null } };
+  raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+  return raw;
+}
+export function trimDocument(): CanonicalDocument {
+  const raw = document();
+  const clips = [{ id: 'x', track: 'V1', asset: 'picture', clipType: 'media', at: 1, hold: 17,
+    from: 2, to: 6, speed: 2, app: { astrid: { for: 19, until: null, opaque: [null, false] },
+      'org.example': { literal: 'x', clear: null } }, unknown: { keep: [null, false, 0] } },
+  { id: 'other', track: 'V1', at: 25, hold: 1, app: { opaque: [null, false] } }];
+  raw.parent_revision.payload.clips = structuredClone(clips);
+  raw.parent_revision.payload.config = { ...raw.parent_revision.payload.config as object, clips };
+  raw.parent_revision.payload.registry = structuredClone(trimFixture.input.parent_revision.payload.registry);
   raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
   return raw;
 }
@@ -91,12 +107,15 @@ export async function environment(initialDocument = document()) {
       response.data.previous_revision_id = serverHead.revisionId;
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
-      if (request.commands[0].op === 'clip.move' || request.commands[0].op === 'track.set') {
+      if (['clip.move', 'track.set', 'clip.trim', 'clip.set-params'].includes(request.commands[0].op)) {
         let result;
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);
           result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
-            : finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs);
+            : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
+            : request.commands[0].op === 'track.set'
+              ? finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs)
+              : finishClipParams({ bundle, command: request.commands[0] }, request.commands[0].args as ClipParamsArgs);
         }
         catch (error) {
           if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
@@ -127,7 +146,8 @@ export async function environment(initialDocument = document()) {
   };
   const provider = new RuntimeDataProvider({ projectId, baseUrl: `http://session-${crypto.randomUUID()}.test`, token: 'token', transport });
   const initial = await provider.loadTimelineCommandBasis(timelineId);
-  let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, { assets: {} }, undefined, 1, undefined,
+  let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never,
+    serverDocument.parent_revision.payload.registry as AssetRegistry, undefined, 1, undefined,
     { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
   const projected: TimelineCommandBasis[] = [];
   const previews = vi.fn();
@@ -138,7 +158,7 @@ export async function environment(initialDocument = document()) {
     project: async (basis) => {
       projected.push(basis);
       const parent = basis.canonicalDocument.parent_revision.payload;
-      current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, { assets: {} }, undefined,
+      current = await buildTimelineData({ ...parent.config as object, clips: parent.clips } as never, parent.registry as AssetRegistry, undefined,
         1, undefined, { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
     }, changed: () => {},
   });

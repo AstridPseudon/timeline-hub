@@ -12,7 +12,8 @@ import type { ClipTypeDescriptor } from '@/tools/video-editor/clip-types/defineC
 import { KeyframeInspector } from '@/tools/video-editor/components/KeyframeInspector/KeyframeInspector';
 import type { EffectResource } from '@/tools/video-editor/hooks/useEffectResources.ts';
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import type { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
 import type {
   ResolvedTimelineClip,
@@ -34,6 +35,9 @@ const LazyEffectCreatorPanel = lazy(() =>
 export function ClipEffectsTab({
   clip,
   onChange,
+  clipParamsPort,
+  current,
+  clipId,
   effectResources,
   clipDescriptor,
   isClipTypeRegistered = false,
@@ -53,6 +57,9 @@ export function ClipEffectsTab({
 }: {
   clip: ResolvedTimelineClip;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  clipParamsPort?: ClipParamsCapturePort;
+  current?: TimelineData;
+  clipId?: string;
   effectResources: VideoEditorEffectCatalog;
   clipDescriptor: ClipTypeDescriptor | undefined;
   isClipTypeRegistered?: boolean;
@@ -116,6 +123,9 @@ export function ClipEffectsTab({
         params={clip.params}
         registry={registry}
         hideEmptyState={hasActiveAstridElementParams}
+        clipParamsPort={clipParamsPort}
+        current={current}
+        clipId={clipId}
         onChange={(nextParams) => onChange({ params: nextParams })}
       />
     );

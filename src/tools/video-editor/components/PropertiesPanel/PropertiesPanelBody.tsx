@@ -232,6 +232,7 @@ function PropertiesPanelComponent({
     setPrecisionEnabled,
     setSelectedTrackId,
     applyEdit,
+    clipParams,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
@@ -551,6 +552,8 @@ function PropertiesPanelComponent({
             precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
+            clipParamsPort={clipParams}
+            current={data ?? undefined}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
             onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}

@@ -135,6 +135,7 @@ function useTimelineEditorContextValue({
   externalDrop,
   trackManagement,
   trackLabelPort,
+  clipParamsPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -179,6 +180,7 @@ function useTimelineEditorContextValue({
   externalDrop: ExternalDropHook;
   trackManagement: TimelineTrackManagementHook;
   trackLabelPort?: TrackLabelCapturePort;
+  clipParamsPort?: import('@/tools/video-editor/commands/clipParamsGesture.ts').ClipParamsCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -205,6 +207,7 @@ function useTimelineEditorContextValue({
 
   return useMemo<TimelineEditorContextValue>(() => ({
     trackLabel: trackLabelPort,
+    clipParams: clipParamsPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -386,6 +389,7 @@ function useTimelineEditorContextValue({
     moveSelectedClipsToTrack,
     trackScaleMap,
     trackLabelPort,
+    clipParamsPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -1085,6 +1089,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     externalDrop,
     trackManagement,
     trackLabelPort: save.commands.trackLabelPort,
+    clipParamsPort: save.commands.clipParamsPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1174,6 +1179,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
     trackLabel: save.commands.trackLabelPort,
+    clipParams: save.commands.clipParamsPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1233,7 +1239,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipParamsPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

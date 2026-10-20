@@ -228,6 +228,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     patchRegistry,
     setSelectedTrackId,
     applyEdit,
+    clipParams,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const { staleAssetKeys, dismissedAssetKeys, dismissAsset, updateAssetToCurrentVariant, applyVariantToAsset } = useStaleVariants({
@@ -540,6 +541,8 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
             precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={handleSelectedClipChange}
+            clipParamsPort={clipParams}
+            current={data ?? undefined}
             onResetPosition={handleResetClipPosition}
             onClose={clearSelection}
             onDelete={selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
