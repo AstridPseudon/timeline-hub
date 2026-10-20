@@ -58,7 +58,7 @@ export function assertDownloadTransfer(
   assert.equal(blob.hash, '');
 }
 
-/** Observe the click's generated-client reads without intercepting App bytes. */
+/** Observe only the click's generated-client reads; never fetch or intercept bytes for the App. */
 export function observeDownloadTransfer(page: Page, runtimeBase: string, projectId: string, video: ManagedOutput) {
   const pageOrigin = new URL(page.url()).origin;
   const base = runtimeBase.replace(/\/$/, '');
@@ -69,13 +69,13 @@ export function observeDownloadTransfer(page: Page, runtimeBase: string, project
     if (![objectUrl, locationUrl].includes(response.url())) return;
     const request = response.request();
     if (request.resourceType() === 'media') return;
-    const headers = request.headers();
-    const read: FetchRead = {
-      url: response.url(), method: request.method(), resourceType: request.resourceType(),
-      status: response.status(), range: headers.range, origin: headers.origin,
-      redirected: request.redirectedFrom() !== null,
-    };
-    const reading = response.body().then(bytes => ({ read, bytes }));
+    const read: FetchRead = { url: response.url(), method: request.method(), resourceType: request.resourceType(),
+      status: response.status(), redirected: request.redirectedFrom() !== null };
+    // headers() is provisional; await the same raw headers used by Playwright's trace recorder.
+    const reading = Promise.all([request.allHeaders(), response.body()]).then(([headers, bytes]) => ({
+      read: { ...read, range: headers.range, origin: headers.origin }, bytes,
+    }));
+    // Keep a failed header/body read for finish(), without an unhandled rejection in the interim.
     void reading.catch(() => {});
     reads.push(reading);
   };

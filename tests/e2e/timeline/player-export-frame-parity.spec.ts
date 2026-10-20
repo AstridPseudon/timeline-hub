@@ -98,7 +98,10 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
     const blocker = page.locator('[data-video-editor-render-blocker="true"]');
     await expect.poll(async () => {
       const task = await readRuntimeJson<Task>(harness, taskPath);
-      if (['failed', 'cancelled'].includes(task.state)) return `error:task-${task.state}`;
+      if (['failed', 'cancelled'].includes(task.state)) {
+        const diagnostic = (await blocker.textContent())?.trim();
+        return `error:task-${task.state}${diagnostic ? `:${diagnostic}` : ''}`;
+      }
       const error = (await blocker.allTextContents()).join('\n').trim();
       if (error) return `error:${error}`;
       return task.state === 'succeeded' && await downloadLink.isVisible() ? 'done' : 'pending';
