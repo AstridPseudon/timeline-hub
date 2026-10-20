@@ -26,7 +26,10 @@ def occurrence_duplicate(ctx, command):
     if occurrence_id == row['occurrence_id'] or shot_id == source_shot:
         raise CommandError('duplicate requires reserved identities distinct from the source',
                            kind='identity_collision', ref=owner)
-    from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement
+    from astrid.core.timeline.authoring_bundle import (
+        _copy_shot_for_placement,
+        compile_authoring_candidate,
+    )
     bundle = ctx.state.bundle
     copied, remap = _copy_shot_for_placement(
         payload, project_id=bundle['project_id'], timeline_id=bundle['timeline_id'],
@@ -42,6 +45,13 @@ def occurrence_duplicate(ctx, command):
     created.pop('shot_revision_id', None)
     created.pop('revision_id', None)
     created.update(occurrence_id=occurrence_id, shot_id=shot_id)
+    fields = [key for key in ('stable_deep_link', 'output_identity') if key in created]
+    if fields and ctx.state.entity('occurrence:' + occurrence_id, optional=True) is None:
+        # Record the same factory-derived destination values as immutable compilation.
+        candidate = copy.deepcopy(bundle)
+        candidate['placements'].append(created)
+        compiled = compile_authoring_candidate(candidate).publication['parent_composition']['occurrences'][-1]
+        created.update({key: compiled[key] for key in fields})
     ctx.create_entity('occurrence:' + occurrence_id, kind='occurrence', owner='parent', value=created)
 
 
