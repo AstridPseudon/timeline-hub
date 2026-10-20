@@ -75,10 +75,45 @@ def _patch(state, path, replacement):
     return present(value)
 
 
-def coalesce(records):
+def _root_addresses(records, state=None):
+    """Resolve aliases by authored owner, never a shared source shot identity."""
+    owners = {}
+    if state is not None:
+        for row in state.bundle['placements']:
+            ref = 'occurrence:' + row['occurrence_id']
+            if ref in owners:
+                raise CommandError('ambiguous root context', kind='history_unavailable', ref=ref)
+            owners[ref] = row['shot_id']
+    for record in records:
+        for write in record['writes']:
+            if root_identity(write['ref']) is None or not write['ref'].startswith('occurrence:') or write['path']:
+                continue
+            for value in (write['before'], write['after']):
+                if value['state'] == 'present':
+                    shot = value['value'].get('shot_id')
+                    if not isinstance(shot, str) or root_identity('shot:' + shot) is None:
+                        raise CommandError('root context is unavailable', kind='history_unavailable', ref=write['ref'])
+                    if write['ref'] in owners and owners[write['ref']] != shot:
+                        raise CommandError('root context changed', kind='history_unavailable', ref=write['ref'])
+                    owners[write['ref']] = shot
+
+    def address(ref, path):
+        if ref.startswith('occurrence:') and ref.endswith('/registry'):
+            ref, path = ref.removesuffix('/registry'), ('source', 'registry', *path)
+        root, path = logical_address(ref, path)
+        if root.startswith('occurrence:') and path[:1] == ('source',) and root in owners:
+            return 'shot:' + owners[root], ('internal_timeline', *path[1:])
+        return root, path
+
+    return address
+
+
+def coalesce(records, state=None):
     """Retain first-before/last-after, folding descendants into authored roots."""
+    root_address = _root_addresses(records, state)
+
     def value_address(write):
-        ref, path = logical_address(write['ref'], write['path'])
+        ref, path = root_address(write['ref'], write['path'])
         # Source rows are owned by an occurrence, but aren't JSON children of
         # its placement row. Ownership overlap must not fold them into that row.
         if ref.startswith('occurrence:') and path[:1] == ('source',):
@@ -106,10 +141,10 @@ def coalesce(records):
     return result
 
 
-def check_intervening(records, intervening_records, *, include_reads=True):
+def check_intervening(records, intervening_records, *, include_reads=True, state=None):
     if intervening_records is None:
         raise CommandError('complete intervening history is required', kind='history_unavailable')
-    guarded = []
+    guarded, source_roots = [], []
     selections = []
     for record in records:
         if not isinstance(record, dict) or any(key not in record for key in ('writes', 'reads', 'selections', 'created')):
@@ -122,19 +157,21 @@ def check_intervening(records, intervening_records, *, include_reads=True):
                 if read['ref'].endswith('/shot'):
                     guarded.append((read['ref'].removesuffix('/shot'), ('shot_id',)))
                     if read['path'] == ['shot_id'] and isinstance(read['state'].get('value'), str):
-                        guarded.append(('shot:' + read['state']['value'], ()))
+                        source_roots.append(('shot:' + read['state']['value'], ()))
             for binding in record.get('bindings', []):
                 ref = binding['ref']
                 if member(ref) is not None:
                     guarded.append((ref, ('id',)))
                 elif ref.startswith('occurrence:') and '/' not in ref:
                     guarded.append((ref, ('occurrence_id',)))
+    root_address = _root_addresses(records, state)
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:
             raise CommandError("complete intervening write history is required", kind='history_unavailable')
         for write in record['writes']:
             address = write['ref'], tuple(write['path'])
-            if (any(overlaps(address, prior) for prior in guarded)
+            if (any(overlaps(address, prior) for prior in [*guarded, *source_roots])
+                    or any(overlaps(root_address(*address), root_address(*prior)) for prior in guarded)
                     or any(selection_overlap(s, write) for s in selections)):
                 raise CommandError("an intervening publication wrote a guarded address",
                                    kind='intervening_write', ref=address[0], path=address[1])
@@ -212,21 +249,34 @@ def _validate_inputs(state, record, records):
 
     def proven_sites():
         if record['command']['op'] == 'timeline.inverse':
-            return _legacy_inverse_sites(records, record)
+            return (*_legacy_inverse_sites(records, record), set())
         # Recorder writes are ordered even though reads and selections are not.
         # Reconstruct only those stages, retaining unrelated current authored data.
-        stage = State(copy.deepcopy(state.bundle), closures=state.closures)
-        reads, selections = [], []
+        staged = Recording(copy.deepcopy(state.bundle), record['command'], record['ordinal'],
+                           closures=state.closures)
+        stage = staged.state
+        reads, selections, bindings = [], [], set()
         for write in [None, *record['writes']]:
             if write is not None:
                 guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
-                stage.set(write['ref'], write['path'], write['after'])
+                root = root_identity(write['ref'])
+                if root is not None and not write['path'] and write['before'] == ABSENT and write['after'] != ABSENT:
+                    created = {'ref': write['ref'], 'kind': root[0],
+                               'owner': None if root[0] == 'shot' else 'parent'}
+                    if record['created'].count(created) != 1:
+                        raise CommandError('root creation context is unavailable', kind='history_unavailable',
+                                           ref=write['ref'])
+                    staged.create_entity(**created, value=write['after']['value'], restoring=True)
+                else:
+                    stage.set(write['ref'], write['path'], write['after'])
             reads.extend(read for read in record['reads']
                          if stage.matches(read['ref'], read['path'], read['state']))
             selections.extend(selected for selected in record['selections']
                               if equal(selection(stage, selected['key'], selected['owner'],
                                                  selected['members']), selected))
-        return reads, selections
+            bindings.update(binding['ref'] for binding in record.get('bindings', [])
+                            if stage.entity(binding['ref'], optional=True) is not None)
+        return reads, selections, bindings
 
     for read in record['reads']:
         if state.matches(read['ref'], read['path'], read['state']):
@@ -248,7 +298,10 @@ def _validate_inputs(state, record, records):
     for binding in record.get('bindings', []):
         ref = binding['ref']
         if ref not in created and state.entity(ref, optional=True) is None:
-            raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
+            if sites is None:
+                sites = proven_sites()
+            if ref not in sites[2]:
+                raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
 
 
 def apply_inverse(ctx, records, intervening_records):
@@ -256,8 +309,8 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
-    check_intervening(records, intervening_records)
-    changes = coalesce(records)
+    check_intervening(records, intervening_records, state=ctx.state)
+    changes = coalesce(records, ctx.state)
     orders = restoration_orders(records)
     for (owner, kind), (_, expected) in orders.items():
         actual = ctx.select('collection.' + kind + 's', owner)

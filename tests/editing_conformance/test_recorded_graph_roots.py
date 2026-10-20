@@ -79,14 +79,7 @@ def test_missing_occurrence_scopes_have_absent_input_guards(scope):
         state.get('occurrence:occ-a/' + scope, [])
 
 
-# Requirements: reconstructed root stages retain source identity, and root/child
-# aliases coalesce before inverse guards. Keep both expectations until restored.
-@pytest.mark.parametrize('mode', ['read',
-    pytest.param('selection', marks=pytest.mark.xfail(
-        strict=True, reason='reconstructed created-shot stage loses its source-free identity')),
-    pytest.param('edit', marks=pytest.mark.xfail(
-        strict=True, reason='root creation and occurrence-child writes need shared inverse alias coalescing')),
-])
+@pytest.mark.parametrize('mode', ['read', 'selection', 'edit'])
 def test_one_recipe_creates_roots_then_reads_and_edits_their_children(monkeypatch, mode):
     from tests.editing_conformance.test_recipe_m1_commands import inverse
 
@@ -111,6 +104,153 @@ def test_one_recipe_creates_roots_then_reads_and_edits_their_children(monkeypatc
     assert State(plan.bundle).get('occurrence:new-occ/clip:title', ['hold']) == present(3 if mode == 'edit' else 2)
     assert replay(plan, original).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+@pytest.fixture
+def child_ops(root_ops, monkeypatch):
+    def create(ctx, command):
+        for root in root_values():
+            ctx.create_entity(**root)
+        ref = 'occurrence:new-occ/clip:title'
+        ctx.select('collection.clips', 'occurrence:new-occ')
+        ctx.read(ref, ['hold'])
+        ctx.bind('child', ref)
+        for value in (3, 3, 2, 3):
+            ctx.write(ref, ['hold'], value)
+            ctx.read(ref, ['hold'])
+
+    def write(ctx, command):
+        for value in command['args']['values']:
+            ctx.write(command['select'], ['hold'], value)
+
+    def write_root(ctx, command):
+        owner = command['select'].split('/')[0]
+        ref = 'shot:' + ctx.state.occurrence(owner)['shot_id']
+        for value in command['args']['values']:
+            shot = ctx.read(ref)
+            shot['internal_timeline']['clips'][0]['hold'] = value
+            ctx.write(ref, [], shot)
+
+    registered = commands.operations()
+    registered['test.create-roots'] = commands.Operation({'type': 'object'}, create, {})
+    registered['test.child-write'] = commands.Operation({'type': 'object'}, write, {}, True)
+    registered['test.root-write'] = commands.Operation({'type': 'object'}, write_root, {}, True)
+    monkeypatch.setattr(commands, 'operations', lambda: registered)
+
+
+def child_command(ref='occurrence:new-occ/clip:title', values=(3,)):
+    return {'schema_version': 1, 'op': 'test.child-write', 'version': '1',
+            'select': ref, 'args': {'values': list(values)}}
+
+
+def test_created_root_child_stages_replay_inverse_redo_and_compiled_reload(child_ops):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    records = copy.deepcopy(plan.records)
+    assert replay(plan, original).records == records
+    undone = inverse(plan.bundle, records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+    assert replay(undone, plan.bundle, inverse_records=records).records == undone.records
+    accepted = document_from_bundle(plan.bundle)
+    reloaded = bundle_from_document(accepted)
+    undone = inverse(reloaded, records)
+    restored = document_from_bundle(undone.bundle, source_bundles=(original, reloaded))
+    assert restored == document_fixture()
+    redone = inverse(undone.bundle, undone.records)
+    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == accepted
+    assert plan.records == records
+
+
+@pytest.mark.parametrize('values', [(3,), (4, 3)])
+def test_created_root_child_same_value_and_aba_publications_refuse(child_ops, values):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    later = commands.execute(plan.bundle, [child_command(values=values)])
+    assert later.bundle == plan.bundle
+    before = copy.deepcopy(later.bundle)
+    with pytest.raises(CommandError) as error:
+        inverse(later.bundle, plan.records, later.records)
+    assert error.value.kind == 'intervening_write'
+    assert later.bundle == before
+
+
+def test_created_shot_later_occurrence_dependency_refuses(root_ops):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    original = bundle_from_document(document_fixture())
+    plan = commands.execute(original, [create_command()])
+    root = copy.deepcopy(root_values()[1])
+    root['ref'] = 'occurrence:dependent'
+    root['value']['occurrence_id'] = 'dependent'
+    later = commands.execute(plan.bundle, [create_command([root])])
+    before = copy.deepcopy(later.bundle)
+    with pytest.raises(CommandError) as error:
+        inverse(later.bundle, plan.records, later.records)
+    assert error.value.kind == 'surviving_dependents'
+    assert later.bundle == before
+
+
+def test_root_and_child_aliases_use_exact_authored_owner_not_shared_source(child_ops, monkeypatch):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    def edit(ctx, command):
+        ref = command['select']
+        shot = 'shot:' + ctx.state.occurrence(ref.split('/')[0])['shot_id']
+        value = ctx.read(shot)
+        value['internal_timeline']['clips'][0]['hold'] = 3
+        ctx.write(shot, [], value)
+        ctx.write(ref, ['hold'], 4)
+
+    registered = commands.operations()
+    registered['test.root-child'] = commands.Operation({'type': 'object'}, edit, {}, True)
+    monkeypatch.setattr(commands, 'operations', lambda: registered)
+    original = bundle_from_document(document_fixture())
+    ref = 'occurrence:occ-a/clip:clip-a'
+    sibling = 'occurrence:occ-b/clip:clip-a'
+    assert State(original).occurrence('occurrence:occ-a')['shot_id'] != State(original).occurrence('occurrence:occ-b')['shot_id']
+    command = {**child_command(ref), 'op': 'test.root-child', 'args': {}}
+    plan = commands.execute(original, [command])
+    later = commands.execute(plan.bundle, [child_command(sibling, (5,))])
+    expected = commands.execute(original, [child_command(sibling, (5,))])
+    undone = inverse(later.bundle, plan.records, later.records)
+    assert undone.bundle == expected.bundle
+    assert inverse(undone.bundle, undone.records).bundle == later.bundle
+    assert replay(plan, expected.bundle, intervening_records=later.records).bundle == later.bundle
+    collision = commands.execute(plan.bundle, [child_command(ref, (4,))])
+    with pytest.raises(CommandError) as error:
+        inverse(collision.bundle, plan.records, collision.records)
+    assert error.value.kind == 'intervening_write'
+
+
+@pytest.mark.parametrize('damage', ['missing-created', 'wrong-kind', 'wrong-owner', 'missing-owner',
+                                   'changed-owner', 'duplicate-owner', 'missing-source'])
+def test_created_child_inverse_requires_complete_exact_root_context(child_ops, damage):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    plan = commands.execute(bundle_from_document(document_fixture()), [create_command()])
+    records = copy.deepcopy(plan.records)
+    head = copy.deepcopy(plan.bundle)
+    if damage == 'missing-created':
+        records[0]['created'] = []
+    elif damage in ('wrong-kind', 'wrong-owner'):
+        records[0]['created'][0]['kind' if damage == 'wrong-kind' else 'owner'] = 'parent'
+    elif damage == 'missing-owner':
+        records[0]['writes'].pop(1)
+    elif damage == 'changed-owner':
+        records[0]['writes'][1]['after']['value']['shot_id'] = 'other-shot'
+    elif damage == 'duplicate-owner':
+        head['placements'].append(copy.deepcopy(head['placements'][-1]))
+    else:
+        head['shots']['new-shot'].pop('_created')
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        inverse(head, records)
+    assert head == before
 
 
 def test_executor_creates_full_roots_replays_and_compiles_without_source_pins(root_ops):
