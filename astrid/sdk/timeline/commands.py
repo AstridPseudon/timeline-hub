@@ -31,6 +31,7 @@ def operations():
     from ._clip_commands import clip_add
     from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
+    from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
     from ._scalar_commands import clip_set_params, track_set
     from ._shot_commands import SHOT_INTENT, shot_set
     from ._split_commands import clip_split
@@ -89,7 +90,9 @@ def operations():
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
             'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
             'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {}),
-            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
+            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {}),
+            'project-data.write': Operation(_SCHEMA['$defs']['ProjectDataWriteArgs'], project_data_write,
+                                            PROJECT_DATA_INTENT)}
 
 
 @dataclass
@@ -157,14 +160,54 @@ def _normalize(command):
     return command
 
 
+def _project_data_container_claim(ctx, command, ref, path, expected):
+    """Allow a recorded namespace birth to merge through a disjoint key.
+
+    The property guards for the requested leaf remain authoritative.  A
+    missing/null config, app map, or extension namespace is only setup for
+    that leaf, so an ordinary replay may reuse a concurrently created object
+    while preserving its other members.  Malformed shapes still fail visibly
+    instead of being overwritten.
+    """
+    if not _is_project_data_container_path(command, ref, path):
+        return False
+    if expected["state"] == "present" and expected.get("value") is not None:
+        return False
+    actual = ctx.state.get(ref, path)
+    if actual["state"] == "absent" or (
+        actual["state"] == "present"
+        and (actual.get("value") is None or isinstance(actual.get("value"), dict))
+    ):
+        return True
+    raise CommandError(
+        "project-data namespace shape changed",
+        kind="dependency_changed",
+        ref=ref,
+        path=path,
+        base=expected,
+        theirs=actual,
+    )
+
+
+def _is_project_data_container_path(command, ref, path):
+    if command.get("op") != "project-data.write" or ref != "parent":
+        return False
+    target = command["args"]["target"]
+    return tuple(path) in (("config",), ("config", "app"), ("config", "app", target))
+
+
 def _verify_claims(ctx, command):
     for ref in command.get('created', []):
         if ctx.state.entity(ref, optional=True) is not None:
             raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
     for key, expected in command.get('expect', {}).items():
         ref, path = address(key, command.get('resolved', []))
+        if _project_data_container_claim(ctx, command, ref, path, expected):
+            continue
         guard(ctx.state, ref, path, expected)
     for read in command.get('reads', []):
+        if _project_data_container_claim(ctx, command, read['ref'], read['path'], read['state']):
+            continue
         guard(ctx.state, read['ref'], read['path'], read['state'])
     for selected in command.get('selections', []):
         actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
@@ -252,16 +295,54 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 matches = len(command[field]) == len(record['command'][field]) and all(
                     selection_matches(claimed, actual)
                     for claimed, actual in zip(command[field], record['command'][field]))
+            if field == 'expect':
+                authoritative = record['command'][field]
+                matches = set(authoritative).issubset(command[field]) and all(
+                    ctx.command_input.matches(
+                        *address(key, command.get('resolved', [])), authoritative[key]
+                    )
+                    for key in authoritative
+                )
+                matches = matches and all(
+                    _project_data_container_claim(
+                        ctx, command, *address(key, command.get('resolved', [])), expected
+                    )
+                    for key, expected in command[field].items()
+                    if key not in authoritative
+                )
+            if field == 'authorship':
+                authoritative = record['command'][field]
+                matches = set(authoritative).issubset(command[field]) and all(
+                    command[field][key] == authoritative[key] for key in authoritative
+                )
+                matches = matches and all(
+                    _is_project_data_container_path(
+                        command, *address(key, command.get('resolved', []))
+                    )
+                    and value == 'direct'
+                    for key, value in command[field].items()
+                    if key not in authoritative
+                )
             if field == 'reads':
-                actual = record['command']['reads']
-                matches = len(command[field]) == len(actual) and all(
-                    claimed['ref'] == read['ref'] and claimed['path'] == read['path']
-                    and (equal(claimed['state'], read['state'])
-                         or ctx.command_input.matches(read['ref'], read['path'], claimed['state']))
-                    for claimed, read in zip(command[field], actual))
-            if field == 'expect' and command[field].keys() == record['command'][field].keys():
-                matches = all(ctx.command_input.matches(*address(key, command.get('resolved', [])), expected)
-                              for key, expected in command[field].items())
+                supplied = [
+                    read for read in command[field]
+                    if not _is_project_data_container_path(command, read['ref'], read['path'])
+                ]
+                authoritative = record['command']['reads']
+                matches = len(supplied) == len(authoritative) and all(
+                    claimed['ref'] == read['ref']
+                    and claimed['path'] == read['path']
+                    and (
+                        equal(claimed['state'], read['state'])
+                        or ctx.command_input.matches(read['ref'], read['path'], claimed['state'])
+                    )
+                    for claimed, read in zip(supplied, authoritative)
+                )
+                matches = matches and all(
+                    _project_data_container_claim(ctx, command, read['ref'], read['path'], read['state'])
+                    for read in command[field]
+                    if _is_project_data_container_path(command, read['ref'], read['path'])
+                )
             if not matches:
                 raise CommandError(
                     f"submitted {field} does not match authoritative v{command['version']} capture; "

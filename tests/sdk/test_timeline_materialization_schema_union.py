@@ -15,11 +15,18 @@ from tests.sdk.command_schema_compatibility import compatibility_errors
 REFERENCES = ('ScopedId', 'EntityRef', 'TargetKey')
 ORDINARY_SHA256 = '6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d'
 PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f'
+PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
+PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
     candidate = copy.deepcopy(_SCHEMA)
+    del candidate['$defs']['ProjectDataWriteArgs']
+    candidate['$defs']['EditCommand']['allOf'] = [
+        clause for clause in candidate['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'project-data.write'
+    ]
     for name in REFERENCES:
         branches = candidate['$defs'][name]['anyOf']
         assert len(branches) == 4
@@ -51,9 +58,29 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     ordinary = ordinary_schema()
     raw = (json.dumps(ordinary, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
-    assert len(ordinary['$defs']) == len(_SCHEMA['$defs']) == 55
+    assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
+    assert len(_SCHEMA['$defs']) == 56
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 30
     assert compatibility_errors(ordinary, _SCHEMA) == []
+
+
+def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
+    candidate = copy.deepcopy(_SCHEMA)
+    del candidate['$defs']['ProjectDataWriteArgs']
+    candidate['$defs']['EditCommand']['allOf'] = [
+        clause for clause in candidate['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'project-data.write'
+    ]
+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_CARRIER_SHA256
+    assert len(candidate['$defs']) == 55
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 29
+
+
+def test_project_data_proposal_has_a_new_closed_schema_hash():
+    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
