@@ -53,3 +53,24 @@ Existing tests selected:
 - Gate 1 is bounded; the full editing-conformance corpus was intentionally not run. Non-timing CLI/Python/sheet scenarios, including the broader structure/look/audio set, remain outside this result. The focused occurrence/source/transcript checks are recipe/provider tests rather than a new three-front-end scenario for every one of those data shapes.
 - Gate 3 proves renderer independence with import/process fences and provider restart/reload tests. It does not prove a live browser, a real Composition frame, a physical preview artifact, or a stopped external renderer process behind the Runtime door.
 - No full suite, localhost/browser/live-socket journey, or cross-product App journey was run. Runtime restart cases are the existing bounded provider/runtime fixtures, not a new full Runtime-door qualification.
+
+## Follow-up: corrected Gate3 Door node
+
+Date: 2026-10-20
+
+Gate1's new three-front-end case was already qualified by the predecessor at 3
+passes and was not repeated. The predecessor's Gate3 node reached authenticated
+Door commit, reload, and undo, but its first run failed only on the new preview
+error-shape assertion (`preview.error` is a mapping, not an object with
+`.code/.message/.details`). After the test-only shape correction, the authorized
+central rerun passed:
+
+- `agt-m2-gate3-door-final-correction-proof-gate3-followup-new-node-1020213757-26194`
+- `gate3-followup-new-node`: **1 passed**, exit 0, 37.85s
+
+The passing case still asserts the authenticated `/v1` commit/reload/undo path,
+`preview.ok is False`, the current structured
+`CapabilityValidationError`/`validation` preview refusal, and both stopped-
+renderer subprocess fences. This is a PASS for the corrected Gate3 node. The
+preview result is an honest structured preflight refusal on the public013/C13
+normal Door fixture; no renderer process was launched. No full suite was run.
