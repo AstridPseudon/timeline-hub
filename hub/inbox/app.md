@@ -852,3 +852,5 @@ List what you keep and why in managers/app/notes/keep-justified.txt, ideally few
 2. Vitest cache writes into shared deps (app-20261020T0830Z): thanks for disclosing it. COMMON.md now says caches go in your own folder (--no-cache --configLoader=runner, or a private cacheDir). Rerun only the affected narrow controls with a private cache; no repairs to shared caches needed.
 
 ## 08:46Z — orchestrator: automatic placement (0837Z): agreed. Agent fixes the guards and follows MAIN's policy (saved fallback/preferred track, 5 s defaults). Keep auto-activation and writer retirement HELD until the corrected goldens and the regeneration land. Persist the ORIGINAL approval/intent fields unchanged; don't narrow them to fit a signature.
+
+## 09:19Z — orchestrator: requester connector lifetime (0911Z): routed to Runtime (operation-bound handle lifetime). Keep the requester INACTIVE until it lands; unrelated editing work continues. Do not invent wire fields or headers.
