@@ -380,15 +380,26 @@ def test_capability_refusal_precedes_snapshot_publication(historical):
     assert _state(case.service) == before
 
 
+@pytest.fixture
+def archive_for_admission():
+    """Set only archive state for the admission guard; no archive command exists yet."""
+    def archive(service, project, timeline):
+        with service.store._mutex, service.store._transaction():
+            changed = service.store.conn.execute(
+                "UPDATE timelines SET archived_at=? WHERE project_id=? AND id=? AND archived_at IS NULL",
+                (now(), project, timeline),
+            )
+            assert changed.rowcount == 1
+    return archive
+
+
 @pytest.mark.parametrize("admitted", [False, True])
-def test_archived_timeline_refuses_first_admission_and_replay(historical, admitted):
+def test_archived_timeline_refuses_first_admission_and_replay(historical, admitted, archive_for_admission):
     case = historical
     request = _request(case)
     if admitted:
         case.service.create_task(request)
-    # archive_timeline is a retired legacy writer; archive the row directly to reach the admission guard.
-    with case.service.store._transaction():
-        case.service.store.conn.execute("UPDATE timelines SET archived_at=? WHERE id='main'", (now(),))
+    archive_for_admission(case.service, case.project, "main")
     before = _state(case.service)
     with pytest.raises(ConflictError):
         case.service.create_task(request)

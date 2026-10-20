@@ -9,6 +9,7 @@ from runtime_protocol.errors import NotFoundError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore, IDEMPOTENCY_RESULT_MARKER, IdempotencyWindowExpired, command_result
 from runtime_protocol.snapshot_refs import restore_spec_snapshots
+from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 from runtime_protocol.upgrade import migrate_canonical_to_current, compact_idempotency_ledger
 from runtime_protocol.util import canonical_json, now
 from tests.schema_fixtures import walk_back_to_v30
@@ -18,16 +19,13 @@ def _digest(value):
     return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
-# Admission now refuses a revision capture the projector cannot reproduce (5a78d1e, PLAN 2026-10-20
-# capture certification). This hand-built snapshot and directly inserted revision are not certifiable;
-# restore the positive with a capture projected from a real accepted revision.
-@pytest.mark.xfail(strict=True, reason="ledger: no row id yet (PLAN 2026-10-20 capture certification); hand-built revision capture is refused at admission")
 @pytest.mark.integration
 def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path, astrid_importable):
     # This crosses task admission, CAS custody, task readback, and Astrid's
     # actual host materializer. A fake Runtime *transport* delegates to the
     # real service, so neither the admission nor the hydration layer is mocked.
     from astrid.core.execution.generic_host import GenericPackHost
+    from test_canonical_render_admission import _accept_publication
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -35,17 +33,25 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
     try:
         project = service.create_project({"slug": "snapshots", "name": "Snapshots"}, idempotency_key="project")
         project_id = project["id"]
+        provider = load_timeline_commit_provider("astrid")
+        service.register_timeline_commit_provider(provider)
         service.create_timeline(project_id, "main", idempotency_key="timeline")
         service.register_capability({"capability_id": "rendering.timeline_visualize", "definition_digest": _digest("visualize")})
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.timeline_visualize"]})
-        parent = {"config": {"clips": []}, "registry": {"assets": {}}, "clips": [], "occurrences": []}
-        with service.store._transaction():
-            service.store.conn.execute(
-                "INSERT INTO parent_composition_revisions(id,project_id,timeline_id,payload_json,content_digest,created_at) "
-                "VALUES (?,?,?,?,?,?)",
-                ("revision-1", project_id, "main", canonical_json(parent), _digest(parent), now()),
-            )
-        snapshot = {"config": {"clips": [{"id": "old", "at": 0, "hold": 1}]}, "registry": {"assets": {}}}
+        clips = [{"id": "old", "clipType": "text", "text": "Saved revision", "at": 0, "hold": 1}]
+        parent = {"config": {"clips": clips}, "registry": {"assets": {}},
+                  "clips": clips, "occurrences": []}
+        _accept_publication({"service": service, "project": project_id}, {
+            "expected_head": None, "parent_revision_id": "revision-1",
+            "parent_composition": parent, "dependency_manifest": {"media": []},
+        }, idempotency_key="saved-revision")
+        document = service._timeline_commits()[0].revision_closure(project_id, "main", "revision-1")
+        projection = provider.project_capture(document)
+        snapshot = {"config": projection["config"], "registry": projection["registry"],
+                    "metadata": {"capture_authority": {
+                        "parent_revision_id": "revision-1", "parent_content_digest": _digest(parent),
+                        "expansion": projection["expansion"],
+                    }}}
         context = {"mode": "composed_capture", "project_id": project_id, "timeline_id": "main",
                    "revision_id": "revision-1", "capture_snapshot": snapshot}
         task = service.create_task({
@@ -76,8 +82,14 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         assert json.loads((attempt / "inputs" / "timeline.json").read_text()) == snapshot["config"]
         assert json.loads(values["filmstrip_authority"])["capture_snapshot"] == snapshot
 
-        with service.store._transaction():
-            service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='revision-1'")
+        # Simulate lost retained storage despite its accepted-history foreign keys.
+        with service.store._mutex:
+            service.store.conn.execute("PRAGMA foreign_keys=OFF")
+            try:
+                with service.store._transaction():
+                    service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='revision-1'")
+            finally:
+                service.store.conn.execute("PRAGMA foreign_keys=ON")
         with pytest.raises(NotFoundError, match="parent revision is missing"):
             service.claim_next({"executor_id": "worker", "capability_ids": ["rendering.timeline_visualize"],
                                 "runtime_epoch": service.health()["runtime_epoch"]})
