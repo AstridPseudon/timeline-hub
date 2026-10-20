@@ -1672,7 +1672,7 @@ def _audio_envelope(snapshot: Mapping, asset_files: Mapping[str, str] | None, st
         return None
 
 
-def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list) -> dict:
+def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, frame_provider=None) -> dict:
     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
 
     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
@@ -1682,12 +1682,21 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list) -> dic
     fps = float(Fraction(*snapshot["fps_rational"]))
     canvas = canvas_of(config)
     for row, card in zip(receipt.get("cards") or [], cards):
-        row["addresses"] = addresses_at(config, int(card["frame"]), fps, canvas)
+        frame = int(card["frame"])
+        capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+        if capture is None:
+            row["addresses"] = addresses_at(config, frame, fps, canvas)
+        else:
+            from .overlays.labels import MIN_OPACITY
+
+            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
+            row["addresses"] = [item.address for item in labels
+                                if item.opacity is None or item.opacity >= MIN_OPACITY]
     return receipt
 
 
 
-def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None):
+def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frame_provider=None):
     """Compose the selected bounds and address overlays for contact tiles."""
     selected = set(layer_names or ())
     if not selected.intersection({"bounds", "labels"}):
@@ -1707,9 +1716,12 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
 
             result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
         if "labels" in selected and config is not None:
-            from .overlays.labels import overlay_labels_at
+            from .overlays.labels import overlay_labels_frame
 
-            result = overlay_labels_at(result, config, seconds, fps)
+            frame = int(math.floor(float(seconds) * fps + 0.5))
+            capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+            result = overlay_labels_frame(result, config, frame, fps, capture=capture,
+                                          source_identity=getattr(frame_provider, "source_identity", ""))
         return result
 
     return overlay
@@ -1864,7 +1876,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         duration = float(Fraction(int(snapshot['duration_frames']), 1) / Fraction(*snapshot['fps_rational']))
         components = set(options.get('components') or ('output', 'text', 'audio'))
         contact_fps = float(Fraction(*snapshot['fps_rational']))
-        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'))
+        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'), frame_provider=frame_provider)
         from .contact_sheet import contact_band_width, contact_silence_findings
         audio = _audio_envelope(snapshot, asset_files, 0.0, duration, contact_band_width(columns))
         paths = {'png': static_contact_png(
@@ -1936,7 +1948,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
     # Keep rich navigation in memory for the paired compositor, but persist a
     # bounded receipt so agents never need to ingest the full timeline graph.
     receipt = compact_render_receipt(index, snapshot, out_root)
-    attach_frame_addresses(receipt, snapshot, index['cards'])
+    attach_frame_addresses(receipt, snapshot, index['cards'], frame_provider=frame_provider)
     Path(paths['json']).write_text(
         json.dumps(receipt, ensure_ascii=True, separators=(',', ':')),
         encoding='utf-8')
