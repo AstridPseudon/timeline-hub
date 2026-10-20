@@ -32,6 +32,11 @@ def _hold_extent(ctx, ref, values, clear):
                     raise CommandError('clip.set hold conflicts with static for', kind='unsupported_timing', ref=ref)
                 duration_paths.append(prefix + [key])
                 continue
+            if key == 'cut':
+                # Cut ownership is retained metadata, not a competing extent.
+                # A sheet's `for` edit must be able to update the same clip
+                # while preserving its original cut binding.
+                continue
             raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
     if 'hold' in values:
         number(values['hold'], 'hold', positive=True)

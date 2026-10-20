@@ -11,6 +11,7 @@ from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline.commit import _json
 from astrid.sdk.timeline.outbox import request_bytes
 from astrid.sdk.timeline_sheet import NativeSheet, SheetError
@@ -19,7 +20,7 @@ from tests.editing_conformance.test_recipe_clip_scalar_fields import CHILD, app_
 from tests.editing_conformance.test_recipe_m1_commands import inverse
 from tests.editing_conformance.test_recipe_m2_clip_trim import REF, bundle
 from tests.sdk.test_timeline_sheet_native import sheet_for
-from tests.sdk.test_timeline_sync import initial_bundle
+from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session
 
 
 def edited(sheet):
@@ -43,6 +44,37 @@ def test_exported_gutter_accepts_hold_edit_without_rewriting_timestamp(start):
     assert request_bytes(State(plan.bundle).entity('parent/clip:a')) == request_bytes(expected)
     assert plan.commands == [capture_clip_set(original, 'parent/clip:a', values={'hold': 2})]
     assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
+
+
+def test_native_for_edit_captures_cut_owned_row_and_rebases_disjointly(connected):  # noqa: F811
+    original = initial_bundle()
+    target = 'parent/clip:a'
+    row = State(original).entity(target)
+    row['app'] = {'cut': 'c2', 'layer': 'card', 'for': 1}
+    sheet = sheet_for(original)
+    edited = property_cell(sheet.text, target, 'hold', '1.5')
+
+    plan = sheet.preview(edited)
+    expected = capture_clip_set(original, target, values={'hold': 1.5})
+    assert plan.commands == [expected]
+    assert State(plan.bundle).entity(target)['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
+    assert _json(inverse(plan.bundle, plan.records).bundle) == _json(original)
+
+    head = copy.deepcopy(original)
+    State(head).entity('parent/clip:b')['params']['text'] = 'peer'
+    rebased = replay(plan, head)
+    assert State(rebased.bundle).entity(target)['app']['for'] == 1.5
+    assert State(rebased.bundle).entity('parent/clip:b')['params']['text'] == 'peer'
+    assert _json(inverse(rebased.bundle, rebased.records).bundle) == _json(head)
+
+    connected[1].bundles['r0'] = copy.deepcopy(original)
+    session = open_session(connected)
+    result = sheet.apply(edited, session=session, dry_run=False)
+    accepted = State(connected[1].bundles['r1']).entity(target)
+    assert result['data']['commands'] == [expected]
+    assert accepted['app'] == {'cut': 'c2', 'layer': 'card', 'for': 1.5}
+    session.undo([result['receipt']['receipt_id']])
+    assert connected[1].bundles['r2'] == original
 
 
 def test_source_trim_clear_batch_uses_capturers_and_restores_exact_original():
