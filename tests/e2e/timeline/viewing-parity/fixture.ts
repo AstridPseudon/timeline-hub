@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { compositionPublication, type DirectHarness } from '../../local/support/harness';
-import { generatePlayableVideo, mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
+import { generatePlayableVideo, mediaHash, PARITY_FPS } from './media';
+import { ORIGINAL_640, type ParityCanvas } from './canvas';
 
 export { PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
 export const PARITY_FRAMES = [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164] as const;
@@ -67,7 +68,7 @@ async function readClosure(harness: DirectHarness, fixture: Pick<FrameParityFixt
 }
 
 /** Existing M1 fixture setup before authoring/Render; not an authoring-path proof. */
-export async function prepareFrameParityFixture(harness: DirectHarness): Promise<FrameParityFixture> {
+export async function prepareFrameParityFixture(harness: DirectHarness, canvas: ParityCanvas = ORIGINAL_640): Promise<FrameParityFixture> {
   const directory = await mkdtemp(join(tmpdir(), 'real-frame-parity-'));
   try {
     const source = await generatePlayableVideo(directory);
@@ -106,7 +107,7 @@ export async function prepareFrameParityFixture(harness: DirectHarness): Promise
         speed: 1, volume: 0.8, effects: [{ fade_in: 0.1, fade_out: 0.1 }] },
     ];
     Object.assign(publication.parent_composition, {
-      config: { output: { resolution: `${PARITY_WIDTH}x${PARITY_HEIGHT}`, fps: PARITY_FPS, file: 'frame-parity.mp4' },
+      config: { output: { resolution: `${canvas.width}x${canvas.height}`, fps: PARITY_FPS, file: 'frame-parity.mp4' },
         tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }], clips: [] },
       occurrences: [{ occurrence_id: occurrenceId, shot_id: shotId, shot_revision_id: shotRevisionId,
         placement: { start_ms: 0 }, source_offset: 0, duration_ms: 5500, speed: 1, track: 'S1',

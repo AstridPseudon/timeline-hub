@@ -7,6 +7,7 @@ import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/
 import { startRealPackHost } from './bootstrap';
 import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
 import { mediaHash } from './media';
+import { ORIGINAL_640, type ParityCanvas } from './canvas';
 import type { Capability } from '../../../../src/integrations/runtime/generated';
 import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from './browser-profile';
 
@@ -215,8 +216,9 @@ export async function readyRenderCapability(harness: DirectHarness): Promise<Cap
 }
 
 export const test = base.extend<object, {
-  harness: DirectHarness; fixture: FrameParityFixture; browser: Browser;
+  harness: DirectHarness; fixture: FrameParityFixture; browser: Browser; parityCanvas: ParityCanvas;
 }>({
+  parityCanvas: [ORIGINAL_640, { scope: 'worker', option: true }],
   // eslint-disable-next-line no-empty-pattern
   harness: [async ({}, provide, workerInfo) => {
     const reason = harnessUnavailableReason();
@@ -225,8 +227,8 @@ export const test = base.extend<object, {
     const harness = await new DirectHarness().start();
     try { await provide(harness); } finally { await harness.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],
-  fixture: [async ({ harness }, provide) => {
-    const fixture = await prepareFrameParityFixture(harness);
+  fixture: [async ({ harness, parityCanvas }, provide) => {
+    const fixture = await prepareFrameParityFixture(harness, parityCanvas);
     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
     // Browser/export qualification still requires the approved Agent helper
     // and adoption of the frozen consumer graph.
@@ -259,9 +261,9 @@ export const test = base.extend<object, {
     }
     if (failure !== undefined) throw failure;
   }, { scope: 'worker' }],
-  context: async ({ browser, harness }, provide) => {
+  context: async ({ browser, harness, parityCanvas }, provide) => {
     const context = await browser.newContext({ ...harness.contextOptions,
-      viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
+      viewport: parityCanvas.viewport, deviceScaleFactor: 1, acceptDownloads: true });
     try { await provide(context); } finally { await context.close(); }
   },
 });

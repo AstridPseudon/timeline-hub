@@ -4,10 +4,7 @@ import type { PlayerRef } from '@remotion/player';
 import { readFrameMarker, VIDEO_START_FRAME } from './media';
 import { promisify } from 'node:util';
 import { expect, type Page, type TestInfo } from '@playwright/test';
-import {
-  PARITY_HEIGHT,
-  PARITY_WIDTH,
-} from './media';
+import { ORIGINAL_640, type ParityCanvas } from './canvas';
 import { type RgbFrame } from './compare';
 export { assertFrameWithinBound, compareRgbFrames, type FrameComparison, type RgbFrame } from './compare';
 
@@ -24,22 +21,22 @@ async function ffprobeDimensions(path: string): Promise<{ width: number; height:
   return { width: stream.width, height: stream.height };
 }
 
-async function decodeRgb(path: string, args: string[]): Promise<RgbFrame> {
+async function decodeRgb(path: string, args: string[], canvas: ParityCanvas): Promise<RgbFrame> {
   const dimensions = await ffprobeDimensions(path);
   const { stdout } = await execFileAsync('ffmpeg', [
     '-v', 'error', '-i', path, ...args, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1',
-  ], { encoding: 'buffer', maxBuffer: PARITY_WIDTH * PARITY_HEIGHT * 3 + 1024 });
+  ], { encoding: 'buffer', maxBuffer: canvas.width * canvas.height * 3 + 1024 });
   const bytes = Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout);
   expect(bytes).toHaveLength(dimensions.width * dimensions.height * 3);
   return { ...dimensions, bytes };
 }
 
-export async function decodeExportFrame(exportPath: string, frame: number): Promise<RgbFrame> {
-  return decodeRgb(exportPath, ['-map', '0:v:0', '-an', '-vf', `select=eq(n\\,${frame})`]);
+export async function decodeExportFrame(exportPath: string, frame: number, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
+  return decodeRgb(exportPath, ['-map', '0:v:0', '-an', '-vf', `select=eq(n\\,${frame})`], canvas);
 }
 
-export async function decodePlayerCapture(path: string): Promise<RgbFrame> {
-  return decodeRgb(path, []);
+export async function decodePlayerCapture(path: string, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
+  return decodeRgb(path, [], canvas);
 }
 
 declare global {
@@ -76,7 +73,7 @@ export async function seekPlayerFrame(page: Page, frame: number): Promise<void> 
   })), { timeout: 10_000 }).toEqual({ frame, playing: false });
 }
 
-async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
+async function waitForRequestedMedia(page: Page, frame: number, canvas: ParityCanvas): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
   await expect.poll(() => page.locator(PLAYER_COMPOSITION).evaluate((element) =>
     Array.from(element.querySelectorAll('img')).every(image => image.complete && image.naturalWidth > 0),
@@ -87,10 +84,10 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
     // bit source-frame marker. Bound: 10 seconds, then fail; never use this
     // source readback as the Player/export screenshot comparator.
     await expect.poll(async () => {
-      const bytes = await page.locator(PLAYER_COMPOSITION).evaluate((element) => {
+      const bytes = await page.locator(PLAYER_COMPOSITION).evaluate((element, dimensions) => {
         const media = Array.from(element.querySelectorAll('canvas, video')).find(node => {
           const box = node.getBoundingClientRect();
-          return box.width === 640 && box.height === 360 && getComputedStyle(node).visibility !== 'hidden';
+          return box.width === dimensions.width && box.height === dimensions.height && getComputedStyle(node).visibility !== 'hidden';
         }) as HTMLCanvasElement | HTMLVideoElement | undefined;
         if (!media) return [];
         if (media instanceof HTMLVideoElement && (media.readyState < 2 || media.seeking)) return [];
@@ -101,7 +98,7 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
         if (!context) throw new Error('Cannot inspect decoded media marker');
         context.drawImage(media, 0, 0);
         return Array.from(context.getImageData(0, 0, 640, 48).data);
-      });
+      }, canvas);
       // Canvas readback is RGBA; marker inspection uses the RGB source domain.
       const rgb = new Uint8Array(bytes.length / 4 * 3);
       for (let i = 0; i < bytes.length / 4; i++) rgb.set(bytes.slice(i * 4, i * 4 + 3), i * 3);
@@ -117,7 +114,7 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
 }
 
 /** Capture only the native composition viewport after exact Player/media seek. */
-export async function capturePlayerFrame(page: Page, frame: number, testInfo: TestInfo, name: string): Promise<RgbFrame> {
+export async function capturePlayerFrame(page: Page, frame: number, testInfo: TestInfo, name: string, canvas: ParityCanvas = ORIGINAL_640): Promise<RgbFrame> {
   await seekPlayerFrame(page, frame);
   const composition = page.locator(PLAYER_COMPOSITION).first();
   await expect(composition).toBeVisible();
@@ -125,7 +122,7 @@ export async function capturePlayerFrame(page: Page, frame: number, testInfo: Te
   // test host to the composition's native box. A fixed, raised host escapes
   // the editor panel's overflow clipping and sibling chrome; sizing alone can
   // capture those siblings over an otherwise ready decoded frame.
-  await page.evaluate(() => {
+  await page.evaluate((dimensions) => {
     const host = window.__frameParityPlayer.getContainerNode();
     if (!host) throw new Error('Mounted Player has no container');
     host.dataset.frameParityNativeHost = 'true';
@@ -135,26 +132,26 @@ export async function capturePlayerFrame(page: Page, frame: number, testInfo: Te
     style.textContent = `[data-frame-parity-native-host="true"] {
       position: fixed !important; left: 32px !important; top: 32px !important;
       z-index: 2147483647 !important;
-      width: 640px !important; height: 360px !important;
-      min-width: 640px !important; min-height: 360px !important;
-      flex: 0 0 640px !important;
+      width: ${dimensions.width}px !important; height: ${dimensions.height}px !important;
+      min-width: ${dimensions.width}px !important; min-height: ${dimensions.height}px !important;
+      flex: 0 0 ${dimensions.width}px !important;
     }`;
     document.head.appendChild(style);
-  });
+  }, canvas);
   await expect.poll(async () => {
     const box = await composition.boundingBox();
     return box ? [box.width, box.height] : null;
-  }, { timeout: 5_000 }).toEqual([PARITY_WIDTH, PARITY_HEIGHT]);
+  }, { timeout: 5_000 }).toEqual([canvas.width, canvas.height]);
 
   expect(await page.evaluate(() => window.__frameParityPlayer.getScale())).toBe(1);
-  await waitForRequestedMedia(page, frame);
+  await waitForRequestedMedia(page, frame, canvas);
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(1);
   const output = playerCapturePath(testInfo, frame, name);
   await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
   await composition.screenshot({ path: output, animations: 'disabled' });
-  const decoded = await decodePlayerCapture(output);
-  expect(decoded.width).toBe(PARITY_WIDTH);
-  expect(decoded.height).toBe(PARITY_HEIGHT);
+  const decoded = await decodePlayerCapture(output, canvas);
+  expect(decoded.width).toBe(canvas.width);
+  expect(decoded.height).toBe(canvas.height);
   return decoded;
 }
 

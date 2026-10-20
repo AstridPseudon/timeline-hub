@@ -1,4 +1,4 @@
-import { PARITY_HEIGHT, PARITY_WIDTH } from './media';
+import { ORIGINAL_640, type ParityCanvas } from './canvas';
 
 export type RgbFrame = {
   readonly width: number;
@@ -15,10 +15,10 @@ export type FrameComparison = {
   readonly meanChannelError: number;
 };
 
-export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: number): FrameComparison {
+export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: number, canvas: ParityCanvas = ORIGINAL_640): FrameComparison {
   for (const [host, image] of [['Player', expected], ['export', actual]] as const) {
-    if (image.width !== PARITY_WIDTH || image.height !== PARITY_HEIGHT
-      || image.bytes.length !== PARITY_WIDTH * PARITY_HEIGHT * 3) {
+    if (image.width !== canvas.width || image.height !== canvas.height
+      || image.bytes.length !== canvas.width * canvas.height * 3) {
       throw new Error(`frame ${frame}: invalid ${host} RGB frame dimensions/bytes: ${image.width}x${image.height}, ${image.bytes.length} bytes`);
     }
   }
@@ -46,8 +46,8 @@ export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: nu
   };
 }
 
-export function assertFrameWithinBound(comparison: FrameComparison): void {
-  if (!Number.isFinite(comparison.outsideBoundFraction) || comparison.pixels !== PARITY_WIDTH * PARITY_HEIGHT) {
+export function assertFrameWithinBound(comparison: FrameComparison, canvas: ParityCanvas = ORIGINAL_640): void {
+  if (!Number.isFinite(comparison.outsideBoundFraction) || comparison.pixels !== canvas.width * canvas.height) {
     throw new Error(`frame ${comparison.frame}: invalid comparison`);
   }
   if (comparison.outsideBoundFraction > 0.001) {

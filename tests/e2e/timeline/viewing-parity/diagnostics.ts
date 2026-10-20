@@ -3,8 +3,9 @@ import type { ManagedOutput, Task } from '../../../../src/integrations/runtime/g
 import { assertDownloadTransfer, type DownloadTransfer } from './download';
 import { assertTaskAuthority, record } from './authority';
 import { PARITY_FRAMES, type FrameParityFixture } from './fixture';
-import { mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
+import { mediaHash, PARITY_FPS } from './media';
 import { assertFrameWithinBound, type FrameComparison, type RgbFrame } from './compare';
+import { ORIGINAL_640, type ParityCanvas } from './canvas';
 import type { ConsoleMessage, Page, Request, Response } from '@playwright/test';
 
 export const ACP_RESOURCE_ERROR = 'Failed to load resource: the server responded with a status of 503 (Service Unavailable)';
@@ -31,7 +32,7 @@ export interface ResultPreviewProof {
 }
 
 /** Concrete same-case results, supplied only after all case assertions finish. */
-export function assertCompleteResult(proof: ResultPreviewProof, origin: string, projectId: string): string {
+export function assertCompleteResult(proof: ResultPreviewProof, origin: string, projectId: string, canvas: ParityCanvas = ORIGINAL_640): string {
   const { initial, completed, fixture, video, provenanceOutput, metadata, media } = proof;
   assert.equal(fixture.projectId, projectId);
   assert.equal(completed.state, 'succeeded');
@@ -76,18 +77,18 @@ export function assertCompleteResult(proof: ResultPreviewProof, origin: string, 
   const a = metadata.streams.find(stream => stream.codec_type === 'audio');
   assert.ok(v && a);
   assert.deepEqual([v.codec_name, v.width, v.height, v.r_frame_rate, v.nb_read_frames],
-    ['h264', PARITY_WIDTH, PARITY_HEIGHT, `${PARITY_FPS}/1`, '165']);
+    ['h264', canvas.width, canvas.height, `${PARITY_FPS}/1`, '165']);
   assert.deepEqual([a.codec_name, a.sample_rate, a.channels], ['aac', '48000', 2]);
   assert.equal(metadata.format.size, String(video.size));
   assert.deepEqual(proof.decodedFrames.map(item => item.frame), proof.comparisons ? [...PARITY_FRAMES] : [0]);
   if (proof.comparisons) {
     assert.deepEqual(proof.comparisons.map(item => item.frame), [...PARITY_FRAMES]);
-    proof.comparisons.forEach(assertFrameWithinBound);
+    proof.comparisons.forEach(comparison => assertFrameWithinBound(comparison, canvas));
   }
   for (const { decoded } of proof.decodedFrames) {
-    assert.equal(decoded.width, PARITY_WIDTH);
-    assert.equal(decoded.height, PARITY_HEIGHT);
-    assert.equal(decoded.bytes.length, PARITY_WIDTH * PARITY_HEIGHT * 3);
+    assert.equal(decoded.width, canvas.width);
+    assert.equal(decoded.height, canvas.height);
+    assert.equal(decoded.bytes.length, canvas.width * canvas.height * 3);
   }
   const url = `${new URL(origin).origin}/api/astrid/v1/objects/${encodeURIComponent(video.object_id)}`;
   assert.equal(proof.downloadHref, url);
@@ -100,10 +101,10 @@ export function assertCompleteResult(proof: ResultPreviewProof, origin: string, 
 }
 
 function resultPreviewAbort(raw: readonly PageDiagnostic[], proof: ResultPreviewProof | undefined,
-  origin: string, projectId: string): PageDiagnostic[] {
+  origin: string, projectId: string, canvas: ParityCanvas): PageDiagnostic[] {
   if (!proof) return [];
   let url: string;
-  try { url = assertCompleteResult(proof, origin, projectId); } catch { return []; }
+  try { url = assertCompleteResult(proof, origin, projectId, canvas); } catch { return []; }
   const matching = raw.filter(item => item.kind === 'requestfailed' && item.url === url);
   if (matching.length !== 1) return [];
   const item = matching[0];
@@ -131,7 +132,7 @@ function unavailableBody(body: string | undefined): boolean {
 }
 
 /** Keep raw failures; qualify only paired ACP errors or a fully checked result preview. */
-export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin: string, projectId: string, proof?: ResultPreviewProof) {
+export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin: string, projectId: string, proof?: ResultPreviewProof, canvas: ParityCanvas = ORIGINAL_640) {
   const optional = new Set<PageDiagnostic>();
   const responses = raw.filter(item => item.kind === 'response');
   for (const item of raw) {
@@ -147,14 +148,14 @@ export function classifyPageDiagnostics(raw: readonly PageDiagnostic[], origin: 
     if (response) { optional.add(response); optional.add(item); }
   }
   // Other errors also prevent qualification; a complete file does not excuse them.
-  const candidates = resultPreviewAbort(raw, proof, origin, projectId);
+  const candidates = resultPreviewAbort(raw, proof, origin, projectId, canvas);
   const qualifiedResultPreviews = raw.every(item => optional.has(item) || candidates.includes(item)) ? candidates : [];
   return { raw: [...raw], optionalAcp: raw.filter(item => optional.has(item)), qualifiedResultPreviews,
     failures: raw.filter(item => !optional.has(item) && !qualifiedResultPreviews.includes(item)) };
 }
 
 /** Observe real traffic without intercepting requests or changing product readiness. */
-export function collectPageDiagnostics(page: Page, origin: string, projectId: string) {
+export function collectPageDiagnostics(page: Page, origin: string, projectId: string, canvas: ParityCanvas = ORIGINAL_640) {
   const raw: PageDiagnostic[] = [];
   const pending = new Set<Promise<void>>();
   const responses = new WeakMap<Request, NonNullable<Extract<PageDiagnostic, { kind: 'requestfailed' }>['response']>>();
@@ -218,7 +219,7 @@ export function collectPageDiagnostics(page: Page, origin: string, projectId: st
       const media = await liveMedia();
       assert.ok(observingMedia && media, 'result requires document media-error observation and a live video');
       assert.equal(value.downloadTransfer.pageOrigin, new URL(page.url()).origin);
-      assertCompleteResult({ ...value, media }, origin, projectId);
+      assertCompleteResult({ ...value, media }, origin, projectId, canvas);
       proof = value;
     },
     discardResult() { proof = undefined; },
@@ -229,7 +230,7 @@ export function collectPageDiagnostics(page: Page, origin: string, projectId: st
       }
       const media = proof ? await liveMedia() : undefined;
       if (media?.error) raw.push({ kind: 'mediaerror', url: media.currentSrc, ...media.error });
-      return classifyPageDiagnostics(raw, origin, projectId, proof && media ? { ...proof, media } : undefined);
+      return classifyPageDiagnostics(raw, origin, projectId, proof && media ? { ...proof, media } : undefined, canvas);
     },
     stop() {
       page.off('pageerror', onPageError);
