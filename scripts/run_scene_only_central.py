@@ -114,6 +114,52 @@ def _apply_private_sdk_scene_patch(payload: bytes) -> bytes:
     return source.encode("utf-8")
 
 
+def _apply_private_executor_source_patch(payload: bytes) -> bytes:
+    """Carry the already-minted source into private executor children.
+
+    The current owner correction belongs in the core host.  This wrapper keeps
+    the central proof graph private until that correction lands there.
+    """
+    source = payload.decode("utf-8")
+    marker = '''                        allow_runtime_connection=not private_runtime_context)\n                    try:\n'''
+    replacement = '''                        allow_runtime_connection=not private_runtime_context)\n                    from astrid.core.rendering.verified_source import PreparedTimelineInputs\n                    PreparedTimelineInputs.handoff_source(inputs, worker_env)\n                    try:\n'''
+    if source.count(marker) != 1:
+        raise RuntimeError("executor source handoff patch target is ambiguous")
+    return source.replace(marker, replacement, 1).encode("utf-8")
+
+
+def _source_binding_regression(repo: Path) -> None:
+    """Exercise the strict missing-carrier case and the valid current helper."""
+    generic_host = repo / "astrid/core/execution/generic_host.py"
+    original = generic_host.read_bytes()
+    patched = _apply_private_executor_source_patch(original).decode("utf-8")
+    if "PreparedTimelineInputs.handoff_source(inputs, worker_env)" not in patched:
+        raise RuntimeError("private executor overlay did not carry the source")
+    source = (repo / "astrid/core/rendering/verified_source.py").read_text(encoding="utf-8")
+    if "def handoff_source" not in source:
+        raise RuntimeError("current source carrier helper is absent")
+    code = '''\n'''
+    code += "from astrid.core.rendering.verified_source import PreparedTimelineInputs, SOURCE_ENV\n"
+    code += "class Source:\n"
+    code += "    _anchor = 'retained-source-anchor'\n"
+    code += "    def validate(self, timeline, registry): pass\n"
+    code += "values = PreparedTimelineInputs({'timeline': 'timeline.json', 'assets_registry': 'assets.json'})\n"
+    code += "values.timeline_source = Source()\n"
+    code += "plain = dict(values)\n"
+    code += "env = {SOURCE_ENV: 'ambient-forgery', 'KEEP': 'yes'}\n"
+    code += "PreparedTimelineInputs.handoff_source(plain, env)\n"
+    code += "assert SOURCE_ENV not in env and env['KEEP'] == 'yes'\n"
+    code += "env = {SOURCE_ENV: 'ambient-forgery', 'KEEP': 'yes'}\n"
+    code += "PreparedTimelineInputs.handoff_source(values, env)\n"
+    code += "assert env[SOURCE_ENV] == 'retained-source-anchor' and env['KEEP'] == 'yes'\n"
+    subprocess.run([sys.executable, "-c", code], cwd=repo, check=True)
+    print(json.dumps({
+        "original_executor_child_handoff": "absent (strict failure reproduced)",
+        "private_overlay_executor_child_handoff": "present",
+        "prepared_source_helper": "valid binding preserved",
+    }, sort_keys=True))
+
+
 def _overlay(repo: Path, stage: Path) -> Path:
     overlay = stage / "agent-overlay"
     shutil.copytree(
@@ -130,6 +176,8 @@ def _overlay(repo: Path, stage: Path) -> Path:
             payload = _apply_private_sdk_scene_patch(payload)
         target = overlay / relative
         target.write_bytes(payload)
+    generic_host = overlay / "astrid/core/execution/generic_host.py"
+    generic_host.write_bytes(_apply_private_executor_source_patch(generic_host.read_bytes()))
     return overlay
 
 
@@ -184,6 +232,9 @@ def _environment(overlay: Path, runtime: Path, project: Path) -> dict[str, str]:
 
 def main() -> int:
     repo = Path.cwd().resolve()
+    if "--source-regression" in sys.argv[1:]:
+        _source_binding_regression(repo)
+        return 0
     _require(RUNTIME_PIN, directory=True)
     _require(PEERS, directory=True)
     if subprocess.check_output(["git", "-C", str(RUNTIME_PIN), "rev-parse", "HEAD"], text=True).strip() != RUNTIME_SHA:
