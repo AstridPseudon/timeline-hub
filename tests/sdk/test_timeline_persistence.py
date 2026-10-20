@@ -371,12 +371,12 @@ def test_a_failed_working_copy_write_leaves_no_undo_step_for_the_edit_it_did_not
 def test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name(world, monkeypatch):
     path = world.working_copy()
     Checkout(timeline()).save(path, quiet=True)
+    tl = Checkout.load(path)
     holder = subprocess.Popen([sys.executable, "-c", HOLD, str(path)], cwd=str(REPO),
                               stdout=subprocess.PIPE, text=True, encoding="utf-8")
     try:
         assert holder.stdout.readline().strip() == "held"  # the holder has the lock and its pid on it
         monkeypatch.setenv("ASTRID_TIMELINE_LOCK_TIMEOUT", "0.5")  # the real wait is 30 s; this test shortens it
-        tl = Checkout.load(path)
         tl.clip("b-type").set(text="blocked edit")
         started = time.monotonic()
         with pytest.raises(TimelineEditError, match=rf"another writer \(pid {holder.pid}\) has held") as refused:
