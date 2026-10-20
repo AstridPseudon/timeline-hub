@@ -3601,7 +3601,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:f88ce18c3486aca0cf5a844420b822c554ff3b3eb396ab4c1ea54430a43be5b3",
+    "revision": "sha256:da9e894e6ad65f4503f60a9adf80596ad88ec1436302dcf57783d880496e1966",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
