@@ -36,3 +36,63 @@ void [
   projectSequence, labeledTrack, clearedTrack, missingTrackFields, missingTrackClear,
   missingTrackValues, invalidTrackLabel, invalidTrackClear,
 ];
+
+import type {
+  ClipSetElementArgs, ElementRef, OccurrenceDeleteArgs, OccurrenceDuplicateArgs,
+  OccurrenceAddMediaArgs, PlacementCreateArgs, PlacementUnplaceArgs,
+  ProducerAdmittedTarget, ProducerIdentity, ProducerAttemptPin, ProducerGuardArgs,
+  SettledProducerProposal, ShotPoolArgs, ShotSetArgs,
+} from "@astrid/runtime-client";
+
+const admittedTarget: ProducerAdmittedTarget = {
+  project_id: "p", timeline_id: "t", base_revision_id: "r", base_publication_id: "txn",
+};
+const producer: ProducerIdentity = {
+  task_id: "task", attempt_id: "attempt", executor_id: "executor", fence: 1, runtime_epoch: 1,
+};
+const producerPin: ProducerAttemptPin = {
+  ...producer, admitted_target: admittedTarget, proposal_digest: "sha256:" + "a".repeat(64),
+};
+const producerGuard: ProducerGuardArgs = { pin: producerPin };
+const proposal: SettledProducerProposal = {
+  schema_version: 1, producer, admitted_target: admittedTarget, rationale: "Add track",
+  proposal_digest: producerPin.proposal_digest,
+  commands: [{ schema_version: 1, op: "track.create", version: "1", select: "parent",
+    args: { row: { id: "v", kind: "video" } },
+    reads: [{ ref: "parent", path: ["tracks"], state: { state: "present", value: [] } }],
+  }],
+};
+const selectedMedia = { asset: "a", generation_id: "g", variant_id: "v", object_id: "digest", catalog_digest: "digest" };
+const placement: PlacementCreateArgs = { id: "new", on: 0, hold: 1.5, media: selectedMedia, consumed: ["old"] };
+const occurrenceMedia: OccurrenceAddMediaArgs = {
+  row: { id: "c", clipType: "media", track: "v", at: 0, hold: 1.5 },
+  media: selectedMedia, consumed: ["old"],
+};
+const element: ElementRef = { id: "e", kind: "component", revision: "r" };
+const setElement: ClipSetElementArgs = { elementRef: element };
+const shotSet: ShotSetArgs = { values: { settings: { enhancePrompt: false, batchVideoFrames: 1.5 } }, clear: [] };
+const duplicate: OccurrenceDuplicateArgs = { occurrence_id: "o", shot_id: "s" };
+const deleteOccurrence: OccurrenceDeleteArgs = {};
+const unplace: PlacementUnplaceArgs = {};
+const pool: ShotPoolArgs = { action: "add", media: selectedMedia };
+
+// @ts-expect-error Producer pins require the original proposal digest.
+const missingProducerDigest: ProducerAttemptPin = { ...producer, admitted_target: admittedTarget };
+// @ts-expect-error Producer fence numbers cannot be booleans.
+const booleanFence: ProducerIdentity = { ...producer, fence: true };
+// @ts-expect-error Producer guard args are closed.
+const extraGuardArg: ProducerGuardArgs = { pin: producerPin, extra: true };
+// @ts-expect-error Consumed raw IDs are typed array items.
+const booleanConsumed: PlacementCreateArgs = { ...placement, consumed: [false] };
+// @ts-expect-error Read paths retain string tokens.
+proposal.commands[0].reads = [{ ref: "parent", path: [1], state: { state: "absent" } }];
+// @ts-expect-error Shot setting booleans cannot be numbers.
+const numberBooleanSetting: ShotSetArgs = { values: { settings: { enhancePrompt: 1 } }, clear: [] };
+// @ts-expect-error Shot setting numbers cannot be booleans.
+const booleanNumberSetting: ShotSetArgs = { values: { settings: { batchVideoFrames: true } }, clear: [] };
+// @ts-expect-error Element revisions remain required.
+const missingElementRevision: ElementRef = { id: "e", kind: "component" };
+
+void [producerGuard, proposal, occurrenceMedia, setElement, shotSet, duplicate,
+  deleteOccurrence, unplace, pool, missingProducerDigest, booleanFence, extraGuardArg,
+  booleanConsumed, numberBooleanSetting, booleanNumberSetting, missingElementRevision];

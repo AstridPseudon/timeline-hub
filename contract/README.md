@@ -79,3 +79,20 @@ validation or renderer dependency. Acceptance validates finite JSON, closure
 identity and recorder consistency separately; types alone do not grant authority.
 Commit clients preserve the `{data, receipt}` envelope, including the distinct
 preview status with a null receipt. Restore requires both current head pins.
+
+The 0.2.13 staging candidate copies the complete schema from Agent
+`0a0ac7baaa74e15485b10bcbaa80eda1afe48c00`, raw SHA256
+`30da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd`
+(48 definitions, 22 operations). The immutable source snapshots and their
+provenance are in `tests/fixtures/published-command-schemas/`. Normal generation
+checks containment against this freeze and the complete Runtime 0.2.10,
+0.2.3 and 0.2.2 schemas before writing artifacts. The 0.2.2 check proves only
+the five explicit additive regex changes; other rewrites still require review.
+After copying an authorized source pin and updating `generators/release.json`,
+run `python generators/generate.py`, then `python scripts/artifact_manifest.py`,
+and run both commands again with `--check`.
+
+This candidate does not publish a release or change consumer pins. Connector
+0.2.11 and view write-scope 0.2.12 are separate private candidates, absent here.
+Actual producer acceptance requires the paired guard-record normalization fix;
+schema and generated-type qualification alone do not prove producer acceptance.
