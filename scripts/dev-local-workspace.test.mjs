@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
 import { readGeneratedSchemaDigest } from './runtime-schema-guard.mjs';
+import { terminateProcessTree } from './terminate-process-tree.mjs';
+import { listenOnTestPort } from './test-port.mjs';
 
 import {
   parseDevLocalWorkspaceArgs,
@@ -279,10 +281,10 @@ async function launchFixture(overrides = {}) {
     if (req.url === '/v1/realm') return json({ realm_id: overrides.realmResponseId ?? realmId, display_name: 'Astrid test realm', version: 1, created_at: '2026-09-11T00:00:00Z' });
     res.writeHead(404); res.end();
   });
-  await new Promise(r => runtime.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(runtime);
   // The Runtime's browser door: a stand-in listener on its own port, recorded in discovery as the hosted page's door.
   const door = createServer((_req, res) => { res.writeHead(404); res.end(); });
-  await new Promise(r => door.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(door);
   const discovery = join(fixture, 'discovery.json');
   const discoveryDocument = JSON.stringify({
     endpoint: `http://127.0.0.1:${runtime.address().port}`,
@@ -513,12 +515,11 @@ test('build handoff rejects a Runtime instance change during compilation', async
 
 // The whole launcher against a fake Runtime, with a fake long-lived `npm` for ACP and Vite. The fake Vite listens on the app's
 // port (PORT), so the launcher's Open block, which waits for it, is reached; it also records every spawn.
-function freePort() {
-  return new Promise((resolvePort, reject) => {
-    const server = createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => { const { port } = server.address(); server.close(() => resolvePort(port)); });
-  });
+async function freePort() {
+  const server = createServer();
+  const port = await listenOnTestPort(server);
+  await new Promise((resolve) => server.close(resolve));
+  return port;
 }
 
 const FAKE_NPM = (spawnLog) => `#!${process.execPath}
@@ -530,7 +531,16 @@ fs.appendFileSync(process.env.FAKE_RUNTIME_LIFECYCLE_LOG, kind + ':start\\n');
 if (kind === 'vite') fs.writeFileSync(process.env.FAKE_RUNTIME_APP_ENV, JSON.stringify({ args, astridCheckout: process.env.ASTRID_CHECKOUT, dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT, supportRoot: process.env.ASTRID_SUPPORT_ROOT, discovery: process.env.ASTRID_WORKSPACE_DISCOVERY }));
 console.log(['fake-npm', ...args].join(' '));
 if (kind === 'vite' && process.env.FAKE_NPM_VITE_EXIT) process.exit(Number(process.env.FAKE_NPM_VITE_EXIT));
-if (args.includes('dev') || args.includes('preview')) require('node:http').createServer((request, response) => {
+if (process.env.FAKE_NPM_TREE_PIDS) {
+  fs.appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + '\\n');
+  const server = ${JSON.stringify(`
+    const fs = require('node:fs');
+    fs.appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + String.fromCharCode(10));
+    require('node:http').createServer((_request, response) => response.end('descendant server')).listen(Number(process.env.PORT), '127.0.0.1', () => fs.writeFileSync(process.env.FAKE_NPM_TREE_READY, 'ready'));
+  `)};
+  const middle = 'require("node:fs").appendFileSync(process.env.FAKE_NPM_TREE_PIDS, process.pid + String.fromCharCode(10)); require("node:child_process").spawn(process.execPath, ["-e", ' + JSON.stringify(server) + '], { stdio: "inherit" });';
+  require('node:child_process').spawn(process.execPath, ['-e', middle], { stdio: 'inherit' });
+} else if (args.includes('dev') || args.includes('preview')) require('node:http').createServer((request, response) => {
   if (request.url !== '/runtime-config/v1/workspace.json') { response.writeHead(404); response.end(); return; }
   response.writeHead(200, { 'Content-Type': 'application/json' });
   response.end(JSON.stringify({ realmId: process.env.FAKE_VITE_REALM_ID || process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID }));
@@ -551,6 +561,15 @@ setInterval(() => {}, 1000);
 `;
 
 const OPEN_BLOCK_END = 'Keep this window open while you work. Press Ctrl+C to stop.';
+// Windows kill(SIGINT/SIGTERM) forcibly exits Node; deliver the event inside the
+// launcher there. POSIX tests continue sending real signals.
+const SIGNAL_CONTROL = `data:text/javascript,${encodeURIComponent(`
+process.on('message', (signal) => {
+  process.emit(signal);
+  process.send(signal);
+});
+process.channel.unref();
+`)}`;
 
 /**
  * The launcher against a fake Runtime. Resolves once `until(stdout, stderr, exitCode)` holds, with what it printed; `stop()`
@@ -576,17 +595,24 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   };
   // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
   if (shippedConfig) delete env.ASTRID_APP_HOSTED_ORIGIN_CONFIG;
-  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
+  const controlArgs = process.platform === 'win32' ? ['--import', SIGNAL_CONTROL] : [];
+  const child = spawn(process.execPath, [...controlArgs, 'scripts/dev-local-workspace.mjs', ...args], { env, stdio: process.platform === 'win32' ? ['ignore', 'pipe', 'pipe', 'ipc'] : ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
   const seen = { stdout: '', stderr: '' };
   child.stdout.on('data', c => { seen.stdout += c; }); child.stderr.on('data', c => { seen.stderr += c; });
   const closed = new Promise(resolveClose => child.once('close', resolveClose));
+  const requestSignal = (name) => new Promise((resolveSignal, reject) => {
+    if (child.exitCode !== null) return resolveSignal();
+    if (process.platform !== 'win32') { child.kill(name); return resolveSignal(); }
+    child.once('message', resolveSignal);
+    child.send(name, (error) => { if (error) reject(error); });
+  });
   const stop = async () => {
-    if (child.exitCode === null) child.kill('SIGTERM');
+    await requestSignal('SIGTERM');
     await closed;
     if (!given) await fixture.close();
   };
   const signal = async (name) => {
-    if (child.exitCode === null) child.kill(name);
+    await requestSignal(name);
     await closed;
   };
   try {
@@ -597,7 +623,7 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
       }
       await new Promise(r => setTimeout(r, 50));
     }
-    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, signal, seen };
+    return { stdout: seen.stdout, stderr: seen.stderr, child, closed, env, fixture, spawnLog, stop, signal, requestSignal, seen };
   } catch (error) {
     await stop();
     throw error;
@@ -691,7 +717,7 @@ test('the app port taken by another program: one friendly line, the details, no 
   // Something that is not Astrid's app already listens on the app's port. Vite would not start, and whatever answers must
   // never be taken for it: the launcher refuses before it prints "Starting Astrid…" or an address.
   const holder = createServer((_req, res) => { res.writeHead(200); res.end('not the app'); });
-  await new Promise(r => holder.listen(0, '127.0.0.1', r));
+  await listenOnTestPort(holder);
   const appPort = String(holder.address().port);
   try {
     const result = await launcherEnds({ configuredOrigin: 'https://hosted.test', env: { PORT: appPort } });
@@ -1132,13 +1158,50 @@ test('shutdown stops Vite and bridge services before Runtime down', async () => 
     started = await startLauncher({ fixture, args: ['--acp'], env: { ASTRID_APP_LOOPBACK_ORIGIN: 'off' } });
     await started.stop();
     const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
-    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
+    assert(lifecycle.includes('vite:start'), lifecycle.join('\n'));
     assert.equal(lifecycle.indexOf('acp:stop'), -1, 'chat is owned by the Runtime');
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    // taskkill forcibly terminates Windows children; their signal handlers cannot log a stop.
+    if (process.platform === 'win32') assert.equal(lifecycle.includes('vite:stop'), false);
+    else assert(lifecycle.indexOf('vite:stop') >= 0 && lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
     assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
+});
+
+test('startup timeout closes the real child/grandchild server and inherited pipes on native platforms', { timeout: 20_000 }, async () => {
+  const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
+  const pidsFile = join(fixture.fixture, 'tree-pids');
+  const ready = join(fixture.fixture, 'tree-ready');
+  // The Runtime passes validation, but its browser door becomes unavailable.
+  // That startup failure triggers shutdown internally, without console Ctrl+C.
+  await new Promise((resolve) => fixture.door.close(resolve));
+  let started;
+  const pids = () => existsSync(pidsFile) ? readFileSync(pidsFile, 'utf8').trim().split('\n').map(Number) : [];
+  const alive = (pid) => {
+    try { process.kill(pid, 0); return true; }
+    catch (error) { if (error.code === 'ESRCH') return false; throw error; }
+  };
+  try {
+    started = await startLauncher({ fixture, args: ['--verbose'], env: { FAKE_NPM_TREE_PIDS: pidsFile, FAKE_NPM_TREE_READY: ready }, until: () => existsSync(ready) });
+    assert.equal(pids().length, 3, 'the owned process must have a real child and grandchild');
+    assert(pids().every(alive), 'all three processes must be alive before cleanup');
+    assert.equal(await (await fetch(`http://127.0.0.1:${started.env.PORT}`)).text(), 'descendant server');
+    const deadline = Date.now() + 10_000;
+    while (started.child.exitCode === null || pids().some(alive)) {
+      assert(Date.now() < deadline, `tree cleanup did not finish: ${started.seen.stdout}${started.seen.stderr}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await started.closed;
+    assert.equal(started.child.exitCode, 1, started.seen.stderr);
+    assert.match(started.seen.stderr, /nothing listened on/);
+    await assert.rejects(fetch(`http://127.0.0.1:${started.env.PORT}`, { signal: AbortSignal.timeout(1000) }));
+    await assert.rejects(fetch(`http://127.0.0.1:${started.env.VITE_ASTRID_DYNAMIC_PROXY_PORT}`, { signal: AbortSignal.timeout(1000) }));
+  } finally {
+    for (const pid of pids()) if (alive(pid)) await terminateProcessTree({ pid, exitCode: null, signalCode: null });
+    if (started) await started.stop();
+    await fixture.close();
+  }
 });
 
 test('SIGINT stops services and then shuts down the Runtime this launcher started', async () => {
@@ -1149,10 +1212,11 @@ test('SIGINT stops services and then shuts down the Runtime this launcher starte
     await started.signal('SIGINT');
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up', 'down']);
     const lifecycle = readFileSync(fixture.env.FAKE_RUNTIME_LIFECYCLE_LOG, 'utf8').trim().split('\n');
-    assert(lifecycle.indexOf('vite:stop') >= 0, lifecycle.join('\n'));
+    assert(lifecycle.includes('vite:start'), lifecycle.join('\n'));
     const down = lifecycle.find((line) => line.startsWith('runtime:down '));
     assert(down, lifecycle.join('\n'));
-    assert(lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
+    if (process.platform === 'win32') assert.equal(lifecycle.includes('vite:stop'), false);
+    else assert(lifecycle.indexOf('vite:stop') >= 0 && lifecycle.indexOf('vite:stop') < lifecycle.indexOf(down), lifecycle.join('\n'));
     assert.equal(down, 'runtime:down viteOpen=false proxyOpen=false');
   } finally { if (started) await started.stop(); await fixture.close(); }
 });
@@ -1174,7 +1238,7 @@ test('SIGINT during Runtime up waits for ownership handoff, then brings that Run
       until: () => existsSync(startedMarker),
     });
     assert.deepEqual(runtimeCliCalls(fixture).map(({ action }) => action), ['up']);
-    if (process.platform === 'win32') started.child.kill('SIGINT');
+    if (process.platform === 'win32') await started.requestSignal('SIGINT');
     else process.kill(-started.child.pid, 'SIGINT');
     appendFileSync(releaseFile, ' release Runtime up');
     await started.closed;

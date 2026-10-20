@@ -10,6 +10,7 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { packageManagerInvocation } from './node-package-manager.mjs';
+import { terminateProcessTree } from './terminate-process-tree.mjs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,10 +86,7 @@ function spawnService(command, args, { kind = 'bridge', ...options }) {
 
 async function stopService(service, signal) {
   if (!service.closed && service.child.pid) {
-    try {
-      if (process.platform === 'win32') service.child.kill(signal);
-      else process.kill(-service.child.pid, signal);
-    } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    await terminateProcessTree(service.child, signal);
   }
   await service.done;
 }
