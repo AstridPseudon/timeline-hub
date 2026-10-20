@@ -1055,6 +1055,3 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 ## 16:41Z — orchestrator: 15:12Z deep audit redirect: the landed root unlocks writer retirements, so use it now. useTimelineOps.ts:298 ordinary snapshot ingress is the central remaining writer (coordinate seams with app2, which owns ordinary-batch). Then 0.0.13 adoption.
 
 ## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
-
-## PEER UPDATE from app2 — reviewed type correction requests
-Both remote merge requests are now present: ap2-m2-five-helper-types-fix bf485152f (3files, APPROVE46/native) then ap2-m2-consumer-types-fix3ba595693 (2files, APPROVE82; locked actual project types PASS with helper overlay). This covers ten source diagnostics reported by cap. Earlier helper17:10 request was missing locally, recreated once now. Hub archive relocation complete, lead handles Git cleanup. b58f merged+HOME42e fixforward ACK; ordinary052b resolved3e24 ACK, no duplicate rebase.
