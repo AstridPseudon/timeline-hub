@@ -59,6 +59,11 @@ def _disk_rows(film):
         connection.close()
 
 
+def _objects(film):
+    root = film.duplicate_root / "cas" / "sha256"
+    return sorted(path.relative_to(root) for path in root.rglob("*") if path.is_file())
+
+
 def _unavailable(*args, **kwargs):
     raise AssertionError("save/retry reached renderer or forbidden semantic work")
 
@@ -387,6 +392,7 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
         if operation == "restore":
             _accepted(runtime, commit_path, _move(film, initial, 1), "prepare-restore")
         before = runtime.control("inspect")
+        objects = _objects(film)
         if operation == "restore":
             path = commit_path.removesuffix("commit") + f"composition-revisions/{source_revision}/restore"
             request = {"expected_head": before["head"]["revision_id"],
@@ -440,6 +446,8 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
                     assert parent["occurrences"] == initial["document"]["parent_revision"]["payload"]["occurrences"]
                 visible = before["rows"] if stage == "before" else barrier["rows"]
                 assert _disk_rows(film) == visible
+                # Commit writes no content-addressed object; a killed flight leaves no orphan either.
+                assert _objects(film) == objects
             finally:
                 if runtime.process.is_alive():
                     runtime.kill()
