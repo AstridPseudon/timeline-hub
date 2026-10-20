@@ -1,0 +1,105 @@
+diff --git a/scripts/run_scene_only_central.py b/scripts/run_scene_only_central.py
+index ccf1457df..5fd450ccd 100644
+--- a/scripts/run_scene_only_central.py
++++ b/scripts/run_scene_only_central.py
+@@ -251,6 +251,86 @@ def _environment(overlay: Path, runtime: Path, project: Path) -> dict[str, str]:
+     return env
+ 
+ 
++def _bundle_preflight(overlay: Path, project: Path, env: dict[str, str], stage: Path) -> dict[str, object]:
++    """Qualify the private generated registry/source graph before managed work."""
++    generator = overlay / "scripts" / "gen_effect_registry.py"
++    subprocess.run(
++        [sys.executable, "-B", str(generator)],
++        cwd=overlay,
++        env=env,
++        capture_output=True,
++        check=True,
++        text=True,
++    )
++
++    # Resolve every normal generator import through the exact native alias
++    # implementation.  This catches a detached remotion/ root before the
++    # renderer can turn all generated animation imports into UNAVAILABLE.
++    alias_probe = r"""
++import fs from 'node:fs';
++import path from 'node:path';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++const project = process.cwd();
++const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
++const imports = [];
++for (const name of ['effects', 'animations', 'transitions']) {
++  const source = fs.readFileSync(path.join(project, 'src', `${name}.generated.ts`), 'utf8');
++  for (const match of source.matchAll(/from '([^']+)'/g)) {
++    if (match[1].startsWith('@pack-')) imports.push({name, specifier: match[1]});
++  }
++}
++const resolved = imports.map(({name, specifier}) => {
++  const alias = Object.keys(aliases).find(key => specifier === key || specifier.startsWith(`${key}/`));
++  if (!alias) throw new Error(`${name}: no alias for ${specifier}`);
++  const suffix = specifier.slice(alias.length).split('?')[0];
++  const target = path.join(aliases[alias], suffix);
++  const resolvedTarget = [target, ...['.ts', '.tsx', '.js', '.jsx'].map(extension => `${target}${extension}`)]
++    .find(candidate => fs.existsSync(candidate) && fs.statSync(candidate).isFile());
++  if (!resolvedTarget) throw new Error(`${name}: missing ${target}`);
++  return {name, specifier, alias, target: resolvedTarget};
++});
++process.stdout.write(JSON.stringify({aliases, imports: resolved}));
++"""
++    aliases = subprocess.run(
++        [str(NODE_PIN), "--input-type=module", "-e", alias_probe],
++        cwd=project,
++        env=env,
++        capture_output=True,
++        check=True,
++        text=True,
++    )
++    alias_result = json.loads(aliases.stdout)
++
++    # The private copy intentionally dereferences shared install symlinks;
++    # invoke TypeScript from its real package path, not the copied .bin shim.
++    tsc = project / "node_modules" / "typescript" / "bin" / "tsc"
++    subprocess.run(
++        [str(NODE_PIN), str(tsc), "--noEmit"],
++        cwd=project,
++        env=env,
++        capture_output=True,
++        check=True,
++        text=True,
++    )
++    bundle = stage / "bundle-preflight"
++    cli = project / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
++    subprocess.run(
++        [str(NODE_PIN), str(cli), "bundle", "src/index.ts", "--out-dir", str(bundle), "--bundle-cache=false"],
++        cwd=project,
++        env=env,
++        capture_output=True,
++        check=True,
++        text=True,
++    )
++    return {
++        "generated_imports": len(alias_result["imports"]),
++        "resolved_aliases": sorted(alias_result["aliases"]),
++        "typecheck": "passed",
++        "bundle_files": sum(path.is_file() for path in bundle.rglob("*")),
++    }
++
++
+ def main() -> int:
+     repo = Path.cwd().resolve()
+     if "--source-regression" in sys.argv[1:]:
+@@ -285,11 +365,13 @@ def main() -> int:
+             "pythonpath": env["PYTHONPATH"], "agent": str(overlay), "runtime": str(runtime),
+             "project": str(project), "node": str(node),
+         }, sort_keys=True))
++        bundle_preflight = _bundle_preflight(overlay, project, env, stage)
+         preflight = {
+             "phase": "preflight", "runtime": RUNTIME_SHA, "node": str(node),
+             "node_sha256": NODE_SHA256, "composition": PUBLIC13_NAME,
+             "composition_sha256": PUBLIC13_SHA256, "composition_files": PUBLIC13_FILES,
+             "source_tuple": {"sdk": "9b887e232", "executor": "23db420c1", "runtime": RUNTIME_SHA},
++            "bundle_preflight": bundle_preflight,
+         }
+         print(json.dumps(preflight, sort_keys=True), flush=True)
+         if "--preflight" in sys.argv[1:]:
