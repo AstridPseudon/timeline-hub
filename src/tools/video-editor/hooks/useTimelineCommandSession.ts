@@ -196,6 +196,21 @@ export function useTimelineCommandSession(options: {
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
+        const shotSetPort = session.shotSetPort;
+        session.shotSetPort = {
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a shot name');
+            return shotSetPort.capture(input);
+          },
+          finish(basis, args) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a shot name');
+            return shotSetPort.finish(basis, args);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a shot name');
+            return shotSetPort.submit(input);
+          },
+        };
         const scalarPort = session.clipScalarPort;
         const requireCleanScalarEdit = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing clip fields');
@@ -279,7 +294,7 @@ export function useTimelineCommandSession(options: {
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     genericPatchPort: sessionRef.current?.genericPatchPort,
     elementPort: sessionRef.current?.elementPort,
-    trackLabelPort: sessionRef.current?.trackLabelPort,
+    trackLabelPort: sessionRef.current?.trackLabelPort, shotSetPort: sessionRef.current?.shotSetPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }

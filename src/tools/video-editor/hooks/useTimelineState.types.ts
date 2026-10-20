@@ -3,6 +3,7 @@ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackL
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
 import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
+import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -143,6 +144,7 @@ export interface TimelineEditorOpsContextValue {
   element?: ElementCapturePort;
   clipScalar?: ClipScalarCapturePort;
   trackLabel?: TrackLabelCapturePort;
+  shotSet?: ShotSetCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;
