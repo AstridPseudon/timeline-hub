@@ -4624,6 +4624,73 @@ def test_later_native_absence_reuses_existing_reconciliation_with_all_guards(obs
         assert failure['observations']['pre']['outcome'] == failure['observations']['post']['outcome'] == 'LIVE'
 
 
+def test_later_absence_refuses_departed_parent_with_detached_grandchild(observed_descendant, monkeypatch):
+    """A leaf in the first census can fork and lose its ancestry before retry."""
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, _ = observed_descendant
+    parent = {**census[100], 'pid': 102, 'parent_pid': 100, 'pgid': 102,
+              'start_usec': 234567}
+    parent['birth_id'] = custody._ps_lstart_birth(parent['start_sec'])
+    census[102] = parent
+    parent_handle = (parent['birth_id'], object())
+    owner._handles[102] = parent_handle
+    native = {**native, 'parent_pid': 102, 'pgid': 102, 'status': 2}
+    census[103] = {**native, 'birth_id': birth}
+    identity = {'pid': 103, 'uid': 501, 'parent_pid': 102, 'birth_id': birth}
+    identities[103] = identity
+    escaped = {**native, 'pid': 104, 'parent_pid': 1, 'pgid': 104,
+               'start_usec': native['start_usec'] + 1, 'birth_id': birth}
+    later = {100: dict(census[100]), 104: escaped}
+    observations = []
+    captures = []
+    snapshots = []
+
+    def observation(pid):
+        assert pid == 103
+        observations.append(pid)
+        if len(observations) > 2:
+            return {'outcome': 'ABSENT'}
+        return {'outcome': 'LIVE', 'identity': dict(identity), 'native': dict(native)}
+
+    def capture(pid):
+        captures.append(pid)
+        raise custody.NativeTokenCaptureError('controlled end-of-capture failure',
+            substage='task_name_for_pid', kern_return=5, port_acquired=False)
+
+    def fresh():
+        # First retry census still sees the candidate and its retained parent.
+        # Then G forks/setsid()s and both ancestors exit and are reaped. G's
+        # new PPID/PGID is indistinguishable from an unrelated process.
+        snapshots.append(1)
+        return {pid: dict(row) for pid, row in (census if len(snapshots) == 1 else later).items()}
+
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', observation)
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    with pytest.raises(custody.CustodyError, match='controlled end-of-capture failure'):
+        owner.observe_census({pid: row['birth_id'] for pid, row in census.items()},
+                             census=census, fresh_census=fresh)
+
+    failure = owner._capture_failure_observations[0]
+    decision = failure['retry_decision']
+    assert failure['observations']['pre']['outcome'] == failure['observations']['post']['outcome'] == 'LIVE'
+    assert decision['fresh_candidate']['present'] and decision['fresh_parent']['present']
+    assert decision['later_candidate'] == decision['later_parent'] == {'present': False}
+    assert decision['outcome'] == 'REFUSED' and decision['fence'] == 'later.parent-present'
+    assert decision['authority'] == 'NONE' and decision['retry_registration_started'] is False
+    assert captures == [103] and len(snapshots) == 2
+    assert owner._handles[102] is parent_handle and set(owner._handles) == {100, 102}
+    assert not owner._unadmitted_absent
+    assert not list(owner.root.glob('designation-descendant_103_*.json'))
+    unresolved = owner._uncertain
+    assert unresolved is not None
+    # Even once the root exits, final validation must not bless the surviving G.
+    with pytest.raises(custody.CustodyError, match='unresolved'):
+        owner.validate_final_census({104: escaped})
+    assert owner._uncertain is unresolved
+    saved = json.loads((owner.root / 'observed-containment.json').read_text())
+    assert saved['capture_failures'][0]['retry_decision'] == decision
+
+
 @pytest.mark.parametrize('origin', ['intermediate', 'original-pending'])
 @pytest.mark.parametrize('outcome', ['absent', 'live', 'reuse', 'reparented', 'census-reuse'])
 def test_retry_internal_census_keeps_every_pending_sibling(observed_descendant, monkeypatch, origin, outcome):

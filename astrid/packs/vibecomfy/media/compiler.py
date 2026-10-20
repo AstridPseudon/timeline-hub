@@ -125,6 +125,7 @@ class VideoEnhanceRequest:
     video_ref: str
     scale: float = 2.0
     upscale_method: str = "lanczos"
+    # Retained for compatibility so older callers receive a clear rejection.
     enable_interpolation: bool = False
     enable_upscale: bool = True
     interpolation_frames: int = 1
@@ -406,9 +407,7 @@ def compile_video_enhance(request: VideoEnhanceRequest, *, profile: str = "pip_e
             "video_ref": video_ref,
             "scale": scale,
             "upscale_method": upscale_method,
-            "enable_interpolation": request.enable_interpolation,
             "enable_upscale": request.enable_upscale,
-            "interpolation_frames": interpolation_frames,
             "color_fix": request.color_fix,
             "output_quality": output_quality,
             "preserve_audio": True,

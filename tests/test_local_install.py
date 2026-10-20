@@ -75,6 +75,38 @@ class LocalInstallBoundaries(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bun is required for Astrid chat"):
             installer.agent_tools({"PATH": "/nonexistent-local-install-test"}, {})
 
+    def test_remotion_dependencies_follow_lockfile_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            remotion = root / "source" / "remotion"
+            remotion.mkdir(parents=True)
+            lockfile = remotion / "package-lock.json"
+            lockfile.write_text('{"lockfileVersion": 3, "dependencies": {}}\n')
+            fake_bin = root / "fake-bin"
+            fake_bin.mkdir()
+            log = root / "npm.log"
+            npm = fake_bin / "npm"
+            npm.write_text(
+                f"#!{sys.executable}\n"
+                "import os\n"
+                "from pathlib import Path\n"
+                "import sys\n"
+                "with open(os.environ['FAKE_NPM_LOG'], 'a') as stream:\n"
+                "    stream.write(os.getcwd() + '|' + ' '.join(sys.argv[1:]) + '\\n')\n"
+                "Path('node_modules').mkdir(exist_ok=True)\n"
+            )
+            npm.chmod(0o700)
+            env = {"PATH": str(fake_bin), "FAKE_NPM_LOG": str(log)}
+
+            installer.install_remotion_dependencies(root / "source", env)
+            installer.install_remotion_dependencies(root / "source", env)
+            lockfile.write_text('{"lockfileVersion": 3, "dependencies": {"changed": true}}\n')
+            installer.install_remotion_dependencies(root / "source", env)
+
+            self.assertEqual(log.read_text().splitlines(), [f"{remotion.resolve()}|ci", f"{remotion.resolve()}|ci"])
+            marker = remotion / "node_modules" / ".astrid-package-lock.sha256"
+            self.assertEqual(marker.read_text(), installer.digest(lockfile) + "\n")
+
     def test_stale_wheel_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
