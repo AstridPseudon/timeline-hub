@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T15:44:59Z | dispatcher heartbeat 12s | live 6 (sol 0, luna 6, other 0) | busy30 35 | status age 3m -->
+<!-- app2 | 2026-10-20T15:47:20Z | dispatcher heartbeat 1s | live 6 (sol 0, luna 6, other 0) | busy30 37 | status age 5m -->
 # app2 — 2026-10-20 15:41 UTC
 Milestone: M2 — all seven handoffs started; selected-PARAM last after Agent WC4 qualification. No row retired; no exit.
 Integrated: App remote tl/integration 41fff23a2; current-root b1ef4b9b9/05b6b488 candidate still unmerged. No app2 merge or durable consumer qualification.

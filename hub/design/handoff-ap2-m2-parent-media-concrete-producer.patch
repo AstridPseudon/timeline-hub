@@ -1,0 +1,434 @@
+diff --git a/src/integrations/paired/pairedRoutePolicy.test.ts b/src/integrations/paired/pairedRoutePolicy.test.ts
+index c31d5f465..efe3028a0 100644
+--- a/src/integrations/paired/pairedRoutePolicy.test.ts
++++ b/src/integrations/paired/pairedRoutePolicy.test.ts
+@@ -391,7 +391,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
+ 
+   // Reached through /api/astrid (nativeEditorConnection.ts:6); the Runtime alias deliberately has no capability catalog.
+   const astridOnly = new Set(['listCapabilities']);
+-  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection']);
++  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia']);
+   const pairedCalls = calls.filter(({ op }) => !localDoorOnly.has(op));
+   const localDoorOnlyCalls = calls.filter(({ op }) => localDoorOnly.has(op));
+ 
+@@ -406,7 +406,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
+     expect(calls.every(({ path }) => path.startsWith('/v1/') && !path.includes('${'))).toBe(true);
+     expect(calls.flatMap((call) => call.headers)).toEqual(expect.arrayContaining(['content-type', 'idempotency-key', 'x-original-name', 'range']));
+     expect(new Set(localDoorOnlyCalls.map(({ op }) => op))).toEqual(localDoorOnly);
+-    expect(localDoorOnlyCalls).toHaveLength(3);
++    expect(localDoorOnlyCalls).toHaveLength(4);
+   });
+ 
+   describe.each(pairedCalls)('$op: $method $path', ({ method, path, op }) => {
+diff --git a/src/integrations/runtime/client.ts b/src/integrations/runtime/client.ts
+index 49b46ca4c..355b22e0b 100644
+--- a/src/integrations/runtime/client.ts
++++ b/src/integrations/runtime/client.ts
+@@ -25,6 +25,7 @@ import {
+   type HistoryPage,
+   type MediaSelection,
+   type MediaSelectionQuery,
++  type VerifiedMedia,
+   type Transport,
+   type RequestBody,
+ } from './generated.ts';
+@@ -636,6 +637,13 @@ export class AstridRuntimeClient {
+     return this.withSession(() => this.client.getProjectMediaSelection(projectId, selection));
+   }
+ 
++  async getProjectVerifiedMedia(
++    projectId: string,
++    selection: MediaSelection,
++  ): Promise<VerifiedMedia> {
++    return this.withSession(() => this.client.getProjectVerifiedMedia(projectId, selection));
++  }
++
+   async publishParentComposition(
+     projectId: string,
+     timelineId: string,
+diff --git a/src/integrations/runtime/dataProvider.ts b/src/integrations/runtime/dataProvider.ts
+index 0f8ace6e0..e87c96709 100644
+--- a/src/integrations/runtime/dataProvider.ts
++++ b/src/integrations/runtime/dataProvider.ts
+@@ -1,5 +1,13 @@
+ import { PROJECT_TRANSCRIPT_KIND, parseProjectTranscriptDocument, projectTranscriptSchema, transcriptDocumentId, type ProjectTranscriptRepository } from '@/tools/video-editor/data/typed/projectTranscript.ts';
+-import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody } from './generated.ts';
++import {
++  ApiError,
++  type ByteResponse,
++  type MediaImportOperation as MediaImport,
++  type MediaSelection,
++  type MediaSelectionQuery,
++  type RequestBody,
++  type VerifiedMedia,
++} from './generated.ts';
+ import type {
+   CanonicalDocument,
+   CommitAcceptedMutation,
+@@ -731,6 +739,20 @@ export class RuntimeDataProvider implements DataProvider {
+     return this.client.listTimelineCommits(this.projectId, timelineId, cursor, limit);
+   }
+ 
++  async getProjectMediaSelection(
++    projectId: string,
++    selection: MediaSelectionQuery,
++  ): Promise<MediaSelection> {
++    return this.client.getProjectMediaSelection(projectId, selection);
++  }
++
++  async getProjectVerifiedMedia(
++    projectId: string,
++    selection: MediaSelection,
++  ): Promise<VerifiedMedia> {
++    return this.client.getProjectVerifiedMedia(projectId, selection);
++  }
++
+   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
+     const data = response.data;
+     const receipt = response.receipt;
+diff --git a/src/tools/video-editor/commands/commitSession.ts b/src/tools/video-editor/commands/commitSession.ts
+index 0922b4660..9e609b8e5 100644
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@ -10,6 +10,8 @@ import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+ import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
++import { captureParentClipAddMediaFromRuntime, finishParentClipAddMediaFromBasis, type ParentMediaProducerBasis, type ParentMediaReadCapability } from './parentMediaProducer.ts';
++import type { ParentMediaCapturePort } from './parentMediaGesture.ts';
+ 
+ type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+ export type CommandSessionState = {
+@@ -29,6 +31,7 @@ type Options = {
+   send(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
+   preview(patch: TimelinePatch): void;
+   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
++  parentMediaReads?: ParentMediaReadCapability;
+   changed(state: CommandSessionState): void;
+ };
+ const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
+@@ -271,6 +274,41 @@ export async function createTimelineCommandSession(options: Options) {
+       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+     },
+   };
++  const parentMediaPort: ParentMediaCapturePort = {
++    async capture({ current, row, selectionQuery }) {
++      assertReady();
++      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
++        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
++        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
++        throw new Error('Displayed timeline does not match the raw authoring basis');
++      }
++      const basis = await captureParentClipAddMediaFromRuntime(options.parentMediaReads, {
++        projectId: options.scope.projectId, bundle, row, selectionQuery,
++      });
++      return json({ ...basis, localGeneration,
++        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } });
++    },
++    finish(basis) {
++      assertReady();
++      const captured = basis as unknown as ParentMediaProducerBasis & { localGeneration: number; localBasis: JSON };
++      if (captured.localGeneration !== localGeneration) throw new Error('Timeline changed during the parent media add');
++      const result = finishParentClipAddMediaFromBasis(captured);
++      prepared.set(JSON.stringify(result.command), { payload: {
++        commands: [result.command], before: captured.bundle, after: result.bundle, preview: null,
++      }, generation: localGeneration, basis: captured.localBasis as unknown as OutboxBasis });
++      return { command: result.command };
++    },
++    submit({ command, preview }) {
++      assertReady();
++      const key = JSON.stringify(command);
++      const entry = prepared.get(key);
++      if (command.op !== 'clip.add-media' || !entry || entry.generation !== localGeneration) {
++        throw new Error('Parent media was not captured by this session');
++      }
++      prepared.delete(key);
++      enqueue({ ...entry.payload, preview }, preview, entry.basis);
++    },
++  };
+   const trackLabelPort: TrackLabelCapturePort = {
+     capture({ trackId, current }) {
+       assertReady();
+@@ -422,6 +460,7 @@ export async function createTimelineCommandSession(options: Options) {
+   return {
+     port,
+     trackLabelPort,
++    parentMediaPort,
+     useLatest: () => resolveRejected(false),
+     keepLabelChanges: () => resolveRejected(true),
+     getState: () => state,
+diff --git a/src/tools/video-editor/commands/parentClipAddCapture.test.ts b/src/tools/video-editor/commands/parentClipAddCapture.test.ts
+index 69baa7ab4..61563a5d4 100644
+--- a/src/tools/video-editor/commands/parentClipAddCapture.test.ts
++++ b/src/tools/video-editor/commands/parentClipAddCapture.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, expect, it } from 'vitest';
+-import type { EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { EditCommand, JSON, MediaSelection, MediaSelectionQuery, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+ import {
+   captureParentClipAddMedia,
+   executeParentClipAddMedia,
+@@ -7,6 +7,10 @@ import {
+ } from './parentClipAddCapture.ts';
+ import { ClipMoveError, copy } from './clipMovePrimitives.ts';
+ import type { AuthoredBundle } from './clipMovePrimitives.ts';
++import {
++  captureParentClipAddMediaFromRuntime,
++  finishParentClipAddMediaFromBasis,
++} from './parentMediaProducer.ts';
+ 
+ const media: MediaSelection = {
+   asset: 'reserved-new',
+@@ -54,6 +58,37 @@ function capture(input = bundle(), selectedMedia = media, inputVerified: readonl
+ }
+ 
+ describe('native parent clip.add-media capture', () => {
++  it('reads immutable selection and detached verification once, then retries from that basis', async () => {
++    const query: MediaSelectionQuery = {
++      asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
++    };
++    const calls: string[] = [];
++    const capability = {
++      getProjectMediaSelection: async (projectId: string, received: MediaSelectionQuery) => {
++        calls.push(`selection:${projectId}`);
++        expect(received).toEqual(query);
++        return copy(media);
++      },
++      getProjectVerifiedMedia: async (projectId: string, received: MediaSelection) => {
++        calls.push(`verified:${projectId}`);
++        expect(received).toEqual(media);
++        return copy(verified);
++      },
++    };
++    const basis = await captureParentClipAddMediaFromRuntime(capability, {
++      projectId: 'project-1', bundle: bundle(), row, selectionQuery: query,
++    });
++    query.asset = 'changed-before-retry';
++    expect(calls).toEqual(['selection:project-1', 'verified:project-1']);
++    expect(finishParentClipAddMediaFromBasis(JSON.parse(JSON.stringify(basis)))).toEqual(
++      finishParentClipAddMediaFromBasis(basis),
++    );
++    expect(basis.selectionQuery).toEqual({
++      asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
++    });
++    expect(calls).toHaveLength(2);
++  });
++
+   it('matches the native birth claims and preserves raw opaque data and order', () => {
+     const input = bundle(), before = copy(input);
+     const result = finishParentClipAddMedia(capture(input));
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+index 39db2c89b..6ae912e8e 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -7,6 +7,7 @@ import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+ import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+ import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
++import type { ParentMediaReadCapability } from '../commands/parentMediaProducer.ts';
+ import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
+ import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
+ import type { TimelineStoreApi } from './timelineStore.ts';
+@@ -124,6 +125,11 @@ export function useTimelineCommandSession(options: {
+           return fresh;
+         },
+         send: (request, key) => provider.commitTimeline!(request, key),
++        parentMediaReads: (() => {
++          const reads = provider as DataProvider & Partial<ParentMediaReadCapability>;
++          return typeof reads.getProjectMediaSelection === 'function' && typeof reads.getProjectVerifiedMedia === 'function'
++            ? reads as ParentMediaReadCapability : undefined;
++        })(),
+         changed,
+         preview: (patch) => {
+           if (disposed) throw new Error('Timeline command session is closed');
+@@ -158,6 +164,15 @@ export function useTimelineCommandSession(options: {
+           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
+           return realPort.capture(input);
+         } };
++        const parentMediaPort = session.parentMediaPort;
++        const requireCleanParentMedia = () => {
++          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before adding parent media');
++        };
++        session.parentMediaPort = {
++          capture(input) { requireCleanParentMedia(); return parentMediaPort.capture(input); },
++          finish(basis) { requireCleanParentMedia(); return parentMediaPort.finish(basis); },
++          submit(input) { requireCleanParentMedia(); parentMediaPort.submit(input); },
++        };
+         const labelPort = session.trackLabelPort;
+         const requireCleanLabelEdit = () => {
+           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
+@@ -238,6 +253,7 @@ export function useTimelineCommandSession(options: {
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+     trackLabelPort: sessionRef.current?.trackLabelPort,
++    parentMediaPort: sessionRef.current?.parentMediaPort,
+     retry, undo, flush, recover, useLatest, keepLabelChanges };
+ }
+ export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
+diff --git a/src/tools/video-editor/hooks/useTimelineState.ts b/src/tools/video-editor/hooks/useTimelineState.ts
+index a949741e7..961742853 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -1164,6 +1164,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+   const editorOps = useMemo(() => ({
+     clipMove: save.commands.port,
+     trackLabel: save.commands.trackLabelPort,
++    parentMedia: save.commands.parentMediaPort,
+     transcriptHost,
+     setInputModality: editor.setInputModality,
+     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
+@@ -1222,7 +1223,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+     patchRegistry: editor.patchRegistry,
+     unpatchRegistry: editor.unpatchRegistry,
+     registerAsset: editor.registerAsset,
+-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
++  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.parentMediaPort]);
+ 
+   const renderRequest = useTimelineRenderRequest(
+     runtime.timelineId,
+diff --git a/src/tools/video-editor/hooks/useTimelineState.types.ts b/src/tools/video-editor/hooks/useTimelineState.types.ts
+index 7f9741081..5ce4e565f 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.types.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.types.ts
+@@ -1,6 +1,7 @@
+ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
+ import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
++import type { ParentMediaCapturePort } from '@/tools/video-editor/commands/parentMediaGesture.ts';
+ import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+ import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
+ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
+@@ -139,6 +140,7 @@ export interface TimelineEditorOpsContextValue {
+   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
+   clipMove?: ClipMoveCapturePort;
+   trackLabel?: TrackLabelCapturePort;
++  parentMedia?: ParentMediaCapturePort;
+   setInputModality: (inputModality: TimelineInputModality) => void;
+   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
+   setInteractionMode: (mode: TimelineInteractionMode) => void;
+diff --git a/src/tools/video-editor/commands/parentMediaProducer.ts b/src/tools/video-editor/commands/parentMediaProducer.ts
+new file mode 100644
+index 000000000..243e05a7e
+--- /dev/null
++++ b/src/tools/video-editor/commands/parentMediaProducer.ts
+@@ -0,0 +1,71 @@
++import type {
++  MediaSelection,
++  MediaSelectionQuery,
++  VerifiedMedia,
++} from '@/integrations/runtime/timeline-commit-types.ts';
++import {
++  ClipMoveError,
++  copy,
++  equal,
++  freezeJson,
++  object,
++} from './clipMovePrimitives.ts';
++import {
++  captureParentClipAddMedia,
++  finishParentClipAddMedia,
++  type ParentClipAddMediaBasis,
++} from './parentClipAddCapture.ts';
++import type { AuthoredBundle } from './clipMovePrimitives.ts';
++import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++
++type Row = Record<string, JSON>;
++
++/** The two existing immutable Runtime reads needed by parent media capture. */
++export interface ParentMediaReadCapability {
++  getProjectMediaSelection(projectId: string, query: MediaSelectionQuery): Promise<MediaSelection>;
++  getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia>;
++}
++
++export type ParentMediaProducerInput = {
++  readonly projectId: string;
++  readonly bundle: AuthoredBundle;
++  readonly row: Row;
++  readonly selectionQuery: MediaSelectionQuery;
++};
++
++export type ParentMediaProducerBasis = ParentClipAddMediaBasis & {
++  readonly selectionQuery: MediaSelectionQuery;
++};
++
++function requireCapability(capability: ParentMediaReadCapability | undefined): ParentMediaReadCapability {
++  if (!capability || typeof capability.getProjectMediaSelection !== 'function' ||
++    typeof capability.getProjectVerifiedMedia !== 'function') {
++    throw new ClipMoveError('parent media producer requires immutable Runtime selection and verification reads', 'unsupported_media');
++  }
++  return capability;
++}
++
++/** Capture the immutable selection and detached verification exactly once. */
++export async function captureParentClipAddMediaFromRuntime(
++  capability: ParentMediaReadCapability | undefined,
++  input: ParentMediaProducerInput,
++): Promise<ParentMediaProducerBasis> {
++  const reads = requireCapability(capability);
++  const selectionQuery = copy(input.selectionQuery);
++  const media = await reads.getProjectMediaSelection(input.projectId, selectionQuery);
++  const verifiedMedia = await reads.getProjectVerifiedMedia(input.projectId, media);
++  if (!object(verifiedMedia) || !equal(verifiedMedia.selection, media)) {
++    throw new ClipMoveError('parent media verification does not match the captured selection', 'dependency_changed');
++  }
++  const basis = captureParentClipAddMedia(input.bundle, input.row, media, [verifiedMedia]);
++  return freezeJson({ ...basis, selectionQuery });
++}
++
++/** Retry from the frozen original bundle, command, selection, and verification. */
++export function finishParentClipAddMediaFromBasis(basis: ParentMediaProducerBasis): {
++  command: EditCommand;
++  bundle: AuthoredBundle;
++} {
++  const result = finishParentClipAddMedia(basis);
++  return { command: result.command, bundle: result.bundle };
++}
+diff --git a/src/tools/video-editor/commands/parentMediaGesture.ts b/src/tools/video-editor/commands/parentMediaGesture.ts
+new file mode 100644
+index 000000000..000000000
+--- /dev/null
++++ b/src/tools/video-editor/commands/parentMediaGesture.ts
+@@ -0,0 +1,38 @@
++import type { MediaSelectionQuery, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
++import type { TimelineData } from '../lib/timeline-data.ts';
++
++export interface ParentMediaCapturePort {
++  capture(input: {
++    current: TimelineData;
++    row: Record<string, JSON>;
++    selectionQuery: MediaSelectionQuery;
++  }): Promise<JSON>;
++  finish(basis: JSON): { command: EditCommand };
++  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
++}
++
++export type CapturedParentMedia = {
++  readonly basis: JSON;
++  readonly port: ParentMediaCapturePort;
++};
++
++/** Capture at the gesture boundary; the session owns the immutable basis. */
++export async function captureParentMediaEdit(
++  port: ParentMediaCapturePort | undefined,
++  current: TimelineData,
++  row: Record<string, JSON>,
++  selectionQuery: MediaSelectionQuery,
++): Promise<CapturedParentMedia> {
++  if (!port) throw new Error('parent media capture is unavailable');
++  const basis = await port.capture({ current, row, selectionQuery });
++  return { basis: structuredClone(basis), port };
++}
++
++export function submitParentMediaEdit(
++  captured: CapturedParentMedia,
++  preview: TimelinePatch | null = null,
++): void {
++  const prepared = captured.port.finish(captured.basis);
++  if (prepared.command.schema_version !== 1 || prepared.command.op !== 'clip.add-media'
++    || prepared.command.version !== '1') {
++    throw new Error('Unsupported parent media capture result');
++  }
++  captured.port.submit({ command: structuredClone(prepared.command), preview });
++}
+
