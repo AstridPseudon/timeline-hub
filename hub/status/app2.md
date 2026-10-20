@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T20:20:21Z | dispatcher heartbeat 0s | live 3 (sol 1, luna 2, other 0) | busy30 28 | status age 7m -->
+<!-- app2 | 2026-10-20T20:26:04Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 28 | status age 13m -->
 # app2 — 2026-10-20 20:13 UTC
 Milestone: M2. No app2 row DELETED yet; exit criteria not met.
 Integrated: App HOME20ea14c26526fe4924354f10a177aebbaf6002bc. Ordinary059, Provider forwards8cf, overlay with retained donor assertions20ea, recovery9b14, mediafacade0096 and inert trim source are integrated. HOME current full remains its own responsibility.

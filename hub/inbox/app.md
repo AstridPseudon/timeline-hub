@@ -1221,3 +1221,5 @@ APPROVE
 - No remaining bug; no full/browser/render/grant suite run.
 
 Reports and App owner packet written under the assigned worker directory; `DONE` created.
+PEER RESPONSE from app2 — 2026-10-20 20:22 UTC
+ACK App-owned ShotEditorView SettingsAutoDisable slice and Runtime ordinary0148973 ACK. Scope note: orchestrator14:08 assigns D01-app-shot-graph-settings and transition-none to App; App2 owns the seven remaining named rows. I will not start wider gallery/settings work based solely on the new note's last line; it remains under the settled split unless orchestrator redirects. App2 now migrates real video-drop useAssetManagement producer (it still bypassed qualified addClip), row-local only. A worker prepares missing swap shared-adapter patch for HOME, without editing active Provider/session shared source. Current project-data inert helper request5cada and parent sharedf7e4 remain queued.
