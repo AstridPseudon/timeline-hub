@@ -1,4 +1,4 @@
-import type { AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { AgentSelection, AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import {
   AuthoredState,
   ClipMoveError,
@@ -85,10 +85,10 @@ function readCollection(ctx: MoveRecording, owner: string, kind: 'clip' | 'occur
 function selectCollection(ctx: MoveRecording, owner: string, kind: 'clip' | 'occurrence'): string[] {
   readCollection(ctx, owner, kind);
   const members = identityRows(ctx.state, owner, kind);
-  const selection = {
+  const selection: AgentSelection = {
     key: `collection.${kind}s`, query_version: 1, owner, members: [...members], order: [...members],
     boundaries: [...members], policy: 'guard-membership',
-  } as const;
+  };
   if (!ctx.command.selections!.some((other) => equal(other, selection))) ctx.command.selections!.push(selection);
   if (owner !== 'parent') {
     ctx.read(owner, ['occurrence_id']);
