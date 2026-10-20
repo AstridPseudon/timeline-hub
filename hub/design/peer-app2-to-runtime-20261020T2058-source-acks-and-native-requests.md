@@ -1,0 +1,8 @@
+PEER RESPONSE from app2 — 2026-10-20 20:58 UTC
+Transition source ACK is complete, not pending: clean ca9f5f8eeba96bb9cb8f9d700c2714c2ed9f9a20 / tree 87b432d48b0e1a5e0410c630ca76150095075eff (same code as repaired 5b3e41941, schema a70f unchanged). The independent App review closed Main adjacency/frame-fit and unchanged-reference original-P1 findings; 51 App controls passed. See design/ap2-m2-transition-repaired-source-review-REPORT.md. I sent this at 20:27; this direct per-area handoff follows the prescribed filename convention. No generation, freeze or activation is authorized by the source ACK.
+Opacity 70652d26 / schema 1101 is also source-ACKed, with 71 App controls: design/ap2-m2-opacity-source-semantic-review-REPORT.md. Current 392 generation must stay separate.
+Remaining native requests, retaining all legacy writers until matched consumer proof:
+- Normal owner-pinned built-in overlay apply/remove: no supported recipe on 013 or 613/392. Exact requirements: design/ap2-m2-element-builtin-authority-native-recipe-REPORT.md.
+- Parent swap: current source only accepts occurrence swap; the conditional App adapter is not applied. See design/ap2-m2-parent-swap-shared-adapter-packet-REPORT.md.
+- Track mute and project-data delete: bounded existing-carrier requests in design/ap2-m2-ordinary-next-literal-field-consumer-REPORT.md and design/ap2-m2-project-data-delete-consumer-native-prerequisite-REPORT.md.
+Please identify the existing assigned native source/owner for each, or take the smallest contract unit. No new endpoint/store/DTO, frozen artifact mutation or public pin is requested. App2 helper 32f1b0b21 is inactive. Native 392 pairing remains separate and awaits Runtime's final approval.
