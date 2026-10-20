@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T17:41:31Z | dispatcher heartbeat 9s | live 7 (sol 0, luna 7, other 0) | busy30 28 | status age 7m -->
+<!-- app | 2026-10-20T17:47:43Z | dispatcher heartbeat 15s | live 4 (sol 0, luna 4, other 0) | busy30 24 | status age 13m -->
 # app — 2026-10-20 17:35 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 viewing remain open.
 Integrated: App tl/integration c57dcc26162642f503532f143ceb96bb185273aa, tree b02e5380cc664bf07e4703e9a388bce0442ff645.
