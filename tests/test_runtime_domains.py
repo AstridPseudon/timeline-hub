@@ -170,7 +170,6 @@ def test_project_shot_reference_routes_reject_non_object_json_as_typed_400(tmp_p
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
 def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
@@ -189,14 +188,6 @@ def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_
         with pytest.raises(ApiError) as stale_document:
             client.update_document(project.project_id, "doc-1", expected_version=1, idempotency_key="doc-1-stale", content={"text": "three"})
         assert stale_document.value.status == 409
-
-        timeline = client.create_timeline(project.project_id, "timeline-1", idempotency_key="timeline-1")
-        assert timeline["version"] == 1
-        saved = client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-update", shots=[{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}])
-        assert saved["version"] == 2 and saved["shots"][0]["shot_id"] == "shot-1"
-        with pytest.raises(ApiError) as stale_timeline:
-            client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-stale", shots=[])
-        assert stale_timeline.value.status == 409
 
         object_row = client.ingest_object(b"variant", media_type="application/octet-stream", idempotency_key="variant-object")
         # Generated clients retain these wire methods, but publication now
@@ -226,6 +217,24 @@ def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_
         assert failed.task_id == failed_task.task_id and failed.state == "failed"
         events, _cursor = client.list_run_events(failed_task.run_id)
         assert events[-1].event_type == "task.failed"
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement")
+def test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Domain Project", idempotency_key="domain-project")
+        timeline = client.create_timeline(project.project_id, "timeline-1", idempotency_key="timeline-1")
+        assert timeline["version"] == 1
+        saved = client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-update", shots=[{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}])
+        assert saved["version"] == 2 and saved["shots"][0]["shot_id"] == "shot-1"
+        with pytest.raises(ApiError) as stale_timeline:
+            client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-stale", shots=[])
+        assert stale_timeline.value.status == 409
     finally:
         daemon.stop()
 
@@ -273,13 +282,33 @@ def test_timeline_document_replay_is_retired_after_runtime_restart(tmp_path):
         second.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
-def test_project_media_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
+def test_project_reference_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     project = service.create_project({"slug": "atomic", "name": "Atomic"})
     service.store.record_object("a" * 64, 1, "application/octet-stream")
     service.store.add_object_ref(project["id"], "a" * 64)
+    original = service._command_record
+    reference_body = {"reference_id": "atomic-ref", "kind": "character", "name": "Ref", "media_id": "sha256:" + "a" * 64}
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("response serialization failed")
+
+    monkeypatch.setattr(service, "_command_record", fail)
+    with pytest.raises(RuntimeError):
+        service.create_project_reference(project["id"], reference_body, idempotency_key="atomic-ref")
+    assert service.store.conn.execute("SELECT 1 FROM project_references WHERE id='atomic-ref'").fetchone() is None
+    monkeypatch.setattr(service, "_command_record", original)
+    reference = service.create_project_reference(project["id"], reference_body, idempotency_key="atomic-ref")
+    assert service.create_project_reference(project["id"], reference_body, idempotency_key="atomic-ref") == reference
+    service.close()
+
+
+@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
+def test_project_shot_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    project = service.create_project({"slug": "atomic", "name": "Atomic"})
     original = service._command_record
 
     def fail(*args, **kwargs):
@@ -288,18 +317,14 @@ def test_project_media_mutations_roll_back_before_idempotency_replay(tmp_path, m
     monkeypatch.setattr(service, "_command_record", fail)
     with pytest.raises(RuntimeError):
         service.create_project_shot(project["id"], {"shot_id": "atomic-shot", "name": "Shot"}, idempotency_key="atomic-shot")
-    with pytest.raises(RuntimeError):
-        service.create_project_reference(project["id"], {"reference_id": "atomic-ref", "kind": "character", "name": "Ref", "media_id": "sha256:" + "a" * 64}, idempotency_key="atomic-ref")
     assert service.store.conn.execute("SELECT 1 FROM project_shots WHERE id='atomic-shot'").fetchone() is None
-    assert service.store.conn.execute("SELECT 1 FROM project_references WHERE id='atomic-ref'").fetchone() is None
     monkeypatch.setattr(service, "_command_record", original)
     shot = service.create_project_shot(project["id"], {"shot_id": "atomic-shot", "name": "Shot"}, idempotency_key="atomic-shot")
     assert service.create_project_shot(project["id"], {"shot_id": "atomic-shot", "name": "Shot"}, idempotency_key="atomic-shot") == shot
     service.close()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); restored by their /v1 commit replacements")
-def test_generated_domains_preserve_project_media_and_timeline_recovery(tmp_path):
+def test_generated_domains_preserve_project_media_and_task_listing(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
     try:
@@ -313,6 +338,36 @@ def test_generated_domains_preserve_project_media_and_timeline_recovery(tmp_path
 
         client.create_document(project.project_id, "settings", "settings", {"theme": "dark"}, idempotency_key="settings-document")
         client.create_document(project.project_id, "review", "review", {"approved": False}, idempotency_key="review-document")
+        second_object = client.ingest_project_object(project.project_id, b"second-managed", media_type="application/octet-stream", idempotency_key="media-2")
+        relation = client.create_media_relation(project.project_id, object_row.object_id, second_object.object_id, "derived_from", idempotency_key="relation")
+        relations, _ = client.list_media_relations(project.project_id)
+        assert relation["kind"] == "derived_from" and relations[0]["to_object_id"] == second_object.object_id
+
+        with pytest.raises(ApiError) as direct_generation:
+            client.create_generation(project.project_id, "generation", idempotency_key="generation")
+        assert direct_generation.value.status == 409
+        with pytest.raises(ApiError) as direct_variant:
+            client.create_variant("generation", "variant", idempotency_key="variant")
+        assert direct_variant.value.status == 409
+        assert client.list_generations(project.project_id)[0] == []
+
+        client.register_capability("render.basic", _digest("render.basic"), idempotency_key="listed-capability")
+        task = client.admit_task(capability_id="render.basic", capability_digest=_digest("render.basic"), input_object_ids=[], idempotency_key="listed-task", project_id=project.project_id, spec={"prompt": "listed"})
+        tasks, _ = client.list_project_tasks(project.project_id)
+        runs, _ = client.list_project_runs(project.project_id)
+        assert [item.task_id for item in tasks] == [task.task_id] and runs[0]["id"] == task.run_id
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02/D04 held: legacy timeline publication, timeline archive/recover and direct shot/reference writes are retired (410); restored by their /v1 commit replacements")
+def test_generated_timeline_recovery_is_retired_pending_commit_replacement(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
+        object_row = client.ingest_project_object(project.project_id, b"managed", media_type="application/octet-stream", idempotency_key="media", filename="managed.bin")
         timeline = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
         saved = client.update_timeline("timeline", expected_version=1, idempotency_key="timeline-update", shots=[{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}])
         history, _ = client.list_timeline_history("timeline")
@@ -338,24 +393,5 @@ def test_generated_domains_preserve_project_media_and_timeline_recovery(tmp_path
         shot = client.recover_shot("shot-mounted", expected_version=shot["version"], idempotency_key="recover-shot")
         reference = client.recover_reference("reference-mounted", expected_version=reference["version"], idempotency_key="recover-reference")
         assert shot["archived"] is False and reference["archived"] is False
-
-        second_object = client.ingest_project_object(project.project_id, b"second-managed", media_type="application/octet-stream", idempotency_key="media-2")
-        relation = client.create_media_relation(project.project_id, object_row.object_id, second_object.object_id, "derived_from", idempotency_key="relation")
-        relations, _ = client.list_media_relations(project.project_id)
-        assert relation["kind"] == "derived_from" and relations[0]["to_object_id"] == second_object.object_id
-
-        with pytest.raises(ApiError) as direct_generation:
-            client.create_generation(project.project_id, "generation", idempotency_key="generation")
-        assert direct_generation.value.status == 409
-        with pytest.raises(ApiError) as direct_variant:
-            client.create_variant("generation", "variant", idempotency_key="variant")
-        assert direct_variant.value.status == 409
-        assert client.list_generations(project.project_id)[0] == []
-
-        client.register_capability("render.basic", _digest("render.basic"), idempotency_key="listed-capability")
-        task = client.admit_task(capability_id="render.basic", capability_digest=_digest("render.basic"), input_object_ids=[], idempotency_key="listed-task", project_id=project.project_id, spec={"prompt": "listed"})
-        tasks, _ = client.list_project_tasks(project.project_id)
-        runs, _ = client.list_project_runs(project.project_id)
-        assert [item.task_id for item in tasks] == [task.task_id] and runs[0]["id"] == task.run_id
     finally:
         daemon.stop()

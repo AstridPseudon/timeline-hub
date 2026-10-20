@@ -196,15 +196,11 @@ def test_startup_reconciles_journaled_publication_after_crash_seam(tmp_path: Pat
         recovered.close()
 
 
-# Direct shot/reference writes are retired (ledger RT02), so their key checks
-# are gone with them; this returns when the commit path owns these updates.
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="ledger RT02: direct shot/reference writes retired; awaiting commit-path replacement")
-def test_project_updates_require_idempotency_keys_at_service_boundary(tmp_path: Path) -> None:
+def test_project_reference_updates_require_idempotency_keys_at_service_boundary(tmp_path: Path) -> None:
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
         project = service.create_project({"slug": "p1", "name": "P1"}, idempotency_key="project")
-        shot = service.create_project_shot(project["id"], {"name": "Shot", "metadata": {}}, idempotency_key="shot")
         media = service.ingest(project["id"], b"reference-media", idempotency_key="media")
         reference = service.create_project_reference(
             project["id"],
@@ -212,11 +208,28 @@ def test_project_updates_require_idempotency_keys_at_service_boundary(tmp_path: 
             idempotency_key="reference",
         )
         with pytest.raises(InvalidRequestError, match="Idempotency-Key is required"):
-            service.update_project_shot(project["id"], shot["data"]["shot_id"], {"expected_version": 1, "name": "Updated"})
-        with pytest.raises(InvalidRequestError, match="Idempotency-Key is required"):
             service.update_project_reference(
                 project["id"], reference["data"]["reference_id"], {"expected_version": 1, "name": "Updated"}
             )
+        with pytest.raises(InvalidRequestError, match="at most 256"):
+            service.update_project_reference(
+                project["id"], reference["data"]["reference_id"], {"expected_version": 1, "name": "Updated"}, idempotency_key="x" * 257
+            )
+    finally:
+        service.close()
+
+
+# Direct shot writes are retired (ledger RT02), so their key checks are gone
+# with them; this returns when the commit path owns shot updates.
+@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="ledger RT02: direct shot writes retired; awaiting commit-path replacement")
+def test_project_shot_updates_require_idempotency_keys_at_service_boundary(tmp_path: Path) -> None:
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    try:
+        project = service.create_project({"slug": "p1", "name": "P1"}, idempotency_key="project")
+        shot = service.create_project_shot(project["id"], {"name": "Shot", "metadata": {}}, idempotency_key="shot")
+        with pytest.raises(InvalidRequestError, match="Idempotency-Key is required"):
+            service.update_project_shot(project["id"], shot["data"]["shot_id"], {"expected_version": 1, "name": "Updated"})
         with pytest.raises(InvalidRequestError, match="at most 256"):
             service.update_project_shot(
                 project["id"], shot["data"]["shot_id"], {"expected_version": 1, "name": "Updated"}, idempotency_key="x" * 257
