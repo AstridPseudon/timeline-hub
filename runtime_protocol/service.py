@@ -42,6 +42,7 @@ from urllib.parse import quote
 from .errors import RuntimeErrorBase, AuthorizationError, ForbiddenError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError, RetiredRouteError
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
+from .timeline_commit_store import timeline_scope_is_empty
 from .timeline_inspection import inspect as inspect_timeline_closure
 from .timeline_view import markdown as render_timeline_markdown, png as render_timeline_png
 from .visual_seam import evaluate_closure, load_closure
@@ -2774,7 +2775,8 @@ class RuntimeService:
             # expected_head null matches a headless shell, so the head guard cannot see authored
             # shell content that the public resource hides; refuse before any write.
             hidden = self.store.conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", project["id"])).fetchone()
-            if hidden is not None and self._has_authored_content(json.loads(hidden["content_json"])):
+            if (hidden is not None and self._has_authored_content(json.loads(hidden["content_json"]))) \
+                    or not timeline_scope_is_empty(self.store.conn, timeline_id):
                 raise ConflictError("headless timeline holds authored content", details={"status": "refused", "reason": "headless_content_not_empty"})
 
         raw_internal = body.get("internal_timeline_revisions", body.get("timelines", []))

@@ -149,3 +149,33 @@ def test_fresh_creation_is_unchanged(service):
     runtime, project = service
     created = runtime.create_timeline(project, "second", idempotency_key="create-second")
     assert runtime.create_timeline(project, "second", idempotency_key="create-second") == created
+
+
+def _scoped_rows(runtime, project, kind):
+    conn = runtime.store.conn
+    with runtime.store._mutex, runtime.store._transaction():
+        if kind == "timeline_references":
+            conn.execute("INSERT INTO timeline_references(id, timeline_id, object_id, role) VALUES ('r1','main','obj',NULL)")
+        elif kind == "timeline_shots":
+            conn.execute("INSERT INTO timeline_shots(id, timeline_id, start_ms, duration_ms, reference_ids_json) VALUES ('s1','main',0,1000,'[]')")
+        elif kind == "snapshot":
+            conn.execute("INSERT INTO timeline_revisions(timeline_id, version, shots_json, references_json, created_at) VALUES ('main',2,'[{\"id\":\"s1\"}]','[]','2026-01-01T00:00:00Z')")
+        else:  # a dependency row on an unpublished parent revision of the headless timeline
+            conn.execute(
+                "INSERT INTO parent_composition_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?,?,?,?,?,?)",
+                ("orphan-rev", project, "main", json.dumps(EMPTY), digest(EMPTY), "2026-01-01T00:00:00Z"))
+            conn.execute(
+                "INSERT INTO composition_revision_dependencies(parent_revision_id, dependency_kind, dependency_id, content_digest, ordinal) VALUES (?,?,?,?,0)",
+                ("orphan-rev", "object", "x", "0" * 64))
+
+
+@pytest.mark.parametrize("kind", ["timeline_references", "timeline_shots", "snapshot", "dependency"])
+def test_headless_timeline_with_scoped_rows_refuses_empty_publish_untouched(service, kind):
+    runtime, project = service
+    _scoped_rows(runtime, project, kind)
+    before = _dump(runtime)
+    for key in ("scope-deny", "scope-deny"):  # the retry is refused the same way
+        with pytest.raises(ConflictError) as error:
+            _publish_empty(runtime, project, key)
+        assert error.value.details["reason"] == "headless_content_not_empty"
+        assert _dump(runtime) == before
