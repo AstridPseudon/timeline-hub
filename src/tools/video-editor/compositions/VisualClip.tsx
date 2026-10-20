@@ -1,13 +1,12 @@
 import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
 import { AbsoluteFill, Freeze, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
-import { queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
+import { getSanitizedPlaybackRate, queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
 import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
 import { ReadinessVideo } from './ReadinessVideo.tsx';
 import {
   getClipDurationInFrames,
   getSanitizedMediaSrc,
   getSanitizedMediaTrimProps,
-  getSanitizedPlaybackRate,
   getSanitizedVolume,
   parseResolution,
   secondsToFrames,
