@@ -1,5 +1,7 @@
 # Models (owner rule, 2026-10-19). This applies to the orchestrator, area leads, managers and workers.
 
+**Owner rule 2026-10-20 (overrides the table below for workers): use Sol ONLY for xhard tasks; Luna for everything else in terms of code.** Workers default to `gpt-5.6-luna --effort high`; a genuinely hard task may use Luna xhigh. Sol is allowed only as `--model gpt-6.1-sol --effort xhigh`, for the hardest coupled reasoning (cross-repo contracts, undo/rebase semantics, a failure that Luna xhigh has already tried and missed). bin/dispatch downgrades any Sol request below xhigh to Luna and logs it in $ORCH/model-downgrades.log. Reviews, fixture cleanup, test-only work, merges-forward and docs always use Luna. Managers and the 3-hourly audit (coordination, not code) stay on Sol high.
+
 Prefer Codex models. Fall back to Claude models only when the Codex one is unavailable: login missing, rate-limited, or erroring repeatedly.
 
 | Role | Codex (preferred) | Claude fallback |

@@ -10,6 +10,8 @@ while [ $# -gt 0 ]; do case $1 in
  --merge-parent) MPARENT=$2; shift 2;;
  --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
  *) echo "unknown arg $1"; exit 2;; esac; done
+# Owner rule 2026-10-20: Sol only for xhard tasks; Luna for all other code work. Sol below xhigh is downgraded to Luna.
+case $M in *sol*) [ "$E" = xhigh ] || { echo "$(date -u +%FT%TZ) $N: $M/$E -> gpt-5.6-luna/$E (Sol only for xhigh)" >> $O/model-downgrades.log; M=gpt-5.6-luna; };; esac
 . $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
 [ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
 D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
