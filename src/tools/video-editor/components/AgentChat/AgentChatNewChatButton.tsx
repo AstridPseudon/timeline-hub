@@ -4,8 +4,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { defaultThoughtLevel, type AgentThoughtLevel, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
-import { readModelThoughtSelections, rememberModelThoughtSelection } from './chatModelMemory.ts';
+import { readModelThoughtSelections, rememberModelThoughtSelection } from './newChatThinkingSelection.ts';
 
 const KEYCAP = 'verbatim-case select-all rounded border border-border px-1 font-mono text-[10px]';
 const SEGMENT = 'flex h-7 items-center text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50';
@@ -18,7 +19,7 @@ export interface NewChatModelChoice { id: string; name: string; detail?: string 
 export interface NewChatAgentModels {
   agent: LocalAgentId;
   models: NewChatModelChoice[];
-  /** The model a plain click on the agent starts with. */
+  /** The model selected initially when the submenu opens. */
   defaultModel?: string | null;
   loading: boolean;
   /** Shown when there is no list to offer, such as before the agent's first chat. */
@@ -26,7 +27,7 @@ export interface NewChatAgentModels {
 }
 
 interface AgentChatNewChatButtonProps {
-  /** The agent the last chat started with; the main click reuses it. */
+  /** The service’s last-used agent; the main click omits choices to reuse its defaults. */
   defaultAgent: LocalAgentId;
   agents?: LocalAgentChoice[];
   /** Current model names when existing model-list plumbing has reported them. */
@@ -39,7 +40,7 @@ interface AgentChatNewChatButtonProps {
   /** Start a chat: no agent reuses the last one; no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
   onMenuOpenChange?: (open: boolean) => void;
-  /** Tells the host which agent's models to fetch (null when the submenu closes). */
+  /** Tells the host which agent's service catalog to show (null when the submenu closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
   /** Bring a chat started elsewhere into this project. */
@@ -156,6 +157,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
     else onNewChat(agent, model, level);
   };
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
+  const astridSignInLine = agents?.find(choice => choice.id === 'astrid')?.signInLine;
   const copyLine = async (id: LocalAgentId, command: string, index: number) => {
     try {
       await navigator.clipboard.writeText(command);
@@ -192,7 +194,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!browsing && event.key === 'ArrowRight') {
       const agent = AGENT_IDS.find(id => `agent:${id}` === highlighted);
-      if (agent && availability(agent).usable && agentCanBrowse?.[agent] !== false) { event.preventDefault(); browse(agent); }
+      if (agent && agents?.some(choice => choice.id === agent) && availability(agent).usable && agentCanBrowse?.[agent] !== false) { event.preventDefault(); browse(agent); }
     } else if (browsing && (event.key === 'ArrowRight' || (event.key === ' ' && (event.target === root.current || query === '')))) {
       const model = agentModels?.models.find(model => `model:${model.id}` === highlighted);
       if (model?.thoughtLevel?.options.length) { event.preventDefault(); setOpenLevelSelector(model.id); }
@@ -246,13 +248,14 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                 <CommandGroup heading="New chat with">
                   {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
                   {agentsError && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError}</p>}
-                  {AGENT_IDS.map(id => {
+                  {agents?.map(choice => {
+                    const id = choice.id;
                     const state = availability(id);
                     const last = id === defaultAgent;
                     return (
                       <Fragment key={id}>
                         <CommandItem value={`agent:${id}`} aria-current={last ? 'true' : undefined}
-                          className="items-start gap-2 pr-1" onSelect={() => { if (state.usable) start(id); }}>
+                          className="items-start gap-2 pr-1" onSelect={() => { if (state.usable) { if (agentCanBrowse?.[id] === false) start(id); else browse(id); } }}>
                           <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
                           <span className="flex min-w-0 flex-1 flex-col">
                             <span className="flex items-baseline gap-2">
@@ -323,10 +326,15 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                       <p className="px-2 py-1.5 text-[11px] text-muted-foreground">Showing {SUBMENU_LIMIT} of {shownModels.length}. Keep typing to narrow.</p>
                     )}
                     {submenu && !submenu.loading && submenu.models.length === 0 && (
-                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? `${agentNames[browsing]} reports its models once a chat starts.`}</p>
+                      <>
+                        <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? AGENT_CHAT_COPY.noModels}</p>
+                        <CommandItem value="agent-default" className="text-xs" onSelect={() => start(browsing)}>
+                          <span className="normal-case">{AGENT_CHAT_COPY.useAgentDefault}</span>
+                        </CommandItem>
+                      </>
                     )}
-                    {browsing === 'astrid' && (
-                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: run <code className={KEYCAP}>omp</code>, then <code className={KEYCAP}>/login</code>.</p>
+                    {browsing === 'astrid' && astridSignInLine && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
                     )}
                   </CommandGroup>
                   {submenu && submenu.models.length > 0 && <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}

@@ -44,7 +44,7 @@ beforeEach(() => {
   state.timelineData = {};
   state.inventory = null;
   state.extensions = [
-    { manifest: { id: 'haus.astrid.live-scenes', label: 'Three.js Live Editor' } },
+    { manifest: { id: 'haus.astrid.threejs-live-editor', label: 'Three.js Live Editor' } },
     { manifest: { id: 'haus.astrid.transcript-lane', label: 'Transcript' } },
   ];
 }); afterEach(cleanup);
@@ -256,6 +256,31 @@ it('Extensions with extension panels keeps the dock open and shows the tool cont
   expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('data-open', 'true');
   expect(screen.getByRole('textbox', { name: 'Retained draft' })).toBeVisible();
   expect(screen.queryByTestId('extensions-empty-state')).toBeNull();
+});
+it('disabling the selected extension keeps the dock open on the next panel, with Manage still reachable', () => {
+  const view = render(<Harness />);
+  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
+  // The Extension Manager disables Transcript: its panel unregisters while it is still the selected key.
+  state.panels = [{ extensionId: 'example', id: 'beat', label: 'Beat Cue' }];
+  view.rerender(<Harness />);
+  expect(state.preferences.selectedRightPanelId).toBe(panelKey);
+  expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('data-open', 'true');
+  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Beat Cue');
+  expect(screen.getByRole('button', { name: 'Manage extensions' })).toBeVisible();
+  expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
+  // Re-enabling it brings the remembered panel back.
+  state.panels = [{ extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' }, { extensionId: 'example', id: 'beat', label: 'Beat Cue' }];
+  view.rerender(<Harness />);
+  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
+});
+it('reopening from Panel display with no extension panels parks on the Extensions host key instead of staying closed', async () => {
+  const user = userEvent.setup(); state.panels = [];
+  render(<Harness initialPreferences={{ selectedRightPanelId: null, lastExtensionPanelId: null, rightPanelTab: 'extensions' }} />);
+  screen.getByRole('button', { name: 'Panel display' }).focus(); await user.keyboard('{ArrowDown}');
+  await user.click(screen.getByRole('menuitemradio', { name: 'Full-height' }));
+  expect(state.preferences.selectedRightPanelId).toBe('host:extensions');
+  expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('data-open', 'true');
+  expect(screen.getByTestId('extensions-empty-state')).toBeVisible();
 });
 it('on touch, the Extensions picker lists the Transcript panel', async () => {
   const user = userEvent.setup();

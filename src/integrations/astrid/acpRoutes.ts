@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { BridgeRouteError, type AstridBridgeTransport } from './transport.ts';
 import { localAgentCatalogSchema, localAgentModelsSchema, type LocalAgentId } from './localAgents.ts';
+import { AGENT_CHAT_COPY } from './chatCopy.ts';
 
 const connectionSchema = z.strictObject({
   connection_id: z.string().min(1),
@@ -162,11 +163,6 @@ export class AstridLocalAcpRoutes {
       { method: 'GET' }, localModelResponseSchema, 'List local agent models');
   }
 
-  async setSessionModel(connectionId: string, sessionId: string, modelId: string, projectId?: string) {
-    return this.transport.requestJson(`/acp/${encodeURIComponent(connectionId)}/model`,
-      { method: 'POST', body: { sessionId, modelId, ...(projectId ? { project_id: projectId } : {}) } }, localModelResponseSchema, 'Set local agent model');
-  }
-
   async reconnect(connectionId?: string): Promise<AstridAcpConnection | z.infer<typeof reconnectResponseSchema>> {
     if (!connectionId) return this.connect();
     return this.transport.requestJson(
@@ -211,6 +207,7 @@ export class AstridLocalAcpRoutes {
     configId: string,
     value: string,
   ): Promise<T> {
+    if (configId === 'model') throw new Error(AGENT_CHAT_COPY.fixedModel);
     return this.rpc<T>(connectionId, 'session/set_config_option', { sessionId, configId, value });
   }
 

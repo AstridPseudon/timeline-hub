@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); localStorage.clear(); });
 const plainLine = (line: string) => line.replaceAll('`', '');
 
 const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
-  .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null }));
+  .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null, models: [], defaultModel: null }));
 const claudeModels: NewChatAgentModels = {
   agent: 'claude-code',
   defaultModel: 'sonnet',
@@ -43,7 +43,7 @@ describe('AgentChatNewChatButton', () => {
 
   it.each(['sign-in', 'not-installed'] as const)('shows Hermes and opens the menu when the default agent is %s', (state) => {
     const onNewChat = vi.fn();
-    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? LOCAL_AGENT_TABLE.hermes.signInLine : LOCAL_AGENT_TABLE.hermes.notInstalledLine }]} onNewChat={onNewChat} />);
+    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? 'Run `hermes setup`, then come back.' : 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`' }]} onNewChat={onNewChat} />);
     expect(screen.getByRole('button', { name: 'New chat' })).toHaveAttribute('title', 'New chat with Hermes');
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
     expect(onNewChat).not.toHaveBeenCalled();
@@ -53,19 +53,22 @@ describe('AgentChatNewChatButton', () => {
   it('does not copy or start a chat when a non-ready row is clicked', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const astridSignIn = 'Use Astrid sign-in instructions.';
+    const claudeSignIn = 'Run `claude auth login`, then come back.';
+    const codexInstall = 'Use the Codex installer.';
     const { onNewChat } = openMenu({ agents: [
-      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: LOCAL_AGENT_TABLE['claude-code'].signInLine },
-      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine! },
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: astridSignIn, models: [], defaultModel: null },
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: claudeSignIn, models: [], defaultModel: null },
+      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: codexInstall, models: [], defaultModel: null },
     ] });
     const astrid = screen.getByRole('option', { name: /Astrid/ });
     const claude = screen.getByRole('option', { name: /Claude Code/ });
     const codex = screen.getByRole('option', { name: /Codex/ });
     expect(astrid).toHaveTextContent('Sign in');
-    expect(astrid).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE.astrid.signInLine));
-    expect(claude).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE['claude-code'].signInLine));
+    expect(astrid).toHaveTextContent(plainLine(astridSignIn));
+    expect(claude).toHaveTextContent(plainLine(claudeSignIn));
     expect(codex).toHaveTextContent('Not installed');
-    expect(codex).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE.codex.notInstalledLine!));
+    expect(codex).toHaveTextContent(plainLine(codexInstall));
     for (const row of [astrid, claude, codex]) expect(row).not.toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(claude);
     expect(writeText).not.toHaveBeenCalled();
@@ -78,7 +81,7 @@ describe('AgentChatNewChatButton', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const command = 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash';
     const { onNewChat } = openMenu({ agents: [
-      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.hermes.notInstalledLine! },
+      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`' },
     ] });
     const hermes = screen.getByRole('option', { name: /Hermes/ });
     const copyButton = within(hermes).getByRole('button', { name: 'Copy command' });
@@ -97,7 +100,7 @@ describe('AgentChatNewChatButton', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     openMenu({ agents: [
-      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: 'Run `omp`, then `/login`.' },
     ] });
     const astrid = screen.getByRole('option', { name: /Astrid/ });
     const buttons = within(astrid).getAllByRole('button', { name: 'Copy command' });
@@ -110,16 +113,28 @@ describe('AgentChatNewChatButton', () => {
     expect(writeText).toHaveBeenNthCalledWith(1, 'omp');
   });
 
-  it('starts ready agents and treats unknown sign-in as ready', async () => {
-    const { onNewChat } = openMenu({ agents: [
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine! },
-      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready', line: null },
+  it('opens the model menu for a ready agent before starting a chat', async () => {
+    const { onNewChat, onBrowseAgent } = openMenu({ agents: [
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: 'Use the Claude Code installer.', models: [], defaultModel: null },
+      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready', line: null, models: [], defaultModel: null },
     ] });
     expect(screen.getByRole('option', { name: /Claude Code/ })).not.toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('option', { name: /Codex/ })).toHaveTextContent('Ready');
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
-    await waitFor(() => expect(onNewChat).toHaveBeenCalledWith('codex', undefined));
-    expect(screen.queryByRole('option', { name: /Codex/ })).toBeNull();
+    expect(onBrowseAgent).toHaveBeenLastCalledWith('codex');
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
+  });
+
+  it('starts a ready non-default agent with its own default when its catalog is empty', () => {
+    const { onNewChat, onBrowseAgent, view } = openMenu();
+    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'codex', models: [], loading: false }} />);
+
+    fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
+
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('codex', undefined);
+    expect(screen.queryByPlaceholderText('Search Codex models...')).toBeNull();
   });
 
   it('shows a known current model on the ready row', () => {
@@ -154,6 +169,12 @@ describe('AgentChatNewChatButton', () => {
     render(<AgentChatNewChatButton defaultAgent="astrid" agents={ready} onNewChat={vi.fn()} disabled />);
     expect(screen.getByRole('button', { name: 'New chat' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'New chat with…' })).toBeDisabled();
+  });
+
+  it('only offers the agents returned by the service', () => {
+    openMenu({ agents: ready.filter(agent => agent.id === 'codex') });
+    expect(screen.getByRole('option', { name: /Codex/ })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: /Astrid|Claude Code/ })).toBeNull();
   });
 
   it('opens an agent\'s models with → and starts the chat with the picked model', async () => {
@@ -192,11 +213,12 @@ describe('AgentChatNewChatButton', () => {
   });
 
   it('shows the Astrid sign-in command at the foot of its model list', () => {
-    const { onBrowseAgent, view } = openMenu();
+    const signInLine = "Run `'/home/test/.local/share/astrid/run-astrid'`, then enter `/login` in Astrid.";
+    const agents = ready.map(choice => choice.id === 'astrid' ? { ...choice, signInLine } : choice);
+    const { onBrowseAgent, view } = openMenu({ agents });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
-    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'astrid', models: [], loading: false, note: 'No models available.' }} />);
-    const [omp, login] = Array.from(LOCAL_AGENT_TABLE.astrid.signInLine.matchAll(/`([^`]+)`/g), match => match[1]);
-    expect(screen.getByText((_text, element) => element?.textContent === `More models: run ${omp}, then ${login}.`)).toBeTruthy();
+    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={agents} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'astrid', models: [], loading: false, note: 'No models available.' }} />);
+    expect(screen.getByText((_text, element) => element?.textContent === `More models: ${plainLine(signInLine)}`)).toBeTruthy();
   });
 
   it('keeps attaching an existing chat in the same menu', () => {
@@ -291,6 +313,21 @@ describe('AgentChatNewChatButton', () => {
     fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
     fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
     expect(reopened.onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+  });
+
+  it('keeps the explicit thinking choice when storage is unavailable', () => {
+    const save = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage blocked'); });
+    try {
+      const { onNewChat } = openMenu({ agentModels: effortModels });
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+      fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+      fireEvent.keyDown(screen.getByPlaceholderText('Search Claude Code models…'), { key: 'ArrowLeft' });
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+      expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
+      fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+      expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+    } finally { save.mockRestore(); }
   });
 
   it.each(['ArrowRight', ' '])('opens with %j, navigates levels, selects without starting, and returns with Esc', async key => {

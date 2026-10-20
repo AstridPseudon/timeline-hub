@@ -42,9 +42,9 @@ import {
   withTranscriptFixture,
 } from "@/tools/video-editor/dev/transcript-lane/fixtureProvider.ts";
 import {
-  getSnapshot as getDevDisabledSnapshot,
-  subscribe as subscribeDevDisabled,
-} from "@/tools/video-editor/dev/devExtensionEnablement.ts";
+  getSnapshot as getBuiltInDisabledSnapshot,
+  subscribe as subscribeBuiltInDisabled,
+} from "@/tools/video-editor/runtime/builtInExtensionEnablement.ts";
 import { useExtensionLoaderWiring } from "@/tools/video-editor/runtime/useExtensionLoaderWiring";
 import { AstridVideoEditorShell } from "@/tools/video-editor/components/AstridVideoEditorShell.tsx";
 import {
@@ -145,32 +145,33 @@ export default function VideoEditorPage() {
   // runtime document loaded before React mounts. DEV defaults open for authoring. URL or browser
   // storage cannot override the production rollout contract.
   //
-  // Dev-local enablement is an external store (`devExtensionEnablement.ts`):
+  // Built-in enablement is an external store (`builtInExtensionEnablement.ts`),
+  // shared by DEV and production so the ExtensionManager toggle applies in both:
   // subscribing via useSyncExternalStore makes the disabled-ID snapshot part of
   // this component's render inputs, so a toggle in the ExtensionManager updates
   // the direct-extension memo below without a searchParams change or a loader
   // refresh key. The snapshot is a stable cached Set — unchanged reads never
   // re-render the page, and disabling an extension drops it from the list, which
   // tears its runtime lifecycle down (the lifecycle host disposes on removal).
-  const devDisabledIds = useSyncExternalStore(
-    subscribeDevDisabled,
-    getDevDisabledSnapshot,
-    getDevDisabledSnapshot,
+  const builtInDisabledIds = useSyncExternalStore(
+    subscribeBuiltInDisabled,
+    getBuiltInDisabledSnapshot,
+    getBuiltInDisabledSnapshot,
   );
 
   const smokeDirectExtensions = useMemo(() => {
     // The routed native editor uses the same admitted catalog for every backend.
-    const disabled = import.meta.env.DEV ? devDisabledIds : new Set<string>();
     // Arbitrary scratchpad manifests remain usable in DEV. Production alone
-    // applies the frozen reviewed inventory.
+    // applies the frozen reviewed inventory. The built-in enablement filter
+    // applies in both builds.
     const admittedExtensions = (
       import.meta.env.DEV
         ? devLocalExtensions
         : selectReviewedExtensions(devLocalExtensions)
-    ).filter((extension) => !disabled.has(extension.manifest.id as string));
+    ).filter((extension) => !builtInDisabledIds.has(extension.manifest.id as string));
     const direct = [...admittedExtensions];
     return direct.length > 0 ? direct : undefined;
-  }, [devDisabledIds]);
+  }, [builtInDisabledIds]);
 
   // Extensions contribute overlays in every build.
   const timelineOverlaysEnabled =

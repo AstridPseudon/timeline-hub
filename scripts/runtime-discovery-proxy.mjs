@@ -1,4 +1,4 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { createServer, request as requestHttp } from 'node:http';
 import { URL, fileURLToPath } from 'node:url';
@@ -12,6 +12,7 @@ const port = Number(process.env.ASTRID_RUNTIME_PROXY_PORT ?? '17336');
 // producing bytes (same idea as the paired relay's idle timeout).
 export const CONNECT_TIMEOUT_MS = 10_000;
 export const IDLE_TIMEOUT_MS = 60_000;
+const ACP_IDLE_TIMEOUT_MS = 5 * 60_000;
 
 function fail(message, status = 503) {
   return { status, body: JSON.stringify({
@@ -56,7 +57,26 @@ export function currentRuntime(discoveryPath, { credentialFile: credentialFileOv
   return { endpoint, token: readToken(credentialFile) };
 }
 
-function readRuntimeSnapshot(discoveryPath) {
+/** The agent owns this registration and can rotate it independently of Vite. */
+export function currentChat(discoveryPath) {
+  if (!discoveryPath) throw new Error('ASTRID_WORKSPACE_DISCOVERY is not configured');
+  const path = resolve(dirname(discoveryPath), 'chat.json');
+  const metadata = lstatSync(path);
+  if (!metadata.isFile() || (process.platform !== 'win32'
+    && ((metadata.mode & 0o077) !== 0 || metadata.uid !== process.getuid()))) {
+    throw new Error('chat registration must be an owner-only regular file');
+  }
+  const registration = readJson(path, 'chat registration');
+  const endpoint = new URL(String(registration.endpoint ?? ''));
+  if (endpoint.protocol !== 'http:' || endpoint.hostname !== '127.0.0.1' || !endpoint.port || Number(endpoint.port) < 1
+    || endpoint.username || endpoint.password || endpoint.pathname !== '/' || endpoint.search || endpoint.hash
+    || typeof registration.token !== 'string' || !registration.token.trim()) {
+    throw new Error('chat registration must name an authenticated loopback service');
+  }
+  return { endpoint, token: registration.token };
+}
+
+export function readWorkspaceRuntimeConfig(discoveryPath) {
   if (!discoveryPath) throw new Error('ASTRID_WORKSPACE_DISCOVERY is not configured');
   const discovery = readJson(discoveryPath, 'runtime discovery');
   const endpoint = new URL(String(discovery.endpoint ?? ''));
@@ -81,32 +101,23 @@ function readRuntimeSnapshot(discoveryPath) {
     || realpathSync(discovery.realm_root) !== realpathSync(matches[0].data_root)) {
     throw new Error('runtime discovery does not match the selected Astrid realm');
   }
-  return { endpoint, token: credential.token.trim(), identity: { actorId, realmId, runtimeInstanceId } };
+  return { schemaVersion: 1, endpoint: endpoint.origin, actorId, realmId, runtimeInstanceId };
 }
 
-export function readWorkspaceRuntimeConfig(discoveryPath) {
-  const { endpoint, identity } = readRuntimeSnapshot(discoveryPath);
-  return { schemaVersion: 1, endpoint: endpoint.origin, ...identity };
-}
-
-function writeFailure(response, failure) {
-  if (response.destroyed || response.writableEnded) return;
-  if (response.headersSent) {
-    response.destroy();
-    return;
-  }
-  response.writeHead(failure.status, {
-    'Cache-Control': 'no-store',
-    'Content-Type': 'application/json',
-  });
-  response.end(failure.body);
-}
-
+// The operation relay is also consumed by Vite's same-origin admission plugin. Keep its
+// bounded handle registry here so the discovery proxy and the dev server share one contract.
 export const OPERATION_PREFIX = '/runtime-config/v1/operation';
 const HANDLE_HEADER = 'x-astrid-operation-handle';
 const HANDLE_PATTERN = /^[a-f0-9]{64}$/;
 const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
   'te', 'trailer', 'transfer-encoding', 'upgrade'];
+
+function readRuntimeSnapshot(discoveryPath) {
+  const runtime = currentRuntime(discoveryPath);
+  const config = readWorkspaceRuntimeConfig(discoveryPath);
+  return { endpoint: runtime.endpoint, token: runtime.token,
+    identity: { actorId: config.actorId, realmId: config.realmId, runtimeInstanceId: config.runtimeInstanceId } };
+}
 
 function headerValues(incoming, name) {
   const values = [];
@@ -155,7 +166,6 @@ export function operationFailure(status, code) {
   return { status, body: JSON.stringify({ code, message: messages[code] }) };
 }
 
-// Only the credential-owning process holds these entries. A bound dispatch never reads discovery.
 export function createRuntimeOperationRegistry({ discoveryPath, idleTimeoutMs = IDLE_TIMEOUT_MS } = {}) {
   const entries = new Map();
   let disposed = false;
@@ -285,7 +295,6 @@ function forwardOperation(incoming, response, entry, registry, path, connectTime
   response.setTimeout(idleTimeoutMs, failOwned);
   const headers = strippedHeaders(incoming.headers);
   headers.authorization = `Bearer ${entry.connection.token}`;
-  // No await or replaceable transport between this fence and the actual Node dispatch.
   if (!registry.isActive(entry) || incoming.aborted || response.destroyed) { failOwned(); return; }
   try {
     upstream = entry.connection.dispatch({ hostname: entry.connection.hostname, port: entry.connection.port,
@@ -301,18 +310,13 @@ function forwardOperation(incoming, response, entry, registry, path, connectTime
         if (!response.write(chunk)) reply.pause();
       });
       response.on('drain', () => { if (registry.isActive(entry)) reply.resume(); });
-      reply.once('end', () => {
-        if (registry.isActive(entry)) response.end(); else unavailable();
-      });
+      reply.once('end', () => { if (registry.isActive(entry)) response.end(); else unavailable(); });
       reply.once('error', failOwned);
       reply.once('aborted', failOwned);
     });
     connectTimer = setTimeout(failOwned, connectTimeoutMs);
     upstream.on('socket', (socket) => {
-      const connected = () => {
-        clearTimeout(connectTimer);
-        upstream.setTimeout(idleTimeoutMs, failOwned);
-      };
+      const connected = () => { clearTimeout(connectTimer); upstream.setTimeout(idleTimeoutMs, failOwned); };
       if (socket.connecting) socket.once('connect', connected); else connected();
     });
     upstream.once('close', () => clearTimeout(connectTimer));
@@ -321,70 +325,82 @@ function forwardOperation(incoming, response, entry, registry, path, connectTime
   } catch { failOwned(); }
 }
 
+function writeFailure(response, failure) {
+  if (response.headersSent) {
+    response.destroy();
+    return;
+  }
+  response.writeHead(failure.status, {
+    'Cache-Control': 'no-store',
+    'Content-Type': 'application/json',
+  });
+  response.end(failure.body);
+}
+
 export function createRuntimeProxyServer({
   discoveryPath,
   allowedOrigin,
   expectedHost,
   connectTimeoutMs = CONNECT_TIMEOUT_MS,
   idleTimeoutMs = IDLE_TIMEOUT_MS,
+  request = requestHttp,
 } = {}) {
   const operations = createRuntimeOperationRegistry({ discoveryPath, idleTimeoutMs });
   const pendingControls = new Set();
   const server = createServer((incoming, response) => {
-    if (incoming.url?.includes(OPERATION_PREFIX) || incoming.headers[HANDLE_HEADER] !== undefined) {
-      void (async () => {
-        if (!operationRequestAllowed(incoming, allowedOrigin, expectedHost)) {
-          writeFailure(response, operationFailure(403, 'operation_origin_forbidden')); return;
-        }
-        const target = operationTarget(incoming.url);
-        const handles = headerValues(incoming, HANDLE_HEADER);
-        if (!target || handles.length > 1 || (handles.length && !HANDLE_PATTERN.test(handles[0]))) {
-          writeFailure(response, operationFailure(400, 'operation_invalid')); return;
-        }
-        const handle = handles[0];
-        if (!target.control) {
-          const entry = operations.get(handle);
-          if (!entry) { writeFailure(response, operationFailure(410, 'operation_retired')); return; }
-          if (!['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(incoming.method)) {
-            writeFailure(response, operationFailure(405, 'operation_method_not_allowed')); return;
-          }
-          forwardOperation(incoming, response, entry, operations, target.path, connectTimeoutMs, idleTimeoutMs);
-          return;
-        }
-        if (incoming.method === 'DELETE') {
-          if (!handle || incoming.headers['transfer-encoding'] || Number(incoming.headers['content-length'] ?? 0) !== 0) {
-            writeFailure(response, operationFailure(400, 'operation_invalid')); return;
-          }
-          operations.retire(handle);
-          response.writeHead(204, { 'Cache-Control': 'no-store' }); response.end(); return;
-        }
-        if (incoming.method !== 'POST') {
+  if (incoming.url?.includes(OPERATION_PREFIX) || incoming.headers[HANDLE_HEADER] !== undefined) {
+    void (async () => {
+      if (!operationRequestAllowed(incoming, allowedOrigin, expectedHost)) {
+        writeFailure(response, operationFailure(403, 'operation_origin_forbidden')); return;
+      }
+      const target = operationTarget(incoming.url);
+      const handles = headerValues(incoming, HANDLE_HEADER);
+      if (!target || handles.length > 1 || (handles.length && !HANDLE_PATTERN.test(handles[0]))) {
+        writeFailure(response, operationFailure(400, 'operation_invalid')); return;
+      }
+      const handle = handles[0];
+      if (!target.control) {
+        const entry = operations.get(handle);
+        if (!entry) { writeFailure(response, operationFailure(410, 'operation_retired')); return; }
+        if (!['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(incoming.method)) {
           writeFailure(response, operationFailure(405, 'operation_method_not_allowed')); return;
         }
-        // Retire before any body await, discovery read, or replacement failure.
+        forwardOperation(incoming, response, entry, operations, target.path, connectTimeoutMs, idleTimeoutMs);
+        return;
+      }
+      if (incoming.method === 'DELETE') {
+        if (!handle || incoming.headers['transfer-encoding'] || Number(incoming.headers['content-length'] ?? 0) !== 0) {
+          writeFailure(response, operationFailure(400, 'operation_invalid')); return;
+        }
         operations.retire(handle);
-        if (!/^application\/json(?:;\s*charset=utf-8)?$/i.test(incoming.headers['content-type'] ?? '')) {
-          writeFailure(response, operationFailure(400, 'operation_invalid')); return;
-        }
-        pendingControls.add(response);
-        let body;
-        try { body = JSON.parse(await readControlBody(incoming, response, connectTimeoutMs)); }
-        catch { writeFailure(response, operationFailure(400, 'operation_invalid')); return; }
-        finally { pendingControls.delete(response); }
-        if (!body || Array.isArray(body) || typeof body !== 'object' || Object.keys(body).length) {
-          writeFailure(response, operationFailure(400, 'operation_invalid')); return;
-        }
-        if (incoming.aborted || response.destroyed) return;
-        let entry;
-        try { entry = operations.acquire(); }
-        catch { writeFailure(response, operationFailure(503, 'operation_unavailable')); return; }
-        response.once('close', () => { if (!response.writableFinished) operations.retire(entry.handle); });
-        if (!operations.isActive(entry) || response.destroyed) { operations.retire(entry.handle); return; }
-        response.writeHead(201, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
-        response.end(JSON.stringify({ schemaVersion: 1, handle: entry.handle, identity: entry.identity }));
-      })().catch(() => writeFailure(response, operationFailure(503, 'operation_unavailable')));
-      return;
-    }
+        response.writeHead(204, { 'Cache-Control': 'no-store' }); response.end(); return;
+      }
+      if (incoming.method !== 'POST') {
+        writeFailure(response, operationFailure(405, 'operation_method_not_allowed')); return;
+      }
+      operations.retire(handle);
+      if (!/^application\/json(?:;\s*charset=utf-8)?$/i.test(incoming.headers['content-type'] ?? '')) {
+        writeFailure(response, operationFailure(400, 'operation_invalid')); return;
+      }
+      pendingControls.add(response);
+      let body;
+      try { body = JSON.parse(await readControlBody(incoming, response, connectTimeoutMs)); }
+      catch { writeFailure(response, operationFailure(400, 'operation_invalid')); return; }
+      finally { pendingControls.delete(response); }
+      if (!body || Array.isArray(body) || typeof body !== 'object' || Object.keys(body).length) {
+        writeFailure(response, operationFailure(400, 'operation_invalid')); return;
+      }
+      if (incoming.aborted || response.destroyed) return;
+      let entry;
+      try { entry = operations.acquire(); }
+      catch { writeFailure(response, operationFailure(503, 'operation_unavailable')); return; }
+      response.once('close', () => { if (!response.writableFinished) operations.retire(entry.handle); });
+      if (!operations.isActive(entry) || response.destroyed) { operations.retire(entry.handle); return; }
+      response.writeHead(201, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ schemaVersion: 1, handle: entry.handle, identity: entry.identity }));
+    })().catch(() => writeFailure(response, operationFailure(503, 'operation_unavailable')));
+    return;
+  }
   if (incoming.url?.split('?')[0] === '/runtime-config/v1/workspace.json') {
     if (incoming.method !== 'GET') {
       writeFailure(response, fail('method not allowed', 405));
@@ -400,10 +416,13 @@ export function createRuntimeProxyServer({
     return;
   }
   let runtime;
+  const chat = incoming.url === '/acp' || incoming.url?.startsWith('/acp/');
   try {
-    runtime = currentRuntime(discoveryPath);
+    runtime = chat ? currentChat(discoveryPath) : currentRuntime(discoveryPath);
   } catch (error) {
-    writeFailure(response, fail(error instanceof Error ? error.message : String(error)));
+    writeFailure(response, chat
+      ? { status: 503, body: JSON.stringify({ error: 'acp_unavailable' }) }
+      : fail(error instanceof Error ? error.message : String(error)));
     return;
   }
 
@@ -411,12 +430,13 @@ export function createRuntimeProxyServer({
   delete headers.host;
   delete headers.authorization;
   headers.authorization = `Bearer ${runtime.token}`;
+  if (chat) headers['x-astrid-bridge-version'] = 'v1';
 
-  const upstream = requestHttp({
+  const upstream = request({
     hostname: runtime.endpoint.hostname,
     port: Number(runtime.endpoint.port),
     method: incoming.method,
-    path: incoming.url || '/',
+    path: chat ? incoming.url.slice(4) || '/' : incoming.url || '/',
     headers,
   }, (upstreamResponse) => {
     clearTimeout(connectTimer);
@@ -434,7 +454,7 @@ export function createRuntimeProxyServer({
     const connected = () => {
       clearTimeout(connectTimer);
       // Socket idle timeout: re-armed by every byte in either direction.
-      upstream.setTimeout(idleTimeoutMs, () => upstream.destroy(new Error('runtime request idle timeout')));
+      upstream.setTimeout(chat ? ACP_IDLE_TIMEOUT_MS : idleTimeoutMs, () => upstream.destroy(new Error('runtime request idle timeout')));
     };
     if (socket.connecting) socket.once('connect', connected); else connected();
   });
@@ -457,10 +477,6 @@ if (isMain) {
 const server = createRuntimeProxyServer({ discoveryPath,
   allowedOrigin: process.env.ASTRID_RUNTIME_OPERATION_ORIGIN,
   expectedHost: `127.0.0.1:${port}` });
-for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => {
-  server.close();
-  server.closeAllConnections();
-});
 server.on('error', (error) => {
   console.error(`runtime discovery proxy failed: ${error.message}`);
   process.exitCode = 1;

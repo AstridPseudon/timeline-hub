@@ -13,7 +13,7 @@ catalog-bound Tool at `/tools/video-editor`. This declaration does not contain
 the editor page or create a route.
 
 Editor-only code is declared separately as `type: editor`. For example,
-Astrid's `rendering` pack declares `live-scenes` as an editor contribution and
+Astrid's `rendering` pack declares `threejs-live-editor` as an editor contribution and
 the generated editor-extension catalog includes editor declarations while the
 Tool catalog includes Tool declarations. Existing effect, animation,
 transition, overlay, panel, inspector, and command surfaces continue to use
@@ -109,8 +109,8 @@ catalog by hand. A stale digest or wrong source selection is a failed
 candidate: keep it closed, restore the intended source or regenerate from the
 intended source, run `--check`, rebuild, and only then open it.
 
-For the deterministic editor preview, run `npm run dev:editor` from Astrid App
-with the same `ASTRID_CHECKOUT` environment. Open the printed existing
+For the deterministic editor preview, follow the [repository README](../../README.md)
+and use the same `ASTRID_CHECKOUT` environment. Open the printed existing
 `/tools/video-editor` URL. This dev launcher uses an in-memory demo project and
 enables the development timeline-overlay canary; that does not enable a
 production query override. The production host remains a statically built

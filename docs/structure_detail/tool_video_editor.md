@@ -12,8 +12,6 @@
 
 | Task | Command |
 |---|---|
-| Run the local App with your own Runtime | `npm run dev:local` (attaches to a compatible owner, or starts one; prints the URL when ready) |
-| Boot the timeline with demo clips, no Supabase/Docker/sign-in | `npm run dev:editor` (prints the Runtime-mode editor URL; fake Runtime + Vite) |
 | Fake Runtime alone (when Vite is already running) | `node tests/e2e/fake-runtime/launch.mjs --serve` (port from `FAKE_RUNTIME_PORT`) |
 | Run one test file | `npx vitest run <path>` — the root `vitest.config.ts` delegates to `config/testing/`, so the `--config` flag in the package scripts is **not** needed interactively |
 | Watch one test file | `npx vitest <path>` |
@@ -26,31 +24,8 @@ loop, watch the single file you are changing.
 
 ### Your local Runtime
 
-From the App checkout, run `npm run dev:local`. It uses
-`ASTRID_RUNTIME_DATA_ROOT`, or the existing default
-`~/Library/Application Support/Astrid Runtime`. For an explicit data root and
-Runtime checkout:
-
-```sh
-npm run dev:local -- --data-root /path/to/my-runtime-data --runtime /path/to/astrid-runtime --astrid /path/to/astrid-agent
-```
-
-`--data-root` takes precedence over the environment. `--runtime` is also available
-as `ASTRID_RUNTIME_CHECKOUT`, and `--astrid` as `ASTRID_CHECKOUT`. The launcher uses
-the Runtime checkout's `.venv/bin/python -m astrid_runtime.cli`, or
-`ASTRID_RUNTIME_PYTHON` when supplied; without a selected checkout or Python it
-uses `astrid-runtime` on `PATH`. Pass `--source-manifest /path/to/source.json` when
-the Runtime needs an explicit source manifest.
-
-The Runtime owns the local data path: the App reads its published discovery,
-checks its contract and scoped credential, and connects through the local proxy.
-If no owner is running, the launcher calls `up --profile astrid --data-root ...`
-and checks the resulting discovery and health before starting the App. An
-incompatible live owner is left running; the error gives the actual and expected
-contract and the exact restart command. Press Ctrl-C to stop Vite, then the
-bridges and proxy, then a Runtime started by this command. An attached Runtime
-stays running. `--check` and `--build` retain their existing requirement for an
-already running Runtime.
+See [the repository README](../../README.md) for the local app and deterministic
+editor preview launch commands. This guide focuses on the editor surface.
 
 ---
 

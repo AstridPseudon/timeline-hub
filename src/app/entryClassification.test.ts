@@ -2,10 +2,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  APP_ENTRY_PATH,
   classifyBrowserEntry,
   isRecognizedOAuthCallbackUrl,
   prefersAppEntry,
   rememberAppEntryPreference,
+  resolveInstallerConnectEntry,
   resolveReturningAppEntry,
 } from './entryClassification.ts';
 
@@ -71,6 +73,33 @@ describe('browser entry classification', () => {
     expect(prefersAppEntry()).toBe(true);
     expect(resolveReturningAppEntry(new URL('https://astrid.test/?ref=x'), true))
       .toBe('/tools/video-editor?project=demo-project-id&timeline=demo-timeline');
+  });
+
+  it('sends installer root links to the Runtime gate with their query intact', () => {
+    const expected = new URL(APP_ENTRY_PATH, 'https://astrid.test');
+    expected.searchParams.set('connect', '1');
+    expect(resolveInstallerConnectEntry(new URL('https://astrid.test/?connect=1')))
+      .toBe(`${expected.pathname}${expected.search}`);
+    expected.searchParams.set('source', 'installer');
+    expect(resolveInstallerConnectEntry(new URL('https://astrid.test/?connect=1&source=installer')))
+      .toBe(`${expected.pathname}${expected.search}`);
+    expect(classifyBrowserEntry(new URL(`https://astrid.test${expected.pathname}${expected.search}`))).toBe('app');
+    expect(readFileSync(path.join(process.cwd(), 'src/app/main.tsx'), 'utf8')).toContain('resolveInstallerConnectEntry(currentUrl)');
+    expect(resolveInstallerConnectEntry(new URL('https://astrid.test/home?connect=1'))).toBeNull();
+    expect(resolveInstallerConnectEntry(new URL('https://astrid.test/?source=installer'))).toBeNull();
+  });
+
+  it('preserves repeated installer query keys and the URL hash', () => {
+    const installerUrl = new URL('https://astrid.test/?connect=1&source=alpha&source=beta&project=film#continue');
+    const resolved = resolveInstallerConnectEntry(installerUrl);
+    expect(resolved).not.toBeNull();
+
+    const target = new URL(resolved!, installerUrl.origin);
+    expect(target.searchParams.getAll('source')).toEqual(['alpha', 'beta']);
+    expect(target.searchParams.getAll('project')).toEqual(['film']);
+    expect(target.searchParams.get('timeline')).toBe(new URL(APP_ENTRY_PATH, installerUrl.origin).searchParams.get('timeline'));
+    expect(target.searchParams.get('connect')).toBe('1');
+    expect(target.hash).toBe('#continue');
   });
 
   it('keeps the landing page for first visits, /home and OAuth callbacks', () => {

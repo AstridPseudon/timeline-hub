@@ -28,7 +28,7 @@
  *   [data-testid="runtime-connection-status"][data-state="connected"]   the status container: nothing visible while connected (screen-reader text only)
  *   [data-testid="runtime-not-connected"]                               the connection panel (permission, blocked, set up, not running, restart needed)
  *   a button named "Connect" in the permission panel                    triggers Chrome's local-network prompt
- *   a button named "Copy setup steps for your agent" / "Copy steps for your agent" inside that panel
+ *   a visible install/update command and a button named "Copy" inside that panel
  *   a button named "Reload" in the "Astrid restarted" card; the "Astrid stopped" card clears by itself
  */
 import { expect, type Page } from '@playwright/test';
@@ -87,7 +87,7 @@ function expectBareUrl(page: Page, harness: DirectHarness) {
   expect(url.origin).toBe(harness.origin);
   expect(url.pathname).toBe(APP_ENTRY_ROUTE);
   expect(url.hash).toBe('');
-  expect([...url.searchParams.keys()].filter((key) => !['localProject', 'localTimeline'].includes(key))).toEqual([]);
+  expect([...url.searchParams.keys()].filter((key) => !['project', 'timeline'].includes(key))).toEqual([]);
 }
 
 /** The App's probe, as a raw request: `GET /api/runtime/v1/health` with the hosted Origin (or the given Origin and Host). */
@@ -123,7 +123,7 @@ test.describe('zero-click connection (App)', () => {
     expectBareUrl(page, harness);
   });
 
-  test('with Astrid stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
+  test('with Astrid stopped the panel offers the install line, then connects by itself once it starts', async ({ page, harness, context }) => {
     // grantPermissions replaces the origin's grants, so the local-network permission the fixture context holds is listed again.
     await context.grantPermissions(['clipboard-read', 'clipboard-write', LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
     await harness.stopRuntime(); // the door goes with it
@@ -132,12 +132,11 @@ test.describe('zero-click connection (App)', () => {
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
       await expect(panel).toBeVisible();
-      await panel.getByRole('button', { name: UI.copySetup }).click();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await panel.getByRole('button', { name: UI.copy }).click();
       await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
-      await expect(panel.getByText('Now paste them into your agent.')).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
-      expect(copied).toContain('npm run dev:local');
-      expect(copied).toContain(`prints "Open ${harness.origin}"`);
+      expect(copied).toBe('curl -fsSL https://astrid.haus/install | sh');
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
@@ -164,6 +163,36 @@ test.describe('the bare domain (App)', () => {
     expect(harness.audit().length, 'the door saw nothing').toBe(auditedBefore);
   });
 
+  test('the installer root URL enters the app, connects, and preserves its other URL parts', async ({ page, harness }) => {
+    const doorRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) {
+        doorRequests.push(`${request.method()} ${request.url()}`);
+      }
+    });
+
+    const initialSearch = new URLSearchParams({
+      connect: '1',
+      project: harness.seed.projectId,
+      timeline: harness.seed.timelineId,
+      source: 'installer',
+    });
+    await page.goto(`${harness.origin}/?${initialSearch}#continue`);
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+
+    const url = new URL(page.url());
+    expect(url.pathname).toBe(APP_ENTRY_ROUTE);
+    const expectedSearch = new URLSearchParams({
+      project: harness.seed.projectId,
+      timeline: harness.seed.timelineId,
+      source: 'installer',
+    });
+    expect(url.search).toBe(`?${expectedSearch}`);
+    expect(url.hash).toBe('#continue');
+    expect(doorRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
+  });
+
   test('a returning visitor at the bare domain goes straight into the app and connects with no click', async ({ page, harness }) => {
     // Connecting once is what marks this browser as one that chose the app; the context (and its localStorage) is the same for both visits.
     await openApp(page, harness);
@@ -188,10 +217,10 @@ test.describe('first time and returning panels (App)', () => {
     try {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
+      await expect(panel).toBeVisible();
       await expect(panel.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeVisible();
-      await expect(panel.getByText('Already installed? Start Astrid')).toBeVisible();
-      await expect(panel.getByRole('link', { name: 'the install guide' })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copySetup })).toBeVisible();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
 
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
@@ -199,7 +228,8 @@ test.describe('first time and returning panels (App)', () => {
       await harness.stopRuntime();
       await page.reload();
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
     } finally {
       await harness.resetToHealthy();
@@ -207,22 +237,22 @@ test.describe('first time and returning panels (App)', () => {
   });
 });
 
-// Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the door until it
-// is granted. These cases use their own browser context, because the fixture context is granted up front.
+// Fresh profiles see setup before any local-network prompt or door request. The installer handoff remains explicit.
 test.describe('permission gate and readiness (App)', () => {
-  test('a first visit without the local-network permission sends nothing to the door until Connect, then connects', async ({ browser, harness }) => {
+  test('a fresh profile sees setup before any permission prompt or door request', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
       const page = await context.newPage();
       const doorRequests = await openApp(page, harness);
       expect(await readLocalNetworkState(page)).toBe('prompt');
       const panel = page.locator(UI.panel);
-      await expect(panel.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeVisible();
-      await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
-      expect(doorRequests, 'nothing is sent to the door before Connect').toEqual([]);
-      // Headless Chromium cannot answer Chrome's prompt, so the click is followed by the grant the prompt would give.
-      // The grant comes after the click: a granted permission connects by itself, and Connect would be gone.
-      await panel.getByRole('button', { name: UI.connect }).click();
+      await expect(panel).toHaveAttribute('data-state', 'set_up');
+      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
+      await expect(panel.getByRole('button', { name: UI.connect })).toHaveCount(0);
+      expect(doorRequests, 'a fresh profile does not probe the door while showing setup').toEqual([]);
+
+      await page.goto(`${harness.origin}/?connect=1#continue`);
+      await expect(page.locator(UI.panel).getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
       await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
       await expectConnected(page);
       expect(doorRequests.length).toBeGreaterThan(0);
@@ -267,7 +297,7 @@ test.describe('permission gate and readiness (App)', () => {
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
-      await expect(panel.getByText('Start Astrid on this computer and this page opens by itself.')).toBeVisible();
+      await expect(panel.getByText('Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.')).toBeVisible();
       await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
       await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|door|reload/i);
       const notReadyReadings = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status === 503).length;
@@ -643,8 +673,8 @@ test.describe('restarts', () => {
     harness.withdrawProductCredential();
     try {
       await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByText('Start it again on this computer and this page carries on. Your changes are kept.')).toBeVisible();
-      await expect(page.getByRole('button', { name: UI.copySteps })).toBeVisible();
+      await expect(page.getByText('Run this line in a terminal to start it again. Your changes are kept.')).toBeVisible();
+      await expect(page.getByRole('button', { name: UI.copy })).toBeVisible();
       // The status no longer claims "Connected", and the editor's own technical recovery card is not there.
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'stopped');
       await expect(page.locator(UI.status)).not.toContainText('Connected');
@@ -830,12 +860,12 @@ test.describe('security', () => {
 
 /**
  * The second timeline the harness seeds for the pack extensions (made here, after the cases that open the seeded timeline,
- * so none of them sees a second timeline). Opened by URL: the hosted workspace route takes the project slug and timeline id.
+ * so none of them sees a second timeline). Opened by URL with canonical project and timeline IDs.
  */
 async function openSeededTimelineByUrl(page: Page, harness: DirectHarness, seed: { projectSlug: string; timelineId: string }) {
   const doorRequests: string[] = [];
   page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
-  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?project=${encodeURIComponent(harness.seed.projectId)}&timeline=${encodeURIComponent(seed.timelineId)}`);
   await expectConnected(page);
   await expect(firstTrackName(page)).toBeVisible();
   return { seed, doorRequests };

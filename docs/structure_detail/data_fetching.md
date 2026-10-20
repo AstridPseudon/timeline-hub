@@ -30,24 +30,24 @@
 
 Otherwise the provider stays on `connecting` until two readings in a row fail. A door refusal (503 `runtime_unavailable`: listening, but the Runtime is not ready) is evidence Astrid is installed; network errors and other replies are silent. A `restart` response takes precedence and shows `restart_needed` immediately. Background re-checks do not produce a temporary checking line.
 
-**What a person sees** (`src/shared/components/RuntimeConnection/`: wording only in `copy.ts`, layout in `RuntimeConnectionPanel.tsx`). The product is called Astrid on every screen; commands appear only in the agent block (`agent.instructions`). Each gate state names its screen; permission and phone screens come from browser context:
+**What a person sees** (`src/shared/components/RuntimeConnection/`: wording only in `copy.ts`, layout in `RuntimeConnectionPanel.tsx`). Each gate state names its screen; permission and phone screens come from browser context. Setup, repair, restart, and update states show the corresponding OS installer line with a copy action. The landing installer opens `/?connect=1`, which the app entry routes through to this gate:
 
 | Screen | States that show it | Primary action |
 |--------|---------------------|----------------|
 | Mink only, "Looking for Astrid on this computer…" after 1 s | `connecting` while waiting for permission or probe readings | none |
-| "Connect to Astrid on this computer" | permission `prompt` (direct visit) | Connect (the landing page's "use it right here" click sets a one-shot flag, `autoConnectRequest.ts`, and the gate calls `connect()` at once) |
+| "Connect to Astrid on this computer" | permission `prompt` (direct visit or before installer auto-connect) | Connect on a direct visit; the installer's `connect=1` query is consumed by `autoConnectRequest.ts`, and the gate calls `connect()` automatically |
 | "Choose Allow in Chrome" | Connect pressed, Chrome's prompt open | none (arrow up to the address bar) |
 | "Allow Astrid in Chrome" | `blocked` | two steps in Chrome's site settings |
-| "Set up Astrid on this computer" | `set_up` | Copy setup steps for your agent (footer links the install guide) |
-| "Astrid isn't running" | `not_running` | Copy steps for your agent |
-| "Astrid needs a restart" | `restart_needed` | Copy steps for your agent |
+| "Set up Astrid on this computer" | `set_up` | Copy the OS installer line |
+| "Astrid isn't running" | `not_running` | Copy the install/repair line |
+| "Astrid needs a restart" | `restart_needed` | Copy the install/repair line |
 | "Open Astrid on your computer" | any not-connected state on a phone (`isMobileDevice`, the landing dialog's check) | Send the link to your computer |
 
 Once connected nothing is shown while Astrid is up (a screen-reader-only "Connected to Astrid" in `runtime-connection-status`). `useRuntimeRestartWatch` polls health: two failed readings in a row show the "Astrid stopped" card (clears itself when the same instance answers), a new instance or a `runtime_identity_mismatch` 503 shows the "Astrid restarted" card (Reload). While either card shows, `recoveryCard.ts` tells the editor to stay quiet: no canonical-refresh banner, no load-error card, a neutral "Not saved" badge, and `WorkspaceConnectionRecovery` never renders on the hosted build. When the "stopped" card clears, the shell retries what failed meanwhile: the timeline read (`retryLoad`) and the save that never got an answer (`retryPendingSave`, which replays it under its own idempotency key; an edit made meanwhile queues behind it and is never reported as "changed somewhere else", see `OwnUnacknowledgedSaveError`). The hosted build never shows a red "Error" save badge, and `TimelineLoadErrorCard` (the connection cards' frame) also retries by itself when `/v1/health` starts answering.
 
-**Launcher output** (`scripts/dev-local-workspace.mjs`): a healthy `npm run dev:local` prints `Starting Astrid…`, then the `Open <hosted origin>` block, only after the Runtime's door and the app both listen. Everything else (proxy, ACP bridge, door line, Vite) is held back; `--verbose` or `ASTRID_VERBOSE=1` prints it after the Open block. Errors are one `Astrid: ` line plus one `Details: ` line for an agent. A second launcher for the same realm says `Astrid is already running in another window.` and prints the same block without starting anything. `--check` prints `Astrid is ready.`
+**Launcher output** (`scripts/dev-local-workspace.mjs`; start it from the [repository README](../../README.md)): a healthy launch prints `Starting Astrid…`, then the `Open <hosted origin>` block, only after the Runtime's door and the app both listen. Other startup details (proxy, door line, Vite) are held back; `--verbose` or `ASTRID_VERBOSE=1` prints them after the Open block. Errors are one `Astrid: ` line plus one `Details: ` line for an agent. A second launcher for the same realm says `Astrid is already running in another window.` and prints the same block without starting anything. `--check` prints `Astrid is ready.`
 
-**The Runtime's door** (`127.0.0.1:17340`, opened by `astrid-runtime up`; astrid-runtime `runtime_protocol/door.py`): serves the dev paths `/api/runtime/*` and `/api/astrid/*` on the route table; admin, doctor, backup, restore, export, realm recovery, workers, credentials and compose get 404 `route_not_allowed`, and chat is forwarded to the chat service registered in the Runtime's `chat.json` (`dev:local --acp` registers its bridge). Checks run in this order:
+**The Runtime's door** (`127.0.0.1:17340`, opened by `astrid-runtime up`; astrid-runtime `runtime_protocol/door.py`): serves the dev paths `/api/runtime/*` and `/api/astrid/*` on the route table; admin, doctor, backup, restore, export, realm recovery, workers, credentials and compose get 404 `route_not_allowed`. Chat is forwarded to the agent-owned chat service registered in the Runtime's `chat.json`; the Runtime supervises that service, and the app does not launch a local bridge. Checks run in this order:
 
 | Check | Refusal |
 |-------|---------|

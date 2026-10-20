@@ -25,7 +25,8 @@ export function VideoEditorPanelDisplayControl({ className = '', visible = true 
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  const open = selected !== null && (tab === 'inspector' || selected === HOST_EXTENSIONS_PANEL_KEY || panels.some((panel) => getPanelKey(panel) === selected));
+  // Only "Closed" (null) closes the dock: disabling the selected extension falls back to "tool".
+  const open = selected !== null;
   const [menuOpen, setMenuOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const returnFocusScope = useRef<HTMLElement | null>(null);
@@ -48,7 +49,7 @@ export function VideoEditorPanelDisplayControl({ className = '', visible = true 
         if (value === 'closed') ops.setSelectedRightPanelId(null);
         else {
           ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, value as 'compact' | 'dock');
-          if (!open) ops.setSelectedRightPanelId(tab === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey);
+          if (!open) ops.setSelectedRightPanelId(tab === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey ?? HOST_EXTENSIONS_PANEL_KEY);
         }
       }}>
         <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>

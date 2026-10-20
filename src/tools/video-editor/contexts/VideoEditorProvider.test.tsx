@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { defineExtension } from '@astrid/editor-sdk';
 import type { AstridExtension, ExtensionContext, DisposeHandle, ProjectObjectMetadata, ProjectObjectStorage, TimelineOps } from '@astrid/editor-sdk';
-import { LIVE_SCENE_CLIP_TYPE_ID, LIVE_SCENE_EXTENSION_ID, LIVE_SCENE_IMPORT_COMMAND_ID, liveSceneExtension } from '@astrid/packs/rendering/ui/live-scenes/extension';
+import { LIVE_SCENE_CLIP_TYPE_ID, THREEJS_LIVE_EDITOR_EXTENSION_ID, LIVE_SCENE_IMPORT_COMMAND_ID, threejsLiveEditorExtension } from '@astrid/packs/rendering/ui/threejs-live-editor/extension';
 import { commandExtension } from '@/examples/command-extension';
 import { flagshipLocalExtension } from '@/tools/video-editor/examples/extensions/flagship-local/index';
 import { useAddToVideoEditor } from '@/domains/media-lightbox/hooks/useAddToVideoEditor';
@@ -1013,12 +1013,12 @@ describe('VideoEditorProvider', () => {
         </QueryClientProvider>
       </MemoryRouter>
     );
-    const view = render(renderProvider([liveSceneExtension]));
+    const view = render(renderProvider([threejsLiveEditorExtension]));
 
     try {
       await waitFor(() => {
         expect(editorContext?.liveSceneOperationPort).toBeDefined();
-        expect(runtime?.extensionRuntime.extensions.some((extension) => extension.manifest.id === LIVE_SCENE_EXTENSION_ID)).toBe(true);
+        expect(runtime?.extensionRuntime.extensions.some((extension) => extension.manifest.id === THREEJS_LIVE_EDITOR_EXTENSION_ID)).toBe(true);
         expect(runtime?.commandRegistry?.getSnapshot().commands.map((command) => command.commandId))
           .toContain(LIVE_SCENE_IMPORT_COMMAND_ID);
       });
@@ -1170,7 +1170,7 @@ describe('VideoEditorProvider', () => {
                 projectId="second-live-scene-project"
                 timelineId="second-live-scene-timeline"
                 userId={null}
-                extensions={[liveSceneExtension]}
+                extensions={[threejsLiveEditorExtension]}
                 initialTimelineData={secondFixture.data}
               >
                 <CaptureSecondProvider />

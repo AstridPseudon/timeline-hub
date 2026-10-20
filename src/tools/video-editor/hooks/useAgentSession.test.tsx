@@ -21,7 +21,7 @@ import {
   useSendMessage,
   useAgentSession,
   useAgentModels,
-  useSetAgentModel,
+  useConfigureAgentSession,
   useTakeOverSession,
   useLocalAgents,
   localAgentsQueryKey,
@@ -29,7 +29,7 @@ import {
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { LOCAL_AGENT_IDS, LOCAL_AGENT_SETTING_KEY, LOCAL_AGENT_TABLE, localAgentModelSettingKey, saveLocalAgent, savedLocalAgent, savedLocalAgentModel } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_TABLE } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -62,8 +62,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  testStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
-  for (const agent of LOCAL_AGENT_IDS) testStorage.removeItem(localAgentModelSettingKey(agent));
   vi.unstubAllGlobals();
 });
 
@@ -232,63 +230,39 @@ describe('timeline agent ACP chat', () => {
     hook.unmount();
   });
 
-  it('persists a ready local agent default and rejects non-ready choices', async () => {
-    const acp = {
-      agents: vi.fn(async () => ({ agents: [
-        { id: 'claude-code', name: 'Claude Code', state: 'ready' as const, line: null },
-        { id: 'codex', name: 'Codex', state: 'sign-in' as const, line: LOCAL_AGENT_TABLE.codex.signInLine },
-      ] })),
-    };
-    const store = new AstridAgentSessionStore({ acp } as never);
-    localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
-    await store.setAgent('claude-code');
-    expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('claude-code');
-    await expect(store.setAgent('codex')).rejects.toThrow('not signed in');
-    acp.agents.mockResolvedValue({ agents: [{ id: 'claude-code', name: 'Claude Code', state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine! }] });
-    await expect(store.setAgent('claude-code')).rejects.toThrow('not installed');
+  it('reads choices and defaults directly from the service without browser storage', async () => {
+    const catalog = { defaultAgent: 'claude-code', agents: [
+      { id: 'claude-code', name: 'Claude Code', state: 'ready', line: null, models: [{ modelId: 'sonnet', name: 'Sonnet' }], defaultModel: 'sonnet' },
+      { id: 'codex', name: 'Codex', state: 'sign-in', line: LOCAL_AGENT_TABLE.codex.signInLine, models: [], defaultModel: null },
+    ] };
+    const store = new AstridAgentSessionStore({ acp: { agents: vi.fn(async () => catalog) } } as never);
+    const write = vi.spyOn(testStorage, 'setItem');
+    await expect(store.agents()).resolves.toEqual(catalog);
+    expect(write).not.toHaveBeenCalled();
   });
 
-  it('updates mounted agent selection when the shared default saver runs', async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    vi.spyOn(AstridAgentSessionStore.prototype, 'agents').mockImplementation(async () => ({
-      agents: [{ id: 'hermes', name: 'Hermes', state: 'ready', line: null }],
-      selectedAgent: savedLocalAgent(),
-    }));
-    client.setQueryData(localAgentsQueryKey, {
-      agents: [{ id: 'hermes', name: 'Hermes', state: 'ready' as const, line: null }],
-      selectedAgent: 'astrid' as const,
-    });
-    const hook = renderHook(() => useLocalAgents(), { wrapper: wrapperWithClient(client) });
-    await waitFor(() => expect(hook.result.current.data?.selectedAgent).toBe('astrid'));
-
-    act(() => saveLocalAgent('hermes'));
-    await waitFor(() => expect(hook.result.current.data?.selectedAgent).toBe('hermes'));
-    expect(localStorage.getItem(LOCAL_AGENT_SETTING_KEY)).toBe('hermes');
-    hook.unmount();
-  });
-
-  it.each(['claude-code', 'codex', 'hermes'] as const)('routes saved sessions by their original agent while new sessions use the saved %s default', async (agent) => {
-    saveLocalAgent(agent);
-    const newSessionId = `${agent}:new-1`;
+  it('routes saved sessions by their original agent while new sessions use the current default', async () => {
     const connects: Array<string | undefined> = [];
     const projectChat = { project_id: 'p', revision: 1, selected_session_id: null, main_session_id: null, sessions: [], draft: { revision: 1 } };
     const acp = {
-      connect: vi.fn(async (agent?: string) => { connects.push(agent); return { connection_id: `conn-${agent ?? 'astrid'}` }; }),
-      createProjectSession: vi.fn(async (_project: string, _connection: string) => ({ ...projectChat, operation_session_id: newSessionId, selected_session_id: newSessionId, sessions: [{ id: newSessionId }] })),
-      projectChat: vi.fn(async (project: string) => ({ ...projectChat, project_id: project, sessions: [{ id: 'astrid-old' }, { id: newSessionId }] })),
+      connect: vi.fn(async (agent?: string) => { connects.push(agent); return { connection_id: `conn-${agent ?? 'claude-code'}` }; }),
+      createProjectSession: vi.fn(async (_project: string, _connection: string) => ({ ...projectChat, operation_session_id: 'claude-code:new-1', selected_session_id: 'claude-code:new-1', sessions: [{ id: 'claude-code:new-1' }] })),
+      projectChat: vi.fn(async (project: string) => ({ ...projectChat, project_id: project, sessions: [{ id: 'astrid-old' }, { id: 'claude-code:new-1' }] })),
       loadSession: vi.fn(async () => ({})),
       events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+      disconnect: vi.fn(async () => ({})),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     await store.create('p', 'new', 'op-1');
     await store.get('p', 'astrid-old');
-    await store.get('p', newSessionId);
-    expect(connects).toEqual([agent, undefined]);
-    expect(acp.loadSession.mock.calls.map(call => call[0])).toEqual(['conn-astrid', `conn-${agent}`]);
+    await store.get('p', 'claude-code:new-1');
+    // The service-chosen creation connection has no reported agent; saved-session loads choose explicitly.
+    expect(connects).toEqual([undefined, 'claude-code', 'astrid']);
+    expect(acp.disconnect).toHaveBeenCalledWith('conn-claude-code');
+    expect(acp.loadSession.mock.calls.map(call => call[0])).toEqual(['conn-claude-code', 'conn-astrid']);
   });
 
   it('lists saved Astrid chats without connecting to an unavailable selected default', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
     const connects: Array<string | undefined> = [];
     const chat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-saved', main_session_id: 'astrid-saved', sessions: [{ id: 'astrid-saved' }], draft: { revision: 1 } };
     const acp = {
@@ -305,12 +279,11 @@ describe('timeline agent ACP chat', () => {
     await expect(store.list('p')).resolves.toEqual([{ id: 'astrid-saved', status: 'waiting_user' }]);
     expect(connects).toEqual([]);
     await store.get('p', 'astrid-saved');
-    expect(connects).toEqual([undefined]);
+    expect(connects).toEqual(['astrid']);
     expect(acp.loadSession).toHaveBeenCalledWith('conn-astrid', 'astrid-saved');
   });
 
   it('keeps ensure_main on the existing main session agent after the default changes', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
     const connects: Array<string | undefined> = [];
     const priorChat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-selected', main_session_id: 'codex:main', sessions: [{ id: 'astrid-selected' }, { id: 'codex:main' }], draft: { revision: 1 } };
     const acp = {
@@ -324,86 +297,266 @@ describe('timeline agent ACP chat', () => {
     expect(connects).toEqual(['codex']);
   });
 
-  it('loads the model catalog and refreshes it after a model selection', async () => {
-    let currentModel = 'deepseek/deepseek-chat';
-    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({
-      currentModel,
-      providers: [{ id: 'deepseek', name: 'DeepSeek', signedIn: true, models: [{ id: 'deepseek-chat', name: 'DeepSeek' }] }],
-    }));
-    const setModel = vi.spyOn(AstridAgentSessionStore.prototype, 'setModel').mockImplementation(async model => {
-      currentModel = model;
-      return { currentModel };
-    });
-    const hook = renderHook(() => ({ models: useAgentModels(), selection: useSetAgentModel() }), { wrapper });
-    try {
-      await waitFor(() => expect(hook.result.current.models.data?.currentModel).toBe('deepseek/deepseek-chat'));
-      await act(async () => { await hook.result.current.selection.mutateAsync('openai-codex/gpt-5'); });
-      await waitFor(() => expect(hook.result.current.models.data?.currentModel).toBe('openai-codex/gpt-5'));
-      expect(setModel).toHaveBeenCalledWith('openai-codex/gpt-5');
-      expect(models).toHaveBeenCalledTimes(2);
-    } finally {
-      hook.unmount();
-    }
-  });
-
-  it('uses the active chat agent for session models and switches its exact model without reconnecting', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
-    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-1', main_session_id: null, sessions: [{ id: 'codex:chat-1' }], draft: { revision: 1 } };
+  it('uses the service Codex default for unassigned and unscoped discovery while Astrid is active', async () => {
     const acp = {
-      projectChat: vi.fn(async () => chat),
-      connect: vi.fn(async () => ({ connection_id: 'codex-connection' })),
-      loadSession: vi.fn(async () => ({})),
+      agents: vi.fn(async () => ({ defaultAgent: 'codex', agents: [] })),
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'astrid-active' }] })),
+      connect: vi.fn(async (agent: string) => ({ connection_id: `connection-${agent}` })),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: true, activeRequestId: 'astrid-turn' } })),
       events: vi.fn(async () => ({ notifications: [], disconnected: false })),
-      sessionModels: vi.fn(async (_connectionId: string, sessionId: string) => ({ models: { currentModelId: `${sessionId}/model-a`, availableModels: [{ modelId: 'provider/model-a', name: 'Model A' }] } })),
-      setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [{ modelId, name: 'Model' }] } })),
+      unassignedProjectSessions: vi.fn(async () => [{ id: 'codex:external', title: 'Codex external' }]),
+      listSessions: vi.fn(async () => ({ sessions: [{ id: 'codex:external' }] })),
+      disconnect: vi.fn(),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
-    await expect(store.models('codex:chat-1', 'p')).resolves.toMatchObject({ localModels: { currentModelId: 'codex:chat-1/model-a' } });
-    await expect(store.setModel('provider/model-exact', 'codex:chat-1', 'p')).resolves.toEqual({ currentModel: 'provider/model-exact' });
-    expect(acp.connect).toHaveBeenCalledOnce();
-    expect(acp.connect).toHaveBeenCalledWith('codex', undefined);
-    expect(acp.loadSession).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
-    expect(acp.sessionModels).toHaveBeenCalledWith('codex-connection', 'codex:chat-1');
-    expect(acp.setSessionModel).toHaveBeenCalledWith('codex-connection', 'codex:chat-1', 'provider/model-exact', 'p');
-    expect(acp).not.toHaveProperty('models');
+    await store.get('p', 'astrid-active');
+    await expect(store.unassignedProjectSessions('p')).resolves.toEqual([{ id: 'codex:external', title: 'Codex external' }]);
+    await expect(store.list()).resolves.toEqual([{ id: 'codex:external', status: 'waiting_user' }]);
+    expect(acp.agents).toHaveBeenCalledTimes(2);
+    expect(acp.connect.mock.calls).toEqual([['astrid'], ['codex']]);
+    expect(acp.unassignedProjectSessions).toHaveBeenCalledWith('p', 'connection-codex');
+    expect(acp.listSessions).toHaveBeenCalledWith('connection-codex');
+    await expect(store.get('p', 'astrid-active')).resolves.toMatchObject({ control: { active: true, activeRequestId: 'astrid-turn' } });
+    expect(acp.loadSession.mock.calls).toEqual([['connection-astrid', 'astrid-active']]);
+    expect(acp.disconnect).not.toHaveBeenCalled();
   });
 
-  it('stores model defaults per agent and passes the saved preference when a fresh store connects', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'claude-code');
-    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-2', main_session_id: null, sessions: [{ id: 'codex:chat-2' }], draft: { revision: 1 } };
-    const makeClient = () => ({ acp: {
+  it.each(['astrid', 'claude-code', 'codex'] as const)('passes an explicit %s model only when creating a new chat', async (agent) => {
+    const sessionId = agent === 'astrid' ? 'saved-astrid' : `${agent}:saved`;
+    const chat = { project_id: 'p', selected_session_id: sessionId, sessions: [{ id: sessionId, model_id: 'exact/model' }] };
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: 'connection' })),
+      createProjectSession: vi.fn(async () => ({ ...chat, operation_session_id: sessionId })),
       projectChat: vi.fn(async () => chat),
-      connect: vi.fn(async () => ({ connection_id: 'conn' })),
+      loadSession: vi.fn(async () => ({})),
+      takeOverSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
+      promptProjectSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'exact/model', availableModels: [{ modelId: 'exact/model', name: 'Exact' }] } })),
+      setConfigOption: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const write = vi.spyOn(testStorage, 'setItem');
+    await store.create('p', 'new', 'op-new', { agent, defaultModelId: 'exact/model' });
+    expect(acp.connect).toHaveBeenCalledWith(agent, 'exact/model');
+    await store.get('p', sessionId);
+    await store.takeOver('p', sessionId);
+    await expect(store.models(sessionId, 'p')).resolves.toMatchObject({ localModels: { currentModelId: 'exact/model' } });
+    await store.prompt(sessionId, { message: 'hello' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
+    expect(acp.connect).toHaveBeenCalledOnce();
+    expect(acp.loadSession).toHaveBeenCalledWith('connection', sessionId);
+    expect(acp.takeOverSession).toHaveBeenCalledWith('connection', sessionId);
+    expect(acp.promptProjectSession).toHaveBeenCalledWith('p', 'connection', sessionId, expect.any(Array), expect.any(String));
+    expect(acp.setConfigOption).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('omits choices on every plain New, even with an existing connection', async () => {
+    let sequence = 0;
+    const acp = {
+      connect: vi.fn(async () => ({ connection_id: `connection-${++sequence}` })),
+      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'codex:existing' }] })),
+      loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: true, activeRequestId: 'existing-turn' } })),
+      createProjectSession: vi.fn(async () => ({ project_id: 'p', selected_session_id: `codex:new-${sequence}`, sessions: [{ id: `codex:new-${sequence}` }] })),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      disconnect: vi.fn(async () => ({})),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.get('p', 'codex:existing');
+    await store.create('p', 'new', 'op-1');
+    await store.create('p', 'new', 'op-2');
+    expect(acp.connect.mock.calls).toEqual([['codex'], [undefined, undefined], [undefined, undefined]]);
+    // Attach on the scoped existing connection before releasing each creator host.
+    expect(acp.disconnect.mock.calls).toEqual([['connection-2'], ['connection-3']]);
+    await expect(store.get('p', 'codex:existing')).resolves.toMatchObject({ control: { active: true, activeRequestId: 'existing-turn' } });
+    expect(acp.loadSession.mock.calls).toEqual([['connection-1', 'codex:existing'], ['connection-1', 'codex:new-2'], ['connection-1', 'codex:new-3']]);
+    expect(acp.loadSession.mock.invocationCallOrder[1]).toBeLessThan(acp.disconnect.mock.invocationCallOrder[0]);
+    expect(acp.loadSession.mock.invocationCallOrder[2]).toBeLessThan(acp.disconnect.mock.invocationCallOrder[1]);
+  });
+
+  it.each([undefined, 'codex'] as const)('retains the live creator before releasing a new %s chat', async agent => {
+    const existing = 'codex:existing';
+    const created = 'codex:empty';
+    let sequence = 0;
+    let released = false;
+    let attached = false;
+    let effort = 'low';
+    const acp = {
+      projectChat: vi.fn(async () => ({ sessions: [{ id: existing }, { id: created }] })),
+      connect: vi.fn(async () => ({ connection_id: `connection-${++sequence}` })),
+      createProjectSession: vi.fn(async () => ({ selected_session_id: created, sessions: [{ id: existing }, { id: created }] })),
+      loadSession: vi.fn(async (_connection: string, sessionId: string) => {
+        if (sessionId === created) {
+          if (released) throw new Error('Empty native chat is not on disk');
+          attached = true;
+        }
+        return {};
+      }),
+      disconnect: vi.fn(async () => { expect(attached).toBe(true); released = true; }),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      sessionModels: vi.fn(async () => {
+        expect(attached).toBe(true);
+        return { models: { currentModelId: 'chosen', availableModels: [], thoughtLevel: { configId: 'opaque-effort', name: 'Effort', currentValue: effort, options: [{ value: 'high', name: 'High' }] } } };
+      }),
+      setConfigOption: vi.fn(async (_connection: string, _session: string, _config: string, value: string) => { effort = value; }),
+      promptProjectSession: vi.fn(async () => { expect(attached).toBe(true); expect(effort).toBe('high'); return {}; }),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.get('p', existing);
+    await store.create('p', 'new', 'new-empty', { agent, defaultModelId: 'chosen' });
+    await store.configureSessionSelection(created, 'p', 'chosen', 'high');
+    await store.prompt(created, { message: 'First prompt' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
+    expect(acp.loadSession).toHaveBeenCalledWith('connection-1', created);
+    expect(acp.loadSession.mock.invocationCallOrder[1]).toBeLessThan(acp.disconnect.mock.invocationCallOrder[0]);
+    expect(acp.createProjectSession).toHaveBeenCalledOnce();
+    expect(acp.setConfigOption).toHaveBeenCalledWith('connection-1', created, 'opaque-effort', 'high');
+    expect(acp.promptProjectSession).toHaveBeenCalledWith('p', 'connection-1', created, expect.any(Array), expect.any(String));
+  });
+
+  it.each(['ensure', 'ensure_main'] as const)('routes a cross-tab %s result by its original agent (pre-read: empty)', async (mode) => {
+    const chosenId = 'codex:chosen-by-other-tab';
+    let current = { project_id: 'p', selected_session_id: null as string | null, main_session_id: null as string | null, sessions: [] as Array<{ id: string; model_id?: string }> };
+    const agents = new Map<string, string>();
+    const acp = {
+      projectChat: vi.fn(async () => current),
+      connect: vi.fn(async (agent?: string) => {
+        const connectionId = `connection-${agents.size + 1}`;
+        agents.set(connectionId, agent ?? 'astrid');
+        return { connection_id: connectionId };
+      }),
+      createProjectSession: vi.fn(async () => {
+        // Another tab selects Codex after this tab's empty registry read and Astrid connect.
+        current = { project_id: 'p', selected_session_id: chosenId, main_session_id: chosenId, sessions: [{ id: chosenId, model_id: 'codex/fixed' }] };
+        return { ...current, operation_session_id: chosenId };
+      }),
+      loadSession: vi.fn(async (connectionId: string, sessionId: string) => {
+        expect(agents.get(connectionId)).toBe('codex');
+        expect(sessionId).toBe(chosenId);
+        return {};
+      }),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'codex/fixed', availableModels: [] } })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+      disconnect: vi.fn(async () => ({})),
+      setConfigOption: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await expect(store.create('p', mode, `cross-tab-${mode}`)).resolves.toMatchObject({ id: chosenId });
+    await store.get('p', chosenId);
+    await expect(store.models(chosenId, 'p')).resolves.toMatchObject({ localModels: { currentModelId: 'codex/fixed' } });
+    expect(acp.connect.mock.calls).toEqual([[undefined, undefined], ['codex']]);
+    expect(acp.disconnect.mock.calls).toEqual([['connection-1']]);
+    expect(acp.loadSession).toHaveBeenCalledWith('connection-2', chosenId);
+    expect(acp.setConfigOption).not.toHaveBeenCalled();
+  });
+
+  it.each(['ensure', 'ensure_main'] as const)('preserves active agent A when %s returns latest agent B', async (mode) => {
+    const originalId = 'astrid-active';
+    const chosenId = 'codex:latest-choice';
+    let current = { project_id: 'p', selected_session_id: originalId, main_session_id: originalId, sessions: [{ id: originalId }] };
+    const agents = new Map<string, string>();
+    const acp = {
+      projectChat: vi.fn(async () => current),
+      connect: vi.fn(async (agent?: string) => {
+        const connectionId = `connection-${agents.size + 1}`;
+        agents.set(connectionId, agent ?? 'astrid');
+        return { connection_id: connectionId };
+      }),
+      loadSession: vi.fn(async (connectionId: string, sessionId: string) => {
+        expect(agents.get(connectionId)).toBe(sessionId === originalId ? 'astrid' : 'codex');
+        return sessionId === originalId ? { _astridSession: { role: 'writer', active: true, activeRequestId: 'in-flight-original' } } : {};
+      }),
+      createProjectSession: vi.fn(async () => {
+        current = { project_id: 'p', selected_session_id: chosenId, main_session_id: chosenId, sessions: [{ id: originalId }, { id: chosenId }] };
+        return { ...current, operation_session_id: chosenId };
+      }),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+      disconnect: vi.fn(async () => ({})),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.get('p', originalId);
+    await expect(store.create('p', mode, `changed-selection-${mode}`)).resolves.toMatchObject({ id: chosenId });
+    await store.get('p', chosenId);
+    await expect(store.get('p', originalId)).resolves.toMatchObject({ control: { role: 'writer', active: true, activeRequestId: 'in-flight-original' } });
+    expect(acp.connect.mock.calls).toEqual([['astrid'], ['codex']]);
+    expect(acp.createProjectSession).toHaveBeenCalledWith('p', 'connection-1', mode, `changed-selection-${mode}`);
+    expect(acp.loadSession.mock.calls).toEqual([['connection-1', originalId], ['connection-2', chosenId]]);
+    expect(acp.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('reloads the original agent after a lost New reply and a changed default on operation replay', async () => {
+    const originalId = 'astrid-committed';
+    let defaultAgent = 'astrid';
+    let committed = false;
+    const agents = new Map<string, string>();
+    const current = { project_id: 'p', selected_session_id: originalId, sessions: [{ id: originalId, model_id: 'original/model' }] };
+    const acp = {
+      projectChat: vi.fn(async () => current),
+      connect: vi.fn(async (agent?: string) => {
+        const connectionId = `connection-${agents.size + 1}`;
+        agents.set(connectionId, agent ?? defaultAgent);
+        return { connection_id: connectionId };
+      }),
+      createProjectSession: vi.fn(async (_project: string, _connection: string, _mode: string, operationId: string) => {
+        expect(operationId).toBe('same-operation');
+        if (!committed) {
+          committed = true;
+          throw new Error('New reply lost after committing Astrid chat');
+        }
+        // Service replays the committed operation even though the retry connected to Codex.
+        return { ...current, operation_session_id: originalId };
+      }),
+      loadSession: vi.fn(async (connectionId: string) => {
+        expect(agents.get(connectionId)).toBe('astrid');
+        return {};
+      }),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'original/model', availableModels: [] } })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: [] })),
+      disconnect: vi.fn(async () => ({})),
+      setConfigOption: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await expect(store.create('p', 'new', 'same-operation')).rejects.toThrow('New reply lost');
+    defaultAgent = 'codex';
+    await expect(store.create('p', 'new', 'same-operation')).resolves.toMatchObject({ id: originalId });
+    await store.get('p', originalId);
+    await expect(store.models(originalId, 'p')).resolves.toMatchObject({ localModels: { currentModelId: 'original/model' } });
+    expect([...agents.values()]).toEqual(['astrid', 'codex', 'astrid']);
+    expect(acp.connect.mock.calls).toEqual([[undefined, undefined], [undefined, undefined], ['astrid']]);
+    expect(acp.createProjectSession.mock.calls).toEqual([
+      ['p', 'connection-1', 'new', 'same-operation'], ['p', 'connection-2', 'new', 'same-operation'],
+    ]);
+    expect(acp.disconnect.mock.calls).toEqual([['connection-1'], ['connection-2']]);
+    expect(acp.loadSession).toHaveBeenCalledWith('connection-3', originalId);
+    expect(acp.setConfigOption).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('rejects model slash commands before config or prompt dispatch (attachments: %s)', async (withAttachments) => {
+    const acp = {
+      projectChat: vi.fn(async () => ({ sessions: [{ id: 'saved' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'connection' })),
       loadSession: vi.fn(async () => ({})),
       events: vi.fn(async () => ({ notifications: [], disconnected: false })),
-      setSessionModel: vi.fn(async (_connectionId: string, _sessionId: string, modelId: string) => ({ models: { currentModelId: modelId, availableModels: [] } })),
-      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'model', availableModels: [] } })),
-    } });
-    const firstClient = makeClient();
-    const firstStore = new AstridAgentSessionStore(firstClient as never);
-    await firstStore.setModel('codex-preference', 'codex:chat-2', 'p');
-    expect(savedLocalAgentModel('codex')).toBe('codex-preference');
-    expect(savedLocalAgentModel('claude-code')).toBeUndefined();
-
-    const freshClient = makeClient();
-    const freshStore = new AstridAgentSessionStore(freshClient as never);
-    await freshStore.models('codex:chat-2', 'p');
-    expect(freshClient.acp.connect).toHaveBeenCalledWith('codex', 'codex-preference');
+      setConfigOption: vi.fn(),
+      promptProjectSession: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await expect(store.prompt('saved', {
+      message: '/model provider/other', ...(withAttachments ? { attachments: [{}] as never } : {}),
+    }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null })).rejects.toThrow('To use another model, start a new chat.');
+    expect(acp.setConfigOption).not.toHaveBeenCalled();
+    expect(acp.promptProjectSession).not.toHaveBeenCalled();
   });
 
-  it('does not replace a saved model preference when the session switch fails', async () => {
-    localStorage.setItem(localAgentModelSettingKey('codex'), 'old-model');
-    const chat = { project_id: 'p', revision: 1, selected_session_id: 'codex:chat-3', main_session_id: null, sessions: [{ id: 'codex:chat-3' }], draft: { revision: 1 } };
-    const store = new AstridAgentSessionStore({ acp: {
-      projectChat: vi.fn(async () => chat), connect: vi.fn(async () => ({ connection_id: 'conn' })), loadSession: vi.fn(async () => ({})), events: vi.fn(async () => ({ notifications: [], disconnected: false })),
-      setSessionModel: vi.fn(async () => { throw new Error('switch failed'); }),
-    } } as never);
-    await expect(store.setModel('new-model', 'codex:chat-3', 'p')).rejects.toThrow('switch failed');
-    expect(savedLocalAgentModel('codex')).toBe('old-model');
+  it('passes explicit creation choices through the mutation hook', async () => {
+    const chat = { project_id: 'p', scope_key: 'p', revision: 1, selected_session_id: 'new-chat', sessions: [{ id: 'new-chat' }], draft: { text: '', revision: 0 } };
+    const create = vi.spyOn(AstridAgentSessionStore.prototype, 'create').mockResolvedValue({ id: 'new-chat', projectChat: chat });
+    const hook = renderHook(() => useCreateSession(null, 'p', 'new'), { wrapper });
+    await act(async () => { await hook.result.current.mutateAsync({ operationId: 'op-explicit', agent: 'astrid', defaultModelId: 'provider/exact' }); });
+    expect(create).toHaveBeenCalledWith('p', 'new', 'op-explicit', { agent: 'astrid', defaultModelId: 'provider/exact' });
+    hook.unmount();
   });
 
-  it('returns the empty local-model fallback without opening a session when no local chat is active', async () => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
+  it('returns no model without opening a session when no chat is active', async () => {
     const connect = vi.fn();
     const store = new AstridAgentSessionStore({ acp: { connect } } as never);
     await expect(store.models()).resolves.toEqual({ providers: [], currentModel: null, localModels: null });
@@ -415,8 +568,8 @@ describe('timeline agent ACP chat', () => {
     { sessionId: 'claude-code:startup', configId: 'effort', thoughtLevel: undefined },
     { sessionId: 'omp-startup', configId: 'thinking', thoughtLevel: undefined },
     { sessionId: 'codex:chosen', configId: 'reasoning_effort', thoughtLevel: 'low' },
-  ])('configures $sessionId model before applying its chosen or recommended effort', async ({ sessionId, configId, thoughtLevel }) => {
-    let currentModelId = 'a';
+  ])('validates $sessionId created model before applying its chosen or recommended effort', async ({ sessionId, configId, thoughtLevel }) => {
+    const currentModelId = 'b';
     let currentValue = 'low';
     const calls: string[] = [];
     const acp = {
@@ -424,22 +577,17 @@ describe('timeline agent ACP chat', () => {
       connect: vi.fn(async () => ({ connection_id: 'connection' })),
       loadSession: vi.fn(async () => ({})),
       events: vi.fn(async () => ({ notifications: [], disconnected: false })),
-      setSessionModel: vi.fn(async (_connection: string, _session: string, model: string) => {
-        calls.push('model'); currentModelId = model;
-        return { models: { currentModelId, availableModels: [{ modelId: model, name: model }] } };
-      }),
       sessionModels: vi.fn(async () => {
         calls.push('levels');
         return { models: { currentModelId, availableModels: [], thoughtLevel: { configId, name: 'Effort', currentValue,
-          // Model a's levels intentionally do not include high.
-          options: currentModelId === 'b' ? [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }], recommendedValue: currentModelId === 'b' ? 'high' : 'low' } } };
+          options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }], recommendedValue: 'high' } } };
       }),
       setConfigOption: vi.fn(async (_connection: string, _session: string, _config: string, value: string) => { calls.push('effort'); currentValue = value; }),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     await store.configureSessionSelection(sessionId, 'project', 'b', thoughtLevel);
-    expect(calls).toEqual(['model', 'levels', 'effort', 'levels']);
-    expect(acp.setSessionModel).toHaveBeenCalledWith('connection', sessionId, 'b', 'project');
+    expect(calls).toEqual(['levels', 'effort', 'levels']);
+    await expect(store.configureSessionSelection(sessionId, 'project', 'other')).rejects.toThrow('did not confirm the selected model');
     expect(acp.setConfigOption).toHaveBeenCalledWith('connection', sessionId, configId, thoughtLevel ?? 'high');
   });
 
@@ -453,7 +601,7 @@ describe('timeline agent ACP chat', () => {
     const hook = renderHook(() => ({
       models: useAgentModels(true, 'claude-code:new', 'project'),
       // Startup still holds a callback from the previous active chat's render.
-      selection: useSetAgentModel('claude-code:old', 'project'),
+      selection: useConfigureAgentSession('project'),
     }), { wrapper: wrapperWithClient(client) });
     try {
       await waitFor(() => expect(models).toHaveBeenCalledWith('claude-code:new', 'project'));
@@ -487,16 +635,16 @@ describe('timeline agent ACP chat', () => {
       loadSession: vi.fn(async () => ({})),
       events: vi.fn(async () => ({ notifications: [], disconnected: false })),
       promptProjectSession: vi.fn(async () => { await promptWait; }),
-      setSessionModel: vi.fn(async () => ({ models: { currentModelId: 'b', availableModels: [] } })),
-      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'b', availableModels: [] } })),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'b', availableModels: [], thoughtLevel: { configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'high', name: 'High' }] } } })),
+      setConfigOption: vi.fn(async () => undefined),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     const prompt = store.prompt('codex:busy', { message: 'hello' }, { tool: 'video-editor', projectId: 'project', projectSlug: null, timelineId: null, timelineName: null });
     try {
       await vi.waitFor(() => expect(acp.promptProjectSession).toHaveBeenCalledOnce());
-      await expect(store.setModel('b', 'codex:busy', 'project')).rejects.toThrow('Wait for the active agent turn');
+      await expect(store.configureSessionSelection('codex:busy', 'project', 'b')).rejects.toThrow('Wait for the active agent turn');
       await store.configureSessionSelection('codex:idle', 'project', 'b');
-      expect(acp.setSessionModel).toHaveBeenCalledExactlyOnceWith('connection', 'codex:idle', 'b', 'project');
+      expect(acp.setConfigOption).toHaveBeenCalledExactlyOnceWith('connection', 'codex:idle', 'effort', 'high');
     } finally { finishPrompt(); await prompt; }
   });
 
@@ -512,33 +660,27 @@ describe('timeline agent ACP chat', () => {
     await expect(store.configureSessionSelection(sessionId, 'p', undefined, 'high')).rejects.toThrow('no longer advertises');
   });
 
-  it('keeps the model query scoped to the active session and refreshes it after a switch', async () => {
-    const catalogs: string[] = [];
-    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async (sessionId) => {
-      catalogs.push(sessionId ?? 'default');
-      return { providers: [], currentModel: null, localModels: { currentModelId: sessionId === 'codex:chat-a' ? 'model-a' : 'model-b', availableModels: [] } };
-    });
-    const setModel = vi.spyOn(AstridAgentSessionStore.prototype, 'setModel').mockImplementation(async model => ({ currentModel: model }));
+  it('keeps each model query scoped to its active session', async () => {
+    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async (sessionId) => ({
+      providers: [], currentModel: null, localModels: { currentModelId: sessionId === 'codex:chat-a' ? 'model-a' : 'model-b', availableModels: [] },
+    }));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const hook = renderHook(({ sessionId }: { sessionId: string }) => ({ models: useAgentModels(true, sessionId, 'p'), selection: useSetAgentModel(sessionId, 'p') }), {
+    const hook = renderHook(({ sessionId }: { sessionId: string }) => useAgentModels(true, sessionId, 'p'), {
       wrapper: wrapperWithClient(client), initialProps: { sessionId: 'codex:chat-a' },
     });
     try {
-      await waitFor(() => expect(hook.result.current.models.data?.localModels?.currentModelId).toBe('model-a'));
+      await waitFor(() => expect(hook.result.current.data?.localModels?.currentModelId).toBe('model-a'));
       hook.rerender({ sessionId: 'codex:chat-b' });
-      await waitFor(() => expect(hook.result.current.models.data?.localModels?.currentModelId).toBe('model-b'));
+      await waitFor(() => expect(hook.result.current.data?.localModels?.currentModelId).toBe('model-b'));
+      expect(models).toHaveBeenLastCalledWith('codex:chat-b', 'p');
       expect(client.getQueryData(['agent-models', 'codex:chat-a', 'p'])).toMatchObject({ localModels: { currentModelId: 'model-a' } });
-      const beforeSwitch = catalogs.length;
-      await act(async () => { await hook.result.current.selection.mutateAsync('model-b2'); });
-      await waitFor(() => expect(catalogs.length).toBeGreaterThan(beforeSwitch));
-      expect(setModel).toHaveBeenCalledWith('model-b2', 'codex:chat-b', 'p');
     } finally {
       hook.unmount();
       client.clear();
     }
   });
 
-  it('refreshes a follower model catalog from live model updates and blocks model changes', async () => {
+  it('refreshes a follower model catalog from live model updates', async () => {
     const sessionId = 'codex:chat-model-follower';
     const project = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: sessionId, sessions: [{ id: sessionId }], draft: { text: '', revision: 1, queued_messages: [] } };
     let eventPending = true;
@@ -548,7 +690,6 @@ describe('timeline agent ACP chat', () => {
       loadSession: vi.fn(async () => ({ _astridSession: { role: 'follower', active: true, activeRequestId: 'remote-model-turn' } })),
       events: vi.fn(async () => ({ disconnected: false, notifications: eventPending ? (eventPending = false, [{ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update: { sessionUpdate: 'current_model_update', currentModelId: 'model-b', models: { currentModelId: 'model-b', availableModels: [{ modelId: 'model-b', name: 'Model B' }] } } } }]) : [] })),
       sessionModels: vi.fn(async () => ({ models: { currentModelId: 'model-b', availableModels: [{ modelId: 'model-b', name: 'Model B' }] } })),
-      setSessionModel: vi.fn(),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     const catalogs = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async () => ({ providers: [], currentModel: null, localModels: { currentModelId: eventPending ? 'model-a' : 'model-b', availableModels: [] } }));
@@ -560,8 +701,6 @@ describe('timeline agent ACP chat', () => {
       await store.get('p', sessionId);
       await waitFor(() => expect(hook.result.current.data?.localModels?.currentModelId).toBe('model-b'));
       expect(catalogs).toHaveBeenCalledTimes(2);
-      await expect(store.setModel('model-c', sessionId, 'p')).rejects.toThrow('Take over');
-      expect(acp.setSessionModel).not.toHaveBeenCalled();
     } finally {
       hook.unmount();
       client.clear();
@@ -630,8 +769,6 @@ describe('timeline agent ACP chat', () => {
     ['claude-code', 'Resource not found'],
     ['codex', 'no rollout found for thread ID'],
   ] as const)('recovers a legacy empty %s chat after session/load proves its transcript is missing', async (agent, missingDetail) => {
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, agent);
-    localStorage.setItem(localAgentModelSettingKey(agent), 'model-beta');
     const oldId = `${agent}:empty-before-reload`;
     const freshId = `${agent}:fresh-after-reload`;
     let projectChat = { project_id: 'reload-project', scope_key: 'project:reload-project', revision: 4, selected_session_id: oldId, main_session_id: 'other-chat', sessions: [{ id: oldId, title: 'Untitled', model_id: 'model-beta' }, { id: 'other-chat', title: 'Other' }], draft: { text: '', revision: 0, queued_messages: [] } };
@@ -664,7 +801,7 @@ describe('timeline agent ACP chat', () => {
         main_session_id: 'other-chat',
         sessions: [{ id: freshId, title: 'Untitled', model_id: 'model-beta', pending_first_message: true }, { id: 'other-chat' }],
       });
-      expect(calls.find(call => call.url.endsWith('/connect'))?.body).toMatchObject({ agent, defaultModelId: 'model-beta' });
+      expect(calls.find(call => call.url.endsWith('/connect'))?.body).toEqual({ agent });
     } finally {
       hook.unmount();
       client.clear();

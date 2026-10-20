@@ -4,10 +4,11 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
-import { CopyAgentInstructions } from './CopyAgentInstructions.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
+import { CopyInstallCommand } from './CopyInstallCommand.tsx';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withCommandShell } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value; the panel is only rendered while it is not connected. */
@@ -31,6 +32,8 @@ interface PanelFrameProps {
   readonly action?: ReactNode;
   /** The one quiet line under the action. */
   readonly footer?: ReactNode;
+  /** Help for the person when the connection needs attention. */
+  readonly showHelp?: boolean;
   /** Content between the sentence and the action (the blocked state's steps). */
   readonly children?: ReactNode;
   /** The word on a hand-drawn arrow, outside the card, aimed at the top left of the window: the browser's prompt is there. */
@@ -42,7 +45,7 @@ interface PanelFrameProps {
  * sentence (two only on set up), at most one primary button and at most one quiet line. Everything is centred, and
  * balanced so no line ends on a lone word at phone width.
  */
-function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer }: PanelFrameProps) {
+function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer, showHelp = false }: PanelFrameProps) {
   return (
     <section
       aria-label={COPY.panelLabel}
@@ -61,6 +64,7 @@ function PanelFrame({ dataState, title, sentence, detail, action, footer, childr
         {children}
         {action && <div className="flex flex-col items-center">{action}</div>}
         {footer && <p className="text-balance text-sm text-muted-foreground">{footer}</p>}
+        {showHelp && <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>}
         {pointer && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
       </div>
     </section>
@@ -153,52 +157,43 @@ function BlockedPanel() {
 
 /**
  * Nothing answers and this browser has never connected. That is also what a set-up computer looks like from a new
- * browser or a private window, so the screen hedges, and the setup steps find an existing install before installing.
+ * browser or a private window, so the screen uses the same idempotent install line.
  */
-function SetUpPanel({ pageOrigin }: { pageOrigin: string }) {
+function SetUpPanel() {
   const { setUp } = COPY;
   return (
     <PanelFrame
       dataState="set_up"
       title={setUp.title}
-      sentence={setUp.sentence}
-      detail={setUp.installed}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copySetup} variant="setup" />}
-      footer={(
-        <>
-          {setUp.footer.before}
-          <a href={COPY.commands.installUrl} target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-2">
-            {setUp.footer.linkText}
-          </a>
-          {setUp.footer.after}
-        </>
-      )}
+      sentence={withCommandShell(setUp.sentence)}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
     />
   );
 }
 
 /** Nothing answers on a return visit, or the gateway answered but Astrid is not ready: a person does the same for each. */
-function NotRunningPanel({ pageOrigin }: { pageOrigin: string }) {
+function NotRunningPanel() {
   const { notRunning } = COPY;
   return (
     <PanelFrame
       dataState="not_running"
       title={notRunning.title}
-      sentence={notRunning.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
+      sentence={withCommandShell(notRunning.sentence)}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
+      showHelp
     />
   );
 }
 
-/** The Astrid running is not the one this page was set up with: only a restart helps, and the agent block says so. */
-function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
-  const { restartNeeded } = COPY;
+function UpdateNeededPanel() {
+  const { updateNeeded } = COPY;
   return (
     <PanelFrame
-      dataState="restart_needed"
-      title={restartNeeded.title}
-      sentence={restartNeeded.sentence}
-      action={<CopyAgentInstructions pageOrigin={pageOrigin} label={COPY.agent.copy} variant="start" />}
+      dataState="update_needed"
+      title={updateNeeded.title}
+      sentence={withCommandShell(updateNeeded.sentence)}
+      action={<CopyInstallCommand label={COPY.agent.copy} mode="update" />}
+      showHelp
     />
   );
 }
@@ -208,22 +203,24 @@ function RestartNeededPanel({ pageOrigin }: { pageOrigin: string }) {
  * connected: the gate then shows the app. Every word comes from `copy.ts`.
  */
 export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelProps) {
-  const pageOrigin = window.location.origin;
   // The landing page's install dialog asks the same question, so the two always agree on who is on a phone.
   const phone = useMemo(isMobileDevice, []);
   const { state } = connection;
   if (state.status === 'connected') return null;
-  if (connection.awaitingConnect) return phone ? <PhonePanel /> : <PermissionPanel connection={connection} />;
+  // Keep setup visible before permission unless a prior connection or explicit installer handoff takes precedence.
+  if (connection.awaitingConnect && (state.status !== 'set_up' || connection.isChecking)) {
+    return phone ? <PhonePanel /> : <PermissionPanel connection={connection} />;
+  }
   switch (state.status) {
     case 'connecting':
       return <ConnectingPanel phone={phone} />;
     case 'set_up':
-      return phone ? <PhonePanel /> : <SetUpPanel pageOrigin={pageOrigin} />;
+      return phone ? <PhonePanel /> : <SetUpPanel />;
     case 'not_running':
-      return phone ? <PhonePanel /> : <NotRunningPanel pageOrigin={pageOrigin} />;
+      return phone ? <PhonePanel /> : <NotRunningPanel />;
     case 'blocked':
       return phone ? <PhonePanel /> : <BlockedPanel />;
-    case 'restart_needed':
-      return phone ? <PhonePanel /> : <RestartNeededPanel pageOrigin={pageOrigin} />;
+    case 'update_needed':
+      return phone ? <PhonePanel /> : <UpdateNeededPanel />;
   }
 }

@@ -1,210 +1,162 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
-
-const { inspectMock } = vi.hoisted(() => ({ inspectMock: vi.fn() }));
-vi.mock('@/integrations/astrid/capabilityCensus.ts', () => ({ inspectAstridCapabilities: inspectMock }));
-
 import userEvent from '@testing-library/user-event';
-import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement } from 'react';
+import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
 import { Dialog, DialogContent } from '@/shared/components/ui/dialog';
-import { AstridSetupStep, resetSetupChecksForTests, setupChecksFrom } from './AstridSetupStep';
-import { LOCAL_AGENT_SETTING_KEY, savedLocalAgent } from '@/integrations/astrid/localAgents.ts';
+import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { connectionFor, CONNECTED_REALM } from '@/shared/components/RuntimeConnection/connectionFixture.ts';
 
-const renderInDialog = (ui: ReactElement) => render(<Dialog open><DialogContent>{ui}</DialogContent></Dialog>);
-import { AGENT_SETUP_BRIEF, ASTRID_LAUNCH_COMMANDS, ASTRID_STUDIO_MESSAGE, MANUAL_SETUP_STEPS, RECONNECT_COMMANDS } from '@/shared/components/OnboardingModal/lib/astridSetupGuide';
+const mocks = vi.hoisted(() => ({
+  connection: {} as RuntimeConnectionValue,
+  projects: vi.fn(),
+  clipboard: vi.fn(),
+}));
+vi.mock('@/integrations/runtime/RuntimeConnectionProvider.tsx', () => ({
+  useRuntimeConnection: () => mocks.connection,
+}));
+vi.mock('@/integrations/runtime/client.ts', () => ({
+  AstridRuntimeClient: class { listProjects = mocks.projects; },
+}));
+vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
 
-const down: AstridCapabilityCensus = {
-  health: 'unavailable', readiness: 'unavailable', projectSlug: null,
-  capabilities: { tasks: 'unknown', generations: 'unknown', media: 'unknown' },
-  reasons: { health: 'bridge health unavailable' },
-};
-const freshWorkspace: AstridCapabilityCensus = {
-  health: 'available', readiness: 'degraded', projectSlug: null,
-  capabilities: { tasks: 'unknown', generations: 'unknown', media: 'unknown' },
-  reasons: { projects: 'No project exists yet; project-scoped capabilities were not probed.' },
-};
-const ready: AstridCapabilityCensus = {
-  health: 'available', readiness: 'ready', projectSlug: 'demo',
-  capabilities: { tasks: 'supported', generations: 'supported', media: 'supported' },
-  reasons: {},
-};
+import { AstridSetupStep } from './AstridSetupStep';
 
-describe('setupChecksFrom', () => {
-  it('is not ready while the Runtime is down', () => {
-    expect(setupChecksFrom(down)).toMatchObject({ runtime: 'fail', workspace: 'fail', ready: false });
-  });
+function renderWithQueries(ui: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  return render(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+}
+const renderInDialog = (ui: ReactElement) => renderWithQueries(<Dialog open><DialogContent>{ui}</DialogContent></Dialog>);
 
-  it('counts a brand-new workspace with no projects as set up, checking tools later', () => {
-    expect(setupChecksFrom(freshWorkspace)).toMatchObject({ runtime: 'pass', workspace: 'pass', tools: 'later', ready: true });
-  });
-
-  it('does not count an unreadable workspace as set up', () => {
-    const broken = { ...freshWorkspace, reasons: { projects: 'Astrid bridge request failed: 500' } };
-    expect(setupChecksFrom(broken)).toMatchObject({ runtime: 'pass', workspace: 'fail', ready: false });
-  });
-
-  it('passes every check on a working install with a project', () => {
-    expect(setupChecksFrom(ready)).toMatchObject({ runtime: 'pass', workspace: 'pass', tools: 'pass', ready: true });
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.connection = connectionFor({ status: 'set_up' });
+  mocks.clipboard.mockResolvedValue(true);
+  mocks.projects.mockResolvedValue([]);
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('AstridSetupStep', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    resetSetupChecksForTests();
-    localStorage.removeItem(LOCAL_AGENT_SETTING_KEY);
-  });
-
-  it('guides the agent through choosing and saving Astrid’s model', () => {
-    expect(AGENT_SETUP_BRIEF).toContain(`FINALLY: CHOOSE YOUR MODEL AND HAND OVER TO ASTRID
-Astrid has its own agent (the astrid command, running on oh-my-pi). Make sure the command is installed; install any missing requirements.
-
-1. Run astrid agent models --json. Show me the saved current default, signed-in model choices, and providers that need sign-in. Ask which exact PROVIDER/MODEL I want to use.
-2. If my chosen provider needs sign-in, have me run astrid --onboard locally and choose the provider by its exact displayed name. If onboarding is unavailable, have me run omp, then /login, and pick that same name. Use OMP's own sign-in; never read, copy, or forward credential files or tokens from another agent, including ~/.codex/auth.json.
-3. Run astrid agent use PROVIDER/MODEL with my choice, then astrid agent models to verify the saved default. This persists OMP's modelRoles.default for new App and terminal chats using this OMP profile. Existing chats and explicit project defaults can retain their own model.
-
-Tell me I can later ask Astrid "Which models can you use?" or "Switch to PROVIDER/MODEL." After a billing, authentication, or quota error, Astrid should list signed-in alternatives and offer to switch.
-
-Don't set up generation (GPU, models, API keys, workflows) yourself: Astrid does that with me.`);
-    expect(AGENT_SETUP_BRIEF).toContain('1. Inside an agent I already use, like you: through the Astrid skill you installed, I can just ask for Astrid there.');
-    expect(AGENT_SETUP_BRIEF).toContain("2. In Astrid's own dedicated agent: run astrid in a terminal.");
-  });
-
-  it('opens the modal on its content and lets Tab reach the selected setup option', async () => {
-    inspectMock.mockResolvedValue(down);
+  it('opens the modal on its content and lets Tab reach the shared Copy action', async () => {
     const user = userEvent.setup();
-    render(<OnboardingModal isOpen onClose={vi.fn()} />);
-    const agentOption = await screen.findByRole('radio', { name: 'Claude Code' });
+    renderWithQueries(<OnboardingModal isOpen onClose={vi.fn()} />);
+    const copy = screen.getByRole('button', { name: COPY.agent.copy });
     await waitFor(() => {
-      expect(document.activeElement).toContainElement(screen.getByRole('heading', { name: 'Set up Astrid' }));
-      expect(agentOption).not.toHaveFocus();
+      expect(document.activeElement).toContainElement(screen.getByRole('heading', { name: COPY.setUp.title }));
+      expect(copy).not.toHaveFocus();
     });
     await user.tab();
-    expect(agentOption).toHaveFocus();
-  });
-
-  it('keeps the shared Runtime, Workspace and Tools rows in onboarding', async () => {
-    inspectMock.mockResolvedValue(ready);
-    render(<OnboardingModal isOpen onClose={vi.fn()} />);
-    const runtime = await screen.findByText('Runtime');
-    expect(runtime).toHaveAttribute('data-state', 'pass');
-    expect(screen.getByText('Workspace')).toHaveAttribute('data-state', 'pass');
-    expect(screen.getByText('Tools')).toHaveAttribute('data-state', 'pass');
-  });
-
-  it('offers the agent brief verbatim and copies it whole', async () => {
-    inspectMock.mockResolvedValue(down);
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
-
-    expect(screen.getByRole('note').textContent).toMatch(/requires a GPU/i);
-    expect(screen.getByRole('note').textContent).toMatch(/technically use APIs/i);
-    fireEvent.click(screen.getByRole('button', { name: /copy brief/i }));
-    await act(async () => {});
-    expect(writeText).toHaveBeenCalledWith(AGENT_SETUP_BRIEF);
+    expect(copy).toHaveFocus();
   });
 
   it.each([
-    ['Claude Code', 'claude-code'],
-    ['Codex', 'codex'],
-    ['Hermes', 'hermes'],
-  ] as const)('saves %s and offers a brief addressed to it', async (name, id) => {
-    inspectMock.mockResolvedValue(down);
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    ['MacIntel', ASTRID_COMMANDS.macLinux],
+    ['Win32', ASTRID_COMMANDS.windows],
+  ])('uses the shared install flow on %s', async (platform, command) => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
 
-    expect(screen.getByText('Already use an agent?')).toBeTruthy();
-    expect(screen.getByRole('radiogroup', { name: 'Already use an agent?' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('radio', { name }));
-    expect(savedLocalAgent()).toBe(id);
-    expect(screen.getByText(`Paste this into ${name}`)).toBeTruthy();
-    const tailoredLine = `I'll use Astrid from ${name}, so sync Astrid's skills into ${name}.`;
-    expect(screen.getByText((_, element) => element?.tagName === 'PRE' && element.textContent?.includes(tailoredLine))).toBeTruthy();
+    expect(screen.getByRole('heading', { name: COPY.setUp.title })).toBeInTheDocument();
+    expect(screen.getByText(withCommandShell(COPY.setUp.sentence))).toBeInTheDocument();
+    expect(screen.getByText(command, { selector: 'code' })).toBeInTheDocument();
+    expect(screen.getByText(COPY.agent.note)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: COPY.agent.copy })).toHaveLength(1);
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(document.querySelector('[data-check]')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    expect(mocks.projects).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: /copy brief/i }));
-    await act(async () => {});
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining(tailoredLine));
+    fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
+    expect(await screen.findByRole('button', { name: COPY.agent.copied })).toBeInTheDocument();
+    expect(mocks.clipboard).toHaveBeenCalledWith(command);
   });
 
-  it('maps None yet to Astrid and selects the manual setup route', async () => {
-    inspectMock.mockResolvedValue(down);
+  it('keeps the command selectable when the shared copy action fails', async () => {
+    mocks.clipboard.mockResolvedValue(false);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
-    fireEvent.click(screen.getByRole('radio', { name: 'None yet' }));
-    expect(savedLocalAgent()).toBe('astrid');
-    expect(screen.getByRole('radio', { name: 'I’ll set it up myself' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText(/check what you already have/i)).toBeTruthy();
+    const command = screen.getByText(/https:\/\/astrid.haus\/install/, { selector: 'code' }).textContent;
+    fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(COPY.agent.copyFailed);
+    const fallback = screen.getByRole('textbox', { name: COPY.agent.copyFailed }) as HTMLTextAreaElement;
+    expect(fallback).toHaveValue(command);
+    expect(fallback.selectionStart).toBe(0);
+    expect(fallback.selectionEnd).toBe(command?.length);
+    expect(screen.queryByRole('button', { name: COPY.agent.copied })).toBeNull();
   });
 
-  it('leaves the existing default untouched when no agent is selected', async () => {
-    inspectMock.mockResolvedValue(down);
-    localStorage.setItem(LOCAL_AGENT_SETTING_KEY, 'codex');
-    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
+  it('uses the shared start copy and install line for reconnecting', () => {
+    mocks.connection = connectionFor({ status: 'not_running' });
+    renderInDialog(<AstridSetupStep reconnect onNext={vi.fn()} onClose={vi.fn()} />);
 
-    expect(savedLocalAgent()).toBe('codex');
-    expect(screen.getByText('Brief for your agent to set everything up')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: COPY.notRunning.title })).toBeInTheDocument();
+    expect(screen.getByText(withCommandShell(COPY.notRunning.sentence))).toBeInTheDocument();
+    expect(screen.getByText(ASTRID_COMMANDS.macLinux, { selector: 'code' })).toBeInTheDocument();
+    expect(screen.queryByText(/Runtime|Workspace|Tools/)).toBeNull();
   });
 
-  it('lists the manual steps when the person sets it up themselves', async () => {
-    inspectMock.mockResolvedValue(down);
-    renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
-
-    fireEvent.click(screen.getByText(/set it up myself/i));
-    for (const step of MANUAL_SETUP_STEPS.unix) expect(screen.getByText(step.title)).toBeTruthy();
-    expect(screen.getByText(/check what you already have/i)).toBeTruthy();
-
-    fireEvent.click(screen.getByText('Windows'));
-    expect(screen.getByText(/open powershell/i)).toBeTruthy();
-    expect(screen.getByText(/not yet validated on windows/i)).toBeTruthy();
-  });
-
-  it('says you are set up once the Runtime responds, and continues', async () => {
-    inspectMock.mockResolvedValue(freshWorkspace);
+  it.each([
+    { label: 'empty', projects: [] },
+    { label: 'existing', projects: [{ project_id: 'existing-project' }] },
+  ])('continues once the connected workspace is readable: $label', async ({ projects }) => {
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+    mocks.projects.mockResolvedValue(projects);
     const onNext = vi.fn();
     renderInDialog(<AstridSetupStep onNext={onNext} onClose={vi.fn()} />);
-    await act(async () => {});
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Hermes' }));
-    expect(savedLocalAgent()).toBe('hermes');
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
-    expect(onNext).toHaveBeenCalled();
+    expect(await screen.findByRole('heading', { name: COPY.connected.sentence })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: COPY.agent.copy })).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onNext).toHaveBeenCalledOnce();
+    expect(mocks.projects).toHaveBeenCalledOnce();
   });
 
-  it('once set up, hands over to Astrid with a message to paste in', async () => {
-    inspectMock.mockResolvedValue(freshWorkspace);
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+  it('waits for a same-origin workspace to become readable and accepts an empty project list', async () => {
+    vi.useFakeTimers();
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM }, { gated: false });
+    mocks.projects.mockRejectedValueOnce(new Error('project list unavailable')).mockResolvedValue([]);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
 
-    expect(screen.getByText(/set up your studio with astrid/i)).toBeTruthy();
-    expect(screen.getByText((_, element) => element?.tagName === 'PRE' && element.textContent === ASTRID_LAUNCH_COMMANDS.unix)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /copy message/i }));
-    await act(async () => {});
-    expect(writeText).toHaveBeenCalledWith(ASTRID_STUDIO_MESSAGE);
+    expect(mocks.projects).toHaveBeenCalledOnce();
+    expect(screen.getByRole('heading', { name: COPY.setUp.title })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+
+    expect(mocks.projects).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(8000); });
+    expect(mocks.projects).toHaveBeenCalledTimes(2);
   });
 
-  it('shows a set-up install how to start its Runtime again', async () => {
-    inspectMock.mockResolvedValue(down);
-    renderInDialog(<AstridSetupStep reconnect onNext={vi.fn()} onClose={vi.fn()} />);
-    await act(async () => {});
-
-    expect(screen.getByText(RECONNECT_COMMANDS.unix)).toBeTruthy();
-  });
-
-  it('returns directly to Astrid when a reconnecting Runtime becomes ready', async () => {
-    inspectMock.mockResolvedValue(ready);
+  it.each([false, true])('keeps waiting when a connected workspace cannot be read, reconnect=%s', async reconnect => {
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+    mocks.projects.mockRejectedValue(new Error('project list unavailable'));
     const onNext = vi.fn();
-    renderInDialog(<AstridSetupStep reconnect onNext={onNext} onClose={vi.fn()} />);
+    renderInDialog(<AstridSetupStep reconnect={reconnect} onNext={onNext} onClose={vi.fn()} />);
 
-    await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.projects).toHaveBeenCalledOnce());
+    expect(screen.getByRole('heading', { name: reconnect ? COPY.notRunning.title : COPY.setUp.title })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Back to Astrid' })).toBeNull();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('returns directly to Astrid when a reconnecting install becomes ready', async () => {
+    const onNext = vi.fn();
+    const view = renderInDialog(<AstridSetupStep reconnect onNext={onNext} onClose={vi.fn()} />);
+    expect(onNext).not.toHaveBeenCalled();
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+    view.rerender(<Dialog open><DialogContent><AstridSetupStep reconnect onNext={onNext} onClose={vi.fn()} /></DialogContent></Dialog>);
+
+    await waitFor(() => expect(onNext).toHaveBeenCalledOnce());
   });
 });

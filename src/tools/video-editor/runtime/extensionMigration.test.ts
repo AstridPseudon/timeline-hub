@@ -857,7 +857,7 @@ describe('executeLocalToInstalledMigration', () => {
     const result = await executeLocalToInstalledMigration({
       localManifest: makeLocalManifest({ id: operationalExtensionId as never }),
       installedPack: makeInstalledPack({
-        manifest: { id: 'haus.astrid.live-scenes' as never },
+        manifest: { id: 'haus.astrid.threejs-live-editor' as never },
       }),
       repository: makeMockRepository(),
       localSettings: {},

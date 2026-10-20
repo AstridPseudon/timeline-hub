@@ -1,6 +1,5 @@
-import { existsSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve, win32 } from 'node:path';
 import { parseEnv } from 'node:util';
 
 const VITE_ENTRY_RE = /^index-[A-Za-z0-9_-]+\.js$/;
@@ -106,7 +105,7 @@ export function parseDevLocalWorkspaceArgs(args, env = {}) {
 }
 
 /** Resolve the Runtime CLI invocation without a shell, preserving explicit Python selection. */
-export function resolveRuntimeCommand({ runtimeCheckout, runtimePython } = {}) {
+export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, platform = process.platform, exists = existsSync } = {}) {
   const checkout = runtimeCheckout?.trim();
   const python = runtimePython?.trim();
   if (python) {
@@ -117,9 +116,12 @@ export function resolveRuntimeCommand({ runtimeCheckout, runtimePython } = {}) {
     };
   }
   if (checkout) {
-    const checkoutPython = join(checkout, '.venv', 'bin', 'python');
-    if (!existsSync(checkoutPython)) {
-      throw new Error(`Runtime checkout has no .venv/bin/python: ${checkoutPython}; set ASTRID_RUNTIME_PYTHON to an explicit Python executable`);
+    const path = platform === 'win32' ? win32 : undefined;
+    const scriptsDirectory = platform === 'win32' ? 'Scripts' : 'bin';
+    const executable = platform === 'win32' ? 'python.exe' : 'python';
+    const checkoutPython = (path?.join ?? join)(checkout, '.venv', scriptsDirectory, executable);
+    if (!exists(checkoutPython)) {
+      throw new Error(`Runtime checkout has no .venv/${scriptsDirectory}/${executable}: ${checkoutPython}; set ASTRID_RUNTIME_PYTHON to an explicit Python executable`);
     }
     return { command: checkoutPython, args: ['-m', 'astrid_runtime.cli'], cwd: checkout };
   }
@@ -206,54 +208,34 @@ export function viteChildArgs(options) {
 }
 
 /** Runtime selection is independent of an Astrid source checkout. */
-export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot, home }) {
+export function resolveRuntimeDataRoot({ platform = process.platform, env = process.env, home }) {
+  const path = platform === 'win32' ? win32 : undefined;
+  const pathJoin = path?.join ?? join;
+  if (platform === 'win32') return pathJoin(env.LOCALAPPDATA || pathJoin(home, 'AppData', 'Local'), 'Astrid Runtime');
+  if (platform === 'darwin') return pathJoin(home, 'Library', 'Application Support', 'Astrid Runtime');
+  return pathJoin(env.XDG_DATA_HOME || pathJoin(home, '.local', 'share'), 'astrid-runtime');
+}
+
+export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot, home, platform = process.platform, env = process.env }) {
+  const path = platform === 'win32' ? win32 : undefined;
+  const pathIsAbsolute = path?.isAbsolute ?? isAbsolute;
   const selected = discovery?.trim();
   if (selected) {
-    if (!isAbsolute(selected)) throw new Error('ASTRID_WORKSPACE_DISCOVERY must be an absolute path');
-    return resolve(selected);
+    if (!pathIsAbsolute(selected)) throw new Error('ASTRID_WORKSPACE_DISCOVERY must be an absolute path');
+    return (path?.resolve ?? resolve)(selected);
   }
   const roots = [supportRoot, dataRoot].map((value) => value?.trim()).filter(Boolean);
-  if (roots.some((value) => !isAbsolute(value))) throw new Error('Runtime support root must be an absolute path');
-  const canonical = (value) => { try { return realpathSync(value); } catch { return resolve(value); } };
+  if (roots.some((value) => !pathIsAbsolute(value))) throw new Error('Runtime support root must be an absolute path');
+  const canonical = (value) => { try { return realpathSync(value); } catch { return (path?.resolve ?? resolve)(value); } };
   if (roots.length === 2 && canonical(roots[0]) !== canonical(roots[1])) {
     throw new Error('ASTRID_SUPPORT_ROOT and ASTRID_RUNTIME_DATA_ROOT select different roots');
   }
-  return join(roots[0] || join(home, 'Library', 'Application Support', 'Astrid Runtime'), 'runtime', 'discovery.json');
+  return (path?.join ?? join)(roots[0] || resolveRuntimeDataRoot({ platform, env, home }), 'runtime', 'discovery.json');
 }
 
 /** Quote one command path for the shell snippets shown to the person. */
-export function shellQuote(value) {
+export function shellQuote(value, platform = process.platform) {
   const command = String(value);
+  if (platform === 'win32') return `'${command.replaceAll("'", "''")}'`;
   return /^[A-Za-z0-9_./:=-]+$/.test(command) ? command : `'${command.replaceAll("'", "'\"'\"'")}'`;
-}
-
-/**
- * Where a chat service tells the running Runtime about itself: `chat.json` next to the Runtime's discovery.json. The
- * Runtime's browser door reads it on every chat request and forwards the hosted page's `/api/astrid/acp/*` there with
- * this credential (astrid-runtime `runtime_protocol/door.py`); with no file, the page shows that chat is unavailable.
- */
-export function chatRegistrationPath(discoveryPath) {
-  return join(dirname(discoveryPath), 'chat.json');
-}
-
-/** The registration the door reads: `{"endpoint": "http://127.0.0.1:<port>", "token": "<credential>"}`, owner-only. */
-export function chatRegistration(acpPort, token) {
-  const port = Number(acpPort);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('the chat bridge port must be an integer from 1 to 65535');
-  if (typeof token !== 'string' || !token) throw new Error('the chat bridge needs a credential');
-  return { endpoint: `http://127.0.0.1:${port}`, token };
-}
-
-/** Publishes the registration atomically and owner-only (the door ignores anything readable by others). */
-export function writeChatRegistration(path, registration) {
-  const temporary = join(dirname(path), `.chat.json.${randomBytes(6).toString('hex')}`);
-  writeFileSync(temporary, JSON.stringify(registration), { mode: 0o600, flag: 'wx' });
-  try { renameSync(temporary, path); } catch (error) { rmSync(temporary, { force: true }); throw error; }
-}
-
-/** Removes the registration when `owned(registration)` holds for what is there now, so another service's is left alone. */
-export function removeChatRegistration(path, owned) {
-  let current;
-  try { current = JSON.parse(readFileSync(path, 'utf8')); } catch { return; }
-  if (owned(current)) rmSync(path, { force: true });
 }

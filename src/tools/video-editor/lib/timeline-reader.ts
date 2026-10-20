@@ -241,7 +241,7 @@ function liveSceneSourceSummary(
     id: `source.live-scene.${sourceObjectId ?? sourceRevision ?? packageRevision}.${clipId}`,
     clipId,
     sourceKind: 'provider',
-    extensionId: 'haus.astrid.live-scenes',
+    extensionId: 'haus.astrid.threejs-live-editor',
     ...(sourceObjectId ? { sourceObjectId } : {}),
     ...(sourceRevision ? { sourceRevision } : {}),
     ...(packageRevision ? { packageRevision } : {}),

@@ -27,7 +27,7 @@ const operationalPolicy = {
 describe('extension release controls', () => {
   it('admits the actual generated catalog including Transcript', () => {
     const localIds = devLocalExtensions.map((item) => item.manifest.id as string);
-    expect(localIds).toContain('haus.astrid.live-scenes');
+    expect(localIds).toContain('haus.astrid.threejs-live-editor');
     expect(localIds).toContain(TRANSCRIPT_LANE_EXTENSION_ID);
     expect(selectReviewedExtensions(devLocalExtensions)).toEqual(devLocalExtensions);
     expect(new Set(REVIEWED_PRODUCTION_EXTENSION_IDS).size).toBe(REVIEWED_PRODUCTION_EXTENSION_IDS.length);

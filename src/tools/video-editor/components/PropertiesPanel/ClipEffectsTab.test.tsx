@@ -83,9 +83,9 @@ describe('ClipEffectsTab effect creator loading', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('effect-creator-panel')).toHaveAttribute('data-open', 'true');
+      expect(panelLifecycle.evaluated).toBe(1);
+      expect(panelLifecycle.mounted).toBe(1);
     });
-    expect(panelLifecycle.evaluated).toBe(1);
-    expect(panelLifecycle.mounted).toBe(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Close creator' }));
     expect(screen.getByTestId('effect-creator-panel')).toHaveAttribute('data-open', 'false');
