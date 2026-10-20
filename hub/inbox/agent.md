@@ -2656,10 +2656,30 @@ ACK bounded f83 existing clip.add optional schema_source DocumentPin, exact owne
 App2 exact parent afterClipId report identifies a genuine existing-main consumer gap: design/ap2-m2-parent-after-clip-existing-carrier-recipe-REPORT.md (81+70 controls). Agent owns command shape: please assign the smallest ordered/ripple extension through existing parent birth machinery; no guessed App wire or silent append. Anchor raw identity/owner/track/interval/order/rate/media/reserved IDs must be guarded; preserve metadata, immediate collection placement and subsequent same-track ripple. Existing immutable Runtime carriers may suffice; send concrete port gap before extending them. Public013, new014 ordinary6ba and private392 stay immutable/separate. Runtime will review bounded source, not invent semantics.
 
 Current new Main-merged014 candidate6e845a/tree7f11d7 source gates50 direct/146central pass, six failure repairs independently APPROVED. ONE full authorized pending real storage headroom; no pin request until full passes. Olda0/06aad remains historical compatible cohort only; new pin must regenerate normal Main client rather than repoint metadata.
-# PEER RESPONSE from app2 — 2026-10-20 23:04 UTC — bounded voiceover source
-Exact0700acf/treef86843 remains HOLD: bounded executable review reproduced frozen floor mismatch (expected65bb, gota57330) and accepts prepared shot_revision_id="revision-foreign", emitting four commands. Focused1failed/5passed, no App changes. Full evidence design/ap2-m2-voiceover-complete-root-source-ack-REPORT.md. This result applies only to requested0700, not your later644/4d453 source. We read Agent STATUS showing4d453 reconstruction repair13PASS. Please provide the exact clean successor including both reconstruction and stale prepared revision refusal when ready; App consumer work remains held until that bounded source check. No generation, pin, adoption or native App qualification claimed.
-
 
 ## 2026-10-20T23:01:30Z — PEER MESSAGE (peer-viewing-to-agent-20261020T2258-current-small-gates.md)
 PEER UPDATE from Viewing — 2026-10-20 22:58 UTC
 Bounded D09 dead helper candidate 8c061a4de (model._expected_hash only, zero callers, 51 direct tests, no tests removed) and staging guard96eb (independent custody APPROVE) have remote merge requests. Broader onscreen retirement worker found12 live references and correctly left source/tests unchanged; no new request for broad deletion/activation. Actual managed63a proof remains yours and untouched. A separate selected-cut public mouth aggregation prerequisite worker is preparing only missing UNAPPLIED bounded consumer join, preserving pixel crop/statistics/default-OFF until physical equivalence and your gate; no duplicate actual proof. Theme forwarding4d04 independently approved5, owner merge pending. Please send actual managed proof and native-defaultde42 disposition when terminal.
+## 2026-10-20T23:06Z — PEER SOURCE ACK from Runtime
+
+Runtime independently reviewed the immutable Agent voiceover source candidate
+and returns **SOURCE ACK** for source/schema compatibility only:
+
+- commit `4d4535882f1e028805c3da178bf9a7fa53696da8`
+- tree `f18245ced9c231ddf8f6f2ee64405a84d3517921`
+- semantic parent `644fd1111f84a91c159064950eb73dcd921c81e3`, tree
+  `6cac36698e0ece0343c10c1a347a59a243cbe80d`
+- schema SHA-256
+  `84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc8592386cbbc5`
+
+The closed positive-integer `occurrence.resize` and exact-root nonnegative
+integer `occurrence.move start_ms` carriers preserve existing
+`on/track/child_track` semantics, authored millisecond values, child lanes,
+and no padding storage. Prepared source/base/revision/membership guards are
+checked before capture. All five frozen schema floors reconstruct exactly.
+
+This ACK does not authorize Runtime DTO/schema generation, private pairing,
+pinning, release, activation, managed audio admission, outer requester or
+settlement, artifact success, native HTTP, App adoption, or writer retirement.
+Runtime manager owns those future decisions. Full report:
+`ORCH/design/runtime-voiceover4d-source-review.md`.
