@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getTimelineDurationInFrames as publicGetTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { computeMediaTrim, getSanitizedPlaybackRate } from '@banodoco/timeline-composition/evaluation';
 import {
   getConfigSignature,
@@ -46,6 +47,10 @@ describe('config-utils media sanitizers', () => {
       registry: {},
     };
     expect(getTimelineDurationInFrames(config, 30)).toBe(31);
+  });
+
+  it('re-exports the public timeline duration evaluator without a local wrapper', () => {
+    expect(getTimelineDurationInFrames).toBe(publicGetTimelineDurationInFrames);
   });
 
   it('omits trimAfter when source out is not greater than source in', () => {

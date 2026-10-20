@@ -1,4 +1,5 @@
 import { memo, useMemo, useRef } from 'react';
+import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
 import {
   useTimelineEditorData,
@@ -15,7 +16,6 @@ import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionS
 import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
-import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
 import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';

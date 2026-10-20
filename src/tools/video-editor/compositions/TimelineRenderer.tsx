@@ -1,10 +1,10 @@
-import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+import { getTimelineDurationInFrames, type CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import { getAdmittedElementSelection, subscribeAdmittedElements } from '../runtime/admitted-elements';
 import { AbsoluteFill, Sequence, useCurrentFrame, useRemotionEnvironment } from 'remotion';
 import { Component, createContext, memo, useContext, useMemo, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
-import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
+import { getClipDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { BUILTIN_CLIP_TYPES } from '@/sdk/video/timeline/clipTypes.ts';
 import { clipSourceTime } from '../clip-types/sourceTime';
 import {
