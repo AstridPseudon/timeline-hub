@@ -3267,6 +3267,16 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if parsed.extend is not None and parsed.for_seconds is not None:
         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
 
+    from astrid.packs.timeline.cli_native import commit_trim, ordinary_trim_requested
+
+    if ordinary_trim_requested(parsed):
+        result = _cmd_commit_edit(parsed, edit=commit_trim)
+        if result is not NotImplemented:
+            return result
+    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native trim; "
+                         "other edit families still use the detached working copy", 2)
+
     if parsed.file:
         tl, target = Checkout.load(parsed.file), parsed.file
     else:
@@ -3679,7 +3689,8 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                              "--track parent/track:ID --set LABEL (or --clear) for native commits. "
                              "Use edit commands-file TL FILE --base-revision-id REV "
                              "--base-publication-id PUB for a native batch. "
-                             "The detached working-copy flags below are legacy.")
+                             "Ordinary --trim-in/--trim-out on literal parent media also commit directly "
+                             "when no detached working copy exists. Other flags edit a legacy detached working copy.")
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
                            help="Timeline id or slug with a saved working copy (or use --file).")
@@ -3787,6 +3798,10 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
+    subparser.add_argument("--dry-run", action="store_true", help="Preview a native trim without accepting a publication.")
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(native_trim_defaults={action.dest: action.default for action in subparser._actions})
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
 
 
@@ -3888,7 +3903,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
-def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None, sheet=False) -> int:
+def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None, sheet=False, edit=None):
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
@@ -3908,7 +3923,11 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
             base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
         session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if sheet:
+        if edit is not None:
+            result = edit(session, parsed, options)
+            if result is NotImplemented:
+                return NotImplemented
+        elif sheet:
             from astrid.sdk.timeline_sheet import NativeSheet
 
             result = NativeSheet.load(session).apply(

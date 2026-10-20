@@ -1983,6 +1983,9 @@
             "--draft": {
               "required": false
             },
+            "--dry-run": {
+              "required": false
+            },
             "--duration": {
               "required": false
             },
@@ -2038,6 +2041,9 @@
             "--id": {
               "required": false
             },
+            "--idempotency-key": {
+              "required": false
+            },
             "--insert": {
               "required": false
             },
@@ -2045,6 +2051,9 @@
               "required": false
             },
             "--insert-line": {
+              "required": false
+            },
+            "--json": {
               "required": false
             },
             "--keep": {
