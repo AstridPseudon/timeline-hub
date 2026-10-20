@@ -129,8 +129,8 @@ for f in hub/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); want
 
 # deletion ledger: per-area files sync like any design doc; main regenerates the combined read-only view after the sync-in
 # design docs both ways, newer wins
-for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e hub/design/$b ] || [ $f -nt hub/design/$b ] && cp -p $f hub/design/$b; done
-for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e $ORCH/design/$b ] || [ $f -nt $ORCH/design/$b ] && cp -p $f $ORCH/design/$b; done
+for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename "$f"); [ ! -e "hub/design/$b" ] || [ "$f" -nt "hub/design/$b" ] && cp -p "$f" "hub/design/$b"; done
+for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename "$f"); [ ! -e "$ORCH/design/$b" ] || [ "$f" -nt "$ORCH/design/$b" ] && cp -p "$f" "$ORCH/design/$b"; done
 [ $M = main ] && { $ORCH/bin/ledger-index; cp -p $ORCH/design/deletion-ledger.md hub/design/deletion-ledger.md; }
 
 # --- code ---
