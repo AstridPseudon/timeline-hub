@@ -1,9 +1,8 @@
 import { expect, test as base } from '@playwright/test';
 import { createServer, type Server } from 'node:http';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { statSync } from 'node:fs';
 import { promisify } from 'node:util';
 import {
   assertCaptureCapabilities,
@@ -38,26 +37,23 @@ async function stopOwned(child: ChildProcess) {
 }
 
 async function privatePulse() {
-  if (process.getuid?.() === 0) throw new Error('Root/system mode is forbidden for the private Pulse diagnostic');
-  const directory = await mkdtemp(join(tmpdir(), 'timeline-private-pulse-'));
-  await chmod(directory, 0o700);
-  const inherited = {...process.env};
-  for (const key of ['PULSE_SERVER', 'PULSE_SINK', 'PULSE_RUNTIME_PATH', 'PULSE_STATE_PATH', 'PULSE_COOKIE']) delete inherited[key];
-  const env: NodeJS.ProcessEnv = {
-    ...inherited,
-    XDG_RUNTIME_DIR: directory,
-    PULSE_RUNTIME_PATH: directory,
-    PULSE_STATE_PATH: directory,
-    PULSE_SERVER: `unix:${directory}/native`,
-    PULSE_SINK: 'player',
-  };
-  const daemon = spawn('pulseaudio', [
-    '-n', '--daemonize=no', '--use-pid-file=no', '--exit-idle-time=-1', '--log-target=stderr',
-    `--load=module-native-protocol-unix socket=${directory}/native auth-anonymous=1 auth-cookie-enabled=0`,
-    '--load=module-null-sink sink_name=player rate=48000 channels=2 format=float32le channel_map=front-left,front-right',
-  ], { env, stdio: ['ignore', 'ignore', 'pipe'] });
-  let daemonLog = '';
-  daemon.stderr.on('data', (bytes) => { daemonLog += bytes.toString(); });
+  // The launcher owns the module-null-sink daemon and supplies these client
+  // settings; keep the fallback lifecycle visible to the offline controller.
+  if (process.getuid?.() !== 0) throw new Error('The private Pulse controller must remain on the original root UID');
+  const env = {...process.env};
+  const server = env.PULSE_SERVER;
+  const cookie = env.PULSE_COOKIE;
+  if (env.PULSE_SINK !== 'player') throw new Error('Private Pulse clients require the private player sink');
+  if (!server?.startsWith('unix:/tmp/timeline-private-pulse-runtime-')) {
+    throw new Error('Private Pulse clients require the per-run private Unix server');
+  }
+  if (!cookie?.startsWith('/tmp/timeline-private-pulse-cookie-')) {
+    throw new Error('Private Pulse clients require the per-run private cookie');
+  }
+  const cookieStat = statSync(cookie, {throwIfNoEntry: false});
+  if (!cookieStat || cookieStat.uid !== 65534 || (cookieStat.mode & 0o077) !== 0) {
+    throw new Error('Private Pulse cookie must be owned by nobody:65534 and private');
+  }
   const inspect = async () => {
     const [sinks, sources, inputs, outputs] = await Promise.all(
       ['sinks', 'sources', 'sink-inputs', 'source-outputs'].map(async (kind) =>
@@ -67,7 +63,6 @@ async function privatePulse() {
   };
   try {
     await expect.poll(async () => {
-      if (daemon.exitCode !== null) throw new Error(daemonLog);
       try { return (await exec('pactl', ['list', 'short', 'sinks'], { env })).stdout; } catch { return ''; }
     }, { timeout: 10_000 }).toContain('player');
     return {
@@ -96,21 +91,14 @@ async function privatePulse() {
             beforeWarm,
             recorderPid: recorder.pid,
             recorderLog: log,
-            daemonLog,
             completedAtMs: Date.now(),
           }, null, 2));
         }
         return { beforeWarm, recorderLog: log };
       },
-      async close() {
-        await stopOwned(daemon);
-        await rm(directory, { recursive: true, force: true });
-      },
     };
   } catch (error) {
-    await stopOwned(daemon);
-    await rm(directory, { recursive: true, force: true });
-    throw new Error(`Private Pulse startup failed: ${error instanceof Error ? error.message : String(error)}\n${daemonLog}`);
+    throw new Error(`Private Pulse connection failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -185,7 +173,7 @@ type WorkerFixtures = { url: string; pulse: PulseFixture };
 const test = base.extend<TestFixtures, WorkerFixtures>({
   // This fixture starts only in the centrally granted run; offline collection never imports Playwright.
   // eslint-disable-next-line no-empty-pattern
-  pulse: [async ({}, use) => { const pulse = await privatePulse(); try { await use(pulse); } finally { await pulse.close(); } }, { scope: 'worker' }],
+  pulse: [async ({}, use) => { await use(await privatePulse()); }, { scope: 'worker' }],
   url: [async ({ pulse: _pulse }, use) => {
     const server = fixtureServer(); await listen(server);
     try { const address = server.address(); if (!address || typeof address === 'string') throw new Error('fixture server address missing'); await use(`http://127.0.0.1:${address.port}/`); }

@@ -32,42 +32,102 @@ fi
 [[ -d "$STATE" && ! -L "$STATE" && "$(realpath -- "$STATE")" == "$STATE" ]] \
   || { echo 'PRIVATE_PULSE_STATE_ROOT must be an existing real per-run directory' >&2; exit 2; }
 
-RUN_AS_USER="${TAB_AUDIO_RUN_AS_USER:-}"
-if [[ "$(id -u)" == 0 ]]; then
-  : "${RUN_AS_USER:?root launcher requires an area-lead-admitted existing non-root identity in TAB_AUDIO_RUN_AS_USER}"
-  command -v runuser >/dev/null || { echo 'runuser is required for the root-to-user-mode handoff' >&2; exit 2; }
-  RUN_UID=$(id -u -- "$RUN_AS_USER")
-  RUN_GID=$(id -g -- "$RUN_AS_USER")
-  [[ "$RUN_UID" != 0 ]] || { echo 'TAB_AUDIO_RUN_AS_USER must resolve to a non-root identity' >&2; exit 2; }
-else
-  RUN_UID=$(id -u)
-  RUN_GID=$(id -g)
-  if [[ -n "$RUN_AS_USER" && "$(id -u -- "$RUN_AS_USER")" != "$RUN_UID" ]]; then
-    echo 'TAB_AUDIO_RUN_AS_USER must name the invoking non-root identity' >&2
-    exit 2
-  fi
-  RUN_AS_USER=$(id -un)
-fi
+[[ "$(id -u)" == 0 ]] || { echo 'private Pulse capture requires the original root launcher UID' >&2; exit 2; }
+command -v runuser >/dev/null || { echo 'runuser is required for the private Pulse daemon' >&2; exit 2; }
+command -v setsid >/dev/null || { echo 'setsid is required for the private Pulse daemon process group' >&2; exit 2; }
+PULSE_USER_RECORD=$(getent passwd 65534 || true)
+IFS=: read -r PULSE_USER _ PULSE_UID PULSE_GID _ _ _ <<< "$PULSE_USER_RECORD"
+[[ "$PULSE_USER" == nobody && "$PULSE_UID" == 65534 && "$PULSE_GID" == 65534 ]] \
+  || { echo 'existing nobody UID/GID 65534 is required for private Pulse' >&2; exit 2; }
+PULSE_USER=$(getent passwd 65534 | cut -d: -f1)
+[[ "$(id -u -- "$PULSE_USER")" == 65534 && "$(id -g -- "$PULSE_USER")" == 65534 ]] \
+  || { echo 'getent nobody identity did not resolve to UID/GID 65534' >&2; exit 2; }
 
 TASK_TMPDIR=$(mktemp -d /tmp/timeline-private-pulse-capture-XXXXXX)
 chmod 700 "$TASK_TMPDIR"
-if [[ "$(id -u)" == 0 ]]; then
-  chown "$RUN_UID:$RUN_GID" "$TASK_TMPDIR"
-fi
 for child_dir in home cache config playwright-transform playwright-output xdg-runtime; do
-  if [[ "$(id -u)" == 0 ]]; then
-    install -d -o "$RUN_UID" -g "$RUN_GID" -m 700 "$TASK_TMPDIR/$child_dir"
-  else
-    install -d -m 700 "$TASK_TMPDIR/$child_dir"
-  fi
+  install -d -m 700 "$TASK_TMPDIR/$child_dir"
 done
 CHILD_OUTPUT_DIR="$TASK_TMPDIR/playwright-output"
 export TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
+
+# These are separate direct /tmp allocations because the root-owned task
+# directory is intentionally 0700: nobody must not need to traverse it. Only
+# these newly-created daemon directories are handed to the existing nobody
+# account; source, graph, grants, controller, Node, Chrome, and ffmpeg remain
+# in the original root process.
+PULSE_RUNTIME_DIR=$(mktemp -d /tmp/timeline-private-pulse-runtime-XXXXXX)
+PULSE_HOME_DIR=$(mktemp -d /tmp/timeline-private-pulse-home-XXXXXX)
+PULSE_COOKIE_DIR=$(mktemp -d /tmp/timeline-private-pulse-cookie-XXXXXX)
+chmod 700 "$PULSE_RUNTIME_DIR" "$PULSE_HOME_DIR" "$PULSE_COOKIE_DIR"
+PULSE_COOKIE="$PULSE_COOKIE_DIR/cookie"
+PULSE_SOCKET="$PULSE_RUNTIME_DIR/native"
+PULSE_DAEMON_LOG="$TASK_TMPDIR/pulse-daemon.log"
+PULSE_DAEMON_PID=''
+
+assert_owned_private_dir() {
+  local path="$1"
+  [[ -d "$path" && ! -L "$path" && "$(realpath -- "$path")" == "$path" \
+    && "$(stat -c '%u %a' -- "$path")" == "$(id -u) 700" ]] \
+    || { echo "private Pulse path is not a fresh root-owned 0700 directory: $path" >&2; exit 2; }
+}
+for pulse_path in "$PULSE_RUNTIME_DIR" "$PULSE_HOME_DIR" "$PULSE_COOKIE_DIR"; do
+  assert_owned_private_dir "$pulse_path"
+done
+[[ "$(stat -c '%u %a' -- "$TASK_TMPDIR")" == "$(id -u) 700" ]] \
+  || { echo 'private Pulse task temp is not a fresh root-owned 0700 directory' >&2; exit 2; }
+chown "$PULSE_UID:$PULSE_GID" "$PULSE_RUNTIME_DIR" "$PULSE_HOME_DIR" "$PULSE_COOKIE_DIR"
+
+start_private_pulse() {
+  setsid runuser --user "$PULSE_USER" -- env -i \
+    "HOME=$PULSE_HOME_DIR" \
+    PATH=/usr/bin:/bin \
+    "XDG_RUNTIME_DIR=$PULSE_RUNTIME_DIR" \
+    "XDG_CONFIG_HOME=$PULSE_HOME_DIR/config" \
+    "PULSE_RUNTIME_PATH=$PULSE_RUNTIME_DIR" \
+    "PULSE_STATE_PATH=$PULSE_HOME_DIR/state" \
+    "PULSE_COOKIE=$PULSE_COOKIE" \
+    pulseaudio -n --daemonize=no --use-pid-file=no --exit-idle-time=-1 --log-target=stderr \
+      "--load=module-native-protocol-unix socket=$PULSE_SOCKET auth-cookie=$PULSE_COOKIE auth-cookie-enabled=1" \
+      '--load=module-null-sink sink_name=player rate=48000 channels=2 format=float32le channel_map=front-left,front-right' \
+    >"$PULSE_DAEMON_LOG" 2>&1 &
+  PULSE_DAEMON_PID=$!
+}
+
+stop_private_pulse() {
+  [[ -n "$PULSE_DAEMON_PID" ]] || return 0
+  kill -TERM -- "-$PULSE_DAEMON_PID" 2>/dev/null || kill -TERM "$PULSE_DAEMON_PID" 2>/dev/null || true
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    kill -0 -- "-$PULSE_DAEMON_PID" 2>/dev/null || break
+    sleep 0.1
+  done
+  if kill -0 -- "-$PULSE_DAEMON_PID" 2>/dev/null; then
+    kill -KILL -- "-$PULSE_DAEMON_PID" 2>/dev/null || kill -KILL "$PULSE_DAEMON_PID" 2>/dev/null || true
+  fi
+  wait "$PULSE_DAEMON_PID" 2>/dev/null || true
+  PULSE_DAEMON_PID=''
+}
+
+remove_private_pulse_dir() {
+  local path="$1"
+  case "$path" in
+    /tmp/timeline-private-pulse-runtime-*|/tmp/timeline-private-pulse-home-*|/tmp/timeline-private-pulse-cookie-*) ;;
+    *) echo "refusing to remove unexpected private Pulse path: $path" >&2; return 1 ;;
+  esac
+  [[ -d "$path" && ! -L "$path" && "$(realpath -- "$path")" == "$path" ]] \
+    || { echo "refusing to remove non-owned private Pulse path: $path" >&2; return 1; }
+  rm -rf -- "$path"
+}
+
 cleanup() {
   local status=$? postflight=0
+  stop_private_pulse
   if [[ ${TAB_AUDIO_PREFLIGHT_DONE:-0} == 1 ]]; then
     "$NODE" "$BASE_CONTROLLER" --postflight || postflight=$?
   fi
+  for pulse_path in "$PULSE_RUNTIME_DIR" "$PULSE_HOME_DIR" "$PULSE_COOKIE_DIR"; do
+    remove_private_pulse_dir "$pulse_path" || postflight=1
+  done
   if [[ -n "${TASK_TMPDIR:-}" ]]; then
     [[ "$TASK_TMPDIR" == /tmp/timeline-private-pulse-capture-* && -d "$TASK_TMPDIR" && "$(realpath -- "$TASK_TMPDIR")" == "$TASK_TMPDIR" ]] || {
       echo "refusing to remove non-owned task temp: $TASK_TMPDIR" >&2
@@ -89,38 +149,32 @@ TAB_AUDIO_RUN=0 "$NODE" "$PRIVATE_CONTROLLER" --prepare
 export TAB_AUDIO_PREFLIGHT_DONE=1
 "$NODE" "$BASE_CONTROLLER" --claim
 
-assert_child_access() {
-  if [[ "$(id -u)" == 0 ]]; then
-    runuser --user "$RUN_AS_USER" -- test -r "$ROOT/node_modules/playwright/cli.js" \
-      && runuser --user "$RUN_AS_USER" -- test -r "$ROOT/tests/e2e/timeline/private-pulse-stereo.probe.ts"
-  else
-    [[ -r "$ROOT/node_modules/playwright/cli.js" && -r "$ROOT/tests/e2e/timeline/private-pulse-stereo.probe.ts" ]]
-  fi
-}
-assert_child_access || { echo 'Admitted identity cannot read the exact frozen graph/source' >&2; exit 2; }
+[[ -r "$ROOT/node_modules/playwright/cli.js" && -r "$ROOT/tests/e2e/timeline/private-pulse-stereo.probe.ts" ]] \
+  || { echo 'Original launcher UID cannot read the exact frozen graph/source' >&2; exit 2; }
 
-run_probe_as_user() {
+start_private_pulse
+
+run_probe() {
   local -a command=(env
+    -u PULSE_SERVER -u PULSE_COOKIE -u PULSE_SINK -u PULSE_SOURCE
+    -u PULSE_RUNTIME_PATH -u PULSE_STATE_PATH -u PULSE_CLIENTCONFIG -u PULSE_CONFIG -u PULSE_LATENCY_MSEC
     "HOME=$TASK_TMPDIR/home"
     "TMPDIR=$TASK_TMPDIR" "TMP=$TASK_TMPDIR" "TEMP=$TASK_TMPDIR"
     "XDG_RUNTIME_DIR=$TASK_TMPDIR/xdg-runtime"
     "XDG_CACHE_HOME=$TASK_TMPDIR/cache" "XDG_CONFIG_HOME=$TASK_TMPDIR/config"
     "PWTEST_CACHE_DIR=$TASK_TMPDIR/playwright-transform"
     "PLAYWRIGHT_OUTPUT_DIR=$CHILD_OUTPUT_DIR"
+    "PULSE_SERVER=unix:$PULSE_SOCKET" "PULSE_COOKIE=$PULSE_COOKIE" "PULSE_SINK=player"
     "TAB_AUDIO_RUN_MODE=stereo" NODE_PATH=''
     PATH="$(dirname "$NODE"):/usr/bin:/bin"
     PLAYWRIGHT_TIMELINE_DEVICES=1
     "$NODE" "$ROOT/node_modules/playwright/cli.js" test
     --config "$CONFIG" --project=private-pulse-stereo-chrome155 --workers=1)
-  if [[ "$(id -u)" == 0 ]]; then
-    runuser --user "$RUN_AS_USER" -- "${command[@]}"
-  else
-    "${command[@]}"
-  fi
+  "${command[@]}"
 }
 
 probe_status=0
-run_probe_as_user || probe_status=$?
+run_probe || probe_status=$?
 mkdir -p "$PLAYWRIGHT_OUTPUT_DIR"
 cp -a "$CHILD_OUTPUT_DIR/." "$PLAYWRIGHT_OUTPUT_DIR/"
 exit "$probe_status"
