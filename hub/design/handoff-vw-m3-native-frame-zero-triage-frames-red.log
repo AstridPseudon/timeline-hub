@@ -1,0 +1,137 @@
+TAP version 13
+# Subtest: dismisses the completed render and waits for its backdrop before inspecting the actual Player
+not ok 1 - dismisses the completed render and waits for its backdrop before inspecting the actual Player
+  ---
+  duration_ms: 3.282108
+  location: '/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:1:1574'
+  failureType: 'testCodeFailure'
+  error: |-
+    The validation function is expected to return "true". Received false
+    
+    Caught error:
+    
+    Error: Rendered film obscures actual Player
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: [Function (anonymous)]
+  actual:
+  error: 'Rendered film obscures actual Player'
+  stack: |-
+    Object.evaluate (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:46:35)
+    seekPlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:49:14)
+    capturePlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:118:9)
+    TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:56:24)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    node:internal/test_runner/harness:255:12
+    node:internal/process/task_queues:140:7
+    AsyncResource.runInAsyncScope (node:async_hooks:206:9)
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:56:3)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: keeps fixture-only captures on the existing Player path when no result dialog is open
+not ok 2 - keeps fixture-only captures on the existing Player path when no result dialog is open
+  ---
+  duration_ms: 2.231452
+  location: '/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:1:1914'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    -   'backdrop detached',
+        'inspect Player'
+      ]
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'backdrop detached'
+    1: 'inspect Player'
+  actual:
+    0: 'inspect Player'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:63:10)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: does not inspect or capture the Player if normal dialog dismissal fails
+not ok 3 - does not inspect or capture the Player if normal dialog dismissal fails
+  ---
+  duration_ms: 0.653942
+  location: '/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:1:2231'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Close failed/. Input:
+    
+    'Error: Rendered film obscures actual Player'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'Rendered film obscures actual Player'
+  stack: |-
+    Object.evaluate (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:46:35)
+    seekPlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:49:14)
+    capturePlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:118:9)
+    TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:68:24)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:68:3)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: does not inspect or capture the Player while the closing backdrop remains
+not ok 4 - does not inspect or capture the Player while the closing backdrop remains
+  ---
+  duration_ms: 0.533866
+  location: '/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:1:2496'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Backdrop still covers Player/. Input:
+    
+    'Error: Rendered film obscures actual Player'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'Rendered film obscures actual Player'
+  stack: |-
+    Object.evaluate (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:46:35)
+    seekPlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:49:14)
+    capturePlayerFrame (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.ts:118:9)
+    TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:74:24)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts:74:3)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 94.751592

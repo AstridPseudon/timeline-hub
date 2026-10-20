@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: dismisses the completed render and waits for its backdrop before inspecting the actual Player
+ok 1 - dismisses the completed render and waits for its backdrop before inspecting the actual Player
+  ---
+  duration_ms: 1.681872
+  ...
+# Subtest: keeps fixture-only captures on the existing Player path when no result dialog is open
+ok 2 - keeps fixture-only captures on the existing Player path when no result dialog is open
+  ---
+  duration_ms: 0.192506
+  ...
+# Subtest: does not inspect or capture the Player if normal dialog dismissal fails
+ok 3 - does not inspect or capture the Player if normal dialog dismissal fails
+  ---
+  duration_ms: 0.267683
+  ...
+# Subtest: does not inspect or capture the Player while the closing backdrop remains
+ok 4 - does not inspect or capture the Player while the closing backdrop remains
+  ---
+  duration_ms: 0.18909
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.263942
