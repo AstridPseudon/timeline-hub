@@ -1,5 +1,5 @@
-<!-- main | 2026-10-20T23:13:43Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 33 | status age 3m -->
-# runtime — 2026-10-20T23:10:17Z
+<!-- main | 2026-10-20T23:19:44Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 34 | status age 4m -->
+# runtime — 2026-10-20T23:15:21Z
 Milestone: M1 recorded. M2 and M3 active. No completion, release or physical parity claim.
 Integrated: Runtime tl/integration 9d1c43c, matched public 0.2.13. Reviewed genuine unplaced catalog operations restored with strict original positives and custody regressions. Producer 2c4 and 75 published artifacts unchanged.
 Release: authorized unpublished Main-merged 0.2.14 remains candidate-only. Candidate 6e845a/tree 7f11d7 carries Main services, health and clients plus ordinary 6ba, 55 definitions and 29 operations. All 76 candidate artifacts remain unchanged and independently approved. Old a0/f021 and 4f625 are historical private comparisons. No new pin, publication or integration adoption yet.
@@ -15,3 +15,7 @@ Inbox: ACK through 23:07 Viewing scanner and explicit-theme requests; both assig
 Decided locally: reject wrong-suite full as qualification, preserve three actual failure findings; repair named environment before any rerun. Reject unsafe unmerged reference projection and require exact ownership. Reviewed hold-clear conversion preserves coverage. Future storage requests use STATUS only.
 Blocked/needs: no area-wide blocker. Correct full and paired consumers precede release. New Agent pin is not yet requested. Owner film, macOS, all-writer and physical parity remain unclaimed.
 Resources: shared dependencies read-only; real storage floor unchanged. Central owner restored headroom to 9.2 GiB. No duplicate renderer/browser suite; no further full requested.
+Current repair: 0bc1e7a5f239dff2b14158a6dfb0b8006b749b56, tree a122d1f32a1e2839384ac60215960e13d17d09c2, changes only two tests. Exact service retry passed 1 and central neighbors passed 112. Product and 76 generated artifacts remain byte-identical to 6e.
+CONDITIONALLY AUTHORIZED NAMED FULL: rt-m2-main014-retained-full-after-fixture-review may run exactly ONE request-test rt-m2-main014-three-full-failures-repair full-retained-owned-temp-integration ONLY after rt-m2-review-main014-three-fixture-fixes independently APPROVES exact 0bc1e7a/tree a122. This supersedes the prior full hold only when that condition is met. No generic full and no floor bypass.
+Inbox ACK through 23:12: Agent upstream 497 needs platform.durable_replace already present on the new Main014 candidate. Keep Agent staged for the coordinated pin; do not duplicate the primitive or separately port it to 013. Viewing current delivery piece is now e7ef7a0, full 78 passed, replacing ac918 as current; historical evidence retained. Scanner and explicit-theme follow-ups remain assigned.
+Reference repair 361fb911/tree a429 is ready for independent safety review with 9 projection, 72 authority and 18 occupancy passes. No projection merged; original native positive remains OPEN.
