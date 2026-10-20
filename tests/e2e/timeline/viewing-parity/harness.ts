@@ -10,6 +10,7 @@ import { mediaHash } from './media';
 import type { Capability } from '../../../../src/integrations/runtime/generated';
 
 export const INSTALLED_BROWSER = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
+export const PLAYER_BROWSER = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const COMPOSITION_HASH = 'sha256:93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa';
 const COMPOSITION_FILE_COUNT = 77;
 const EXPECTED_PACKAGE_VERSIONS = {
@@ -172,7 +173,7 @@ export async function sourceVersions() {
     },
     renderGraphProvenance: Object.fromEntries(Object.entries(EXPECTED_RENDER_GRAPHS)
       .map(([consumer, graph]) => [consumer, graph.provenance])),
-    packages, browserExecutable: INSTALLED_BROWSER, node: process.version,
+    packages, browserExecutable: INSTALLED_BROWSER, playerBrowserExecutable: PLAYER_BROWSER, node: process.version,
   };
 }
 
@@ -234,7 +235,8 @@ export const test = base.extend<object, {
     let browser: Browser | undefined;
     let failure: unknown;
     try {
-      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: INSTALLED_BROWSER });
+      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: PLAYER_BROWSER });
+      console.log('[viewing-parity] Player browser', browser.version(), PLAYER_BROWSER);
       await provide(browser);
     } catch (error) {
       failure = error;

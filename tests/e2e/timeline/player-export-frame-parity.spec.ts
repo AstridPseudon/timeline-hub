@@ -163,6 +163,23 @@ async function compareAllFrames(page: Page, exportPath: string, testInfo: TestIn
 }
 
 test.describe('ordinary media: mounted App Player versus real task export', () => {
+  test('normal App Render action downloads a valid native-size MP4 without a parity comparison', async ({ page, harness, fixture }, testInfo) => {
+    const logs = collectPageLogs(page);
+    await openParityEditor(page, harness, fixture);
+    const render = await renderAndDownload(page, harness, fixture, testInfo);
+    const firstFrame = await decodeExportFrame(render.exportPath, 0);
+    expect(firstFrame.width).toBe(PARITY_WIDTH);
+    expect(firstFrame.height).toBe(PARITY_HEIGHT);
+    expect(firstFrame.bytes).toHaveLength(PARITY_WIDTH * PARITY_HEIGHT * 3);
+    await assertRenderUnchanged(harness, fixture, render);
+    expect(logs).toEqual([]);
+    await saveEvidence(testInfo, 'normal-render-action', {
+      proof: 'normal App Render route and downloaded MP4 only; no Player/frame/audio parity or source-policy claim',
+      revision: fixture.headRevisionId, taskId: render.taskId, authority: render.authority,
+      firstFrame: { width: firstFrame.width, height: firstFrame.height, hash: mediaHash(firstFrame.bytes) },
+    });
+  });
+
   test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture }, testInfo) => {
     const logs = collectPageLogs(page);
     const requests: Array<{ url: string; status: number }> = [];
