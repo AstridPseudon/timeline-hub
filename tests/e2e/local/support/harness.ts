@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import type { TimelineClip } from '@banodoco/timeline-schema';
+import { projectPackDocumentId } from '../../../../config/vite/projectElementSelection.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
@@ -327,6 +328,19 @@ export interface ThreeProductsSeed {
   opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot: Record<string, unknown> };
 }
 
+export interface SelectedParamDevSeed {
+  projectId: string;
+  projectSlug: string;
+  timelineId: string;
+  clipId: string;
+  packId: string;
+  elementId: string;
+  p1: { packId: string; id: string; kind: 'effect'; revision: string };
+  p1DocumentPin: { document_id: string; version: number; content_digest: string };
+  sourceRoot: string;
+  elementRoot: string;
+}
+
 export interface CanonicalSettingsSeed {
   projectSlug: string;
   timelineId: string;
@@ -383,6 +397,12 @@ export class DirectHarness {
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
+  private selectedParamDevSeed?: SelectedParamDevSeed;
+  private selectedParamEnv?: NodeJS.ProcessEnv;
+  private selectedParamPython?: string;
+  private selectedParamVerifier?: string;
+  private devServer?: Managed;
+  private devPort = 0;
   private canonicalSettingsSeed?: CanonicalSettingsSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
@@ -508,6 +528,11 @@ export class DirectHarness {
 
   get runtimeUrl() { return `http://127.0.0.1:${this.runtimePort}`; }
 
+  get devOrigin() {
+    if (!this.devPort) throw new Error('selected PARAM DEV server has not started');
+    return `http://127.0.0.1:${this.devPort}`;
+  }
+
   /** A request straight to the Runtime with the product credential (the "direct" side of every comparison). */
   async runtimeFetch(pathAndQuery: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
     return fetch(`${this.runtimeUrl}${pathAndQuery}`, { ...init, headers: { Authorization: `Bearer ${this.productToken}`, ...init.headers } });
@@ -538,6 +563,173 @@ export class DirectHarness {
     if (response.status !== 201) throw new Error(`credential provisioning for ${actorId} failed: ${response.status} ${await response.text()}`);
     writeFileSync(path.join(this.tmp, file), JSON.stringify({ token, actor_id: actorId }), { mode: 0o600 });
     return token;
+  }
+
+  private agentPython(): string {
+    const checkout = path.resolve(process.env.ASTRID_CHECKOUT
+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const python = process.env.ASTRID_PYTHON
+      ?? [path.join(checkout, '.venv/bin/python'), path.join(checkout, '../venv-agent/bin/python')].find(existsSync)
+      ?? path.join(checkout, '.venv/bin/python');
+    if (!existsSync(python)) throw new Error(`Astrid Python not found at ${python}`);
+    return python;
+  }
+
+  private projectPackCommand(args: string[]): any {
+    if (!this.selectedParamPython || !this.selectedParamEnv) throw new Error('selected PARAM project-pack host is not initialized');
+    const output = execFileSync(this.selectedParamPython, ['-m', 'astrid.core.element.cli', 'project-pack', ...args], {
+      cwd: this.tmp,
+      env: this.selectedParamEnv,
+      encoding: 'utf8',
+      maxBuffer: 4_000_000,
+    });
+    return JSON.parse(output.trim());
+  }
+
+  private agentCommand(args: string[]): any {
+    if (!this.selectedParamPython || !this.selectedParamEnv) throw new Error('selected PARAM Agent host is not initialized');
+    const output = execFileSync(this.selectedParamPython, ['-m', 'astrid', ...args], {
+      cwd: this.tmp,
+      env: this.selectedParamEnv,
+      encoding: 'utf8',
+      maxBuffer: 4_000_000,
+    });
+    const result = JSON.parse(output.trim().split('\n').pop()!);
+    if (result.ok === false) throw new Error(`Agent command failed: ${JSON.stringify(result)}`);
+    return result.data ?? result;
+  }
+
+  private selectedParamDocumentPin(record: any): SelectedParamDevSeed['p1DocumentPin'] {
+    const binding = record?.binding;
+    if (!binding || binding.documentId !== projectPackDocumentId(this.seed.projectId)
+      || binding.projectId !== this.seed.projectId || !Number.isSafeInteger(binding.documentVersion)
+      || !/^sha256:[0-9a-f]{64}$/.test(binding.contentDigest)) {
+      throw new Error(`Project-pack resolver returned no exact selected DocumentPin: ${JSON.stringify(binding)}`);
+    }
+    return { document_id: binding.documentId, version: binding.documentVersion, content_digest: binding.contentDigest };
+  }
+
+  /**
+   * Seeds one real project-owned selected PARAM element through the existing
+   * Agent project-pack admission path, then publishes that exact P1 revision
+   * into the existing Runtime timeline. All source and build artifacts stay
+   * under this harness's throwaway directory.
+   */
+  async seedSelectedParamDev(): Promise<SelectedParamDevSeed> {
+    if (this.selectedParamDevSeed) return this.selectedParamDevSeed;
+    await this.enableTimelineAuthoring(this.agentPython());
+    const python = this.agentPython();
+    const sourceRoot = path.join(this.tmp, 'selected-project-packs');
+    const artifactRoot = path.join(this.tmp, 'selected-element-artifacts');
+    const credentialFile = path.join(this.tmp, 'selected-agent-credential.json');
+    const verifier = path.join(this.tmp, 'selected-element-build-verifier.py');
+    mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
+    mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
+    const token = await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
+    writeFileSync(verifier, "import hashlib,json,sys\nfrom pathlib import Path\np=Path(sys.argv[1])\nselection=json.loads(p.read_text())\nprint(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in selection['elements']]}))\n");
+    this.selectedParamPython = python;
+    this.selectedParamVerifier = verifier;
+    this.selectedParamEnv = {
+      ...process.env,
+      ...this.runtimeEnv(),
+      ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
+      ASTRID_RUNTIME_CREDENTIAL: token,
+      ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
+      ASTRID_ELEMENT_ARTIFACT_ROOT: artifactRoot,
+      ASTRID_ELEMENT_BUILD_COMMAND: JSON.stringify([python, verifier]),
+    };
+    const { projectId, timelineId, image } = this.seed;
+    const initialized = this.projectPackCommand(['init', '--realm', this.realmId, '--project', projectId]);
+    const packId = initialized.packId;
+    const sourcePackRoot = initialized.packRoot;
+    const elementId = 'selected_param_fixture';
+    const elementRoot = path.join(sourcePackRoot, 'rendering/elements/effects', elementId);
+    mkdirSync(elementRoot, { recursive: true });
+    writeFileSync(path.join(sourcePackRoot, 'pack.yaml'), `schema_version: 3\nid: ${packId}\nname: Project drafts\nversion: 0.1.0\nstatus: active\ndomain: media\nstability: experimental\nsupport: project\nvisibility: visible\ndescription: Editable project-owned visual elements.\npermissions:\n  - id: project_files\n    reason: Provides project-owned visual source.\ndocumentation:\n  kind: skill\n  path: docs/SKILL.md\nrendering:\n  effects/${elementId}:\n    type: element\n    path: rendering/elements/effects/${elementId}/element.yaml\n    resources:\n      - kind: implementation\n        path: rendering/elements/effects/${elementId}/component.tsx\n`);
+    writeFileSync(path.join(elementRoot, 'component.tsx'), "import React from 'react';\nimport {AbsoluteFill} from 'remotion';\nexport default function SelectedParamFixture() { return <AbsoluteFill />; }\n");
+    const writeDefinition = (maximum: number) => writeFileSync(path.join(elementRoot, 'element.yaml'), `schema_version: 1\nid: ${elementId}\nkind: effect\npack_id: ${packId}\nshort_description: Selected PARAM fixture.\ndefaults:\n  amount: 4\nschema:\n  title: Amount\n  type: object\n  properties:\n    amount:\n      type: number\n      minimum: 0\n      maximum: ${maximum}\n  required:\n    - amount\n  additionalProperties: false\nruntime:\n  adapter: remotion\n`);
+    writeDefinition(10);
+    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', projectId]);
+    if (!Array.isArray(admitted.elements) || admitted.elements.length !== 1) throw new Error(`selected PARAM admission did not admit one element: ${JSON.stringify(admitted)}`);
+    const p1 = admitted.elements[0].descriptor as SelectedParamDevSeed['p1'];
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`selected PARAM project read: ${project.status} ${JSON.stringify(project.body)}`);
+    const clipId = 'selected-param-clip';
+    const clips = [
+      { id: 'selected-base-clip', at: 0, track: 'V1', clipType: 'media', asset: 'selected-image', from: 0, to: 3, speed: 1 },
+      // The normal native apply carrier starts from the unowned draft ref;
+      // Agent's accepted update-element command attaches the real P1 owner and
+      // its exact schema/object dependencies to history.
+      { id: clipId, at: 0, track: 'FX', clipType: elementId, hold: 3, elementRef: { id: elementId, kind: 'effect', revision: 'draft-1' }, params: { amount: 4 } },
+    ];
+    const publication = compositionPublication({ projectId, timelineId }, this.seed.headRevisionId, 'Selected PARAM', 30);
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'FX', kind: 'visual', label: 'FX' }] } as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = clips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = { assets: { 'selected-image': { file: 'selected-image.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest } } } as unknown as typeof publication.parent_composition.registry;
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`selected PARAM timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    const applied = this.agentCommand(['timelines', 'update-element', '--project', projectId, timelineId, '--realm', this.realmId,
+      '--clip-id', clipId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision,
+      '--expected-head', published.body.data.new_head, '--params-json', JSON.stringify({ amount: 4 }), '--json']);
+    const history = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}/timelines/${timelineId}/commits?limit=50`);
+    if (history.status !== 200) throw new Error(`selected PARAM history: ${history.status} ${JSON.stringify(history.body)}`);
+    const accepted = history.body.items?.find((entry: any) => entry.revision_id === applied.new_head);
+    const operations = accepted?.receipt?.result?.commands?.map((command: any) => command.op);
+    if (JSON.stringify(operations) !== JSON.stringify(['clip.set-element', 'clip.set-params'])) {
+      throw new Error(`selected PARAM P1 did not use the native element producer: ${JSON.stringify(operations)}`);
+    }
+    const p1DocumentPin = this.selectedParamDocumentPin(this.projectPackCommand(['resolve', '--realm', this.realmId, '--project', projectId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision]));
+    this.selectedParamDevSeed = {
+      projectId, projectSlug: (project.body.data ?? project.body).slug, timelineId, clipId, packId: p1.packId, elementId, p1,
+      p1DocumentPin, sourceRoot: sourcePackRoot, elementRoot,
+    };
+    return this.selectedParamDevSeed;
+  }
+
+  /** Admit P2 with a changed schema, then remove only authored P1/P2 source. The retained P1 artifact remains the resolver authority. */
+  async advanceSelectedParamAndRemoveSource(seed: SelectedParamDevSeed): Promise<{ p2: SelectedParamDevSeed['p1']; p2DocumentPin: SelectedParamDevSeed['p1DocumentPin'] }> {
+    if (!this.selectedParamEnv || !this.selectedParamPython) throw new Error('selected PARAM seed has not been created');
+    writeFileSync(path.join(seed.elementRoot, 'element.yaml'), readFileSync(path.join(seed.elementRoot, 'element.yaml'), 'utf8').replace('maximum: 10', 'maximum: 20'));
+    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', seed.projectId]);
+    const p2 = admitted.elements.find((entry: any) => entry.descriptor?.id === seed.elementId && entry.descriptor?.revision !== seed.p1.revision)?.descriptor as SelectedParamDevSeed['p1'] | undefined;
+    if (!p2) throw new Error(`selected PARAM P2 admission did not produce a new revision: ${JSON.stringify(admitted)}`);
+    const resolved = this.projectPackCommand(['resolve', '--realm', this.realmId, '--project', seed.projectId, '--pack', p2.packId, '--element', p2.id, '--kind', p2.kind, '--revision', p2.revision]);
+    const p2DocumentPin = this.selectedParamDocumentPin(resolved);
+    rmSync(seed.elementRoot, { recursive: true, force: true });
+    return { p2, p2DocumentPin };
+  }
+
+  async startSelectedParamDevServer(): Promise<void> {
+    if (this.devServer) return;
+    const seed = this.selectedParamDevSeed;
+    if (!seed || !this.selectedParamEnv) throw new Error('selected PARAM seed must be created before starting DEV');
+    this.devPort = await freePort();
+    const agent = path.resolve(process.env.ASTRID_CHECKOUT
+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const env = {
+      ...this.selectedParamEnv,
+      PORT: String(this.devPort),
+      VITE_WORKSPACE_RUNTIME_URL: this.runtimeUrl,
+      WORKSPACE_RUNTIME_TOKEN_FILE: this.credentialPath,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: this.realmId,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: this.runtimeInstanceId,
+      ASTRID_CHECKOUT: agent,
+      ASTRID_RUNTIME_CHECKOUT: RUNTIME_CHECKOUT,
+      ASTRID_PROJECT_PACKS_ROOT: seed.sourceRoot,
+      ASTRID_ELEMENT_ARTIFACT_ROOT: this.selectedParamEnv.ASTRID_ELEMENT_ARTIFACT_ROOT,
+      ASTRID_ELEMENT_RESOLVE_COMMAND: JSON.stringify([this.selectedParamPython, '-m', 'astrid.core.element.cli']),
+      VITE_DISABLE_REMOTE_FONTS: '1',
+    };
+    this.devServer = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'node_modules/vite/bin/vite.js'), '--config', path.join(REPO_ROOT, 'config/vite/vite.config.ts'), '--host', '127.0.0.1', '--port', String(this.devPort)], { cwd: REPO_ROOT, env });
+    await waitFor('selected PARAM DEV server', async () => {
+      const response = await fetch(`${this.devOrigin}/tools/video-editor`).catch(() => null);
+      return response?.ok ? true : null;
+    }, 60_000, () => (this.devServer?.child.exitCode !== null ? `Vite exited ${this.devServer?.child.exitCode}: ${this.devServer?.stderr.slice(-1200)}` : null));
   }
 
   /**
@@ -942,6 +1134,7 @@ export class DirectHarness {
   async stop(): Promise<void> {
     if (this.stopped) return;
     this.stopped = true;
+    await stopGroup(this.devServer).catch(() => {});
     await stopGroup(this.runtime).catch(() => {});
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
