@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T21:54:56Z | dispatcher heartbeat 12s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 27m -->
+<!-- app2 | 2026-10-20T22:01:29Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 21 | status age 33m -->
 # app2 — 2026-10-20 21:27:46 UTC
 Milestone: M2. One of seven assigned rows complete: D01-app-duplicate DELETED. Six rows and milestone exit remain open.
 Integrated: App HOME8c0e1f799b64e9b6f179018b7dff01479d43c85c contains duplicate cut plus ordinary4694ea92c. Shared stale TimelineOps fix7d42fcd3a is included. Parent fences merged270d2437a; inactive project-data helper32f1b0b21.
