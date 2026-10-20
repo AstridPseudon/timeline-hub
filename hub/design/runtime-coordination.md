@@ -670,3 +670,21 @@ path under Runtime guard; restore/inverse/redo use authenticated own-slot proof,
 not fresh claims. The physical-slot state view/compiler seam needs owner
 agreement before attempting <=150 product lines; this report is a blocker,
 not permission to invent authority from virtual occupancy or ID spelling.
+
+agt-m2-materialization-identity final: STOPPED at the explicit carrier boundary;
+no product/schema/artifact edits. Existing mappings already satisfy scope controls
+(project/timeline/occurrence/source); built-in clip.move proves absent typed
+physical births, and four positive item-address requirements are strict xfails.
+Final targeted201PASS/7xfail (5new carrier/birth requirements +2unchanged root
+alias); actual normal Runtime9f M1 identity lane3PASS/4.06s including atomic
+same-project/foreign refusal and own-slot reopen/retry/restore/rematerialization.
+No M2 typed-birth acceptance claim. Read precise carrier and remaining matrix in
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-identity/notes/report.md.
+Root-stage-alias owner has exclusive inverse ownership; no overlap changes.
+Both commit messages written; harness commit pending.
+
+## rt-m2-internal-nesting-guard — source and bounded scope
+
+Worker source `/home/user/work/wt/rt-m2-internal-nesting-guard`, branch `tl/rt-m2-internal-nesting-guard`, base `81b6665` (`tl/rt-m2-composition-validation-port`). Predecessor `workers/rt-m2-composition-validation-port/notes/report.md` read: actual acceptance persists internal `occurrences: []`; original main refuses. Work is confined to `_validate_closure` plus small focused tests, retaining the original Shot-file RED assertion unchanged. Structural internal-root/authored-clip guard only; opaque params/provenance stay open and byte-exact. This preserves the host structural boundary on held M2; it is not evidence of an M1 native-path exploit or data loss. Bounded validation nodes/neighbors and central actual nine restore/input controls planned; no full suite. All M2 merges remain HELD until PLAN M1 record.
+
+rt-m2-internal-nesting-guard result: six-line `_validate_closure` guard plus one focused test file only; original Shot file byte-identical. Original four validation nodes +17 new structural/opaque controls **21 PASS/2.62s**; whole acceptance/validation/raw-payload/port files **171 PASS/1 integration deselected/13.62s**. Central `rt-m2-internal-nesting-guard-occupancy-integration-1020010610-29298`: **19 PASS/6.62s**, all nine actual restore +ten input controls, snapshot tree `84e1f44d3b348a421fd267f5e54f8b9bd17dd035`, actual Agent `f6fbe741a256e2756a1d686350f8a38e37c015ee`. Root/authored-clip graph fields refuse 422 invalid_closure with nested reason and zero SQL/CAS/staging writes; opaque params/provenance roundtrip byte-exact after restart/retry. Original main recursive blacklist not restored. No other product/schema/DTO/endpoint/projection/retention changes, full run, git mutation, or merge request. The predecessor's five retired-protocol failures remain unchanged/unqualified and are listed explicitly in both reports. HOST structural preservation only, no M1 native-path exploit/data-loss claim. Reports and both commit messages ready at `workers/rt-m2-internal-nesting-guard/{report.md,notes/report.md,commit-msg,commit-msg.txt}`. Manager review next; all M2 merges HELD until PLAN M1 record. Bounded proof complete; stopping.

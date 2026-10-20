@@ -28,12 +28,14 @@ and `until` entries. Each entry has exactly this shape (optional defaults omitte
 
 `source`, `document`, and nonempty ordered unique `word_ids` are required.
 `document` is the existing exact transcript DocumentPin, not a new DTO. The
-transcript content must be `astrid.media.transcript.v1`; IDs use main's existing
+transcript content must be `media.transcript/v1`; IDs use main's existing
 `word:<64 hex>(:<positive collision suffix>)?` format. A phrase names every
 consecutive word of one segment. `edge` is optional `start|end` (default start);
 `offset_s` is an optional finite JSON number (default zero); `offset_frames` is an
 optional integer (default zero). Seconds are read as decimal rationals and frame
-offsets use the exact rational canvas fps. No extra type/version wrapper is needed:
+offsets use the exact rational canvas fps. The spike lowers seconds through
+main Moment grammar and refuses values beyond its six-decimal precision; it
+preserves all supported digits instead of using the lossy human formatter. No extra type/version wrapper is needed:
 the namespaced key defines the type, the pinned transcript defines the ID schema.
 No unknown fields inside a typed entry; unrelated namespaced data is preserved.
 
@@ -74,9 +76,9 @@ canonical bundle and authorized retained VerifiedDocuments. It lowers each entry
 into existing WordBinding values, resolving the owner through current placements.
 It constructs a private Moment spelling from the exact selected IDs plus typed
 edge/offsets, never from the human echo. The existing kernel checks identity,
-scoped exact pin, media, consecutive IDs, source maps and windows. Its phrase
-validation is bounded to those IDs; it cannot search the transcript/film for a
-replacement. The adapter returns the unchanged authored bundle and derived timing.
+scoped exact pin, media, consecutive IDs, source maps and windows. A small pure evaluator change resolves the bound edge directly, without any
+text search; phrase spelling is checked against those exact IDs only. It cannot
+search the transcript/film for a replacement. The adapter returns the unchanged authored bundle and derived timing.
 A raw JSON canonical bundle plus retained inputs suffices, without accepted history.
 
 This adapter is defined and tested before test-local operation registration.
@@ -118,8 +120,8 @@ and provenance checks. No full history binding fold is needed to define a film.
 recipe; `test_word_binding_recipe.py` drives actual Runtime acceptance/rebase,
 restart, guarded inverse/redo, native revision restore, source moves/reorder,
 reused-CAS clips, rational fps, windows, clears and invalid IDs/pins/sources.
-The original same-revision counterexample remains as strict expected failure with
-its pre-fix assertions intact; its positive restore requirement now passes.
+The original same-revision collision assertions remain as strict expected failure
+(the obsolete history-fold assertion is retired with the fold); its positive restore requirement now passes.
 The report records exact executed tests and remaining unverified boundaries.
 No new production operation, port, restore argument, history semantics, general
 feature, producer carrier or compiler activation is introduced.
