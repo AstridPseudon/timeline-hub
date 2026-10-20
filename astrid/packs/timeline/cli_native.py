@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 
-
 def configure_track_label(parser):
     from astrid.packs.timeline.cli import (
         _add_idempotency_key,

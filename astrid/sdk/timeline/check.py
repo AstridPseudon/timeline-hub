@@ -191,6 +191,19 @@ class _CheckMixin:
                        "a declared fade/dip (not a gap)")
         return out
 
+    def _scene_problems(self, spans: list) -> list[str]:
+        """Advisory scene findings, retaining cut addresses and deliberate-hold classification."""
+        sustained, incidental = self.empty_cuts(spans)
+        out = [f"picture {line}" for line in self.picture_gaps(spans)]
+        out += sustained + incidental + self.dips(spans)
+        for span in spans:
+            if span.cls not in {"UNKNOWN", "UNAVAILABLE"} and span.content != "UNKNOWN":
+                continue
+            kind = span.cls if span.cls in {"UNKNOWN", "UNAVAILABLE"} else "CONTENT UNKNOWN"
+            out.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
+                       + (f": {', '.join(span.findings)}" if span.findings else ""))
+        return out
+
     def _length_problems(self) -> list[str]:
         """Visible clips that run past the end of their shot's placement: the render stops at the shot's end, so
         they would be cut off. Audio is exempt (a music bed runs out with the film). Blocking."""
@@ -554,16 +567,14 @@ class _CheckMixin:
         blocking += [f"type    {line}" for line in self._type_mismatches()]
         blocking += [f"beats   {line}" for line in self._stale_beats()]
         spans = self._on_screen()  # one pass over the film for the three readers below
-        blocking += [f"picture {line}" for line in self.picture_gaps(spans)]
-        empty_blocking, empty_info = self.empty_cuts(spans)
-        blocking += empty_blocking
+        problems += self._scene_problems(spans)
         blocking += [f"length  {line}" for line in self._length_problems()]
         sprite_blocking, sprite_notes = self._sprite_problems()
         blocking += sprite_blocking
         if blocking:
             valid = False
         problems += [f"why     {line}" for line in self._stale_whys()]
-        problems += empty_info + self.dips(spans) + sprite_notes
+        problems += sprite_notes
         problems += [f"text    {line}" for line in self._text_overflow()]
         from astrid.sdk.timeline.look import look_unrendered
 
