@@ -57,9 +57,7 @@ _TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
 # Pairing is owned by the Runtime lifecycle.  This deliberately does not tell
 # a caller to check out a historical tree or kill a process by PID.
 RUNTIME_PAIRING_FIX = (
-    "use the owner-managed Astrid Runtime lifecycle (`astrid-runtime down --profile astrid`, "
-    "then `astrid-runtime up --profile astrid`) against the installed workspace contract; "
-    "do not switch checkouts or kill a PID"
+    "run the Astrid install line again to restore the installed workspace contract"
 )
 
 
@@ -70,7 +68,7 @@ def _protocol_error(field: str, message: str, *, actual_digest: str | None = Non
         "field": field,
         "expected_schema_digest": SCHEMA_DIGEST,
         "expected_component_manifest": COMPONENT_MANIFEST_SHA256,
-        "next_action": "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`",
+        "next_action": "run the Astrid install line again",
     }
     if actual_digest is not None:
         details["actual_schema_digest"] = actual_digest
@@ -91,7 +89,7 @@ def _identity_error(field: str, message: str) -> Any:
         message,
         {
             "field": field,
-            "next_action": "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`",
+            "next_action": "run the Astrid install line again",
         },
     )
 
@@ -239,13 +237,13 @@ class AstridClient:
 
         if protocol_version != PROTOCOL:
             raise ServiceUnavailableError(
-                "unsupported runtime protocol; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "unsupported runtime protocol; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
         if not all(isinstance(value, str) and value.strip() for value in (endpoint, realm_id, actor_id, client_name, client_version)) or not isinstance(credential, (str, Path)) or (isinstance(credential, str) and not credential.strip()):
             raise ServiceUnavailableError(
-                "runtime realm, actor, and client identity are required; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "runtime realm, actor, and client identity are required; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
 
         def unavailable(exc: Exception, *, operation: str | None = None) -> ServiceUnavailableError:
@@ -273,8 +271,8 @@ class AstridClient:
             if operation is not None:
                 details["operation"] = operation
             message = (
-                f"runtime request failed ({reason}: {original}); reconfigure the Astrid runtime "
-                "with `astrid-runtime up --profile astrid`"
+                f"runtime request failed ({reason}: {original}); "
+                "run the Astrid install line again"
             )
             if reason == "protocol_error":
                 details.setdefault("expected_schema_digest", SCHEMA_DIGEST)
@@ -291,10 +289,10 @@ class AstridClient:
                 )
             elif reason == "identity_mismatch":
                 message = (
-                    f"runtime rejected the explicit client context ({original}); reconfigure the Astrid "
-                    "runtime with `astrid-runtime up --profile astrid`"
+                    f"runtime rejected the explicit client context ({original}); "
+                    "run the Astrid install line again"
                 )
-            details["next_action"] = "astrid-runtime up --profile astrid"
+            details["next_action"] = "run the Astrid install line again"
             return ServiceUnavailableError(
                 message,
                 details=details,
@@ -416,8 +414,8 @@ class AstridClient:
             credential_value = Path(str(credential_file)) if credential_file else ""
         if not credential_value:
             raise ServiceUnavailableError(
-                "runtime credential is required; run `astrid-runtime up --profile astrid`",
-                details={"next_action": "astrid-runtime up --profile astrid"},
+                "runtime credential is required; run the Astrid install line again",
+                details={"next_action": "run the Astrid install line again"},
             )
         return cls.open(
             endpoint=str(result.get("endpoint", "")),
@@ -452,7 +450,7 @@ class AstridClient:
         from astrid.sdk.exceptions import ServiceUnavailableError
         from astrid.sdk.storage_root import resolve_runtime_data_root
 
-        next_action = "astrid-runtime up --profile astrid"
+        next_action = "run the Astrid install line again"
 
         def unavailable(message: str, *, reason: str = "runtime_unavailable") -> ServiceUnavailableError:
             return ServiceUnavailableError(
@@ -582,7 +580,7 @@ class AstridClient:
             raise
         except (RuntimeCLIError, OSError, ValueError, json.JSONDecodeError) as exc:
             raise unavailable(
-                "the selected Runtime is unavailable; run `astrid-runtime up --profile astrid`",
+                "the selected Runtime is unavailable; run the Astrid install line again",
                 reason=getattr(exc, "code", "runtime_unavailable"),
             ) from exc
 
@@ -702,9 +700,9 @@ class AstridClient:
             return self._remote.health()
         except WorkspaceClientError as exc:
             raise ServiceUnavailableError(
-                "runtime unavailable; run `astrid-runtime up --profile astrid`",
+                "runtime unavailable; run the Astrid install line again",
                 details={
-                    "next_action": "astrid-runtime up --profile astrid",
+                    "next_action": "run the Astrid install line again",
                     "reason": exc.code,
                 },
             ) from exc

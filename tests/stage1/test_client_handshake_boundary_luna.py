@@ -107,7 +107,7 @@ def test_open_rejects_tampered_health(monkeypatch: pytest.MonkeyPatch, response:
             protocol_version=PROTOCOL,
         )
     assert error.value.details["reason"] in {"protocol_error", "identity_mismatch"}
-    assert error.value.details["next_action"] == "astrid-runtime up --profile astrid"
+    assert error.value.details["next_action"] == "run the Astrid install line again"
 
 
 def _service(**overrides: object) -> dict[str, object]:

@@ -34,7 +34,7 @@ __all__ = [
 
 _DOCUMENT_CONTENT_UNSET = object()
 
-RECONFIGURE_ACTION = "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`"
+RECONFIGURE_ACTION = "run the Astrid install line again"
 
 
 def _reconfigure(field: str, message: str) -> "WorkspaceClientError":

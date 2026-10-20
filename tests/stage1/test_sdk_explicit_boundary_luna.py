@@ -22,7 +22,7 @@ def test_open_requires_explicit_context_and_never_bootstraps(monkeypatch):
         "astrid.sdk.autobootstrap.ensure_runtime",
         lambda: pytest.fail("ordinary SDK open invoked the launcher"),
     )
-    with pytest.raises(Exception, match="astrid-runtime up --profile astrid"):
+    with pytest.raises(Exception, match="run the Astrid install line again"):
         AstridClient.open()
 
 

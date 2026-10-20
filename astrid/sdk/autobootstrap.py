@@ -18,12 +18,8 @@ from typing import Any, Iterator, Mapping
 from runtime_protocol import platform
 
 PROFILE = "astrid"
-RECONFIGURE_ACTION = "run `astrid-runtime up --profile astrid`"
-INSTALL_RUNTIME_ACTION = (
-    "python3 -m pip install 'astrid-runtime @ "
-    "git+https://github.com/banodoco/astrid-runtime.git@"
-    "329c9c591d9c0f74026d599ee00c14c165cb3e53'"
-)
+RECONFIGURE_ACTION = "run the Astrid install line again"
+INSTALL_RUNTIME_ACTION = "run the Astrid install line again"
 
 
 class AutoBootstrapError(RuntimeError):
