@@ -1,0 +1,12 @@
+{
+  "name": "astrid-workspace",
+  "private": true,
+  "description": "Workspace marker for the Astrid repository. Not a real npm package.",
+  "type": "module",
+  "_private_packages": {
+    "@banodoco/timeline-schema": {
+      "description": "Optional private package providing the Zod-schema-validated timeline config shape.",
+      "install_note": "Install from the sibling banodoco-workspace repository: cd <path-to-banodoco-workspace>/packages/timeline-schema && npm install && npm run build, then `npm link` or copy into node_modules/@banodoco/timeline-schema."
+    }
+  }
+}

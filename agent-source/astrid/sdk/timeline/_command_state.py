@@ -1,0 +1,440 @@
+"""Canonical addresses and tagged authored state for the command recorder."""
+from __future__ import annotations
+
+import copy
+import json
+import re
+
+from ._common import TimelineEditError
+
+ABSENT = {"state": "absent"}
+
+
+class CommandError(TimelineEditError):
+    def __init__(self, message, *, kind="invalid_edit_command", ref="parent", path=(),
+                 base=None, theirs=None, ours=None):
+        super().__init__(message)
+        self.kind, self.ref, self.path = kind, ref, list(path)
+        self.base = copy.deepcopy(base or ABSENT)
+        self.theirs = copy.deepcopy(theirs or ABSENT)
+        self.ours = copy.deepcopy(ours or ABSENT)
+
+    def to_json(self):
+        return {"kind": self.kind, "ref": self.ref, "path": self.path,
+                "base": self.base, "theirs": self.theirs, "ours": self.ours, "choices": []}
+
+
+def present(value):
+    return {"state": "present", "value": copy.deepcopy(value)}
+
+
+def equal(a, b):
+    """JSON equality, with numeric equivalence but no bool/number coercion."""
+    if isinstance(a, bool) or isinstance(b, bool):
+        return type(a) is type(b) and a == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return a == b
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(equal(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(equal(x, y) for x, y in zip(a, b))
+    return a == b
+
+
+def tokens(path):
+    """Parse the legacy property spelling once; quoted punctuation is data."""
+    if not isinstance(path, str):
+        raise CommandError("property path must be a string")
+    result, pos = [], 0
+    while pos < len(path):
+        if path[pos] == '[':
+            if path[pos + 1:pos + 2] == '"':
+                try:
+                    value, end = json.JSONDecoder().raw_decode(path, pos + 1)
+                except ValueError as exc:
+                    raise CommandError("invalid quoted property token") from exc
+                if end >= len(path) or path[end] != ']':
+                    raise CommandError("missing property bracket")
+                pos = end + 1
+            else:
+                match = re.match(r'\[(0|[1-9][0-9]*)\]', path[pos:])
+                if not match:
+                    raise CommandError("invalid numeric property token")
+                value, pos = match[1], pos + match.end()
+        else:
+            match = re.match(r'[A-Za-z_][\w-]*', path[pos:])
+            if not match:
+                raise CommandError("invalid property token")
+            value, pos = match[0], pos + match.end()
+        result.append(value)
+        if pos < len(path) and path[pos] == '.':
+            pos += 1
+            if pos == len(path) or path[pos] == '[':
+                raise CommandError("invalid property separator")
+        elif pos < len(path) and path[pos] != '[':
+            raise CommandError("invalid property separator")
+    return tuple(result)
+
+
+def spelling(path):
+    return ''.join((('.' if i else '') + token if re.fullmatch(r'[A-Za-z_][\w-]*', token)
+                    else '[' + json.dumps(token, ensure_ascii=False) + ']')
+                   for i, token in enumerate(path))
+
+
+def address(key, resolved):
+    # The entity delimiter is outside any quoted JSON property atom.
+    quoted, escaped, split = False, False, []
+    for i, char in enumerate(key):
+        if escaped:
+            escaped = False
+        elif quoted and char == '\\':
+            escaped = True
+        elif char == '"':
+            quoted = not quoted
+        elif not quoted and key[i:i + 2] == '::':
+            split.append(i)
+    if len(split) > 1:
+        raise CommandError("ambiguous entity/property delimiter")
+    if split:
+        i = split[0]
+        return key[:i], tokens(key[i + 2:])
+    if len(resolved) != 1:
+        raise CommandError("bare property guard needs exactly one target")
+    return resolved[0], tokens(key)
+
+
+def logical_address(ref, path):
+    path = tuple(path)
+    if '/asset:' in ref:
+        owner, identity = ref.rsplit('/asset:', 1)
+        return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets', identity, *path)
+    if '/collection:' in ref:
+        owner, kind = ref.rsplit('/collection:', 1)
+        from ._collections import container
+        root, prefix = container(owner, kind)
+        return root, (*prefix, ('shape',), *path)
+    if '/clip:' in ref or '/track:' in ref:
+        owner, entity = ref.rsplit('/', 1)
+        kind, identity = entity.split(':', 1)
+        prefix = ('config' if owner == 'parent' else 'source', kind + 's')
+        return owner, (*prefix, ('id', identity), *path)
+    if ref.endswith('/source'):
+        owner = ref.removesuffix('/source')
+        return owner, ('config' if owner == 'parent' else 'source', *path)
+    if ref.endswith('/shot') and path[:1] == ('shot_id',):
+        return ref.removesuffix('/shot'), path
+    if ref == 'parent' and path[:1] == ('clips',):
+        path = ('config', *path)
+    return ref, path
+
+
+def overlaps(a, b):
+    a, b = logical_address(*a), logical_address(*b)
+    return (a == ("timeline", ()) or b == ("timeline", ())
+            or (a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]))
+
+
+def one(rows, key, identity, *, optional=False):
+    if not isinstance(rows, list):
+        raise CommandError("entity collection must be an array")
+    matches = [row for row in rows if isinstance(row, dict) and row.get(key) == identity]
+    if len(matches) != 1:
+        if optional and not matches:
+            return None
+        raise CommandError(f"missing or ambiguous identity {identity!r}", kind="identity_conflict")
+    return matches[0]
+
+
+def root_identity(ref):
+    match = re.fullmatch(r'(shot|occurrence):((?!.*::)[^/]+)', ref) if isinstance(ref, str) else None
+    return match.groups() if match and match[2].strip() else None
+
+
+class State:
+    def __init__(self, bundle, *, closures=None):
+        self.bundle = bundle
+        self.closures = closures or {}
+        parent = bundle['parent']
+        config = parent.get('config')
+        primary = parent.get('clips')
+        mirror = config.get('clips') if isinstance(config, dict) else None
+        self.parent_clip_path = ('clips',) if isinstance(primary, list) and (
+            primary or not isinstance(mirror, list) or not mirror) else ('config', 'clips')
+
+    def occurrence(self, owner):
+        return one(self.bundle["placements"], "occurrence_id", owner.removeprefix("occurrence:"))
+
+    def config(self, owner):
+        if owner == "parent":
+            return self.bundle["parent"].get("config", {})
+        if not owner.startswith('occurrence:') or '/' in owner:
+            raise CommandError('collection requires an exact owner', kind='identity_conflict', ref=owner)
+        row = self.occurrence(owner)
+        return self.bundle["shots"][row["shot_id"]]["internal_timeline"]
+
+    def collection(self, owner, kind):
+        config = self.config(owner)
+        if owner == "parent" and kind == "clip":
+            parent = self.bundle["parent"]
+            return (parent.get('clips', []) if self.parent_clip_path == ('clips',)
+                    else config.get('clips', []))
+        return config.get(kind + "s", [])
+
+    def entity(self, ref, *, optional=False):
+        if optional and ref.startswith('occurrence:') and '/' in ref:
+            owner = ref.split('/', 1)[0]
+            if self.entity(owner, optional=True) is None:
+                return None
+        if '/asset:' in ref:
+            owner, identity = ref.rsplit('/asset:', 1)
+            assets = self.config(owner).get('registry', {}).get('assets', {})
+            if not isinstance(assets, dict):
+                raise CommandError('asset collection must be an object', ref=ref)
+            if identity not in assets and not optional:
+                raise CommandError('missing asset identity', kind='identity_conflict', ref=ref)
+            if identity in assets and not isinstance(assets[identity], dict):
+                raise CommandError('asset binding must be an object', ref=ref)
+            return assets.get(identity)
+        if '/clip:' in ref or '/track:' in ref:
+            owner, entity = ref.rsplit('/', 1)
+            kind, identity = entity.split(':', 1)
+            return one(self.collection(owner, kind), "id", identity, optional=optional)
+        if ref == "parent":
+            return self.bundle["parent"]
+        root = root_identity(ref)
+        if root is not None:
+            kind, identity = root
+            if kind == 'occurrence':
+                return one(self.bundle['placements'], 'occurrence_id', identity, optional=optional)
+            shot = self.bundle['shots'].get(identity)
+            if shot is None:
+                if optional:
+                    return None
+                raise CommandError('missing shot root', kind='identity_conflict', ref=ref)
+            return {key: copy.deepcopy(shot[key]) for key in ('payload', 'internal_timeline')}
+        if ref.endswith('/registry'):
+            owner = ref.removesuffix('/registry')
+            if owner == "parent":
+                from astrid.core.timeline.parent_registry import effective_parent_registry
+                return effective_parent_registry(self.bundle["parent"])
+            return self.config(owner).get("registry", {})
+        if ref.endswith('/source'):
+            return self.config(ref.removesuffix('/source'))
+        if ref.endswith('/shot'):
+            owner = ref.removesuffix('/shot')
+            row = self.occurrence(owner)
+            if (row['shot_id'] not in self.bundle['source_mapping']['shots']
+                    and self.bundle['shots'][row['shot_id']].get('_created') is True):
+                return {'shot_id': row['shot_id']}
+            source = self.bundle['source_mapping']['shots'].get(row['shot_id'])
+            if source is None:
+                raise CommandError('shot identity requires its source or recorded creation',
+                                   kind='history_unavailable', ref=ref)
+            source = source['shot_id']
+            from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+            identity = _authoring_shot_id(
+                self.bundle['project_id'], self.bundle['timeline_id'], row['occurrence_id'],
+                source, shared=True)
+            if row['shot_id'] not in (source, identity):
+                raise CommandError('occurrence authoring owner changed', kind='identity_conflict',
+                                   ref=owner, path=['shot_id'])
+            return {"shot_id": source}
+        raise CommandError(f"unsupported entity reference {ref!r}")
+
+    def validate_root(self, ref, value):
+        root = root_identity(ref)
+        if root is None or not isinstance(value, dict):
+            raise CommandError('invalid authored root', ref=ref)
+        kind, identity = root
+        if kind == 'shot':
+            if (set(value) != {'payload', 'internal_timeline'}
+                    or not all(isinstance(child, dict) for child in value.values())):
+                raise CommandError('shot root requires payload and internal_timeline objects', ref=ref)
+        elif (value.get('occurrence_id') != identity
+              or not isinstance(value.get('shot_id'), str)
+              or root_identity('shot:' + value['shot_id']) is None
+              or any(key in value for key in ('revision_id', 'shot_revision_id'))):
+            raise CommandError('invalid authored occurrence identity or revision', ref=ref)
+        elif value['shot_id'] not in self.bundle['shots']:
+            raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
+
+    def get(self, ref, path):
+        if '/collection:' in ref:
+            from ._collections import shape
+            owner, kind = ref.rsplit('/collection:', 1)
+            if path:
+                raise CommandError('collection shape requires the whole guard', ref=ref)
+            if owner != 'parent' and self.entity(owner, optional=True) is None:
+                return copy.deepcopy(ABSENT)
+            return present(shape(self, owner, kind))
+        if ref == "timeline":
+            if path:
+                raise CommandError("timeline replacement requires the whole closure")
+            from .commit import document_from_bundle
+            image = document_from_bundle(self.bundle)['parent_revision']
+            return present({key: image[key] for key in ('revision_id', 'content_digest')})
+        value = self.entity(ref, optional=True)
+        if value is None:
+            return copy.deepcopy(ABSENT)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
+            # Authored content in published identities, never the materialized alias.
+            from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+            owner = ref.removesuffix('/shot')
+            shot = self.occurrence(owner)['shot_id']
+            mapping = self.bundle['source_mapping']['shots'].get(shot, {}).get('item_id_map', {})
+            value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
+                                                           {v: k for k, v in mapping.items()})}
+        for key in path:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            elif isinstance(value, list) and key.isdecimal() and int(key) < len(value):
+                value = value[int(key)]
+            else:
+                return copy.deepcopy(ABSENT)
+        return present(value)
+
+    def matches(self, ref, path, expected):
+        actual = self.get(ref, path)
+        if equal(actual, expected):
+            return True
+        if (root_identity(ref) is not None and ref.startswith('occurrence:')
+                and expected['state'] == actual['state'] == 'present'):
+            if not path and isinstance(expected['value'], dict):
+                before = copy.deepcopy(expected['value'])
+                if not self.matches(ref, ['shot_id'], present(before.get('shot_id'))):
+                    return False
+                before['shot_id'] = actual['value']['shot_id']
+                return equal(before, actual['value'])
+            if list(path) == ['shot_id']:
+                from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+                source = self.entity(ref + '/shot')['shot_id']
+                materialized = _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+                                                ref.removeprefix('occurrence:'), source, shared=True)
+                return expected['value'] in (source, materialized) and actual['value'] in (source, materialized)
+        if (root_identity(ref) is not None and ref.startswith('shot:') and not path
+                and expected['state'] == actual['state'] == 'present'):
+            # The verified source link is compiler output, not authored root data.
+            source = self.bundle['source_mapping']['shots'].get(ref[5:], {})
+            link = actual['value']['payload'].get('internal_timeline_revision_id')
+            if link is not None and link == source.get('internal_timeline_revision_id'):
+                before, after = copy.deepcopy(expected['value']), copy.deepcopy(actual['value'])
+                before['payload'].pop('internal_timeline_revision_id', None)
+                after['payload'].pop('internal_timeline_revision_id', None)
+                return equal(before, after)
+        if (ref.endswith('/shot') and list(path) == ['shot_id']
+                and expected['state'] == actual['state'] == 'present'
+                and isinstance(expected.get('value'), str)):
+            from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+            # The only admitted source change is this occurrence's exact main
+            # materialization of the original source, never a prefix heuristic.
+            occurrence = self.occurrence(ref.removesuffix('/shot'))
+            def materialized(source):
+                return _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+                                          occurrence['occurrence_id'], source, shared=True)
+            return (actual['value'] == materialized(expected['value'])
+                    or expected['value'] == occurrence['shot_id'] == materialized(actual['value']))
+        return False
+
+    def set(self, ref, path, state):
+        if '/asset:' in ref and not path:
+            owner, identity = ref.rsplit('/asset:', 1)
+            assets = self.config(owner)['registry']['assets']
+            if state['state'] == 'absent':
+                assets.pop(identity, None)
+            elif isinstance(state['value'], dict):
+                assets[identity] = copy.deepcopy(state['value'])
+            else:
+                raise CommandError('asset binding must be an object', ref=ref)
+            return
+        if ref == "timeline":
+            pin = state.get('value', {})
+            target = self.closures.get(pin.get('revision_id'))
+            if path or state.get('state') != 'present' or target is None:
+                raise CommandError("timeline replacement requires a verified historical closure",
+                                   kind='history_unavailable', ref=ref)
+            image = target['source_mapping']['_runtime_document']['parent_revision']
+            if pin != {key: image[key] for key in ('revision_id', 'content_digest')}:
+                raise CommandError("historical closure pin mismatch", ref=ref)
+            replacement = copy.deepcopy(target)
+            self.bundle.clear()
+            self.bundle.update(replacement)
+            return
+        root = root_identity(ref)
+        if root is not None and (not path or root[0] == 'shot'):
+            kind, identity = root
+            if path:
+                raise CommandError('shot writes require the complete authored aggregate', ref=ref, path=path)
+            if state['state'] == 'present':
+                self.validate_root(ref, state['value'])
+            if kind == 'occurrence':
+                existing = self.entity(ref, optional=True)
+                rows = self.bundle['placements']
+                if existing is not None:
+                    index = rows.index(existing)
+                    if state['state'] == 'absent':
+                        rows.pop(index)
+                    else:
+                        rows[index] = copy.deepcopy(state['value'])
+                elif state['state'] == 'present':
+                    rows.append(copy.deepcopy(state['value']))
+            elif state['state'] == 'absent':
+                if any(row['shot_id'] == identity for row in self.bundle['placements']):
+                    raise CommandError('shot has surviving occurrences', kind='surviving_dependents', ref=ref)
+                self.bundle['shots'].pop(identity, None)
+            else:
+                shot = self.bundle['shots'].get(identity)
+                if shot is None:
+                    # Reopening the exact input recovers compiler baselines for
+                    # an existing root restored after removal, never latest data.
+                    source = self.bundle['source_mapping'].get('_runtime_document')
+                    if identity in self.bundle['source_mapping']['shots']:
+                        if source is None:
+                            raise CommandError('restoring a source shot requires its exact input closure',
+                                               kind='history_unavailable', ref=ref)
+                        from .commit import bundle_from_document
+                        shot = bundle_from_document(source)['shots'].get(identity)
+                    if shot is None:
+                        shot = {'shot_id': identity}
+                self.bundle['shots'][identity] = {**shot, **copy.deepcopy(state['value'])}
+            return
+        if root is None and ref.startswith(('shot:', 'occurrence:')) and '/' not in ref:
+            raise CommandError('invalid authored root reference', ref=ref)
+        if not path:
+            owner, entity = ref.rsplit('/', 1)
+            kind, identity = entity.split(':', 1)
+            rows = self.collection(owner, kind)
+            existing = self.entity(ref, optional=True)
+            if state['state'] == 'present' and (not isinstance(state['value'], dict)
+                                               or state['value'].get('id') != identity):
+                raise CommandError('row identity differs from its scoped reference',
+                                   kind='identity_conflict', ref=ref)
+            if existing is not None:
+                index = rows.index(existing)
+                if state["state"] == "absent":
+                    rows.pop(index)
+                else:
+                    rows[index] = copy.deepcopy(state["value"])
+            elif state["state"] == "present":
+                rows.append(copy.deepcopy(state["value"]))
+            return
+        value = self.entity(ref)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',) and len(path) > 1:
+            # Only the occurrence's own shot root; display IDs never select it.
+            shot = self.occurrence(ref.removesuffix('/shot'))['shot_id']
+            value, path = self.bundle['shots'][shot]['payload'], tuple(path[1:])
+        for key in path[:-1]:
+            if (state['state'] == 'absent' and isinstance(value, dict)
+                    and (key not in value or value[key] is None)):
+                return
+            if not isinstance(value, dict) or key not in value or not isinstance(value[key], dict):
+                raise CommandError("write requires recorded container creation", ref=ref, path=path)
+            value = value[key]
+        if not isinstance(value, dict):
+            raise CommandError("property parent must be an object", ref=ref, path=path)
+        if state["state"] == "absent":
+            value.pop(path[-1], None)
+        else:
+            value[path[-1]] = copy.deepcopy(state["value"])

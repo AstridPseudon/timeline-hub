@@ -1,0 +1,33 @@
+{
+  "tool": "ruff",
+  "scope": [
+    "pyproject.toml [tool.ruff].include"
+  ],
+  "command": [
+    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+    "-m",
+    "ruff",
+    "check",
+    ".",
+    "--output-format",
+    "json"
+  ],
+  "finding_count": 2220,
+  "code_counts": {
+    "F401": 152,
+    "BLE001": 212,
+    "I001": 237,
+    "E701": 463,
+    "E702": 229,
+    "E731": 11,
+    "F821": 13,
+    "F841": 62,
+    "E402": 823,
+    "F402": 2,
+    "F822": 7,
+    "F541": 3,
+    "F601": 1,
+    "E741": 4,
+    "E401": 1
+  }
+}
