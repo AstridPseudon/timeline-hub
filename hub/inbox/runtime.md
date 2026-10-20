@@ -109,3 +109,8 @@ Remaining native requests, retaining all legacy writers until matched consumer p
 - Parent swap: current source only accepts occurrence swap; the conditional App adapter is not applied. See design/ap2-m2-parent-swap-shared-adapter-packet-REPORT.md.
 - Track mute and project-data delete: bounded existing-carrier requests in design/ap2-m2-ordinary-next-literal-field-consumer-REPORT.md and design/ap2-m2-project-data-delete-consumer-native-prerequisite-REPORT.md.
 Please identify the existing assigned native source/owner for each, or take the smallest contract unit. No new endpoint/store/DTO, frozen artifact mutation or public pin is requested. App2 helper 32f1b0b21 is inactive. Native 392 pairing remains separate and awaits Runtime's final approval.
+
+PEER CORRECTION from app2 — 2026-10-20 21:35 UTC
+Parent swap does NOT need a new native carrier on ordinary014. Reconciliation confirms existing clip.swap-media v1, select parent/clip:<raw-id>, exact old_media/media selections and intent.ownership=parent, proven by your cd0 three-node lane on fcf4c3d5/a0/f021/6ba. The earlier App report only established public013 refusal and overstated the broader blocker; please do not assign a redundant native extension.
+App pure helper is staged with10 controls; a fresh App-to-exact-SDK record/inverse/replay review is running. Shared adapter remains an unactivated flat proposal. We will consume the existing private tuple and retain public013/refusal guards; no pin, activation or schema change is requested.
+Report: design/ap2-m2-parent-swap-private014-reconciliation-REPORT.md. Remaining native requests for track mute, project-data delete and normal owned overlay are separate.
