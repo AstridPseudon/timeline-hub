@@ -35,7 +35,7 @@ from .tools import binary, install_tools, source
 
 class Backend:
     def __init__(self, root: Path, log: Path, uv: Path, *, say=print):
-        self.root, self.log, self.uv = root, log, uv
+        self.root, self.log, self.uv, self.say = root, log, uv, say
         self.service = Service(root, log, self.run, say=say)
 
     def run(self, argv, *, extra_env=None, cwd=None, timeout=1800, clean_bun_env=False) -> str:
@@ -327,6 +327,9 @@ class Backend:
             if failed.exists() and not realm_root.exists():
                 os.replace(failed, realm_root)
             raise
+        for failed_copy in sorted(path for path in realm_root.parent.glob(realm_root.name + ".failed-*")
+                                  if path.is_dir() and not path.is_symlink()):
+            self.say(f"The failed update's workspace copy is kept at {failed_copy}. You can delete it once Astrid works.")
         # Restore all support metadata, preserving unselected realms and extras.
         def copy_support(source: Path, target: Path) -> None:
             if source.is_dir():

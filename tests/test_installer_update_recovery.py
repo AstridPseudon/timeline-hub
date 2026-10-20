@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import re
 import signal
 import sqlite3
 import subprocess
@@ -86,6 +87,7 @@ class _Backend(Backend):
     def __init__(self, base, kill_at):
         self.base, self.root, self.kill_at = base, base / "program", kill_at
         self.log = base / "install.log"
+        self.say = print
 
     def existing(self, _data):
         return None
@@ -178,9 +180,15 @@ def _run(base, kill_at="", mode="update"):
 def _assert_retry(base, *, restore_expected):
     events = base / "events"
     before = events.read_text().splitlines() if events.exists() else []
-    for _ in range(3):
+    for attempt in range(3):
         result = _run(base)
         assert result.returncode == 0, result.stderr
+        if attempt == 0 and restore_expected:
+            match = re.search(r"The failed update's workspace copy is kept at (.+)\. You can delete it once Astrid works\.", result.stdout)
+            assert match, result.stdout
+            failed_copy = Path(match.group(1))
+            assert failed_copy.name.startswith("realm-1.failed-")
+            assert failed_copy.is_dir()
         transaction = read_json(base / "program" / "update-transaction.json")
         assert transaction["step"] == "complete"
         assert current(base / "program").root.name.startswith("new-")
@@ -351,7 +359,7 @@ def _installer(base, kill_at, mode):
     Path.unlink = unlink_and_kill
     backend = _Backend(base, kill_at)
     backend.restart_required = lambda: False
-    Installer(root, data, backend, say=lambda _line: None).run(mode, {})
+    Installer(root, data, backend, say=print).run(mode, {})
 
 
 if __name__ == "__main__":

@@ -161,8 +161,15 @@ def test_rollback_preserves_live_logs_even_in_an_older_snapshot(tmp_path, monkey
         return remove(path, *args, **kwargs)
 
     monkeypatch.setattr(shutil, "rmtree", remove_except_logs)
+    lines = []
+    backend.say = lines.append
     backend.restore(version, data, identity, backup)
-
+    failed_line = next(line for line in lines if "failed update's workspace copy" in line)
+    failed_copy = Path(failed_line.removeprefix("The failed update's workspace copy is kept at ").removesuffix(
+        ". You can delete it once Astrid works."
+    ))
+    assert failed_copy.is_dir()
+    assert (failed_copy / "realm.sqlite3").read_bytes() == b"failed migration"
     assert (realm / "realm.sqlite3").read_bytes() == b"selected database"
     assert (data / "logs/install.log").read_text() == "the update failed here\n"
     assert (data / "logs/runtime-service.log").read_text() == "live shutdown output\n"
@@ -303,12 +310,20 @@ def test_windows_failed_update_restores_private_support_and_can_retry(
 
     backend.start = Mock(side_effect=start)
     backend.verify = Mock()
+    lines = []
+    backend.say = lines.append
     installer = Installer(backend.root, data, backend, say=lambda _line: None)
 
     with pytest.raises(RuntimeError, match="^candidate upgrade failed$"):
         installer.run("update", {})
 
     assert current(backend.root) == old
+    failed_line = next(line for line in lines if "failed update's workspace copy" in line)
+    failed_copy = Path(failed_line.removeprefix("The failed update's workspace copy is kept at ").removesuffix(
+        ". You can delete it once Astrid works."
+    ))
+    assert failed_copy.is_dir()
+    assert (failed_copy / "realm.sqlite3").read_bytes() == b"failed migration"
     assert read_json(backend.root / "update-transaction.json")["step"] == "rolled_back"
     backend.start.assert_called_once_with(old, data)
     assert (realm / "realm.sqlite3").read_bytes() == b"selected database"
