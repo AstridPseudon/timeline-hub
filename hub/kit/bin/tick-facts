@@ -55,6 +55,8 @@ echo "== LOCAL DECISIONS (lines added to STATUS since; models check these agains
 for a in agent runtime app viewing app2; do f=$O/managers/$a/STATUS.md; [ $(stat -c %Y $f 2>/dev/null || echo 0) -ge $SINCE ] || continue
   grep -iE 'decided locally|lead decided' $f | cut -c1-220 | sed "s/^/  $a: /" | head -4; done
 
+echo "== STORAGE NEEDS (managers asking for central space; free it: reproducible artifacts, finished worktrees of moved homes after saving WIP patches)"
+for a in agent runtime app viewing app2; do grep -h "STORAGE NEED" $O/managers/$a/STATUS.md $H/hub/status/$a.md 2>/dev/null | head -2 | cut -c1-160 | sed "s/^/  $a: /"; done
 echo "== UNDELIVERED MESSAGES (should be empty)"
 ls $O/hub/inbox/*.md 2>/dev/null | sed 's/^/  UNDELIVERED: /'
 find $O/workers -maxdepth 3 -path '*hub/inbox*' -name '*.md' -newer $O/.last_tick 2>/dev/null | sed 's/^/  STRAY inbox file in a worker: /'

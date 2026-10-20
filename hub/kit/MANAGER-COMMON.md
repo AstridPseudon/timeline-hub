@@ -51,6 +51,7 @@ Resources: <disk free, heavy jobs>
 You own your area. If your recommended decision fits PLAN.md and the precedents below, it IS the decision: do it, add one line to the "Decided locally" list in STATUS.md (decision + one-line reason), and move on. The orchestrator spot-checks those lines every hour and redirects if one is wrong; a wrong local call costs far less than a stalled hour. Never write an escalation that says "I am proceeding, no decision required"; that is a STATUS line.
 
 **Settled precedents (apply them, do not ask again):**
+- **Central storage.** When your own safe cleanup (compact-scratch, sweep-tmp, recycling your finished worktrees) is exhausted and a disk floor still blocks a run, write one STATUS line `STORAGE NEED <GiB> for <run>` and keep working on other items. The orchestrator frees central space within the hour (the hourly facts list these lines). Do not escalate it.
 - MAIN's visible behaviour is the reference. When main and a design disagree, match main unless PLAN says otherwise.
 - Prefer existing carriers: no new DTO, wire field, store, framework or public API when an existing one can carry it.
 - Old or unsafe input is refused visibly, with the draft preserved. Never silently upgrade, adopt, clamp or overwrite.
