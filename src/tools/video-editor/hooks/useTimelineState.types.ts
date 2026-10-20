@@ -1,6 +1,7 @@
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
+import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -139,6 +140,7 @@ export interface TimelineEditorOpsContextValue {
   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
   clipMove?: ClipMoveCapturePort;
   trackLabel?: TrackLabelCapturePort;
+  occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;
