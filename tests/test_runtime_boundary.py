@@ -179,18 +179,25 @@ class _CustodyChild:
 
     def __init__(self):
         self.exited = False
+        self.returncode = None
 
     def poll(self):
-        return 0 if self.exited else None
+        self.returncode = 0 if self.exited else None
+        return self.returncode
 
     def wait(self, *, timeout):
         assert timeout > 0
         self.exited = True
-        return 0
+        self.returncode = 0
+        return self.returncode
 
 
 def _stub_owner_broker(monkeypatch, child, *, exit_during_signal=False):
     from astrid_runtime import runtime_boundary as boundary_module
+
+    # These assertions exercise the retained macOS custody-broker branch. The
+    # Linux boundary uses native process custody and would not call this fake.
+    monkeypatch.setattr(boundary_module.sys, "platform", "darwin")
 
     class Broker:
         error = None
@@ -255,6 +262,10 @@ def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monk
     from astrid_runtime import runtime_boundary as boundary_module
     child = _CustodyChild()
     facts = {}
+
+    # The broker and escrow assertions cover the macOS launch path; select it
+    # explicitly so this Linux test does not silently exercise native custody.
+    monkeypatch.setattr(boundary_module.sys, "platform", "darwin")
 
     class Broker:
         def __init__(self, **kwargs):
@@ -438,12 +449,17 @@ def test_detached_legacy_active_designation_is_refused_without_signal(tmp_path, 
 def test_retained_stop_owner_reclaims_release_before_term_kill_and_positive_wait(tmp_path, monkeypatch):
     import subprocess
     module, boundary, authority, actors, identities, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch, release=False)
+    # This fixture supplies the retained role-custody broker below, so select
+    # the broker-backed branch rather than Linux native process custody.
+    monkeypatch.setattr(module.sys, "platform", "darwin")
     events = []
     class Child:
         pid = 103
         exit_code = None
         _runtime_boundary_sole_reaper = True
-        def poll(self): return self.exit_code
+        @property
+        def returncode(self): return self.exit_code
+        def poll(self): return self.returncode
         def wait(self, timeout):
             events.append(("wait", self.exit_code))
             if self.exit_code is None: raise subprocess.TimeoutExpired("fake", timeout)
