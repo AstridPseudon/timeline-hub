@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "contract": "design/visual-compile-contract.md",
-  "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py:_project_clip (visible window clamped to the occurrence, lines 308-326)",
-  "fps": 30,
+  "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py:_project_clip (visible window clamped to the occurrence, lines 309-313)",
+  "fps_rational": [30, 1],
   "lane": "video",
   "base": {"graph": "tests/fixtures/timeline/shot_composition.json", "child": "alpha-video"},
   "closure": {
@@ -13,7 +13,11 @@
     ]
   },
   "vectors": [
-    {"id": "popup-occurrence-a-clamped-to-8s", "occurrence_id": "occ-1", "expect": {"start_frame": 0, "end_frame": 240}},
-    {"id": "popup-occurrence-b-clamped-to-10s-after-a", "occurrence_id": "occ-3", "expect": {"start_frame": 240, "end_frame": 540}}
+    {"id": "popup-occurrence-a-start-frame", "occurrence_id": "occ-1", "field": "start_frame", "expect": 0},
+    {"id": "popup-occurrence-a-end-frame", "occurrence_id": "occ-1", "field": "end_frame", "expect": 240},
+    {"id": "popup-occurrence-a-duration-frames", "occurrence_id": "occ-1", "field": "duration_frames", "expect": 240},
+    {"id": "popup-occurrence-b-start-frame", "occurrence_id": "occ-3", "field": "start_frame", "expect": 240},
+    {"id": "popup-occurrence-b-end-frame", "occurrence_id": "occ-3", "field": "end_frame", "expect": 540},
+    {"id": "popup-occurrence-b-duration-frames", "occurrence_id": "occ-3", "field": "duration_frames", "expect": 300}
   ]
 }

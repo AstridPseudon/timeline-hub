@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import re
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -69,7 +70,7 @@ def test_audio_vector(vector):
             meta = clip['app']['astrid_shot_composition']
             assert {name: meta[name] for name in want} == want
         elif want is None:
-            assert key not in clip
+            assert _lookup(clip, key) is None
         elif isinstance(want, bool):
             assert bool(_lookup(clip, key)) is want
         else:
@@ -95,17 +96,24 @@ def _lane_clips(projection):
     return [c for c in projection.config['clips'] if c['track'] == VISUAL['lane']]
 
 
+def _clock():
+    # main's rational clock is the [num, den] pair (filmstrip_cards.py:466); the frame helpers take a Real, so pass the Fraction.
+    return Fraction(*VISUAL['fps_rational'])
+
+
 @pytest.mark.parametrize('vector', _marked(VISUAL['vectors']))
 def test_visual_vector(vector):
-    fps = VISUAL['fps']
+    fps = _clock()
     projection = project_shot_composition(_closure_graph())
     clip = next(c for c in _lane_clips(projection) if c['shot_occurrence_id'] == vector['occurrence_id'])
-    assert clip_start_frame(clip, fps) == vector['expect']['start_frame']
-    assert clip_end_frame(clip, fps) == vector['expect']['end_frame']
+    start = clip_start_frame(clip, fps)
+    end = clip_end_frame(clip, fps)
+    rows = {'start_frame': start, 'end_frame': end, 'duration_frames': end - start}
+    assert rows[vector['field']] == vector['expect']
 
 
 def test_popup_closure_occurrences_are_half_open_on_the_shared_lane():
-    fps = VISUAL['fps']
+    fps = _clock()
     projection = project_shot_composition(_closure_graph())
     spans = sorted((clip_start_frame(c, fps), clip_end_frame(c, fps)) for c in _lane_clips(projection))
     assert len(spans) == len(VISUAL['closure']['occurrences'])
