@@ -21,6 +21,7 @@ import type {
 import { createExtensionContext } from '@/tools/video-editor/runtime/extensionContextFactory';
 import { validateTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
 import { createTimelineViewStore } from '@/tools/video-editor/lib/timeline-view-store.ts';
+import { classifyGenericPatch } from '@/tools/video-editor/commands/genericPatchCapture.ts';
 import {
   FOOTER_RENDER_ID,
   MARK_PHASE_COMMAND,
@@ -811,6 +812,42 @@ describe('buildAlignShotsPatch', () => {
       { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
       { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
     ]);
+  });
+
+  it('keeps cross-track move and hold members wholly on the legacy guarded shape', () => {
+    const snapshot = makeSnapshot({
+      clips: [{ id: 'clip-a', track: 'V1', at: 12, duration: 4 }],
+    });
+    const patch = buildAlignShotsPatch(snapshot, [
+      { clipId: 'clip-a', trackId: 'A1', time: 3, hold: 6 },
+    ], SCENE_PHASE_EXTENSION_ID);
+
+    expect(patch.operations).toEqual([
+      { op: 'clip.move', target: 'clip-a', payload: { track: 'A1', at: 3 } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
+    ]);
+    expect(classifyGenericPatch(patch)).toBe('unsupported');
+  });
+
+  it('classifies a mixed same/cross-track move and hold batch as wholly legacy', () => {
+    const snapshot = makeSnapshot({
+      clips: [
+        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
+        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+      ],
+    });
+    const patch = buildAlignShotsPatch(snapshot, [
+      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
+      { clipId: 'clip-b', trackId: 'A1', time: 9, hold: 2 },
+    ], SCENE_PHASE_EXTENSION_ID);
+
+    expect(patch.operations).toEqual([
+      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 3 } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
+      { op: 'clip.move', target: 'clip-b', payload: { track: 'A1', at: 9 } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2, mode: 'merge' } },
+    ]);
+    expect(classifyGenericPatch(patch)).toBe('unsupported');
   });
 
   it('refuses duplicate target alignments before a patch can be applied', () => {
