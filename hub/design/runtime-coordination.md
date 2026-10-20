@@ -1880,3 +1880,13 @@ Runtime `7f6dd892`.
 Evidence: Runtime targeted media-selection/commit-port/closure-invariant lane
 `59 passed in 31.49s`; detailed report is
 `design/runtime-same-alias-port-review.md`.
+
+## 2026-10-20T14:30Z — independent carrier compatibility review
+
+**APPROVE** exact Runtime repair `62b5f8ea1a177879be8ddabf045795b735924e1f` for composition review. Composition remains held from adoption/activation until its own manager path completes the paired review and native qualification.
+
+Exact source is Agent `3730d0bd51686a1692450359482205df64dcc839`, private schema SHA-256 `f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f`; public S2/a6f fixture remains distinct. Independent report: `design/runtime-carrier-compatibility-final-review.md`.
+
+Evidence: Runtime focused compatibility/artifact lane **169 passed**; public generation and artifact checks passed with public schema `a6f1aaa9…` and manifest `129abdbb…` unchanged; isolated private f802 normal generation, `--check`, artifact generation and `--check` all passed. Exact-022 adversarial probe rejected all 32 ref uses and 16 referenced definitions under deliberate mutations, plus every historical pattern, complete `track.set` clause, closed args and missing operation; proof inputs stayed unchanged.
+
+No public pin, merge, release, activation, product edit, full/broad/matrix suite, or shared-dependency write was performed. Next: composition manager may review the approved repair alongside the already-held carrier peer and then request the bounded native paired qualification.
