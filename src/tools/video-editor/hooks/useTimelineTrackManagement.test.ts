@@ -14,6 +14,25 @@ import type {
   TrackKind,
 } from '@/tools/video-editor/types';
 import { createTimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import { trackCreatePreview, type TrackCreateCapturePort } from '@/tools/video-editor/commands/trackCreateGesture.ts';
+import { toast } from '@/shared/components/ui/toast.tsx';
+
+function makeTrackCreatePort(): TrackCreateCapturePort {
+  return {
+    capture: vi.fn(({ row }) => ({ capturedId: row.id })),
+    finish: vi.fn((_basis, args) => ({
+      command: {
+        schema_version: 1,
+        op: 'track.create',
+        version: '1',
+        select: 'parent',
+        args,
+      },
+      preview: trackCreatePreview(args.row),
+    })),
+    submit: vi.fn(),
+  };
+}
 
 const makePinnedGroup = (args: {
   shotId: string;
@@ -514,10 +533,12 @@ describe('source track editing', async () => {
     const config = makeResolvedConfig([{ ...makeTrack('V1', 'visual'), role: 'source' }, makeTrack('V2', 'visual')]);
     const dataRef = { current: await buildTimelineData(serializeForDisk(config), { assets: {} }) };
     const applyEdit = vi.fn();
+    const trackCreatePort = makeTrackCreatePort();
+    const setSelectedTrackId = vi.fn();
     const { result } = renderHook(() => useTimelineTrackManagement({
-      dataRef, resolvedConfig: config, selectedClipId: 'clip-V1', setSelectedTrackId: vi.fn(), applyEdit,
+      dataRef, resolvedConfig: config, selectedClipId: 'clip-V1', setSelectedTrackId, applyEdit, trackCreatePort,
     }));
-    return { config, dataRef, applyEdit, result };
+    return { config, dataRef, applyEdit, trackCreatePort, setSelectedTrackId, result };
   }
 
   it('changes role as an ordinary config edit while preserving clips and other settings', async () => {
@@ -549,9 +570,91 @@ describe('source track editing', async () => {
   });
 
   it('keeps explicit Add track on the legacy Output default', async () => {
-    const { applyEdit, result } = await setup();
+    const { applyEdit, trackCreatePort, result } = await setup();
     act(() => result.current.handleAddTrack('visual'));
-    expect(applyEdit.mock.calls[0][0].resolvedConfig.tracks.at(-1).role ?? 'output').toBe('output');
+    expect(trackCreatePort.submit).toHaveBeenCalledOnce();
+    expect(trackCreatePort.submit.mock.calls[0][0].command.args.row.role ?? 'output').toBe('output');
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['visual', 'V3'],
+    ['audio', 'A1'],
+  ] as const)('submits one complete %s footer row through native track.create', async (kind, id) => {
+    const { dataRef, applyEdit, trackCreatePort, setSelectedTrackId, result } = await setup();
+
+    act(() => result.current.handleAddTrack(kind));
+
+    expect(trackCreatePort.capture).toHaveBeenCalledOnce();
+    expect(trackCreatePort.finish).toHaveBeenCalledOnce();
+    expect(trackCreatePort.submit).toHaveBeenCalledOnce();
+    const captured = trackCreatePort.capture.mock.calls[0][0];
+    expect(captured.row).toMatchObject({ id, kind, label: id, scale: 1, opacity: 1, blendMode: 'normal' });
+    expect(trackCreatePort.submit.mock.calls[0][0].preview).toEqual(trackCreatePreview(captured.row));
+    expect(trackCreatePort.submit.mock.calls[0][0].command).toMatchObject({
+      schema_version: 1, op: 'track.create', version: '1', select: 'parent', args: { row: captured.row },
+    });
+    expect(setSelectedTrackId).toHaveBeenCalledWith(id);
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('retains the draft and selection when native footer creation is refused', async () => {
+    const { applyEdit, trackCreatePort, setSelectedTrackId, result } = await setup();
+    const refusal = new Error('Original track selection no longer holds.');
+    trackCreatePort.submit = vi.fn(() => { throw refusal; });
+    const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
+
+    act(() => result.current.handleAddTrack('visual'));
+
+    expect(toastError).toHaveBeenCalledOnce();
+    expect(toastError).toHaveBeenCalledWith('Could not add track', {
+      description: refusal.message,
+    });
+    expect(setSelectedTrackId).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+    toastError.mockRestore();
+  });
+
+  it('refuses a missing native port without a snapshot fallback', async () => {
+    const config = makeResolvedConfig([makeTrack('V1', 'visual')]);
+    const data = await buildTimelineData(serializeForDisk(config), { assets: {} });
+    const applyEdit = vi.fn();
+    const setSelectedTrackId = vi.fn();
+    const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
+    const { result } = renderHook(() => useTimelineTrackManagement({
+      dataRef: { current: data }, resolvedConfig: data.resolvedConfig, selectedClipId: null,
+      setSelectedTrackId, applyEdit,
+    }));
+
+    act(() => result.current.handleAddTrack('visual'));
+
+    expect(toastError).toHaveBeenCalledOnce();
+    expect(setSelectedTrackId).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+    toastError.mockRestore();
+  });
+
+  it('refuses a read-only timeline before native capture', async () => {
+    const { dataRef, applyEdit, trackCreatePort, setSelectedTrackId } = await setup();
+    const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
+    const readOnly = renderHook(() => useTimelineTrackManagement({
+      dataRef, resolvedConfig: dataRef.current!.resolvedConfig,
+      selectedClipId: null,
+      setSelectedTrackId,
+      applyEdit,
+      editability: createTimelineEditability({ readOnly: true }),
+      trackCreatePort,
+    }));
+
+    act(() => readOnly.result.current.handleAddTrack('visual'));
+
+    expect(toastError).toHaveBeenCalledOnce();
+    expect(trackCreatePort.capture).not.toHaveBeenCalled();
+    expect(trackCreatePort.submit).not.toHaveBeenCalled();
+    expect(setSelectedTrackId).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+    readOnly.unmount();
+    toastError.mockRestore();
   });
 });
 

@@ -21,6 +21,7 @@ import type { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEve
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import { allowTimelineEdits, type TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit, type TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+import { captureTrackCreateEdit, submitTrackCreateEdit, type TrackCreateCapturePort } from '@/tools/video-editor/commands/trackCreateGesture.ts';
 import { toast } from '@/shared/components/ui/toast.tsx';
 
 const NO_PROTECTED_TRACKS: ReadonlySet<string> = new Set();
@@ -32,6 +33,7 @@ export interface UseTimelineTrackManagementArgs {
   setSelectedTrackId: React.Dispatch<React.SetStateAction<string | null>>;
   applyEdit: TimelineApplyEdit;
   trackLabelPort?: TrackLabelCapturePort;
+  trackCreatePort?: TrackCreateCapturePort;
   /**
    * Optional event bus for surfacing dropped edits (the null-data
    * moveClipToRow early return). Optional so tests and embed hosts that
@@ -246,6 +248,7 @@ export function useTimelineTrackManagement({
   setSelectedTrackId,
   applyEdit,
   trackLabelPort,
+  trackCreatePort,
   eventBus,
   editability = allowTimelineEdits,
   protectedTrackIds = NO_PROTECTED_TRACKS,
@@ -894,14 +897,37 @@ export function useTimelineTrackManagement({
   }, [applyEdit, dataRef, moveClipToRow, selectedClipId, setSelectedTrackId]);
 
   const handleAddTrack = useCallback((kind: TrackKind) => {
-    if (!resolvedConfig) {
-      return;
-    }
+    try {
+      const current = dataRef.current;
+      if (!current) {
+        throw new Error('Timeline data is not ready.');
+      }
+      const timelinePermission = editabilityRef.current.checkTimeline?.()
+        ?? editabilityRef.current.check({ clipId: '', sourceTrackId: null, targetTrackId: null });
+      if (!timelinePermission.allowed) {
+        throw new Error(`Timeline edits are unavailable (${timelinePermission.reason ?? 'read-only'}).`);
+      }
+      const displayConfig = current.resolvedConfig ?? resolvedConfig;
+      if (!displayConfig) {
+        throw new Error('Timeline configuration is not ready.');
+      }
+      const nextResolvedConfig = addTrack(displayConfig, kind);
+      const nextTrack = nextResolvedConfig.tracks[nextResolvedConfig.tracks.length - 1] ?? null;
+      if (!nextTrack) {
+        throw new Error('A new track could not be prepared.');
+      }
 
-    const nextResolvedConfig = addTrack(resolvedConfig, kind);
-    const nextTrack = nextResolvedConfig.tracks[nextResolvedConfig.tracks.length - 1] ?? null;
-    applyEdit({ type: 'config', resolvedConfig: nextResolvedConfig }, { selectedTrackId: nextTrack?.id ?? null });
-  }, [applyEdit, resolvedConfig]);
+      // Footer track creation is the bounded native create journey. Allocate
+      // the complete authored row before capture so retries reuse this ID and
+      // never derive a replacement from a later projection.
+      submitTrackCreateEdit(captureTrackCreateEdit(trackCreatePort, current, nextTrack));
+      setSelectedTrackId(nextTrack.id);
+    } catch (error) {
+      toast.error('Could not add track', {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [dataRef, resolvedConfig, setSelectedTrackId, trackCreatePort]);
 
   const handleTrackLabelEditStart = useCallback((trackId: string) => {
     const current = dataRef.current;

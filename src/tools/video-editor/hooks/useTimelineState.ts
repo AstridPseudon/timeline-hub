@@ -973,6 +973,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
     protectedTrackIds: canonicalShotTrackIds,
     trackLabelPort: save.commands.trackLabelPort,
+    trackCreatePort: save.commands.trackCreatePort,
   });
 
   const timelineCommands = useMemo<TimelineEditorCommands>(() => {
