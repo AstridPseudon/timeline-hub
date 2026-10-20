@@ -11,3 +11,6 @@
 
 ## Lead 10:07Z: upstream refresh ancestry verified
 - tl/app-m2-refresh-main-true-ancestry = 35dbb0eb1 "Merge upstream main into Timeline App integration": parents 667498cc4 (resolved refresh branch) + 44f0b9ca9 (banodoco/reigh-app main). `merge-base --is-ancestor 44f0b9ca9` OK; tree identical to 667498cc4. Made by kit dispatch --merge-parent (exit 0). Integration not merged yet; that waits on the manager tests + batch full + gated merge.
+
+## Lead 10:21Z: dispatch-bug guard confirmed
+- Both workers that started under the buggy 10:00Z dispatch finished cleanly with the empty merge-parent guard: selected-param-production-ingress-stage (ended 10:19:23Z, commit 3add7415e) and m4-refresh-full20880-classify (ended 10:20:26Z, no changes). No worker left stuck.
