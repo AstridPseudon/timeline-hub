@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: public admission accepts matching full-source PCM with the rounded trim/rate clock
+ok 1 - public admission accepts matching full-source PCM with the rounded trim/rate clock
+  ---
+  duration_ms: 33.425518
+  type: 'test'
+  ...
+# Subtest: public admission refuses wrong envelope
+ok 2 - public admission refuses wrong envelope
+  ---
+  duration_ms: 0.51668
+  type: 'test'
+  ...
+# Subtest: public admission refuses raw fractional origin
+ok 3 - public admission refuses raw fractional origin
+  ---
+  duration_ms: 0.131536
+  type: 'test'
+  ...
+# Subtest: public admission refuses wrong child rate
+ok 4 - public admission refuses wrong child rate
+  ---
+  duration_ms: 0.11532
+  type: 'test'
+  ...
+# Subtest: public admission refuses blob URL
+ok 5 - public admission refuses blob URL
+  ---
+  duration_ms: 0.086894
+  type: 'test'
+  ...
+# Subtest: public admission preserves canonical identity and addressed missing/malformed/duck refusals
+ok 6 - public admission preserves canonical identity and addressed missing/malformed/duck refusals
+  ---
+  duration_ms: 0.32067
+  type: 'test'
+  ...
+# Subtest: public evaluation imports without runtime peers or browser side effects
+ok 7 - public evaluation imports without runtime peers or browser side effects
+  ---
+  duration_ms: 93.215071
+  type: 'test'
+  ...
+# Subtest: track queries use half-open draw bounds and retain mounted zero-opacity layers
+ok 8 - track queries use half-open draw bounds and retain mounted zero-opacity layers
+  ---
+  duration_ms: 0.597097
+  type: 'test'
+  ...
+# Subtest: audio envelope evaluation accepts representative fade input and applies gain in place
+ok 9 - audio envelope evaluation accepts representative fade input and applies gain in place
+  ---
+  duration_ms: 0.384727
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve trim rounding and strict half-open source bounds
+ok 10 - public media clock helpers preserve trim rounding and strict half-open source bounds
+  ---
+  duration_ms: 0.342944
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+ok 11 - public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+  ---
+  duration_ms: 0.162215
+  type: 'test'
+  ...
+# Subtest: incoming preroll policy advances content without changing own frames or half-open mounts
+ok 12 - incoming preroll policy advances content without changing own frames or half-open mounts
+  ---
+  duration_ms: 0.686707
+  type: 'test'
+  ...
+# Subtest: policy is per boundary, preserves cut admission, and composes overlapping transition windows
+ok 13 - policy is per boundary, preserves cut admission, and composes overlapping transition windows
+  ---
+  duration_ms: 0.228663
+  type: 'test'
+  ...
+# Subtest: App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+ok 14 - App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+  ---
+  duration_ms: 0.540097
+  type: 'test'
+  ...
+# Subtest: public incoming vector represents first clips and leaves audio envelope gain unchanged
+ok 15 - public incoming vector represents first clips and leaves audio envelope gain unchanged
+  ---
+  duration_ms: 0.458321
+  type: 'test'
+  ...
+# Subtest: native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+ok 16 - native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+  ---
+  duration_ms: 0.256917
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 219.174898

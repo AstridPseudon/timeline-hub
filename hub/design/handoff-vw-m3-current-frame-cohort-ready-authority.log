@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: authority comparison accepts public pins independent of dependency ordering
+ok 1 - authority comparison accepts public pins independent of dependency ordering
+  ---
+  duration_ms: 10.109835
+  ...
+# Subtest: authority comparison refuses a different project, head, child pin, media, snapshot or capability
+ok 2 - authority comparison refuses a different project, head, child pin, media, snapshot or capability
+  ---
+  duration_ms: 11.919773
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27.708448

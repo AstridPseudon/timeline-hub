@@ -1,0 +1,51 @@
+Working directory: /home/user/work/wt/vw-m3-d09-sdk-source-join
+Base HEAD: d8749a9ce (Merge tl/agt-m2-safe-s2-pin-integration-gate)
+
+FINAL TREE (no component dependency overlay):
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-final tests/sdk/test_scene_check_save_boundary.py tests/sdk/test_scene_caller_preservation.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_checkout.py::test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address tests/sdk/test_timeline_publish_connection.py tests/sdk/test_timeline_transaction.py tests/sdk/test_timeline_commit_provider.py::test_move_reload_and_inverse_import_no_renderer tests/sdk/test_timeline_capture_projection.py::test_capture_method_imports_and_runs_without_renderer_or_runtime tests/editing_conformance/test_recipe_scalar_commands.py::test_scalar_capture_and_save_import_no_renderer_or_runtime tests/editing_conformance/test_recipe_shot_set.py::test_shot_set_capture_and_save_import_no_renderer_or_runtime > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/final-tests.log 2>&1
+Result: exit 0; 40 passed in 3.17s.
+
+TEMPORARY NARROW DEPENDENCIES, tested then restored (no git mutation):
+Read these exact paths using git show REF:PATH into the same paths in this worktree,
+after retaining original bytes in this worker folder. Restore original bytes/remove
+originally absent files after the following two commands. No other branch paths used.
+c35b317c1:
+  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+  astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+  tests/packs/rendering/test_am_snap_plate_scene_capability.py
+bdd02bd3f:
+  astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+  tests/packs/rendering/test_sprite_scene_capability.py
+Existing flat dependency patches are in design/handoff-vw-m3-d09-am-{plate,sprite}-public-positive-exact.patch.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-capabilities tests/packs/rendering/test_am_snap_plate_scene_capability.py tests/packs/rendering/test_sprite_scene_capability.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/capabilities.log 2>&1
+Result: exit 0; 31 passed in 32.49s.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-prototype-final /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/prototype-final.log 2>&1
+Result: exit 1; 1 passed, 1 failed in 4.49s. Intended unmodified positive stays red at check.py:106; exact final Root/public EMPTY source precondition passes. Flat copy: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-d09-sdk-source-join-prototype.py (same bytes).
+
+LINT/WHITESPACE on final repository test:
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_scene_check_save_boundary.py
+Result: exit 0; All checks passed!
+git diff --check
+Result: exit 0.
+git diff --no-index --check /dev/null tests/sdk/test_scene_check_save_boundary.py
+Result: exit 0 (also checks the untracked new file).
+git status --short
+Result: only ?? tests/sdk/test_scene_check_save_boundary.py
+
+EARLIER ITERATIONS (not hidden):
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-save-before tests/sdk/test_scene_check_save_boundary.py
+Result: exit 1; 1 failed, 1 passed in 0.50s. New fixture saved outside draft_path, so no undo step existed. Fixed only fixture path and isolated runtime-data root.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-save-fixed tests/sdk/test_scene_check_save_boundary.py
+Result: exit 0; 2 passed in 0.50s.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-prototype /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/prototype.log 2>&1
+Result: exit 1; 2 setup errors in 3.55s. New fixture selected an ambiguous source ID shared by two occurrences.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-prototype-fixed /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/prototype-fixed.log 2>&1
+Result: exit 1; 2 failed in 4.38s. New fixture assumed both occurrences survived Checkout resolution; candidate output contained only A.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/pytest-prototype-clock /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py::test_exact_resolved_candidate_has_public_empty_and_opaque_address_join > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/prototype-clock.log 2>&1
+Result: exit 1; 1 failed in 3.98s; records actual final props/profile and frames. Final seam fixture is explicitly single-occurrence; this observation is not claimed as a diagnosed product defect or multi-occurrence parity.
+
+No full, central request, install, network, browser, media render, socket, git mutation or shared dependency/cache writes.
+Test stages and pytest temp directories were private; removed after logs were exported.

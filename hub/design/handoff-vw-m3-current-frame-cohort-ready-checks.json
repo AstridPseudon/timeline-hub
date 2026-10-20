@@ -1,0 +1,139 @@
+{
+  "cwd": "/home/user/work/wt/vw-m3-current-frame-cohort-ready",
+  "environmentOverrides": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
+    "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/usr/bin:/bin",
+    "XDG_CACHE_HOME": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-frame-cohort-ready/offline-xr4skn2l/cache",
+    "TMPDIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-frame-cohort-ready/offline-xr4skn2l",
+    "PLAYWRIGHT_TEST_CACHE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-frame-cohort-ready/offline-xr4skn2l/playwright-cache",
+    "PLAYWRIGHT_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-frame-cohort-ready/offline-xr4skn2l/results",
+    "npm_config_cache": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-frame-cohort-ready/offline-xr4skn2l/npm"
+  },
+  "results": [
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/admission.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-admission.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/authority.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-authority.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/browser-profile.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-browser-profile.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/canvas.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-canvas.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/compare.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-compare.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/diagnostics.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-diagnostics.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/directframes.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-directframes.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/download.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-download.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/harness.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-harness.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/media.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-media.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "--import",
+        "tsx",
+        "tests/e2e/timeline/viewing-parity/source-tuple.test.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-source-tuple.log"
+    },
+    {
+      "command": [
+        "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+        "/home/user/work/wt/vw-m3-current-frame-cohort-ready/node_modules/playwright/cli.js",
+        "test",
+        "--config",
+        "/home/user/work/wt/vw-m3-current-frame-cohort-ready/playwright.viewing-parity.normal-profile-native1920.config.ts",
+        "--project=native-codec-chrome155",
+        "--list"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-frame-cohort-ready-playwright-list.log"
+    }
+  ]
+}

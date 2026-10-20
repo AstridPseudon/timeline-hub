@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: decodes generated native-size PNG and lossless video before comparator rejects oversized frames
+ok 1 - decodes generated native-size PNG and lossless video before comparator rejects oversized frames
+  ---
+  duration_ms: 747.424211
+  ...
+# Subtest: dismisses the completed render and waits for its backdrop before inspecting the actual Player
+ok 2 - dismisses the completed render and waits for its backdrop before inspecting the actual Player
+  ---
+  duration_ms: 0.726243
+  ...
+# Subtest: keeps fixture-only captures on the existing Player path when no result dialog is open
+ok 3 - keeps fixture-only captures on the existing Player path when no result dialog is open
+  ---
+  duration_ms: 0.169792
+  ...
+# Subtest: does not inspect or capture the Player if normal dialog dismissal fails
+ok 4 - does not inspect or capture the Player if normal dialog dismissal fails
+  ---
+  duration_ms: 0.200512
+  ...
+# Subtest: does not inspect or capture the Player while the closing backdrop remains
+ok 5 - does not inspect or capture the Player while the closing backdrop remains
+  ---
+  duration_ms: 0.208961
+  ...
+# Subtest: propagates a failed native probe instead of accepting partial frame bytes
+ok 6 - propagates a failed native probe instead of accepting partial frame bytes
+  ---
+  duration_ms: 41.101129
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 794.624757

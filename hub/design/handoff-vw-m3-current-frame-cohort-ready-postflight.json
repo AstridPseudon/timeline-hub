@@ -1,0 +1,18 @@
+{
+  "graph": {
+    "equal": true,
+    "sha256": "2077e5364f56a8f3c9daf72b74dd60ed58c797f2ff2c2daf78a0dbcd4579f24e"
+  },
+  "browser": {
+    "equal": true,
+    "sha256": "f81d44105d07f145542bb834edf913c006336c2ba96d896489369530cd9dd53b"
+  },
+  "sources": {
+    "equal": true,
+    "sha256": "821cfede86d08f1b527e387579af6d3e1586178243ae3f360b3497312b151362"
+  },
+  "environment": {
+    "equal": true,
+    "sha256": "e7bc7085debfd762c86bea85d3d6a4f9d12be51333a2c7df92b8c0a2cb04a881"
+  }
+}

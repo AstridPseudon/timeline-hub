@@ -1,0 +1,25 @@
+TAP version 13
+# Subtest: same comparator accepts baseline then rejects an opaque one-host patch with pixel metric
+ok 1 - same comparator accepts baseline then rejects an opaque one-host patch with pixel metric
+  ---
+  duration_ms: 19.225236
+  ...
+# Subtest: strict RGB threshold and 0.1 percent boundary remain unchanged
+ok 2 - strict RGB threshold and 0.1 percent boundary remain unchanged
+  ---
+  duration_ms: 6.771257
+  ...
+# Subtest: rejects empty, truncated, extra and wrong-dimension images on either host
+ok 3 - rejects empty, truncated, extra and wrong-dimension images on either host
+  ---
+  duration_ms: 3.261957
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37.438657

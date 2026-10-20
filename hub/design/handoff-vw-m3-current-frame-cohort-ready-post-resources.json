@@ -1,0 +1,7 @@
+{
+  "quietAbsent": true,
+  "diskFloorBytes": 10737418240,
+  "diskFreeBytes": 11539841024,
+  "actualRun": false,
+  "flockRequiredForActualRun": "/tmp/timeline-viewing-browser.lock"
+}

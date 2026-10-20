@@ -1,0 +1,19 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_explicit_check_preserves_public_empty_without_private_coverage ______
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py:105: in test_explicit_check_preserves_public_empty_without_private_coverage
+    report = checkout.check()
+             ^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/check.py:569: in check
+    spans = self._on_screen()  # one pass over the film for the three readers below
+            ^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/check.py:106: in _on_screen
+    return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py:100: in forbidden
+    raise AssertionError("D09 seam: exact prepared candidate exists, check still calls private coverage")
+E   AssertionError: D09 seam: exact prepared candidate exists, check still calls private coverage
+---------------------------- Captured stdout setup -----------------------------
+{"basis": {"width": 200, "height": 100, "fps": 24.0}, "clips": [{"id": "opaque:occ:A:opaque:source:field", "track": "picture", "clipType": "am-snap-plate", "at": 0.0, "hold": 1.0, "params": {"fill": "#123456"}, "app": {"astrid": {"cut": "c08", "layer": "field"}, "astrid_shot_composition": {"project_id": "p", "timeline_id": "tl", "shot_id": "s", "shot_revision_id": "authoring-shot-revision-c76958fef5d09621855d46863377005f5d28e90d550fe2f48d179ee9f48d82b0", "internal_timeline_revision_id": "authoring-timeline-revision-b42631485352de7b38a7a7dd672d45760d9169fe8e7a4e46aca59c85c375dac1", "occurrence_id": "opaque:occ:A", "output_identity": "authoring-parent-revision-fda0d64ada3d997c9cf863d91354208f5d9f8b19d1e6a88a4d824805becd7f58:opaque:occ:A", "stable_deep_link": "astrid://projects/p/timelines/tl/occurrences/opaque:occ:A", "source_offset": 0, "speed": 1.0, "gain": 1, "muted": false, "source_clip_id": "opaque:source:field"}}, "shot_id": "s", "shot_occurrence_id": "opaque:occ:A"}], "rows": [[0, "COVERED", "EMPTY"], [1, "COVERED", "EMPTY"], [2, "COVERED", "EMPTY"], [3, "COVERED", "EMPTY"], [4, "COVERED", "EMPTY"], [5, "COVERED", "EMPTY"], [6, "COVERED", "EMPTY"], [7, "COVERED", "EMPTY"], [8, "COVERED", "EMPTY"], [9, "COVERED", "EMPTY"], [10, "COVERED", "EMPTY"], [11, "COVERED", "EMPTY"], [12, "COVERED", "EMPTY"], [13, "COVERED", "EMPTY"], [14, "COVERED", "EMPTY"], [15, "COVERED", "EMPTY"], [16, "COVERED", "EMPTY"], [17, "COVERED", "EMPTY"], [18, "COVERED", "EMPTY"], [19, "COVERED", "EMPTY"], [20, "COVERED", "EMPTY"], [21, "COVERED", "EMPTY"], [22, "COVERED", "EMPTY"], [23, "COVERED", "EMPTY"]]}
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-sdk-source-join/test_source_join_prototype.py::test_explicit_check_preserves_public_empty_without_private_coverage
+1 failed, 1 passed in 4.49s
