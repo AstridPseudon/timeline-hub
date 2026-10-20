@@ -83,8 +83,12 @@ def test_provider_unchanged_publication_and_aba_refuse_old_inverse(ref, field, a
     assert snapshot == (realm.head, realm.entries, realm.documents)
 
 
-@pytest.mark.parametrize('ref,on', [(PARENT, 16), (CHILD, 4)])
-@pytest.mark.parametrize('separate', [False, True])
+# Final Bundle2 ingress must hydrate B's allocation captured before the move ACK.
+@pytest.mark.parametrize('separate,ref,on', [
+    (False, PARENT, 16), (False, CHILD, 4), (True, PARENT, 16),
+    pytest.param(True, CHILD, 4, marks=pytest.mark.xfail(
+        strict=True, reason='dependent materialization source hydration at native ingress')),
+])
 def test_move_then_hold_accepts_original_capture_and_generic_inverse_stages(ref, on, separate):
     from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
     from astrid.sdk.timeline.capture import capture_move

@@ -228,7 +228,7 @@ def _authoring_shot_id(
     return _identity("shot-placement", project_id, timeline_id, occurrence_id, source_shot_id)
 
 
-def _remap_known_item_references(
+def _remap_shot_items(
     payload: Mapping[str, Any], item_ids: Mapping[str, str]
 ) -> dict[str, Any]:
     """Remap the shot item codec and its declared source dependency links."""
@@ -284,8 +284,7 @@ def _copy_shot_for_placement(
             authoring_shot_id,
             source_item_id,
         )
-    result = _remap_known_item_references(result, remap)
-    return result, remap
+    return _remap_shot_items(result, remap), remap
 
 
 def open_authoring_bundle(
@@ -293,6 +292,7 @@ def open_authoring_bundle(
     *,
     shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
     internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    capture_sources: bool = False,
 ) -> dict[str, Any]:
     """Open one exact immutable closure as a detached, lossless working copy.
 
@@ -445,6 +445,10 @@ def open_authoring_bundle(
         "source_mapping": {
             "placements": base_placements,
             "shots": shot_sources,
+            **({"_source_closure": {"parent_revision": _copy(dict(parent)),
+                                   "shot_revisions": _copy(list(shot_index.values())),
+                                   "internal_timeline_revisions": _copy(list(internal_index.values()))}}
+               if capture_sources else {}),
         },
     }
 
@@ -884,8 +888,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             )
         needs_materialization = (
             authoring_shot_id != source_shot_id
-            or candidate_shot != base_shot
-            or candidate_internal != base_internal
+            or _canonical_json(candidate_shot) != _canonical_json(base_shot)
+            or _canonical_json(candidate_internal) != _canonical_json(base_internal)
         )
         if needs_materialization:
             internal_payload = _copy(dict(candidate_internal))

@@ -217,8 +217,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
 
     Historical source images alone never authorize dropping retained media.
     """
-    from ._command_state import equal
-
+    # Immutable reuse follows exact encoded content, independently of value guards.
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
@@ -246,8 +245,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         identity = occurrence["shot_id"]
         shot = bundle["shots"][identity]
         origin = bundle["source_mapping"]["shots"].get(identity)
-        if (origin is not None and shot["payload"] == shot["base_payload"]
-                and shot["internal_timeline"] == shot["base_internal_timeline"]
+        if (origin is not None and _json(shot["payload"]) == _json(shot["base_payload"])
+                and _json(shot["internal_timeline"]) == _json(shot["base_internal_timeline"])
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
             occurrence["shot_revision_id"] = origin["revision_id"]
@@ -261,7 +260,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             payload, old_payload = copy.deepcopy(shot['payload']), copy.deepcopy(old['payload'])
             payload.pop('internal_timeline_revision_id', None)
             old_payload.pop('internal_timeline_revision_id', None)
-            if not equal(payload, old_payload) or not equal(shot['internal_timeline'], old['internal_timeline']):
+            if (_json(payload) != _json(old_payload)
+                    or _json(shot['internal_timeline']) != _json(old['internal_timeline'])):
                 continue
             origin = historical['source_mapping']['shots'][identity]
             occurrence['shot_id'] = origin['shot_id']
@@ -300,8 +300,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             media.pop(identity, None)
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
-    if (parent == source["parent_revision"]["payload"]
-            and manifest == source["dependency_manifest"]):
+    if (digest == source["parent_revision"]["content_digest"]
+            and _json(manifest) == _json(source["dependency_manifest"])):
         revision = source["parent_revision"]["revision_id"]
     else:
         revision = "authoring-parent-revision-" + _digest({
@@ -310,7 +310,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         }).removeprefix("sha256:")
     for historical in source_bundles:
         prior = historical['source_mapping']['_runtime_document']
-        if equal(parent, prior['parent_revision']['payload']) and equal(manifest, prior['dependency_manifest']):
+        if (digest == prior['parent_revision']['content_digest']
+                and _json(manifest) == _json(prior['dependency_manifest'])):
             revision = prior['parent_revision']['revision_id']
             break
     document = {
@@ -484,9 +485,10 @@ def _records(entries, rejected, base, current):
     for entry in entries:
         recorder = entry.get("records")
         if (entry.get("intent") != "recorded" or not isinstance(recorder, Mapping)
-                or recorder.get("schema_version") != 1
+                or type(recorder.get("schema_version")) is not int or recorder["schema_version"] != 1
                 or not isinstance(recorder.get("commands"), list) or not recorder["commands"]
-                or any(not isinstance(record, Mapping) or record.get("ordinal") != ordinal
+                or any(not isinstance(record, Mapping) or type(record.get("ordinal")) is not int
+                       or record["ordinal"] != ordinal
                        or set(record) != {"ordinal", "command", "writes", "reads", "selections",
                                           "bindings", "created", "dependencies", "derived_writes"}
                        for ordinal, record in enumerate(recorder["commands"]))):
@@ -503,6 +505,13 @@ def _reservation_refs(state):
             for identity in bundle['shots']}
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
+    for shot in bundle['shots'].values():
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
+    document = bundle['source_mapping'].get('_runtime_document', {})
+    for shot in document.get('shot_revisions', []):
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
     for owner in owners:
         assets = state.config(owner).get('registry', {}).get('assets', {})
         _require(isinstance(assets, dict), 'invalid asset identity collection')
@@ -522,12 +531,15 @@ def _reservation_refs(state):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
-    from ._command_state import State, root_identity
+    from ._command_state import State, item_identity, root_identity
 
     def valid(item):
         if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
                 or not _id(item['ref']) or not _id(item['kind'])):
             return False
+        member = item_identity(item['ref'])
+        if member is not None:
+            return item['kind'] == 'item' and item['owner'] == member[0]
         root = root_identity(item['ref'])
         if root is not None:
             return (item['kind'] == root[0]
@@ -549,7 +561,11 @@ def _check_reservations(port, plan, current, rejected, base):
     # check project-wide shot occupancy/reservations before persisting a closure.
     # Inverse creates restore authenticated accepted writes. Ordinary creates
     # must never claim an identity retired by an earlier accepted publication.
-    created = [item["ref"] for record in plan.records
+    def reservation(ref):
+        member = item_identity(ref)
+        return 'item:' + member[1] if member else ref
+
+    created = [reservation(item["ref"]) for record in plan.records
                if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
     if not created:
         return
@@ -571,7 +587,7 @@ def _check_reservations(port, plan, current, rejected, base):
             check = ordinary and record['command']['op'] != 'timeline.inverse'
             claimed = set()
             for item in items:
-                ref = item['ref']
+                ref = reservation(item['ref'])
                 if check and (ref in reserved or ref in claimed):
                     raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
                 claimed.add(ref)
@@ -719,6 +735,15 @@ class RuntimeCommitService:
                                                     if later['publication_id'] not in undo_of],
                                                    CommitRejected, base, current),
                                           state=State(_load(port, context, entry['revision_id'])))
+            source_closures = {source['base_parent']['revision_id']: source for source in inverse_sources}
+            for record in inverse_records:
+                for dependency in record['dependencies']:
+                    if dependency['key'].startswith('materialization.source:'):
+                        revision = dependency['pin']['parent']['revision_id']
+                        if revision not in source_closures:
+                            source = _load(port, context, revision)
+                            source_closures[revision] = source
+                            inverse_sources.append(source)
             closures, restored_from = {}, None
             if restore:
                 restored_from = copy.deepcopy(calls[0]['args'])
@@ -747,7 +772,7 @@ class RuntimeCommitService:
                 schema_inputs = _hydrate(port, bundle, calls)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures,
+                               intervening_records=inverse_intervening, closures={**source_closures, **closures},
                                verified_media=verified_media, realm_id=context['realm_id'],
                                resolve_inputs=resolve_inputs)
             for attempt in range(3):
@@ -766,7 +791,7 @@ class RuntimeCommitService:
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures,
+                                      entries, CommitRejected, base, current)], closures={**source_closures, **closures},
                                   verified_media=verified_media, realm_id=context['realm_id'],
                                   resolve_inputs=resolve_inputs)
                 _check_reservations(port, plan, current, CommitRejected, base)
@@ -777,7 +802,7 @@ class RuntimeCommitService:
                     "document_digest": _digest(document),
                     "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
                                 "undo_of": undo_of, "restored_from": restored_from},
-                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "id_map": copy.deepcopy(plan.id_map), "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:

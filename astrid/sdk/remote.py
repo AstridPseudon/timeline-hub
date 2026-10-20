@@ -1239,6 +1239,7 @@ class RemoteTimelines(_RemoteFamily):
         try:
             bundle = open_authoring_bundle(
                 parent.data,
+                capture_sources=True,
                 shot_revisions=list(shots.values()),
                 internal_timeline_revisions=list(internals.values()),
             )

@@ -59,8 +59,9 @@ def _native_command(command):
     return command
 
 
-def _ack(result, body, flight, identity):
+def _ack(result, body, flight, identity, *, source_bundle=None, inverse_records=(), closures=None):
     """Check acceptance identity, leaving full closure validation to Runtime."""
+    from astrid.sdk.timeline._command_state import equal
     from astrid.sdk.timeline.commands import validate_command
 
     def require(condition):
@@ -77,8 +78,13 @@ def _ack(result, body, flight, identity):
         for command in data["commands"]:
             validate_command(command)
         require(isinstance(data["id_map"], dict))
-        if any(not isinstance(key, str) or not key or key != value for key, value in data["id_map"].items()):
-            raise TimelineEditError("Runtime returned a nonidentity id_map; request remains in flight")
+        require(all(isinstance(key, str) and key and isinstance(value, str) and value
+                    for key, value in data["id_map"].items()))
+        paired = any(key.startswith('materialization.owner:')
+                     for command in body['commands'] for key in command.get('bindings', {}))
+        inverse = len(body['commands']) == 1 and body['commands'][0]['op'] == 'timeline.inverse'
+        if any(key != value for key, value in data['id_map'].items()) and not (paired or (inverse and inverse_records)):
+            raise TimelineEditError('Runtime returned an unverified nonidentity id_map; request remains in flight')
         document = data["canonical_document"]
         require(isinstance(document, dict) and type(document["schema_version"]) is int and document["schema_version"] == 1)
         require(document["project_id"] == body["project_id"] and document["timeline_id"] == body["timeline_id"])
@@ -93,6 +99,42 @@ def _ack(result, body, flight, identity):
         require(isinstance(manifest, dict))
         for key in ("shots", "internal_timelines", "media", "documents"):
             require(isinstance(manifest[key], list) and all(isinstance(row, dict) for row in manifest[key]))
+        if paired or inverse:
+            from ._command_state import one
+            from .commands import execute
+            from .commit import _verify_document
+
+            require(source_bundle is not None)
+            require(source_bundle['project_id'] == body['project_id']
+                    and source_bundle['timeline_id'] == body['timeline_id']
+                    and source_bundle['base_parent']['revision_id'] == body['base_revision_id'])
+            from ._materialization import id_map
+
+            original = execute(source_bundle, body['commands'], inverse_records=inverse_records,
+                               closures=closures)
+            require(equal(original.commands, data['commands']))
+            known = original.records
+            mapping = id_map(known)
+            require({key: value for key, value in data['id_map'].items() if key != value} == mapping)
+            _verify_document(document)
+            require(data['document_digest'] == 'sha256:' + hashlib.sha256(
+                canonical_json(document).encode()).hexdigest())
+            for record in known:
+                for binding in record['bindings']:
+                    if not binding['key'].startswith('materialization.owner:'):
+                        continue
+                    destination = binding['key'].removeprefix('materialization.owner:shot:')
+                    occurrence = one(parent['payload']['occurrences'], 'occurrence_id', binding['ref'][11:])
+                    origin = next(b['ref'][5:] for b in record['bindings'] if b['key'] == 'shot:' + destination)
+                    require(occurrence['shot_id'] in ((destination, origin) if inverse else (destination,)))
+                    shot = one(document['shot_revisions'], 'revision_id', occurrence['shot_revision_id'])
+                    items = {item.get('item_id', item.get('id')) for item in shot['payload'].get('items', [])}
+                    expected_items = {value for key, value in mapping.items()
+                                      if key.startswith('shot:' + destination + '/item:')}
+                    if inverse and occurrence['shot_id'] == origin:
+                        expected_items = {b['ref'].partition('/item:')[2] for b in record['bindings']
+                                          if b['key'].startswith('shot:' + destination + '/item:')}
+                    require(expected_items <= items)
         if body.get("dry_run", False):
             require(data["status"] == "preview" and receipt is None)
             _pin(data["evaluated_head"])
@@ -102,7 +144,7 @@ def _ack(result, body, flight, identity):
             CommandReceipt.from_dict(receipt)
             require(receipt["command_kind"] == "timeline.commit")
             require(receipt["project_id"] == body["project_id"] and receipt["idempotency_key"] == flight["key"])
-            require(receipt["result"] == data and data["publisher"] == identity["actor_id"])
+            require(equal(receipt["result"], data) and data["publisher"] == identity["actor_id"])
             invocation = {"operation": "commitTimeline", "path": flight["path"],
                           "publisher": identity["actor_id"], "request": body}
             require(receipt["request_hash"] == hashlib.sha256(canonical_json(invocation).encode()).hexdigest())
@@ -286,7 +328,53 @@ class TimelineSession:
                         self.outbox.write(state)
                 raise CommitConflict(failure) from exc
             raise  # Ambiguous failure: never replace the durable flight.
-        data, receipt = _ack(result, body, flight, self.identity)
+        from ._command_state import equal
+
+        source_bundle, inverse_records, closures = None, [], {}
+        inverse = len(body['commands']) == 1 and body['commands'][0]['op'] == 'timeline.inverse'
+        if inverse or any(key.startswith('materialization.owner:')
+                          for command in body['commands'] for key in command.get('bindings', {})):
+            from .store import fetch_bundle
+            source_bundle = fetch_bundle(self.project_id, self.timeline_id,
+                                         revision_id=body['base_revision_id'], client=self.client)
+        if inverse:
+            targets = body['commands'][0]['args']['publications']
+            from ._materialization import id_map
+            entries, cursor = {}, None
+            while True:
+                page = _response(self.client.timelines.history(
+                    self.project_id, self.timeline_id, cursor=cursor, limit=200))['data']
+                entries.update({entry['publication_id']: entry for entry in page['items']})
+                cursor = page['next_cursor']
+                if all(target in entries for target in targets) or cursor is None:
+                    break
+            for target in targets:
+                entry = entries.get(target, {})
+                records = (entry.get('records') or {}).get('commands', [])
+                receipt = entry.get('receipt', {})
+                if (receipt.get('receipt_id') != target or receipt.get('project_id') != self.project_id
+                        or not equal(receipt.get('result', {}).get('commands'), [r['command'] for r in records])
+                        or {key: value for key, value in receipt.get('result', {}).get('id_map', {}).items()
+                            if key != value} != id_map(records)):
+                    raise TimelineEditError('inverse acknowledgement requires verified accepted history')
+                inverse_records.extend(records)
+            for record in inverse_records:
+                for dep in record['dependencies']:
+                    if dep['key'].startswith('materialization.source:'):
+                        revision = dep['pin']['parent']['revision_id']
+                        closures[revision] = fetch_bundle(self.project_id, self.timeline_id,
+                                                         revision_id=revision, client=self.client)
+            from ._collections import AcceptedRecords
+
+            def load_boundary(entry):
+                return tuple(fetch_bundle(self.project_id, self.timeline_id, revision_id=revision,
+                                          client=self.client) for revision in (
+                    entry['previous']['revision_id'], entry['revision_id']))
+
+            inverse_records = AcceptedRecords([entries[target] for target in targets],
+                                              inverse_records, load_boundary)
+        data, receipt = _ack(result, body, flight, self.identity, source_bundle=source_bundle,
+                             inverse_records=inverse_records, closures=closures)
         with self.outbox.locked():
             state = self._state()
             # A duplicate send may finish after another send acknowledged this

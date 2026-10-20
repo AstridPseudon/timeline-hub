@@ -56,6 +56,7 @@ class Plan:
     bundle: dict
     records: list[dict]
     semantic_events: list[dict] = dataclass_field(default_factory=list)
+    id_map: dict[str, str] = dataclass_field(default_factory=dict)
 
     @property
     def commands(self):
@@ -123,7 +124,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None):
+            closures=None, materializations=(), verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -134,13 +135,14 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
 
     if not commands:
         raise CommandError("command batch must not be empty")
-    if id_map and any(key != value for key, value in id_map.items()):
-        raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
         raise CommandError("restore must be the sole command", kind='invalid_commands')
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
+        if command['op'] == 'timeline.inverse':
+            from ._materialization import consume
+            candidate = consume(candidate, inverse_records, closures=closures)
         ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
                         schema_inputs=schema_inputs, realm_id=realm_id)
         _verify_claims(ctx, command)
@@ -168,6 +170,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         if ordinal == len(commands) - 1:
             ctx.compile_inputs()
         ctx.compile_mirrors()
+        from ._materialization import capture, verify_sources
+        capture(ctx, inverse_records if command['op'] == 'timeline.inverse' else materializations)
+        verify_sources(ctx.state, [ctx.record])
         record = ctx.finish(capture=True)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
             if field not in command:
@@ -186,4 +191,12 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         # Keep original claims and metadata after they have been verified.
         record['command'].update({k: v for k, v in command.items() if k != 'intent'})
         records.append(record)
-    return Plan(candidate, records)
+    from ._materialization import id_map as allocation_map
+    mapping = allocation_map(records)
+    if id_map is not None:
+        if any(not isinstance(key, str) or not key or not isinstance(value, str) or not value
+               for key, value in id_map.items()) or {
+                key: value for key, value in id_map.items() if key != value} != mapping:
+            raise CommandError('id_map requires identity pairs or verified allocations', kind='identity_collision')
+        mapping = {**id_map, **mapping}
+    return Plan(candidate, records, id_map=mapping)
