@@ -116,6 +116,9 @@ def logical_address(ref, path):
         from ._collections import container
         root, prefix = container(owner, kind)
         return root, (*prefix, ('shape',), *path)
+    item = item_identity(ref)
+    if item is not None:
+        return item[0], ('payload', 'items', ('item', item[1]), *path)
     if '/clip:' in ref or '/track:' in ref:
         owner, entity = ref.rsplit('/', 1)
         kind, identity = entity.split(':', 1)
@@ -137,15 +140,20 @@ def overlaps(a, b):
             or (a[0] == b[0] and a[1][:len(b[1])] == b[1][:len(a[1])]))
 
 
-def one(rows, key, identity, *, optional=False):
+def one(rows, key, identity, *, optional=False, item=False):
     if not isinstance(rows, list):
         raise CommandError("entity collection must be an array")
-    matches = [row for row in rows if isinstance(row, dict) and row.get(key) == identity]
+    matches = [row for row in rows if isinstance(row, dict) and row.get(key, row.get("id") if item else None) == identity]
     if len(matches) != 1:
         if optional and not matches:
             return None
         raise CommandError(f"missing or ambiguous identity {identity!r}", kind="identity_conflict")
     return matches[0]
+
+
+def item_identity(ref):
+    match = re.fullmatch(r'(shot:((?!.*::)[^/]+))/item:((?!.*::)[^/]+)', ref) if isinstance(ref, str) else None
+    return (match[1], match[3]) if match and match[2].strip() and match[3].strip() else None
 
 
 def root_identity(ref):
@@ -202,6 +210,14 @@ class State:
             owner, entity = ref.rsplit('/', 1)
             kind, identity = entity.split(':', 1)
             return one(self.collection(owner, kind), "id", identity, optional=optional)
+        item = item_identity(ref)
+        if item is not None:
+            shot = self.bundle['shots'].get(item[0][5:])
+            if shot is None and optional:
+                return None
+            if shot is None:
+                raise CommandError('missing item owner', kind='identity_conflict', ref=ref)
+            return one(shot['payload'].get('items', []), 'item_id', item[1], optional=optional, item=True)
         if ref == "parent":
             return self.bundle["parent"]
         root = root_identity(ref)
@@ -402,6 +418,22 @@ class State:
             return
         if root is None and ref.startswith(('shot:', 'occurrence:')) and '/' not in ref:
             raise CommandError('invalid authored root reference', ref=ref)
+        if not path and item_identity(ref) is not None:
+            owner, identity = item_identity(ref)
+            rows = self.bundle['shots'][owner[5:]]['payload'].setdefault('items', [])
+            existing = self.entity(ref, optional=True)
+            if state['state'] == 'present' and (not isinstance(state['value'], dict)
+                    or state['value'].get('item_id', state['value'].get('id')) != identity):
+                raise CommandError('item identity differs from its reference', kind='identity_conflict', ref=ref)
+            if existing is not None:
+                index = rows.index(existing)
+                if state['state'] == 'absent':
+                    rows.pop(index)
+                else:
+                    rows[index] = copy.deepcopy(state['value'])
+            elif state['state'] == 'present':
+                rows.append(copy.deepcopy(state['value']))
+            return
         if not path:
             owner, entity = ref.rsplit('/', 1)
             kind, identity = entity.split(':', 1)

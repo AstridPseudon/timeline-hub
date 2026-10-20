@@ -30,6 +30,7 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
                 for command in fixture_commands(json.loads(path.read_text()))}
     conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
+    assert set(conditions) == set(operations()) | {'timeline.inverse', 'timeline.restore'}
     for op, operation in operations().items():
         ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
@@ -42,8 +43,9 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
 
 
 @pytest.mark.parametrize('ref', ['shot:raw-shot', 'occurrence:raw-occurrence',
-                                'parent/asset:alias', 'occurrence:raw-occurrence/asset:alias'])
-def test_root_and_scoped_asset_references_share_the_canonical_patterns(ref):
+                                'parent/asset:alias', 'occurrence:raw-occurrence/asset:alias',
+                                'shot:raw-shot/item:raw-item'])
+def test_root_and_scoped_references_share_the_canonical_patterns(ref):
     for name in ('ScopedId', 'EntityRef', 'AnchorIdentity'):
         Draft202012Validator(_SCHEMA).evolve(
             schema={'$ref': '#/$defs/' + name}).validate(ref)

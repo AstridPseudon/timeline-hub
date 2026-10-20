@@ -35,6 +35,7 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 NEW = 'sha256:' + '2' * 64
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_occurrence_media.json'
+MATERIALIZATION_FIXTURE = FIXTURE.with_name('recipe_m2_occurrence_media_materialization_v1.json')
 
 
 def inputs(kind='image'):
@@ -60,9 +61,9 @@ def inputs(kind='image'):
     return document, old, new, verified
 
 
-def captured(operation, kind='image'):
+def captured(operation, kind='image', *, capture_sources=True):
     document, old, new, verified = inputs(kind)
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     if operation == 'add':
         row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
@@ -98,10 +99,17 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
 
 
-@pytest.mark.parametrize('operation', ['add', 'swap'])
-def test_portable_goldens(operation):
-    golden = load_fixture(FIXTURE)[operation]
-    document, bundle, command, verified = captured(operation, 'video')
+@pytest.mark.parametrize(('operation', 'fixture_path'), [
+    ('add', FIXTURE), ('swap', FIXTURE), ('swap', MATERIALIZATION_FIXTURE),
+    # Restore the historical v1 capture through an explicit capture-version
+    # policy; current placement owner/order guards must remain authoritative.
+    pytest.param('add', MATERIALIZATION_FIXTURE, marks=pytest.mark.xfail(
+        strict=True, reason='historical carrier add needs the legacy placement capture version')),
+])
+def test_portable_goldens(operation, fixture_path):
+    golden = load_fixture(fixture_path)[operation]
+    document, bundle, command, verified = captured(
+        operation, 'video', capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
     plan = execute(bundle, [command], verified_media=verified)
     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
                       'records': plan.records, 'output': document_from_bundle(plan.bundle)}

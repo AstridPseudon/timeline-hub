@@ -27,6 +27,20 @@ def baseline(name):
     return json.loads(raw)
 
 
+def ordinary_schema():
+    """Remove only the reviewed four item-reference unions for frozen comparisons."""
+    from tests.sdk.test_timeline_schema_superset import baseline as published
+
+    previous = published('runtime-0.2.13')
+    candidate = copy.deepcopy(_SCHEMA)
+    for name in ('ScopedId', 'EntityRef', 'AnchorIdentity', 'TargetKey'):
+        old = previous['$defs'][name]['pattern']
+        assert candidate['$defs'][name]['pattern'].startswith(f'(?:{old})|(?:^')
+        candidate['$defs'][name]['pattern'] = old
+    assert candidate == previous
+    return candidate
+
+
 @pytest.mark.parametrize('name', SOURCES)
 def test_full_current_candidate_preserves_every_definition_and_registered_operation(name):
     assert compatibility_errors(baseline(name), _SCHEMA) == []
@@ -56,7 +70,7 @@ def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(n
 
 def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
     previous = baseline('agent-current-c456b328')
-    candidate = copy.deepcopy(_SCHEMA)
+    candidate = ordinary_schema()
     for definition in ('ProducerAdmittedTarget', 'ProducerIdentity', 'ProducerAttemptPin',
                        'ProducerGuardArgs', 'SettledProducerProposal'):
         del candidate['$defs'][definition]
@@ -71,7 +85,7 @@ def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
 
 def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
     previous = baseline('agent-frozen-s1-0a0ac7ba')
-    candidate = copy.deepcopy(_SCHEMA)
+    candidate = ordinary_schema()
     element = candidate['$defs']['ClipSetElementArgs']
     assert element['properties'].pop('schema_source') == {'$ref': '#/$defs/DocumentPin'}
     assert element['required'] == ['elementRef'] and element['additionalProperties'] is False
@@ -93,9 +107,14 @@ def test_existing_argument_narrowing_still_fails(name):
     assert compatibility_errors(baseline(name), candidate)
 
 
-def test_canonical_schema_is_byte_identical_to_approved_s2():
+def test_reversing_only_item_unions_is_byte_identical_to_approved_s2():
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+    raw = path.read_bytes()
+    for name, definition in ordinary_schema()['$defs'].items():
+        if definition != _SCHEMA['$defs'][name]:
+            raw = raw.replace(json.dumps(_SCHEMA['$defs'][name]['pattern']).encode(),
+                              json.dumps(definition['pattern']).encode(), 1)
+    assert hashlib.sha256(raw).hexdigest() == (
         'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
 
 
@@ -105,7 +124,7 @@ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_
     for version, source in sources.items():
         raw = (FIXTURES / source['file']).read_bytes()
         assert hashlib.sha256(raw).hexdigest() == source['sha256']
-        previous, candidate = json.loads(raw), copy.deepcopy(_SCHEMA)
+        previous, candidate = json.loads(raw), ordinary_schema()
         if version in ('0.2.1', '0.2.2'):
             # The conservative checker cannot prove regex inclusion. Verify
             # these exact additive alternatives, then check every other field.

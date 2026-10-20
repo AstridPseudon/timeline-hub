@@ -57,7 +57,8 @@ def compatibility_errors(previous, current):
         for key in old.keys() | new.keys():
             a, b = old.get(key), new.get(key)
             at = f'{path}/{key}'
-            if same(a, b) or key in {'title', 'description', '$comment', 'examples', 'default'}:
+            if ((key in old and key in new and same(a, b))
+                    or key in {'title', 'description', '$comment', 'examples', 'default'}):
                 continue
             if key == '$defs':
                 for name, value in (a or {}).items():

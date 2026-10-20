@@ -9,6 +9,7 @@ from ._command_state import (
     CommandError,
     State,
     equal,
+    item_identity,
     logical_address,
     overlaps,
     present,
@@ -29,7 +30,9 @@ def _patch(state, path, replacement):
     node = value
     for token in path[:-1]:
         if isinstance(token, tuple):
-            matches = [row for row in node if row.get('id') == token[1]]
+            matches = [row for row in node
+                       if (row.get('item_id', row.get('id')) if token[0] == 'item'
+                           else row.get('id')) == token[1]]
             if len(matches) != 1:
                 raise CommandError('ambiguous collection alias', kind='identity_conflict')
             node = matches[0]
@@ -49,7 +52,9 @@ def _patch(state, path, replacement):
             raise CommandError('patch requires historical container structure', kind='history_unavailable')
     if isinstance(path[-1], tuple):
         identity = path[-1][1]
-        indices = [i for i, row in enumerate(node) if row.get('id') == identity]
+        indices = [i for i, row in enumerate(node)
+                   if (row.get('item_id', row.get('id')) if path[-1][0] == 'item'
+                       else row.get('id')) == identity]
         if len(indices) > 1:
             raise CommandError('ambiguous collection alias', kind='identity_conflict')
         if replacement['state'] == 'absent':
@@ -340,6 +345,14 @@ def _validate_inputs(state, record, records):
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
         ref = binding['ref']
+        if binding['key'].startswith('shot:'):
+            from ._materialization import id_map, source_entity, verify_sources
+            if binding['key'] in id_map([record]):
+                verify_sources(state, [record])
+                dep = next(dep for dep in record['dependencies']
+                           if dep['key'] in binding['dependencies'])
+                source_entity(state, ref, dep['pin'])
+                continue
         if ref not in created and state.entity(ref, optional=True) is None:
             if sites is None:
                 sites = proven_sites()
@@ -406,7 +419,10 @@ def apply_inverse(ctx, records, intervening_records):
         # no entity and must not allocate an identity or dereference a value.
         if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
             root = root_identity(write['ref'])
-            if root is not None:
+            if item_identity(write['ref']) is not None:
+                ctx.create_entity(write['ref'], kind='item', owner=item_identity(write['ref'])[0],
+                                  value=write['before']['value'], restoring=True)
+            elif root is not None:
                 ctx.create_entity(write['ref'], kind=root[0],
                                   owner=None if root[0] == 'shot' else 'parent',
                                   value=write['before']['value'], restoring=True)

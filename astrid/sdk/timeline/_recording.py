@@ -4,7 +4,7 @@ from __future__ import annotations
 import copy
 
 from ._collections import KINDS, arrange, insertion_boundary, order, rows
-from ._command_state import ABSENT, CommandError, State, equal, present, spelling
+from ._command_state import ABSENT, CommandError, State, equal, item_identity, present, spelling
 from ._common import AUDIO_KINDS
 
 
@@ -156,6 +156,27 @@ class Recording:
     def create_entity(self, ref, *, kind, owner, value, restoring=False):
         from ._command_state import root_identity
 
+        item = item_identity(ref)
+        if item is not None:
+            if (kind != 'item' or owner != item[0] or not isinstance(value, dict)
+                    or value.get('item_id', value.get('id')) != item[1]):
+                raise CommandError('invalid created item scope', ref=ref)
+            mapping = self.state.bundle['source_mapping']
+            document = mapping.get('_runtime_document', mapping.get('_source_closure', {}))
+            source_items = [row for shot in document.get('shot_revisions', [])
+                            for row in shot['payload'].get('items', [])]
+            authored_items = [row for shot in self.state.bundle['shots'].values()
+                              for row in shot['payload'].get('items', [])]
+            if (any(row.get('item_id', row.get('id')) == item[1]
+                    for row in [*authored_items, *([] if restoring else source_items)])
+                    or any(created['kind'] == 'item' and item_identity(created['ref'])[1] == item[1]
+                           for created in self.record['created'])
+                    or self.state.get(ref, []) != ABSENT):
+                raise CommandError('created item identity is occupied', kind='identity_collision', ref=ref)
+            self.read(ref)
+            self.write(ref, [], value)
+            self.record['created'].append({'ref': ref, 'kind': kind, 'owner': owner})
+            return ref
         root = root_identity(ref)
         if (root is None or root[0] != kind
                 or owner != (None if kind == 'shot' else 'parent')):
@@ -215,6 +236,18 @@ class Recording:
                 self.state.set('parent', ['config', 'clips'], after)
 
     def finish(self, *, capture=False):
+        # A raw aggregate replacement cannot smuggle an unrecorded item birth.
+        created = {item['ref'] for item in self.record['created']}
+        for identity, shot in self.state.bundle.get('shots', {}).items():
+            owner = 'shot:' + identity
+            if owner in created or self.record['command'].get('op') in ('timeline.inverse', 'timeline.restore'):
+                continue
+            before = self.command_input.bundle['shots'].get(identity, {}).get('payload', {})
+            old = {row.get('item_id', row.get('id')) for row in before.get('items', [])}
+            for row in shot['payload'].get('items', []):
+                item = row.get('item_id', row.get('id'))
+                if item not in old and owner + '/item:' + item not in created:
+                    raise CommandError('semantic item birth requires create_entity', kind='identity_collision')
         command = self.record['command']
         if capture:
             # Public replay guards describe the input; the record retains actual
@@ -230,6 +263,7 @@ class Recording:
                     command['selections'].append(claim)
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
+                                   or b['key'].startswith(('shot:', 'materialization.owner:'))
                                    or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
             command['created'] = [item['ref'] for item in self.record['created']]
             command['expect'], command['authorship'] = {}, {}
