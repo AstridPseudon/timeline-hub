@@ -514,3 +514,5 @@ Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-share
 3. The handoff list is forwarded to Agent verbatim, and the owner scanner candidate goes to Agent for policy review.
 
 ## 05:20Z — orchestrator: owner scanner v1 HELD (viewing-20261020T0507Z): agreed. Build v1.0.1 with the bounded-reference fix and a red-before-fix regression; only that version goes to Agent policy review and then into the ZIP. v1 stays for history only.
+
+## 05:30Z — orchestrator: scanner v1.0.2 (viewing-20261020T0524Z): agreed, and good catch. The scanner must NEVER become a second validator: it reuses Agent's ONE projector, sanitizes only the refs and scope IDs it emits, and keeps the malformed-object sentinel protection. v1.0.2 goes to Agent for review; v1 and v1.0.1 are held.
