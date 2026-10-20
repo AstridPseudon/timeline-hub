@@ -284,6 +284,7 @@ def _validate_inputs(state, record, records):
                     staged.create_entity(**created, value=write['after']['value'], restoring=True)
                 else:
                     stage.set(write['ref'], write['path'], write['after'])
+                staged.compile_mirrors()
             reads.extend(read for read in record['reads']
                          if stage.matches(read['ref'], read['path'], read['state']))
             selections.extend(selected for selected in record['selections']

@@ -37,6 +37,7 @@ def operations():
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     from .native_placement_commands import placement_move
+    from .new_group_commands import migrate_groups
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
@@ -48,7 +49,8 @@ def operations():
             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
+            'timeline.migrate-groups': Operation(_SCHEMA['$defs']['MigrateGroupsArgs'], migrate_groups, {})}
 
 
 @dataclass
@@ -134,6 +136,15 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
 
     if not commands:
         raise CommandError("command batch must not be empty")
+    config = bundle['parent'].get('config')
+    if isinstance(config, dict) and 'pinnedShotGroups' in config:
+        migration = len(commands) == 1 and commands[0].get('op') == 'timeline.migrate-groups'
+        reversing = len(commands) == 1 and commands[0].get('op') == 'timeline.inverse' and any(
+            w['ref'] == 'parent' and w['path'] == ['config', 'pinnedShotGroups']
+            for record in inverse_records for w in record['writes'])
+        if not migration and not reversing:
+            raise CommandError('legacy groups require the sole recorded migration command',
+                               kind='unsupported_dependency')
     if id_map and any(key != value for key, value in id_map.items()):
         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:

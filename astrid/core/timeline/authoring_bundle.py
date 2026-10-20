@@ -293,6 +293,7 @@ def open_authoring_bundle(
     *,
     shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
     internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    legacy_group_migration: bool = False,
 ) -> dict[str, Any]:
     """Open one exact immutable closure as a detached, lossless working copy.
 
@@ -306,6 +307,9 @@ def open_authoring_bundle(
     timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
     revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
     payload = _mapping(parent.get("payload"), "parent_revision.payload")
+    if (isinstance(payload.get("config"), Mapping)
+            and "pinnedShotGroups" in payload["config"] and not legacy_group_migration):
+        raise AuthoringBundleError("pinnedShotGroups requires explicit timeline.migrate-groups admission")
     parent_digest = _verify_digest(
         payload, parent.get("content_digest"), "parent_revision.content_digest"
     )

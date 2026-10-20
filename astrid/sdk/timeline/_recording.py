@@ -17,6 +17,13 @@ def selection(state, key, owner, members=()):
     boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'migration.groups':
+        # Proposed identities come from the sealed args; the complete original
+        # legacy array is a separate tagged read, including on inverse stages.
+        if owner != 'parent' or len(set(members)) != len(members) or any(
+                not ref.startswith('occurrence:') or '/' in ref for ref in members):
+            raise CommandError('invalid migration group selection')
+        result = list(members)
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))
@@ -229,7 +236,7 @@ class Recording:
                     command['selections'].append(claim)
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
-                                   or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
+                                   or (b['ref'].startswith(('occurrence:', 'shot:')) and '/' not in b['ref'])}
             command['created'] = [item['ref'] for item in self.record['created']]
             command['expect'], command['authorship'] = {}, {}
             for write in self.record['writes']:
