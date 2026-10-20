@@ -71,3 +71,49 @@ Final focused evidence: reviewed lane **631PASS/7integration deselected (87.63s)
 **Actual Runtime admission remains PENDING.** Runtime owner must generate the official matched artifact normally from this schema, compose its source/private join +authenticated own-slot implementation, and qualify occupancy/retired/globalitem authority, stale sibling replay, inverse/redo/restore/retry and six positive opaque real-service requirements. No actual matched-pair run/override/pin mutation or acceptance qualification occurred here. App ACK/pins remain owned work. M2held.
 
 Exact commands, provenance, five outstanding requirements and next steps: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-union-compose/notes/report.md`. Both commit-msg files ready; harness owns commit creation.
+
+
+## agt-m2-materialization-superset-compose — guard PASS; successor freeze requires harness HEAD
+
+This section supersedes the preceding 8e schema generation recommendation. Complete candidate `8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce` was NOT a release: its four regex rewrites fail the conservative public-floor guard. Withdrawn10c remains WITHDRAWN and is an exact negative fixture only.
+
+Only the four canonical patterns changed in product: each keeps the complete anchored ordinary regex as an independent first alternative and adds a typed shot-item alternative. TargetKey retains the unchanged property-path suffix. Reversing ONLY these four pattern edits recovers the exact ordinary472622 bytes; all 35 ordinary definitions, 14 conditionals, schema_source, closed args and registry are retained. No State/recording/provider/SDK/client/Runtime or pin changes.
+
+Imported the exact six-file tests-only delta from `ffa5325c69c575a883af25123f4d1c20a3706e4b`. Original fixture bytes, provenance and guard tests remain exact. One minimal helper correction distinguishes an absent keyword from an unknown keyword set to null: both adding and removing it now require review. New tests prove the four actual unions under an arbitrary definition name, reject old-branch changes/sibling restrictions/unknown changes, preserve arbitrary old IDs, accept typed new refs and reject malformed item refs. No sample-based containment or name allowlist; no general solver.
+
+- Assigned source worktree: `/home/user/work/wt/agt-m2-materialization-superset-compose`, branch `tl/agt-m2-materialization-superset-compose`.
+- Observed source HEAD / successor parent: `2ea37958c8e70ab56209f1c104976f8a198a6a85`; parent tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`.
+- **Exact NEW source tree including all seven new test files: `2a5f9267e6c5e6b924c77d88e8712f77d1ec446f`.** Product subtree `8e28d41e67aa0b54fd3d2fcf82fa5c111b8321ca`; tests subtree `17a9ea9f9d8a34db10fb3bf60fb5aef7985c1617`.
+- **NEW canonical schema SHA256: `62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6`**, source `astrid/core/timeline/schema/edit-command.schema.json`.
+- Final successor source HEAD does not exist until the harness commits after worker exit. Manager must publish that actual commit SHA and verify its tree equals the NEW tree above before freezing a generation input. The observed parent HEAD is NOT the successor. No commit identity has been invented.
+
+| Fixture | Published source | Raw SHA256 |
+| --- | --- | --- |
+| `runtime-0.2.2.json` | Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`, `contract/schemas/edit-command.json`, version 0.2.2 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` |
+| `runtime-0.2.3.json` | Runtime `d691ddadb4ef3f5881a25fa893b4fb812211f102`, same path, version 0.2.3 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
+| `withdrawn-10c.json` | Agent `b3c0dbd7c69a369dee303640c2bd608f1d3b71c9`, canonical schema, withdrawn negative only | `10c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1` |
+
+Commands run from the assigned source worktree AFTER the schema/helper changes:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+**111 passed in 13.20s**, exit 0. The original five-file guard handoff command (omit only the new materialization-union test file above) also passed unchanged: **77 passed in 7.36s**, exit 0; the extra case versus the prior worker's 76 is the item-reference case already present on this materialization base. All original guard assertions remain.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_parent_track_label.py
+```
+
+**185 passed in 11.10s**, exit 0. No xfails/skips/deselections in these two final lanes.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_materialization_schema_union.py
+git diff --check
+```
+
+Both PASS, exit 0. Each of the seven new files also passed `git diff --no-index --check /dev/null <file>` (exit 0/1 with empty diagnostics, as appropriate for new files).
+
+**Manager handoff after actual guard PASS:** harness commit -> publish exact successor HEAD/tree -> normal Runtime generation from schema62a7 -> apply the same published-floor guard to generated canonical bytes and retain exact Agent/artifact checks. No release/pin/adoption is authorized by this schema result. Historical 0.2.2->0.2.3 regex rewrites remain outside this conservative proof.
+
+M2 integration remains HELD. Five preserved capture behavior requirements (two dependent-B captures and three legacy media/placement goldens) are owned by another worker and were not rerun or claimed resolved here. Runtime admission, own-slot/occupancy, opaque real-service requirements and coupled acceptance remain pending. No App-readiness claim. Full report and RED probes: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-superset-compose/notes/report.md`.

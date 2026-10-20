@@ -1203,3 +1203,78 @@ Productworker sourceUNCHANGED4bb,6PASS/12FAIL321; no exactexistingRuntimeproject
 
 
 rt-m3-capture-authority-boundary-tests FINAL/STOP: announced b309f26 test +39bf401 fixture unchanged. Final direct25:14expectedRED/11PASS13.01s; unchanged spec_reference/direct_render/canonical_render neighbors88PASS/6defaultdeselected43.14s. Independent exact321cef4b realCaptureRuntime.snapshot equals ENTIRE Runtime-only reconstructed fixture AND canonical serialized bytes. Ruff/whitespacePASS. Full exact commands+14nodes+actualpartialwriteSQLtables in workers/rt-m3-capture-authority-boundary-tests/{notes/report.md,report.md}; both commitmsgsready, harnesspending. ACKmanager02:27 sourceblock/02:19nativeuncertifiedworkingcopylabel: no existingauthoritativecandidate invented, no producthelper consumed, originalAgent/Runtimepositivesunchanged. Ownercompose TWOtestfiles; featurequalification pending. No full/HTTP/sockets/schema/Agent edits. Bounded evidence exists, stopping now.
+
+
+## Runtime manager02:33 — public popup read REVIEWED 0.2.6 candidate
+Exact tl/rt-m2-popup-verified-media-read a9a81078e2aa30f071f84d3c64e1025e9ed62df1/tree d9b5af4279bcb69aaa68b6e4056fcfce588437c7, clients0.2.6, canonical472622 unchanged, RuntimeSCHEMAsha256:f6b8bfd4159037c3a33f43332cad588a8cc1d90db9e571e0dd93e9fa38a9fcc8, artifactsha256:2579b3d1d163d52641e8fdd36f3b1f0cb7e9a7a336275c1bef03a0e11cb0a125. Managerreviewednarrowservice/route/door/query/generator: existingMediaReads.selected+scope/mutex, SAME5fields, noauthoritycopylogic. M1nullfix+genuinetestsincluded; noD13/itempartialunion.
+GET /v1/projects/{project_id}/media-selection/verified/getProjectVerifiedMedia, queryrequired {asset,generation_id,variant_id,object_id,catalog_digest}; rawexistingVerifiedMediaresponse {selection,media_type,size,duration_seconds?,width?,height?}. Pyget_project_verified_media(project_id,selection:MediaSelection), TSgetProjectVerifiedMedia(projectId,selection:MediaSelection). OriginalgetProjectMediaSelectionresponseunchanged. Central102PASS(realsettledPNG/old+newffmpegvideo, exactaliases/catalog/object/scope/lifecycle/versionraces/origin/auth/allSQL+CASunchanged),105focused; normalgenerator/conformance/artifact/offlinewheel/packedTS PASS. Broader1466PASS/1inheritedbadclipaddfixture handledbyRuntimec82b56f6(testonly94PASS). No full/newactualApppairclaim.
+UNFROZENreviewcandidateforadapter+normalownedpinpreparation; finalsourcecohortmustcomposemandatorycompatgate550ff4ee andknownDoorcreateTimelinePOSTfix(currentallowlistGETonly; rt-m2-empty-timeline-door-route active). Theseareproduct/test/toolingonly, artifacts expectedunchangedunlesswirechangeproven. Oldordinary0.2.3 4c145proofstaysvalidonitsexacttuple; nevermutate/refreeze. CoordinateNEXT0.2.6normalAgent/Apppinsasonechange, then actualpopupADD/SWAPmedia-selection-integration+PARAM/ordinaryQA. Appmaybuildadapteragainstthisexactreviewedmethodnow; nofinalintegrationadoptionuntilreleasequalification/globalM1record.
+
+
+## agt-m2-materialization-superset-compose — guard PASS; successor freeze requires harness HEAD
+
+This section supersedes the preceding 8e schema generation recommendation. Complete candidate `8e0e80624909c31b4a07c956fe06389a1b711b67f46392772ae8b0ff430a56ce` was NOT a release: its four regex rewrites fail the conservative public-floor guard. Withdrawn10c remains WITHDRAWN and is an exact negative fixture only.
+
+Only the four canonical patterns changed in product: each keeps the complete anchored ordinary regex as an independent first alternative and adds a typed shot-item alternative. TargetKey retains the unchanged property-path suffix. Reversing ONLY these four pattern edits recovers the exact ordinary472622 bytes; all 35 ordinary definitions, 14 conditionals, schema_source, closed args and registry are retained. No State/recording/provider/SDK/client/Runtime or pin changes.
+
+Imported the exact six-file tests-only delta from `ffa5325c69c575a883af25123f4d1c20a3706e4b`. Original fixture bytes, provenance and guard tests remain exact. One minimal helper correction distinguishes an absent keyword from an unknown keyword set to null: both adding and removing it now require review. New tests prove the four actual unions under an arbitrary definition name, reject old-branch changes/sibling restrictions/unknown changes, preserve arbitrary old IDs, accept typed new refs and reject malformed item refs. No sample-based containment or name allowlist; no general solver.
+
+- Assigned source worktree: `/home/user/work/wt/agt-m2-materialization-superset-compose`, branch `tl/agt-m2-materialization-superset-compose`.
+- Observed source HEAD / successor parent: `2ea37958c8e70ab56209f1c104976f8a198a6a85`; parent tree `42c44bc62e2d2a31cae1c5d531438fa2eb68c5b5`.
+- **Exact NEW source tree including all seven new test files: `2a5f9267e6c5e6b924c77d88e8712f77d1ec446f`.** Product subtree `8e28d41e67aa0b54fd3d2fcf82fa5c111b8321ca`; tests subtree `17a9ea9f9d8a34db10fb3bf60fb5aef7985c1617`.
+- **NEW canonical schema SHA256: `62a7a2ed1c7af34b90e6c38cda1f8fb725742077a3ac66051ca29dcf389750a6`**, source `astrid/core/timeline/schema/edit-command.schema.json`.
+- Final successor source HEAD does not exist until the harness commits after worker exit. Manager must publish that actual commit SHA and verify its tree equals the NEW tree above before freezing a generation input. The observed parent HEAD is NOT the successor. No commit identity has been invented.
+
+| Fixture | Published source | Raw SHA256 |
+| --- | --- | --- |
+| `runtime-0.2.2.json` | Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`, `contract/schemas/edit-command.json`, version 0.2.2 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` |
+| `runtime-0.2.3.json` | Runtime `d691ddadb4ef3f5881a25fa893b4fb812211f102`, same path, version 0.2.3 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
+| `withdrawn-10c.json` | Agent `b3c0dbd7c69a369dee303640c2bd608f1d3b71c9`, canonical schema, withdrawn negative only | `10c1610b61ad151259149c97061493d9e36ae0a9220ba4983b45f22e8ac7e3b1` |
+
+Commands run from the assigned source worktree AFTER the schema/helper changes:
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_materialization_schema_union.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_composed_schema.py tests/sdk/test_workspace_client_timeline_commit.py tests/sdk/test_runtime_response_conformance.py tests/stage1/test_vendored_workspace_client_parity_luna.py
+```
+
+**111 passed in 13.20s**, exit 0. The original five-file guard handoff command (omit only the new materialization-union test file above) also passed unchanged: **77 passed in 7.36s**, exit 0; the extra case versus the prior worker's 76 is the item-reference case already present on this materialization base. All original guard assertions remain.
+
+```bash
+PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q --tb=short tests/editing_conformance/test_materialization_map.py tests/editing_conformance/test_recipe_m1_commands.py tests/editing_conformance/test_parent_track_label.py
+```
+
+**185 passed in 11.10s**, exit 0. No xfails/skips/deselections in these two final lanes.
+
+```bash
+/home/user/work/venv-agent/bin/ruff check --no-force-exclude tests/sdk/command_schema_compatibility.py tests/sdk/test_timeline_schema_superset.py tests/sdk/test_timeline_materialization_schema_union.py
+git diff --check
+```
+
+Both PASS, exit 0. Each of the seven new files also passed `git diff --no-index --check /dev/null <file>` (exit 0/1 with empty diagnostics, as appropriate for new files).
+
+**Manager handoff after actual guard PASS:** harness commit -> publish exact successor HEAD/tree -> normal Runtime generation from schema62a7 -> apply the same published-floor guard to generated canonical bytes and retain exact Agent/artifact checks. No release/pin/adoption is authorized by this schema result. Historical 0.2.2->0.2.3 regex rewrites remain outside this conservative proof.
+
+M2 integration remains HELD. Five preserved capture behavior requirements (two dependent-B captures and three legacy media/placement goldens) are owned by another worker and were not rerun or claimed resolved here. Runtime admission, own-slot/occupancy, opaque real-service requirements and coupled acceptance remain pending. No App-readiness claim. Full report and RED probes: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-superset-compose/notes/report.md`.
+
+
+## agt-m3-capture-candidate-forward — forwarding seam proposal (before wiring)
+Per PLAN/Agent INBOX02:28, propose freezing `spec.inputs.authoring_preview` = deep copy of the WHOLE existing SDK authoring-candidate-preview artifact (kind, candidate, head, publication, candidate_digest, publication_digest). Its `candidate` is authored data; no new authority field/DTO/endpoint. Keep exact `capture_snapshot_ref` working_copy binding and full snapshot expansion pins. Normal saved capture has no authoring_preview. GenericPackHost consumes admitted refs only; CAS refs with leftover capture metadata remain native, never canonical. Runtime owns base/scope/retained-read verification and refusal before writes; no duplicate Agent authority validation. Please ACK this existing input path before SDK wiring; provider sibling freezes the separate optional pure method. Actual paired run waits for reviewed provider + Runtime validation; 12 malicious cases stay strict xfail until then.
+
+
+## agt-m3-capture-projector — frozen optional provider contract (before wiring)
+
+`RuntimeCommitService.project_capture(document, *, authoring_preview=None) -> {"config": dict, "registry": dict, "expansion": dict}`. Existing startup provider/interface_version=1; optional callable, capture admission only, never save. `document` is the existing verified/scoped CanonicalDocument for the exact saved parent (or candidate BASE parent); no client/port/IO. `authoring_preview` is the COMPLETE existing preview (kind/candidate/head/candidate_digest/publication_digest/publication), passed unchanged from `spec.inputs.authoring_preview` as authored task data. No candidate field in provenance. Runtime verifies scope, retained media/documents and document authority BEFORE invoking; errors (ValueError/AuthoringBundleError) refuse requested certification before writes. Missing method also refuses certification, native unclaimed CAS unaffected.
+
+Return config/registry are raw ONE `project_runtime_parent_composition` output. `expansion` is EXACT existing SDK closure authority: saved = `managed_timeline._project_exact_parent_head` expansion PLUS `parent_content_digest`; candidate = `timeline_filmstrip._open_candidate_input_closure` third result, including exact `working_copy` marker (`label: Unpublished working copy`, base_parent, candidate_digest, publication_digest, candidate_parent_revision_id). Thus saved includes outputs/graph, candidate does not (matching existing SDK). Both include canonical, parent_revision_id, parent_content_digest, children (full config_hash), shots (full content_digest/name/text_bindings), occurrences. Saved rows use first-reference order; candidate rows use existing manifest order. No normalization/materialization. JSON-safe detached results. Runtime compares against capture_authority.expansion and metadata.working_copy, config/registry using canonical JSON equality (including JSON number/bool spelling); MUST independently bind claimed project/timeline/revision/ref and retained inputs.
+
+Implementation pending in `/home/user/work/wt/agt-m3-capture-projector/astrid/sdk/timeline/commit.py`; no consumption/source-proof claim until final hashes/goldens below. Candidate-forward sibling owns forwarding; Runtime worker `rt-m3-capture-provider-validation` please consume this exact call/keys (or record any blocking mismatch here before wiring). M3 remains held; no claim that 12 forgeries are fixed.
+
+
+agt-m3-capture-candidate-forward follow-up BEFORE wiring: `_kernel_invoke` currently pre-ingests canonical capture snapshots before `tasks.create`. That violates the approved refusal-before-CAS-writes property when Runtime lacks authority/provider. Propose capture-only bypass of SDK `publish_snapshot`, sending existing inline authority_context.capture_snapshot + duplicate filmstrip_authority to Runtime's existing atomic publisher (render/input-only behavior unchanged). Full authoring_preview stays ONLY in spec.inputs as proposed. Runtime must validate whole capture/duplicates/candidate BEFORE publication. Please ACK input path + this capture-only publication order. SDK pure transport tests will inspect inline body, zero pre-ingest writes, unchanged candidate+full pins; real CAS/ref/claim proof remains in test_capture_source_runtime.py after reviewed Runtime+provider availability. Viewing owns explicit CAS-only UNCERTIFIED labels; host continues trusting source_kind cas/revision/working_copy solely from admitted refs, never metadata.
+
+
+### agt-m3-capture-projector — exact golden constraint conflict discovered
+Real Runtime `get_project_{parent_composition,shot,timeline}_revision` adds `created_at` (and parent may add dependency_manifest), while existing CanonicalDocument images EXCLUDE these fields. Core projector copies full read rows into expansion.graph. Thus EXACT graph equality against real managed `_project_exact_parent_head` is mathematically unavailable from the approved input, with no IO/normalization/invented metadata. Config/registry + all shot/internal/occurrence/output rows/order can match exactly. Method will preserve supplied CanonicalDocument fields + derived scope in graph. Golden will keep exact full expansion equality as strict xfail documenting this missing metadata requirement, plus independent exact render/pin/order equality assertions. This is NOT a claimed solved golden; manager/orchestrator must settle graph read-metadata comparison before M3 clearance. Runtime must not treat created_at as authoring authority or silently normalize authored content. No second projector or alternative schema added. All other contract keys unchanged.
+
+
+agt-m3-capture-candidate-forward VERIFIED finding: exact435357ae real `_invoke_internal_result` with genuine preview already sends the FULL artifact in `spec.inputs.authoring_preview` (comparison True); original Runtime test helper `CaptureRuntime.admit` omitted it. No new candidate carrier/product field required. Will freeze/detach preview before read-only prepare and add direct serialization assertions; adapt actual Runtime test helper to carry actual preview without changing 12 malicious bodies. Only material product issue found is SDK premature snapshot ingestion (proposal above), pending Runtime ACK before wiring. Also saw provider sibling graph/created_at mismatch escalation; no paired run until reviewed provider+Runtime validation available. Viewing must own truthful CAS-only labels, not caller-provided status flags.
