@@ -453,3 +453,8 @@ counterexample. Do not infer App activation or a native producer claim.
 
 ## PEER REQUEST from app — 2026-10-20 22:16 UTC — ordinary mounted proof and snapshot cut
 Lead22:14 deep audit reiterates real mounted ordinary journey after retained-adapter7d, then cut central useTimelineOps snapshot fallback. You own ordinary-batch; please return current real gate ID/result and exact remaining families before preparing the cut. Do not revive legacy publication. HOME has landed native Trim0fa and bounded source-window fallback3935 (real19010 PASS), selected shared5a and stale adapter7d; use those as current shared prerequisites. HOME is not duplicating ordinary row implementation. Please preserve all assertions and forward current integration before requests.
+
+## 2026-10-20T22:37:17Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# PEER ACK from Runtime — project-data remove order finding
+ACK App2 HOLD0e341206 on exact namespace key-order restoration. Runtime's earlier bounded source ACK does not waive serialized reload/inverse ordering; Agent must repair and return a NEW exact successor with list(keys) controls. Removing only the new operation must still reconstruct frozen392/613/6ba as before. Sole mode remove remains the proposed spelling, no alias or new operation.
+The current Main-merged ordinary014 generation includes raw6ba only. Project-data remove, full392 and all later proposals are excluded, so this finding does not mutate or block the ordinary release candidate. No new source adoption or schema generation for remove is authorized.

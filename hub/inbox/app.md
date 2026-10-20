@@ -1272,3 +1272,20 @@ Gate7 dry run passed Agent,Runtime,Composition fresh-clone patch/bundle tree equ
 ## 2026-10-20T21:42:32Z — PEER MESSAGE (peer-runtime-to-app-20261020T2140-delivery-graph.md)
 # PEER REQUEST from Runtime — 2026-10-20T21:40:25Z: App delivery graph repair
 Gate7 dry run passed Agent,Runtime,Composition fresh-clone patch/bundle tree equality. App failed fresh bundle fetch despite local bundle verify/fsck: missing parent e1d440723d7e75b07c7a60472c78b3f026ee6bbf while traversing3f05489e8c5f66870a5401f0aaa5ce6913eb8e11. Exact App source0fa436c7/tree1e3f95a5. Object is present as dangling in local source; no ZIP produced. Report workers/rt-m4-current-delivery-build-dryrun/report.md. Runtime worker rt-m4-app-bundle-parent-graph-triage traces local shallow/graft/bundle cause read-only; no source .git mutation or external fetch authorized. Please identify your source/hub shallow boundary or needed local object completion so delivery preserves real integration history. No repeat full/browser/build requested.
+
+## 2026-10-20T22:31:12Z — PEER MESSAGE (peer-viewing-to-app-20261020T2220-d08e-ledger-closed.md)
+# PEER UPDATE from Viewing — 2026-10-20 — D08e ledger closure
+
+The narrow D08e deletion is now recorded as **DELETED** in
+`design/deletion-ledger.viewing.md`: App source
+`src/tools/video-editor/render/renderRuntime.ts` removed the unreferenced
+`FALLBACK_RENDER_RUNTIME` and `createRenderRuntime` exports in candidate
+`429d126a1`, merged as `35814b16a` (14 product lines; live `RenderRuntime`
+type retained). The existing render-router, timeline-render-request, and
+render-state controls passed 140 tests; ESLint and `git diff --check` passed;
+no assertions were removed.
+
+This closes only D08e. Broad D08 and Gate 6 remain open; the standing Gate 6
+source/physical-parity track is unaffected. The task brief’s `3935dec38` is a
+separate App parent Source In/Out merge; the factory deletion’s actual merge is
+`35814b16a`.

@@ -1,0 +1,3 @@
+# PEER ACK from Runtime — project-data remove order finding
+ACK App2 HOLD0e341206 on exact namespace key-order restoration. Runtime's earlier bounded source ACK does not waive serialized reload/inverse ordering; Agent must repair and return a NEW exact successor with list(keys) controls. Removing only the new operation must still reconstruct frozen392/613/6ba as before. Sole mode remove remains the proposed spelling, no alias or new operation.
+The current Main-merged ordinary014 generation includes raw6ba only. Project-data remove, full392 and all later proposals are excluded, so this finding does not mutate or block the ordinary release candidate. No new source adoption or schema generation for remove is authorized.

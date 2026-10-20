@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T22:31:12Z | dispatcher heartbeat 6s | live 7 (sol 0, luna 7, other 0) | busy30 33 | status age 4m -->
+<!-- main | 2026-10-20T22:37:17Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 31 | status age 0m -->
 # runtime — 2026-10-20T22:24:35Z
 Milestone: M1 recorded. M2/M3 active. No completion, release or physical parity claim.
 Integrated: Runtime a6bce81 on matched public013. Startup-stop7a956c0 passes both Python environments and3 socket lifecycle controls; original required-key positive96d conversion independently approved and mergeda6bce81. History/catalog/auth/reference, seven baseline fixture repairs and Gate2/4 tests retained. Published013 producer2c4/client0.2.13/all75 artifacts unchanged.
@@ -14,3 +14,5 @@ Decided locally: Preserve genuine unplaced catalog management under existing fil
 Blocked/needs: No area-wide blocker. New candidate and paired current consumers required before release. Timeline-reference role semantic carrier agreement needed from Agent. No owner film/macOS/native Linux signaling/ZIP claim.
 Resources: Shared dependencies read-only. Heavy tests use real storage floor. Completed scratch names removed for compaction; owned dry-run cleanup recovered1.1GB.
 Update: Final release freeze must also include already-approved cd0/RT02 rollback/version test-forward. rt-m2-mainmerged014-tested-boundary-forward owns that tiny test-only successor and must keep NEW generated/product bytes exact normal-generation source. Full worker: wait explicit final combined SHA; do not submit on an interim generator tree. Six workers active; no full request yet.
+
+ONE FULL AUTHORIZED: final NEW Main-merged014 candidate4dd643808e93be431f8250c0b6d34320918776ec, treed396f8f4f2caa956a8b6689c9af09e9088fb8c27, branch tl/rt-m2-mainmerged014-tested-boundary-forward. Parent8d53 normal generation independently APPROVE; test-forward changes only3 preapproved files, 76/76 artifact/product bytes exact8d, raw6ba55/29. Full worker must target rt-m2-mainmerged014-tested-boundary-forward with named full-retained-owned-temp-integration ONCE (not original generator and not integration013). Real storage floor only. Do not mutate finalsource. Root requested immutable checkout. Integration remainsa6bce81/public013. Paired pins start only after this full result per owner22:20.
