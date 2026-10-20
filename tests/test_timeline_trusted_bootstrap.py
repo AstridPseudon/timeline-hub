@@ -124,14 +124,56 @@ def test_bound_factory_parent_with_runtime_supported_source_reads_back_exactly(l
         assert captured.document == source
         history = runtime.list_timeline_commits(project, timeline, authorize=lambda: None)
         assert len(history["items"]) == 2
+        bootstrap = history["items"][0]
         setup = history["items"][-1]
+        assert bootstrap["intent"] == "bootstrap" and bootstrap["previous"] is None
+        assert setup["previous"] == {key: bootstrap[key] for key in ("revision_id", "publication_id")}
+        assert setup["publication_id"] == result["receipt"]["receipt_id"]
+        assert setup["revision_id"] == parent["revision_id"] == result["data"]["accepted_revision_id"]
         assert setup["receipt"] == result["receipt"]
         assert setup["provider_version"] == "test-only-trusted-bootstrap"
+        assert commits.history_entry(project, timeline, setup["publication_id"]) == setup
+        before = commits.revision_closure(project, timeline, bootstrap["revision_id"])
+        before_parent = before["parent_revision"]
+        assert before_parent["content_digest"] == digest(before_parent["payload"])
+        before_pin = {key: before_parent[key] for key in ("revision_id", "content_digest")}
+        after_pin = {key: parent[key] for key in ("revision_id", "content_digest")}
         record = setup["records"]["commands"][0]
         assert record["command"]["op"] == "test.trusted-legacy-bootstrap"
         assert record["command"]["created"] == record["created"] == []
-        assert record["writes"][0]["after"]["value"] == parent["payload"]
+        assert record["command"]["args"] == {"document_digest": digest(original)}
+        assert record["reads"] == [{"ref": "timeline", "path": [],
+                                     "state": {"state": "present", "value": before_pin}}]
+        assert record["writes"] == [{"ref": "timeline", "path": [],
+                                      "before": {"state": "present", "value": before_pin},
+                                      "after": {"state": "present", "value": after_pin}}]
         assert record["dependencies"][0]["pin"] == pin
+        assert commits.integrity_errors() == []
+        # Pure Agent state checks use the complete retained boundaries. They
+        # qualify the capture shape, not actual migration acceptance.
+        script = """
+import json, sys
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+context = json.load(sys.stdin)
+write, = context['record']['writes']
+for side in ('before', 'after'):
+    closure = context[side]
+    bundle = bundle_from_document(closure, _migration_inverse=True)
+    assert document_from_bundle(bundle) == closure
+    state = State(bundle)
+    assert state.matches(write['ref'], write['path'], write[side])
+    if side == 'before':
+        read, = context['record']['reads']
+        assert state.matches(read['ref'], read['path'], read['state'])
+"""
+        checkout = astrid_checkout()
+        subprocess.run(
+            [os.environ.get("ASTRID_PYTHON", sys.executable), "-c", script],
+            cwd=checkout, env={**os.environ, "PYTHONPATH": str(checkout), "PYTHONDONTWRITEBYTECODE": "1"},
+            input=json.dumps({"record": record, "before": before, "after": original}),
+            capture_output=True, text=True, check=True,
+        )
         inspected = runtime.inspect_timeline(project, timeline, {"detail": True})
         assert inspected["revision_id"] == parent["revision_id"]
         assert inspected["parent_content_digest"] == parent["content_digest"]

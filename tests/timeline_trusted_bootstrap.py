@@ -27,7 +27,7 @@ def seed_trusted_legacy_parent(service, document, *, idempotency_key):
     ordinary APIs. No identity, time, fps, pin or payload is rewritten here.
     Only a legacy parent with no shots/occurrences is supported. Inputs must be
     current on first use; retry returns storage's original receipt. The helper
-    records the actual root replacement, not a migration command or Agent
+    records the actual whole-closure RootPins, not a migration command or Agent
     semantic acceptance. Later migration/reload/inverse belong to the Agent.
     """
     document = detached(document)
@@ -85,11 +85,15 @@ def seed_trusted_legacy_parent(service, document, *, idempotency_key):
             persist_document_input_links(service.store.conn, project_id=project, timeline_id=timeline,
                                          publication_id=publication_id, revision_id=revision_id, links=links)
 
+    before_pin = {key: before["parent_revision"][key] for key in ("revision_id", "content_digest")}
+    after_pin = {key: parent[key] for key in ("revision_id", "content_digest")}
     record = {"ordinal": 0, "command": command,
-              "writes": [{"ref": "parent", "path": [],
-                          "before": {"state": "present", "value": before["parent_revision"]["payload"]},
-                          "after": {"state": "present", "value": parent["payload"]}}],
-              "reads": [], "selections": [], "bindings": [], "created": [], "derived_writes": [],
+              "writes": [{"ref": "timeline", "path": [],
+                          "before": {"state": "present", "value": before_pin},
+                          "after": {"state": "present", "value": after_pin}}],
+              "reads": [{"ref": "timeline", "path": [],
+                         "state": {"state": "present", "value": before_pin}}],
+              "selections": [], "bindings": [], "created": [], "derived_writes": [],
               "dependencies": [{"key": f"setup-input-{link.ordinal}", "kind": link.dependency_kind,
                                 "pin": link.capture.pin, "policy": "exact"} for link in links]}
     prepared = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
