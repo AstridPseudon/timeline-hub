@@ -682,7 +682,7 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -700,7 +700,7 @@ export class DirectHarness {
     const shotRevisionId = randomUUID();
     const parentClips = [
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: ids.transitionClipId, at: THREE_PRODUCTS_REFERENCE_AT, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
+      { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },

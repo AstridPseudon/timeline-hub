@@ -119,7 +119,7 @@ it('ShotEditor reads, edits and saves Runtime-valid raw settings without changin
   const harness = new DirectHarness();
   try {
     await harness.start();
-    const seed = await harness.seedThreeProducts();
+    const seed = await harness.seedThreeProducts(3);
     const projectId = harness.seed.projectId;
     const timelinePath = `/v1/projects/${projectId}/timelines/${seed.timelineId}`;
     const shotPath = `/v1/projects/${projectId}/shots/${seed.shotId}/revisions`;
@@ -213,7 +213,8 @@ it('ShotEditor reads, edits and saves Runtime-valid raw settings without changin
       assert.deepStrictEqual(await readClosure(head), sourceSnapshot);
 
       capture.onName!(`Renamed ${shape}`);
-      await waitFor(() => expect(editor.published).toHaveLength(1), { timeout: 30_000 });
+      await waitFor(() => expect(editor.published.length + capture.errors.mock.calls.length).toBeGreaterThan(0), { timeout: 30_000 });
+      expect(editor.published).toHaveLength(1);
       expect(capture.errors).not.toHaveBeenCalled();
       head = editor.published[0].headRevisionId;
       const renamed = await readClosure(head);
@@ -271,9 +272,13 @@ it('ShotEditor reads, edits and saves Runtime-valid raw settings without changin
     console.info('ShotEditor historical safety integration source tuple:', revisionSet(identity));
     const provider = new RuntimeDataProvider({ projectId, baseUrl: harness.doorBase, transport });
     const basis = await provider.loadTimelineCommandBasis(seed.timelineId);
-    const moved = await astrid.commitCaptured(projectId, seed.timelineId,
+    const movedClip = await astrid.commitCaptured(projectId, seed.timelineId,
       { revision_id: basis.head.revisionId, publication_id: basis.head.publicationId },
       { kind: 'move', clipId: seed.appClipId, on: 5 }, 'settings-tracked-move');
+    // Keep the crossfade contiguous so these writes reach Runtime's tracked-head guard.
+    const moved = await astrid.commitCaptured(projectId, seed.timelineId,
+      { revision_id: movedClip.data.accepted_revision_id, publication_id: movedClip.receipt.receipt_id },
+      { kind: 'move', clipId: seed.transitionClipId, on: 8 }, 'settings-tracked-successor-move');
     const trackedHead = moved.data.accepted_revision_id;
     const trackedBefore = await readClosure(trackedHead);
     const editor = await openEditor(trackedHead);
