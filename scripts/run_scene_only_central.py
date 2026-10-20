@@ -25,10 +25,15 @@ NODE_PIN = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
     "scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node"
 )
-PEERS = Path("/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules")
+# The retained scene graph is the 21,495-entry repaired graph.  The older D1
+# graph is intentionally not a fallback: it is a different qualification
+# baseline and must not silently re-enter this lane.
+PEERS = Path("/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules")
 NODE_SHA256 = "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
 PUBLIC12_SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
 PUBLIC12_FILES = 77
+PEER_GRAPH_FILES = 21495
+SCENE_COMPOSITION_VERSION = "0.0.8"
 PUBLIC12_NAME = "banodoco-timeline-composition-0.0.12.tgz"
 
 
@@ -67,15 +72,17 @@ def _copy_runtime(runtime_source: Path, runtime_pin: Path) -> None:
 
 def _link_peer_graph(project: Path, peers: Path, artifact: Path) -> tuple[int, str]:
     modules = project / "node_modules"
-    modules.mkdir()
-    for entry in os.scandir(peers):
-        source = Path(entry.path)
-        if source.name == "@banodoco":
-            continue
-        target = modules / source.name
-        target.symlink_to(source.resolve(), target_is_directory=source.is_dir())
+    # Keep package directories inside the owned project.  The runtime input
+    # validator intentionally rejects a package entry point that resolves out
+    # through a top-level directory link; preserve only the graph's existing
+    # leaf links while copying the real directories into this private stage.
+    shutil.copytree(peers, modules, symlinks=True)
 
     scope = modules / "@banodoco"
+    if scope.is_symlink() or scope.is_file():
+        scope.unlink()
+    elif scope.exists():
+        shutil.rmtree(scope)
     scope.mkdir()
     extracted = project.parent / "public12-extracted"
     extracted.mkdir()
@@ -86,6 +93,20 @@ def _link_peer_graph(project: Path, peers: Path, artifact: Path) -> tuple[int, s
     package.rename(target)
     files = [path for path in target.rglob("*") if path.is_file()]
     return len(files), _sha256(artifact)
+
+
+def _peer_graph_values(peers: Path) -> dict[str, object]:
+    entries = list(peers.rglob("*"))
+    links = [path for path in entries if path.is_symlink()]
+    files = [path for path in entries if path.is_file()]
+    graph_files = len(files) + len(links)
+    if graph_files != PEER_GRAPH_FILES:
+        raise RuntimeError(f"scene graph file count mismatch: {graph_files}")
+    package = peers / "@banodoco" / "timeline-composition" / "package.json"
+    package_data = json.loads(package.read_text())
+    if package_data.get("version") != SCENE_COMPOSITION_VERSION:
+        raise RuntimeError("scene graph is not the retained public08 graph")
+    return {"peer_graph_files": graph_files, "scene_composition_version": package_data["version"]}
 
 
 def _environment(repo: Path, stage: Path) -> tuple[dict[str, str], dict[str, Path | str]]:
@@ -102,6 +123,7 @@ def _environment(repo: Path, stage: Path) -> tuple[dict[str, str], dict[str, Pat
         raise RuntimeError(f"Node pin mismatch: {node} reports {node_version}")
     peers = _require_path(PEERS, directory=True)
     _require_path(peers / "esbuild", directory=True)
+    peer_graph = _peer_graph_values(peers)
     artifact = _require_path(repo / "remotion" / "artifacts" / PUBLIC12_NAME)
     if _sha256(artifact) != PUBLIC12_SHA256:
         raise RuntimeError(f"public12 artifact hash mismatch: {artifact}")
@@ -149,6 +171,7 @@ def _environment(repo: Path, stage: Path) -> tuple[dict[str, str], dict[str, Pat
         "project": str(project.resolve()),
         "node": str(node.resolve()),
         "peers": str(peers),
+        **peer_graph,
         "public12_files": public12_files,
         "public12_sha256": public12_sha256,
         "node_sha256": NODE_SHA256,
@@ -210,7 +233,9 @@ print(json.dumps({"origins": origins, "pythonpath": [str(root) for root in roots
 
 def _run(repo: Path, *, preflight_only: bool) -> int:
     stage = Path(tempfile.mkdtemp(prefix=".scene-only-central-", dir=repo))
-    python = Path(sys.executable).resolve()
+    # Preserve the venv launcher.  Resolving its symlink drops the venv's
+    # site-packages and makes the child pytest invocation use system Python.
+    python = Path(sys.executable)
     environment: dict[str, str] | None = None
     try:
         environment, values = _environment(repo, stage)
