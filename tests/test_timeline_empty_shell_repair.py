@@ -175,9 +175,17 @@ def test_non_empty_headless_shell_is_refused_untouched(service):
     assert _head(runtime, project)["head_publication_id"] is None
 
 
-def test_non_empty_legacy_document_is_refused_before_empty_shell_adoption(service):
+@pytest.mark.parametrize("parent", ["unpublished", "absent", "null"])
+def test_non_empty_legacy_document_is_refused_before_empty_shell_adoption(service, parent):
     runtime, project = service
-    _shell(runtime, project)
+    if parent == "unpublished":
+        _shell(runtime, project)
+    elif parent == "null":
+        with runtime.store._mutex, runtime.store._transaction():
+            runtime.store.conn.execute(
+                "INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)",
+                ("main", project, "t"),
+            )
     content = {
         "config": {"clips": [{"id": "unsaved", "at": 7, "hold": 3}]},
         "registry": {"assets": {}},
@@ -223,3 +231,44 @@ def test_wrong_project_or_name_is_refused_untouched(service):
     other = runtime.create_project({"slug": "other", "name": "Other"}, idempotency_key="other")["id"]
     _refused_untouched(runtime, lambda: runtime.create_timeline(other, "main", idempotency_key="foreign"))
     _refused_untouched(runtime, lambda: runtime.create_timeline(project, "main", name="Renamed", idempotency_key="renamed"))
+
+
+@pytest.mark.parametrize("parent", ["absent", "null"])
+@pytest.mark.parametrize("hidden", ["timeline_references", "timeline_shots", "snapshot", "dependency",
+                                   "retained-parent", "internal", "internal-digest", "internal-project",
+                                   "publication", "foreign-head", "archived"])
+def test_no_parent_repair_refuses_retained_content_and_corruption(service, parent, hidden):
+    from test_timeline_headless_overwrite_refused import _scoped_rows
+
+    runtime, project = service
+    conn = runtime.store.conn
+    with runtime.store._mutex, runtime.store._transaction():
+        if parent == "null":
+            conn.execute("INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)",
+                         ("main", project, "t"))
+        if hidden in {"timeline_references", "timeline_shots", "snapshot", "dependency"}:
+            _scoped_rows(runtime, project, hidden)
+        elif hidden == "retained-parent":
+            _scoped_rows(runtime, project, "dependency")
+            conn.execute("DELETE FROM composition_revision_dependencies WHERE parent_revision_id='orphan-rev'")
+        elif hidden == "internal":
+            conn.execute("INSERT INTO internal_timeline_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                         ("hidden", project, "main", '{"clips":[],"tracks":[]}', "0" * 64, "t"))
+        elif hidden == "internal-digest":
+            conn.execute("UPDATE internal_timeline_revisions SET content_digest=? WHERE timeline_id='main'", ("0" * 64,))
+        elif hidden == "internal-project":
+            other = runtime.create_project({"slug": "other", "name": "Other"})["id"]
+            conn.execute("UPDATE internal_timeline_revisions SET project_id=? WHERE timeline_id='main'", (other,))
+        elif hidden == "publication":
+            runtime.store._append_timeline_event("main", "parent.composition.published", {"project_id": project})
+        elif hidden == "foreign-head":
+            other = runtime.create_project({"slug": "other", "name": "Other"})["id"]
+            conn.execute("INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?) "
+                         "ON CONFLICT(timeline_id) DO UPDATE SET project_id=excluded.project_id", ("main", other, "t"))
+        else:
+            conn.execute("UPDATE timelines SET archived_at='t' WHERE id='main'")
+    before, cas_before, changes = _dump(runtime), _cas_dump(runtime), conn.total_changes
+    for _ in range(2):
+        _refused_untouched(runtime, lambda: runtime.create_timeline(project, "main", idempotency_key="repair"))
+        assert _dump(runtime) == before and _cas_dump(runtime) == cas_before
+        assert conn.total_changes == changes
