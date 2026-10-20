@@ -362,17 +362,43 @@ def parse_extra(value):
 
 
 def _open_extra_source(source):
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    parent_fd = None
+    source_fd = None
     try:
-        fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
-    except OSError as e:
-        raise ExtraError(f"--extra source must be a regular non-symlink file: {source}") from e
-    try:
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
+        parent, leaf = os.path.split(source)
+        parent_fd = os.open(os.sep if os.path.isabs(parent) else ".", directory_flags)
+        for component in parent.split(os.sep):
+            if component in ("", "."):
+                continue
+            child_fd = os.open(component, directory_flags, dir_fd=parent_fd)
+            try:
+                os.close(parent_fd)
+            except BaseException:
+                os.close(child_fd)
+                raise
+            parent_fd = child_fd
+        source_fd = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent_fd)
+        if not stat.S_ISREG(os.fstat(source_fd).st_mode):
             raise ExtraError(f"--extra source must be a regular non-symlink file: {source}")
+        os.close(parent_fd)
+        parent_fd = None
+        fd = source_fd
+        source_fd = None
         return fd
+    except OSError as e:
+        try:
+            if source_fd is not None:
+                os.close(source_fd)
+        finally:
+            raise ExtraError(f"--extra source must be a regular non-symlink file: {source}") from e
     except BaseException:
-        os.close(fd)
+        if source_fd is not None:
+            os.close(source_fd)
         raise
+    finally:
+        if parent_fd is not None:
+            os.close(parent_fd)
 
 
 def _preflight_extra_destinations(staging, extras):

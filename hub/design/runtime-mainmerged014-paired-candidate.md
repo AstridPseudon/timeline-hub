@@ -1,16 +1,17 @@
-# Runtime Main-merged014 corrected paired candidate
+# Runtime Main-merged014 final paired candidate
 
 **SHARED PRIVATE CANDIDATE — NOT PUBLISHED.** No `PUBLISHED` marker, consumer
 pin, integration adoption, or peer pin is authorized. Manager acceptance of the
-corrected full is still pending; the corrected full is RED.
+final full is still pending; full31902 is the terminal qualification gate.
 
 ## Exact server tuple
 
 | Field | Value |
 | --- | --- |
-| Runtime server SHA | `6e845a187684919c162b29568496c015bda1a591` |
-| Runtime server tree | `7f11d7e159d46a88a22111c414aa7bdf7b599d9d` |
-| Parent / generated producer | `4dd643808e93be431f8250c0b6d34320918776ec` / `8d53e2e1043eddfcfd92fe5983a5404b94745d63` |
+| Runtime server SHA | `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` |
+| Runtime server tree | `d3a290b407fa61e6ab2d476f50c068073f70df00` |
+| True merge parent / generated producer | `d1bde2c9c29f5fc088b9076db12ebc0a16411d3a` / `8d53e2e1043eddfcfd92fe5983a5404b94745d63` |
+| Current integration parent / tree | `9d1c43c647301da48a6e86ad82e466b501bd2418` / `50e74e3243c5da4cf77b6e6cc76605fae8aeb649` |
 | Main-merged base | `8bd92de606647d6ffc8887436a3dde3f95ea2330` (tree `d964d7138be203f7f18d8ff1f4f109805161cf5d`) |
 | Main parents | `7a956c027cbbcb498a50de59d85f3b424897f70b` + `b535646faaad2f8ae7968dfe0f4fa3057f960264` |
 | Contract/client version | `0.2.14` / `0.2.14` |
@@ -28,22 +29,40 @@ source is `contract/artifacts.json` at this exact server SHA/tree; App must use
 its normal `scripts/vendor-lock.mjs` updater after manager acceptance, not a
 hand-copied or public-013 artifact.
 
+The final candidate is the verified current-integration merge parent plus the
+copied-fixture repair on top of `0bc1e7a`; no product or artifact bytes changed
+after the reviewed `6e845a1` tuple. The normal producer checkout already exists
+at `/home/user/work/wt/rt-pin-95bd3c5f`, detached at the exact server SHA above.
+
 ## Required Main behavior and qualification counts
 
-- Health responses require `status`, `protocol`, `schema_digest`,
-  `runtime_epoch`, `runtime_session_id`, and `runtime_instance_id`.
-- Health service entries require `name`, `state`, `last_exit`, and
-  `restart_count` (optional `reason`). Service declarations require
-  `version: 1`, `services`, and per-service `name`, `argv`, and `restart`
-  (optional `env` and `ready.file`/`timeout_seconds`).
-- Generated clients use the `/v1` door. The qualified local-door operations
-  are `commitTimeline`, `listTimelineCommits`, and
-  `getProjectMediaSelection`; there is no `/astrid/v1` route or paired relay.
+- Main health contract is `workspace.v1`; its exact `health.json` digest is
+  `sha256:dcaec4238eec1633683b3bc223c039f78e7f9066effb18d80667a4a903f4510e`.
+  Responses require `status`, `protocol`, `schema_digest`, `runtime_epoch`,
+  `runtime_session_id`, and `runtime_instance_id`; service observations require
+  `name`, `state`, `last_exit`, and `restart_count` (optional `reason`).
+- Main service declaration contract is version `1`; its exact `services.json`
+  digest is
+  `sha256:10614b9c5a8f044b4c6727701147197b91410ddaf4230b8fa990b78255574018`.
+  Declarations require `version: 1`, `services`, and per-service `name`,
+  `argv`, and `restart` (optional `env` and `ready.file`/`timeout_seconds`).
+- The generated Python and TypeScript clients are contract `0.2.14`, protocol
+  `workspace.v1`, schema digest
+  `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`,
+  and component-manifest digest
+  `sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5`.
+  They use the `/v1` door; the qualified local-door operations are
+  `commitTimeline`, `listTimelineCommits`, and `getProjectMediaSelection`.
+- Main's `runtime_protocol.platform.durable_replace` remains the shared durable
+  publication helper. It preserves POSIX source/destination and parent-directory
+  fsync behavior and is available to the held Agent Main caller compatibility
+  pair. No `/astrid/v1` route, paired relay, or second timeline writer is added.
 - Contract/artifact/generation: **1,581 local tests passed; 76/76 artifacts**.
   Commit integration: **11 passed**. Door suite: **1,293 passed**. Gate 4:
   **29 Python + 61 TypeScript passed**. Corrected source gates: **50 direct
   passed, 146 central passed**. Gate 2 corrected subset: **7 passed**;
-  historical 51-case proof remains retained. Gate 7 dry run `32417` passed
+  historical 51-case proof remains retained. Exact six-node scoped run `5889`
+  passed **6 in 2.75s**. Gate 7 dry run `32417` passed
   all four bundle/linearized-patch tree comparisons; no final ZIP.
 
 ## Full results and remaining gates
@@ -53,8 +72,8 @@ The prior full on `4dd6438` / tree `d396f8f` remains RED exactly:
 review of the six failure repairs is **APPROVE**; it restored Main startup
 semantics and scoped the platform `os.open` fixture without weakening tests.
 
-The corrected full is a separate run on `6e845a1` / tree `7f11d7e`, not a
-reinterpretation of the prior result:
+The corrected full on `6e845a1` / tree `7f11d7e` remains a separate historical
+RED result, not a reinterpretation of full31902:
 
 ```text
 rt-m2-main014-corrected-current-candidate-compose-full-1020230205-26822
@@ -66,15 +85,25 @@ The three failures are the foreign-owned-shot refusal and the service/HTTP
 historical text-binding exact-retry cases; the 245 errors are concentrated in
 reference-authority/catalog HTTP cases. This result is not accepted as green.
 
-Remaining gates are manager acceptance/classification of this corrected RED
-full, then a new matched Agent/App consumer cohort against this exact tuple,
-their `/v1` door qualification, and coordinated adoption. No publish,
-`PUBLISHED`, peer pin, or public artifact mutation may occur first.
+Full31902 is the matched final run on `95bd3c5f` / tree `d3a290b4`, launched as
+`rt-m2-main014-reference-fixture-clock-repair-full-retained-owned-temp-integration-1020233140-31902`.
+It is **GREEN**: **5,988 passed, 26 skipped, 15 xfailed, 12 warnings**, exit 0,
+in 353.01s. The retained owned temporary root was
+`/tmp/rt-full-tcnell_w`. This qualifies the candidate for manager merge and
+publication review; it does not itself authorize publication, a `PUBLISHED`
+marker, current/integration adoption, or consumer pin changes.
+
+Remaining gates are manager acceptance, then a new matched Agent/App consumer
+cohort against this exact tuple, their `/v1` door qualification, and coordinated
+adoption. No publish, `PUBLISHED`, peer pin, or public artifact mutation may
+occur before that acceptance.
 
 ## Consumer handoff (after acceptance only)
 
-Root must provide an immutable checkout at the exact server SHA as
-`RUNTIME_PRODUCER`. Agent’s one normal producer-lock command is:
+After manager acceptance of a green full, use the already verified immutable
+checkout at the exact server SHA as `RUNTIME_PRODUCER`:
+`/home/user/work/wt/rt-pin-95bd3c5f`. Agent’s one normal producer-lock command
+is:
 
 ```sh
 python3 scripts/vendor_lock.py update runtime.lock.json --producer "$RUNTIME_PRODUCER"

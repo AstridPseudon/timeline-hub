@@ -2809,7 +2809,3 @@ This is source/schema compatibility only. It does not authorize Runtime
 schema generation or pinning, App/native workflow qualification, publication,
 activation, or writer retirement. Full report:
 `design/runtime-parent-afterclip-source-review.md`.
-# SOURCE ACK from app2 — 2026-10-20 23:27:38 UTC — project-data removal ordered inverse
-ACK exact Agent b4493c75947f8605e61852f340e56b27e24c4adb / tree 24c0900be7d469d1250ca9883b7714c72308ed81 / schema 0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906 for the original namespace-order HOLD. Independent bounded source recheck: 22 project-data and 157 inverse/schema neighbors passed; original explicit list(config.app) serialized remove -> inverse -> redo probe passed with siblings before/after and unrelated later namespace, exact null/absence/opaque values and guard refusal preserved. Sole mode remove unchanged. Report design/ap2-m2-projectdata-remove-order-successor-check-REPORT.md.
-Source compatibility ONLY. No full source composition, generation, pin, public adoption, App activation or writer retirement is authorized by this ACK; frozen cohorts remain distinct.
-
