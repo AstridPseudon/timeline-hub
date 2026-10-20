@@ -450,6 +450,11 @@ def test_installed_wheel_validates_outside_checkout_and_abi_is_stdlib_only(tmp_p
         "offline wheel test requires Python with setuptools>=68, wheel and pip"
     )
     wheelhouse = tmp_path / "wheels"
+    build_env = os.environ.copy()
+    if builder == sys.executable:
+        build_env.pop("SETUPTOOLS_USE_DISTUTILS", None)
+    else:
+        build_env["SETUPTOOLS_USE_DISTUTILS"] = "stdlib"
     subprocess.run(
         [
             builder,
@@ -464,7 +469,7 @@ def test_installed_wheel_validates_outside_checkout_and_abi_is_stdlib_only(tmp_p
             str(wheelhouse),
             str(source),
         ],
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
+        env=build_env,
         check=True,
     )
     (wheel,) = wheelhouse.glob("*.whl")

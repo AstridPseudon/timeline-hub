@@ -84,6 +84,11 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
 
     wheelhouse = tmp_path / "wheelhouse"
     wheelhouse.mkdir()
+    build_env = os.environ.copy()
+    if builder == sys.executable:
+        build_env.pop("SETUPTOOLS_USE_DISTUTILS", None)
+    else:
+        build_env["SETUPTOOLS_USE_DISTUTILS"] = "stdlib"
     subprocess.run(
         [
             builder,
@@ -98,7 +103,7 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
             str(wheelhouse),
             str(source),
         ],
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
+        env=build_env,
         check=True,
     )
     wheels = list(wheelhouse.glob("astrid_runtime-*.whl"))

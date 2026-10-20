@@ -405,8 +405,11 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
                     while not stopped.wait(0.2):
                         boundary.check_running()
                 except Exception as exc:
-                    failure = str(exc)
-                    print("Runtime failed: " + failure, flush=True)
+                    # A requested stop is orderly at any point, including mid-startup;
+                    # only real failures exit non-zero (login services restart on failure).
+                    if not (stopped.is_set() and isinstance(exc, cancellation.StartupCancelled)):
+                        failure = str(exc)
+                        print("Runtime failed: " + failure, flush=True)
                 finally:
                     try:
                         boundary.stop()
