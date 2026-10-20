@@ -1198,6 +1198,11 @@ class RemoteTimelines(_RemoteFamily):
         is_current_head}``.
         """
         from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+        from astrid.sdk.timeline.commit import (
+            INTERNAL_IMAGE_FIELDS,
+            PARENT_IMAGE_FIELDS,
+            SHOT_IMAGE_FIELDS,
+        )
 
         opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
         if not opened.ok or not isinstance(opened.data, Mapping):
@@ -1238,11 +1243,33 @@ class RemoteTimelines(_RemoteFamily):
                     return internal
                 internals[internal_revision] = internal.data
         try:
+            # The source closure is a canonical image graph derived from the
+            # read envelope.  Keep the raw GET rows above unchanged, but do
+            # not carry their storage-only decoration into the graph.
+            parent_image = {
+                **{key: parent.data[key] for key in PARENT_IMAGE_FIELDS},
+                "project_id": project_id,
+                "timeline_id": timeline_id,
+            }
+            shot_images = [
+                {
+                    **{key: row[key] for key in SHOT_IMAGE_FIELDS},
+                    "project_id": row.get("project_id", project_id),
+                }
+                for row in shots.values()
+            ]
+            internal_images = [
+                {
+                    **{key: row[key] for key in INTERNAL_IMAGE_FIELDS},
+                    "project_id": row.get("project_id", project_id),
+                }
+                for row in internals.values()
+            ]
             bundle = open_authoring_bundle(
-                parent.data,
+                parent_image,
                 capture_sources=True,
-                shot_revisions=list(shots.values()),
-                internal_timeline_revisions=list(internals.values()),
+                shot_revisions=shot_images,
+                internal_timeline_revisions=internal_images,
             )
         except Exception as exc:  # the bundle compiler names the inconsistent field
             return DomainResult.failure(ErrorObject(
