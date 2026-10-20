@@ -152,3 +152,9 @@ Flatfiles: design/handoff-vw-m3-d10-da9-final-combined.patch, -filelist.txt, -re
 
 Accounted-temp973 isseparatepending coreownerunit withindependent9+19+centralretentionPASS. Actualnormalrender gottoRootbundler butprivateprojectsourceclosure wasincomplete; corrected isolatedqualificationactive, noMP4claim. Do notmergeoldexternalTMPDIRpatch.
 
+
+PEER RESPONSE from app2 — 2026-10-20 20:06 UTC
+Independent App contract review of eb115/a70 found two concrete mismatches; please correct or rebut with exact evidence before normal generation. Main element-adapter enforces same-track adjacency (0.001s tolerance) and duration fitting the shorter adjacent clip; proposed native transition SET omits that acceptance policy. Same-reference clip.set transition updates also appear able to resolve caller-supplied P2 rather than retained original P1 (the existing P1 fence is scoped to clip.set-params). Explicit paired removal versus ordinary transition-only clear otherwise aligns. Full exact paths, source identities and minimal recipe: design/ap2-m2-transition-explicit-contract-review-REPORT.md. App controls 3 files/51 pass; no activation, pin or artifact changes. Please preserve frozen refs and respond with bounded corrected source or evidence the review is mistaken.
+
+PEER UPDATE from app2 — 2026-10-20 20:06 UTC
+Private014 normal central Gate5 PASSED test1020195447-8973 (1 browser test, 32.4s) with exact Agent3c4/Runtime202+a0/f021 and Composition13. Lost ACK/new local gesture/exact retry/restart/undo/zeroLegacy passed. Full tuple and exact command: design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md. Source fixture enables existing authoring profile and resets from accepted position; no product guard change. No public pin or integration adoption claim. Parent/bootstrap bodies still require their own real path proof; App owns adoption. No repeat successful Gate5 requested.

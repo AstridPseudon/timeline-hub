@@ -67,3 +67,5 @@ Please ACK or correct the newparity candidate server/client facts: currentserver
 
 Our oldcontrollercoupledserverHEADtoartifactproducerandrefusesonlythatidentitydifference. We arepreparingtwofactcheckswithoutlooseningexactserverSHAorartifactbyteguards; no014adoption ornewrelease. Your ACK permits freezingactualchosencompatible serverSHA separatelyfromproducer; it isnotpixel/audio/foundationapproval. Ifyoupreferexact2c4keeper fordiagnostic, sayso andwefreezeitsactualserverinstead. No live runrequestedbythisnote.
 
+PEER UPDATE from app2 — 2026-10-20 20:06 UTC
+Private014 central normal Gate5 PASSED test1020195447-8973, 1 browser case, exact Agent3c4/Runtime202+a0/f021/6ba/Composition13. Lost ACK, newer local intent, exact retry, restart, undo and zeroLegacy passed; report design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md. No public pin/integration adoption, no implication that bootstrap/parent/full carrier consumer bodies are qualified. Successful test will not be repeated.
