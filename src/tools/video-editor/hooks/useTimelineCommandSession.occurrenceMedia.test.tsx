@@ -5,7 +5,7 @@ import type { CanonicalDocument, CommitRequest, VerifiedMedia } from '@/integrat
 import { occurrenceMediaFixtureGraph } from '../commands/__tests__/occurrenceMediaFixture.ts';
 import type { DataProvider } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
-import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+import { buildTimelineData } from '../lib/timeline-data.ts';
 import { authoringBundleFromDocument } from '../commands/authoringBundle.ts';
 import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { captureOccurrenceMediaEdit, occurrenceMediaPreview, projectOccurrenceMediaPreview, submitOccurrenceMediaEdit,
@@ -69,7 +69,7 @@ async function setup() {
 
 // Deferred App-only tests: detached read fixtures confer no media authority or Runtime acceptance.
 describe('mounted occurrence media read fences', () => {
-  it.each(['project', 'timeline', 'unmount', 'display'] as const)('refuses a late verified read after %s changes without preview or writes', async (change) => {
+  it.each(['project', 'timeline', 'unmount', 'display', 'head'] as const)('refuses a late verified read after %s changes without preview or writes', async (change) => {
     const env = await setup();
     const captured = captureOccurrenceMediaEdit(env.hook.result.current.commands.occurrenceMediaPort, env.current(), request);
     const before = env.current();
@@ -77,8 +77,10 @@ describe('mounted occurrence media read fences', () => {
     act(() => { rejected = submitOccurrenceMediaEdit(captured); });
     const refusal = expect(rejected).rejects.toThrow();
     if (change === 'unmount') env.hook.unmount();
-    else if (change === 'display') act(() => {
-      const changed = { ...before, configVersion: before.configVersion + 1 } as TimelineData;
+    else if (change === 'display' || change === 'head') act(() => {
+      const changed = change === 'head'
+        ? { ...before, head: { ...before.head!, headRevisionId: 'another-head', headPublicationId: 'another-publication' } }
+        : { ...before, configVersion: before.configVersion + 1 };
       env.hook.result.current.commit.commitData(changed, { save: false, skipHistory: true });
     });
     else env.hook.rerender({ activeProvider: change === 'project'

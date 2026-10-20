@@ -146,7 +146,7 @@ describe('occurrence media in the existing durable session', () => {
     env.reads.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
     const pending = submitOccurrenceMediaEdit(captured);
     // Reuse an ordinary port in this same queue; its preview is irrelevant to the pending read fence.
-    submitClipScalarEdit(captureClipScalarEdit(session.clipScalarPort, env.current(), 'occ-a:clip-a', ownerRef), { values: { hold: 4 }, clear: [] });
+    submitClipScalarEdit(captureClipScalarEdit(session.clipScalarPort, env.current(), 'clip-a', 'parent'), { values: { hold: 3 }, clear: [] });
     release(copy(fixture.swap.verified_media[0]));
     await expect(pending).rejects.toThrow('Timeline changed during the media read');
     expect(env.preview.mock.calls.filter(([patch]) => patch.source === 'occurrence.media')).toHaveLength(0);

@@ -98,7 +98,8 @@ export function projectOccurrenceMediaPreview(patch: TimelinePatch, current: Tim
     return { ...occurrence, revision: { ...copy(occurrence.revision), runtime_playback_assets: assets,
       internal_timeline_revision: { ...copy(internal), timeline: copy(shot.internal_timeline) } } };
   });
+  // Retain the authored window in the local draft, including overlap with the next occurrence.
   const { config } = projectCanonicalComposition({ ...prepared, occurrences,
-    contract: { ...prepared.contract, parent_composition: copy(bundle.parent) } });
+    contract: { ...prepared.contract, parent_composition: copy(bundle.parent) } }, undefined, { clampToOccurrenceDuration: false });
   return buildDataFromCurrentRegistry(config, current, { registry: { assets: config.registry }, resolvedRegistry: config.registry });
 }
