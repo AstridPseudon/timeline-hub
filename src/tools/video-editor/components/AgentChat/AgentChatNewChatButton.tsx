@@ -157,6 +157,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
     else onNewChat(agent, model, level);
   };
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
+  const astridSignInLine = agents?.find(choice => choice.id === 'astrid')?.signInLine;
   const copyLine = async (id: LocalAgentId, command: string, index: number) => {
     try {
       await navigator.clipboard.writeText(command);
@@ -332,8 +333,8 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                         </CommandItem>
                       </>
                     )}
-                    {browsing === 'astrid' && (
-                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: run <code className={KEYCAP}>omp</code>, then <code className={KEYCAP}>/login</code>.</p>
+                    {browsing === 'astrid' && astridSignInLine && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
                     )}
                   </CommandGroup>
                   {submenu && submenu.models.length > 0 && <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}

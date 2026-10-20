@@ -97,7 +97,7 @@ describe('AgentChatNewChatButton', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     openMenu({ agents: [
-      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: 'Run `omp`, then `/login`.' },
     ] });
     const astrid = screen.getByRole('option', { name: /Astrid/ });
     const buttons = within(astrid).getAllByRole('button', { name: 'Copy command' });
@@ -210,11 +210,12 @@ describe('AgentChatNewChatButton', () => {
   });
 
   it('shows the Astrid sign-in command at the foot of its model list', () => {
-    const { onBrowseAgent, view } = openMenu();
+    const signInLine = "Run `'/home/test/.local/share/astrid/run-astrid'`, then enter `/login` in Astrid.";
+    const agents = ready.map(choice => choice.id === 'astrid' ? { ...choice, signInLine } : choice);
+    const { onBrowseAgent, view } = openMenu({ agents });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
-    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'astrid', models: [], loading: false, note: 'No models available.' }} />);
-    const [omp, login] = Array.from(LOCAL_AGENT_TABLE.astrid.signInLine.matchAll(/`([^`]+)`/g), match => match[1]);
-    expect(screen.getByText((_text, element) => element?.textContent === `More models: run ${omp}, then ${login}.`)).toBeTruthy();
+    view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={agents} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={{ agent: 'astrid', models: [], loading: false, note: 'No models available.' }} />);
+    expect(screen.getByText((_text, element) => element?.textContent === `More models: ${plainLine(signInLine)}`)).toBeTruthy();
   });
 
   it('keeps attaching an existing chat in the same menu', () => {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /** One shared table for the service's agent names and the exact recovery lines shown in the menu. */
 export const LOCAL_AGENT_TABLE = {
-  astrid: { name: 'Astrid', signInLine: 'Run `omp`, then `/login`.' },
+  astrid: { name: 'Astrid', signInLine: 'Use the sign-in instructions from Astrid on this computer.' },
   'claude-code': {
     name: 'Claude Code',
     signInLine: 'Run `claude auth login`, then come back.',
@@ -52,6 +52,7 @@ export const localAgentCatalogSchema = z.object({
     name: z.string(),
     state: z.enum(['ready', 'sign-in', 'not-installed']),
     line: z.string().nullable(),
+    signInLine: z.string().optional(),
     models: z.array(localAgentModelSchema),
     defaultModel: z.string().nullable(),
   })),
