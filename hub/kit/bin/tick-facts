@@ -1,0 +1,56 @@
+#!/bin/bash
+# tick-facts [SINCE_EPOCH] — the hourly check's FACTS, gathered by script (no model). Prints a compact digest:
+# capacity per area (measured headers), infra, merges since SINCE with mechanical test red flags, ledger burndown,
+# escalations per area, main drift, App/app2 overlap, local decisions added. Models only read flagged items.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+H=/home/user/timeline-hub; W=/home/user/work
+SINCE=${1:-$(cat $O/.last_tick 2>/dev/null || echo $(( $(date +%s) - 3600 )))}; NOW=$(date +%s)
+iso(){ date -u -d @$1 +%FT%TZ; }
+echo "== TICK FACTS $(iso $NOW) (since $(iso $SINCE))"
+git -C $H pull -q --rebase origin main 2>/dev/null
+
+echo "== CAPACITY (measured hub headers; status age = minutes since the manager last wrote STATUS)"
+for a in runtime agent app viewing app2; do h=$(head -1 $H/hub/status/$a.md 2>/dev/null); t=$(echo "$h" | sed -n 's/^<!-- [a-z0-9]* | \([^ ]*\) |.*/\1/p')
+  age=$(( (NOW - $(date -d "$t" +%s 2>/dev/null || echo $NOW)) / 60 ))
+  echo "  $a: $(echo "$h" | sed -n 's/.*| live \(.*\) -->/live \1/p') | header ${age}m old"; done
+
+echo "== INFRA (main)"
+echo "  dispatcher heartbeat $(( NOW - $(stat -c %Y $O/dispatcher.heartbeat) ))s, hub-sync $(( NOW - $(stat -c %Y $O/hub-sync.heartbeat) ))s, disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ') free, load $(cut -d' ' -f1-3 /proc/loadavg)"
+for m in agent runtime; do echo "  manager $m: $([ -f $O/managers/$m/running ] && pgrep -f "^/bin/bash $O/bin/run-manager $m" >/dev/null && echo alive || echo DOWN)"; done
+n=0; for d in $O/workers/*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] || continue; w=$(basename $d); alive=0
+  for p in $(pgrep -x timeout); do tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null | grep -q -- "-C $W/wt/$w " && alive=1; done
+  for p in $(pgrep -f "claude -p"); do [ "$(readlink /proc/$p/cwd 2>/dev/null)" = "$W/wt/$w" ] && alive=1; done
+  [ $alive = 0 ] && { echo "  ORPHAN worker $w (running marker, no process): finalize with bin/stop-worker"; n=$((n+1)); }; done
+echo "  pending queue: $(ls $O/queue/pending 2>/dev/null | grep -vc '^\.') item(s); oldest waiting $( f=$(ls -1tr $O/queue/pending 2>/dev/null | grep -v '^\.' | head -1); [ -n "$f" ] && echo $(( (NOW - $(stat -c %Y $O/queue/pending/$f)) / 60 ))m || echo -)"
+
+echo "== MERGES since (red flags are mechanical: removed assert/expect lines in tests, added skip/xfail/only, deleted test files)"
+awk -v s="$(iso $SINCE)" '$1 >= s' $O/merges.log | while read ts repo name sha; do R=$W/$repo
+  git -C $R cat-file -e "$sha^{commit}" 2>/dev/null || { echo "  $ts $repo $name $sha (not available locally)"; continue; }
+  st=$(git -C $R diff --shortstat $sha^1 $sha 2>/dev/null | sed 's/ files\? changed/f/;s/ insertions\?(+)/+/;s/ deletions\?(-)/-/;s/,//g')
+  T=$(git -C $R diff $sha^1 $sha -- '*test*' '*spec*' '*__tests__*' 2>/dev/null)
+  ra=$(echo "$T" | grep -cE '^-[^-].*(assert|expect\(|toBe|toEqual|toThrow|pytest\.raises)'); aa=$(echo "$T" | grep -cE '^\+[^+].*(assert|expect\(|toBe|toEqual|toThrow|pytest\.raises)')
+  sk=$(echo "$T" | grep -cE '^\+[^+].*(\.skip\(|\.only\(|it\.todo|xfail|pytest\.mark\.skip|skipIf|@unittest\.skip)')
+  dt=$(git -C $R diff --diff-filter=D --name-only $sha^1 $sha 2>/dev/null | grep -cE 'test|spec')
+  flag=""; [ $ra -gt $aa ] && flag="$flag NET-ASSERTS-REMOVED($ra>$aa)"; [ $sk -gt 0 ] && flag="$flag SKIP/XFAIL+$sk"; [ $dt -gt 0 ] && flag="$flag TEST-FILES-DELETED:$dt"
+  echo "  $ts $repo $name $sha [$st] asserts -$ra/+$aa${flag:+ FLAG:$flag}"; done
+
+echo "== LEDGER"
+echo "  DELETED rows: $(grep -cE '^\|.*\| *DELETED' $O/design/deletion-ledger.md 2>/dev/null) of $(grep -cE '^\| *[A-Z][A-Z0-9-]*[0-9]' $O/design/deletion-ledger.md 2>/dev/null); last change $(( (NOW - $(stat -c %Y $O/.ledger_deleted_changed 2>/dev/null || echo $NOW)) / 60 ))m ago"
+
+echo "== ESCALATIONS filed since (by area)"
+for a in agent runtime app viewing app2; do c=0; for f in $O/escalations/$a-*.md $O/escalations/closed/$a-*.md; do [ -e "$f" ] && [ $(stat -c %Y "$f") -ge $SINCE ] && c=$((c+1)); done; echo -n "  $a $c;"; done; echo
+echo "  open now: $(ls $O/escalations/*.md 2>/dev/null | wc -l)"
+
+echo "== MODEL MIX of workers started since (main)"
+for p in agt rt; do s=0; l=0; for m in $O/workers/$p-*/meta; do [ $(stat -c %Y $m) -ge $SINCE ] || continue; case $(sed -n 's/^model=//p' $m) in *sol*) s=$((s+1));; *luna*) l=$((l+1));; esac; done; echo -n "  $p sol $s / luna $l;"; done; echo
+
+echo "== MAIN DRIFT"; $O/bin/refresh-main --check 2>&1 | sed 's/^/  /'
+
+echo "== OVERLAP (App vs app2 rows)"
+git -C $W/app fetch -q hub 2>/dev/null
+git -C $W/app for-each-ref --format='%(committerdate:unix) %(refname:short)' 'refs/remotes/hub/tl/app-m2-*' | awk -v s=$SINCE '$1>=s {print $2}' | grep -iE 'element|ordinary|duplicat|parent-media|bootstrap|serializ|selected-param' | sed 's/^/  NEW App branch on an app2 row: /'
+echo "  handoff notes: $(ls $O/design/handoff-app-to-app2-*.md 2>/dev/null | wc -l)/7"
+
+echo "== LOCAL DECISIONS (lines added to STATUS since; models check these against precedents)"
+for a in agent runtime app viewing app2; do f=$O/managers/$a/STATUS.md; [ $(stat -c %Y $f 2>/dev/null || echo 0) -ge $SINCE ] || continue
+  grep -iE 'decided locally|lead decided' $f | cut -c1-220 | sed "s/^/  $a: /" | head -4; done

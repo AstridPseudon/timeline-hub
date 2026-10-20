@@ -1,0 +1,16 @@
+#!/bin/bash
+# compact-scratch [MIN_MB] — global, safe disk relief (orchestrator/lead tool). In FINISHED workers (ended over 1 h ago,
+# not running, not KEEP, not leased, not named in tests/suites.conf, tests/*.env or any manager STATUS.md), every scratch
+# directory larger than MIN_MB (default 50) inside the worker's record folder is packed into <dir>.tgz and the directory
+# removed. Nothing is lost (unpack with tar xzf). Worktrees are never touched (use bin/recycle for those).
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; MIN=${1:-50}; cut=$(date -d '-1 hour' +%s)
+B=$(df -BM --output=avail /home/user | tail -1 | tr -d ' M'); n=0
+REF=$(cat $O/tests/suites.conf $O/tests/*.env $O/managers/*/STATUS.md 2>/dev/null)
+for d in $O/workers/*/; do w=$(basename $d)
+  [ -f $d/running ] || [ -f $d/KEEP ] && continue; [ -f $d/ended ] && [ $(stat -c %Y $d/ended) -lt $cut ] || continue
+  grep -lqsw -- "$w" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && continue
+  grep -qw -- "$w" <<< "$REF" && continue
+  for s in $(find $d -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
+    [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
+    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && n=$((n+1)); done; done
+echo "packed $n scratch dirs; free ${B}M -> $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
