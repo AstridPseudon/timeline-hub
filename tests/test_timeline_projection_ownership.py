@@ -59,7 +59,7 @@ def test_foreign_global_shot_refuses_without_disclosing_owner(realm, monkeypatch
     refuses(service, commits, candidate, monkeypatch, reason="destination_occupied")
 
 
-@pytest.mark.parametrize("case", ["same-shot-duplicate", "two-shot-duplicate", "foreign-shot", "conflicting-alias", "empty"])
+@pytest.mark.parametrize("case", ["same-shot-duplicate", "two-shot-duplicate", "foreign-shot", "empty"])
 def test_complete_item_write_set_refuses_before_any_revision(realm, monkeypatch, case):
     service, commits, project, _, _ = realm
     item = media_item(service, project, "reserved-item")
@@ -72,11 +72,38 @@ def test_complete_item_write_set_refuses_before_any_revision(realm, monkeypatch,
         shots += [image("b-new", "new-shot", items=[item])]
     elif case == "foreign-shot":
         shots = [image("b-new", "new-shot", items=[item])]
-    elif case == "conflicting-alias":
-        shots = [image("a-owner", "updated-owner", items=[dict(item, id="different")])]
     elif case == "empty":
         shots = [image("a-owner", "updated-owner", items=[dict(item, item_id="")])]
     refuses(service, commits, with_media(proposal(service, commits, project, "main", "item-intruder", shots=shots), item), monkeypatch)
+
+
+def test_own_primary_update_preserves_distinct_opaque_secondary_and_its_unrelated_owner(realm):  # noqa: F811
+    service, commits, project, _, _ = realm
+    item = media_item(service, project, "reserved-item")
+    original = accept(commits, with_media(proposal(service, commits, project, "main", "item-owner",
+        shots=[image("a-owner", "owner-shot", items=[item])]), item))["data"]["canonical_document"]
+    new_timeline(service, commits, project, "other")
+    unrelated = dict(item, item_id="different")
+    accept(commits, with_media(proposal(service, commits, project, "other", "secondary-owner",
+        shots=[image("unrelated", "unrelated-shot", items=[unrelated])]), unrelated))
+    before = tuple(service.store.conn.execute("SELECT * FROM shot_items WHERE id='different'").fetchone())
+    # The former conflicting-alias negative supplied only an own-primary
+    # update. The stored codec treats its distinct secondary as opaque data.
+    updated = dict(item, id="different")
+    pair = with_media(proposal(service, commits, project, "main", "opaque-update",
+        shots=[image("a-owner", "updated-owner", items=[updated])]), updated)
+    accepted = accept(commits, pair)
+    document = accepted["data"]["canonical_document"]
+    assert document == pair[1]["canonical_document"]
+    assert document["shot_revisions"][0]["payload"]["items"] == [updated]
+    assert accepted["receipt"]["result"] == accepted["data"]
+    assert commits.history_entry(project, "main", accepted["receipt"]["receipt_id"])["records"] == pair[1]["records"]
+    assert commits.revision_closure(project, "main", document["parent_revision"]["revision_id"]) == document
+    assert commits.revision_closure(project, "main", original["parent_revision"]["revision_id"]) == original
+    assert [tuple(r) for r in service.store.conn.execute("SELECT id, shot_id FROM shot_items ORDER BY id")] == [
+        ("different", "unrelated"), ("reserved-item", "a-owner")]
+    assert tuple(service.store.conn.execute("SELECT * FROM shot_items WHERE id='different'").fetchone()) == before
+    assert service.store.integrity_report()["ok"]
 
 
 def test_retired_item_cannot_be_moved_to_another_owner(realm, monkeypatch):

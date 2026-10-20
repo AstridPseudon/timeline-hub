@@ -102,6 +102,7 @@ def test_actual_move_readback_reopen_retry_inverse_preserve_secondary(codec_film
     editing.agent = SimpleNamespace(move=capture_move, bundle=bundle_from_document)
     editing.service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
     original = editing.document()
+    unrelated_row = tuple(editing.service.store.conn.execute("SELECT * FROM shot_items WHERE id='OPAQUE'").fetchone())
     command = editing.agent.move(editing.agent.bundle(original), "occurrence:occurrence-1/clip:clip-1", 0.5)
     body = editing.body([command])
     accepted = editing.commit(body, "codec-move")
@@ -125,9 +126,13 @@ def test_actual_move_readback_reopen_retry_inverse_preserve_secondary(codec_film
     assert [tuple(r) for r in editing.service.store.conn.execute(
         "SELECT id, shot_id FROM shot_items ORDER BY id")] == sorted([
             ("OPAQUE", "shot-3"), ("item-I", "shot-1"), (primary, shot["shot_id"])])
+    assert tuple(editing.service.store.conn.execute("SELECT * FROM shot_items WHERE id='OPAQUE'").fetchone()) == unrelated_row
     editing.assert_readback(accepted)
     assert editing.document(original["parent_revision"]["revision_id"]) == original
     history = editing.history()
+    assert history[-1]["publication_id"] == accepted["receipt"]["receipt_id"]
+    assert history[-1]["receipt"] == accepted["receipt"]
+    assert history[-1]["records"]["commands"][0]["command"] == accepted["data"]["commands"][0]
     editing.service.close()
     editing.service = RuntimeService(editing.film.fixture.duplicate_root)
     editing.service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
@@ -142,9 +147,14 @@ def test_actual_move_readback_reopen_retry_inverse_preserve_secondary(codec_film
     assert rows(editing.service) == before
     assert editing.history() == history
     editing.assert_readback(accepted)
+    assert editing.document(original["parent_revision"]["revision_id"]) == original
     undone = editing.commit(editing.body([inverse(accepted["receipt"]["receipt_id"])]), "codec-inverse")
     assert undone["data"]["canonical_document"] == original
     editing.assert_readback(undone)
+    assert editing.history()[:-1] == history
+    assert editing.history()[-1]["records"]["undo_of"] == [accepted["receipt"]["receipt_id"]]
+    editing.assert_readback(accepted)
+    assert tuple(editing.service.store.conn.execute("SELECT * FROM shot_items WHERE id='OPAQUE'").fetchone()) == unrelated_row
     assert editing.service.store.integrity_report()["ok"]
 
 
