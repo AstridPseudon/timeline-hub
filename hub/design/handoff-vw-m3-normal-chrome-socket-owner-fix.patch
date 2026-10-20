@@ -1,0 +1,107 @@
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py b/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+index e5e125dce..12f623e44 100644
+--- a/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
++++ b/astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+@@ -3,7 +3,9 @@
+ from __future__ import annotations
+ 
+ import json
++import os
+ import shutil
++import stat
+ from contextlib import ExitStack, contextmanager
+ from pathlib import Path
+ from tempfile import TemporaryDirectory
+@@ -13,5 +15,32 @@ from astrid.core.rendering.contracts import FrameWindow
+ from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
+ 
+ 
++def _render_temp_parent(staging_parent: Path) -> Path:
++    """Select an admitted private parent for browser-backed render scratch.
++
++    The task's ``TMPDIR`` is already part of the host-selected Node
++    environment.  A private directory there keeps Chromium's Unix socket
++    below its platform path limit without moving outputs or authority out of
++    the assigned attempt.  Unqualified, symlinked, foreign-owned, and shared
++    temporary directories retain the existing attempt-local behavior.
++    """
++    raw = os.environ.get("TMPDIR")
++    if not raw:
++        return staging_parent
++    candidate = Path(raw).expanduser()
++    if not candidate.is_absolute() or candidate.is_symlink():
++        return staging_parent
++    try:
++        resolved = candidate.resolve(strict=True)
++        facts = resolved.stat()
++    except OSError:
++        return staging_parent
++    mode = stat.S_IMODE(facts.st_mode)
++    if (resolved != candidate or not resolved.is_dir()
++            or facts.st_uid != os.getuid() or mode & 0o077):
++        return staging_parent
++    return resolved
++
++
+ @contextmanager
+ def _prepared_remotion_root(
+@@ -78,7 +108,9 @@ def _prepared_remotion_root(
+     staged_public_root = project_dir / "public" / "astrid-effects" / render_hash
+     with ExitStack() as asset_lifecycle:
+         try:
+-            temp_parent = (staging_parent or provenance_out_path.parent).resolve()
++            temp_parent = _render_temp_parent(
++                (staging_parent or provenance_out_path.parent).resolve()
++            )
+             temp_parent.mkdir(parents=True, exist_ok=True)
+             remotion_temp_root = Path(
+                 asset_lifecycle.enter_context(
+diff --git a/tests/packs/rendering/test_remotion_root_preparation.py b/tests/packs/rendering/test_remotion_root_preparation.py
+new file mode 100644
+index 000000000..c89a3a85c
+--- /dev/null
++++ b/tests/packs/rendering/test_remotion_root_preparation.py
+@@ -0,0 +1,43 @@
++"""Pure path-budget checks for invocation-scoped Remotion scratch."""
++
++import os
++import stat
++import tempfile
++from pathlib import Path
++
++from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
++    _render_temp_parent,
++)
++
++
++def test_private_tmpdir_bounds_chrome_singleton_socket_without_changing_attempt_parent(
++    tmp_path: Path, monkeypatch,
++) -> None:
++    with tempfile.TemporaryDirectory(prefix="tl-", dir="/tmp") as private_text:
++        private_tmp = Path(private_text)
++        private_tmp.chmod(0o700)
++        staging_parent = tmp_path / ("attempt-" + "x" * 120)
++        staging_parent.mkdir()
++        monkeypatch.setenv("TMPDIR", str(private_tmp))
++
++        selected = _render_temp_parent(staging_parent)
++        socket_path = (
++            selected / ".remotion-runtime-9x9u2k0m"
++            / "com.google.Chrome.12345678901234567890" / "SingletonSocket"
++        )
++
++        assert selected == private_tmp
++        assert len(os.fsencode(socket_path)) < 108
++        assert staging_parent.is_dir()
++        assert stat.S_IMODE(private_tmp.stat().st_mode) & 0o077 == 0
++
++
++def test_shared_tmpdir_falls_back_to_attempt_parent(tmp_path: Path, monkeypatch) -> None:
++    shared_tmp = tmp_path / "shared"
++    shared_tmp.mkdir(mode=0o777)
++    shared_tmp.chmod(0o1777)
++    staging_parent = tmp_path / "attempt"
++    staging_parent.mkdir()
++    monkeypatch.setenv("TMPDIR", str(shared_tmp))
++
++    assert _render_temp_parent(staging_parent) == staging_parent
