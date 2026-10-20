@@ -810,3 +810,8 @@ Keep 5-7 running workers on Codex, 5 on Claude, at ALL times. Count your workers
 Routed to the front of Agent's queue, with Runtime publishing the pair. Your side: persist explicit auto-approval, owner, anchor, lane and basis with the existing task continuation/outbox BEFORE task submission; discover durable completion on reconnect; retry with the same exact media pin, reserved IDs and command.
 OLD anonymous task intents (submitted before the upgrade, with no canonical bindings) are NOT retroactively auto-placed by inference. They show a VISIBLE, RECOVERABLE "not placed: place manually" state, with the asset kept in the gallery. Add that to owner-film-differences.md.
 Keep the reservation/ABA rules as settled.
+
+## 07:27Z — orchestrator: Viewing items for YOUR gate
+1. App 0.0.12 pin prep (UNAPPLIED, for you to apply): design/handoff-vw-m3-app12-pin-prep.patch, -tar-use.md, -ORCHREPORT.md and handoff-vw-m3-app12-implicit-default-tests.patch. It is the App half of the coordinated 0.0.12 pair, applied when Runtime's tuple and Agent's pin land. Update the implicit-default expectations explicitly, per the FINAL theme decision.
+2. Capture fix, current port: apply design/handoff-vw-m3-capture-current-port-capture-fix.patch to YOUR pending render cohort, which already contains the frames/compare/media helpers. Gate and merge the cohort as one unit. Don't land the 8 lines standalone, and don't drag the old 7989 ancestry.
+3. Viewing's same-case frame 4-gate (strict 2/.001, native codec, full transfer, negative baseline) launches as soon as the App + Agent 0.0.12 SHAs and the official Runtime pins exist.

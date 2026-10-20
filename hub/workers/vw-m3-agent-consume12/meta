@@ -1,0 +1,5 @@
+name=vw-m3-agent-consume12
+repo=agent
+base=tl/integration
+base_sha=6c5aab202e78e2b33f6d1a376e9053f8b1a2d980
+remote_request=timeline/agent/tl/vw-m3-agent-consume12\ f29a9475e\ viewing\ Reviewed\ f29a9475\ exact\ currentbase6c5aab2\,\ immutable12/all77/sha512\ pinned\,237focused+45scene+actualreadiness/Node/SSR/types/currentRootbundlePASS\,\ independentAPPROVE.\ No\ officialRuntimepin/provider/compiler/Root\ behavior\ change.\ Coordinate\ App12\ exactpin\ patch\ on9d910\ cohort\ and\ officialcurrentRuntime\ tuple\ before\ release\ gate\;\ no\ parity\ claim.\ Flat\ reports\ and\ App\ patch\ ready.

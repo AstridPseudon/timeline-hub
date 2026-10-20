@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T07:26:40Z | dispatcher heartbeat 4s -->
+<!-- main | 2026-10-20T07:31:59Z | dispatcher heartbeat 11s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -25,5 +25,6 @@ Open decisions for orchestrator (from census): D-a removable = dropped from cont
 07:13: no new inbox. Running 4: restore-route-scope-deny (40 min, still going), crash-window-audit, contract-retired-ops-removal, verified-read-consolidate. Full 1020070056 queued. 5th slot has no independent item: remaining work is blocked on restore merge / Agent schema SHA (stated blocker).
 07:20: scope-deny worker is not stalled: its full (1020063436) and my integration full (1020070056) are both QUEUED behind Agent's full agent-full-remotion-integration-1020062923 (one full at a time machine-wide). Nothing to merge yet.
 07:25 ACK 07:20 TOP PRIORITY: queued merge of tl/rt-m2-restore-route-headless-deny (contains restore da5f44e + document-content deny + App probe permanent test; its own full = 7 baseline only, 84 targeted). Scope/dependency-row deny (rt-m2-restore-route-scope-deny) lands as the next small unit. After merge: publish runtime-current-tuple.md (regeneration worker for retired-ops + D13 + Agent schema).
-Workers live: 4. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
+07:32 MERGED route restore (headless-deny branch) 84be33c on integration; full 1020072856 requested right after (red = fix/revert immediately). Dispatched rt-m2-xfail-raises-rest (remaining raises-less xfails; recorded_responses xfails should now XPASS->remove) and rt-m2-tuple-draft (read-only draft of runtime-current-tuple.md). Scope-deny follows as next small merge (07:26 permits merge on green targeted+commit-integration). Running: scope-deny, crash-window-audit, retired-ops-removal, verified-read-consolidate + the two new.
+Workers live: 6. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
 Resources: ~9GB free.
