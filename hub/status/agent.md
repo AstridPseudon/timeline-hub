@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T14:48:39Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 1m -->
+<!-- main | 2026-10-20T14:49:35Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 2m -->
 # agent — 2026-10-20 14:47:10 UTC
 Milestone: M1 RECORDED; M2 active, no exit. Gates1/6/7 OPEN.
 Integrated: agent tl/integration130b4937. WC9docs/401wordarchitecture merged afterfourfallbackguidancefix; docrefs0errors/0warnings and scopedgrep onlydo-not-call, WC9ledgerDELETED. Approved sprite ded9 source/catalog/normalmanifest merged; current33PASS (realSSR+geometry), no parityclaim. WC4 native element publisher47c1 cut qualified: independent25+30+133; current central13386=30PASS and F1zero-write negative2PASS; ledgerDELETED. Scene/save-core dab91714 current83PASS, detachedCLI fixture6a6d92 current2PASS; service725d335 current31PASS then Root04c247 current40HTTP/WAV/lifetime/lock/fingerprint/inventoryPASS. All separate gated merges. Explicit OFFCANVAS preserved after core-valid save. Original F1/duplicate reload9cb/stored4000cap140e/sourcehost extraction4ef retained.
