@@ -6,7 +6,7 @@ import {mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'nod
 import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
 
-const tarball = resolve(process.argv[2] ?? 'banodoco-timeline-composition-0.0.9.tgz');
+const tarball = resolve(process.argv[2] ?? 'banodoco-timeline-composition-0.0.10.tgz');
 const files = execFileSync('tar', ['-tzf', tarball], {encoding: 'utf8'}).trim().split('\n');
 assert.ok(files.every(file => /^package\/(?:dist\/.*\.(?:js|d\.ts)|package\.json|README\.md|LICENSE)$/.test(file)),
   'Tarball contains source, scripts, tests or other unexpected files');
