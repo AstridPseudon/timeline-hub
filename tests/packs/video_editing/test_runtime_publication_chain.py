@@ -464,7 +464,7 @@ provenance = {
                 "{voice}", "{rate}", "{volume}", "{pitch}", "{malformed}",
             ]},
             "outputs": [
-                {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+                {"name": "audio", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
                 {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
             ],
             "isolation": {"mode": "subprocess", "network": False},
@@ -530,7 +530,7 @@ def _run_real_speech_sync(tmp_path: Path, real_runtime, *, malformed: bool):
     host = GenericPackHost(
         pack_roots=[_speech_fixture_pack(tmp_path, malformed=malformed)],
         client=worker,
-        executor_id="speech-fixture-host",
+        executor_id="astrid-pack-host",
         attempt_root=tmp_path / "attempts",
     )
     transport = WorkspaceClient(daemon.endpoint, daemon.token)
