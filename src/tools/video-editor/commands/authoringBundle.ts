@@ -94,6 +94,12 @@ function remapItems(payload: ObjectValue, remap: Map<string, string>): ObjectVal
   return result;
 }
 
+// The shared Agent corpus supplies arbitrary remap values, so it cannot enter
+// through authoringBundleFromDocument's hash-derived materialization map.
+export function remapItemsForTest(payload: ObjectValue, remap: Record<string, string>): ObjectValue {
+  return remapItems(payload, new Map(Object.entries(remap)));
+}
+
 function validateEntities(payload: ObjectValue): void {
   for (const key of ['clips', 'tracks']) {
     if (key in payload) unique(rows(payload[key]), (row) => id(row.id));
