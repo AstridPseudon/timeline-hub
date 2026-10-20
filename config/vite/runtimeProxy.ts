@@ -1,4 +1,6 @@
-import type { ProxyOptions } from 'vite';
+import type { Plugin, ProxyOptions } from 'vite';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { OPERATION_PREFIX, operationFailure, operationRequestAllowed, operationTarget } from '../../scripts/runtime-discovery-proxy.mjs';
 import { objectCacheControl } from './objectCachePolicy.mjs';
 
 // Idle (socket inactivity) window: re-armed by every byte, so a flowing media stream is never capped.
@@ -23,5 +25,53 @@ export function createWorkspaceRuntimeProxyOptions(
     },
     rewrite: (incomingPath) => incomingPath.replace(/^\/api\/runtime/, ''),
     ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  };
+}
+
+// This route never uses Vite's startup bearer or the ordinary Runtime rewrite/cache policy.
+export function createRuntimeOperationProxyOptions(target: string): ProxyOptions {
+  return {
+    target,
+    changeOrigin: true,
+    timeout: RUNTIME_REQUEST_TIMEOUT_MS,
+    proxyTimeout: RUNTIME_REQUEST_TIMEOUT_MS,
+    configure: (proxy) => {
+      proxy.on('error', (_error, _request, response) => {
+        if (!('writeHead' in response) || response.destroyed || response.writableEnded) return;
+        if (response.headersSent) { response.destroy(); return; }
+        const failure = operationFailure(503, 'operation_unavailable');
+        response.writeHead(failure.status, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
+        response.end(failure.body);
+      });
+      proxy.on('proxyReq', (request) => {
+        for (const name of ['authorization', 'cookie', 'proxy-authorization']) request.removeHeader(name);
+      });
+      proxy.on('proxyRes', (response) => {
+        response.headers['cache-control'] = 'no-store';
+        delete response.headers['set-cookie'];
+      });
+    },
+  };
+}
+
+export function createRuntimeOperationAdmissionPlugin(allowedOrigin: string | undefined): Plugin {
+  const admit = (request: IncomingMessage, response: ServerResponse, next: () => void) => {
+    if (!request.url?.includes(OPERATION_PREFIX) && request.headers['x-astrid-operation-handle'] === undefined) {
+      next(); return;
+    }
+    let host: string | undefined;
+    try { host = new URL(allowedOrigin ?? '').host; } catch { /* Unconfigured means unavailable. */ }
+    response.setHeader('Cache-Control', 'no-store');
+    const allowed = operationRequestAllowed(request, allowedOrigin, host);
+    const failure = !allowed ? operationFailure(403, 'operation_origin_forbidden')
+      : !operationTarget(request.url) ? operationFailure(400, 'operation_invalid') : null;
+    if (!failure) { next(); return; }
+    response.writeHead(failure.status, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
+    response.end(failure.body);
+  };
+  return {
+    name: 'runtime-operation-admission',
+    configureServer: (server) => { server.middlewares.use(admit); },
+    configurePreviewServer: (server) => { server.middlewares.use(admit); },
   };
 }
