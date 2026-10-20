@@ -70,8 +70,8 @@ def test_portable_native_captures(name):
 
 
 def test_closed_native_schema_refuses_inline_transcript_authority():
-    # This is the additive slice; publishing still requires the manager's S1
-    # union and the Runtime's ordinary generator/compatibility checks.
+    # Full frozen-S2 containment is guarded separately; these captures retain
+    # the closed word-choice envelope in that additive successor.
     from astrid.sdk.timeline.commands import _SCHEMA, operations
 
     assert operations()['clip.anchor'].parameters == _SCHEMA['$defs']['ClipAnchorArgs']
@@ -150,3 +150,17 @@ def test_word_choice_refuses_inactive_or_unsupported_source_ownership_before_wri
     with pytest.raises(CommandError, match='active source selection|supported source map'):
         declare(ctx, command)
     assert ctx.record['writes'] == []
+
+
+@pytest.mark.parametrize('duration', [None, float('inf')])
+def test_unresolvable_occurrence_window_refuses_before_declaration_writes(duration):
+    from astrid.sdk.timeline._recording import Recording
+    from astrid.sdk.timeline.native_word_anchor import declare
+
+    bundle, _, _ = fixture()
+    bundle['placements'][0]['duration_ms'] = duration
+    ctx = Recording(copy.deepcopy(bundle), vector('a')['command'], 0)
+    with pytest.raises(CommandError, match='resolvable occurrence interval'):
+        declare(ctx, ctx.record['command'])
+    assert ctx.record['writes'] == []
+    assert ctx.state.bundle == bundle

@@ -18,7 +18,7 @@ from astrid.sdk.timeline.compiler import (
     WordBinding,
     compile_timing,
 )
-from astrid.sdk.timeline.units import source_to_timeline_time
+from astrid.sdk.timeline.units import _time_fraction, source_to_timeline_time
 
 OP = "clip.anchor"
 PATH = ["app", "astrid"]
@@ -82,7 +82,7 @@ def binding(bundle, target, field, choice, sources):
     asset = internal.get('registry', {}).get('assets', {}).get(source.get('asset'), {})
     if not isinstance(asset, dict):
         raise TimingCompileError('transcript identity does not match the bound media source')
-    if (any(value.get(key) is not None for value in (internal, asset)
+    if (any(value.get(key) is not None for value in (internal, asset, source)
             for key in ('source_window', 'time_map', 'timeMap'))
             or any(source.get(key) is not None for key in ('asset_id', 'media_id', 'object_id'))
             or any(isinstance(placement.get(key), bool) for key in ('source_offset', 'speed'))):
@@ -101,6 +101,22 @@ def binding(bundle, target, field, choice, sources):
              for word in segment["words"]}
     if any(key not in words for key in choice["word_ids"]):
         raise TimingCompileError("bound stable word is missing; text rebinding is forbidden")
+    try:
+        geometry = placement.get('placement') or {}
+        start = _time_fraction(geometry.get('start_ms', placement.get('at_ms', 0)), 'occurrence start') / 1000
+        end = start + _time_fraction(placement['duration_ms'], 'occurrence duration') / 1000
+        origin = start + _time_fraction(source.get('at', 0), 'clip start')
+        for key in choice['word_ids']:
+            onset, finish = (source_to_timeline_time(words[key][edge],
+                source_start=source.get('from') or 0, timeline_start=origin,
+                speed=1 if source.get('speed') is None else source['speed'])
+                for edge in ('start', 'end'))
+            if onset < start or onset >= end or finish > end:
+                raise TimingCompileError('bound word is outside the half-open occurrence interval')
+    except TimingCompileError:
+        raise
+    except (KeyError, ValueError, TypeError, ArithmeticError) as exc:
+        raise TimingCompileError('word source requires a resolvable occurrence interval') from exc
     # A private kernel spelling from exact IDs, never from the echo. The kernel
     # validates only these IDs; it cannot select a different transcript word.
     text = " ".join(words[key]["text"] for key in choice["word_ids"])

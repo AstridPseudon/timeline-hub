@@ -13,8 +13,9 @@ and stable v1 word IDs. Existing source_mapping.pinned_documents can supply thes
 VerifiedDocuments; the adapter must still capture the word/occurrence binding.
 A phrase binds all its consecutive IDs. A changed declaration needs a new binding.
 Missing/revoked inputs must be omitted, never fetched as latest; authority and exact
-historical reads belong to the caller. Main has no persisted representation of this
-binding yet. These records are consumed inputs, not a new stored authoring format.
+historical reads belong to the caller. The native authored-reference adapter must derive these bindings from the
+revision itself, never from an echo or accepted history. These records are consumed
+inputs, not a new stored authoring format.
 Inputs snapshot their JSON at construction, including captured documents.
 
 Supported: fixed clips (including fixed_start), on/until/for, main word/cut/end/offset

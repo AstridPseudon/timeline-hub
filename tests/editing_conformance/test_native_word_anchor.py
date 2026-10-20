@@ -108,6 +108,87 @@ def window_command(monkeypatch, start, end):
             "select": "occurrence:occ/clip:voice", "args": {"from": start, "to": end}}
 
 
+@pytest.mark.parametrize('retained,match', [
+    ({'duration_ms': 100}, 'half-open occurrence interval'),
+    ({'source_window': {'from': 20, 'to': 30}}, 'supported source map'),
+], indirect=['retained'], ids=['short-occurrence', 'raw-source-window'])
+def test_native_acceptance_refuses_review_source_counterexamples_before_writes(recipe, match):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    from astrid.sdk.timeline._recording import Recording
+    from astrid.sdk.timeline.native_word_anchor import declare
+
+    case = recipe
+    call = {'schema_version': 1, 'op': OP, 'version': '1', 'select': REF,
+        'args': {'field': 'on', 'declaration': '"again"', 'choice': {
+            'source': 'occurrence:occ/clip:voice', 'document': case.pin,
+            'word_ids': [case.source['content']['segments'][0]['words'][1]['id']]}}}
+    head = case.service.get_project_timeline(case.project, 'film')
+    accepted = history(case)
+    with pytest.raises(RuntimeErrorBase, match=match) as error:
+        case.submit(case.request([call]), 'review-counterexample')
+    assert error.value.details['reason'] == 'invalid_anchor'
+    assert error.value.details['status'] == 'refused'
+    assert case.service.get_project_timeline(case.project, 'film') == head
+    assert history(case) == accepted
+    ctx = Recording(bundle(case), call, 0)
+    before = copy.deepcopy(ctx.state.bundle)
+    with pytest.raises(CommandError, match=match):
+        declare(ctx, call)
+    assert ctx.record['writes'] == []
+    assert ctx.state.bundle == before
+
+
+@pytest.mark.parametrize('retained', [{'duration_ms': 1750}], indirect=True)
+def test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse(recipe):
+    case = recipe
+    a = case.submit(case.request([pick(case, 1)]), 'boundary-a')
+    timing_a = projected(case).timings[TARGET]
+    b = case.submit(case.request([pick(case)]), 'boundary-b')
+    timing_b = projected(case).timings[TARGET]
+    assert timing_a != timing_b
+    undo(case, b, 'boundary-undo-b')
+    assert projected(case).timings[TARGET] == timing_a
+    case.restart()
+    restore(case, b, 'boundary-restore-b')
+    assert projected(case).timings[TARGET] == timing_b
+    restore(case, a, 'boundary-restore-a')
+    assert projected(case).timings[TARGET] == timing_a
+
+
+def test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse(recipe):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    case = recipe
+    selected = pick(case, 1)
+    anchored = case.submit(case.request([selected]), 'window-anchor')
+    move = {'schema_version': 1, 'op': 'clip.move', 'version': '1',
+            'select': 'occurrence:occ/clip:voice', 'args': {'on': 15}}
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
+        case.submit(case.request([move]), 'outside-with-live-anchor')
+    assert case.head() == head
+    undo(case, anchored, 'remove-live-anchor')
+    selected = pick(case, 1)
+    base = case.head()
+    case.submit(case.request([move]), 'outside-without-anchor')
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
+        case.submit(case.request([selected], base), 'stale-outside-occurrence')
+    assert case.head() == head
+    # Restore recovers the whole immutable revision, including its valid source.
+    restore(case, anchored, 'restore-original-source-and-anchor')
+    assert authored(bundle(case))[KEY] == selected['args']
+    clear = {'schema_version': 1, 'op': OP, 'version': '1', 'select': REF,
+             'args': {'field': 'on', 'declaration': None, 'choice': None}}
+    cleared = case.submit(case.request([clear]), 'clear-for-inverse')
+    case.submit(case.request([move]), 'outside-before-inverse')
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase, match='half-open occurrence interval'):
+        undo(case, cleared, 'inverse-outside-occurrence')
+    assert case.head() == head
+
+
 @pytest.mark.parametrize("same_text", [False, True])
 @pytest.mark.parametrize("retained", [True], indirect=True)
 def test_undo_recovers_before_binding_even_when_text_writes_are_equal(recipe, same_text):

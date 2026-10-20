@@ -188,6 +188,23 @@ class TimelineSession:
 
         return self._queue(lambda state: capture_move(self._bundle(state), select, on))
 
+    def queue_proposal(self, proposal):
+        """Persist the settled batch unchanged at its original admitted base."""
+        from astrid.sdk.timeline.producer import build_producer_batch
+
+        batch = build_producer_batch(proposal)
+        if (batch['project_id'], batch['timeline_id']) != (self.project_id, self.timeline_id):
+            raise TimelineEditError('proposal belongs to a different project or timeline')
+        with self.outbox.locked():
+            state = self._state()
+            if state['pending'] or state['flight'] is not None:
+                raise TimelineEditError('flush pending intent before queueing a proposal')
+            state['base'] = {'revision_id': batch['base_revision_id'],
+                             'publication_id': batch['base_publication_id']}
+            state['pending'], state['rationale'] = batch['commands'], batch['rationale']
+            self.outbox.write(state)
+        return copy.deepcopy(batch['commands'])
+
     def queue(self, command):
         """Capture native intent over the original base plus pending commands.
 
@@ -233,6 +250,8 @@ class TimelineSession:
         while True:
             with self.outbox.locked():
                 state = self._state()
+                if any(call['op'] == 'producer.guard' for call in state['pending']):
+                    raise TimelineEditError('flush the producer proposal before another edit')
                 if matches is not None and state["pending"]:
                     prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
                     if not matches(prefix):
@@ -284,6 +303,8 @@ class TimelineSession:
                         "base_revision_id": state["base"]["revision_id"],
                         "base_publication_id": state["base"]["publication_id"],
                         "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
                 key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
@@ -325,6 +346,7 @@ class TimelineSession:
                     state["base"] = _pin({"revision_id": data["accepted_revision_id"],
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
+                    state.pop('rationale', None)
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)

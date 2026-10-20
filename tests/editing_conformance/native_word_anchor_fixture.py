@@ -64,7 +64,7 @@ def first_selection(bundle):
                        pin["version"], pin["content_digest"], tuple(word.id for word in chosen))
 
 
-def seed(root, reused):
+def seed(root, reused, *, duration_ms=10000, source_window=None):
     # Historical data is authored with the pre-cut public API; measured edits
     # use the current Runtime and normal provider after reopening this realm.
     from runtime_protocol.service import RuntimeService
@@ -87,6 +87,8 @@ def seed(root, reused):
                                 idempotency_key="shot")
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
                "at": 1, "from": 2, "to": 6, "speed": 2}]
+    if source_window is not None:
+        voices[0]['source_window'] = source_window
     if reused:
         voices.append(dict(voices[0], id="other", at=4))
     # Initial untracked publication, before a commit history exists. No SQL,
@@ -109,7 +111,7 @@ def seed(root, reused):
                        "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
             "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
                 "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
-                "duration_ms": 10000, "source_offset": 0, "speed": 1}]}},
+                "duration_ms": duration_ms, "source_offset": 0, "speed": 1}]}},
         idempotency_key="initial-publication")
 
     service.close()
@@ -129,10 +131,13 @@ def retained(tmp_path, monkeypatch, request):
     script = """
 import json, sys
 from tests.editing_conformance.native_word_anchor_fixture import seed
-print(json.dumps(seed(sys.argv[1], sys.argv[2] == 'True')))
+options = json.loads(sys.argv[2])
+print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
 """
+    options = getattr(request, 'param', False)
+    options = options if isinstance(options, dict) else {'reused': options}
     seeded = subprocess.run([sys.executable, '-c', script, str(root),
-        str(getattr(request, 'param', False))], text=True, capture_output=True, check=True,
+        json.dumps(options)], text=True, capture_output=True, check=True,
         env={**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[2]) + os.pathsep + str(historical),
              'PYTHONDONTWRITEBYTECODE': '1'}, cwd=tmp_path)
     values = json.loads(seeded.stdout)

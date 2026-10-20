@@ -45,7 +45,7 @@ def _fps(bundle):
 
 
 def _maps(value, label):
-    for key in ("time_map", "timeMap", "from_ms", "to_ms", "children", "clips"):
+    for key in ("source_window", "time_map", "timeMap", "from_ms", "to_ms", "children", "clips"):
         if value.get(key) is not None:
             raise TimingCompileError(f"{label}: unsupported explicit map {key}")
 
@@ -135,6 +135,7 @@ def evaluate(bundle, sources, bindings, policy):
     fps = _fps(bundle)
     clips, offsets, internals = {}, {}, {}
     placement_ends, seen_shots, seen_occurrences = [], set(), set()
+    occurrence_intervals = {}
     for row in bundle.get("placements", []):
         occurrence, sid = row["occurrence_id"], row["shot_id"]
         if sid in seen_shots:
@@ -156,6 +157,7 @@ def evaluate(bundle, sources, bindings, policy):
         if offset < 0 or length <= 0:
             raise TimingCompileError("invalid occurrence interval")
         placement_ends.append(offset + length)
+        occurrence_intervals[occurrence] = (offset, offset + length)
         internal = bundle["shots"][sid]["internal_timeline"]
         for clip in internal.get("clips", []):
             owner = (occurrence, sid, clip["id"])
@@ -352,6 +354,10 @@ def evaluate(bundle, sources, bindings, policy):
                           timeline_start=interval["start"], speed=speed) for k in ("start", "end"))
             if start < interval["start"] or start >= interval["end"] or end > interval["end"]:
                 raise TimingCompileError("bound word is outside the derived source interval")
+            if pin.source[0] != 'parent':
+                occurrence_start, occurrence_end = occurrence_intervals[pin.source[0]]
+                if start < occurrence_start or start >= occurrence_end or end > occurrence_end:
+                    raise TimingCompileError("bound word is outside the half-open occurrence interval")
     return result
 
 

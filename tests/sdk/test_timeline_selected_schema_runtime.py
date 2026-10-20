@@ -144,6 +144,26 @@ def inverse(publication):
             'select': None, 'args': {'publications': [publication]}}
 
 
+def test_element_first_use_retains_declaration_without_param_writes(retained_pack):
+    from runtime_protocol.service import RuntimeService
+
+    case = retained_pack
+    before = copy.deepcopy(case.bundle()['parent']['clips'][0])
+    assert case.bundle()['source_mapping']['_runtime_document']['dependency_manifest']['documents'] == []
+    call = {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
+            'args': {'elementRef': case.selected, 'schema_source': case.pin}}
+    accepted = case.submit(case.request([call]), 'element-first-use')
+    assert accepted['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
+    assert case.bundle()['parent']['clips'][0] == before
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'element-inverse')
+    assert case.bundle()['parent']['clips'][0] == before
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'element-redo')
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+
+
 def raw_params(case, values, clear=()):
     # Deliberately bypass the capture helper; only the provider can authorize values.
     return {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
