@@ -2739,6 +2739,14 @@ class RuntimeService:
             check()
             return MediaReads(self).selection(project_id, **selectors)
 
+    def get_project_verified_media(self, project_id, selection, *, authorize):
+        from .timeline_commit_port import MediaReads, detached
+        selection = detached(selection)
+        check = self._timeline_authorize(project_id, None, authorize, mutation=False)
+        with self.store._mutex:
+            check()
+            return MediaReads(self).selected(project_id, selection)
+
     def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
                                                     idempotency_key=None, publisher=None,
                                                     invocation_path=None, authorize=None):

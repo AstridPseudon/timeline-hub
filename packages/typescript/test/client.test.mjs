@@ -5,6 +5,27 @@ import { ApiError, CONTRACT_VERSION, WorkspaceClient } from "@astrid/runtime-cli
 
 const json = (value) => new TextEncoder().encode(JSON.stringify(value));
 
+test("verified media read preserves the complete pin and encoded alias without mutation authority", async () => {
+  const selection = { asset: "alias/ &", generation_id: "g", variant_id: "v", object_id: `sha256:${"a".repeat(64)}`, catalog_digest: `sha256:${"b".repeat(64)}` };
+  const verified = { selection, media_type: "video/mp4", size: 42, duration_seconds: 2 };
+  const calls = [];
+  const transport = async (method, path, headers, body) => {
+    calls.push(path);
+    assert.equal(method, "GET");
+    assert.equal(body, undefined);
+    assert.equal(headers.Authorization, "Bearer token");
+    assert.equal(headers["Idempotency-Key"], undefined);
+    const url = new URL(path, "http://runtime");
+    assert.equal(url.pathname, "/v1/projects/project%2Fone/media-selection/verified");
+    assert.deepEqual(Object.fromEntries(url.searchParams), selection);
+    assert.equal([...url.searchParams].length, 5);
+    return { status: 200, headers: {}, body: json(verified) };
+  };
+  const client = new WorkspaceClient("http://runtime", "token", transport);
+  assert.deepEqual(await client.getProjectVerifiedMedia("project/one", selection), verified);
+  assert.equal(calls.length, 1);
+});
+
 test("generated TypeScript client performs scoped handshake and idempotent project admission", async () => {
   const release = JSON.parse(readFileSync(new URL("../../../generators/release.json", import.meta.url), "utf8"));
   assert.equal(CONTRACT_VERSION, release.contract_version);

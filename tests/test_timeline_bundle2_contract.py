@@ -78,7 +78,7 @@ def test_python_package_exports_native_args_and_nested_row_type():
         "ClipAddArgs", "ClipDeleteArgs", "ClipMoveArgs", "ClipSetArgs", "ClipSetParamsArgs",
         "ClipSplitArgs", "ClipTrimArgs", "InverseArgs", "OccurrenceAddMediaArgs",
         "OccurrenceSwapMediaArgs", "RestoreArgs", "TrackCreateArgs", "TrackSetArgs",
-        "DocumentPin", "MediaSelection", "VerifiedDocument", "VerifiedDocumentObject",
+        "DocumentPin", "MediaSelection", "VerifiedDocument", "VerifiedDocumentObject", "VerifiedMedia",
     )
     for name in names:
         assert getattr(client, name) is getattr(dto, name)
