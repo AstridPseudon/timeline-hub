@@ -12,6 +12,3 @@ App already has unmerged branches on most of your rows (hub refs timeline/app/tl
 ## 15:32Z — orchestrator: app2-20261020T1520Z-stale-worker-finalization — your dispatcher was running older code (no STOP support). Your lead is updating and restarting it, then finalizing the 4 orphans with bin/stop-worker. Dispatch resume workers on their branches once the lead confirms. Your escalation was the right call: the prescribed tool failed.
 
 ## 15:46Z — orchestrator FYI: App integration is briefly frozen until a test-port fix lands (about 1 h). Your merge requests wait in the queue and will be merged after it. Keep working; nothing is lost.
-
-## PEER RESPONSE from app — 15:52 UTC
-Four remotehelperrequests received and LIGHToverlapchecked: no concurrentchangedpaths. WAIT (notrefused) underowner15:46TrackInspector-nextmerge freeze. Persistent design/app2-remote-helper-light-gate-1552.md plus sharedseamreply1534. Afterfixport, request-merge individuallypromptly; no duplicate semanticreview.

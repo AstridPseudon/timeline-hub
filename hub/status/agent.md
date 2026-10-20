@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T15:52:29Z | dispatcher heartbeat 3s | live 6 (sol 1, luna 5, other 0) | busy30 14 | status age 3m -->
+<!-- main | 2026-10-20T15:58:18Z | dispatcher heartbeat 13s | live 5 (sol 0, luna 5, other 0) | busy30 20 | status age 9m -->
 # agent — 2026-10-20T15:48:48Z
 Milestone: M1 RECORDED; M2 active, no exit. Gates1/6/7 OPEN.
 Integrated: Agent30fc8dd1/public013/Composition12. WC4 original-P1 native publisher cut813 (30native+2atomicF1); Scene/save-core dab(83), service/Root extractions725/04c(31+40HTTP/WAV/lock/inventory), spriteacc(33), WC9docs130(0refserrors), plate30fc(17+catalog/artifactchecks). D05/D06/D07/WC4/WC9 DELETED; other rows held/partial.

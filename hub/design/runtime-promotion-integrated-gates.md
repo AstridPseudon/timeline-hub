@@ -2,7 +2,7 @@
 
 ## Verdict
 
-The reviewed catalog-promotion candidate is present on actual Runtime integration and is qualified by the bounded promotion gates. The required post-merge full is **not green**: its failures are seven known Runtime baseline nodes plus seven unrelated storage-preflight failures in existing visual-seam tests. No promotion node failed.
+The reviewed catalog-promotion candidate is present on actual Runtime integration and is qualified by the bounded promotion gates. The required post-merge full is **not green**: its failures are seven known Runtime baseline nodes plus seven new visual-seam nodes that remain unclassified here. No promotion node failed.
 
 The review document's **APPROVE** verdict for `4c1a1a30a6dfed4b1d0c7674fe6f8bfc23aab15f` / tree `67f0f65ff6df9595b452f23c2c0fbbf262898cee` is supported. At verification time actual integration was merge `81f8c7e0b22c34804015c054762af3d737e4698a`, tree `0e3a5b938d9ca489fc760b09d34b02d4ac9aad51`, with `4c1a1a3` as its second parent. The candidate is still an ancestor of the later actual integration head.
 
@@ -80,7 +80,7 @@ tests/test_runtime_boundary.py::test_retained_stop_owner_reclaims_release_before
 tests/test_zero_shim_boundary.py::test_start_does_not_inject_checkout_into_child
 ```
 
-The seven additional full-run failures are existing visual-seam nodes, each failing before admission with `ConflictError: task admission refused: storage estimate would cross the free-space floor`:
+The seven additional full-run failures are visual-seam nodes. They are new relative to `16608` and remain unclassified in this attribution record:
 
 ```text
 tests/test_visual_seam_admission.py::test_managed_render_freezes_child_effects_and_offset_from_pinned_closure
@@ -92,7 +92,7 @@ tests/test_visual_seam_admission.py::test_publication_and_render_preserve_uncove
 tests/test_visual_seam_admission.py::test_publication_and_render_preserve_uncovered_child_with_advisory_report[clips1]
 ```
 
-Post-run disk availability was 8.2 GB; the failure is the existing storage preflight's required-bytes-plus-4 GB floor, not a promotion assertion. These seven nodes are unverified under a sufficiently free disk and should not be relabeled as product regressions without a clean rerun.
+The raw log records the observed admission failure, but this report does not promote that observation into a final classification. These seven nodes are unverified under a sufficiently free disk and should not be relabeled as promotion regressions without a clean rerun.
 
 ## New/changed-node classification
 
@@ -102,11 +102,11 @@ Post-run disk availability was 8.2 GB; the failure is the existing storage prefl
 - New promotion authority parameter cases (`item-promote` auth and foreign-project): passed in the explicit central lane.
 - New native historical-render retry node from the preceding merge: no failure in the full result.
 - Changed direct-store stale-version authority control: no failure in the full result.
-- The seven visual-seam failures above are newly observed full-run failures relative to `16608`, but are storage-floor refusals in existing tests, not new promotion nodes.
+- The seven visual-seam failures above are newly observed full-run failures relative to `16608`; they are not new promotion nodes, and remain unclassified.
 
 ## Limits and next steps
 
-The full START snapshot is authoritative. During the full run, actual `/home/user/work/runtime` advanced after START to merge `a51af885ea631c695a857985239c7fe7bf2e871f` / tree `7c6ab6700307309a7942e64eb4d0c6c7cc42b681` (`tl/rt-m2-selected-media-cas-integrity`); that later merge was not part of the full result. The promotion candidate remains an ancestor of it.
+The full START snapshot is authoritative. During the full run, actual `/home/user/work/runtime` advanced after START to merge `a51af885ea631c695a857985239c7fe7bf2e871f` / tree `7c6ab6700307309a7942e64eb4d0c6c7cc42b681` (`tl/rt-m2-selected-media-cas-integrity`); that later CAS merge was not part of the full result. The separate `c45` text resolution was also not part of it. The promotion candidate remains an ancestor of the later source.
 
-No product/test/fixture/schema/client/pin change was made by this worker. The seven baseline failures remain open, and the seven storage-floor visual failures need a future central rerun when the test service has enough free space. No browser, live external service, or owner-film claim follows from this report.
+No product/test/fixture/schema/client/pin change was made by this worker. The seven baseline failures remain open, and the seven new visual-seam failures need a future central rerun when the test service has enough free space; they remain unclassified here. No browser, live external service, or owner-film claim follows from this report.
 

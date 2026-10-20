@@ -17,6 +17,7 @@ The absent-ancestor `own_materialized_read` exemption is not present. P1/F1/Scen
 - Direct focused conformance/feedback/media command: **12 passed**.
 - Ruff on all touched source/tests plus `git diff --check`: **passed**.
 - Central named lane, exact WC6 live node, generated014 client + Runtime `a0dca169`: **1 passed in 7.94s**. Result: `agt-m2-wc6-current014-consumer-proof-native-script-current-integration-1020155019-5943`.
+- Central targeted file lane on `tests/timeline/test_authoring_media.py`: **71 passed, 1 deselected in 8.84s**. Result: `agt-m2-wc6-current014-consumer-proof-targeted-1020155317-1032`.
 - Central named lane on `tests/timeline/test_authoring_media.py`: **71 passed, 1 failed in 8.29s**. The one failure is the unrelated pre-existing marked integration neighbor `test_real_runtime_import_and_parent_publication_roundtrip`, which imports `runtime_protocol` before lane setup (`ModuleNotFoundError`). It was not changed, skipped, or weakened. The exact WC6 node passes in that lane.
 - No full suite requested or run.
 

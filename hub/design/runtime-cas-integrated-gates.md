@@ -79,9 +79,11 @@ M tests/test_timeline_clip_replacement.py
 ```
 
 No product or test files were modified during this verification. No new
-xfail/skip was added. The already queued Runtime full result `16434` started
-from provisional tree `0e3a5b938d9ca489fc760b09d34b02d4ac9aad51`, not this CAS
-tree; it reported 14 failures / 5523 passed and is not used as CAS evidence.
+xfail/skip was added. The completed Runtime full `16434` belongs to the
+separate promotion-only START state: merge `81f8c7e0b22c34804015c054762af3d737e4698a`,
+tree `0e3a5b938d9ca489fc760b09d34b02d4ac9aad51`; it reported 5523 passed / 14
+failed / 18 skipped / 22 xfailed. It does not cover this later `a51` CAS tree
+and is not used as CAS evidence.
 
 ## Limits
 

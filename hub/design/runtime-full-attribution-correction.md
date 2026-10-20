@@ -1,5 +1,15 @@
 # Runtime full-suite attribution correction — 2026-10-20T12:38:53Z
 
+## Correction dated 2026-10-20
+
+The raw artifacts for `rt-m2-promotion-integrated-gates-full-restore-integration-1020150647-16434` correct the attribution of the later Runtime full. Its authoritative START source was the promotion-only integration state: merge `81f8c7e0b22c34804015c054762af3d737e4698a`, tree `0e3a5b938d9ca489fc760b09d34b02d4ac9aad51`. The raw result is **5523 passed, 14 failed, 18 skipped, 22 xfailed** (exit 1).
+
+The 14 failures are seven known baseline nodes plus seven new visual-seam nodes. The seven visual-seam nodes are **unclassified** here; this record does not turn them into promotion regressions or storage-preflight findings. The full covers the `0e3a5b9`/`81f8` promotion state only. It does **not** cover the later `a51` CAS merge or `c45` text resolution, and it makes no current-green, current-full, delivery, or pin-mutation claim.
+
+Prior full `16608` remains raw **5533 passed / 8 failed / 18 skipped / 24 xfailed** on its exact `7f6` source; it includes seven known baseline failures plus the inherited audit race fixed by `16ac`. Its raw count remains eight. The current public producer `0.2.13`/`2c4` is immutable and the compatible server is a distinct source. Any future full is manager-direct `integration:runtime` work only.
+
+This correction changes document attribution only; the request, snapshot, summary, and log under the test-service artifact directory remain unchanged.
+
 Audit1213 correctly found that the queued request had been described as an immutable2c4 snapshot. That was false. The process error was reading a provisional queued snap as final.
 
 | Request | Actual source | Actual state/result |
