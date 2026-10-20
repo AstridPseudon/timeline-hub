@@ -14,11 +14,17 @@ def active(row):
 
 
 def selection(state, key, owner, members=()):
+    boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))
+    elif key == 'placement.owners':
+        shot = state.occurrence(owner)['shot_id']
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if row['shot_id'] == shot]
+        boundaries = ['shot:' + shot]
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -32,12 +38,14 @@ def selection(state, key, owner, members=()):
     else:
         raise CommandError(f"unsupported recorded query {key!r}")
     return {"key": key, "query_version": 1, "owner": owner, "members": result,
-            "order": list(result), "boundaries": list(result), "policy": "guard-membership"}
+            "order": list(result), "boundaries": list(result) if boundaries is None else boundaries,
+            "policy": "guard-membership"}
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal, *, closures=None):
+    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=()):
         self.state = State(bundle, closures=closures)
+        self.verified_media = copy.deepcopy(verified_media)
         self.input_state = None
         self.command_input = State(copy.deepcopy(bundle), closures=closures)
         parent = bundle['parent']
@@ -149,6 +157,18 @@ class Recording:
         if kind == 'shot' and root[1] not in self.state.bundle['source_mapping']['shots']:
             self.state.bundle['shots'][root[1]]['_created'] = True
         self.record['created'].append({'ref': ref, 'kind': kind, 'owner': owner})
+        return ref
+
+    def create_asset(self, owner, identity, value):
+        ref = owner + '/asset:' + identity
+        if owner != 'parent':
+            self.read(owner, ['occurrence_id'])
+            self.read(owner + '/shot', ['shot_id'])
+        if self.state.get(ref, []) != ABSENT:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+        self.read(ref)
+        self.write(ref, [], value)
+        self.record['created'].append({'ref': ref, 'kind': 'asset', 'owner': owner})
         return ref
 
     def compile_inputs(self):

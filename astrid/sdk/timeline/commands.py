@@ -15,12 +15,7 @@ from ._recording import Recording, guard, selection
 
 _SCHEMA = json.loads((Path(__file__).parents[2] / 'core/timeline/schema/edit-command.schema.json').read_text())
 _VALIDATOR = Draft202012Validator(_SCHEMA)
-TRACK_CREATE_PARAMETERS = {
-    'type': 'object', 'required': ['row'], 'additionalProperties': False,
-    'properties': {'row': {'type': 'object', 'required': ['id', 'kind'],
-                           'properties': {'id': {'type': 'string', 'pattern': '^(?!.*::)[^/]+$'},
-                                          'kind': {'type': 'string', 'minLength': 1}}}},
-}
+TRACK_CREATE_PARAMETERS = _SCHEMA['$defs']['TrackCreateArgs']
 
 
 @dataclass(frozen=True)
@@ -37,8 +32,13 @@ def operations():
     from ._delete_commands import delete
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
+    from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_placement_commands import placement_move
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
+            'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
+            'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
@@ -117,7 +117,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None):
+            closures=None, verified_media=()):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -135,12 +135,12 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal, closures=closures)
+        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:
             from .capture import move_intent
-            intent = move_intent(command['select']) if command['op'] == 'clip.move' else operation.intent
+            intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
             supplied_intent = {**intent, **command.get('intent', {})}
             if supplied_intent != intent:
                 raise CommandError("unsupported operation intention policy")

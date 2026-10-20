@@ -158,8 +158,65 @@ def bundle_from_document(document):
     return bundle
 
 
-def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
-    """Compile through main and close every reused image from the exact input."""
+def _inverse_media_removals(records, bundle):
+    """Only accepted edges can prove that a retained pin was introduced by writes."""
+    from ._collections import AcceptedRecords
+    from ._command_state import CommandError, State, equal
+
+    if not records:
+        return set()
+    if not isinstance(records, AcceptedRecords):
+        raise CommandError('media inverse needs accepted boundaries', kind='history_unavailable')
+    if not equal(list(records), [record for entry in records.entries
+                                for record in entry['records']['commands']]):
+        raise CommandError('media inverse records differ from accepted history', kind='history_unavailable')
+    removed = set()
+    for entry in reversed(records.entries):
+        before, after = records.load_boundary(entry)
+        images = [value['source_mapping']['_runtime_document'] for value in (before, after)]
+        for image, pin in zip(images, (entry['previous'], entry)):
+            _verify_document(image)
+            _require((image['project_id'], image['timeline_id']) ==
+                     (bundle['project_id'], bundle['timeline_id'])
+                     and image['parent_revision']['revision_id'] == pin['revision_id'],
+                     'inverse media boundary mismatch')
+        commands = entry['records']['commands']
+        # Whole-closure restoration already selects its exact source manifest.
+        if any(write['ref'] == 'timeline' for record in commands for write in record['writes']):
+            continue
+        prior_media, accepted_media = ({row['media_id'] for row in image['dependency_manifest']['media']}
+                                       for image in images)
+        introduced = accepted_media - prior_media
+        if prior_media - accepted_media and any(record['command']['op'] != 'timeline.inverse'
+                                                for record in commands):
+            raise CommandError('unproven media removal boundary', kind='history_unavailable')
+        removed.difference_update(prior_media - accepted_media)
+        if not introduced:
+            continue
+        state = State(copy.deepcopy(before))
+        for record in commands:
+            for write in [*record['writes'], *record['derived_writes']]:
+                if not state.matches(write['ref'], write['path'], write['before']):
+                    raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
+                state.set(write['ref'], write['path'], write['after'])
+        replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+        if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
+                or any(not equal(replayed[key], images[1][key]) for key in (
+                    'shot_revisions', 'internal_timeline_revisions'))
+                or not equal(replayed['dependency_manifest']['documents'],
+                             images[1]['dependency_manifest']['documents'])
+                or not introduced <= _collect_media([write['after'] for record in commands
+                                                     for write in record['writes']])):
+            raise CommandError('unproven media boundary scope', kind='history_unavailable')
+        removed.update(introduced)
+    return removed
+
+
+def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+    """Compile exact inputs; inverse pin removal requires provider-verified records.
+
+    Historical source images alone never authorize dropping retained media.
+    """
     from ._command_state import equal
 
     source = bundle["source_mapping"]["_runtime_document"]
@@ -222,6 +279,20 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
     # immutable binding rather than a selected clip. Keep those existing pins.
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+    removals = _inverse_media_removals(inverse_records, bundle)
+    if removals:
+        from ._command_state import CommandError
+
+        required = _collect_media([parent, *[row['payload'] for row in shots + internals]])
+        captures = bundle['source_mapping'].get('pinned_documents', [])
+        if any(not any(capture['pin'] == pin for capture in captures) for pin in documents):
+            raise CommandError('media inverse source scope is unavailable', kind='history_unavailable')
+        required.update(_collect_media([capture['document']['content'] for capture in captures
+                                       if capture['pin'] in documents]))
+        if required & removals:
+            raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+        for identity in removals:
+            media.pop(identity, None)
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
     if (parent == source["parent_revision"]["payload"]
@@ -356,6 +427,9 @@ def _reservation_refs(state):
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
     for owner in owners:
+        assets = state.config(owner).get('registry', {}).get('assets', {})
+        _require(isinstance(assets, dict), 'invalid asset identity collection')
+        refs.update(owner + '/asset:' + identity for identity in assets)
         for kind in ('clip', 'track'):
             collection = state.collection(owner, kind)
             if collection is None:
@@ -385,7 +459,7 @@ def _check_reservations(port, plan, current, rejected, base):
         if not _id(owner) or not (owner == 'parent' or (
                 root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
             return False
-        return (item['kind'] in ('track', 'clip')
+        return (item['kind'] in ('track', 'clip', 'asset')
                 and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
                                  item['ref']) is not None)
 
@@ -488,6 +562,14 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
+            verified_media = []
+            for call in calls:
+                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media'):
+                    from .commands import validate_command
+                    validate_command(call)
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
@@ -586,7 +668,8 @@ class RuntimeCommitService:
             if not closures:
                 _hydrate(port, bundle)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures)
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -602,9 +685,11 @@ class RuntimeCommitService:
                         _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures)
+                                      entries, CommitRejected, base, current)], closures=closures,
+                                  verified_media=verified_media)
                 _check_reservations(port, plan, current, CommitRejected, base)
-                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                inverse_records=inverse_records)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
