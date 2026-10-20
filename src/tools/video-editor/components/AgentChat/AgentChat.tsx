@@ -43,6 +43,7 @@ import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton';
+import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
@@ -312,7 +313,7 @@ function AvailableAgentChatPanel({
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string; updateNeeded: boolean } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -915,7 +916,7 @@ function AvailableAgentChatPanel({
       // and applying the selected thinking level.
       if (sessionId) await configureSession.mutateAsync({ sessionId, model, thoughtLevel });
     } catch (error) {
-      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });
+      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
     } finally {
       setStartingAgent(null);
     }
@@ -1045,7 +1046,7 @@ function AvailableAgentChatPanel({
             agentModelNames={agentModelNames}
             agentCanBrowse={agentCanBrowse}
             agentsLoading={localAgents.isLoading}
-            agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
+            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
             disabled={startingAgent !== null || createNewSession.isPending || !hasProject}
             onMenuOpenChange={(open) => { if (open) void localAgents.refetch(); }}
             onBrowseAgent={setBrowseAgent}
@@ -1057,8 +1058,9 @@ function AvailableAgentChatPanel({
       </div>
       {startFailure && (
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          <p>{agentNames[startFailure.agent]} didn't start.</p>
-          <p>Details: {startFailure.details}</p>
+          {startFailure.updateNeeded
+            ? <ChatUpdateNeeded detail={startFailure.details} />
+            : <><p>{agentNames[startFailure.agent]} didn't start.</p><p>Details: {startFailure.details}</p></>}
           <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.choice, startFailure.model, startFailure.thoughtLevel, startFailure.sessionId)}>Try again</button>
         </div>
       )}
@@ -1333,7 +1335,7 @@ function AvailableAgentChatPanel({
 
         {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {turnFailureMessage}
+            {isChatUpdateError(turnFailure) ? <ChatUpdateNeeded detail={turnFailure.message} /> : turnFailureMessage}
             {(sessions.error || projectChat.error) && (
               <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
                 onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>

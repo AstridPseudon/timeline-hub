@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton.tsx';
+import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
 
 beforeAll(() => {
   Element.prototype.scrollIntoView ??= vi.fn();
@@ -412,5 +414,33 @@ describe('AgentChatNewChatButton', () => {
     expect(screen.queryByRole('button', { name: /Choose a thinking level/ })).toBeNull();
     fireEvent.click(screen.getByRole('option', { name: 'Model A' }));
     expect(onNewChat).toHaveBeenCalledWith(agent, 'a');
+  });
+});
+
+describe('AgentChatNewChatButton with an out-of-date local Astrid', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it.each([
+    ['MacIntel', 'Macintosh', ASTRID_COMMANDS.macLinuxUpdate],
+    ['Win32', 'Windows', ASTRID_COMMANDS.windowsUpdate],
+  ])('shows the update prompt and %s update command instead of the raw error', (platform, os, command) => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(os);
+    const error = new BridgeContractError('List local agents', 'agents.0.models: Invalid input');
+    openMenu({ agentsError: error });
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(RUNTIME_CONNECTION_COPY.chatNeedsUpdate);
+    expect(alert).toHaveTextContent(RUNTIME_CONNECTION_COPY.updateNeeded.title);
+    expect(alert).toHaveTextContent(withCommandShell(RUNTIME_CONNECTION_COPY.updateNeeded.sentence));
+    expect(screen.getByText(command, { selector: 'code' })).toBeInTheDocument();
+    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(screen.getByText(error.message)).toBeInTheDocument();
+    expect(screen.queryByText(/Could not load agents/)).toBeNull();
+  });
+
+  it('keeps the plain message for a network error', () => {
+    openMenu({ agentsError: new Error('Failed to fetch') });
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load agents: Failed to fetch');
+    expect(screen.queryByText(RUNTIME_CONNECTION_COPY.chatNeedsUpdate)).toBeNull();
   });
 });

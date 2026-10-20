@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { defaultThoughtLevel, type AgentThoughtLevel, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
+import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 import { readModelThoughtSelections, rememberModelThoughtSelection } from './newChatThinkingSelection.ts';
 
@@ -35,7 +36,7 @@ interface AgentChatNewChatButtonProps {
   /** Hide model drill-in for agents that have no reported or queryable model list. */
   agentCanBrowse?: Partial<Record<LocalAgentId, boolean>>;
   agentsLoading?: boolean;
-  agentsError?: string | null;
+  agentsError?: Error | null;
   disabled?: boolean;
   /** Start a chat: no agent reuses the last one; no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
@@ -247,7 +248,9 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
               {!browsing ? (
                 <CommandGroup heading="New chat with">
                   {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
-                  {agentsError && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError}</p>}
+                  {agentsError && (isChatUpdateError(agentsError)
+                    ? <div role="alert" className="px-2 pb-2"><ChatUpdateNeeded detail={agentsError.message} /></div>
+                    : <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>)}
                   {agents?.map(choice => {
                     const id = choice.id;
                     const state = availability(id);

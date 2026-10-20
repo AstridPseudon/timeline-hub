@@ -158,6 +158,9 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     sentence: 'Astrid on this computer needs an update to work with this page. Run this line in a terminal to update it. It backs up your work first.',
   },
 
+  /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
+  chatNeedsUpdate: 'Chat needs this update.',
+
   phone: {
     title: 'Open Astrid on your computer',
     sentence: 'Astrid runs on a computer, so open this page there.',
