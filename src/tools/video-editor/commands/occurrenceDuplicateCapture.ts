@@ -1,4 +1,4 @@
-import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { AgentState, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { stableOccurrenceDeepLink, stableOutputIdentity } from '../data/shotComposition.ts';
 import { remapItems } from './authoringBundle.ts';
 import {
@@ -80,7 +80,7 @@ function destinationShotRevisionId(bundle: AuthoredBundle, shotId: string, value
 function installStateCompatibility(ctx: MoveRecording): void {
   const state = ctx.state;
   const baseGet = state.get.bind(state);
-  state.get = (ref, path) => {
+  state.get = (ref, path): AgentState => {
     if (/^occurrence:(?!.*::)[^/]+\/collection:(clip|track)$/.test(ref)) {
       if (path.length) throw new ClipMoveError('collection shape requires the whole guard');
       const [owner, kind] = ref.split('/collection:');
@@ -88,9 +88,10 @@ function installStateCompatibility(ctx: MoveRecording): void {
       const config = state.config(owner);
       const key = `${kind}s`;
       const value = config[key];
-      return { state: 'present', value: { members: has(config, key)
+      const members: AgentState = has(config, key)
         ? { state: 'present', value: Array.isArray(value) ? [] : object(value) ? {} : value }
-        : { state: 'absent' } } };
+        : { state: 'absent' };
+      return { state: 'present', value: { members } };
     }
     if (/^shot:(?!.*::)[^/]+$/.test(ref)) {
       const shot = state.bundle.shots[ref.slice(5)];
@@ -188,15 +189,24 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
     payload: remapItems(payload, remap), internal_timeline: copy(internal),
   };
   const destinationRevisionId = destinationShotRevisionId(bundle, shotId, shotValue);
-  const documentId = typeof created.parent_document_id === 'string' && created.parent_document_id.length
-    ? created.parent_document_id : bundle.timeline_id;
+  const projectId = bundle.project_id;
+  if (typeof projectId !== 'string') {
+    throw new ClipMoveError('missing authored project identity', 'identity_conflict');
+  }
+  const timelineId = bundle.timeline_id;
+  if (typeof timelineId !== 'string') {
+    throw new ClipMoveError('missing authored document identity', 'identity_conflict');
+  }
+  const parentDocumentId = created.parent_document_id;
+  const documentId = typeof parentDocumentId === 'string' && parentDocumentId.length
+    ? parentDocumentId : timelineId;
   if (has(created, 'stable_deep_link')) {
     created.stable_deep_link = stableOccurrenceDeepLink(
-      bundle.project_id, documentId, shotId, destinationRevisionId, occurrenceId,
+      projectId, documentId, shotId, destinationRevisionId, occurrenceId,
     );
   }
   if (has(created, 'output_identity')) {
-    created.output_identity = stableOutputIdentity(bundle.project_id, documentId, occurrenceId);
+    created.output_identity = stableOutputIdentity(projectId, documentId, occurrenceId);
   }
   const document = (bundle.source_mapping as ObjectValue)._runtime_document as ObjectValue | undefined;
   const mapping = bundle.source_mapping as ObjectValue;
