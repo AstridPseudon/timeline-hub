@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T10:36:14Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-20T10:41:28Z | dispatcher heartbeat 12s -->
 # viewing — 2026-10-20 10:12 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 active; M4 incomplete. Gates6/7 OPEN; actualframe comparison last2PASS2FAIL. No foundation/Player-export-parity claim.
 Integrated: Compositione80c46baf, same23a994tree asa62e7d266; historyjoined67b8aa3 bylead09:16. Independenttreeequal+mergebase67b8aa3d+cleandiff/HEAD; leaddrymergeclean. Latestfull1020091054-4980 npmtest69PASS/0FAIL/0SKIP; actualbuild+pack+defaultconsumerPASS7s/ESMSSR/scopedregistry/strictNodeNext/immutable12 exact77files58444B SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3. Old11immutable; defaultAgentfullnavyequalitypriorPASS. RootdeliveryhistoryblockerRESOLVED.

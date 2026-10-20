@@ -1,0 +1,7 @@
+{
+  "base": "43d567f9d972386dc4cf585fbacc3ad9afc56bdd",
+  "archive_sha256": "6602f3e097ec499cc43df3a8c9d073eaf7aa905e31ba30b7ac6a46dfb18f5c86",
+  "extent": "5d0f1ddcad54936b36cedf1d89bf34f45fa612b5",
+  "extent_patch_sha256": "a37e0da0be03439df1b3ddbab40727c37c046e03b533b171839db74cc2dc3501",
+  "apply_output": "patching file astrid/core/rendering/service.py\npatching file astrid/packs/rendering/rendering/renderers/remotion/run.py\npatching file remotion/src/Root.tsx\npatching file remotion/tests/root-metadata.test.cjs\npatching file tests/packs/rendering/test_live_scene_composition.py\npatching file tests/packs/rendering/test_native_layer_extent.py\npatching file tests/packs/rendering/test_remotion_layer_tail_compat.py\n"
+}

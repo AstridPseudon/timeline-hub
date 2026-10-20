@@ -1,0 +1,565 @@
+..FFFFFFFFFFFFFFFFFF...FFF...FF..FF..FFFFFFFFFF..FFFF................... [ 27%]
+........................................................................ [ 54%]
+........................................................................ [ 81%]
+..................................................                       [100%]
+=================================== FAILURES ===================================
+_ test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile0] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile1] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile0] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile1] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile0] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile1] _
+tests/packs/rendering/test_normal_audio_run.py:311: in test_normal_serialized_root_clock_and_single_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error0] _
+tests/packs/rendering/test_normal_audio_run.py:325: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    assert normal_run.events == ["server-enter", "consume", "server-exit"]
+E   AssertionError: assert ['server-ente...'server-exit'] == ['server-ente...'server-exit']
+E     
+E     At index 1 diff: 'server-exit' != 'consume'
+E     Right contains one more item: 'server-exit'
+E     Use -v to get more diff
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error1] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error2] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error0] _
+tests/packs/rendering/test_normal_audio_run.py:325: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    assert normal_run.events == ["server-enter", "consume", "server-exit"]
+E   AssertionError: assert ['server-ente...'server-exit'] == ['server-ente...'server-exit']
+E     
+E     At index 1 diff: 'server-exit' != 'consume'
+E     Right contains one more item: 'server-exit'
+E     Use -v to get more diff
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error1] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error2] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error0] _
+tests/packs/rendering/test_normal_audio_run.py:325: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    assert normal_run.events == ["server-enter", "consume", "server-exit"]
+E   AssertionError: assert ['server-ente...'server-exit'] == ['server-ente...'server-exit']
+E     
+E     At index 1 diff: 'server-exit' != 'consume'
+E     Right contains one more item: 'server-exit'
+E     Use -v to get more diff
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error1] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error2] _
+tests/packs/rendering/test_normal_audio_run.py:324: in test_normal_consumer_failure_cancel_and_timeout_release_attempt
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_____________ test_normal_pcm_error_never_launches_consumer[full] ______________
+tests/packs/rendering/test_normal_audio_run.py:336: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:335: in test_normal_pcm_error_never_launches_consumer
+    with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ENVELOPE_UNRENDERED'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+____________ test_normal_pcm_error_never_launches_consumer[window] _____________
+tests/packs/rendering/test_normal_audio_run.py:336: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:335: in test_normal_pcm_error_never_launches_consumer
+    with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ENVELOPE_UNRENDERED'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+_____________ test_normal_pcm_error_never_launches_consumer[layer] _____________
+tests/packs/rendering/test_normal_audio_run.py:336: in test_normal_pcm_error_never_launches_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:335: in test_normal_pcm_error_never_launches_consumer
+    with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ENVELOPE_UNRENDERED'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+____ test_normal_native_decode_error_releases_attempt_before_consumer[full] ____
+tests/packs/rendering/test_normal_audio_run.py:364: in test_normal_native_decode_error_releases_attempt_before_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:363: in test_normal_native_decode_error_releases_attempt_before_consumer
+    with pytest.raises(RuntimeError, match="ffprobe"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ffprobe'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+___ test_normal_native_decode_error_releases_attempt_before_consumer[window] ___
+tests/packs/rendering/test_normal_audio_run.py:364: in test_normal_native_decode_error_releases_attempt_before_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:363: in test_normal_native_decode_error_releases_attempt_before_consumer
+    with pytest.raises(RuntimeError, match="ffprobe"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ffprobe'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+___ test_normal_native_decode_error_releases_attempt_before_consumer[layer] ____
+tests/packs/rendering/test_normal_audio_run.py:364: in test_normal_native_decode_error_releases_attempt_before_consumer
+    normal_run.execute()
+tests/packs/rendering/test_normal_audio_run.py:229: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1227: in _execute_remotion_locked
+    merged_props = prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_run.py:363: in test_normal_native_decode_error_releases_attempt_before_consumer
+    with pytest.raises(RuntimeError, match="ffprobe"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ffprobe'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+_ test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[30-0.06666666666666667] _
+tests/packs/rendering/test_normal_audio_sources.py:91: in test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes
+    output = prepare(props)
+             ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[29.97002997002997-0.03336666666666667] _
+tests/packs/rendering/test_normal_audio_sources.py:91: in test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes
+    output = prepare(props)
+             ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_________________ test_prepared_output_cannot_be_applied_twice _________________
+tests/packs/rendering/test_normal_audio_sources.py:125: in test_prepared_output_cannot_be_applied_twice
+    output = prepare(props)
+             ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+____________ test_no_envelope_does_not_create_render_source_or_pcm _____________
+tests/packs/rendering/test_normal_audio_sources.py:133: in test_no_envelope_does_not_create_render_source_or_pcm
+    assert prepare(props) == props
+           ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_________________ test_failed_batch_removes_only_its_own_files _________________
+tests/packs/rendering/test_normal_audio_sources.py:168: in test_failed_batch_removes_only_its_own_files
+    prepare(props)
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+
+During handling of the above exception, another exception occurred:
+tests/packs/rendering/test_normal_audio_sources.py:167: in test_failed_batch_removes_only_its_own_files
+    with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'ENVELOPE_UNRENDERED'
+E     Actual message: 'runtime validation refuses unsupported loader/interpreter overrides'
+___________ test_url_registration_failure_cleans_the_prepared_batch ____________
+tests/packs/rendering/test_normal_audio_sources.py:185: in test_url_registration_failure_cleans_the_prepared_batch
+    prepare(props)
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+__ test_internal_original_clip_seam_preserves_phase_without_trusting_app[30] ___
+tests/packs/rendering/test_normal_audio_sources.py:197: in test_internal_original_clip_seam_preserves_phase_without_trusting_app
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_internal_original_clip_seam_preserves_phase_without_trusting_app[29.97002997002997] _
+tests/packs/rendering/test_normal_audio_sources.py:197: in test_internal_original_clip_seam_preserves_phase_without_trusting_app
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_______ test_successful_files_survive_until_the_attempt_owner_cleans_up ________
+tests/packs/rendering/test_normal_audio_sources.py:223: in test_successful_files_survive_until_the_attempt_owner_cleans_up
+    output = prepare(props)
+             ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_______ test_actual_slice_needs_original_compiled_clip_transport[window] _______
+tests/packs/rendering/test_normal_audio_sources.py:242: in test_actual_slice_needs_original_compiled_clip_transport
+    output = prepare(
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_______ test_actual_slice_needs_original_compiled_clip_transport[layer] ________
+tests/packs/rendering/test_normal_audio_sources.py:242: in test_actual_slice_needs_original_compiled_clip_transport
+    output = prepare(
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+__ test_window_transports_explicit_envelope_without_slice_origin_metadata[30] __
+tests/packs/rendering/test_normal_audio_sources.py:271: in test_window_transports_explicit_envelope_without_slice_origin_metadata
+    whole = prepare(selected)
+            ^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+_ test_window_transports_explicit_envelope_without_slice_origin_metadata[29.97002997002997] _
+tests/packs/rendering/test_normal_audio_sources.py:271: in test_window_transports_explicit_envelope_without_slice_origin_metadata
+    whole = prepare(selected)
+            ^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+___ test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls ____
+tests/packs/rendering/test_normal_audio_sources.py:299: in test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls
+    output = prepare(props)
+             ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound] ____
+tests/packs/rendering/test_normal_audio_source_phase.py:65: in test_half_second_slice_pcm_equals_original_on_attempt_wav
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other] ____
+tests/packs/rendering/test_normal_audio_source_phase.py:65: in test_half_second_slice_pcm_equals_original_on_attempt_wav
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound] ____
+tests/packs/rendering/test_normal_audio_source_phase.py:65: in test_half_second_slice_pcm_equals_original_on_attempt_wav
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other] ____
+tests/packs/rendering/test_normal_audio_source_phase.py:65: in test_half_second_slice_pcm_equals_original_on_attempt_wav
+    whole = prepare(props)
+            ^^^^^^^^^^^^^^
+tests/packs/rendering/test_normal_audio_sources.py:77: in prepare
+    return prepare_normal_audio_sources(
+astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py:99: in prepare_normal_audio_sources
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/remotion_runtime.py:222: in probe_context
+    raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+E   astrid.core.rendering.remotion_runtime.RemotionValidationError: runtime validation refuses unsupported loader/interpreter overrides
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error0]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error1]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error2]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[full]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[window]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[layer]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[full]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[window]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[layer]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[30-0.06666666666666667]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes[29.97002997002997-0.03336666666666667]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_prepared_output_cannot_be_applied_twice
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_no_envelope_does_not_create_render_source_or_pcm
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_failed_batch_removes_only_its_own_files
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_url_registration_failure_cleans_the_prepared_batch
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_internal_original_clip_seam_preserves_phase_without_trusting_app[30]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_internal_original_clip_seam_preserves_phase_without_trusting_app[29.97002997002997]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_successful_files_survive_until_the_attempt_owner_cleans_up
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[window]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[layer]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_window_transports_explicit_envelope_without_slice_origin_metadata[30]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_window_transports_explicit_envelope_without_slice_origin_metadata[29.97002997002997]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other]
+39 failed, 227 passed, 1 deselected in 42.94s
