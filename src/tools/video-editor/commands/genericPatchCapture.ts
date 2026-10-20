@@ -18,6 +18,13 @@ import {
   executeOrdinaryStructuralBatch,
 } from './ordinaryStructuralMember.ts';
 import {
+  captureProjectDataMember,
+  executeProjectDataMember,
+  projectDataOperationReason,
+  projectDataValue,
+  type ProjectDataPatchArgs,
+} from './projectDataMember.ts';
+import {
   AuthoredState,
   ClipMoveError,
   MoveRecording,
@@ -106,6 +113,7 @@ function supported(operation: TimelinePatchOperation): boolean {
     || (operation.order !== undefined && !Number.isFinite(operation.order))) return false;
   if (structural(operation)) return structuralSupported(operation);
   if (!object(payload)) return false;
+  if (operation.op === 'project-data.write') return projectDataOperationReason(operation) === undefined;
   if (operation.op === 'track.update') {
     return typeof payload.label === 'string' && Object.keys(payload).every((key) => key === 'label' || key === 'mode')
       && (!('mode' in payload) || payload.mode === 'merge');
@@ -455,6 +463,15 @@ export function executeGenericPatch(bundle: AuthoredBundle, commands: readonly E
   for (const [ordinal, command] of commands.entries()) {
     const result = command.op === 'track.set'
       ? executeTrackSet(after, command, ordinal)
+      : command.op === 'project-data.write'
+        ? (() => {
+          const projectData = executeProjectDataMember(after, [command]);
+          if (projectData.records.length !== 1) throw new Error('project-data member did not produce one record');
+          const record = copy(projectData.records[0]);
+          record.ordinal = ordinal;
+          record.derived_writes.forEach((write) => { write.cause = ordinal; });
+          return { bundle: projectData.bundle, record };
+        })()
       : command.op === 'clip.move'
         ? executeOrdinaryMoveMember(after, command, ordinal)
       : command.op === 'clip.set'
@@ -487,18 +504,20 @@ export function captureGenericPatch(
   const original = freezeJson(copy(patch));
   const failures = new Map<number, string>();
   original.operations.forEach((operation, index) => {
-    if (!supported(operation)) failures.set(index, qualified(operation)
+    if (!supported(operation)) failures.set(index, (operation.op === 'project-data.write'
+      ? projectDataOperationReason(operation)
+      : undefined) ?? (qualified(operation)
       ? operation.op === 'clip.move'
         ? 'Requires an absolute clip.move with one finite non-negative at value'
         : 'Requires clip.set-compatible values and explicit clears'
-      : 'Requires a parent label-only merge or exact positive hold SET');
+      : 'Requires a parent label-only merge or exact positive hold SET'));
   });
   if (!original.operations.length || !Number.isSafeInteger(original.version) || original.version < 0) {
     throw new Error('Native patch requires operations and a non-negative integer version');
   }
   if (failures.size) throw new GenericPatchRefusal(original, failures);
   const owners = original.operations.map((operation, index) => {
-    if (structural(operation)) return 'parent';
+    if (structural(operation) || operation.op === 'project-data.write') return 'parent';
     try { return resolve(operation); }
     catch (error) {
       failures.set(index, error instanceof Error ? error.message : String(error));
@@ -519,7 +538,21 @@ export function captureGenericPatch(
   for (const { operation, index } of ordered) {
     try {
       let result;
-      if (operation.op === 'track.update') {
+      if (operation.op === 'project-data.write') {
+        const projectData = captureProjectDataMember(after, {
+          version: original.version,
+          operations: [operation],
+        });
+        if (projectData.commands.length !== 1 || projectData.records.length !== 1) {
+          throw new Error('project-data member did not produce one command and record');
+        }
+        result = {
+          command: projectData.commands[0],
+          bundle: projectData.bundle,
+          record: copy(projectData.records[0]),
+        };
+        previewOperations.push({ ...operation, payload: copy(operation.payload!) });
+      } else if (operation.op === 'track.update') {
         result = finishTrackLabel(captureTrackLabel(after, owners[index]), {
           values: { label: operation.payload!.label as string }, clear: [],
         });
@@ -615,6 +648,16 @@ export function projectGenericPatchPreview(patch: TimelinePatch, current: Timeli
         } else {
           target.clips = (target.clips ?? []).filter((row) => row.id !== operation.target);
         }
+        continue;
+      }
+      if (operation.op === 'project-data.write') {
+        target.app ??= {};
+        const namespace = object(target.app[operation.target]) ? target.app[operation.target] : {};
+        const key = operation.payload!.key as string;
+        target.app[operation.target] = {
+          ...namespace,
+          [key]: projectDataValue(namespace[key], operation.payload as ProjectDataPatchArgs),
+        };
         continue;
       }
       const rows = operation.op === 'track.update' ? target.tracks ?? [] : target.clips;

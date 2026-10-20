@@ -17,6 +17,7 @@ import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 import { executeClipSetBatch } from '../clipScalarCapture.ts';
 import { executeParentClipAddMedia } from '../parentClipAddCapture.ts';
+import { executeProjectDataMember } from '../projectDataMember.ts';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -122,6 +123,18 @@ export async function environment(initialDocument = document()) {
         const payload = { ...result.bundle.parent, occurrences: serverDocument.parent_revision.payload.occurrences };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
+      } else if (request.commands.every((command) => command.op === 'project-data.write')) {
+        try {
+          const bundle = await authoringBundleFromDocument(serverDocument);
+          const result = executeProjectDataMember(bundle, request.commands);
+          const payload = { ...result.bundle.parent, occurrences: serverDocument.parent_revision.payload.occurrences };
+          const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
+          serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
+        } catch (error) {
+          if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
+          return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
+            details: { status: 'conflict', reason: error.kind } }) };
+        }
       } else if (request.commands[0].op === 'timeline.inverse') {
         const publications = request.commands[0].args.publications as string[];
         const restored = structuredClone(previousDocuments.get(publications[0])!);
@@ -175,5 +188,6 @@ export async function environment(initialDocument = document()) {
       serverHead = { revisionId: serverDocument.parent_revision.revision_id, publicationId: `external-${serverHead.publicationId}` };
       return provider.loadTimelineCommandBasis(timelineId);
     },
-    commits: () => calls.filter((call) => call.path.endsWith('/commit')) };
+    commits: () => calls.filter((call) => call.path.endsWith('/commit')),
+    acceptedCommits: () => accepted.size };
 }
