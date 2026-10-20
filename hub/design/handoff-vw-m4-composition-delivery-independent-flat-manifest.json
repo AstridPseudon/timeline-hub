@@ -1,0 +1,75 @@
+{
+  "artifact": "handoff-vw-m4-composition-delivery-independent-flat",
+  "repo": "composition",
+  "scope": "M4 limited composition delivery mechanics",
+  "foundation_or_zip_claim": false,
+  "observed_refs": {
+    "main_ref": "origin/main",
+    "main_commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+    "main_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+    "target_ref": "tl/integration",
+    "target_commit": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "target_tree": "13e375534fffd704305eced5686699d2c8c9c948",
+    "source_head": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "network_fetch": false,
+    "latest_main_claim": false
+  },
+  "patch_review": {
+    "file": "handoff-vw-m4-composition-delivery-tree-dryrun-composition.patch",
+    "kind": "single linearized git diff",
+    "options": ["--binary", "--full-index", "--no-ext-diff", "--no-renames"],
+    "not_format_patch_series": true,
+    "bytes": 463276,
+    "sha256": "ffcde5f77a2b10fc34a101e838c8ef24cf2ac2cb106089c3b5d8a8061cb39206",
+    "source_reproduction": "PASS: git diff origin/main tl/integration produced the same SHA-256",
+    "diff_check": "PASS"
+  },
+  "fresh_archive_proof": {
+    "source_archive": "git archive origin/main",
+    "archive_location": "private worker staging outside the product repository",
+    "fresh_archives_checked": 1,
+    "git_apply_check": "PASS",
+    "git_apply": "PASS",
+    "exact_manifest_comparison": "PASS",
+    "tracked_files": 113,
+    "applied_file_entries": 113,
+    "modes": {"100644": 113},
+    "symlinks": 0,
+    "blob_ids_and_bytes_equal": true,
+    "mode_note": "The source repo has core.sharedRepository=true, so private tar extraction was normalized to the source Git modes before applying the patch; this does not alter file bytes."
+  },
+  "bundle": {
+    "source_file": "handoff-vw-m4-composition-delivery-tree-dryrun-composition.bundle",
+    "member_name": "composition.bundle",
+    "ref": "tl/integration",
+    "head": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "tree": "13e375534fffd704305eced5686699d2c8c9c948",
+    "bytes": 239217,
+    "sha256": "f0395412890441d45956abcb1a4eb41caef0c250ffe1da9c214c28797d2f4461",
+    "verify": "PASS: complete history; no prerequisites",
+    "private_clone_ref_tree_fsck": "PASS"
+  },
+  "transport": {
+    "archive": "handoff-vw-m4-composition-delivery-independent-flat-composition-delivery.tgz",
+    "members": ["composition.bundle", "manifest.json"],
+    "deterministic_tar": true,
+    "reextract_bundle_bytes_and_sha256": "PASS: independently verified after archive re-extraction"
+  },
+  "historical_evidence": {
+    "composition_exact_tree_full_run": {
+      "result": "76 pass / 0 fail / 0 skip",
+      "tree": "13e375534fffd704305eced5686699d2c8c9c948",
+      "status": "historical prior evidence; not rerun by this delivery review"
+    },
+    "does_not_claim": ["foundation complete", "overall ZIP gate", "all-repository exit"]
+  },
+  "product_tests": {
+    "run": false,
+    "browser_npm_build_full_suite": "NOT RUN per delivery-only scope"
+  },
+  "worktree": {
+    "clean": true,
+    "git_mutation": false,
+    "shared_install_write": false
+  }
+}
