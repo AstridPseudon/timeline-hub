@@ -206,7 +206,15 @@ def _views(client, fixture, capsys, document, clip_id):
     assert_json_equal(projected["track"], expected_track)
     assert projected["source_from"] == expected_clip.get("from")
     assert projected["source_to"] == expected_clip.get("to")
-    assert projected["source_object_id"] == parent["registry"]["assets"][expected_clip["asset"]]["media_id"]
+    asset = parent["registry"]["assets"][expected_clip["asset"]]
+    # The old assertion assumed every registered asset exposed media_id.
+    expected_source = asset["media_id"] if "media_id" in asset else asset["object_id"]
+    assert expected_source is not None
+    expected_pin, = [
+        pin["media_id"] for pin in document["dependency_manifest"]["media"]
+        if pin["media_id"] == expected_source
+    ]
+    assert projected["source_object_id"] == expected_pin
     inputs = _ok_cli(client, fixture, capsys, "visualize", fixture.timeline_id,
                      "--published", "--revision-id", revision,
                      "--mode", "inputs", "--format", "md")
