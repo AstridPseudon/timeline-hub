@@ -125,6 +125,23 @@ def test_fresh_public_mouth_facts_drive_existing_consumer(public_capture_rows, r
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
 
 
+@pytest.mark.parametrize("raw_mouth", [None, {"x": 151, "y": 104}])
+def test_partial_or_default_raw_mouth_keeps_private_fallback(public_capture_rows, retained, raw_mouth):
+    case = deepcopy(retained)
+    params = case["props"]["timeline"]["clips"][0]["params"]
+    if raw_mouth is None:
+        params.pop("mouth", None)
+    else:
+        params["mouth"] = raw_mouth
+    ctx = context(case)
+    ctx.shared["public_scene"] = {
+        row["frame"]: {"answer": row, "basis": {"width": 1920, "height": 1080, "fps": 30},
+                        "addresses": {"presenter": "presenter"}}
+        for row in public_capture_rows
+    }
+    assert builtin._public_mouth_facts(ctx, ctx.elements[0], [0, 3, 4, 5]) is None
+
+
 @pytest.mark.parametrize("mutation", ["stale-clip", "forged-roi", "missing-row"])
 def test_planted_public_fact_failures_keep_private_fallback(public_capture_rows, retained, mutation):
     rows = deepcopy(public_capture_rows)

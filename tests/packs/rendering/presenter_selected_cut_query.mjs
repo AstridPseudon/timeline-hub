@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {basis, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
 
 const retained = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));

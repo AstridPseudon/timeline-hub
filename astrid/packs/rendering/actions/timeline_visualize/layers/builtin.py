@@ -376,6 +376,19 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
     """
     if len(frames) < 3:
         return None
+    # Until the presenter owner lands its compatibility source, the public
+    # normalizer is not equivalent for absent or partial raw anchors: partial
+    # ``{x, y}`` is width 19 here while the legacy crop remains width 16.
+    # Require the complete source-shaped anchor so those inputs retain the
+    # established private crop/statistics fallback.
+    params = presenter.params if isinstance(presenter.params, Mapping) else {}
+    raw_mouth = params.get("mouth")
+    if (not isinstance(raw_mouth, Mapping)
+            or any(type(raw_mouth.get(key)) is not int for key in ("x", "y", "w"))
+            or not 0 <= raw_mouth["x"] < 320
+            or not 0 <= raw_mouth["y"] < 180
+            or not 1 <= raw_mouth["w"] <= 40):
+        return None
     public_scene = ctx.shared.get("public_scene")
     if not isinstance(public_scene, Mapping) or any(frame not in public_scene for frame in frames):
         return None
