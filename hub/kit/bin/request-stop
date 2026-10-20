@@ -1,0 +1,9 @@
+#!/bin/bash
+# request-stop WORKER "reason" — ask the dispatcher (outside the sandbox) to stop a stuck worker. Its Codex/Claude process is
+# terminated; the normal harness finalization then commits the worker's work in progress to tl/WORKER (fallback commit message
+# if no commit-msg was written), records exit/ended, and keeps the worktree if it is dirty or KEEP/leased. Then dispatch a
+# small NEW resume worker based on tl/WORKER. Use it only for your own workers that are stuck (no log progress, or repeated
+# max_output_tokens / incomplete responses).
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift; [ -n "$N" ] && [ -f $O/workers/$N/meta ] || { echo "usage: request-stop WORKER reason (no such worker)"; exit 2; }
+echo "STOP $N $*" > $O/queue/pending/stop-$N; echo "stop of $N queued; result in $O/queue/done/stop-$N"

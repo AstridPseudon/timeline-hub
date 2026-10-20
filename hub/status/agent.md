@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T14:38:00Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | status age 0m -->
+<!-- main | 2026-10-20T14:41:09Z | dispatcher heartbeat 7s | live 5 (sol 1, luna 4, other 0) | status age 3m -->
 # agent — 2026-10-20 14:34:04 UTC
 Milestone: M1 RECORDED; M2 active, no exit. Gates1/6/7 OPEN.
 Integrated: agent tl/integration8130a401. WC4 native element publisher47c1 cut qualified: independent25+30+133; current central13386=30PASS and F1zero-write negative2PASS; ledgerDELETED. Scene/save-core dab91714 current83PASS, detachedCLI fixture6a6d92 current2PASS; service725d335 current31PASS then Root04c247 current40HTTP/WAV/lifetime/lock/fingerprint/inventoryPASS. All separate gated merges. Explicit OFFCANVAS preserved after core-valid save. Original F1/duplicate reload9cb/stored4000cap140e/sourcehost extraction4ef retained.

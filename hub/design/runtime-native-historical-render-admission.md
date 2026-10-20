@@ -7,7 +7,7 @@ Date: 2026-10-20
 - Runtime product base: commit `16acbb6ef94a6d8e226ccdc351ba0d96e0b09ea5`,
   tree `6a6ba82cb05200bb822669c19fab2aed40a73076`.
 - Central targeted snapshot (includes the 125-line test below): tree
-  `6c8a1f6ec4bd38a977b9c40fbf9d0ee23cf13fed`.
+  `c431abc5025bcadae5355da8229289af797187ec`.
 - Frozen ordinary Agent: commit `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`,
   tree `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`.
 - Agent normal request builder: `astrid/core/dev/journey.py`,
@@ -85,7 +85,7 @@ python -m pytest -q tests/test_render_native_historical_retry.py \
   tests/test_render_historical_admission.py tests/test_render_admission_exact_retry.py
 ```
 
-Central result: **33 passed, 47 deselected in 17.32s**. A local focused run of
-the new integration test passed (`1 passed in 1.00s`), and `git diff --check`
+Central result: **33 passed, 47 deselected in 24.13s**. A local focused run of
+the new integration test passed (`1 passed in 1.06s`), and `git diff --check`
 passed. No full/broad suite, renderer execution, pixel/audio decode, browser,
 schema/API/pin generation, merge, or publication was performed.
