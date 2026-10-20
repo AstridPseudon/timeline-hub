@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T08:08:08Z | dispatcher heartbeat 9s -->
+<!-- viewing | 2026-10-20T08:13:22Z | dispatcher heartbeat 6s -->
 # viewing — 2026-10-20 08:08 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 delivery incomplete.
 Integrated: Composition 5e06f401 / public0.0.12. Central composition-full-1020064710-6164 npm test69PASS/0FAIL/0SKIP; integration-viewing-agent-default-theme-1020064710-23557 build+fullAgenttheme equalityPASS. Immutable58444B/77members SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3; old11 immutable. App shims DELETED564a21805/65testsPASS; resolved-theme canvas ground f3459863a/66+12PASS. Agent publicscene transport MERGED6c5aab20; stillinactive.

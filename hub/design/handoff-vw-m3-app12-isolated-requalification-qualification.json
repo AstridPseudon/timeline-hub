@@ -1,0 +1,160 @@
+{
+  "safety12": {
+    "overlay": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12",
+    "package_file_count": 77,
+    "archive_member_count": 77,
+    "archive_members_match": true,
+    "file_hashes": {
+      "src/tools/video-editor/compositions/playerEvaluation.ts": "addb46bd84fae79763e52815f29902c83e33ee0bfcb385ae23479628123f32b2",
+      "src/tools/video-editor/compositions/playerEvaluation.test.ts": "bef690a175956a3fddc38502adb778a2896fd2b4ddd3ca396e05b685a3d80d0e",
+      "src/tools/video-editor/compositions/TimelineRenderer.tsx": "1412c325f5a22de9171f1a1e45cee38535d606af51c4dc1697bf7a70b04c043e",
+      "src/tools/video-editor/compositions/VisualClip.tsx": "56fb64bd47a65bd1b4e05f045127bcf3f3029d1c3dc664d21bb734c1955a56b3",
+      "src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx": "64939c06ba57ed0d40796c368eb712db3007c095d7959b58076909f6ab14bc87",
+      "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx": "869f39eb019c6a379eceec465ff8c1b44a62380f7024c2ff88b59631950587f5"
+    },
+    "import_proof": {
+      "resolved": {
+        "@banodoco/timeline-composition": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/index.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/index.js"
+        },
+        "@banodoco/timeline-composition/evaluation": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/evaluation.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/evaluation.js"
+        },
+        "@banodoco/timeline-composition/theme-api": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/theme-api.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12/public12/package/dist/theme-api.js"
+        }
+      },
+      "rootExports": true,
+      "evaluationExports": true,
+      "themeDefault": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#050814",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Arial",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      },
+      "navyFullDefault": true
+    },
+    "versions": {
+      "@banodoco/timeline-composition": "0.0.12",
+      "react": "18.3.1",
+      "react-dom": "18.3.1",
+      "remotion": "4.0.509",
+      "@remotion/media": "4.0.509",
+      "@remotion/player": "4.0.509",
+      "@remotion/layout-utils": "4.0.509",
+      "vitest": "4.1.5",
+      "typescript": "5.9.3"
+    }
+  },
+  "current12": {
+    "overlay": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12",
+    "package_file_count": 77,
+    "archive_member_count": 77,
+    "archive_members_match": true,
+    "file_hashes": {
+      "src/tools/video-editor/compositions/playerEvaluation.ts": "addb46bd84fae79763e52815f29902c83e33ee0bfcb385ae23479628123f32b2",
+      "src/tools/video-editor/compositions/playerEvaluation.test.ts": "bef690a175956a3fddc38502adb778a2896fd2b4ddd3ca396e05b685a3d80d0e",
+      "src/tools/video-editor/compositions/TimelineRenderer.tsx": "1412c325f5a22de9171f1a1e45cee38535d606af51c4dc1697bf7a70b04c043e",
+      "src/tools/video-editor/compositions/VisualClip.tsx": "56fb64bd47a65bd1b4e05f045127bcf3f3029d1c3dc664d21bb734c1955a56b3",
+      "src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx": "64939c06ba57ed0d40796c368eb712db3007c095d7959b58076909f6ab14bc87",
+      "src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx": "869f39eb019c6a379eceec465ff8c1b44a62380f7024c2ff88b59631950587f5"
+    },
+    "import_proof": {
+      "resolved": {
+        "@banodoco/timeline-composition": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/index.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/index.js"
+        },
+        "@banodoco/timeline-composition/evaluation": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/evaluation.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/evaluation.js"
+        },
+        "@banodoco/timeline-composition/theme-api": {
+          "url": "file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/theme-api.js",
+          "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-current12/public12/package/dist/theme-api.js"
+        }
+      },
+      "rootExports": true,
+      "evaluationExports": true,
+      "themeDefault": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#050814",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Arial",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      },
+      "navyFullDefault": true
+    },
+    "versions": {
+      "@banodoco/timeline-composition": "0.0.12",
+      "react": "18.3.1",
+      "react-dom": "18.3.1",
+      "remotion": "4.0.509",
+      "@remotion/media": "4.0.509",
+      "@remotion/player": "4.0.509",
+      "@remotion/layout-utils": "4.0.509",
+      "vitest": "4.1.5",
+      "typescript": "5.9.3"
+    }
+  }
+}

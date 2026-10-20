@@ -1,0 +1,20 @@
+{
+  "before": {
+    "root": "/home/user/work/app/node_modules",
+    "entry_count": 35618,
+    "file_count": 32280,
+    "symlink_count": 193,
+    "directory_count": 3145,
+    "graph_sha256": "5cee798b188c363cba6737bc53e7dfc5f65265cdcfeae21ae993797e9fc8b6d1"
+  },
+  "after": {
+    "root": "/home/user/work/app/node_modules",
+    "entry_count": 35618,
+    "file_count": 32280,
+    "symlink_count": 193,
+    "directory_count": 3145,
+    "graph_sha256": "5cee798b188c363cba6737bc53e7dfc5f65265cdcfeae21ae993797e9fc8b6d1"
+  },
+  "identical": true,
+  "worktree_status": "## tl/vw-m3-app12-isolated-requalification\n"
+}

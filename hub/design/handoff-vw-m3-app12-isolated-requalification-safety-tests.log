@@ -1,0 +1,9 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app12-isolated-requalification/overlay-safety12
+
+
+ Test Files  8 passed (8)
+      Tests  137 passed (137)
+   Start at  08:11:28
+   Duration  10.39s (transform 1.74s, setup 854ms, import 3.41s, tests 1.61s, environment 3.07s)
+
