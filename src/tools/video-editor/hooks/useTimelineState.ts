@@ -1,3 +1,4 @@
+import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
@@ -133,6 +134,7 @@ function useTimelineEditorContextValue({
   clipEditing,
   externalDrop,
   trackManagement,
+  trackLabelPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -175,6 +177,7 @@ function useTimelineEditorContextValue({
   clipEditing: ClipEditingHook;
   externalDrop: ExternalDropHook;
   trackManagement: TimelineTrackManagementHook;
+  trackLabelPort?: TrackLabelCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -199,6 +202,7 @@ function useTimelineEditorContextValue({
   const moveSelectedClipsToTrack = trackManagement.moveSelectedClipsToTrack;
 
   return useMemo<TimelineEditorContextValue>(() => ({
+    trackLabel: trackLabelPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -282,6 +286,7 @@ function useTimelineEditorContextValue({
     handleToggleMuteClips: clipEditing.handleToggleMuteClips,
     handleToggleMute: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleToggleMute(...args); },
     handleDetachAudioClip: clipEditing.handleDetachAudioClip,
+    handleTrackLabelEditStart: trackManagement.handleTrackLabelEditStart,
     handleTrackPopoverChange: trackManagement.handleTrackPopoverChange,
     handleMoveTrack: trackManagement.handleMoveTrack,
     handleRemoveTrack: trackManagement.handleRemoveTrack,
@@ -368,12 +373,14 @@ function useTimelineEditorContextValue({
     trackManagement.createTrackAndMoveClip,
     trackManagement.handleMoveTrack,
     trackManagement.handleRemoveTrack,
+    trackManagement.handleTrackLabelEditStart,
     trackManagement.handleTrackPopoverChange,
     trackManagement.moveClipToRow,
     trackManagement.applyResolvedClipMove,
     moveSelectedClipToTrack,
     moveSelectedClipsToTrack,
     trackScaleMap,
+    trackLabelPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -759,6 +766,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const timelineOps = useTimelineOps({
     commitData: save.commitData,
     dataRef: save.dataRef,
+    trackLabelPort: save.commands.trackLabelPort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,
@@ -943,6 +951,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     eventBus: save.eventBus,
     editability: runtime.timelineEditability,
     protectedTrackIds: canonicalShotTrackIds,
+    trackLabelPort: save.commands.trackLabelPort,
   });
 
   const timelineCommands = useMemo<TimelineEditorCommands>(() => {
@@ -1067,6 +1076,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipEditing,
     externalDrop,
     trackManagement,
+    trackLabelPort: save.commands.trackLabelPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1153,6 +1163,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
+    trackLabel: save.commands.trackLabelPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1196,6 +1207,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     handleToggleMuteClips: editor.handleToggleMuteClips,
     handleToggleMute: editor.handleToggleMute,
     handleDetachAudioClip: editor.handleDetachAudioClip,
+    handleTrackLabelEditStart: editor.handleTrackLabelEditStart,
     handleTrackPopoverChange: editor.handleTrackPopoverChange,
     handleMoveTrack: editor.handleMoveTrack,
     handleRemoveTrack: editor.handleRemoveTrack,
@@ -1210,7 +1222,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
@@ -1288,7 +1300,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const commandHistory = save.commands.ownsHistoryRef.current;
   const chrome = useMemo(() => ({
     ...baseChrome,
-    commandSession: save.commands.enabled ? { state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover } : undefined,
+    commandSession: save.commands.enabled ? {
+      state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover,
+      useLatest: save.commands.useLatest, keepLabelChanges: save.commands.keepLabelChanges,
+    } : undefined,
     ...(commandHistory ? {
       undo: () => { void save.commands.undo().catch((error) => runtime.toast.error(error instanceof Error ? error.message : String(error))); },
       canUndo: save.commands.state.canUndo,

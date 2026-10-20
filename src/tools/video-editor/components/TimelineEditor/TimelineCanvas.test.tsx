@@ -384,6 +384,7 @@ function renderCanvas(params?: {
     setInspectorTarget: ReturnType<typeof vi.fn>;
   };
   onSelectTrack?: React.ComponentProps<typeof TimelineCanvas>['onSelectTrack'];
+  onTrackLabelEditStart?: React.ComponentProps<typeof TimelineCanvas>['onTrackLabelEditStart'];
   onCursorDrag?: React.ComponentProps<typeof TimelineCanvas>['onCursorDrag'];
   onClickTimeArea?: React.ComponentProps<typeof TimelineCanvas>['onClickTimeArea'];
   onEditAreaPointerDown?: React.ComponentProps<typeof TimelineCanvas>['onEditAreaPointerDown'];
@@ -433,6 +434,7 @@ function renderCanvas(params?: {
       selectedTrackId={null}
       getActionRender={getActionRender}
       onSelectTrack={params?.onSelectTrack ?? vi.fn()}
+      onTrackLabelEditStart={params?.onTrackLabelEditStart}
       onTrackChange={vi.fn()}
       onRemoveTrack={vi.fn()}
       onTrackDragEnd={vi.fn()}
@@ -2496,4 +2498,26 @@ it('paints clip-empty row bands across the viewport without leaking grid below t
   expect(plane.style.backgroundImage).toBe('');
   expect(container.querySelector('[data-action-id]')).toBeNull();
   expect(container.querySelector('[data-sortable-id="track-V1"]')).toHaveClass('border-border');
+});
+
+
+describe('track label command capture forwarding', () => {
+  for (const deviceClass of ['desktop', 'phone', 'tablet'] as const) {
+    // MAIN leaves touch track edits to the agent. The positive command-capture
+    // assertion needs an upstream touch label input before it can pass.
+    const labelTest = deviceClass === 'desktop' ? it : it.fails;
+    labelTest(`forwards the ${deviceClass} name edit through the canvas and memoized row`, () => {
+      const finish = vi.fn();
+      const onTrackLabelEditStart = vi.fn(() => finish);
+      renderCanvas({ deviceClass, onTrackLabelEditStart });
+      if (deviceClass !== 'desktop') fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
+      const input = screen.getByRole('textbox', { name: 'Track name' });
+      fireEvent.focus(input);
+      expect(onTrackLabelEditStart).toHaveBeenCalledExactlyOnceWith(track.id);
+      fireEvent.change(input, { target: { value: 'Captured name' } });
+      expect(finish).not.toHaveBeenCalled();
+      fireEvent.blur(input);
+      expect(finish).toHaveBeenCalledExactlyOnceWith('Captured name');
+    });
+  }
 });

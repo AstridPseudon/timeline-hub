@@ -130,6 +130,7 @@ export interface TimelineCanvasProps {
   onOpenExtensionManager?: () => void;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
   onTrackDragEnd: (event: DragEndEvent, lanes?: readonly DataLaneView[]) => void;
   readOnly?: boolean;
@@ -339,6 +340,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   onOpenExtensionManager,
   onSelectTrack,
   onTrackChange,
+  onTrackLabelEditStart,
   onRemoveTrack,
   onTrackDragEnd,
   readOnly = false,
@@ -1412,6 +1414,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             shouldStackOverlappingActions={shouldStackOverlappingActions}
             onSelectTrack={onSelectTrack}
             onTrackChange={onTrackChange}
+            onTrackLabelEditStart={onTrackLabelEditStart}
             onRemoveTrack={onRemoveTrack}
             onTrackDragEnd={(event) => onTrackDragEnd(event, laneDataForDisplay?.dataLanes ?? [])}
             trackSensors={trackSensors}

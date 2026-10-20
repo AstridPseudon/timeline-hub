@@ -24,11 +24,8 @@ export default defineConfig({
       '@remotion/layout-utils': path.join(appRoot, 'node_modules/@remotion/layout-utils'),
       '@remotion/media': path.join(appRoot, 'node_modules/@remotion/media'),
       '@banodoco/timeline-schema': path.join(appRoot, 'src/test/shims/banodoco/timeline-schema.ts'),
-      '@workspace-effects': path.join(appRoot, 'vendor/banodoco-effects'),
-      '@workspace-animations': path.join(appRoot, 'vendor/banodoco-animations'),
-      '@workspace-transitions': path.join(appRoot, 'vendor/banodoco-transitions'),
     },
-    dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'remotion', '@banodoco/timeline-composition', '@banodoco/timeline-theme-2rp'],
+    dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'remotion', '@banodoco/timeline-composition'],
   },
   server: { host: '127.0.0.1', strictPort: true, fs: { allow: [appRoot, publicCheckout] } },
 });
