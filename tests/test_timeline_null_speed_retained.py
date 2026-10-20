@@ -14,8 +14,9 @@ import pytest
 
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import RetiredRouteError, ValidationError
+from runtime_protocol.errors import ConflictError, ValidationError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.util import canonical_json
 from test_timeline_commit_port import PreparedProvider
@@ -196,7 +197,12 @@ def test_null_start_and_duration_remain_invalid(scope, field):
 @pytest.mark.parametrize("scope", ["child", "parent"])
 @pytest.mark.parametrize("speed", [None, [3, 2], "3/2"])
 def test_legacy_visual_publisher_cannot_seed_retained_speed_shapes(tmp_path, scope, speed):
-    service, project, _ = _service(tmp_path)
+    # The publisher only serves a headless timeline: a tracked one is refused before its speed is read.
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    project = service.create_project({"slug": "views", "name": "Views"}, idempotency_key="project")["id"]
+    service.create_timeline(project, "main", idempotency_key="timeline")
     try:
         publication = _publication(project)
         if scope == "parent":
@@ -204,7 +210,7 @@ def test_legacy_visual_publisher_cannot_seed_retained_speed_shapes(tmp_path, sco
         else:
             publication["internal_timeline_revisions"][0]["payload"]["clips"][0]["speed"] = speed
         before, cas = tuple(service.store.conn.iterdump()), _cas_bytes(service)
-        with pytest.raises(RetiredRouteError):
+        with pytest.raises((ValidationError, ConflictError), match="speed"):
             service.publish_parent_composition(project, "main", publication, idempotency_key="public-speed-refusal")
         assert tuple(service.store.conn.iterdump()) == before
         assert _cas_bytes(service) == cas
