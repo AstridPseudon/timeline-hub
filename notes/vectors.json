@@ -1,0 +1,1665 @@
+{
+  "rawOccurrences": [
+    {
+      "occurrence_id": "occ-a",
+      "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
+      "placement": {
+        "start_ms": 8000,
+        "track": "picture"
+      },
+      "duration_ms": 10000,
+      "source_offset": 0,
+      "speed": 1,
+      "track": "picture",
+      "unknown": {
+        "literal": "chapter-shot"
+      },
+      "shot_revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386"
+    },
+    {
+      "occurrence_id": "occ-b",
+      "shot_id": "chapter-shot",
+      "placement": {
+        "start_ms": 10000,
+        "track": "picture"
+      },
+      "duration_ms": 10000,
+      "source_offset": 0,
+      "speed": 1,
+      "track": "picture",
+      "unknown": {
+        "literal": "chapter-shot"
+      },
+      "shot_revision_id": "shot-1"
+    }
+  ],
+  "rawInternals": [
+    {
+      "revision_id": "internal-1",
+      "clips": [
+        {
+          "id": "clip-a",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 1,
+          "hold": 4,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          },
+          "from": 2,
+          "to": 6,
+          "speed": 2
+        },
+        {
+          "id": "clip-b",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 5,
+          "hold": 2,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+      "clips": [
+        {
+          "id": "clip-a",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 1,
+          "hold": 4,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          },
+          "from": 2,
+          "to": 6,
+          "speed": 2
+        },
+        {
+          "id": "clip-b",
+          "track": "picture",
+          "asset": "picture",
+          "clipType": "media",
+          "at": 5,
+          "hold": 2,
+          "app": {
+            "org.example": {
+              "literal": "clip-a",
+              "clear": null
+            }
+          }
+        },
+        {
+          "id": "reserved-child",
+          "clipType": "video",
+          "asset": "reserved-new",
+          "track": "picture",
+          "at": 0.125,
+          "hold": 4,
+          "params": null,
+          "opaque": [
+            null,
+            false,
+            {}
+          ],
+          "from": 2,
+          "to": 6,
+          "speed": 2
+        }
+      ]
+    }
+  ],
+  "prepared": [
+    {
+      "occurrenceId": "occ-a",
+      "atMs": 8000,
+      "durationMs": 10000,
+      "trackId": "picture",
+      "shotId": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
+      "revisionId": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386",
+      "contentDurationMs": 7000,
+      "effectiveDurationMs": 2000
+    },
+    {
+      "occurrenceId": "occ-b",
+      "atMs": 10000,
+      "durationMs": 10000,
+      "trackId": "picture",
+      "shotId": "chapter-shot",
+      "revisionId": "shot-1",
+      "contentDurationMs": 7000,
+      "effectiveDurationMs": 7000
+    }
+  ],
+  "local": {
+    "outputFps": {
+      "numerator": 30000,
+      "denominator": 1001
+    },
+    "config": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "resolved": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "nativeFpsFrames": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateBeforeBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 270,
+        "end": 330,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 390,
+        "end": 450,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 244,
+        "end": 304,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateAfterBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": 270,
+        "end": 300,
+        "duration": 30,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": 244,
+        "end": 300,
+        "duration": 56,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ]
+  },
+  "reopenedLocal": {
+    "outputFps": {
+      "numerator": 30000,
+      "denominator": 1001
+    },
+    "config": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "resolved": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "nativeFpsFrames": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateBeforeBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 270,
+        "end": 330,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:clip-b",
+        "at": 13,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 390,
+        "end": 450,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 244,
+        "end": 304,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateAfterBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": 270,
+        "end": 300,
+        "duration": 30,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": 244,
+        "end": 300,
+        "duration": 56,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ]
+  },
+  "acceptedPath": {
+    "outputFps": {
+      "numerator": 30000,
+      "denominator": 1001
+    },
+    "config": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "resolved": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "asset": "reserved-new",
+        "mediaId": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "asset": "picture",
+        "mediaId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "nativeFpsFrames": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN"
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": "NaN",
+        "end": "NaN",
+        "duration": "NaN",
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateBeforeBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": 270,
+        "end": 300,
+        "duration": 30,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": 244,
+        "end": 300,
+        "duration": 56,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ],
+    "numericRateAfterBoundary": [
+      {
+        "id": "clip-a",
+        "at": 1,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 30,
+        "end": 90,
+        "duration": 60
+      },
+      {
+        "id": "clip-b",
+        "at": 5,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 150,
+        "end": 210,
+        "duration": 60
+      },
+      {
+        "id": "occ-a:clip-a",
+        "at": 9,
+        "from": 2,
+        "to": 4,
+        "speed": 2,
+        "timelineDurationSeconds": 1,
+        "start": 270,
+        "end": 300,
+        "duration": 30,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-a:reserved-child",
+        "at": 8.125,
+        "from": 2,
+        "to": 5.75,
+        "speed": 2,
+        "timelineDurationSeconds": 1.875,
+        "start": 244,
+        "end": 300,
+        "duration": 56,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 8000,
+          "occurrenceDurationMs": 2000
+        }
+      },
+      {
+        "id": "occ-b:clip-a",
+        "at": 11,
+        "from": 2,
+        "to": 6,
+        "speed": 2,
+        "timelineDurationSeconds": 2,
+        "start": 330,
+        "end": 390,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 2,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 4000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      },
+      {
+        "id": "occ-b:clip-b",
+        "at": 15,
+        "hold": 2,
+        "timelineDurationSeconds": 2,
+        "start": 450,
+        "end": 510,
+        "duration": 60,
+        "canonicalTiming": {
+          "sourceOffsetMs": 0,
+          "speed": 1,
+          "gain": 1,
+          "muted": false,
+          "durationMs": 2000,
+          "occurrenceStartMs": 10000,
+          "occurrenceDurationMs": 7000
+        }
+      }
+    ]
+  }
+}
