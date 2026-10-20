@@ -159,6 +159,24 @@ def test_non_empty_headless_shell_is_refused_untouched(service):
     assert _head(runtime, project)["head_publication_id"] is None
 
 
+@pytest.mark.parametrize("sql, args", [
+    pytest.param("INSERT INTO composition_revision_dependencies(parent_revision_id, dependency_kind, dependency_id, content_digest, ordinal) VALUES (?,?,?,?,0)",
+                 ("empty-parent", "media", "m", "0" * 64), id="dependency-row"),
+    pytest.param("INSERT INTO timeline_references(id, timeline_id, object_id, role) VALUES (?,?,?,?)", ("ref", "main", "obj", None),
+                 id="timeline-references"),
+    pytest.param("INSERT INTO timeline_shots(id, timeline_id, start_ms, duration_ms, reference_ids_json) VALUES (?,?,?,?,?)",
+                 ("shot", "main", 0, 1, "[]"), id="timeline-shots"),
+    pytest.param("INSERT INTO timeline_revisions(timeline_id, version, shots_json, references_json, created_at) VALUES (?,?,?,?,?)",
+                 ("main", 99, '[{"id": "x"}]', "[]", "t"), id="timeline-revisions"),])
+def test_empty_shell_with_dependency_row_or_scope_is_refused_untouched(service, sql, args):
+    runtime, project = service
+    _shell(runtime, project)
+    with runtime.store._mutex, runtime.store._transaction():
+        runtime.store.conn.execute(sql, args)
+    _refused_untouched(runtime, lambda: runtime.create_timeline(project, "main", idempotency_key="adopt"))
+    assert _head(runtime, project)["head_publication_id"] is None
+
+
 def test_wrong_project_or_name_is_refused_untouched(service):
     runtime, project = service
     _shell(runtime, project)
