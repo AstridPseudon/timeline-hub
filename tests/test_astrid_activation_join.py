@@ -827,6 +827,9 @@ def _install_join_providers(custody, *, current_pid, peer_pid, patch=None):
             raise RelayError("CPU token words changed")
         return {k: value[k] for k in ("pid", "uid", "pidversion", "sha256")}
     assign(custody, "default_process_identity", default_process_identity)
+    if sys.platform == "linux":
+        # Keep the real compact listener; supply Linux's short temp parent.
+        assign(custody, "DARWIN_CUSTODY_SOCKET_PARENT", Path("/tmp"))
     assign(custody, "audit_token_details", details)
     assign(custody, "current_process_audit_token", _join_token)
     assign(custody.AuthenticatedCleanupActor, "current",
@@ -1577,4 +1580,15 @@ def test_runtime_relay_to_generic_host_successor_finalization_cpu(tmp_path, astr
             "runtime_pins": _JOIN_PINS, "astrid_pins": _JOIN_ASTRID_PINS, "harness_sha256": _digest(Path(__file__)),
             "receiver_wrapper_sha256": "sha256:" + hashlib.sha256(_JOINED_RECEIVER.encode()).hexdigest(),
             "evidence": evidence, "cleanup": cleanup}, sort_keys=True))
+        if sys.exc_info()[0] is not None:
+            diagnostics = {"cleanup": cleanup}
+            for suffix in (".host-phase.json", ".host-failed.json", ".host-stderr.txt", ".relay-stderr.txt"):
+                path = events.with_suffix(suffix)
+                if path.is_file(): diagnostics[suffix] = path.read_text()[-16384:]
+            if adapter is not None and adapter._current is not None:
+                scope = Path(adapter._current.custody_scope)
+                for name in ("host-handoff-state.json", "relay-handoff-state.json", "runtime-handoff-state.json"):
+                    path = scope / name
+                    if path.is_file(): diagnostics[name] = json.loads(path.read_text())
+            print("Joined handoff failure diagnostics:", json.dumps(diagnostics, sort_keys=True))
     assert cleanup["status"] == "cleaned", cleanup
