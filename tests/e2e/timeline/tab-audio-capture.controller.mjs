@@ -59,6 +59,7 @@ export const SOURCE_FILES = [
   'tests/e2e/timeline/private-pulse-stereo.config.ts',
   'tests/e2e/timeline/private-pulse-stereo.controller.mjs',
   'tests/e2e/timeline/setup-private-pulse-stereo.sh',
+  'tests/e2e/timeline/setup-private-pulse-stereo.test.mjs',
 ];
 const INPUT_FILE_PREFIXES = [
   'playwright.config.ts',
