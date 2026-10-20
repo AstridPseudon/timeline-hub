@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-source-final-review/project/tests/gapless-mp3-source-origin.test.mjs
+ok 1 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-source-final-review/project/tests/gapless-mp3-source-origin.test.mjs
+  ---
+  duration_ms: 1950.398196
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-source-final-review/project/tests/normal-audio-sources.test.mjs
+ok 2 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-source-final-review/project/tests/normal-audio-sources.test.mjs
+  ---
+  duration_ms: 1650.168256
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1953.997836
