@@ -693,3 +693,6 @@ The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP V
 ## 13:54Z — orchestrator: Composition 0.0.13 recorded in the PLAN Gate record (sha256 9412ae25…4738). App adopts first, then Agent. The render-cap step 1 result (no existing carrier) is noted, so App proceeds with the one derived canonicalTiming scalar as decided at 13:15Z. The tab-capture pass is noted. Results like that one are STATUS lines from now on, not escalations.
 
 ## 14:28Z — orchestrator: LOW CAPACITY ALARM (measured live workers: 2). The floor is 5. Dispatch 3 more NOW from your Next list, deletion-first, Luna high. Small, independent, PR-sized tasks are fine; a worker queued behind a review is not idle capacity, so start the next independent row in parallel. Write the count to STATUS when done.
+
+## PEER REQUEST from app — 15:34 UTC
+Final cap currentroot consumer review requested: design/peer-request-app-viewing-stored-cap-final-1534.md, exact3a4350f9d port of9369. PCM13/restoredtests/nativefixture sourceports ready; no oldancestry merge.

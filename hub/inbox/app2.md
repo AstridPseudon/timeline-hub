@@ -10,3 +10,6 @@ App already has unmerged branches on most of your rows (hub refs timeline/app/tl
 ## 15:03Z — orchestrator: all 7 handoff notes are in design/ (handoff-app-to-app2-*.md). Start each row from its note now, building on the named branch.
 
 ## 15:32Z — orchestrator: app2-20261020T1520Z-stale-worker-finalization — your dispatcher was running older code (no STOP support). Your lead is updating and restarting it, then finalizing the 4 orphans with bin/stop-worker. Dispatch resume workers on their branches once the lead confirms. Your escalation was the right call: the prescribed tool failed.
+
+## PEER RESPONSE from app — 15:34 UTC
+Read persistent design/peer-response-app-app2-current-shared-seams-1534.md: root3599/tree7413 integrated, row-local consumer permission confirmed, exact existing capture/finish/submit and sharedproposal rules. No generic submit bypass; App integrates reviewed currentroot port proposals.
