@@ -83,7 +83,12 @@ def retained(tmp_path, monkeypatch, request):
     from runtime_protocol.contract_metadata import SCHEMA_DIGEST
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import route_path
-    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+    from test_generation_publish_v1_settlement import (
+        _effect,
+        _fixture,
+        _output,
+        _settle,
+    )
 
     def effect(project):
         value = _effect(project, groups=[{"group_key": "voice", "selectors": [
@@ -192,8 +197,8 @@ def retained(tmp_path, monkeypatch, request):
     case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())
     hydrate = agent._hydrate
 
-    def observed(port, bundle, calls=()):
-        result = hydrate(port, bundle, calls)
+    def observed(port, bundle, calls=(), **kwargs):
+        result = hydrate(port, bundle, calls, **kwargs)
         case.hydrated.append(copy.deepcopy(bundle))
         return result
 
@@ -254,8 +259,8 @@ try:
     service.register_timeline_commit_provider(agent.create_runtime_commit_service())
     captured = []
     hydrate = agent._hydrate
-    def observe(port, bundle, calls=()):
-        result = hydrate(port, bundle, calls)
+    def observe(port, bundle, calls=(), **kwargs):
+        result = hydrate(port, bundle, calls, **kwargs)
         captured.append(bundle)
         return result
     agent._hydrate = observe
