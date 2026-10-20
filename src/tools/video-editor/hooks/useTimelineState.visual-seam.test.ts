@@ -81,4 +81,35 @@ describe('ordinary visual seam acknowledgement persistence', () => {
     });
     expect(prepared?.app?.visualSeamContract).not.toHaveProperty('report');
   });
+
+  it('preserves an existing opaque legacy report when authored seam data changes', () => {
+    const legacyReport = {
+      version: 1,
+      warningCount: 1,
+      blocked: true,
+      opaqueDiagnostic: { source: 'legacy', code: 'SEAM-001' },
+    };
+    const current: TimelineConfig = {
+      ...baseConfig,
+      app: {
+        ...baseConfig.app,
+        visualSeamContract: { ...authoredContract, report: legacyReport },
+      },
+    };
+    const acknowledged = acknowledgedConfig({
+      ...authoredContract,
+      intents: { ...authoredContract.intents, '120': 'hard-cut' },
+      report: { version: 1, warningCount: 0, blocked: false },
+    });
+
+    const prepared = prepareVisualSeamSnapshotConfig(current, acknowledged);
+
+    expect(prepared?.app?.visualSeamContract).toMatchObject({
+      ...authoredContract,
+      intents: { ...authoredContract.intents, '120': 'hard-cut' },
+      report: legacyReport,
+    });
+    expect(prepared?.app?.visualSeamContract?.report).toEqual(legacyReport);
+    expect(prepared?.app?.visualSeamContract?.report).not.toEqual(acknowledged.app?.visualSeamContract?.report);
+  });
 });

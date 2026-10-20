@@ -109,8 +109,19 @@ export function prepareVisualSeamSnapshotConfig(
     throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
   }
   const persistedContract = visualSeamContractWithoutReport(acknowledgedContract)!;
-  const currentContract = visualSeamContractWithoutReport(currentConfig.app?.visualSeamContract);
+  const currentContractValue = currentConfig.app?.visualSeamContract;
+  const currentContract = visualSeamContractWithoutReport(currentContractValue);
   if (canonicalJsonStringify(persistedContract) === canonicalJsonStringify(currentContract)) return null;
+  if (
+    currentContractValue !== null &&
+    typeof currentContractValue === 'object' &&
+    !Array.isArray(currentContractValue) &&
+    Object.prototype.hasOwnProperty.call(currentContractValue, 'report')
+  ) {
+    // Keep a legacy report already in the snapshot opaque; never copy the
+    // newly derived report from the acknowledged render configuration.
+    persistedContract.report = (currentContractValue as Record<string, unknown>).report;
+  }
   return {
     ...currentConfig,
     app: { ...currentConfig.app, visualSeamContract: persistedContract },
