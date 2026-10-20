@@ -158,8 +158,10 @@ def bundle_from_document(document):
     return bundle
 
 
-def document_from_bundle(bundle, *, document_pins=None):
-    """Compile through main and close every reused image from the exact input."""
+def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
+    """Compile exact inputs, reusing authenticated inverse boundary images."""
+    from ._command_state import equal
+
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
@@ -169,6 +171,15 @@ def document_from_bundle(bundle, *, document_pins=None):
                        for row in publication["shot_revisions"]})
     internal_index.update({row["revision_id"]: copy.deepcopy(row)
                            for row in publication["internal_timeline_revisions"]})
+    # Accepted before/after boundaries supply images, never parent replacements.
+    for historical in source_bundles:
+        document = historical["source_mapping"]["_runtime_document"]
+        _verify_document(document)
+        _require((document["project_id"], document["timeline_id"]) ==
+                 (bundle["project_id"], bundle["timeline_id"]), "foreign inverse source")
+        shot_index.update({row["revision_id"]: copy.deepcopy(row) for row in document["shot_revisions"]})
+        internal_index.update({row["revision_id"]: copy.deepcopy(row)
+                               for row in document["internal_timeline_revisions"]})
     parent = copy.deepcopy(publication["parent_composition"])
     # Opening shared occurrences gives them independent editing identities. A
     # parent-only edit must still reuse their ORIGINAL immutable shot images.
@@ -181,6 +192,22 @@ def document_from_bundle(bundle, *, document_pins=None):
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
             occurrence["shot_revision_id"] = origin["revision_id"]
+            continue
+        for historical in source_bundles:
+            prior = next((row for row in historical["placements"]
+                          if row["occurrence_id"] == occurrence["occurrence_id"]), None)
+            if prior is None or prior["shot_id"] != identity:
+                continue
+            old = historical["shots"][identity]
+            payload, old_payload = copy.deepcopy(shot["payload"]), copy.deepcopy(old["payload"])
+            payload.pop("internal_timeline_revision_id", None)
+            old_payload.pop("internal_timeline_revision_id", None)
+            if not equal(payload, old_payload) or not equal(shot["internal_timeline"], old["internal_timeline"]):
+                continue
+            origin = historical["source_mapping"]["shots"][identity]
+            occurrence["shot_id"] = origin["shot_id"]
+            occurrence["shot_revision_id"] = origin["revision_id"]
+            break
     shot_ids = {row["shot_revision_id"] for row in parent["occurrences"]}
     shots = sorted((shot_index[key] for key in shot_ids),
                    key=lambda row: (row["shot_id"], row["revision_id"]))
@@ -203,6 +230,11 @@ def document_from_bundle(bundle, *, document_pins=None):
             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
             "parent": parent, "manifest": manifest,
         }).removeprefix("sha256:")
+    for historical in source_bundles:
+        prior = historical["source_mapping"]["_runtime_document"]
+        if equal(parent, prior["parent_revision"]["payload"]) and equal(manifest, prior["dependency_manifest"]):
+            revision = prior["parent_revision"]["revision_id"]
+            break
     document = {
         "schema_version": 1, "project_id": bundle["project_id"],
         "timeline_id": bundle["timeline_id"],
@@ -396,7 +428,7 @@ class RuntimeCommitService:
                     for publication in call["args"]["publications"]:
                         if publication not in undo_of:
                             undo_of.append(publication)
-            inverse_records, inverse_intervening = [], []
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
             if undo_of:
                 targets = [port.history_entry(publication) for publication in undo_of]
                 segments = []
@@ -421,6 +453,18 @@ class RuntimeCommitService:
                 inverse_intervening = _records([entry for entry in ordered
                                                 if entry["publication_id"] not in undo_of],
                                                CommitRejected, base, current)
+                for entry in ordered:
+                    if entry["publication_id"] not in undo_of:
+                        continue
+                    previous = entry.get("previous")
+                    _require(previous, "inverse input boundary is unavailable")
+                    prior = port.history_entry(previous["publication_id"])
+                    _require(prior["revision_id"] == previous["revision_id"],
+                             "inverse input boundary mismatch")
+                    pin = {key: entry[key] for key in ("revision_id", "publication_id")}
+                    _history(port, pin, previous, CommitRejected, base)
+                    inverse_sources.extend((_load(port, context, previous["revision_id"]),
+                                            _load(port, context, entry["revision_id"])))
             closures, restored_from = {}, None
             if restore:
                 from astrid.sdk.timeline.commands import validate_command
@@ -467,7 +511,7 @@ class RuntimeCommitService:
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures)
                 _check_reservations(port, plan, current, CommitRejected, base)
-                document = document_from_bundle(plan.bundle)
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),

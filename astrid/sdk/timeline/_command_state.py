@@ -203,10 +203,12 @@ class State:
             from astrid.core.timeline.authoring_bundle import _authoring_shot_id
             # The only admitted source change is this occurrence's exact main
             # materialization of the original source, never a prefix heuristic.
-            return actual['value'] == _authoring_shot_id(
-                self.bundle['project_id'], self.bundle['timeline_id'],
-                self.occurrence(ref.removesuffix('/shot'))['occurrence_id'],
-                expected['value'], shared=True)
+            occurrence = self.occurrence(ref.removesuffix('/shot'))
+            def materialized(source):
+                return _authoring_shot_id(self.bundle['project_id'], self.bundle['timeline_id'],
+                                          occurrence['occurrence_id'], source, shared=True)
+            return (actual['value'] == materialized(expected['value'])
+                    or expected['value'] == occurrence['shot_id'] == materialized(actual['value']))
         return False
 
     def set(self, ref, path, state):
