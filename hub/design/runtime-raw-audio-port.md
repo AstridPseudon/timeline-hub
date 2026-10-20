@@ -1,3 +1,5 @@
+> REVIEW HOLD 2026-10-20T16:05:47Z: candidate ab4c REJECTED read-TOCTOU; rt-m2-raw-audio-single-fd-fix active. No merge/native trim qualification. See runtime-raw-audio-port-final-review.md.
+
 # Runtime raw-audio port
 
 Implemented the Runtime-side candidate from `runtime-audio-raw-metadata-proposal.md`

@@ -1,0 +1,5 @@
+name=vw-m3-presenter-known-state-final-gate
+repo=agent
+base=tl/integration
+base_sha=8e3107853d17453758a933d1f47215cc1c002660
+remote_request=timeline/agent/tl/vw-m3-presenter-known-state-final-gate\ 2b5b7fed4\ viewing\ Corrects\ your\ ee710REJECT:\ existing\ default/partial/clamped/rawinvalid\ normalized\ semanticstate\ remainsKNOWN\,\ ONLYlegacycompat\ ROI\ absent/malformed\ conservative.\ Existing\ explicit799+partial697\ unchanged\,17scene/crop+38neighbors2oldskip+8artifactPASS\ independentAPPROVE.\ Tiny3componentfiles\ +normalartifactregeneration\;\ regenerate\ metadata\ on\ YOURcurrentroot\ ifstale.\ Old697actualcomponentphysical\ proof\ not\ Runtimehost/sourcecert/deletion.\ Flat\ corrective\ report/patch.

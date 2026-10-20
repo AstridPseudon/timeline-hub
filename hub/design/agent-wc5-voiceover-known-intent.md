@@ -16,6 +16,10 @@ receive renderer credentials or publish a candidate bundle. Missing tuple,
 producer, WAV metadata, scope, or text evidence returns `proposal_open` with a
 concrete gap.
 
+The known proposal also refuses `ripple` timing: placement/parent retiming has
+no native command in this branch, so it is surfaced as a concrete gap rather
+than omitted from or compiled into a whole-candidate diff.
+
 The existing-clip regeneration branch remains on `TargetBound.publish`; this
 is deliberate because WC5 retires the old writer only for the proven branch.
 `TargetBound.publish` and its deletion-ledger row remain visibly held. No

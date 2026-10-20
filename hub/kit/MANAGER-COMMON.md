@@ -53,7 +53,7 @@ You own your area. If your recommended decision fits PLAN.md and the precedents 
 - A test whose expected behaviour legitimately changes converts one-to-one (refusal on the old case plus an equivalent success on the new one), listed in the deletion ledger. This needs no approval; deleting assertions or skipping tests still does.
 - Giant-file drift: extract the Timeline-added code into a helper; a truthful entry update only when extraction would split one function. Never loosen thresholds.
 - Route retirement follows consumer migration. A legacy path dies once its last consumer has moved.
-- Disk: recycle finished, clean, unleased, non-KEEP worktrees with bin/recycle whenever you need headroom.
+- Disk: recycle finished, clean, unleased, non-KEEP worktrees with bin/recycle whenever you need headroom. Large scratch copies inside finished workers' record folders are packed hourly by the orchestrator's bin/compact-scratch (lossless). Workers you still name in STATUS.md are skipped, so stop naming finished ones.
 - Failed or old full runs: classify them in STATUS, and rerun only on the current tree when a gate needs it.
 - Test environments (temp dirs, fixtures, env vars local to one run): fix them yourself, keeping every guard. A short private per-run temp dir is fine.
 - Test-only setup may use EXISTING private persistence helpers in its OWN ephemeral realm, provided the real product path then accepts the result. No production writer and no new API.
