@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: owner-supplied original phase: fps=30, from=0, speed=1, curve=linear
+ok 1 - owner-supplied original phase: fps=30, from=0, speed=1, curve=linear
+  ---
+  duration_ms: 266.991908
+  ...
+# Subtest: owner-supplied original phase: fps=30, from=0, speed=1, curve=equal-power
+ok 2 - owner-supplied original phase: fps=30, from=0, speed=1, curve=equal-power
+  ---
+  duration_ms: 233.185547
+  ...
+# Subtest: owner-supplied original phase: fps=30, from=0.05, speed=1.5, curve=equal-power
+ok 3 - owner-supplied original phase: fps=30, from=0.05, speed=1.5, curve=equal-power
+  ---
+  duration_ms: 221.6215
+  ...
+# Subtest: owner-supplied original phase: fps=29.97002997002997, from=0.05, speed=1.5, curve=s-curve
+ok 4 - owner-supplied original phase: fps=29.97002997002997, from=0.05, speed=1.5, curve=s-curve
+  ---
+  duration_ms: 212.162925
+  ...
+# Subtest: same envelope and clock retain distinct actual source bytes, not a swapped WAV
+ok 5 - same envelope and clock retain distinct actual source bytes, not a swapped WAV
+  ---
+  duration_ms: 228.028363
+  ...
+# Subtest: recursive multiply/minimum phase translation preserves envelope fields
+ok 6 - recursive multiply/minimum phase translation preserves envelope fields
+  ---
+  duration_ms: 115.187266
+  ...
+# Subtest: forged prepared WAVs and double apply fail before preparing any source
+ok 7 - forged prepared WAVs and double apply fail before preparing any source
+  ---
+  duration_ms: 99.381545
+  ...
+# Subtest: failed batches clean prepared predecessors and preserve unrelated attempt files
+ok 8 - failed batches clean prepared predecessors and preserve unrelated attempt files
+  ---
+  duration_ms: 102.16601
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1490.126314

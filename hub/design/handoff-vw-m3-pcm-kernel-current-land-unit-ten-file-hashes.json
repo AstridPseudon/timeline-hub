@@ -1,0 +1,12 @@
+{
+  "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "b9396f7314f3d17e7268627b5545ab696f51de5fb4c5e605ac7ff0eb1ff839d0",
+  "remotion/attempt-envelope-pcm.mjs": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719",
+  "remotion/compiled-audio-source-clock.mjs": "6ce210e91547d8bca901dc23fe3b06eae0d463fa18d6e1cb79d23494f5145ffc",
+  "remotion/normal-audio-sources.mjs": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4",
+  "remotion/tests/gapless-mp3-source-origin.test.mjs": "269e147352e8ca84d578285c2396977998683e8c56d5f796738771aa221426a6",
+  "remotion/tests/long-audio-source.test.mjs": "e80f3068bfa738dde13c35a7ed07ff22f1ec6322d0d1c0efba8037cb7ceb5e52",
+  "remotion/tests/normal-audio-native-sources.test.mjs": "d27108f95cbec13b3422aad7a3a46ca370bc7e5dad1e657ae2de2922d77cb0c9",
+  "remotion/tests/normal-audio-sources.test.mjs": "b0139f14f3ce9792503ae218d98c82adfff85b8151a7b91c508fb6382c6b1c3e",
+  "tests/packs/rendering/test_normal_audio_source_phase.py": "da82011d8a8415390b9e890ef4e0dc991af12f96da47acac48881d4a9dadbdcc",
+  "tests/packs/rendering/test_normal_audio_sources.py": "66a8ae09e8d84487b77682f14bd6b270e7399d6c5ff3b4c21f0212e75bdc9759"
+}

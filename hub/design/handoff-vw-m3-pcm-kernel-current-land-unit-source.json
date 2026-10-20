@@ -1,0 +1,19 @@
+{
+  "base": "e2ad59584addc892f1a6dd9fd644c75f80a2e28f",
+  "base_tree": "d01be2b2adcc43d4c42f434e2058d27d31fdb396",
+  "landing_patch_bytes": 0,
+  "paths": [
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+    "remotion/attempt-envelope-pcm.mjs",
+    "remotion/compiled-audio-source-clock.mjs",
+    "remotion/normal-audio-sources.mjs",
+    "remotion/tests/gapless-mp3-source-origin.test.mjs",
+    "remotion/tests/long-audio-source.test.mjs",
+    "remotion/tests/normal-audio-native-sources.test.mjs",
+    "remotion/tests/normal-audio-sources.test.mjs",
+    "tests/packs/rendering/test_normal_audio_source_phase.py",
+    "tests/packs/rendering/test_normal_audio_sources.py"
+  ],
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-kernel-current-land-unit-source.tar",
+  "status": "NOP"
+}
