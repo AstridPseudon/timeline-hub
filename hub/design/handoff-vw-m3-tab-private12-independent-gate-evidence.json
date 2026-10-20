@@ -1,0 +1,1480 @@
+{
+  "artifactMemberCount": 77,
+  "artifactMembers": [
+    {
+      "bytes": 245,
+      "path": "dist/animations.generated.js",
+      "sha256": "fa4b15b205f4dee8dc8b20f2ea2036e505ef1cdcd1e06b66c9be85863ad124ec"
+    },
+    {
+      "bytes": 12419,
+      "path": "dist/chunk-BLDFPOW3.js",
+      "sha256": "e296054fd6189c1458196dddb549381eccaa07056ed752f5c083e583fa10f6bf"
+    },
+    {
+      "bytes": 41521,
+      "path": "dist/chunk-DMRW7SC3.js",
+      "sha256": "6b611144f2f9689048ff739e0c33a3700010999b13897fe03448336da07d3b1d"
+    },
+    {
+      "bytes": 5856,
+      "path": "dist/chunk-DUR3GNZH.js",
+      "sha256": "7761523b704a585a09c0d9e45f2dd0edc0f6c9889aaf2d0d9d679cfc8ec23df3"
+    },
+    {
+      "bytes": 11312,
+      "path": "dist/chunk-GWYPEUCA.js",
+      "sha256": "0423ede380691a48bd734c4d8aa356d697bdf1f268ee302bbc6e5f605d1d31ee"
+    },
+    {
+      "bytes": 1096,
+      "path": "dist/chunk-IPYPAILB.js",
+      "sha256": "b899ad286e5b4664f200cd89f4ba1afaf009aa0596fe823ff601a1919b8111b4"
+    },
+    {
+      "bytes": 13284,
+      "path": "dist/chunk-KA66CXRB.js",
+      "sha256": "749a3a8408d705f22239fd9401b4eeb15450d0f298805356153c7d8fa059e65c"
+    },
+    {
+      "bytes": 1170,
+      "path": "dist/chunk-LG3Y3LFP.js",
+      "sha256": "9f38188840874ae37ca1ec3bb5a64316e47d479ee2a017b57a86eceff846be7e"
+    },
+    {
+      "bytes": 17300,
+      "path": "dist/chunk-SE4TPVLW.js",
+      "sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b"
+    },
+    {
+      "bytes": 4351,
+      "path": "dist/chunk-SZIJH2BM.js",
+      "sha256": "51e13b71a8b0db6663c05c994bb7e39c2cc97e173d032837ee3cd0825c9997bb"
+    },
+    {
+      "bytes": 323,
+      "path": "dist/effects.generated.js",
+      "sha256": "d263b83ba162baa42e1735cc0335a36f5fa8beabed498a87974cfbf187166d9c"
+    },
+    {
+      "bytes": 1496,
+      "path": "dist/evaluation.js",
+      "sha256": "5bfa7ac353d7e584c8cb7d3082cb6b49c209a1ec679bc31c25c4b6d8dc7a9390"
+    },
+    {
+      "bytes": 29533,
+      "path": "dist/index.js",
+      "sha256": "364460a558df5b0b9c6633113943f3414fd1c1873cb1357d01ecf7d279a41e52"
+    },
+    {
+      "bytes": 425,
+      "path": "dist/registries.js",
+      "sha256": "dd8b245ba3a2204af3cef9ae6858148a146997d84315c0ce8def3e7133f9019c"
+    },
+    {
+      "bytes": 457,
+      "path": "dist/registry.generated.js",
+      "sha256": "e4a55bcec4b2496dd2728f62757619f3aade270f81ef36bec199601e2a272f63"
+    },
+    {
+      "bytes": 1593,
+      "path": "dist/theme-api.js",
+      "sha256": "30184b842965a640022817033e81fc2f27d30361afbb7355d1db2e00e917603c"
+    },
+    {
+      "bytes": 253,
+      "path": "dist/transitions.generated.js",
+      "sha256": "a5f126233840e53378fbc53d4948d4eba405c6b496cac73f31d4bc5f56ec77af"
+    },
+    {
+      "bytes": 3170,
+      "path": "package.json",
+      "sha256": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb"
+    },
+    {
+      "bytes": 23481,
+      "path": "README.md",
+      "sha256": "88456f72f002df362a8c4b822514e6b6faa5a97f41bfc64ba892ba5fa4a6184b"
+    },
+    {
+      "bytes": 418,
+      "path": "dist/lib/animation-easing.d.ts",
+      "sha256": "566b706fd93cbee4977f220af6750fccbeaa3e5a8a48968f5da1c3ffecfda9d3"
+    },
+    {
+      "bytes": 1430,
+      "path": "dist/lib/animations.d.ts",
+      "sha256": "2572f661cb08d12a849aaeee33120edc61e5af465d2c1d0dcc4bbe5f147acb86"
+    },
+    {
+      "bytes": 549,
+      "path": "dist/animations.generated.d.ts",
+      "sha256": "dcdf510c086b8638e150939808224ea0d61bd421a28a72aa99c0eccaaecb2fed"
+    },
+    {
+      "bytes": 587,
+      "path": "dist/lib/audio-curves.generated.d.ts",
+      "sha256": "fb1570159b5f5ed5fc9253bb8e22a967c7a16708090a2abba7e5b0ce81193687"
+    },
+    {
+      "bytes": 2107,
+      "path": "dist/lib/audio-envelope.d.ts",
+      "sha256": "176f12817826ef20e4e7b495ea5c05174ac05e409bacb0ffc1fd0f8c520b9dd6"
+    },
+    {
+      "bytes": 317,
+      "path": "dist/AudioTrack.d.ts",
+      "sha256": "eec7d7c05133ff85fb47cfd4494d1c1cbfc77e00d69b500d6a2cc2ac392bfe3f"
+    },
+    {
+      "bytes": 1254,
+      "path": "dist/lib/beat-loop.d.ts",
+      "sha256": "9e397a7601da1f9d96366de6e8214dc4a75c4f138516ed91899c235d4611c0a5"
+    },
+    {
+      "bytes": 1446,
+      "path": "dist/lib/clip-look.d.ts",
+      "sha256": "2020bebe2f4c361e1ad926c54aac35925a48b370b51bad41c2a6b06896b4ca55"
+    },
+    {
+      "bytes": 690,
+      "path": "dist/ClipAnimationPhase.d.ts",
+      "sha256": "7de95ce9c33bd647625f89a626e6ddb7af39a18e42ffe2787fa1a5730e34e653"
+    },
+    {
+      "bytes": 946,
+      "path": "dist/ClipLook.d.ts",
+      "sha256": "5be635d470accfbd0618ab02ff451e9401c176c93aca6b7851a7db61be9fee09"
+    },
+    {
+      "bytes": 287,
+      "path": "dist/builtins/animations/fade-up/component.d.ts",
+      "sha256": "9e25aef76467bec99fe8e9573c11855395678e473fb25554425e8015e6c5787f"
+    },
+    {
+      "bytes": 290,
+      "path": "dist/builtins/animations/fade/component.d.ts",
+      "sha256": "da24676182baa4bd322130a1d3539c9e4874f1997b7b5aa9f41973ca3a5a7c63"
+    },
+    {
+      "bytes": 289,
+      "path": "dist/builtins/animations/scale-in/component.d.ts",
+      "sha256": "f1dd5d3699f2361b8dd79a0c155e46a3e8c71e360a409f7c78fcb4b310d14db5"
+    },
+    {
+      "bytes": 293,
+      "path": "dist/builtins/animations/slide-left/component.d.ts",
+      "sha256": "54758f873699684fec2be4e8423bb160cc3e17a05157af9375fa7a261e54a2ae"
+    },
+    {
+      "bytes": 284,
+      "path": "dist/builtins/animations/slide-up/component.d.ts",
+      "sha256": "456c01fbe5e442e6c42ce236e1006f489d2a5e57c7068216224a8ac16ddd9a74"
+    },
+    {
+      "bytes": 275,
+      "path": "dist/builtins/animations/type-on/component.d.ts",
+      "sha256": "092f60b4b132628da2c7a3592407e5dfac08aca291091a0352b27a5c303506c4"
+    },
+    {
+      "bytes": 669,
+      "path": "dist/builtins/effects/text-card/component.d.ts",
+      "sha256": "c2c42f404bc6e0e0e573121426f994669e8da8ce9f694a2bb85dd25f87cc3205"
+    },
+    {
+      "bytes": 433,
+      "path": "dist/builtins/themes/2rp/effects/art-card/component.d.ts",
+      "sha256": "a05ea6ee618dd74d92c4362d1f0279c04f00d37c0126c4bf2978632b83704d7b"
+    },
+    {
+      "bytes": 430,
+      "path": "dist/builtins/themes/2rp/effects/cta-card/component.d.ts",
+      "sha256": "3de063b1b5bf95128e5db98b4f300d9cab266df4bd8a231cbf13b70b11d80ac3"
+    },
+    {
+      "bytes": 497,
+      "path": "dist/builtins/themes/2rp/effects/resource-card/component.d.ts",
+      "sha256": "4ae066ee665797012695650a1951b10e5011395116259481e761fbc116595bef"
+    },
+    {
+      "bytes": 450,
+      "path": "dist/builtins/themes/2rp/effects/section-hook/component.d.ts",
+      "sha256": "88151343fbe05a95a8c74c6ebb72d4336e567c98dcc8cd68b74ba8c3cc678558"
+    },
+    {
+      "bytes": 253,
+      "path": "dist/builtins/transitions/cross-fade/component.d.ts",
+      "sha256": "c541fa5948637d751f013a7c6dc036136533f00038754be9192bef53d38e7432"
+    },
+    {
+      "bytes": 128,
+      "path": "dist/builtins/transitions/fade/component.d.ts",
+      "sha256": "99f36cd1e1421b85139bc0c9a92d68fabe1ef5e0ba94e414b797dd8edd08fcce"
+    },
+    {
+      "bytes": 680,
+      "path": "dist/lib/duration.d.ts",
+      "sha256": "df349bd9b431a410e325aba2361319ff339634798324ae9c0e463948fb98dac0"
+    },
+    {
+      "bytes": 118,
+      "path": "dist/lib/effect-params.d.ts",
+      "sha256": "813c795eb50af4ec8a22546fb01b88d211622b5c0ac664bbe42199d1ba75e990"
+    },
+    {
+      "bytes": 3892,
+      "path": "dist/effects-types.d.ts",
+      "sha256": "64d0351954aa506f4198fcd5d0641cf00c26f2796a26f9e722c37d0c81cde8d4"
+    },
+    {
+      "bytes": 546,
+      "path": "dist/effects.generated.d.ts",
+      "sha256": "f294ad0885043dc58eacba78a9011fe5c9a92a0471ba45dfc6a56888fabbfa6b"
+    },
+    {
+      "bytes": 3154,
+      "path": "dist/evaluation.d.ts",
+      "sha256": "8af0201e86b0685412e5958c9824739f2a9a4812c67796d96df2607ef496c24a"
+    },
+    {
+      "bytes": 131,
+      "path": "dist/lib/fade.d.ts",
+      "sha256": "693ef17faa4b8a82941a7041d7213d431f9f5aed7d70e065e5a0908f6b979249"
+    },
+    {
+      "bytes": 2471,
+      "path": "dist/index.d.ts",
+      "sha256": "da76faee7226e65a18f91a2fb45e2a260f33aef8768609093872c7eff1a76e03"
+    },
+    {
+      "bytes": 254,
+      "path": "dist/lib/keyframe-easing.d.ts",
+      "sha256": "48269f559ebbaaa14f3763e44b85ab9e6813c9374ec7a26fb30d68cb4c8d9370"
+    },
+    {
+      "bytes": 1215,
+      "path": "dist/lib/keyframe-origin.d.ts",
+      "sha256": "8e6e7f6aa32e88cec5556188d91258b304d9015f2dd8d6c9c1c3c20e5d15e6e6"
+    },
+    {
+      "bytes": 395,
+      "path": "dist/lib/modifier-admission.d.ts",
+      "sha256": "a39547d7f7bca2d1131bfff58470893cd257e55b9c602bb017762d2761e0107b"
+    },
+    {
+      "bytes": 322,
+      "path": "dist/lib/modifier-bounds.d.ts",
+      "sha256": "7f1e4d7011909e3cfc0ee295e2447958c04994eaa957072072e6c5aca3fb9645"
+    },
+    {
+      "bytes": 847,
+      "path": "dist/lib/modifier-keyframes.d.ts",
+      "sha256": "1343b772dbd9bc3dc6bd632bdb2b5fcdf38eac3b8663d7e72fdf202fb27ba685"
+    },
+    {
+      "bytes": 2701,
+      "path": "dist/modifier-types.d.ts",
+      "sha256": "51e5409a3468eda0fd1bf9a34dee4740e67b7fc2cbb91799f057440c854eebf7"
+    },
+    {
+      "bytes": 704,
+      "path": "dist/lib/modifiers.d.ts",
+      "sha256": "3dc2380942a77d37908ef0de745162e3e6e62d75549d273013b2403c0a1b0258"
+    },
+    {
+      "bytes": 583,
+      "path": "dist/modifiers.d.ts",
+      "sha256": "8847e2db3c2da608dae8985ab7f6f6bee5ec528d0bf37538a63365ac46917d8f"
+    },
+    {
+      "bytes": 1106,
+      "path": "dist/lib/motion-curves.generated.d.ts",
+      "sha256": "31bf18b3642279150d5929ed29c1c842158e7217990a71a908545fa4eb1c7808"
+    },
+    {
+      "bytes": 1275,
+      "path": "dist/registries.d.ts",
+      "sha256": "566c301b6a48c34ce65b84f3619b61378c1456f36e202b8056ec4f660c96832f"
+    },
+    {
+      "bytes": 1656,
+      "path": "dist/registry.generated.d.ts",
+      "sha256": "14179f9151f6a172d247426c9fa1b1bd79547fd0f7513027acd9ff5e1b1d82d5"
+    },
+    {
+      "bytes": 338,
+      "path": "dist/RegistryContext.d.ts",
+      "sha256": "a603bf7ba688c5a3ecabbfbb6295278fa4170e1cda42437e4f7f5284fd6e398d"
+    },
+    {
+      "bytes": 1433,
+      "path": "dist/lib/render-bounds.d.ts",
+      "sha256": "2a76cab5181640eb98bf6cd40a9c7f652d6c2df205638e9124c34b3a8bd6540c"
+    },
+    {
+      "bytes": 2805,
+      "path": "dist/scene-capabilities.d.ts",
+      "sha256": "8b50046828d459c99fbee0bb6ec5c4d834e3a13afbfd16204d8e44fa9baffcc7"
+    },
+    {
+      "bytes": 2921,
+      "path": "dist/scene-evaluation.d.ts",
+      "sha256": "8f4d7bf5271c74eec7eb87c651384ce77f6bfdf78a5bb55ee807fc46be48a2b3"
+    },
+    {
+      "bytes": 2841,
+      "path": "dist/theme-api.d.ts",
+      "sha256": "c35fd5f289dbb6e208a23475c17746572615a5068fc7bb7e411ba5d1d01459dd"
+    },
+    {
+      "bytes": 1226,
+      "path": "dist/ThemeContext.d.ts",
+      "sha256": "5d0acfce91aaec43d2d4ea322d7666e42b49564a11163faca9885bd8393f0433"
+    },
+    {
+      "bytes": 2530,
+      "path": "dist/TimelineComposition.d.ts",
+      "sha256": "c5ca2b228b1ef4afcc63ee09cc47ea35d50f5c1679cc319d769d0c074f6f9f98"
+    },
+    {
+      "bytes": 291,
+      "path": "dist/lib/tracks.d.ts",
+      "sha256": "2f0b573259ff14991d317cfcf4e11f8347d4d2da01e99f13b62a2b850732c42d"
+    },
+    {
+      "bytes": 2141,
+      "path": "dist/lib/transition-declarations.d.ts",
+      "sha256": "188fc5dadcda032c4fc2212adfc21902e1eb0936bc8c0be0f030cebf21253f59"
+    },
+    {
+      "bytes": 1730,
+      "path": "dist/lib/transition-spans.d.ts",
+      "sha256": "ce6087e85a0f3b59baaa056399cb372de852b96e10423a5796ba546dbe783174"
+    },
+    {
+      "bytes": 365,
+      "path": "dist/TransitionLayer.d.ts",
+      "sha256": "9d11710352e33bcc265a1f6acd4c4778961a45269b90c169caca07d7130452ea"
+    },
+    {
+      "bytes": 652,
+      "path": "dist/lib/transitions.d.ts",
+      "sha256": "c0ac047b7a3283f0e359c22225036a2df51540c427122d2c8851a32e289b8ff4"
+    },
+    {
+      "bytes": 506,
+      "path": "dist/transitions.generated.d.ts",
+      "sha256": "064f3cb031312045501d3e6be07cb18e45d77060915209ae1375c3b04ab3bc92"
+    },
+    {
+      "bytes": 208,
+      "path": "dist/lib/trim.d.ts",
+      "sha256": "708239edae3993e8c7050fdc246e85b3a9da64a4db074df1a7c75b97ab1c75bb"
+    },
+    {
+      "bytes": 3143,
+      "path": "dist/types.d.ts",
+      "sha256": "d1c8f4088362f2935c96bc0c442ebc640af8a8954c396b03faaa36b8be75a95c"
+    },
+    {
+      "bytes": 257,
+      "path": "dist/lib/use-audio-envelope.d.ts",
+      "sha256": "a5a802a551b54d56aec3872ec670bab8c180f780ae12eef4d07f458c9a2052a8"
+    },
+    {
+      "bytes": 345,
+      "path": "dist/VisualClip.d.ts",
+      "sha256": "26bcceaf8385556c15272c17dcb469fed88827424e21a6442c3be5b3fb7e7b31"
+    }
+  ],
+  "artifactSha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "frozenLockSha256": "310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0",
+  "frozenManifestSha256": "0c77703dab8eeb46e05fa7555bbaf5e9ea4fbef077b4759610049fe110894090",
+  "frozenSource": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",
+  "privateGraphVerified": false,
+  "remainingSelfTargetingLinkCount": 147,
+  "remainingSelfTargetingLinks": [
+    {
+      "authorizedExclusion": false,
+      "path": "@acemir/cssom/cssom",
+      "resolved": "/home/user/work/app/node_modules/@acemir/cssom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@acemir/cssom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@adobe/css-tools/css-tools",
+      "resolved": "/home/user/work/app/node_modules/@adobe/css-tools",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@adobe/css-tools"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@alloc/quick-lru/quick-lru",
+      "resolved": "/home/user/work/app/node_modules/@alloc/quick-lru",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@alloc/quick-lru"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@apidevtools/json-schema-ref-parser/json-schema-ref-parser",
+      "resolved": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@asamuzakjp/css-color/css-color",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/css-color",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/css-color"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@asamuzakjp/dom-selector/dom-selector",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@asamuzakjp/generational-cache/generational-cache",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@asamuzakjp/nwsapi/nwsapi",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@babel/code-frame/code-frame",
+      "resolved": "/home/user/work/app/node_modules/@babel/code-frame",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@babel/code-frame"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@babel/helper-validator-identifier/helper-validator-identifier",
+      "resolved": "/home/user/work/app/node_modules/@babel/helper-validator-identifier",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@babel/helper-validator-identifier"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@babel/runtime/runtime",
+      "resolved": "/home/user/work/app/node_modules/@babel/runtime",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@babel/runtime"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@base-ui/react/react",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/react",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@base-ui/react"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@base-ui/utils/utils",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@base-ui/utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@bramus/specificity/specificity",
+      "resolved": "/home/user/work/app/node_modules/@bramus/specificity",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@bramus/specificity"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/color-helpers/color-helpers",
+      "resolved": "/home/user/work/app/node_modules/@csstools/color-helpers",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/color-helpers"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/css-calc/css-calc",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-calc",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/css-calc"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/css-color-parser/css-color-parser",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-color-parser",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/css-color-parser"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/css-parser-algorithms/css-parser-algorithms",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/css-syntax-patches-for-csstree/css-syntax-patches-for-csstree",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@csstools/css-tokenizer/css-tokenizer",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-tokenizer",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@csstools/css-tokenizer"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@dimforge/rapier3d-compat/rapier3d-compat",
+      "resolved": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@dnd-kit/accessibility/accessibility",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/accessibility",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@dnd-kit/accessibility"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@dnd-kit/core/core",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@dnd-kit/core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@dnd-kit/sortable/sortable",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/sortable",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@dnd-kit/sortable"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@dnd-kit/utilities/utilities",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/utilities",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@dnd-kit/utilities"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@esbuild/linux-x64/linux-x64",
+      "resolved": "/home/user/work/app/node_modules/@esbuild/linux-x64",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@esbuild/linux-x64"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint-community/eslint-utils/eslint-utils",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/eslint-utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint-community/eslint-utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint-community/regexpp/regexpp",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/regexpp",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint-community/regexpp"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/config-array/config-array",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-array",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/config-array"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/config-helpers/config-helpers",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-helpers",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/config-helpers"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/core/core",
+      "resolved": "/home/user/work/app/node_modules/@eslint/core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/eslintrc/eslintrc",
+      "resolved": "/home/user/work/app/node_modules/@eslint/eslintrc",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/eslintrc"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/js/js",
+      "resolved": "/home/user/work/app/node_modules/@eslint/js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/object-schema/object-schema",
+      "resolved": "/home/user/work/app/node_modules/@eslint/object-schema",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/object-schema"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@eslint/plugin-kit/plugin-kit",
+      "resolved": "/home/user/work/app/node_modules/@eslint/plugin-kit",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@eslint/plugin-kit"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@exodus/bytes/bytes",
+      "resolved": "/home/user/work/app/node_modules/@exodus/bytes",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@exodus/bytes"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@floating-ui/core/core",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@floating-ui/core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@floating-ui/dom/dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/dom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@floating-ui/dom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@floating-ui/react-dom/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/react-dom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@floating-ui/react-dom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@floating-ui/utils/utils",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@floating-ui/utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@gilbarbara/deep-equal/deep-equal",
+      "resolved": "/home/user/work/app/node_modules/@gilbarbara/deep-equal",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@gilbarbara/deep-equal"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@humanfs/core/core",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@humanfs/core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@humanfs/node/node",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/node",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@humanfs/node"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@humanfs/types/types",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/types",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@humanfs/types"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@humanwhocodes/module-importer/module-importer",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/module-importer",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/module-importer"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@humanwhocodes/retry/retry",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/retry",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/retry"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@jridgewell/gen-mapping/gen-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/gen-mapping",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@jridgewell/gen-mapping"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@jridgewell/resolve-uri/resolve-uri",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/resolve-uri",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@jridgewell/resolve-uri"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@jridgewell/sourcemap-codec/sourcemap-codec",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@jridgewell/trace-mapping/trace-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/trace-mapping",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@jridgewell/trace-mapping"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@jsdevtools/ono/ono",
+      "resolved": "/home/user/work/app/node_modules/@jsdevtools/ono",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@jsdevtools/ono"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@mediabunny/aac-encoder/aac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/aac-encoder",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@mediabunny/aac-encoder"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@mediabunny/flac-encoder/flac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/flac-encoder",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@mediabunny/flac-encoder"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@mediabunny/mp3-encoder/mp3-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@nodelib/fs.scandir/fs.scandir",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.scandir",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.scandir"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@nodelib/fs.stat/fs.stat",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.stat",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.stat"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@nodelib/fs.walk/fs.walk",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.walk",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.walk"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@oxc-project/types/types",
+      "resolved": "/home/user/work/app/node_modules/@oxc-project/types",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@oxc-project/types"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/primitive/primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/primitive",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/primitive"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-compose-refs/react-compose-refs",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-context/react-context",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-context",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-context"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-dialog/react-dialog",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dialog",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dialog"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-dismissable-layer/react-dismissable-layer",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-focus-guards/react-focus-guards",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-focus-scope/react-focus-scope",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-id/react-id",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-id",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-id"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-portal/react-portal",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-portal",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-portal"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-presence/react-presence",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-presence",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-presence"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-primitive/react-primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-primitive",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-primitive"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-slot/react-slot",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-slot",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-slot"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-use-callback-ref/react-use-callback-ref",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-use-controllable-state/react-use-controllable-state",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-use-effect-event/react-use-effect-event",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-use-escape-keydown/react-use-escape-keydown",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@radix-ui/react-use-layout-effect/react-use-layout-effect",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@react-three/fiber/fiber",
+      "resolved": "/home/user/work/app/node_modules/@react-three/fiber",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@react-three/fiber"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@remix-run/router/router",
+      "resolved": "/home/user/work/app/node_modules/@remix-run/router",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@remix-run/router"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@remotion/licensing/licensing",
+      "resolved": "/home/user/work/app/node_modules/@remotion/licensing",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@remotion/licensing"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@remotion/three/three",
+      "resolved": "/home/user/work/app/node_modules/@remotion/three",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@remotion/three"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@rolldown/binding-linux-x64-gnu/binding-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@rolldown/binding-linux-x64-musl/binding-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@rolldown/pluginutils/pluginutils",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/pluginutils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@rolldown/pluginutils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@rollup/rollup-linux-x64-gnu/rollup-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@rollup/rollup-linux-x64-musl/rollup-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@standard-schema/spec/spec",
+      "resolved": "/home/user/work/app/node_modules/@standard-schema/spec",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@standard-schema/spec"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/auth-js/auth-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/auth-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/auth-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/functions-js/functions-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/functions-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/functions-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/phoenix/phoenix",
+      "resolved": "/home/user/work/app/node_modules/@supabase/phoenix",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/phoenix"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/postgrest-js/postgrest-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/postgrest-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/postgrest-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/realtime-js/realtime-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/realtime-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/realtime-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/storage-js/storage-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/storage-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/storage-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@supabase/supabase-js/supabase-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/supabase-js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@supabase/supabase-js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@swc/core-linux-x64-gnu/core-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@swc/core-linux-x64-musl/core-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@swc/core/core",
+      "resolved": "/home/user/work/app/node_modules/@swc/core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@swc/core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@swc/counter/counter",
+      "resolved": "/home/user/work/app/node_modules/@swc/counter",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@swc/counter"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@swc/types/types",
+      "resolved": "/home/user/work/app/node_modules/@swc/types",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@swc/types"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@tailwindcss/container-queries/container-queries",
+      "resolved": "/home/user/work/app/node_modules/@tailwindcss/container-queries",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@tailwindcss/container-queries"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@tanstack/query-core/query-core",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/query-core",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@tanstack/query-core"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@tanstack/react-query/react-query",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/react-query",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@tanstack/react-query"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@testing-library/dom/dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/dom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@testing-library/dom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@testing-library/jest-dom/jest-dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/jest-dom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@testing-library/jest-dom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@testing-library/react/react",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/react",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@testing-library/react"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@testing-library/user-event/user-event",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/user-event",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@testing-library/user-event"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@tweenjs/tween.js/tween.js",
+      "resolved": "/home/user/work/app/node_modules/@tweenjs/tween.js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@tweenjs/tween.js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/aria-query/aria-query",
+      "resolved": "/home/user/work/app/node_modules/@types/aria-query",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/aria-query"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/chai/chai",
+      "resolved": "/home/user/work/app/node_modules/@types/chai",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/chai"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/debug/debug",
+      "resolved": "/home/user/work/app/node_modules/@types/debug",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/debug"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/deep-eql/deep-eql",
+      "resolved": "/home/user/work/app/node_modules/@types/deep-eql",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/deep-eql"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/dom-mediacapture-transform/dom-mediacapture-transform",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/dom-webcodecs/dom-webcodecs",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-webcodecs",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/dom-webcodecs"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/estree-jsx/estree-jsx",
+      "resolved": "/home/user/work/app/node_modules/@types/estree-jsx",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/estree-jsx"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/estree/estree",
+      "resolved": "/home/user/work/app/node_modules/@types/estree",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/estree"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/hast/hast",
+      "resolved": "/home/user/work/app/node_modules/@types/hast",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/hast"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/json-schema/json-schema",
+      "resolved": "/home/user/work/app/node_modules/@types/json-schema",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/json-schema"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/lodash/lodash",
+      "resolved": "/home/user/work/app/node_modules/@types/lodash",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/lodash"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/mdast/mdast",
+      "resolved": "/home/user/work/app/node_modules/@types/mdast",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/mdast"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/ms/ms",
+      "resolved": "/home/user/work/app/node_modules/@types/ms",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/ms"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/node/node",
+      "resolved": "/home/user/work/app/node_modules/@types/node",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/node"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/prop-types/prop-types",
+      "resolved": "/home/user/work/app/node_modules/@types/prop-types",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/prop-types"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/react-dom/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@types/react-dom",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/react-dom"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/react-reconciler/react-reconciler",
+      "resolved": "/home/user/work/app/node_modules/@types/react-reconciler",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/react-reconciler"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/react/react",
+      "resolved": "/home/user/work/app/node_modules/@types/react",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/react"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/stats.js/stats.js",
+      "resolved": "/home/user/work/app/node_modules/@types/stats.js",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/stats.js"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/three/three",
+      "resolved": "/home/user/work/app/node_modules/@types/three",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/three"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/unist/unist",
+      "resolved": "/home/user/work/app/node_modules/@types/unist",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/unist"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/webxr/webxr",
+      "resolved": "/home/user/work/app/node_modules/@types/webxr",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/webxr"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@types/ws/ws",
+      "resolved": "/home/user/work/app/node_modules/@types/ws",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@types/ws"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/eslint-plugin/eslint-plugin",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/parser/parser",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/parser",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/parser"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/project-service/project-service",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/project-service",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/project-service"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/scope-manager/scope-manager",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/tsconfig-utils/tsconfig-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/type-utils/type-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/type-utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/type-utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/types/types",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/types",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/types"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/typescript-estree/typescript-estree",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/utils/utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/utils"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@typescript-eslint/visitor-keys/visitor-keys",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@ungap/structured-clone/structured-clone",
+      "resolved": "/home/user/work/app/node_modules/@ungap/structured-clone",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@ungap/structured-clone"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitejs/plugin-react-swc/plugin-react-swc",
+      "resolved": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/expect/expect",
+      "resolved": "/home/user/work/app/node_modules/@vitest/expect",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/expect"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/mocker/mocker",
+      "resolved": "/home/user/work/app/node_modules/@vitest/mocker",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/mocker"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/pretty-format/pretty-format",
+      "resolved": "/home/user/work/app/node_modules/@vitest/pretty-format",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/pretty-format"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/runner/runner",
+      "resolved": "/home/user/work/app/node_modules/@vitest/runner",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/runner"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/snapshot/snapshot",
+      "resolved": "/home/user/work/app/node_modules/@vitest/snapshot",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/snapshot"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/spy/spy",
+      "resolved": "/home/user/work/app/node_modules/@vitest/spy",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/spy"
+    },
+    {
+      "authorizedExclusion": false,
+      "path": "@vitest/utils/utils",
+      "resolved": "/home/user/work/app/node_modules/@vitest/utils",
+      "selfTargeting": true,
+      "target": "/home/user/work/app/node_modules/@vitest/utils"
+    }
+  ],
+  "selected11FilteredHash": "215e32c6fc86ba57ad36f766a273e43b8c9d328341308fafcda752b03e9eb858",
+  "selected11IsWholeGraph": false,
+  "sixPeerChecks": {
+    "@remotion/layout-utils": {
+      "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "tree": {
+        "fileCount": 13,
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a"
+      },
+      "version": "4.0.509"
+    },
+    "@remotion/media": {
+      "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "tree": {
+        "fileCount": 784,
+        "sha256": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4"
+      },
+      "version": "4.0.509"
+    },
+    "@remotion/player": {
+      "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "tree": {
+        "fileCount": 108,
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7"
+      },
+      "version": "4.0.509"
+    },
+    "react": {
+      "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "tree": {
+        "fileCount": 20,
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07"
+      },
+      "version": "18.3.1"
+    },
+    "react-dom": {
+      "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "tree": {
+        "fileCount": 32,
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2"
+      },
+      "version": "18.3.1"
+    },
+    "remotion": {
+      "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "tree": {
+        "fileCount": 400,
+        "sha256": "d2db38902658bec64dbaf9fe24c53cd2eedd03fd9a0ead4dcecacf04d24199ea"
+      },
+      "version": "4.0.509"
+    }
+  },
+  "status": "REJECT"
+}

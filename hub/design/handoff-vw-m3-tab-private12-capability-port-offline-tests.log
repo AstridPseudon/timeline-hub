@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: /home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+ok 1 - /home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+  ---
+  duration_ms: 190.237159
+  ...
+# Subtest: /home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+ok 2 - /home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+  ---
+  duration_ms: 118.860116
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 194.155029

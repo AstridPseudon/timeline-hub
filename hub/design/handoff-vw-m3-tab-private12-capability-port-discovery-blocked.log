@@ -1,0 +1,14 @@
+file:///home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.mjs:171
+    throw new Error('BLOCKED: app-private-clean12-graph has no approved full physical READY graph');
+          ^
+
+Error: BLOCKED: app-private-clean12-graph has no approved full physical READY graph
+    at privateGraphRoot (file:///home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.mjs:171:11)
+    at sourceFingerprint (file:///home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.mjs:240:3)
+    at discover (file:///home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.mjs:359:23)
+    at file:///home/user/work/wt/vw-m3-tab-private12-capability-port/tests/e2e/timeline/tab-audio-capture.controller.mjs:439:65
+    at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.19.4

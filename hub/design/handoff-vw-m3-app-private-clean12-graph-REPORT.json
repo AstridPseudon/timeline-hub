@@ -1,0 +1,254 @@
+{
+  "status": "BLOCKED",
+  "ready": false,
+  "privateRoot": null,
+  "reason": "147 self-targeting package symlinks remain after ONLY the six authorized exclusions; cannot retain safely or remove within scope",
+  "sourceRoot": "/home/user/work/app/node_modules",
+  "sourcePrePostEqual": true,
+  "sourceManifestSha256": "6eaabbcd0344b935057b981ce6a9a565f12fa7235d4ed83aa4ac9cf439dfb9c4",
+  "sourceFileBytes": 447800429,
+  "sourceEntryCount": 35618,
+  "symlinkCount": 193,
+  "selfTargetingLinkCount": 152,
+  "retainedSelfTargetingLinkCount": 147,
+  "authorizedExclusions": [
+    "@playwright/test/test",
+    "@remotion/player/player",
+    "@remotion/media/media",
+    "@remotion/web-renderer/web-renderer",
+    "@remotion/layout-utils/layout-utils",
+    "@banodoco/timeline-composition/package"
+  ],
+  "externalLinks": [
+    {
+      "path": "@banodoco/timeline-composition/package",
+      "mode": 511,
+      "kind": "symlink",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-current-viewer-cut/overlay/public12/package",
+      "sha256": "4807f082e1a5c19f4d81a79a9260b422b77db7af833953f84e8927dfece09e8d",
+      "mtimeNs": 1792483043559776212
+    },
+    {
+      "path": "@banodoco/timeline-ops",
+      "mode": 511,
+      "kind": "symlink",
+      "target": "../../vendor/timeline-ops",
+      "sha256": "502ad9f7cad0c954a2db8670ef085176d8b8a5836738dd89bd1cf9f51bfa25fe",
+      "mtimeNs": 1792454306674627247
+    },
+    {
+      "path": "@banodoco/timeline-schema",
+      "mode": 511,
+      "kind": "symlink",
+      "target": "../../vendor/timeline-schema",
+      "sha256": "7bc15b739feb91d6ec632f8c4a37ca84400509de4c9b8d6cc7e6792c6eb24e0d",
+      "mtimeNs": 1792454306670627247
+    },
+    {
+      "path": "@banodoco/timeline-theme-2rp",
+      "mode": 511,
+      "kind": "symlink",
+      "target": "../../vendor/timeline-theme-2rp",
+      "sha256": "4675bd8f9c2e160de6997ffbb732444cdff78702a97af4f933618661b46cad93",
+      "mtimeNs": 1792454306674627247
+    },
+    {
+      "path": "fake-indexeddb",
+      "mode": 511,
+      "kind": "symlink",
+      "target": "../vendor/fake-indexeddb",
+      "sha256": "3b1de098d79b93b351930354a8cbfce8123af6ca6b72c5b7c2424abc5d193b50",
+      "mtimeNs": 1792454306670627247
+    }
+  ],
+  "selected11PackageChecks": [
+    {
+      "package": "@playwright/test",
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "f60bd1f10036df0b0ef01bc3ac410d6ffb103be61b6d3fad19e8adb05805eb7e",
+        "fileCount": 11
+      }
+    },
+    {
+      "package": "playwright",
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "01324f07c148278641a19b627ed2f80a608858807abbd3cfefb45b7997af7bf7",
+        "fileCount": 62
+      }
+    },
+    {
+      "package": "playwright-core",
+      "version": "1.60.0",
+      "tree": {
+        "sha256": "6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d",
+        "fileCount": 106
+      }
+    },
+    {
+      "package": "react",
+      "version": "18.3.1",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    {
+      "package": "react-dom",
+      "version": "18.3.1",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    {
+      "package": "remotion",
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "d2db38902658bec64dbaf9fe24c53cd2eedd03fd9a0ead4dcecacf04d24199ea",
+        "fileCount": 400
+      }
+    },
+    {
+      "package": "@remotion/player",
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    {
+      "package": "@remotion/media",
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4",
+        "fileCount": 784
+      }
+    },
+    {
+      "package": "@remotion/web-renderer",
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "cfa5ffb399b0974899de70c62935aa3df7a8510c16e7d65f1840360d2a59544f",
+        "fileCount": 96
+      }
+    },
+    {
+      "package": "@remotion/layout-utils",
+      "version": "4.0.509",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    },
+    {
+      "package": "@banodoco/timeline-composition",
+      "version": "0.0.8",
+      "tree": {
+        "sha256": "704827f41e300add4e5420d3724910e4574c7a21d3f23628e22fa2e6886dffd4",
+        "fileCount": 77
+      }
+    }
+  ],
+  "selected11FilteredHash": "215e32c6fc86ba57ad36f766a273e43b8c9d328341308fafcda752b03e9eb858",
+  "selected11HashIsWholePhysicalGraph": false,
+  "frozenSource": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",
+  "frozenManifestSha256": "0c77703dab8eeb46e05fa7555bbaf5e9ea4fbef077b4759610049fe110894090",
+  "frozenLockSha256": "310d447508a2f0c023176a3283724455cd5823b6ffe116177f8e30d541de82a0",
+  "artifact": {
+    "path": "vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+    "bytes": 58444,
+    "sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "members": 77,
+    "lock": {
+      "version": "0.0.12",
+      "resolved": "file:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+      "integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==",
+      "peerDependencies": {
+        "@remotion/layout-utils": "4.0.509",
+        "@remotion/media": "4.0.509",
+        "react": "18.3.1",
+        "react-dom": "18.3.1",
+        "remotion": "4.0.509"
+      }
+    }
+  },
+  "sixPeerChecks": {
+    "react": {
+      "version": "18.3.1",
+      "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "tree": {
+        "sha256": "d2db38902658bec64dbaf9fe24c53cd2eedd03fd9a0ead4dcecacf04d24199ea",
+        "fileCount": 400
+      }
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "tree": {
+        "sha256": "7c7117a5de0d5f4653acaafbf907be49f467e6b9e97c1e9bc931152b87d112d4",
+        "fileCount": 784
+      }
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    }
+  },
+  "floorBytes": 10737418240,
+  "ownAllocationBudgetBytes": 1073741824,
+  "freeBeforeBytes": 12497719296,
+  "freeAfterBytes": 12497686528,
+  "allocatedPrivateGraphs": 0,
+  "notPerformed": [
+    "dependency copy",
+    "own extraction",
+    "private imports",
+    "install",
+    "network",
+    "browser",
+    "render",
+    "listener",
+    "full suite",
+    "central request",
+    "git mutation",
+    "shared dependency write",
+    "product edit"
+  ],
+  "frozenTree": "e7e282fc958942cea263566a66b2e72d21913e0e",
+  "frozenTrackedBlobBytes": 295053441,
+  "frozenTrackedBlobCount": 5798,
+  "estimatedCombinedFileBytes": 742853870,
+  "sourceAllocatedDiskBytes": 534405120,
+  "estimatedCombinedAllocationBytes": 900000000,
+  "budgetHasSpaceAtPreflight": true
+}

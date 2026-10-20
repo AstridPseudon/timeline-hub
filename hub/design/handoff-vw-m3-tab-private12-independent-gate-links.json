@@ -1,0 +1,2741 @@
+{
+  "sharedRoot": "/home/user/work/app/node_modules",
+  "snapshotSha256": "4f318e4d09e07d8baad544c475662ef7aedb2900bafd658812c70bd571210ccb",
+  "entries": 35618,
+  "symlinks": 193,
+  "selfTargeting": 152,
+  "selfTargetingExcluded": 5,
+  "selfTargetingRetained": 147,
+  "authorizedExclusions": [
+    "@banodoco/timeline-composition/package",
+    "@playwright/test/test",
+    "@remotion/layout-utils/layout-utils",
+    "@remotion/media/media",
+    "@remotion/player/player",
+    "@remotion/web-renderer/web-renderer"
+  ],
+  "remainingSelfTargetingLinks": [
+    {
+      "path": "@acemir/cssom/cssom",
+      "target": "/home/user/work/app/node_modules/@acemir/cssom",
+      "resolved": "/home/user/work/app/node_modules/@acemir/cssom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@adobe/css-tools/css-tools",
+      "target": "/home/user/work/app/node_modules/@adobe/css-tools",
+      "resolved": "/home/user/work/app/node_modules/@adobe/css-tools",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@alloc/quick-lru/quick-lru",
+      "target": "/home/user/work/app/node_modules/@alloc/quick-lru",
+      "resolved": "/home/user/work/app/node_modules/@alloc/quick-lru",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@apidevtools/json-schema-ref-parser/json-schema-ref-parser",
+      "target": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser",
+      "resolved": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/css-color/css-color",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/css-color",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/css-color",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/dom-selector/dom-selector",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/generational-cache/generational-cache",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/nwsapi/nwsapi",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/code-frame/code-frame",
+      "target": "/home/user/work/app/node_modules/@babel/code-frame",
+      "resolved": "/home/user/work/app/node_modules/@babel/code-frame",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/helper-validator-identifier/helper-validator-identifier",
+      "target": "/home/user/work/app/node_modules/@babel/helper-validator-identifier",
+      "resolved": "/home/user/work/app/node_modules/@babel/helper-validator-identifier",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/runtime/runtime",
+      "target": "/home/user/work/app/node_modules/@babel/runtime",
+      "resolved": "/home/user/work/app/node_modules/@babel/runtime",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@base-ui/react/react",
+      "target": "/home/user/work/app/node_modules/@base-ui/react",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@base-ui/utils/utils",
+      "target": "/home/user/work/app/node_modules/@base-ui/utils",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@bramus/specificity/specificity",
+      "target": "/home/user/work/app/node_modules/@bramus/specificity",
+      "resolved": "/home/user/work/app/node_modules/@bramus/specificity",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/color-helpers/color-helpers",
+      "target": "/home/user/work/app/node_modules/@csstools/color-helpers",
+      "resolved": "/home/user/work/app/node_modules/@csstools/color-helpers",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-calc/css-calc",
+      "target": "/home/user/work/app/node_modules/@csstools/css-calc",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-calc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-color-parser/css-color-parser",
+      "target": "/home/user/work/app/node_modules/@csstools/css-color-parser",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-color-parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-parser-algorithms/css-parser-algorithms",
+      "target": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-syntax-patches-for-csstree/css-syntax-patches-for-csstree",
+      "target": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-tokenizer/css-tokenizer",
+      "target": "/home/user/work/app/node_modules/@csstools/css-tokenizer",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-tokenizer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dimforge/rapier3d-compat/rapier3d-compat",
+      "target": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat",
+      "resolved": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/accessibility/accessibility",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/accessibility",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/accessibility",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/core/core",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/core",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/sortable/sortable",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/sortable",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/sortable",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/utilities/utilities",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/utilities",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/utilities",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@esbuild/linux-x64/linux-x64",
+      "target": "/home/user/work/app/node_modules/@esbuild/linux-x64",
+      "resolved": "/home/user/work/app/node_modules/@esbuild/linux-x64",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint-community/eslint-utils/eslint-utils",
+      "target": "/home/user/work/app/node_modules/@eslint-community/eslint-utils",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/eslint-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint-community/regexpp/regexpp",
+      "target": "/home/user/work/app/node_modules/@eslint-community/regexpp",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/regexpp",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/config-array/config-array",
+      "target": "/home/user/work/app/node_modules/@eslint/config-array",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-array",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/config-helpers/config-helpers",
+      "target": "/home/user/work/app/node_modules/@eslint/config-helpers",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-helpers",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/core/core",
+      "target": "/home/user/work/app/node_modules/@eslint/core",
+      "resolved": "/home/user/work/app/node_modules/@eslint/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/eslintrc/eslintrc",
+      "target": "/home/user/work/app/node_modules/@eslint/eslintrc",
+      "resolved": "/home/user/work/app/node_modules/@eslint/eslintrc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/js/js",
+      "target": "/home/user/work/app/node_modules/@eslint/js",
+      "resolved": "/home/user/work/app/node_modules/@eslint/js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/object-schema/object-schema",
+      "target": "/home/user/work/app/node_modules/@eslint/object-schema",
+      "resolved": "/home/user/work/app/node_modules/@eslint/object-schema",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/plugin-kit/plugin-kit",
+      "target": "/home/user/work/app/node_modules/@eslint/plugin-kit",
+      "resolved": "/home/user/work/app/node_modules/@eslint/plugin-kit",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@exodus/bytes/bytes",
+      "target": "/home/user/work/app/node_modules/@exodus/bytes",
+      "resolved": "/home/user/work/app/node_modules/@exodus/bytes",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/core/core",
+      "target": "/home/user/work/app/node_modules/@floating-ui/core",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/dom/dom",
+      "target": "/home/user/work/app/node_modules/@floating-ui/dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/react-dom/react-dom",
+      "target": "/home/user/work/app/node_modules/@floating-ui/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/react-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/utils/utils",
+      "target": "/home/user/work/app/node_modules/@floating-ui/utils",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@gilbarbara/deep-equal/deep-equal",
+      "target": "/home/user/work/app/node_modules/@gilbarbara/deep-equal",
+      "resolved": "/home/user/work/app/node_modules/@gilbarbara/deep-equal",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/core/core",
+      "target": "/home/user/work/app/node_modules/@humanfs/core",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/node/node",
+      "target": "/home/user/work/app/node_modules/@humanfs/node",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/node",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/types/types",
+      "target": "/home/user/work/app/node_modules/@humanfs/types",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanwhocodes/module-importer/module-importer",
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/module-importer",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/module-importer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanwhocodes/retry/retry",
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/retry",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/retry",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/gen-mapping/gen-mapping",
+      "target": "/home/user/work/app/node_modules/@jridgewell/gen-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/gen-mapping",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/resolve-uri/resolve-uri",
+      "target": "/home/user/work/app/node_modules/@jridgewell/resolve-uri",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/resolve-uri",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/sourcemap-codec/sourcemap-codec",
+      "target": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/trace-mapping/trace-mapping",
+      "target": "/home/user/work/app/node_modules/@jridgewell/trace-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/trace-mapping",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jsdevtools/ono/ono",
+      "target": "/home/user/work/app/node_modules/@jsdevtools/ono",
+      "resolved": "/home/user/work/app/node_modules/@jsdevtools/ono",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/aac-encoder/aac-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/aac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/aac-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/flac-encoder/flac-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/flac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/flac-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/mp3-encoder/mp3-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.scandir/fs.scandir",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.scandir",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.scandir",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.stat/fs.stat",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.stat",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.stat",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.walk/fs.walk",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.walk",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.walk",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@oxc-project/types/types",
+      "target": "/home/user/work/app/node_modules/@oxc-project/types",
+      "resolved": "/home/user/work/app/node_modules/@oxc-project/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/primitive/primitive",
+      "target": "/home/user/work/app/node_modules/@radix-ui/primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/primitive",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-compose-refs/react-compose-refs",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-context/react-context",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-context",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-context",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-dialog/react-dialog",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dialog",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dialog",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-dismissable-layer/react-dismissable-layer",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-focus-guards/react-focus-guards",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-focus-scope/react-focus-scope",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-id/react-id",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-id",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-id",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-portal/react-portal",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-portal",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-portal",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-presence/react-presence",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-presence",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-presence",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-primitive/react-primitive",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-primitive",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-slot/react-slot",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-slot",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-slot",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-callback-ref/react-use-callback-ref",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-controllable-state/react-use-controllable-state",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-effect-event/react-use-effect-event",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-escape-keydown/react-use-escape-keydown",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-layout-effect/react-use-layout-effect",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@react-three/fiber/fiber",
+      "target": "/home/user/work/app/node_modules/@react-three/fiber",
+      "resolved": "/home/user/work/app/node_modules/@react-three/fiber",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remix-run/router/router",
+      "target": "/home/user/work/app/node_modules/@remix-run/router",
+      "resolved": "/home/user/work/app/node_modules/@remix-run/router",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/licensing/licensing",
+      "target": "/home/user/work/app/node_modules/@remotion/licensing",
+      "resolved": "/home/user/work/app/node_modules/@remotion/licensing",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/three/three",
+      "target": "/home/user/work/app/node_modules/@remotion/three",
+      "resolved": "/home/user/work/app/node_modules/@remotion/three",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/binding-linux-x64-gnu/binding-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/binding-linux-x64-musl/binding-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/pluginutils/pluginutils",
+      "target": "/home/user/work/app/node_modules/@rolldown/pluginutils",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/pluginutils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rollup/rollup-linux-x64-gnu/rollup-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rollup/rollup-linux-x64-musl/rollup-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@standard-schema/spec/spec",
+      "target": "/home/user/work/app/node_modules/@standard-schema/spec",
+      "resolved": "/home/user/work/app/node_modules/@standard-schema/spec",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/auth-js/auth-js",
+      "target": "/home/user/work/app/node_modules/@supabase/auth-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/auth-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/functions-js/functions-js",
+      "target": "/home/user/work/app/node_modules/@supabase/functions-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/functions-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/phoenix/phoenix",
+      "target": "/home/user/work/app/node_modules/@supabase/phoenix",
+      "resolved": "/home/user/work/app/node_modules/@supabase/phoenix",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/postgrest-js/postgrest-js",
+      "target": "/home/user/work/app/node_modules/@supabase/postgrest-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/postgrest-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/realtime-js/realtime-js",
+      "target": "/home/user/work/app/node_modules/@supabase/realtime-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/realtime-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/storage-js/storage-js",
+      "target": "/home/user/work/app/node_modules/@supabase/storage-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/storage-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/supabase-js/supabase-js",
+      "target": "/home/user/work/app/node_modules/@supabase/supabase-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/supabase-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core-linux-x64-gnu/core-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core-linux-x64-musl/core-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core/core",
+      "target": "/home/user/work/app/node_modules/@swc/core",
+      "resolved": "/home/user/work/app/node_modules/@swc/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/counter/counter",
+      "target": "/home/user/work/app/node_modules/@swc/counter",
+      "resolved": "/home/user/work/app/node_modules/@swc/counter",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/types/types",
+      "target": "/home/user/work/app/node_modules/@swc/types",
+      "resolved": "/home/user/work/app/node_modules/@swc/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tailwindcss/container-queries/container-queries",
+      "target": "/home/user/work/app/node_modules/@tailwindcss/container-queries",
+      "resolved": "/home/user/work/app/node_modules/@tailwindcss/container-queries",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tanstack/query-core/query-core",
+      "target": "/home/user/work/app/node_modules/@tanstack/query-core",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/query-core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tanstack/react-query/react-query",
+      "target": "/home/user/work/app/node_modules/@tanstack/react-query",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/react-query",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/dom/dom",
+      "target": "/home/user/work/app/node_modules/@testing-library/dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/jest-dom/jest-dom",
+      "target": "/home/user/work/app/node_modules/@testing-library/jest-dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/jest-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/react/react",
+      "target": "/home/user/work/app/node_modules/@testing-library/react",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/user-event/user-event",
+      "target": "/home/user/work/app/node_modules/@testing-library/user-event",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/user-event",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tweenjs/tween.js/tween.js",
+      "target": "/home/user/work/app/node_modules/@tweenjs/tween.js",
+      "resolved": "/home/user/work/app/node_modules/@tweenjs/tween.js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/aria-query/aria-query",
+      "target": "/home/user/work/app/node_modules/@types/aria-query",
+      "resolved": "/home/user/work/app/node_modules/@types/aria-query",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/chai/chai",
+      "target": "/home/user/work/app/node_modules/@types/chai",
+      "resolved": "/home/user/work/app/node_modules/@types/chai",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/debug/debug",
+      "target": "/home/user/work/app/node_modules/@types/debug",
+      "resolved": "/home/user/work/app/node_modules/@types/debug",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/deep-eql/deep-eql",
+      "target": "/home/user/work/app/node_modules/@types/deep-eql",
+      "resolved": "/home/user/work/app/node_modules/@types/deep-eql",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/dom-mediacapture-transform/dom-mediacapture-transform",
+      "target": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/dom-webcodecs/dom-webcodecs",
+      "target": "/home/user/work/app/node_modules/@types/dom-webcodecs",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-webcodecs",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/estree-jsx/estree-jsx",
+      "target": "/home/user/work/app/node_modules/@types/estree-jsx",
+      "resolved": "/home/user/work/app/node_modules/@types/estree-jsx",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/estree/estree",
+      "target": "/home/user/work/app/node_modules/@types/estree",
+      "resolved": "/home/user/work/app/node_modules/@types/estree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/hast/hast",
+      "target": "/home/user/work/app/node_modules/@types/hast",
+      "resolved": "/home/user/work/app/node_modules/@types/hast",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/json-schema/json-schema",
+      "target": "/home/user/work/app/node_modules/@types/json-schema",
+      "resolved": "/home/user/work/app/node_modules/@types/json-schema",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/lodash/lodash",
+      "target": "/home/user/work/app/node_modules/@types/lodash",
+      "resolved": "/home/user/work/app/node_modules/@types/lodash",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/mdast/mdast",
+      "target": "/home/user/work/app/node_modules/@types/mdast",
+      "resolved": "/home/user/work/app/node_modules/@types/mdast",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/ms/ms",
+      "target": "/home/user/work/app/node_modules/@types/ms",
+      "resolved": "/home/user/work/app/node_modules/@types/ms",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/node/node",
+      "target": "/home/user/work/app/node_modules/@types/node",
+      "resolved": "/home/user/work/app/node_modules/@types/node",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/prop-types/prop-types",
+      "target": "/home/user/work/app/node_modules/@types/prop-types",
+      "resolved": "/home/user/work/app/node_modules/@types/prop-types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react-dom/react-dom",
+      "target": "/home/user/work/app/node_modules/@types/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@types/react-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react-reconciler/react-reconciler",
+      "target": "/home/user/work/app/node_modules/@types/react-reconciler",
+      "resolved": "/home/user/work/app/node_modules/@types/react-reconciler",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react/react",
+      "target": "/home/user/work/app/node_modules/@types/react",
+      "resolved": "/home/user/work/app/node_modules/@types/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/stats.js/stats.js",
+      "target": "/home/user/work/app/node_modules/@types/stats.js",
+      "resolved": "/home/user/work/app/node_modules/@types/stats.js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/three/three",
+      "target": "/home/user/work/app/node_modules/@types/three",
+      "resolved": "/home/user/work/app/node_modules/@types/three",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/unist/unist",
+      "target": "/home/user/work/app/node_modules/@types/unist",
+      "resolved": "/home/user/work/app/node_modules/@types/unist",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/webxr/webxr",
+      "target": "/home/user/work/app/node_modules/@types/webxr",
+      "resolved": "/home/user/work/app/node_modules/@types/webxr",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/ws/ws",
+      "target": "/home/user/work/app/node_modules/@types/ws",
+      "resolved": "/home/user/work/app/node_modules/@types/ws",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/eslint-plugin/eslint-plugin",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/parser/parser",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/parser",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/project-service/project-service",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/project-service",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/project-service",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/scope-manager/scope-manager",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/tsconfig-utils/tsconfig-utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/type-utils/type-utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/type-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/type-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/types/types",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/types",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/typescript-estree/typescript-estree",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/utils/utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/visitor-keys/visitor-keys",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@ungap/structured-clone/structured-clone",
+      "target": "/home/user/work/app/node_modules/@ungap/structured-clone",
+      "resolved": "/home/user/work/app/node_modules/@ungap/structured-clone",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitejs/plugin-react-swc/plugin-react-swc",
+      "target": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc",
+      "resolved": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/expect/expect",
+      "target": "/home/user/work/app/node_modules/@vitest/expect",
+      "resolved": "/home/user/work/app/node_modules/@vitest/expect",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/mocker/mocker",
+      "target": "/home/user/work/app/node_modules/@vitest/mocker",
+      "resolved": "/home/user/work/app/node_modules/@vitest/mocker",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/pretty-format/pretty-format",
+      "target": "/home/user/work/app/node_modules/@vitest/pretty-format",
+      "resolved": "/home/user/work/app/node_modules/@vitest/pretty-format",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/runner/runner",
+      "target": "/home/user/work/app/node_modules/@vitest/runner",
+      "resolved": "/home/user/work/app/node_modules/@vitest/runner",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/snapshot/snapshot",
+      "target": "/home/user/work/app/node_modules/@vitest/snapshot",
+      "resolved": "/home/user/work/app/node_modules/@vitest/snapshot",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/spy/spy",
+      "target": "/home/user/work/app/node_modules/@vitest/spy",
+      "resolved": "/home/user/work/app/node_modules/@vitest/spy",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/utils/utils",
+      "target": "/home/user/work/app/node_modules/@vitest/utils",
+      "resolved": "/home/user/work/app/node_modules/@vitest/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    }
+  ],
+  "allLinks": [
+    {
+      "path": ".bin/acorn",
+      "target": "../acorn/bin/acorn",
+      "resolved": "/home/user/work/app/node_modules/acorn/bin/acorn",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/autoprefixer",
+      "target": "../autoprefixer/bin/autoprefixer",
+      "resolved": "/home/user/work/app/node_modules/autoprefixer/bin/autoprefixer",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/baseline-browser-mapping",
+      "target": "../baseline-browser-mapping/dist/cli.cjs",
+      "resolved": "/home/user/work/app/node_modules/baseline-browser-mapping/dist/cli.cjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/browserslist",
+      "target": "../browserslist/cli.js",
+      "resolved": "/home/user/work/app/node_modules/browserslist/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/cssesc",
+      "target": "../cssesc/bin/cssesc",
+      "resolved": "/home/user/work/app/node_modules/cssesc/bin/cssesc",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/esbuild",
+      "target": "../esbuild/bin/esbuild",
+      "resolved": "/home/user/work/app/node_modules/esbuild/bin/esbuild",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/eslint",
+      "target": "../eslint/bin/eslint.js",
+      "resolved": "/home/user/work/app/node_modules/eslint/bin/eslint.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/jiti",
+      "target": "../jiti/bin/jiti.js",
+      "resolved": "/home/user/work/app/node_modules/jiti/bin/jiti.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/js-yaml",
+      "target": "../js-yaml/bin/js-yaml.js",
+      "resolved": "/home/user/work/app/node_modules/js-yaml/bin/js-yaml.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/json2ts",
+      "target": "../json-schema-to-typescript/dist/src/cli.js",
+      "resolved": "/home/user/work/app/node_modules/json-schema-to-typescript/dist/src/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/loose-envify",
+      "target": "../loose-envify/cli.js",
+      "resolved": "/home/user/work/app/node_modules/loose-envify/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/lz-string",
+      "target": "../lz-string/bin/bin.js",
+      "resolved": "/home/user/work/app/node_modules/lz-string/bin/bin.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/nanoid",
+      "target": "../nanoid/bin/nanoid.cjs",
+      "resolved": "/home/user/work/app/node_modules/nanoid/bin/nanoid.cjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/node-which",
+      "target": "../which/bin/node-which",
+      "resolved": "/home/user/work/app/node_modules/which/bin/node-which",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/playwright",
+      "target": "../@playwright/test/cli.js",
+      "resolved": "/home/user/work/app/node_modules/@playwright/test/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/playwright-core",
+      "target": "../playwright-core/cli.js",
+      "resolved": "/home/user/work/app/node_modules/playwright-core/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/prettier",
+      "target": "../prettier/bin/prettier.cjs",
+      "resolved": "/home/user/work/app/node_modules/prettier/bin/prettier.cjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/resolve",
+      "target": "../resolve/bin/resolve",
+      "resolved": "/home/user/work/app/node_modules/resolve/bin/resolve",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/rolldown",
+      "target": "../rolldown/bin/cli.mjs",
+      "resolved": "/home/user/work/app/node_modules/rolldown/bin/cli.mjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/rollup",
+      "target": "../rollup/dist/bin/rollup",
+      "resolved": "/home/user/work/app/node_modules/rollup/dist/bin/rollup",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/semver",
+      "target": "../semver/bin/semver.js",
+      "resolved": "/home/user/work/app/node_modules/semver/bin/semver.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/specificity",
+      "target": "../@bramus/specificity/bin/cli.js",
+      "resolved": "/home/user/work/app/node_modules/@bramus/specificity/bin/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/sucrase",
+      "target": "../sucrase/bin/sucrase",
+      "resolved": "/home/user/work/app/node_modules/sucrase/bin/sucrase",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/sucrase-node",
+      "target": "../sucrase/bin/sucrase-node",
+      "resolved": "/home/user/work/app/node_modules/sucrase/bin/sucrase-node",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tailwind",
+      "target": "../tailwindcss/lib/cli.js",
+      "resolved": "/home/user/work/app/node_modules/tailwindcss/lib/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tailwindcss",
+      "target": "../tailwindcss/lib/cli.js",
+      "resolved": "/home/user/work/app/node_modules/tailwindcss/lib/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tldts",
+      "target": "../tldts/bin/cli.js",
+      "resolved": "/home/user/work/app/node_modules/tldts/bin/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tsc",
+      "target": "../typescript/bin/tsc",
+      "resolved": "/home/user/work/app/node_modules/typescript/bin/tsc",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tsserver",
+      "target": "../typescript/bin/tsserver",
+      "resolved": "/home/user/work/app/node_modules/typescript/bin/tsserver",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/tsx",
+      "target": "../tsx/dist/cli.mjs",
+      "resolved": "/home/user/work/app/node_modules/tsx/dist/cli.mjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/update-browserslist-db",
+      "target": "../update-browserslist-db/cli.js",
+      "resolved": "/home/user/work/app/node_modules/update-browserslist-db/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/vite",
+      "target": "../vite/bin/vite.js",
+      "resolved": "/home/user/work/app/node_modules/vite/bin/vite.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/vitest",
+      "target": "../vitest/vitest.mjs",
+      "resolved": "/home/user/work/app/node_modules/vitest/vitest.mjs",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": ".bin/why-is-node-running",
+      "target": "../why-is-node-running/cli.js",
+      "resolved": "/home/user/work/app/node_modules/why-is-node-running/cli.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "@acemir/cssom/cssom",
+      "target": "/home/user/work/app/node_modules/@acemir/cssom",
+      "resolved": "/home/user/work/app/node_modules/@acemir/cssom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@adobe/css-tools/css-tools",
+      "target": "/home/user/work/app/node_modules/@adobe/css-tools",
+      "resolved": "/home/user/work/app/node_modules/@adobe/css-tools",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@alloc/quick-lru/quick-lru",
+      "target": "/home/user/work/app/node_modules/@alloc/quick-lru",
+      "resolved": "/home/user/work/app/node_modules/@alloc/quick-lru",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@apidevtools/json-schema-ref-parser/json-schema-ref-parser",
+      "target": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser",
+      "resolved": "/home/user/work/app/node_modules/@apidevtools/json-schema-ref-parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/css-color/css-color",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/css-color",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/css-color",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/dom-selector/dom-selector",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/dom-selector",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/generational-cache/generational-cache",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/generational-cache",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@asamuzakjp/nwsapi/nwsapi",
+      "target": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi",
+      "resolved": "/home/user/work/app/node_modules/@asamuzakjp/nwsapi",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/code-frame/code-frame",
+      "target": "/home/user/work/app/node_modules/@babel/code-frame",
+      "resolved": "/home/user/work/app/node_modules/@babel/code-frame",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/helper-validator-identifier/helper-validator-identifier",
+      "target": "/home/user/work/app/node_modules/@babel/helper-validator-identifier",
+      "resolved": "/home/user/work/app/node_modules/@babel/helper-validator-identifier",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@babel/runtime/runtime",
+      "target": "/home/user/work/app/node_modules/@babel/runtime",
+      "resolved": "/home/user/work/app/node_modules/@babel/runtime",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@banodoco/timeline-composition/package",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-current-viewer-cut/overlay/public12/package",
+      "resolved": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-current-viewer-cut/overlay/public12/package",
+      "selfTargeting": false,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@banodoco/timeline-ops",
+      "target": "../../vendor/timeline-ops",
+      "resolved": "/home/user/work/app/vendor/timeline-ops",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "@banodoco/timeline-schema",
+      "target": "../../vendor/timeline-schema",
+      "resolved": "/home/user/work/app/vendor/timeline-schema",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "@banodoco/timeline-theme-2rp",
+      "target": "../../vendor/timeline-theme-2rp",
+      "resolved": "/home/user/work/app/vendor/timeline-theme-2rp",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "@base-ui/react/react",
+      "target": "/home/user/work/app/node_modules/@base-ui/react",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@base-ui/utils/utils",
+      "target": "/home/user/work/app/node_modules/@base-ui/utils",
+      "resolved": "/home/user/work/app/node_modules/@base-ui/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@bramus/specificity/specificity",
+      "target": "/home/user/work/app/node_modules/@bramus/specificity",
+      "resolved": "/home/user/work/app/node_modules/@bramus/specificity",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/color-helpers/color-helpers",
+      "target": "/home/user/work/app/node_modules/@csstools/color-helpers",
+      "resolved": "/home/user/work/app/node_modules/@csstools/color-helpers",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-calc/css-calc",
+      "target": "/home/user/work/app/node_modules/@csstools/css-calc",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-calc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-color-parser/css-color-parser",
+      "target": "/home/user/work/app/node_modules/@csstools/css-color-parser",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-color-parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-parser-algorithms/css-parser-algorithms",
+      "target": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-parser-algorithms",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-syntax-patches-for-csstree/css-syntax-patches-for-csstree",
+      "target": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-syntax-patches-for-csstree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@csstools/css-tokenizer/css-tokenizer",
+      "target": "/home/user/work/app/node_modules/@csstools/css-tokenizer",
+      "resolved": "/home/user/work/app/node_modules/@csstools/css-tokenizer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dimforge/rapier3d-compat/rapier3d-compat",
+      "target": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat",
+      "resolved": "/home/user/work/app/node_modules/@dimforge/rapier3d-compat",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/accessibility/accessibility",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/accessibility",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/accessibility",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/core/core",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/core",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/sortable/sortable",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/sortable",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/sortable",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@dnd-kit/utilities/utilities",
+      "target": "/home/user/work/app/node_modules/@dnd-kit/utilities",
+      "resolved": "/home/user/work/app/node_modules/@dnd-kit/utilities",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@esbuild/linux-x64/linux-x64",
+      "target": "/home/user/work/app/node_modules/@esbuild/linux-x64",
+      "resolved": "/home/user/work/app/node_modules/@esbuild/linux-x64",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint-community/eslint-utils/eslint-utils",
+      "target": "/home/user/work/app/node_modules/@eslint-community/eslint-utils",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/eslint-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint-community/regexpp/regexpp",
+      "target": "/home/user/work/app/node_modules/@eslint-community/regexpp",
+      "resolved": "/home/user/work/app/node_modules/@eslint-community/regexpp",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/config-array/config-array",
+      "target": "/home/user/work/app/node_modules/@eslint/config-array",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-array",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/config-helpers/config-helpers",
+      "target": "/home/user/work/app/node_modules/@eslint/config-helpers",
+      "resolved": "/home/user/work/app/node_modules/@eslint/config-helpers",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/core/core",
+      "target": "/home/user/work/app/node_modules/@eslint/core",
+      "resolved": "/home/user/work/app/node_modules/@eslint/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/eslintrc/eslintrc",
+      "target": "/home/user/work/app/node_modules/@eslint/eslintrc",
+      "resolved": "/home/user/work/app/node_modules/@eslint/eslintrc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/js/js",
+      "target": "/home/user/work/app/node_modules/@eslint/js",
+      "resolved": "/home/user/work/app/node_modules/@eslint/js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/object-schema/object-schema",
+      "target": "/home/user/work/app/node_modules/@eslint/object-schema",
+      "resolved": "/home/user/work/app/node_modules/@eslint/object-schema",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@eslint/plugin-kit/plugin-kit",
+      "target": "/home/user/work/app/node_modules/@eslint/plugin-kit",
+      "resolved": "/home/user/work/app/node_modules/@eslint/plugin-kit",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@exodus/bytes/bytes",
+      "target": "/home/user/work/app/node_modules/@exodus/bytes",
+      "resolved": "/home/user/work/app/node_modules/@exodus/bytes",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/core/core",
+      "target": "/home/user/work/app/node_modules/@floating-ui/core",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/dom/dom",
+      "target": "/home/user/work/app/node_modules/@floating-ui/dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/react-dom/react-dom",
+      "target": "/home/user/work/app/node_modules/@floating-ui/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/react-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@floating-ui/utils/utils",
+      "target": "/home/user/work/app/node_modules/@floating-ui/utils",
+      "resolved": "/home/user/work/app/node_modules/@floating-ui/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@gilbarbara/deep-equal/deep-equal",
+      "target": "/home/user/work/app/node_modules/@gilbarbara/deep-equal",
+      "resolved": "/home/user/work/app/node_modules/@gilbarbara/deep-equal",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/core/core",
+      "target": "/home/user/work/app/node_modules/@humanfs/core",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/node/node",
+      "target": "/home/user/work/app/node_modules/@humanfs/node",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/node",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanfs/types/types",
+      "target": "/home/user/work/app/node_modules/@humanfs/types",
+      "resolved": "/home/user/work/app/node_modules/@humanfs/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanwhocodes/module-importer/module-importer",
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/module-importer",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/module-importer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@humanwhocodes/retry/retry",
+      "target": "/home/user/work/app/node_modules/@humanwhocodes/retry",
+      "resolved": "/home/user/work/app/node_modules/@humanwhocodes/retry",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/gen-mapping/gen-mapping",
+      "target": "/home/user/work/app/node_modules/@jridgewell/gen-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/gen-mapping",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/resolve-uri/resolve-uri",
+      "target": "/home/user/work/app/node_modules/@jridgewell/resolve-uri",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/resolve-uri",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/sourcemap-codec/sourcemap-codec",
+      "target": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/sourcemap-codec",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jridgewell/trace-mapping/trace-mapping",
+      "target": "/home/user/work/app/node_modules/@jridgewell/trace-mapping",
+      "resolved": "/home/user/work/app/node_modules/@jridgewell/trace-mapping",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@jsdevtools/ono/ono",
+      "target": "/home/user/work/app/node_modules/@jsdevtools/ono",
+      "resolved": "/home/user/work/app/node_modules/@jsdevtools/ono",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/aac-encoder/aac-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/aac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/aac-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/flac-encoder/flac-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/flac-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/flac-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@mediabunny/mp3-encoder/mp3-encoder",
+      "target": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder",
+      "resolved": "/home/user/work/app/node_modules/@mediabunny/mp3-encoder",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.scandir/fs.scandir",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.scandir",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.scandir",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.stat/fs.stat",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.stat",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.stat",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@nodelib/fs.walk/fs.walk",
+      "target": "/home/user/work/app/node_modules/@nodelib/fs.walk",
+      "resolved": "/home/user/work/app/node_modules/@nodelib/fs.walk",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@oxc-project/types/types",
+      "target": "/home/user/work/app/node_modules/@oxc-project/types",
+      "resolved": "/home/user/work/app/node_modules/@oxc-project/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@playwright/test/test",
+      "target": "/home/user/work/app/node_modules/@playwright/test",
+      "resolved": "/home/user/work/app/node_modules/@playwright/test",
+      "selfTargeting": true,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/primitive/primitive",
+      "target": "/home/user/work/app/node_modules/@radix-ui/primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/primitive",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-compose-refs/react-compose-refs",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-compose-refs",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-context/react-context",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-context",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-context",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-dialog/react-dialog",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dialog",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dialog",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-dismissable-layer/react-dismissable-layer",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-dismissable-layer",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-focus-guards/react-focus-guards",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-guards",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-focus-scope/react-focus-scope",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-focus-scope",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-id/react-id",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-id",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-id",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-portal/react-portal",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-portal",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-portal",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-presence/react-presence",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-presence",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-presence",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-primitive/react-primitive",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-primitive",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-primitive",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-slot/react-slot",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-slot",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-slot",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-callback-ref/react-use-callback-ref",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-callback-ref",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-controllable-state/react-use-controllable-state",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-controllable-state",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-effect-event/react-use-effect-event",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-effect-event",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-escape-keydown/react-use-escape-keydown",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-escape-keydown",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@radix-ui/react-use-layout-effect/react-use-layout-effect",
+      "target": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect",
+      "resolved": "/home/user/work/app/node_modules/@radix-ui/react-use-layout-effect",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@react-three/fiber/fiber",
+      "target": "/home/user/work/app/node_modules/@react-three/fiber",
+      "resolved": "/home/user/work/app/node_modules/@react-three/fiber",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remix-run/router/router",
+      "target": "/home/user/work/app/node_modules/@remix-run/router",
+      "resolved": "/home/user/work/app/node_modules/@remix-run/router",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/layout-utils/layout-utils",
+      "target": "/home/user/work/app/node_modules/@remotion/layout-utils",
+      "resolved": "/home/user/work/app/node_modules/@remotion/layout-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/licensing/licensing",
+      "target": "/home/user/work/app/node_modules/@remotion/licensing",
+      "resolved": "/home/user/work/app/node_modules/@remotion/licensing",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/media/media",
+      "target": "/home/user/work/app/node_modules/@remotion/media",
+      "resolved": "/home/user/work/app/node_modules/@remotion/media",
+      "selfTargeting": true,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/player/player",
+      "target": "/home/user/work/app/node_modules/@remotion/player",
+      "resolved": "/home/user/work/app/node_modules/@remotion/player",
+      "selfTargeting": true,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/three/three",
+      "target": "/home/user/work/app/node_modules/@remotion/three",
+      "resolved": "/home/user/work/app/node_modules/@remotion/three",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@remotion/web-renderer/web-renderer",
+      "target": "/home/user/work/app/node_modules/@remotion/web-renderer",
+      "resolved": "/home/user/work/app/node_modules/@remotion/web-renderer",
+      "selfTargeting": true,
+      "authorizedExclusion": true,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/binding-linux-x64-gnu/binding-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/binding-linux-x64-musl/binding-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/binding-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rolldown/pluginutils/pluginutils",
+      "target": "/home/user/work/app/node_modules/@rolldown/pluginutils",
+      "resolved": "/home/user/work/app/node_modules/@rolldown/pluginutils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rollup/rollup-linux-x64-gnu/rollup-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@rollup/rollup-linux-x64-musl/rollup-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@rollup/rollup-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@standard-schema/spec/spec",
+      "target": "/home/user/work/app/node_modules/@standard-schema/spec",
+      "resolved": "/home/user/work/app/node_modules/@standard-schema/spec",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/auth-js/auth-js",
+      "target": "/home/user/work/app/node_modules/@supabase/auth-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/auth-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/functions-js/functions-js",
+      "target": "/home/user/work/app/node_modules/@supabase/functions-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/functions-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/phoenix/phoenix",
+      "target": "/home/user/work/app/node_modules/@supabase/phoenix",
+      "resolved": "/home/user/work/app/node_modules/@supabase/phoenix",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/postgrest-js/postgrest-js",
+      "target": "/home/user/work/app/node_modules/@supabase/postgrest-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/postgrest-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/realtime-js/realtime-js",
+      "target": "/home/user/work/app/node_modules/@supabase/realtime-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/realtime-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/storage-js/storage-js",
+      "target": "/home/user/work/app/node_modules/@supabase/storage-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/storage-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@supabase/supabase-js/supabase-js",
+      "target": "/home/user/work/app/node_modules/@supabase/supabase-js",
+      "resolved": "/home/user/work/app/node_modules/@supabase/supabase-js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core-linux-x64-gnu/core-linux-x64-gnu",
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-gnu",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core-linux-x64-musl/core-linux-x64-musl",
+      "target": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl",
+      "resolved": "/home/user/work/app/node_modules/@swc/core-linux-x64-musl",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/core/core",
+      "target": "/home/user/work/app/node_modules/@swc/core",
+      "resolved": "/home/user/work/app/node_modules/@swc/core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/counter/counter",
+      "target": "/home/user/work/app/node_modules/@swc/counter",
+      "resolved": "/home/user/work/app/node_modules/@swc/counter",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@swc/types/types",
+      "target": "/home/user/work/app/node_modules/@swc/types",
+      "resolved": "/home/user/work/app/node_modules/@swc/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tailwindcss/container-queries/container-queries",
+      "target": "/home/user/work/app/node_modules/@tailwindcss/container-queries",
+      "resolved": "/home/user/work/app/node_modules/@tailwindcss/container-queries",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tanstack/query-core/query-core",
+      "target": "/home/user/work/app/node_modules/@tanstack/query-core",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/query-core",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tanstack/react-query/react-query",
+      "target": "/home/user/work/app/node_modules/@tanstack/react-query",
+      "resolved": "/home/user/work/app/node_modules/@tanstack/react-query",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/dom/dom",
+      "target": "/home/user/work/app/node_modules/@testing-library/dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/jest-dom/jest-dom",
+      "target": "/home/user/work/app/node_modules/@testing-library/jest-dom",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/jest-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/react/react",
+      "target": "/home/user/work/app/node_modules/@testing-library/react",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@testing-library/user-event/user-event",
+      "target": "/home/user/work/app/node_modules/@testing-library/user-event",
+      "resolved": "/home/user/work/app/node_modules/@testing-library/user-event",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@tweenjs/tween.js/tween.js",
+      "target": "/home/user/work/app/node_modules/@tweenjs/tween.js",
+      "resolved": "/home/user/work/app/node_modules/@tweenjs/tween.js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/aria-query/aria-query",
+      "target": "/home/user/work/app/node_modules/@types/aria-query",
+      "resolved": "/home/user/work/app/node_modules/@types/aria-query",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/chai/chai",
+      "target": "/home/user/work/app/node_modules/@types/chai",
+      "resolved": "/home/user/work/app/node_modules/@types/chai",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/debug/debug",
+      "target": "/home/user/work/app/node_modules/@types/debug",
+      "resolved": "/home/user/work/app/node_modules/@types/debug",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/deep-eql/deep-eql",
+      "target": "/home/user/work/app/node_modules/@types/deep-eql",
+      "resolved": "/home/user/work/app/node_modules/@types/deep-eql",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/dom-mediacapture-transform/dom-mediacapture-transform",
+      "target": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-mediacapture-transform",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/dom-webcodecs/dom-webcodecs",
+      "target": "/home/user/work/app/node_modules/@types/dom-webcodecs",
+      "resolved": "/home/user/work/app/node_modules/@types/dom-webcodecs",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/estree-jsx/estree-jsx",
+      "target": "/home/user/work/app/node_modules/@types/estree-jsx",
+      "resolved": "/home/user/work/app/node_modules/@types/estree-jsx",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/estree/estree",
+      "target": "/home/user/work/app/node_modules/@types/estree",
+      "resolved": "/home/user/work/app/node_modules/@types/estree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/hast/hast",
+      "target": "/home/user/work/app/node_modules/@types/hast",
+      "resolved": "/home/user/work/app/node_modules/@types/hast",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/json-schema/json-schema",
+      "target": "/home/user/work/app/node_modules/@types/json-schema",
+      "resolved": "/home/user/work/app/node_modules/@types/json-schema",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/lodash/lodash",
+      "target": "/home/user/work/app/node_modules/@types/lodash",
+      "resolved": "/home/user/work/app/node_modules/@types/lodash",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/mdast/mdast",
+      "target": "/home/user/work/app/node_modules/@types/mdast",
+      "resolved": "/home/user/work/app/node_modules/@types/mdast",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/ms/ms",
+      "target": "/home/user/work/app/node_modules/@types/ms",
+      "resolved": "/home/user/work/app/node_modules/@types/ms",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/node/node",
+      "target": "/home/user/work/app/node_modules/@types/node",
+      "resolved": "/home/user/work/app/node_modules/@types/node",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/prop-types/prop-types",
+      "target": "/home/user/work/app/node_modules/@types/prop-types",
+      "resolved": "/home/user/work/app/node_modules/@types/prop-types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react-dom/react-dom",
+      "target": "/home/user/work/app/node_modules/@types/react-dom",
+      "resolved": "/home/user/work/app/node_modules/@types/react-dom",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react-reconciler/react-reconciler",
+      "target": "/home/user/work/app/node_modules/@types/react-reconciler",
+      "resolved": "/home/user/work/app/node_modules/@types/react-reconciler",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/react/react",
+      "target": "/home/user/work/app/node_modules/@types/react",
+      "resolved": "/home/user/work/app/node_modules/@types/react",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/stats.js/stats.js",
+      "target": "/home/user/work/app/node_modules/@types/stats.js",
+      "resolved": "/home/user/work/app/node_modules/@types/stats.js",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/three/three",
+      "target": "/home/user/work/app/node_modules/@types/three",
+      "resolved": "/home/user/work/app/node_modules/@types/three",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/unist/unist",
+      "target": "/home/user/work/app/node_modules/@types/unist",
+      "resolved": "/home/user/work/app/node_modules/@types/unist",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/webxr/webxr",
+      "target": "/home/user/work/app/node_modules/@types/webxr",
+      "resolved": "/home/user/work/app/node_modules/@types/webxr",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@types/ws/ws",
+      "target": "/home/user/work/app/node_modules/@types/ws",
+      "resolved": "/home/user/work/app/node_modules/@types/ws",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/eslint-plugin/eslint-plugin",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/eslint-plugin",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/parser/parser",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/parser",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/parser",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/project-service/project-service",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/project-service",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/project-service",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/scope-manager/scope-manager",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/scope-manager",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/tsconfig-utils/tsconfig-utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/tsconfig-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/type-utils/type-utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/type-utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/type-utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/types/types",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/types",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/types",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/typescript-estree/typescript-estree",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/typescript-estree",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/utils/utils",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/utils",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@typescript-eslint/visitor-keys/visitor-keys",
+      "target": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys",
+      "resolved": "/home/user/work/app/node_modules/@typescript-eslint/visitor-keys",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@ungap/structured-clone/structured-clone",
+      "target": "/home/user/work/app/node_modules/@ungap/structured-clone",
+      "resolved": "/home/user/work/app/node_modules/@ungap/structured-clone",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitejs/plugin-react-swc/plugin-react-swc",
+      "target": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc",
+      "resolved": "/home/user/work/app/node_modules/@vitejs/plugin-react-swc",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/expect/expect",
+      "target": "/home/user/work/app/node_modules/@vitest/expect",
+      "resolved": "/home/user/work/app/node_modules/@vitest/expect",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/mocker/mocker",
+      "target": "/home/user/work/app/node_modules/@vitest/mocker",
+      "resolved": "/home/user/work/app/node_modules/@vitest/mocker",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/pretty-format/pretty-format",
+      "target": "/home/user/work/app/node_modules/@vitest/pretty-format",
+      "resolved": "/home/user/work/app/node_modules/@vitest/pretty-format",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/runner/runner",
+      "target": "/home/user/work/app/node_modules/@vitest/runner",
+      "resolved": "/home/user/work/app/node_modules/@vitest/runner",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/snapshot/snapshot",
+      "target": "/home/user/work/app/node_modules/@vitest/snapshot",
+      "resolved": "/home/user/work/app/node_modules/@vitest/snapshot",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/spy/spy",
+      "target": "/home/user/work/app/node_modules/@vitest/spy",
+      "resolved": "/home/user/work/app/node_modules/@vitest/spy",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "@vitest/utils/utils",
+      "target": "/home/user/work/app/node_modules/@vitest/utils",
+      "resolved": "/home/user/work/app/node_modules/@vitest/utils",
+      "selfTargeting": true,
+      "authorizedExclusion": false,
+      "externalAbsolute": true
+    },
+    {
+      "path": "fake-indexeddb",
+      "target": "../vendor/fake-indexeddb",
+      "resolved": "/home/user/work/app/vendor/fake-indexeddb",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "vite/node_modules/.bin/esbuild",
+      "target": "../esbuild/bin/esbuild",
+      "resolved": "/home/user/work/app/node_modules/vite/node_modules/esbuild/bin/esbuild",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    },
+    {
+      "path": "vitest/node_modules/.bin/vite",
+      "target": "../vite/bin/vite.js",
+      "resolved": "/home/user/work/app/node_modules/vitest/node_modules/vite/bin/vite.js",
+      "selfTargeting": false,
+      "authorizedExclusion": false,
+      "externalAbsolute": false
+    }
+  ]
+}
