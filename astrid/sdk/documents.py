@@ -10,6 +10,7 @@ import json
 import os
 import shlex
 import subprocess
+import sys
 import tempfile
 import uuid
 from pathlib import Path
@@ -32,6 +33,65 @@ def stable_document_id(project_id: str, kind: str, name: str = "default") -> str
 
 def _failure(code: str, message: str, **details: Any) -> DomainResult:
     return DomainResult.failure(ErrorObject(code, message, details))
+
+
+def _split_windows_command_line(command: str) -> list[str]:
+    """Split an EDITOR command using the Microsoft C runtime quote rules."""
+    args: list[str] = []
+    i = 0
+    length = len(command)
+
+    # argv[0] is a pathname: quotes group spaces, and backslashes are literal.
+    while i < length and command[i] in " \t":
+        i += 1
+    if i == length:
+        return args
+    executable: list[str] = []
+    quoted = False
+    while i < length:
+        char = command[i]
+        if char == '"':
+            quoted = not quoted
+        elif char in " \t" and not quoted:
+            break
+        else:
+            executable.append(char)
+        i += 1
+    args.append("".join(executable))
+
+    # Remaining arguments use backslash parity to distinguish escaped quotes.
+    while i < length:
+        while i < length and command[i] in " \t":
+            i += 1
+        if i == length:
+            break
+        value: list[str] = []
+        quoted = False
+        while i < length:
+            if command[i] in " \t" and not quoted:
+                break
+            slashes = 0
+            while i < length and command[i] == "\\":
+                slashes += 1
+                i += 1
+            if i < length and command[i] == '"':
+                value.extend("\\" * (slashes // 2))
+                if slashes % 2:
+                    value.append('"')
+                    i += 1
+                elif quoted and i + 1 < length and command[i + 1] == '"':
+                    value.append('"')
+                    i += 2
+                else:
+                    quoted = not quoted
+                    i += 1
+            else:
+                value.extend("\\" * slashes)
+                if i < length and not (command[i] in " \t" and not quoted):
+                    value.append(command[i])
+                    i += 1
+        args.append("".join(value))
+    return args
 
 
 def _digest(value: Any) -> str:
@@ -269,7 +329,7 @@ class Preferences(_DocumentFamily):
     def edit(self, *, scope: str, project: str | None = None, editor: str | None = None) -> DomainResult:
         command = editor or os.environ.get("EDITOR")
         try:
-            command_args = shlex.split(command or "")
+            command_args = _split_windows_command_line(command or "") if sys.platform == "win32" else shlex.split(command or "")
         except ValueError as exc:
             return _failure("editor_missing", str(exc))
         if not command_args:
