@@ -36,7 +36,7 @@ and whether they came from `PATH` or a download; doctor bundles include those
 fields. Tools inside an older managed version are downloaded again so updates
 can remove that older version safely.
 
-`astrid install uninstall` stops and unregisters the service and removes owned
+`astrid install --uninstall` stops and unregisters the service and removes owned
 program files. It keeps data unless you explicitly add `--delete-data`; locked
 files are reported for removal after their processes exit.
 
