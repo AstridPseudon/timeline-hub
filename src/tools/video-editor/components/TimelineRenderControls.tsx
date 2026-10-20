@@ -31,6 +31,9 @@ export function TimelineRenderControls({
 }) {
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const downloadAttemptRef = useRef(0);
   const { renderResultUrl, renderResultInfo } = chrome;
   const completedAt = renderResultInfo?.completedAt ?? null;
   const seenCompletion = useRef(completedAt);
@@ -42,6 +45,26 @@ export function TimelineRenderControls({
     }
     seenCompletion.current = completedAt;
   }, [completedAt, renderResultUrl]);
+  useEffect(() => {
+    setDownloading(false);
+    setDownloadError(null);
+    return () => { downloadAttemptRef.current += 1; };
+  }, [renderResultInfo, renderResultUrl]);
+
+  const download = async () => {
+    const attempt = ++downloadAttemptRef.current;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await chrome.downloadRenderResult();
+    } catch (error) {
+      if (attempt === downloadAttemptRef.current) {
+        setDownloadError(error instanceof Error ? error.message : 'Could not download render. Please try again.');
+      }
+    } finally {
+      if (attempt === downloadAttemptRef.current) setDownloading(false);
+    }
+  };
 
   const hasResult = Boolean(renderResultUrl) && chrome.renderStatus !== 'rendering';
   const filename = chrome.renderResultFilename ?? 'timeline-render.mp4';
@@ -96,13 +119,17 @@ export function TimelineRenderControls({
               data-testid="timeline-render-player"
             />
             <div className="flex justify-end">
-              <Button asChild size="sm" variant="outline" className="gap-1.5">
-                <a href={renderResultUrl} download={filename}>
+              <Button asChild size="sm" variant="outline" className="gap-1.5" disabled={downloading}>
+                <a href={renderResultUrl} download={filename} aria-disabled={downloading} onClick={(event) => {
+                  event.preventDefault();
+                  if (!downloading) void download();
+                }}>
                   <Download className="h-3.5 w-3.5" />
-                  Download
+                  {downloading ? 'Downloading…' : 'Download'}
                 </a>
               </Button>
             </div>
+            {downloadError && <p role="alert" className="text-sm text-destructive">{downloadError}</p>}
           </DialogContent>
         </Dialog>
       )}
