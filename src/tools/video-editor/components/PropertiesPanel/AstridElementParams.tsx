@@ -2,6 +2,9 @@ import { useSyncExternalStore } from 'react';
 import { getAdmittedElementSelection, subscribeAdmittedElements } from '../../runtime/admitted-elements';
 import { CodePathParamEditor } from '@/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { useTimelineEditorDataSafe, useTimelineEditorOpsSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { captureClipElementEdit, submitClipElementEdit } from '@/tools/video-editor/commands/elementGesture.ts';
+import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { ClipPanelProps } from './ClipPanelBody.tsx';
 import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
 
@@ -14,6 +17,8 @@ export function AstridElementParams({
 }: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
   useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const runtime = useVideoEditorRuntime();
+  const editorData = useTimelineEditorDataSafe();
+  const editorOps = useTimelineEditorOpsSafe();
   const descriptors = runtime.astridElementHost?.descriptors ?? [];
   const descriptor = resolveAstridElementParamDescriptor(
     clip,
@@ -37,7 +42,15 @@ export function AstridElementParams({
       || currentDescriptor.kind !== descriptor.kind
       || currentDescriptor.packId !== descriptor.packId
       || currentDescriptor.revision !== descriptor.revision) return;
-    onChange({ params: { ...params, ...nextParams } });
+    const next = { params: { ...params, ...nextParams } };
+    const reference = clip.elementRef;
+    if (!reference?.packId && editorData?.data && editorOps?.element) {
+      const edit = { params: { values: next.params as Record<string, JSON>, clear: [] } } as const;
+      const captured = captureClipElementEdit(editorOps.element, editorData.data, clip.id, edit);
+      submitClipElementEdit(captured, edit);
+      return;
+    }
+    onChange(next);
   };
 
   const schemaTitle = (descriptor.schema as { title?: unknown }).title;

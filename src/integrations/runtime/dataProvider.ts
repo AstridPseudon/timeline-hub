@@ -1208,7 +1208,7 @@ export class RuntimeDataProvider implements DataProvider {
       );
     }
 
-    const prepared = toPreparedMediaImport(
+    const prepared = await toPreparedMediaImport(
       this.client,
       imported,
       mediaType,
@@ -1504,13 +1504,13 @@ async function recoverMediaImportAfterLostAck(
   }
 }
 
-function toPreparedMediaImport(
+async function toPreparedMediaImport(
   client: AstridRuntimeClient,
   imported: MediaImport,
   fallbackMediaType: string,
   fallbackFilename: string,
   fallbackDuration?: number,
-): PreparedMediaImport {
+): Promise<PreparedMediaImport> {
   if (
     imported.provider !== 'runtime'
     || imported.status !== 'completed'
@@ -1519,9 +1519,25 @@ function toPreparedMediaImport(
     || typeof imported.generation_id !== 'string'
     || typeof imported.variant_id !== 'string'
     || typeof imported.asset_id !== 'string'
+    || typeof imported.entry?.object_id !== 'string'
   ) {
     throw new Error('Workspace Runtime returned an incomplete media import descriptor');
   }
+
+  const mediaSelection = await client.getProjectMediaSelection(imported.project, {
+    asset: imported.asset_id,
+    generation_id: imported.generation_id,
+    variant_id: imported.variant_id,
+  });
+  if (
+    mediaSelection.asset !== imported.asset_id
+    || mediaSelection.generation_id !== imported.generation_id
+    || mediaSelection.variant_id !== imported.variant_id
+    || mediaSelection.object_id !== imported.entry.object_id
+  ) {
+    throw new Error('Workspace Runtime media selection does not match the prepared import');
+  }
+  Object.freeze(mediaSelection);
 
   const mediaType = imported.entry.media_type || fallbackMediaType;
   const filename = imported.entry.filename || fallbackFilename;
@@ -1555,6 +1571,7 @@ function toPreparedMediaImport(
     variantId: imported.variant_id,
     assetId: imported.asset_id,
     entry,
+    mediaSelection,
   };
 }
 

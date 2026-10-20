@@ -1,4 +1,5 @@
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+import type { ClipDeleteCapturePort } from '@/tools/video-editor/commands/clipDeleteGesture.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
@@ -135,6 +136,8 @@ function useTimelineEditorContextValue({
   externalDrop,
   trackManagement,
   trackLabelPort,
+  clipDeletePort,
+  elementPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -178,6 +181,8 @@ function useTimelineEditorContextValue({
   externalDrop: ExternalDropHook;
   trackManagement: TimelineTrackManagementHook;
   trackLabelPort?: TrackLabelCapturePort;
+  clipDeletePort?: ClipDeleteCapturePort;
+  elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -202,6 +207,8 @@ function useTimelineEditorContextValue({
   const moveSelectedClipsToTrack = trackManagement.moveSelectedClipsToTrack;
 
   return useMemo<TimelineEditorContextValue>(() => ({
+    clipDelete: clipDeletePort,
+    element: elementPort,
     trackLabel: trackLabelPort,
     data,
     resolvedConfig: selection.resolvedConfig,
@@ -327,6 +334,8 @@ function useTimelineEditorContextValue({
     dragCoordinator.coordinator,
     dragCoordinator.editAreaRef,
     dragCoordinator.indicatorRef,
+    clipDeletePort,
+    elementPort,
     editorPreferences,
     externalDrop.onTimelineDragLeave,
     externalDrop.onTimelineDragOver,
@@ -768,6 +777,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     dataRef: save.dataRef,
     trackLabelPort: save.commands.trackLabelPort,
     clipDeletePort: save.commands.clipDeletePort,
+    genericPatchPort: save.commands.genericPatchPort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,
@@ -1080,6 +1090,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     externalDrop,
     trackManagement,
     trackLabelPort: save.commands.trackLabelPort,
+    clipDeletePort: save.commands.clipDeletePort,
+    elementPort: save.commands.elementPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1167,6 +1179,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
     clipDelete: save.commands.clipDeletePort,
+    element: save.commands.elementPort,
     trackLabel: save.commands.trackLabelPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
@@ -1226,7 +1239,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipDeletePort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
+    save.commands.port, save.commands.clipDeletePort, save.commands.elementPort, save.commands.trackLabelPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

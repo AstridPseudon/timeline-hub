@@ -6,6 +6,7 @@ import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
@@ -92,7 +93,8 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const compiled = compileTimelinePatch(preview, data);
+          const native = projectGenericPatchPreview(preview, data);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
         }
@@ -129,7 +131,8 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const compiled = compileTimelinePatch(patch, commit.dataRef.current);
+          const native = projectGenericPatchPreview(patch, commit.dataRef.current);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -158,6 +161,30 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const realElementPort = session.elementPort;
+        session.elementPort = {
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.capture(input);
+          },
+          finish(basis, edit) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.finish(basis, edit);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            realElementPort.submit(input);
+          },
+        };
+        const genericPatchPort = session.genericPatchPort;
+        const requireCleanGenericPatch = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before applying a native patch');
+        };
+        session.genericPatchPort = {
+          capture(input) { requireCleanGenericPatch(); return genericPatchPort.capture(input); },
+          finish(basis) { requireCleanGenericPatch(); return genericPatchPort.finish(basis); },
+          submit(input) { requireCleanGenericPatch(); genericPatchPort.submit(input); },
+        };
         const labelPort = session.trackLabelPort;
         const requireCleanLabelEdit = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
@@ -246,6 +273,8 @@ export function useTimelineCommandSession(options: {
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    genericPatchPort: sessionRef.current?.genericPatchPort,
+    elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipDeletePort: enabled ? sessionRef.current?.clipDeletePort : undefined,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
