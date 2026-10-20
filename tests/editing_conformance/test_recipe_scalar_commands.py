@@ -116,9 +116,6 @@ def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(containe
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None)])
-# Requirement: exact generic batch undo must preserve a no-op clear's ancestor
-# when a later command creates that container. inverse._patch still normalizes it.
-@pytest.mark.xfail(strict=True, reason='inverse coalescing normalizes absent/null ancestors')
 def test_clear_then_set_batch_preserves_exact_absent_or_null_inverse(container):
     original = bundle()
     if container != ABSENT:

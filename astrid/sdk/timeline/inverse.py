@@ -20,7 +20,11 @@ from ._recording import Recording, guard, selection
 def _patch(state, path, replacement):
     if not path:
         return copy.deepcopy(replacement)
-    value = copy.deepcopy(state.get('value', {}))
+    if state == ABSENT or state.get('value') is None:
+        if replacement == ABSENT:
+            return copy.deepcopy(state)
+        raise CommandError('patch requires historical container structure', kind='history_unavailable')
+    value = copy.deepcopy(state['value'])
     node = value
     for token in path[:-1]:
         if isinstance(token, tuple):
@@ -30,8 +34,18 @@ def _patch(state, path, replacement):
             node = matches[0]
         elif isinstance(node, list):
             node = node[int(token)]
+        elif isinstance(node, dict):
+            if token not in node:
+                if replacement == ABSENT:
+                    return copy.deepcopy(state)
+                raise CommandError('patch requires historical container structure', kind='history_unavailable')
+            node = node[token]
         else:
-            node = node.setdefault(token, {})
+            raise CommandError('patch parent must be an object or array', kind='history_unavailable')
+        if node is None:
+            if replacement == ABSENT:
+                return copy.deepcopy(state)
+            raise CommandError('patch requires historical container structure', kind='history_unavailable')
     if isinstance(path[-1], tuple):
         identity = path[-1][1]
         indices = [i for i, row in enumerate(node) if row.get('id') == identity]
@@ -52,6 +66,8 @@ def _patch(state, path, replacement):
         else:
             node[index] = copy.deepcopy(replacement['value'])
         return present(value)
+    if not isinstance(node, dict):
+        raise CommandError('patch parent must be an object or array', kind='history_unavailable')
     if replacement['state'] == 'absent':
         node.pop(path[-1], None)
     else:
