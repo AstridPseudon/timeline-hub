@@ -14,3 +14,8 @@
 - Open blockers: no machine/infra blocker. Manager-stated external blockers: Runtime current tuple still DRAFT/TBD (84be), Agent 0.0.12 pin, ShotSettings real read round-trip needs a neutral seed.
 - Toolchain folder app-m2-post-opaque-compat-toolchain: stays KEEP (still ACTIVE in notes/opaque-compat-dependencies.lease and post-opaque-full.lease); recycle only after the render gate finishes or the manager drops it from the lease. (c) 1.2 GB + 303 MB node cache would follow then.
 - Questions for the orchestrator: (1) the toolchain folder note above (release it once the render gate is done?); (2) none else.
+
+## Lead 08:34Z: disk at the floor again
+- 08:33Z free disk was 7.7 GB. The lead watcher recycled 5 finished non-KEEP worktrees, and the lead removed ~640 MB of stale Vite/Vitest transform caches in /tmp (idle 3-9 h, none open) and a pip leftover. Free disk is now 8.4 GB. The watcher now clears such stale caches automatically.
+- Remaining space is held by 49 finished, manager-KEEP-marked App worktrees (~300 MB each), plus the toolchain folder and its node cache (~1.5 GB, waiting on the render gate). The lead will not override KEEP.
+- Ask (App manager / orchestrator): drop KEEP from finished worktrees no longer needed for an imminent merge or test. Kit recycle-on-finish then removes them.

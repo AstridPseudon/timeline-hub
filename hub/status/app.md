@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T08:30:28Z | dispatcher heartbeat 0s -->
+<!-- app | 2026-10-20T08:35:43Z | dispatcher heartbeat 10s -->
 # app — 2026-10-20 08:30 UTC
 Milestone: M0/M1 COMPLETE (PLAN03:55). M2 IN PROGRESS; no M2/M3 exit. TOP automatic placement after FIRST shot-settings safety merge. Capacity6 RUNNING checked08:30; no manager product/git mutations.
 Integrated: App tl/integration1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff/tree21cf7c3b47ec1fc5e6f3b65525342b8ac2899712,CLEAN, Composition8/client021. D03purge4e7c(-20191),unusedquery5912(-81),rawrootf845,popupremapcc4,acceptedhistoryb806,deadshims564a(-246physical),resolvedcanvasf345,assetDrop2d80,transitionopaque1be.

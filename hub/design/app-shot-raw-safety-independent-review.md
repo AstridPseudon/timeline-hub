@@ -1,0 +1,79 @@
+# Independent FIRST shot-settings/raw-reader review: HOLD
+
+2026-10-20. Read PLAN first and reviewed `app-shot-settings-real-roundtrip.md`, `app-shot-settings-safety-review.md`, the complete product/test delta, final fixture follow-up and its existing central artifacts. Product review is complete. **HOLD merge until the malformed referenced-container negative control and tracked-write HTTP refusal/draft controls pass.** No new product preservation defect found in this bounded unit; the blocker is an incomplete, failing gate. No product edits or new test-service requests were made.
+
+## Exact source and existing gate
+
+- Integration comparison: `1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff` (integration remained there when inspected).
+- Reviewed product: `c07be0d4dbd97bb4f19329353cff18eb0dc26a0f`, tree `aa09c8819f6e3d0c3fa0ac2372eeb445d94a521c`; three product files changed relative to integration, plus component and HTTP tests.
+- Fixture worker has exited: final commit `b7153c590c88c2947fcbac2119912e7730d8720c`, tree **`916b6705914788292df0f6f46e026c0317ed0e11`**, clean worktree, BLOCKED report. Its three product files are byte-identical to c07. Only `tests/e2e/local/support/harness.ts` and `tests/integration/runtimeRestore.test.ts` changed.
+- Existing central result `app-m2-shot-settings-valid-fixture-gate-restore-opaque-m1-compat-integration-1020082604-16296`: **FAIL, exit 1, 1 passed / 1 failed**, 23s service / 19.42s Vitest. Tree matches the final fixture tree exactly. No new full, named, socket or browser run requested.
+- Existing [central summary](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m2-shot-settings-valid-fixture-gate-restore-opaque-m1-compat-integration-1020082604-16296/summary) and [full log](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-m2-shot-settings-valid-fixture-gate-restore-opaque-m1-compat-integration-1020082604-16296/log.txt) were inspected read-only.
+- Actual selected sources: historical Agent **`4a75f68f32049a69fd86135c645fa64c51175c14`**, Runtime **`4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136`**. These are historical-compatible safety evidence, never current-pair qualification. The explicit command selects those leases; generic service external-head metadata does not override it.
+
+Existing central command, inspected rather than executed by this reviewer:
+
+```sh
+flock -w 600 /home/user/work/.app-m1-browser.lock env ASTRID_CHECKOUT=/home/user/work/wt/app-m1-full-agent-source ASTRID_PYTHON=/home/user/work/venv-agent/bin/python ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/app-m1-full-runtime-source ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python npx vitest run --config config/testing/vitest.runtime-restore.integration.config.ts --maxWorkers=1
+```
+
+## Blocking finding and minimal fix
+
+**P1 — negative fixture does not reference its malformed revision; tracked refusal checks are consequently unexecuted.** Final fixture [`runtimeRestore.test.ts:258`](/home/user/work/wt/app-m2-shot-settings-valid-fixture-gate/tests/integration/runtimeRestore.test.ts:258) copies the current parent unchanged and supplies a fresh shot revision containing `metadata: []`. That parent's `shot_revision_id` still selects the old valid revision. Historical Runtime [`service.py:3352`](/home/user/work/wt/app-m1-full-runtime-source/runtime_protocol/service.py:3352) builds the closure from occurrence pins and [`service.py:3439`](/home/user/work/wt/app-m1-full-runtime-source/runtime_protocol/service.py:3439) validates/stores only those resolved shots. Observed HTTP 200 at test line 266 is consistent with publishing the valid old closure; it does not demonstrate acceptance/storage of the unreferenced malformed row.
+
+Minimal follow-up: allocate the malformed revision ID once, repin the intended parent occurrence to it, and supply its actual internal pin with `metadata: []`. Keep **HTTP 400**, unchanged head, existing positive cases and all tracked 409/draft assertions. Do not change Runtime admission or expect 200. The actual historical `_validate_published_shot_payload` at service line 1438 refuses this selected malformed container in a socket-free control. It still needs HTTP proof.
+
+The final tracked block at [`runtimeRestore.test.ts:269`](/home/user/work/wt/app-m2-shot-settings-valid-fixture-gate/tests/integration/runtimeRestore.test.ts:269) is sound in intent but **not reached**: actual Agent commits, settings POST `409 timeline_commit_required`, exact dirty/error draft and clean snapshot, failed name POST with visible error, zero accepted publications, unchanged head and entire closure. Runtime's production tracked-head refusal remains at [`service.py:3180`](/home/user/work/wt/app-m1-full-runtime-source/runtime_protocol/service.py:3180). Static inspection and local draft tests do not substitute for executing this HTTP block. The orchestrator should authorize a narrow fixture follow-up and its gate; this reviewer did not resubmit.
+
+## Product review and coverage
+
+| Requirement | Finding and evidence |
+| --- | --- |
+| Raw read versus display projection | [`dataProvider.ts:2045`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/integrations/runtime/dataProvider.ts:2045) retains the original full shot object at `rawJson` before display normalization. The ordinary codec-produced `generation_inputs: {}` would otherwise become `[]`, with absent assets/dependencies/timing materialized. Independent baseline probe reproduces this loss at 1be and passes at c07. |
+| Actual settings/name patch wins | [`shotCompositionEditor.ts:287`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/video-editor/data/shotCompositionEditor.ts:287) overlays only explicit settings/provenance/assets and intentional timeline/duration patches on raw payload. [`ShotEditorView.tsx:163`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/travel-between-images/pages/ShotEditorView.tsx:163) overlays changed form roots on original settings. Name patches `provenance.name`; stale raw content cannot overwrite either patch. |
+| No local wrapper leak | [`dataProvider.ts:2207`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/integrations/runtime/dataProvider.ts:2207) encodes the retained payload, not the projected revision/wrapper. Normal inputs have no emitted `rawJson`. A legitimate authored payload field named `rawJson` remains its original value rather than receiving the local wrapper; independent probe checks both cases. |
+| Successor digest and internal repin | [`shotCompositionEditor.ts:325`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/video-editor/data/shotCompositionEditor.ts:325) repins raw `internal_timeline_revision_id` after final internal identity selection, then hashes raw shot payload. Independent probe verifies SHA-256 against the complete outgoing payload, plus encoder/raw internal-pin equality, across settings/name/timeline shared copies. |
+| Exact opaque remap | [`authoringBundle.ts:75`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/video-editor/commands/authoringBundle.ts:75) changes only known item identity mirrors and descriptor-owned source links; object metadata takes precedence, otherwise item-level descriptors do. [`shotCompositionEditor.ts:299`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/video-editor/data/shotCompositionEditor.ts:299) separately applies that same shallow contract to the raw shot. It does not recursively rewrite settings, nested opaque objects, selectors, strings or the nested authored `rawJson` key. Eight canonical corpus cases × three raw operations pass whole-value checks; original adversarial remap suite also passes. |
+| Own prototype keys, null, absence, order | Whole-payload tests/probes retain own `__proto__`, `constructor`, `prototype`, nested zero/false/null, absent keys and duplicate ordered arrays. Object spread/structured cloning do not invoke prototype setters here. Existing structural `equal` ignores object key order and respects array order. Own-property and ordinary-prototype assertions pass. |
+| No change means no settings publication | [`ShotEditorView.tsx:171`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/travel-between-images/pages/ShotEditorView.tsx:171) returns before graph creation for unchanged normalized form. Absent/null/empty roots remain distinct. Tests retain explicit null/removal and ordinary complete compound edits as positive behavior. |
+| Visible draft preservation | Component tests at [`ShotEditorView.test.tsx:201`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/travel-between-images/pages/ShotEditorView.test.tsx:201) and line 258 invoke real callbacks plus entity store: hidden compound data and non-object settings roots visibly refuse, retain complete draft/clean snapshot and dirty/error state, publish nothing, and leave history unchanged. [`createEntityStore.ts:258`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/shared/state/createEntityStore.ts:258) changes only error state on rejection. The HTTP tracked variant remains unverified. |
+| Identity, CAS and immutable history | [`shotCompositionEditor.ts:233`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/video-editor/data/shotCompositionEditor.ts:233) clones, allocates successor identities, isolates shared shot ownership and appends old revisions. Captured expected head remains at [`ShotEditorView.tsx:194`](/home/user/work/wt/app-m2-shot-raw-safety-independent-review/src/tools/travel-between-images/pages/ShotEditorView.tsx:194), with name CAS at line 329. Original stale/uncontended tests are byte-identical in expectation to integration and pass. Independent raw probes verify source graph, old revisions and other occurrences unchanged. |
+
+No guard/admission/DTO/operation/writer-activation/pin changes were introduced by this review or fixture follow-up. Prepared contracts without `rawJson` retain their prior path. Existing wrapper normalization of arbitrary historical internal timelines is not qualified by this unit. Existing root `revision.name` display precedence over `provenance.name` is a known separate limitation, unchanged here; no native command/outbox/restart migration is claimed.
+
+## Audit of actual HTTP assertions
+
+Final fixture [`runtimeRestore.test.ts:180`](/home/user/work/wt/app-m2-shot-settings-valid-fixture-gate/tests/integration/runtimeRestore.test.ts:180) requires HTTP 200 from the actual Runtime codec for each absent/null/scalar/array/object seed; this is not a fabricated acceptance contract. Lines 202–253 then use the actual component callbacks, adapter, door transport and encoder. Only child UI/hooks are mocked to expose callbacks.
+
+The existing log prints completion for **all five roots** after their assertions. Each completed iteration checks neutral save emits no POST and leaves the immutable source unchanged; accepted name publication equals the **entire expected raw outgoing and immutable stored shot payload**; settings prompt publication for object/absent/null likewise compares full raw outgoing and stored payloads; scalar/array edits visibly refuse with no publication. It compares unchanged internal revisions, parent config, parent/occurrence opaque fields and old immutable closure, and reloads the actual raw shot after prompt saves. This proves accepted writes, not just App read projection. The root-shaped codec claims are restricted to this historical tuple.
+
+The malformed-container unchanged-head check at line 267 and **all tracked block assertions at lines 269–307 did not execute**. Overall result remains FAIL despite the positive subcases. No report should call the requested whole gate green.
+
+The original M1 test body at lines 43–115 is byte-identical to c07 and passed centrally. Final harness [`harness.ts:346`](/home/user/work/wt/app-m2-shot-settings-valid-fixture-gate/tests/e2e/local/support/harness.ts:346) retains `THREE_PRODUCTS_REFERENCE_AT = 15`; line 685 uses it as the default and line 711 supplies the same parent clip array to config and parent roots. Only the new settings test calls `seedThreeProducts(3)`. Its tracked setup moves the predecessor to 5s and successor to 8s; original M1 and all existing guard/refusal expectations are unchanged. These are fixture geometry changes only, preserving the incoming crossfade and production seam guard. Tracked HTTP moves themselves were not reached.
+
+## Independent local checks
+
+All writes were limited to this worker's ignored dependency symlink and notes, and this requested shared design report. Symlink points to physical **`/tmp/app-m2-coherent-deps8/node_modules`**. All shared node_modules, runtimes and venv contents remained read-only. Private test config retains the repository config and redirects Vite cache to notes, disables test caching, and uses `runner` config loading to avoid writes under shared `.vite-temp`. It supplies the existing configs' `__dirname` global; no test aliases, expectations or product files were changed.
+
+From `/home/user/work/wt/app-m2-shot-raw-safety-independent-review`, exact successful command (exit 0, **5 files / 74 tests**, 10.52s):
+
+```sh
+./node_modules/.bin/vitest run --config /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-shot-raw-safety-independent-review/notes/vitest.review.config.mjs --configLoader runner --maxWorkers=1 src/tools/travel-between-images/pages/ShotEditorView.test.tsx src/tools/video-editor/data/shotCompositionEditor.test.ts src/tools/video-editor/data/shotCompositionEditor.opaqueRemap.test.ts src/tools/travel-between-images/providers/VideoTravelSettingsProvider.test.tsx src/shared/state/createEntityStore.test.ts
+```
+
+The first invocation with the same command and the initial private config exited 1 before collection (`__dirname is not defined` under runner). Corrected only the notes config, then ran the successful command above. Both logs retained; no shared-cache workaround or product change.
+
+```sh
+node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-shot-raw-safety-independent-review/notes/raw-probe.mjs --baseline
+# exit 1 EXPECTED: integration reader changes generation_inputs {} to [], adds absent defaults
+node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-shot-raw-safety-independent-review/notes/raw-probe.mjs
+# exit 0: ordinary normalization counterexample preserved, 24 full raw shared-copy corpus controls
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/app-m1-full-runtime-source /home/user/work/venv-runtime/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-shot-raw-safety-independent-review/notes/codec-control.py
+# exit 0: actual historical codec preserves all five roots; validator refuses metadata []
+git diff --check
+# exit 0
+```
+
+Probes bundle selected existing functions in memory only to expose the private reader; they are socket-free local diagnostics, not a product build or replacement for main-suite evidence. `source-checks.json` records final commit/tree and byte-identical production and original-control checks. No install/full/build/tsc/browser/socket run. No tests skipped, disabled, deleted, weakened or changed to expect lost behavior. No tracked worktree changes, git commits/merge/rebase/checkout/push or other worktree edits.
+
+Decision: **HOLD** pending the single fixture-reference repair and completed existing gate under orchestrator authorization. Review itself is complete; DONE denotes review delivery, not gate approval. KEEP supplied.
