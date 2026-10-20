@@ -35,6 +35,15 @@ export function useNameEditing({
 }: UseNameEditingProps): UseNameEditingReturn {
   const syncedShotIdRef = useRef<string | null>(selectedShot?.id ?? null);
   const pendingSaveRef = useRef<Promise<void> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      pendingSaveRef.current = null;
+    };
+  }, []);
 
   // Sync editor name from shot data.
   // Hard reset only when switching to a different shot; otherwise do not
@@ -81,12 +90,12 @@ export function useNameEditing({
       }
       const pending = Promise.resolve(result).then(
         () => {
-          if (pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
+          if (!mountedRef.current || pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
           pendingSaveRef.current = null;
           actions.setEditingName(false);
         },
         () => {
-          if (pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
+          if (!mountedRef.current || pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
           pendingSaveRef.current = null;
           // The submitted value is trimmed, but the form must restore exactly
           // what the user typed when the accepted completion refuses.

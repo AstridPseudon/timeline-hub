@@ -43,6 +43,30 @@ describe('native shot name form completion', () => {
     expect(editorActions.setEditingName).toHaveBeenCalledWith(false);
   });
 
+  it('retires a deferred completion when the hook unmounts', async () => {
+    const pending = deferred<void>();
+    const update = vi.fn(() => pending.promise);
+    const editorActions = actions();
+    const { result, unmount } = renderHook(() => useNameEditing({
+      selectedShot: shot,
+      state: { isEditingName: true, editingName: 'Retire this draft' },
+      actions: editorActions,
+      onUpdateShotName: update,
+    }));
+
+    let completion!: Promise<void>;
+    act(() => { completion = result.current.handleNameSave() as Promise<void>; });
+    unmount();
+
+    await act(async () => {
+      pending.resolve();
+      await completion;
+    });
+
+    expect(editorActions.setEditingName).not.toHaveBeenCalled();
+    expect(editorActions.setEditingNameValue).not.toHaveBeenCalled();
+  });
+
   it('restores the exact input and keeps the form open when acceptance refuses', async () => {
     const pending = deferred<void>();
     const update = vi.fn(() => pending.promise);
