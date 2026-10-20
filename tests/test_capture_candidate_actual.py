@@ -245,7 +245,8 @@ def test_original_working_copy_forgeries_refuse_before_writes(candidate, field, 
 @pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
 def test_candidate_claim_without_actual_preview_refuses_before_writes(candidate, inline):
     snapshot, _ = _candidate_snapshot(candidate)
-    _assert_refused_without_writes(candidate.service, _request(candidate, snapshot, None, inline=inline))
+    refused = _assert_refused_without_writes(candidate.service, _request(candidate, snapshot, None, inline=inline))
+    assert 'source_kind "cas"' in str(refused) and "UNCERTIFIED" in str(refused)
 
 
 def test_explicit_cas_candidate_is_native_without_binding(candidate, tmp_path):

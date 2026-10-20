@@ -11,6 +11,9 @@ from .timeline_commit_port import detached, digest
 from .util import canonical_json
 
 
+RESEND_HINT = 'send it as source_kind "cas" (explicit UNCERTIFIED) or forward the real authoring_preview.candidate'
+
+
 def _equal(left, right, message):
     if canonical_json(left) != canonical_json(right):
         raise ConflictError(message)
@@ -64,9 +67,9 @@ def validate_capture(service, snapshot, ref, inputs):
         preview = None
         revision = ref["revision_id"]
         if source_kind == "working_copy":
-            preview = detached(inputs["authoring_preview"])
+            preview = detached(inputs.get("authoring_preview"))
             if not isinstance(preview, dict):
-                raise ValidationError("working-copy capture requires its actual authoring_preview")
+                raise ValidationError("working-copy capture requires its actual authoring_preview; " + RESEND_HINT)
             revision = ref["working_copy"]["base_revision_id"]
         document = commits.revision_closure(ref["project_id"], ref["timeline_id"], revision)
         if preview is not None:
@@ -90,7 +93,7 @@ def validate_capture(service, snapshot, ref, inputs):
     except CommitRejected as exc:
         raise ConflictError(exc.failure["message"], details=exc.failure["details"]) from exc
     except (KeyError, TypeError, ValueError) as exc:
-        raise ValidationError("capture source or authoring_preview is invalid") from exc
+        raise ValidationError("capture source or authoring_preview is invalid; " + RESEND_HINT) from exc
 
 
 def claim_capture_view(service, spec):
