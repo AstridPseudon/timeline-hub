@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
+import { downloadBlobAsFile, triggerBrowserDownload } from '@/shared/runtime/browserDownloadRuntime';
 import { isLocalTestMode } from '@/app/localTestRuntime.ts';
 import { useClientRender } from '@/tools/video-editor/hooks/useClientRender.ts';
 import type { CompositionMetadata } from '@/tools/video-editor/hooks/useDerivedTimeline.ts';
@@ -94,18 +95,6 @@ function newRenderOperationId(): string {
 export interface RenderResultInfo {
   revision: number | null;
   completedAt: number;
-}
-
-/** Trigger one normal browser download without adding another visible preview. */
-export function triggerRenderDownload(url: string, filename: string): void {
-  if (typeof document === 'undefined') return;
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.hidden = true;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
 }
 
 /**
@@ -551,6 +540,7 @@ export function useRenderState(
   const renderOperationIdRef = useRef<string | null>(null);
   const renderCancellationRef = useRef<RenderCancellation | null>(null);
   const renderClientRef = useRef<AstridLocalClient | null>(null);
+  const managedRenderDownloadRef = useRef<(() => Promise<Blob>) | null>(null);
   // M6: Export state
   const [exportStatus, setExportStatus] = useState<ExportStatus>('idle');
   const [exportLog, setExportLogState] = useState('');
@@ -608,6 +598,7 @@ export function useRenderState(
       URL.revokeObjectURL(renderResultUrl);
     }
 
+    managedRenderDownloadRef.current = null;
     setRenderResultUrl(nextValue.url);
     setRenderResultFilename(nextValue.filename);
 
@@ -616,6 +607,27 @@ export function useRenderState(
     setRenderResultInfo(nextValue.url
       ? { revision: renderRevisionRef.current, completedAt: Date.now() }
       : null);
+  }, [renderResultFilename, renderResultUrl]);
+
+  const downloadRenderResult = useCallback(async (): Promise<void> => {
+    if (!renderResultUrl) return;
+    const filename = renderResultFilename ?? 'timeline-render.mp4';
+    try {
+      const read = managedRenderDownloadRef.current;
+      if (read) {
+        const blob = await read();
+        if (read !== managedRenderDownloadRef.current) {
+          throw new Error('The render result changed. Download the current render.');
+        }
+        downloadBlobAsFile(blob, filename);
+      } else if (renderResultUrl.startsWith('blob:')) {
+        triggerBrowserDownload(renderResultUrl, filename);
+      } else {
+        throw new Error('The managed render download is unavailable.');
+      }
+    } catch (error) {
+      throw new Error(`Could not download render: ${compactDiagnosticValue(error instanceof Error ? error.message : String(error)) ?? 'Please try again.'}`);
+    }
   }, [renderResultFilename, renderResultUrl]);
 
   const startClientRender = useClientRender({
@@ -749,6 +761,14 @@ export function useRenderState(
       if (generation !== renderPollGenerationRef.current) return;
 
       if (task.status === 'succeeded') {
+        if (task.task_id !== taskId || task.project_id !== runtimeContext?.project?.projectId) {
+          renderOperationIdRef.current = null;
+          setRenderStatus('error');
+          setRenderProgress(null);
+          setRenderLog('Astrid returned a render result for a different task or project.');
+          setActiveRenderTaskId(null);
+          return;
+        }
         const output = (task.outputs ?? []).find((candidate) => candidate.role === 'render')
           ?? (task.outputs ?? []).find((candidate) => candidate.is_primary)
           ?? task.outputs?.[0];
@@ -764,6 +784,28 @@ export function useRenderState(
           url: client.media.contentUrl(output.media_id),
           filename: renderConfig?.output?.file ?? `timeline-${runtimeContext?.timelineId ?? taskId}.mp4`,
         });
+        const storage = runtimeContext?.provider?.projectObjects;
+        const metadata = asDiagnosticRecord(output.params_json);
+        const size = metadata?.size;
+        // Navigation omits the Origin required by the browser door. Read the
+        // exact task output through the existing project-bound binary port.
+        managedRenderDownloadRef.current = async () => {
+          if (!storage) throw new Error('Project object reads are unavailable.');
+          if (!/^sha256:[0-9a-f]{64}$/.test(output.media_id)
+            || typeof size !== 'number' || !Number.isSafeInteger(size) || size < 0) {
+            throw new Error('The render output has no valid managed identity or size.');
+          }
+          const bytes = await storage.read(output.media_id);
+          if (bytes.byteLength !== size) throw new Error('The render output size does not match.');
+          const blob = new Blob([new Uint8Array(bytes)], {
+            type: typeof metadata?.media_type === 'string' ? metadata.media_type : 'video/mp4',
+          });
+          const { computeSHA256 } = await import('@/tools/video-editor/lib/sha256.ts');
+          if (`sha256:${await computeSHA256(blob)}` !== output.media_id) {
+            throw new Error('The render output digest does not match.');
+          }
+          return blob;
+        };
         setRenderProgress({ current: 1, total: 1, percent: 100, phase: 'complete' });
         renderOperationIdRef.current = null;
         setRenderStatus('done');
@@ -825,7 +867,7 @@ export function useRenderState(
         void pollAstridRender(client, taskId, generation);
       }, 3_000);
     }
-  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.timelineId]);
+  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.project?.projectId, runtimeContext?.provider?.projectObjects, runtimeContext?.timelineId]);
 
   const startAstridRender = useCallback(async (): Promise<boolean> => {
     const projectId = runtimeContext?.project?.projectId;
@@ -874,11 +916,13 @@ export function useRenderState(
       return null;
     });
     setRenderResultFilename(null);
+    managedRenderDownloadRef.current = null;
     setRenderLog('Admitting render to Astrid…');
 
-    const bridgeBaseUrl = (runtimeContext.provider as { apiBaseUrl?: string }).apiBaseUrl;
     const { AstridLocalClient: AstridLocalClientModule } = await import('@/integrations/astrid/client.ts');
-    const client = new AstridLocalClientModule({ projectSlug: projectId, baseUrl: bridgeBaseUrl });
+    // The product bridge owns the ready catalog; the timeline provider's
+    // Runtime alias deliberately does not expose that route.
+    const client = new AstridLocalClientModule({ projectSlug: projectId });
     renderClientRef.current = client;
     const renderRouter = await import('@/tools/video-editor/lib/renderRouter.ts');
     const request = {
@@ -890,7 +934,6 @@ export function useRenderState(
       resolvedConfig: renderConfig,
       renderRuntime: {
         projectId,
-        bridgeBaseUrl,
         destination: renderDestination,
       },
     };
@@ -1382,6 +1425,7 @@ export function useRenderState(
     renderResultUrl,
     renderResultFilename,
     renderResultInfo,
+    downloadRenderResult,
     activeRenderTaskId,
     renderDestination,
     setRenderDestination,
