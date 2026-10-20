@@ -45,7 +45,7 @@ _REQUIRED_PACKAGES = (
     "timeline-composition",
 )
 _COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
-_COMPOSITION_PACKAGE_VERSION = "0.0.12"
+_COMPOSITION_PACKAGE_VERSION = "0.0.13"
 _REQUIRED_COMPOSITION_EXPORTS = (
     ".",
     "./evaluation",
