@@ -14,6 +14,7 @@ import { useTimelineCommit } from '@/tools/video-editor/hooks/useTimelineCommit'
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas';
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types';
 import { extractVideoMetadataFromUrl } from '@/shared/lib/media/videoMetadata';
+import type { GenericPatchCapturePort } from '@/tools/video-editor/commands/genericPatchCapture';
 
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
   toast: {
@@ -398,6 +399,53 @@ describe('useClipEditing pinned group guards', () => {
 
     expect(applyEdit).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith('Use Delete shot from the shot menu');
+  });
+});
+
+describe('useClipEditing native parent deletion', () => {
+  it('captures an ordinary parent clip deletion through the generic command port', () => {
+    const applyEdit = vi.fn();
+    const dataRef = {
+      current: makeConfigTimelineData(
+        {
+          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+          clips: [{ id: 'clip-1', at: 0, track: 'V1', clipType: 'hold', asset: 'asset-1', hold: 5 }],
+        },
+        { assets: { 'asset-1': { file: 'one.png', type: 'image/png' } } },
+      ),
+    };
+    const captured = {};
+    const finished = { commands: [], preview: { version: 1, operations: [] } };
+    const genericPatchPort = {
+      capture: vi.fn(() => captured),
+      finish: vi.fn(() => finished),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+
+    const { result } = renderHook(() => useClipEditing({
+      dataRef,
+      resolvedConfig: dataRef.current.resolvedConfig,
+      selectedClipId: 'clip-1',
+      selectedTrack: null,
+      currentTime: 0,
+      selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(),
+      applyEdit,
+      genericPatchPort,
+    }));
+
+    act(() => {
+      result.current.handleDeleteClip('clip-1');
+    });
+
+    expect(genericPatchPort.capture).toHaveBeenCalledWith(expect.objectContaining({
+      patch: { version: 1, operations: [{ op: 'clip.remove', target: 'clip-1' }] },
+      current: dataRef.current,
+    }));
+    expect(genericPatchPort.finish).toHaveBeenCalledWith(captured);
+    expect(genericPatchPort.submit).toHaveBeenCalledWith(finished);
+    expect(applyEdit).not.toHaveBeenCalled();
   });
 });
 
