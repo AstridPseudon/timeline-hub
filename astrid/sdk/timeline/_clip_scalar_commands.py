@@ -6,7 +6,7 @@ import math
 
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
-from ._command_state import CommandError
+from ._command_state import CommandError, equal, present
 from ._scalar_commands import _capture, _changes, _clip_basis, _target
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
@@ -81,6 +81,37 @@ def _hold_extent(ctx, ref, values, clear):
     return duration_paths, duration
 
 
+def _effect_values(ctx, ref, values):
+    for slot in ('entrance', 'exit', 'continuous', 'effects'):
+        if slot not in values:
+            continue
+        patch = values[slot]
+        if slot != 'effects':
+            selected = ctx.read(ref, [slot, 'type'])
+            if selected != patch['type']:
+                previous = ctx.read(ref, [slot])
+                if previous is not None and not isinstance(previous, dict):
+                    raise CommandError('unsupported named effect shape', ref=ref, path=[slot])
+            if 'params' in patch and (selected != patch['type'] or not equal(
+                    ctx.state.get(ref, [slot, 'params']), present(patch['params']))):
+                raise CommandError('named effect params require a durable exact descriptor binding',
+                                   kind='unsupported_effect_schema', ref=ref, path=[slot, 'params'])
+            if 'params' in patch:
+                ctx.read(ref, [slot, 'params'])
+            if selected != patch['type']:
+                ctx.write(ref, [slot], patch)
+                continue
+        ctx.object(ref, [slot])
+        for key in sorted(patch):
+            if key == 'params':
+                for name in sorted(patch[key]):
+                    ctx.write(ref, [slot, key, name], patch[key][name])
+            elif slot != 'effects' and key == 'type' and selected == patch[key]:
+                continue
+            else:
+                ctx.write(ref, [slot, key], patch[key])
+
+
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
@@ -97,12 +128,14 @@ def clip_set(ctx, command):
         duration_paths, duration = _hold_extent(ctx, ref, values, clear)
         for path in duration_paths:
             ctx.write(ref, path, duration)
+    _effect_values(ctx, ref, values)
     for key in sorted(values):
-        ctx.write(ref, [key], values[key])
+        if key not in ('entrance', 'exit', 'continuous', 'effects'):
+            ctx.write(ref, [key], values[key])
     for key in sorted(clear):
         ctx.clear(ref, [key])
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture source hold set/clear and explicit raw asset/transition removal."""
+    """Capture source hold, named effect leaves, fades, and raw field removal."""
     return _capture(bundle, 'clip.set', select, values, clear)

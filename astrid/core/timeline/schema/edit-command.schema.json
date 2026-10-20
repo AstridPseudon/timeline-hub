@@ -1222,6 +1222,95 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "entrance": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "duration": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "exit": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "duration": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "continuous": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intensity": {
+                  "type": "number"
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Named slot patch. Preserve unmentioned members. Params may only echo unchanged stored values until an exact descriptor binding exists."
+            },
+            "effects": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "fade_in": {
+                  "type": "number"
+                },
+                "fade_out": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Patch numeric fade-map leaves. Ordered legacy fade arrays are preserved, never selected by position or converted implicitly."
             }
           },
           "additionalProperties": false
@@ -1232,7 +1321,11 @@
             "enum": [
               "hold",
               "asset",
-              "transition"
+              "transition",
+              "entrance",
+              "exit",
+              "continuous",
+              "effects"
             ]
           },
           "uniqueItems": true
