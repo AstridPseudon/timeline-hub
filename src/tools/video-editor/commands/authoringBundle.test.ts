@@ -7,8 +7,8 @@ import fixture from './fixtures/authoringBundle.json';
 import correctedFixture from './fixtures/authoringBundleOpaque.json';
 
 /* From App root, check goldens against the actual Python provider/main opener:
- * PYTHONPATH=/home/user/work/wt/agt-m1-provider /home/user/work/venv-agent/bin/python -c 'from pathlib import Path; exec(Path("src/tools/video-editor/commands/authoringBundle.test.ts").read_text().split("PYTHON_GOLDEN\n")[1].split("\nPYTHON_GOLDEN")[0])'
- * Append --write to regenerate. After provider integration, use PYTHONPATH=/home/user/work/agent.
+ * PYTHONPATH=/path/to/agent-875a9aff-archive /home/user/work/venv-agent/bin/python -c 'from pathlib import Path; exec(Path("src/tools/video-editor/commands/authoringBundle.test.ts").read_text().split("PYTHON_GOLDEN\n")[1].split("\nPYTHON_GOLDEN")[0])'
+ * Use Agent 875a9aff4e658def3fa912cacd13f28a911fe89a; append --write to regenerate expected bundles.
  */
 type Golden = { name: string; document: CanonicalDocument; bundle: AuthoringBundle };
 const goldens = fixture.cases as unknown as Golden[];
@@ -83,6 +83,7 @@ describe('Runtime closure → main authoring bundle', () => {
   for (const golden of goldens) {
     it(`matches the complete Python bundle and source mapping: ${golden.name}`, async () => {
       const input = structuredClone(golden.document);
+      expect(input).toEqual(correctedGoldens.find((entry) => entry.name === golden.name)!.document);
       const bundle = await authoringBundleFromDocument(input);
       const captureInput: AuthoredBundle = bundle;
       expect(captureInput).toEqual(golden.bundle);
@@ -123,8 +124,10 @@ describe('Runtime closure → main authoring bundle', () => {
     const remap = bundle.source_mapping.shots[owner].item_id_map;
     const items = payload.items as ObjectValue[];
     expect(items[0].item_id).toBe(remap['source-item-a']);
-    expect(items[0].selected_item_id).toBe(remap['source-item-b']);
-    expect(payload.related_item_ids).toEqual([remap['source-item-a'], 'unknown-item', { item_id: 'source-item-b' }]);
+    expect(items[0].selected_item_id).toBe('source-item-b');
+    expect(items[1].parent_item_id).toBe('source-item-a');
+    expect(payload.related_item_ids).toEqual(['source-item-a', 'unknown-item', { item_id: 'source-item-b' }]);
+    expect(payload.bindings).toEqual({ nested: [{ custom_item_id: 'source-item-a' }] });
     expect(payload.opaque).toEqual({ id: 'source-item-a', label: 'source-item-b', values: ['source-item-a'], clear: null });
     expect(bundle.shots[owner].internal_timeline).toEqual(shared().internal_timeline_revisions[0].payload);
     expect(bundle.placements[0]).not.toHaveProperty('shot_revision_id');
@@ -145,6 +148,8 @@ describe('Runtime closure → main authoring bundle', () => {
     ['manifest missing image', (d) => { d.dependency_manifest.shots = []; }, 'manifest image mismatch'],
     ['manifest wrong scope', (d) => { d.dependency_manifest.internal_timelines[0].timeline_id = 'other'; }, 'manifest pin mismatch'],
     ['duplicate item', (d) => { const items = d.shot_revisions[0].payload.items as ObjectValue[]; items.push(structuredClone(items[0])); }, 'duplicate identity'],
+    ['duplicate fallback item', (d) => { d.shot_revisions[0].payload.items = [{ id: 'legacy-id' }, { id: 'legacy-id' }]; }, 'duplicate identity'],
+    ['ambiguous mixed item identity', (d) => { d.shot_revisions[0].payload.items = [{ item_id: 'legacy-id' }, { id: 'legacy-id' }]; }, 'duplicate identity'],
     ['null item collection', (d) => { d.shot_revisions[0].payload.items = null; }, 'expected array'],
     ['duplicate child clip', (d) => { const clips = d.internal_timeline_revisions[0].payload.clips as ObjectValue[]; clips.push(structuredClone(clips[0])); }, 'duplicate identity'],
     ['duplicate track', (d) => { const tracks = (d.parent_revision.payload.config as ObjectValue).tracks as ObjectValue[]; tracks.push(structuredClone(tracks[0])); }, 'duplicate identity'],
@@ -170,10 +175,25 @@ describe('Runtime closure → main authoring bundle', () => {
     await expect(authoringBundleFromDocument(input)).rejects.toThrow('independent shot identity collision');
   });
 
-  it('preserves Python rejection of global fallback item ID collisions', async () => {
+  it('remaps valid fallback item IDs deterministically and uniquely per occurrence', async () => {
     const input = shared();
     input.shot_revisions[0].payload.items = [{ id: 'legacy-id' }];
-    await expect(authoringBundleFromDocument(input)).rejects.toThrow('item identity collision');
+    const before = structuredClone(input);
+    const bundle = await authoringBundleFromDocument(input);
+    const ids = bundle.placements.map((placement) => {
+      const owner = placement.shot_id as string;
+      const derived = bundle.source_mapping.shots[owner].item_id_map['legacy-id'];
+      expect(derived).toMatch(/^shot-item-placement-[a-f0-9]{64}$/);
+      expect(derived).not.toBe('legacy-id');
+      expect(bundle.shots[owner].payload.items).toEqual([{ id: derived }]);
+      expect(bundle.shots[owner].base_payload.items).toEqual([{ id: derived }]);
+      return derived;
+    });
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(await authoringBundleFromDocument(input)).toEqual(bundle);
+    expect(bundle.source_mapping._runtime_document).toEqual(before);
+    expect(input).toEqual(before);
   });
 });
 
