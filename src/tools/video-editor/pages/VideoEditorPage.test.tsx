@@ -26,6 +26,7 @@ import {
   RUNTIME_CLIENT_SCOPES,
   RuntimeAuthenticationError,
 } from "@/integrations/runtime/client.ts";
+import { ApiError } from "@/integrations/runtime/generated.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import type {
   RuntimeDataProvider,
@@ -1426,6 +1427,42 @@ describe("VideoEditorPage", () => {
     );
     expect(state.runtimeCtor).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "project-canonical-id" }),
+    );
+  });
+
+  it("shows the retired legacy-publisher refusal and does not mount an empty timeline", async () => {
+    state.discovery.projects = [
+      {
+        slug: "demo-project",
+        name: "Demo Project",
+        project_id: "project-canonical-id",
+      },
+    ];
+    state.discovery.timelines = [];
+    state.ensureProjectHasTimeline.mockRejectedValueOnce(
+      new ApiError(
+        410,
+        "retired_route",
+        "legacy timeline writes are retired; submit EditCommands through commitTimeline",
+        "runtime-request-410",
+        {
+          status: "refused",
+          reason: "timeline_commit_required",
+          replacement:
+            "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        },
+      ),
+    );
+
+    renderPage("/tools/video-editor?localProject=demo-project");
+
+    expect(await screen.findByText(/Timeline setup failed \(410 retired_route/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create first timeline" })).toBeEnabled();
+    expect(screen.getByText(/legacy timeline writes are retired/)).toBeInTheDocument();
+    expect(screen.queryByTestId("video-editor-provider")).toBeNull();
+    expect(state.ensureProjectHasTimeline).toHaveBeenCalledWith(
+      "project-canonical-id",
+      expect.anything(),
     );
   });
 

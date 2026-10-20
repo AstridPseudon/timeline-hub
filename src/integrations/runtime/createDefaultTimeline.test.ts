@@ -16,6 +16,20 @@ function runtimeClient(timelines: Record<string, unknown>[]) {
   } as unknown as AstridRuntimeClient;
 }
 
+function retiredLegacyPublisherError() {
+  return new ApiError(
+    410,
+    'retired_route',
+    'legacy timeline writes are retired; submit EditCommands through commitTimeline',
+    'runtime-request-410',
+    {
+      status: 'refused',
+      reason: 'timeline_commit_required',
+      replacement: 'POST /v1/projects/{project_id}/timelines/{timeline_id}/commit',
+    },
+  );
+}
+
 describe('ensureProjectHasTimeline', () => {
   it('reuses an existing canonical timeline head instead of creating a duplicate', async () => {
     const client = runtimeClient([
@@ -67,6 +81,33 @@ describe('ensureProjectHasTimeline', () => {
       expect.objectContaining({ expected_head: null }),
       expect.any(String),
     );
+  });
+
+  it('keeps a selected headless shell and project pointer when the legacy publisher is refused', async () => {
+    const client = runtimeClient([{ timeline_id: 'headless-shell', head_revision_id: null }]);
+    vi.mocked(client.getProject).mockResolvedValue({
+      version: 7,
+      metadata: { default_timeline_id: 'headless-shell', draft: { keep: true } },
+    } as never);
+    vi.mocked(client.publishParentComposition).mockRejectedValueOnce(
+      retiredLegacyPublisherError(),
+    );
+
+    await expect(ensureProjectHasTimeline('project-id', client)).rejects.toMatchObject({
+      status: 410,
+      code: 'retired_route',
+      details: {
+        status: 'refused',
+        reason: 'timeline_commit_required',
+      },
+    });
+    expect(client.publishParentComposition).toHaveBeenCalledWith(
+      'project-id',
+      'headless-shell',
+      expect.objectContaining({ expected_head: null }),
+      'astrid-first-timeline-project-id',
+    );
+    expect(client.updateProject).not.toHaveBeenCalled();
   });
 
   it('honors a reassigned Main pointer over a timeline named main without changing either composition', async () => {
