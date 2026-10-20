@@ -2,6 +2,8 @@
 
 ## Verdict
 
+Manager decision: mark only the bounded single and atomic-bulk Native None row deleted using the merged c57 browser evidence, while keeping transition SET/reset/params and the whole D01 family open.
+
 **No remaining transition-`None` callback fallback exists on the current root.**
 The c57 ledger sentence saying that a callback fallback remains for portless
 standalone callers is stale. The current source is the post-b14 cut, and its
@@ -60,6 +62,6 @@ are separate D01 work and are not `None` writers.
   single+atomic-bulk qualification; it was not rerun per task instruction.
 
 No full suite, TSC, install, local browser/socket run, or new browser claim
-was made. Keep the ledger status **`QUALIFIED (bounded); D01 retirement OPEN`**:
+was made. The bounded single and atomic-bulk Native None row is now **`DELETED`**:
 the callback fallback is gone, but transition SET/reset/params and whole-D01
 writer retirement remain separate.
