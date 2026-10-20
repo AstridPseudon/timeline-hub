@@ -5,6 +5,7 @@ import {
   harnessUnavailableReason,
   REPO_ROOT,
   RUNTIME_CHECKOUT,
+  type CanonicalSettingsSeed,
   type DirectHarness,
   type ThreeProductsSeed,
 } from './support/harness.ts';
@@ -25,6 +26,7 @@ const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const LEGACY_SAVES = /\/timelines\/[^/]+\/composition-revisions$/;
 const SHOT_NAME = 'F2 canonical shot';
+const SETTINGS_SHOT_NAME = 'Settings auto-disable shot';
 const ACCEPTED_NAME = 'Édit 🎬';
 const RETRY_NAME = 'F2 retry survives restart';
 const CONFLICT_DRAFT = '  same-name draft 🎬  ';
@@ -37,8 +39,9 @@ type CommitPost = {
   response: any;
 };
 
-const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
+const test = appTest.extend<object, { seed3: ThreeProductsSeed; settingsSeed: CanonicalSettingsSeed }>({
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
+  settingsSeed: [async ({ harness }, use) => { await use(await harness.seedCanonicalSettingsShot()); }, { scope: 'worker', timeout: 240_000 }],
 });
 test.beforeAll(() => {
   const reason = harnessUnavailableReason();
@@ -47,6 +50,14 @@ test.beforeAll(() => {
     if (!/^[0-9a-f]{40}$/.test(process.env[name] ?? '')) {
       throw new Error(`the shot-name cohort requires ${name} as a full 40-character SHA`);
     }
+  }
+  const exactSources = {
+    TIMELINE_CURRENT013_AGENT_SHA: '8130a401bf44a518d5a40ae274d398b8c560be55',
+    TIMELINE_CURRENT013_RUNTIME_SHA: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
+    TIMELINE_CURRENT013_PUBLIC_SOURCE_SHA256: 'fe380bc3280b1f5efa7ecde7cc55a5415a498f2b35af8fb693d11123aa289a28',
+  } as const;
+  for (const [name, value] of Object.entries(exactSources)) {
+    if (process.env[name] !== value) throw new Error(`the shot-name cohort requires exact ${name}`);
   }
   const git = (checkout: string, ...args: string[]) => execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8' }).trim();
   expect(git(ASTRID_CHECKOUT, 'rev-parse', 'HEAD')).toBe(process.env.TIMELINE_BUNDLE_AGENT_HEAD);
@@ -76,6 +87,15 @@ async function rawShot(harness: DirectHarness, seed: ThreeProductsSeed, parentRe
   const parent = await revisionBody(harness, parentRevisionId);
   const occurrence = (parent.payload.occurrences as Array<Record<string, any>>).find((candidate) => candidate.occurrence_id === seed.occurrenceId);
   expect(occurrence, 'the raw parent binds the requested occurrence').toBeTruthy();
+  const shot = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence!.shot_revision_id}`);
+  expect(shot.status, JSON.stringify(shot.body)).toBe(200);
+  return { parent, shot: shot.body as { payload: Record<string, any> } };
+}
+
+async function rawSettingsShot(harness: DirectHarness, seed: CanonicalSettingsSeed, parentRevisionId: string) {
+  const parent = await revisionBody(harness, parentRevisionId);
+  const occurrence = (parent.payload.occurrences as Array<Record<string, any>>).find((candidate) => candidate.occurrence_id === seed.occurrenceId);
+  expect(occurrence, 'the raw parent binds the settings occurrence').toBeTruthy();
   const shot = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence!.shot_revision_id}`);
   expect(shot.status, JSON.stringify(shot.body)).toBe(200);
   return { parent, shot: shot.body as { payload: Record<string, any> } };
@@ -285,4 +305,69 @@ test('M2 real embedded shot name: raw preservation, undo, lost ACK restart retry
   await expect(conflict.input).toHaveValue(CONFLICT_DRAFT);
   expect(traffic.legacy).toEqual([]);
   await page.unroute(COMMITS, conflictInterceptor);
+});
+
+test('M2 real embedded SettingsAutoDisable: native scalar field change, raw settings preservation, reload, Runtime undo, and zero legacy', async ({ page, harness, settingsSeed }) => {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  await openParent(page, harness);
+  const traffic = observeTraffic(page);
+  const initialHead = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${settingsSeed.timelineId}/composition-revisions?limit=1`)).body.items.find((item: any) => item.is_current_head).revision_id as string;
+  const initial = await rawSettingsShot(harness, settingsSeed, initialHead);
+  expect(initial.shot.payload.settings).toEqual({
+    turboMode: true,
+    advancedMode: true,
+    motionMode: 'advanced',
+    prompt: 'fixture prompt remains raw',
+    negativePrompt: null,
+    x_settings_opaque: settingsSeed.opaqueSettings,
+  });
+
+  // Opening the existing mounted editor is the only trigger. SettingsAutoDisable
+  // observes the raw true/true pair and submits its existing scalar correction.
+  await openEmbeddedCanonicalShot(page, settingsSeed.occurrenceId, SETTINGS_SHOT_NAME);
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
+  await waitForPost(traffic.posts, 0);
+  const accepted = traffic.posts[0];
+  expect(accepted.body).toMatchObject({
+    base_revision_id: initialHead,
+    commands: [{
+      schema_version: 1,
+      op: 'shot.set',
+      version: '1',
+      select: `occurrence:${settingsSeed.occurrenceId}/shot`,
+      args: { values: { settings: { advancedMode: false, motionMode: 'basic' } }, clear: [] },
+    }],
+  });
+  expect(accepted.body).not.toHaveProperty('parent_composition');
+  const acceptedResponse = accepted.response as CommitAcceptedMutation;
+  expect(acceptedResponse.data.status).toMatch(/^(accepted|rebased)$/);
+  const acceptedPin = pinOf(acceptedResponse);
+  const acceptedRaw = await rawSettingsShot(harness, settingsSeed, acceptedPin.revision_id);
+  expect(acceptedRaw.shot.payload).toEqual({
+    ...initial.shot.payload,
+    settings: {
+      ...initial.shot.payload.settings,
+      advancedMode: false,
+      motionMode: 'basic',
+    },
+  });
+
+  // Reload consumes the accepted immutable head without a second settings write.
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
+  const reloaded = await rawSettingsShot(harness, settingsSeed, acceptedPin.revision_id);
+  expect(reloaded.shot.payload.settings).toEqual(acceptedRaw.shot.payload.settings);
+
+  // The mounted parent session's real Runtime inverse restores the raw true/true source.
+  await expect.poll(() => page.getByRole('button', { name: 'Undo', exact: true }).isVisible(), CEILING).toBe(true);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
+  await waitForPost(traffic.posts, 1);
+  expect(traffic.posts[1].body.commands).toEqual([{ schema_version: 1, op: 'timeline.inverse', select: null, version: '1', args: { publications: [acceptedPin.publication_id] } }]);
+  const undone = traffic.posts[1].response as CommitAcceptedMutation;
+  const undoneRaw = await rawSettingsShot(harness, settingsSeed, pinOf(undone).revision_id);
+  expect(undoneRaw.shot.payload).toEqual(initial.shot.payload);
+  expect(traffic.legacy).toEqual([]);
 });

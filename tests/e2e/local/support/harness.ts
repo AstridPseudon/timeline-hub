@@ -327,6 +327,15 @@ export interface ThreeProductsSeed {
   opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot: Record<string, unknown> };
 }
 
+export interface CanonicalSettingsSeed {
+  projectSlug: string;
+  timelineId: string;
+  headRevisionId: string;
+  shotId: string;
+  occurrenceId: string;
+  opaqueSettings: Record<string, unknown>;
+}
+
 export const THREE_PRODUCTS_OPAQUE = {
   config: { owner: 'f2', nested: [1, { k: 'v' }], flag: true },
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
@@ -367,6 +376,7 @@ export class DirectHarness {
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
+  private canonicalSettingsSeed?: CanonicalSettingsSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
 
@@ -747,6 +757,103 @@ export class DirectHarness {
       },
     };
     return this.threeProductsSeed;
+  }
+
+  /**
+   * Adds one canonical shot occurrence to the existing three-products timeline.
+   * The raw settings deliberately contain the two values that the mounted
+   * SettingsAutoDisable effect reconciles, plus an unknown settings sibling.
+   * The original F2 seed remains unchanged for the name and M1 journeys.
+   */
+  async seedCanonicalSettingsShot(): Promise<CanonicalSettingsSeed> {
+    if (this.canonicalSettingsSeed) return this.canonicalSettingsSeed;
+    const base = await this.seedThreeProducts();
+    const { projectId, timelineId, image } = this.seed;
+    const current = await this.runtimeJson('GET', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions/${base.headRevisionId}`);
+    if (current.status !== 200) throw new Error(`read settings fixture base: ${current.status} ${JSON.stringify(current.body)}`);
+
+    const settingsShotId = 'settings-auto-disable-shot';
+    const settingsOccurrenceId = 'settings-auto-disable-occurrence';
+    const internalRevisionId = randomUUID();
+    const shotRevisionId = randomUUID();
+    const opaqueSettings = {
+      owner: 'settings-auto-disable',
+      nested: [null, false, 0, { future: 'preserve' }],
+      nullable: null,
+    };
+    const parent = structuredClone(current.body.payload) as Record<string, any>;
+    const parentConfig = parent.config as Record<string, any>;
+    const tracks = Array.isArray(parentConfig.tracks) ? parentConfig.tracks : [];
+    const occurrence = {
+      occurrence_id: settingsOccurrenceId,
+      shot_id: settingsShotId,
+      shot_revision_id: shotRevisionId,
+      placement: { start_ms: 12000 },
+      source_offset: 0,
+      duration_ms: 3000,
+      speed: 1,
+      track: 'S2',
+      transform: {},
+      gain: 1,
+      mute: false,
+      provenance: {},
+    };
+    parent.config = {
+      ...parentConfig,
+      tracks: [...tracks, { id: 'S2', kind: 'visual', label: 'S2' }],
+      clips: Array.isArray(parentConfig.clips) ? parentConfig.clips : [],
+    };
+    parent.occurrences = [...(Array.isArray(parent.occurrences) ? parent.occurrences : []), occurrence];
+
+    const publication = compositionPublication({ projectId, timelineId }, base.headRevisionId, 'Main', 30);
+    publication.parent_composition = parent;
+    publication.internal_timeline_revisions = [{
+      timeline_id: timelineId,
+      revision_id: internalRevisionId,
+      payload: {
+        tracks: [{ id: 'settings', kind: 'visual', label: 'settings' }],
+        clips: [{ id: 'settings-plate', at: 0, track: 'settings', clipType: 'media', asset: 'settings-plate', hold: 3 }],
+        effects: [], audio: [], layout: {},
+        registry: {
+          assets: {
+            'settings-plate': { file: 'settings-plate.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest },
+          },
+        },
+        assets: [],
+      },
+    }];
+    publication.shot_revisions = [{
+      shot_id: settingsShotId,
+      revision_id: shotRevisionId,
+      internal_timeline_revision_id: internalRevisionId,
+      payload: {
+        name: 'Settings auto-disable shot',
+        metadata: { title: 'Settings auto-disable fixture' },
+        settings: {
+          turboMode: true,
+          advancedMode: true,
+          motionMode: 'advanced',
+          prompt: 'fixture prompt remains raw',
+          negativePrompt: null,
+          x_settings_opaque: opaqueSettings,
+        },
+        provenance: { source: 'settings-auto-disable-seed', revision: 1 },
+        items: [], pools: [], selected_variants: {},
+        generation_inputs: [], audio_bindings: [], text_bindings: [],
+      },
+    }];
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed canonical settings shot: ${published.status} ${JSON.stringify(published.body)}`);
+    const project = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}`);
+    this.canonicalSettingsSeed = {
+      projectSlug: (project.body.data ?? project.body).slug,
+      timelineId,
+      headRevisionId: published.body.data.new_head,
+      shotId: settingsShotId,
+      occurrenceId: settingsOccurrenceId,
+      opaqueSettings,
+    };
+    return this.canonicalSettingsSeed;
   }
 
   // -- Door ----------------------------------------------------------------------------------
