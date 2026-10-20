@@ -86,7 +86,9 @@ Runtime audited at `1f3e64d0c5f681d056dc0154748dbef5714cd6fa`:
 `contract/schemas/edit-command.json` contains `placement.move` and
 `occurrence.add-media`, but no `placement.create` / `placement.unplace`.
 Agent's stack-sync-2 `commit.py:771-774` already requests `selected_media` for
-create. This is source evidence of an unpublished/mismatched contract, not an
+create. Runtime's existing `timeline_commit_port.py:266-273` already verifies
+declared selections through `MediaReads`; no new port or endpoint is needed.
+This is source evidence of an unpublished/mismatched contract, not an
 acceptance result. Broad App `EditCommand.op:string` typing does not authorize it.
 
 ## Smallest App integration recipe and exact dependencies
@@ -115,9 +117,10 @@ acceptance result. Broad App `EditCommand.op:string` typing does not authorize i
    compute an unguarded numeric `on` in App and call that automatic intent.
    Image/video holds must retain the distinct policies above. No new opname,
    query schema, guards or DTO is specified by this handoff.
-4. **Runtime dependency:** publish the official Agent schema/provider/client pair,
-   expose the existing selected-media port for every included birth command, and
-   retain the immutable inputs needed for reload/inverse. Then qualify the real
+4. **Runtime dependency:** publish the official Agent schema/provider/client pair
+   for the selected recipe (include create/unplace only if those operations are
+   consumed), reuse the existing selected-media port, and retain the immutable
+   inputs needed for reload/inverse. Then qualify the real
    create/unplace and video cases, reservation refusal and task/attempt fencing.
 5. **App adapter:** reuse the staged ordinary session and occurrence media seam.
    For an already explicit, exclusively owned image, use create with `hold:4`

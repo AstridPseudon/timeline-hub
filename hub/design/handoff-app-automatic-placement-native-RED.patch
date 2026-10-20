@@ -1,0 +1,196 @@
+diff --git a/src/shared/lib/placement/__tests__/automaticPlacement.native.test.ts b/src/shared/lib/placement/__tests__/automaticPlacement.native.test.ts
+new file mode 100644
+--- /dev/null
++++ b/src/shared/lib/placement/__tests__/automaticPlacement.native.test.ts
+@@ -0,0 +1,191 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors';
++import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults';
++
++/**
++ * Historical fixture retained for a RED native-writer obligation.
++ * B7: under Workspace v1 the Runtime has no `…/timelines/:ref/save` route, so
++ * placement must publish through the same RuntimeDataProvider path the editor
++ * saves with (`saveTimelineAtHead`, expected-head CAS).
++ */
++
++const PROJECT = 'project-v1';
++const TIMELINE = 'timeline-v1';
++const SHOT = 'shot-1';
++
++const runtime = vi.hoisted(() => ({
++  head: 'rev-1',
++  mediaType: 'image/png',
++  config: null as unknown,
++  registry: { assets: {} } as unknown,
++  publishes: [] as string[],
++  /** Runs once, before the next publish is checked — simulates a sibling publish. */
++  beforePublish: null as null | (() => void),
++}));
++
++vi.mock('@/integrations/runtime/dataProvider', () => ({
++  RuntimeDataProvider: class {
++    constructor(readonly options: { projectId: string }) {}
++    async loadTimeline(timelineId: string) {
++      return {
++        config: structuredClone(runtime.config),
++        configVersion: 1,
++        head: { projectId: this.options.projectId, timelineId, headRevisionId: runtime.head },
++      };
++    }
++    async loadAssetRegistry() {
++      return structuredClone(runtime.registry);
++    }
++    async saveTimelineAtHead(
++      timelineId: string,
++      config: unknown,
++      expectedHead: { headRevisionId: string | null },
++      registry: unknown,
++    ) {
++      const hook = runtime.beforePublish;
++      runtime.beforePublish = null;
++      hook?.();
++      if (expectedHead.headRevisionId !== runtime.head) {
++        throw new TimelineVersionConflictError('stale_head');
++      }
++      runtime.config = structuredClone(config);
++      runtime.registry = structuredClone(registry);
++      runtime.head = `rev-${runtime.publishes.length + 2}`;
++      runtime.publishes.push(runtime.head);
++      return { configVersion: 2, head: { projectId: this.options.projectId, timelineId, headRevisionId: runtime.head } };
++    }
++  },
++}));
++
++vi.mock('@/tools/video-editor/data/generationAssetResolver', () => ({
++  resolveGenerationAsset: async () => ({
++    ok: true,
++    asset: {
++      url: 'http://runtime.test/v1/objects/sha256%3Aabc',
++      mimeType: runtime.mediaType,
++      entry: { file: 'sha256:abc', type: runtime.mediaType, media_id: 'sha256:abc' },
++    },
++  }),
++}));
++
++function installV1Fetch() {
++  const calls: string[] = [];
++  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
++    const url = new URL(input instanceof Request ? input.url : String(input), 'http://runtime.test');
++    url.pathname = url.pathname.replace(/^\/api\/astrid/, '');
++    calls.push(`${init?.method ?? 'GET'} ${url.pathname}`);
++    const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
++      status,
++      headers: { 'content-type': 'application/json' },
++    });
++    if (url.pathname === `/v1/projects/${PROJECT}/timelines`) {
++      return json({ items: [{ timeline_id: TIMELINE, name: 'main', is_default: true }] });
++    }
++    if (url.pathname === `/v1/projects/${PROJECT}/timelines/${TIMELINE}` && (init?.method ?? 'GET') === 'GET') {
++      return json({ timeline_id: TIMELINE, config: runtime.config, registry: runtime.registry, config_version: 1 });
++    }
++    return json({ code: 'not_found', message: `no route ${url.pathname}` }, 404);
++  }));
++  return calls;
++}
++
++async function loadService() {
++  return await import('../placementService');
++}
++
++// Ordinary positive requirements: preserve success, while replacing the snapshot writer.
++// The real placementService runs. No native command response is fabricated here.
++function expectNativeWrite(calls: string[]) {
++  expect(runtime.publishes, 'automatic placement must use the normal command session').toEqual([]);
++  expect(calls).toContain(`POST /v1/projects/${PROJECT}/timelines/${TIMELINE}/commit`);
++}
++
++describe('automatic placement through the native command session', () => {
++  beforeEach(() => {
++    runtime.head = 'rev-1';
++    runtime.mediaType = 'image/png';
++    runtime.config = createDefaultTimelineConfig();
++    runtime.registry = { assets: {} };
++    runtime.publishes = [];
++    runtime.beforePublish = null;
++  });
++  afterEach(() => vi.unstubAllGlobals());
++
++  it('places completed media at zero and survives fresh readback', async () => {
++    const calls = installV1Fetch();
++    const { placeGeneration, fetchProjectPlacements } = await loadService();
++    const placed = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
++    expect(placed.timelineFrame).toBe(0);
++    const read = await fetchProjectPlacements(PROJECT);
++    expect(read.byShot.get(SHOT)?.map((row) => [row.generationId, row.timelineFrame])).toEqual([['gen-1', 0]]);
++    expect(read.config.clips).toHaveLength(1);
++    expectNativeWrite(calls);
++  });
++
++  it('appends shared video with its original four-second hold', async () => {
++    const calls = installV1Fetch();
++    runtime.mediaType = 'video/mp4';
++    const { placeGeneration, fetchProjectPlacements } = await loadService();
++    await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'video-1' });
++    const next = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'video-2' });
++    expect(next.timelineFrame).toBe(120);
++    const read = await fetchProjectPlacements(PROJECT);
++    expect(read.config.clips[0]).toMatchObject({ clipType: 'media', at: 0, hold: 4 });
++    expectNativeWrite(calls);
++  });
++
++  it('inherits the existing group lane for automatic placement of a new shot', async () => {
++    const calls = installV1Fetch();
++    const config = createDefaultTimelineConfig();
++    config.tracks!.push({ id: 'V2', kind: 'visual', label: 'V2' });
++    config.pinnedShotGroups = [{ shotId: 'existing', trackId: 'V2', clipIds: [], poolGenerationIds: [] }];
++    runtime.config = config;
++    const { placeGeneration, fetchProjectPlacements } = await loadService();
++    await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
++    const read = await fetchProjectPlacements(PROJECT);
++    expect(read.config.clips[0]).toMatchObject({ track: 'V2', at: 0, hold: 4 });
++    expect(read.config.tracks).toEqual(config.tracks);
++    expectNativeWrite(calls);
++  });
++
++  it('keeps pooled membership without a clip and promotes it in a batch', async () => {
++    const calls = installV1Fetch();
++    const { placeGeneration, fetchProjectPlacements, batchUpdatePlacementFrames } = await loadService();
++    const pooled = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1', timelineFrame: null });
++    expect(pooled.timelineFrame).toBeNull();
++    const before = await fetchProjectPlacements(PROJECT);
++    expect(before.config.clips).toEqual([]);
++    expect(before.byShot.get(SHOT)?.[0]?.generationId).toBe('gen-1');
++    const [promoted] = await batchUpdatePlacementFrames({ projectSlug: PROJECT, shotId: SHOT,
++      updates: [{ entryId: pooled.entryId, timelineFrame: 3 }] });
++    expect(promoted.timelineFrame).toBe(3);
++    expect((await fetchProjectPlacements(PROJECT)).config.clips).toHaveLength(1);
++    expectNativeWrite(calls);
++  });
++
++  it('shifts equal start frames without excluding overlapping intervals', async () => {
++    const calls = installV1Fetch();
++    const { placeGeneration, fetchProjectPlacements } = await loadService();
++    await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-a', timelineFrame: 0 });
++    const overlap = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-b', timelineFrame: 30 });
++    const shifted = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-c', timelineFrame: 30 });
++    expect(overlap.timelineFrame).toBe(30);
++    expect(shifted.timelineFrame).toBe(31);
++    expect((await fetchProjectPlacements(PROJECT)).byShot.get(SHOT)?.map((row) => row.timelineFrame)).toEqual([0, 30, 31]);
++    expectNativeWrite(calls);
++  });
++
++  it('unplaces to the pool while retaining the media binding', async () => {
++    const calls = installV1Fetch();
++    const { placeGeneration, unplaceGeneration, fetchProjectPlacements } = await loadService();
++    const placed = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
++    await unplaceGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1',
++      entryId: placed.entryId, keepAsPooled: true });
++    const read = await fetchProjectPlacements(PROJECT);
++    expect(read.config.clips).toEqual([]);
++    expect(read.byShot.get(SHOT)?.[0]).toMatchObject({ generationId: 'gen-1', timelineFrame: null });
++    expect(read.registry.assets['gen:gen-1']).toBeDefined();
++    expectNativeWrite(calls);
++  });
++});
