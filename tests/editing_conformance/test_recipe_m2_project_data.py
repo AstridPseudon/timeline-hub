@@ -1,4 +1,4 @@
-"""Private candidate contract for authored extension project-data replacement."""
+"""Unfrozen candidate contract for authored extension project-data writes/removals."""
 
 from __future__ import annotations
 
@@ -23,6 +23,16 @@ def command(key, value, *, target=TARGET, select="parent"):
         "version": "1",
         "select": select,
         "args": {"target": target, "key": key, "value": value, "mode": "replace"},
+    }
+
+
+def remove(key, *, target=TARGET, select="parent"):
+    return {
+        "schema_version": 1,
+        "op": "project-data.write",
+        "version": "1",
+        "select": select,
+        "args": {"target": target, "key": key, "mode": "remove"},
     }
 
 
@@ -107,6 +117,71 @@ def test_null_prior_value_is_distinct_from_absence():
         "value": None,
     }
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_remove_deletes_one_key_preserves_order_and_roundtrips_exactly():
+    original = bundle()
+    original["parent"]["config"]["app"] = {
+        TARGET: {"keep": {"opaque": [None, False, 0]}, "gone": None, "last": 0},
+        "sibling": {"leave": True},
+    }
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+
+    assert list(project_data(plan.bundle)[TARGET]) == ["keep", "last"]
+    assert list(project_data(plan.bundle)) == [TARGET, "sibling"]
+    assert plan.records[0]["writes"] == [{
+        "ref": "parent",
+        "path": ["config", "app", TARGET, "gone"],
+        "before": {"state": "present", "value": None},
+        "after": {"state": "absent"},
+    }]
+    assert inverse(plan.bundle, plan.records).bundle == before
+    assert inverse(inverse(plan.bundle, plan.records).bundle,
+                   inverse(plan.bundle, plan.records).records).bundle == plan.bundle
+
+
+def test_remove_last_key_prunes_only_empty_namespace_and_app():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: {"gone": False}, "sibling": {"keep": 1}}
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+
+    assert project_data(plan.bundle) == {"sibling": {"keep": 1}}
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_remove_distinguishes_absent_target_from_null_namespace():
+    absent = bundle()
+    absent["parent"]["config"]["app"] = {"sibling": {"keep": True}}
+    absent_before = copy.deepcopy(absent)
+    assert execute(absent, [remove("gone")]).bundle == absent_before
+
+    null = bundle()
+    null["parent"]["config"]["app"] = {TARGET: None, "sibling": {"keep": True}}
+    null_before = copy.deepcopy(null)
+    plan = execute(null, [remove("gone")])
+    assert project_data(plan.bundle) == {"sibling": {"keep": True}}
+    assert inverse(plan.bundle, plan.records).bundle == null_before
+
+
+def test_remove_rebases_disjoint_key_and_refuses_same_key_aba():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: {"gone": "A", "keep": True}}
+    deletion = execute(original, [remove("gone")])
+    disjoint = execute(original, [command("other", {"id": "B"})])
+
+    rebased = replay(deletion, disjoint.bundle, intervening_records=disjoint.records)
+    assert project_data(rebased.bundle)[TARGET] == {"keep": True, "other": {"id": "B"}}
+
+    away = execute(original, [command("gone", "B")])
+    back = execute(away.bundle, [command("gone", "A")])
+    with pytest.raises(CommandError) as error:
+        inverse(deletion.bundle, deletion.records,
+                [*away.records, *back.records])
+    assert error.value.kind == "intervening_write"
 
 
 def test_disjoint_keys_rebase_and_same_key_aba_refuses():
@@ -243,3 +318,10 @@ def test_private_schema_and_registry_are_closed():
             {**command("source", 1), "args": {**command("source", 1)["args"], "extra": True}}
         )
     assert json.loads(json.dumps(command("source", {"__proto__": 1}), allow_nan=False))
+    validator.validate(remove("source"))
+    with pytest.raises(Exception):
+        validator.validate({**remove("source"), "args": {**remove("source")["args"], "value": 1}})
+    with pytest.raises(Exception):
+        invalid_replace = command("source", 1)
+        del invalid_replace["args"]["value"]
+        validator.validate(invalid_replace)
