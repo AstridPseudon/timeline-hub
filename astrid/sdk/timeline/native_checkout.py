@@ -41,6 +41,9 @@ def _publishable_parent_command(command):
         return True
     if command.get('op') == 'clip.delete' and args == {}:
         return True
+    if (command.get('op') == 'clip.split' and isinstance(args, dict)
+            and set(args) == {'on', 'right_id'}):
+        return True
     values = args.get('values') if isinstance(args, dict) else None
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
             and args.get('clear') == [] and isinstance(values, dict)
@@ -119,14 +122,15 @@ class AttachedCheckout(Checkout):
         return result
 
     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
-        """Publish one captured parent move, hold set, trim, or delete from an explicitly selected outbox.
+        """Publish one captured parent move, hold set, trim, delete, or split from an explicitly selected outbox.
 
         The outbox path is this draft's recovery identity. Reattach that same
         session after a restart; detached checkouts never discover its intent.
         Other attached verbs continue to use ``flush()``. A hold remains a
-        source-unit scalar, trim keeps the original registry/source reads, and
-        delete keeps its full dependency guards; all are captured through the
-        native command operations.
+        source-unit scalar, trim keeps the original registry/source reads,
+        delete keeps its full dependency guards, and split retains its
+        caller-allocated right identity; all are captured through the native
+        command operations.
         """
         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
                 or (client is not None and client is not self.session.client)):
@@ -281,6 +285,16 @@ class AttachedClip(Clip):
         if self.shot_id != 'parent':
             _held()
         return self._command('clip.delete', {})
+
+    def split(self, on, *, id):
+        """Split this attached parent media clip at absolute timeline seconds.
+
+        The caller reserves ``id`` once; the native command keeps that identity
+        in the durable outbox for retries, reloads, and inverse/redo.
+        """
+        if self.shot_id != 'parent':
+            _held()
+        return self._command('clip.split', {'on': on, 'right_id': id})
 
     until = end_at = slip = keep = remove_layer = _held
     set_look = tag = move_to_cut = set_track = swap_asset = set_beats = keyframe_at = _held
