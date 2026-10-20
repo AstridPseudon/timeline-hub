@@ -39,12 +39,44 @@
       "pattern": "^sha256:[0-9a-f]{64}$"
     },
     "ScopedId": {
-      "type": "string",
-      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|occurrence:(?:(?!::)[^/])+/text-binding:(?:prompt|voiceover_script|transcript)(?::[a-z][a-z0-9-]{0,63})?)$"
+        },
+        {
+          "type": "string",
+          "pattern": "(?:^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$)|(?:^shot:(?:(?!::)[^/])+/item:(?:(?!::)[^/])+$)"
+        }
+      ]
     },
     "EntityRef": {
-      "type": "string",
-      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))|occurrence:(?:(?!::)[^/])+/text-binding:(?:prompt|voiceover_script|transcript)(?::[a-z][a-z0-9-]{0,63})?)$"
+        },
+        {
+          "type": "string",
+          "pattern": "(?:^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$)|(?:^shot:(?:(?!::)[^/])+/item:(?:(?!::)[^/])+$)"
+        }
+      ]
     },
     "PropertyPath": {
       "type": "string",
@@ -52,13 +84,32 @@
       "description": "R4 token path; empty is the whole entity. Parse JSON bracket atoms before overlap comparison. No entity array-position selectors."
     },
     "TargetKey": {
-      "type": "string",
-      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
-      "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+          "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+          "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)|occurrence:(?:(?!::)[^/])+/text-binding:(?:prompt|voiceover_script|transcript)(?::[a-z][a-z0-9-]{0,63})?))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+          "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+        },
+        {
+          "type": "string",
+          "pattern": "(?:^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$)|(?:^shot:(?:(?!::)[^/])+/item:(?:(?!::)[^/])+::(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$)",
+          "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
+        }
+      ]
     },
     "AnchorIdentity": {
       "type": "string",
-      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
+      "pattern": "(?:^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$)|(?:^shot:(?:(?!::)[^/])+/item:(?:(?!::)[^/])+$)",
       "description": "R4 string binding values. Legacy word/beat indices are meaningful only against verified immutable source reads; not stable identities across republication. Exact source-word provenance is captured in reads/dependencies."
     },
     "AgentState": {
@@ -189,7 +240,8 @@
         "ownership": {
           "enum": [
             "shared",
-            "occurrence"
+            "occurrence",
+            "parent"
           ]
         },
         "position": {
@@ -465,28 +517,138 @@
             "settings": {
               "type": "object",
               "properties": {
-                "videoControlMode": {"type": ["string", "null"]},
-                "prompt": {"type": ["string", "null"]},
-                "negativePrompt": {"type": ["string", "null"]},
-                "dimensionSource": {"type": ["string", "null"]},
-                "generationMode": {"type": ["string", "null"]},
-                "selectedModel": {"type": ["string", "null"]},
-                "motionMode": {"type": ["string", "null"]},
-                "selectedPhasePresetId": {"type": ["string", "null"]},
-                "textBeforePrompts": {"type": ["string", "null"]},
-                "textAfterPrompts": {"type": ["string", "null"]},
-                "generationTypeMode": {"type": ["string", "null"]},
-                "batchVideoFrames": {"type": ["number", "null"]},
-                "batchVideoSteps": {"type": ["number", "null"]},
-                "customWidth": {"type": ["number", "null"]},
-                "customHeight": {"type": ["number", "null"]},
-                "guidanceScale": {"type": ["number", "null"]},
-                "amountOfMotion": {"type": ["number", "null"]},
-                "enhancePrompt": {"type": ["boolean", "null"]},
-                "turboMode": {"type": ["boolean", "null"]},
-                "advancedMode": {"type": ["boolean", "null"]},
-                "smoothContinuations": {"type": ["boolean", "null"]},
-                "ltxHdResolution": {"type": ["boolean", "null"]}
+                "videoControlMode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "prompt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "negativePrompt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "dimensionSource": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "generationMode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "selectedModel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "motionMode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "selectedPhasePresetId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "textBeforePrompts": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "textAfterPrompts": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "generationTypeMode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "batchVideoFrames": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "batchVideoSteps": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "customWidth": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "customHeight": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "guidanceScale": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "amountOfMotion": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "enhancePrompt": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "turboMode": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "advancedMode": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "smoothContinuations": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "ltxHdResolution": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
               },
               "minProperties": 1,
               "additionalProperties": false
@@ -816,22 +978,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/TrackSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/TrackSetArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/TrackSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -846,27 +1030,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
-              },
-              "args": {
-                "$ref": "#/$defs/ShotSetArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -881,22 +1092,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetParamsArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetParamsArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetParamsArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -911,22 +1144,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetElementArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetElementArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetElementArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1003,37 +1258,74 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipMoveArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ripple": {
-                    "const": "none"
+                  "version": {
+                    "const": "1"
                   },
-                  "anchor": {
-                    "const": "fixed"
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
                   },
-                  "position": {
-                    "const": "absolute"
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
                   },
-                  "ownership": {
-                    "const": "occurrence"
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   }
-                },
-                "required": [],
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1077,27 +1369,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceAddMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceAddMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceAddMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1112,27 +1431,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1147,37 +1493,74 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipMoveArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ripple": {
-                    "const": "none"
+                  "version": {
+                    "const": "1"
                   },
-                  "anchor": {
-                    "const": "fixed"
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
                   },
-                  "position": {
-                    "const": "absolute"
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
                   },
-                  "ownership": {
-                    "const": "occurrence"
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   }
-                },
-                "required": [],
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1192,27 +1575,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/PlacementCreateArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementCreateArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementCreateArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1227,27 +1637,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/PlacementUnplaceArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementUnplaceArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementUnplaceArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1262,27 +1699,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ShotPoolArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotPoolArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotPoolArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1316,22 +1780,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1485,6 +1971,265 @@
               },
               "args": {
                 "$ref": "#/$defs/ProducerGuardArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "timeline.assembled-target"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(parent|parent/clip:(?!.*::)[^/]+)$",
+                "description": "parent asserts a flat assembly target; a parent clip reference asserts that populated replacement target. Both require the complete ordered parent clip inventory."
+              },
+              "args": {
+                "$ref": "#/$defs/AssembledTargetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.add-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(parent|parent/clip:(?!.*::)[^/]+)$",
+                "description": "parent appends; a stable parent clip reference inserts immediately after that clip. Birth never deletes the selected boundary."
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAddMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "timeline.init"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TimelineInitArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.anchor"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^parent/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipAnchorArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "anchor": {
+                    "const": "follow"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.create"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceCreateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.swap-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^parent/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "parent"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "text-binding.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TextBindingSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "project-data.write"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ProjectDataWriteArgs"
               },
               "intent": {
                 "type": "object",
@@ -1760,7 +2505,44 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+    },
+    "ProjectDataWriteArgs": {
+      "type": "object",
+      "required": [
+        "target",
+        "key",
+        "value",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*(\\.[A-Za-z][A-Za-z0-9_-]*)*$"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^\\S(?:[\\s\\S]*\\S)?$",
+          "not": {
+            "enum": [
+              "__proto__",
+              "constructor",
+              "prototype"
+            ]
+          }
+        },
+        "value": {
+          "$ref": "#/$defs/JSON"
+        },
+        "mode": {
+          "const": "replace"
+        }
+      },
+      "description": "Replace one opaque extension-owned project-data value in the parent authored timeline. The project catalog is a separate scoped operation."
     },
     "ClipTrimArgs": {
       "type": "object",
@@ -1977,6 +2759,320 @@
         "proposal_digest"
       ],
       "additionalProperties": false
+    },
+    "AssembledTargetArgs": {
+      "type": "object",
+      "required": [
+        "replace_clips"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "replace_clips": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^parent/clip:(?!.*::)[^/]+$"
+          }
+        }
+      }
+    },
+    "ClipAddMediaArgs": {
+      "type": "object",
+      "required": [
+        "row",
+        "media"
+      ],
+      "properties": {
+        "row": {
+          "$ref": "#/$defs/ClipAddArgs/properties/row"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TimelineInitArgs": {
+      "type": "object",
+      "description": "App empty-timeline defaults only. Requires authenticated original bootstrap publication; never a root replacement or repair.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "resolution": {
+              "type": "string",
+              "const": "1280x720"
+            },
+            "fps": {
+              "type": "integer",
+              "const": 30
+            },
+            "file": {
+              "type": "string",
+              "const": "output.mp4"
+            },
+            "background": {
+              "type": "null"
+            },
+            "background_scale": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "resolution",
+            "fps",
+            "file",
+            "background",
+            "background_scale"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "slug",
+        "output"
+      ],
+      "additionalProperties": false
+    },
+    "WordAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "document",
+        "word_ids"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "document_id",
+            "version",
+            "content_digest"
+          ],
+          "properties": {
+            "document_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^transcript:[0-9a-f]{64}$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "content_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "word_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^word:[0-9a-f]{64}(?::[1-9][0-9]*)?$"
+          }
+        },
+        "edge": {
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "offset_s": {
+          "type": "number"
+        },
+        "offset_frames": {
+          "type": "integer"
+        }
+      }
+    },
+    "ClipAnchorArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "declaration",
+        "choice"
+      ],
+      "properties": {
+        "field": {
+          "enum": [
+            "on",
+            "until"
+          ]
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "choice": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/WordAnchor"
+            }
+          ]
+        }
+      }
+    },
+    "OccurrenceCreateArgs": {
+      "type": "object",
+      "required": [
+        "occurrence_id",
+        "shot_id",
+        "name",
+        "track",
+        "on",
+        "duration"
+      ],
+      "properties": {
+        "occurrence_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "shot_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute start in seconds; quantized to parent frames."
+        },
+        "duration": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Occurrence duration in seconds."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TextBindingSetArgs": {
+      "type": "object",
+      "required": [
+        "binding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "type": "object",
+          "required": [
+            "kind",
+            "slot"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "prompt",
+                "voiceover_script",
+                "transcript"
+              ]
+            },
+            "slot": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                }
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "voiceover_script",
+                      "transcript"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "slot": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "text": {
+          "type": "object",
+          "required": [
+            "object_id",
+            "digest",
+            "size",
+            "media_type"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "object_id": {
+              "$ref": "#/$defs/Digest"
+            },
+            "digest": {
+              "$ref": "#/$defs/Digest"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1048576
+            },
+            "media_type": {
+              "const": "text/plain; charset=utf-8"
+            }
+          }
+        },
+        "clear": {
+          "const": true
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "text"
+          ]
+        },
+        {
+          "required": [
+            "clear"
+          ]
+        }
+      ]
     }
   }
 }

@@ -375,3 +375,107 @@ def test_actual_provider_historical_slot_rematerializes_after_verified_restore(s
     assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
         s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
 
+
+def source_bound_projection(realm):
+    # Runtime-boundary fixture; native provider semantics need the matched pair.
+    service, commits, project, _, _ = realm
+    item = media_item(service, project, "source-item")
+    source = image("source", "source-v1", items=[item])
+    seed = with_media(proposal(service, commits, project, "main", "shared-source", shots=[source]), item)
+    occurrences = seed[1]["canonical_document"]["parent_revision"]["payload"]["occurrences"]
+    occurrences.append(dict(occurrences[0], occurrence_id="occ-1", placement={"start_ms": 1000}))
+    refresh(seed[1])
+    accepted = accept(commits, seed)
+    original = accepted["data"]["canonical_document"]
+    destination = image("destination", "destination-v1", items=[dict(item, item_id="destination-item")])
+    pair = with_media(proposal(service, commits, project, "main", "materialize", shots=[destination, source]), item)
+    value = pair[1]
+    shot, key = "shot:destination", "materialization.source:shot:destination"
+    value["id_map"] = {shot: "destination", shot + "/item:destination-item": "destination-item"}
+    record = value["records"]["commands"][0]
+    record["bindings"] = [
+        {"key": shot, "ref": "shot:source", "policy": "fixed", "dependencies": [key]},
+        {"key": shot + "/item:destination-item", "ref": "shot:source/item:source-item",
+         "policy": "fixed", "dependencies": [key]},
+        {"key": "materialization.owner:" + shot, "ref": "occurrence:occ-0",
+         "policy": "fixed", "dependencies": [key]},
+    ]
+    record["command"]["bindings"] = {b["key"]: b["ref"] for b in record["bindings"]}
+    record["reads"] = [{"ref": "occurrence:occ-0/shot", "path": ["shot_id"],
+                        "state": {"state": "present", "value": "source"}}]
+    record["dependencies"] = [{"key": key, "kind": "entity", "policy": "exact", "pin": {
+        "parent": {k: original["parent_revision"][k] for k in ("revision_id", "content_digest")},
+        "source": {"shot_id": source[0]["shot_id"], "revision_id": source[0]["revision_id"],
+                   "content_digest": source[0]["content_digest"],
+                   "internal_timeline_id": source[1]["timeline_id"],
+                   "internal_timeline_revision_id": source[1]["revision_id"],
+                   "internal_timeline_content_digest": source[1]["content_digest"],
+                   "item_id_map": {"source-item": "destination-item"}},
+    }}]
+    assert record["created"] == []
+    record["command"].update(op="clip.move", version="2", select="occurrence:occ-0/clip:clip")
+    pair[0]["request"]["commands"] = [copy.deepcopy(record["command"])]
+    pair[0]["invocation"]["body"] = copy.deepcopy(pair[0]["request"])
+    pair[0]["request_hash"] = request_identity(pair[0])
+    refresh(value)
+    return pair
+
+
+def test_source_bound_v2_acceptance_keeps_public_refusal_and_ledger_first_retry(realm, monkeypatch):
+    from jsonschema import Draft202012Validator
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+    from runtime_protocol.timeline_commit_validation import validate_commit_value
+    from test_command_schema_compatibility import baseline
+
+    service, commits, project, _, root = realm
+    ctx, value = source_bound_projection(realm)
+    command = ctx["request"]["commands"][0]
+    validate_commit_value(command, "EditCommand")
+    assert not Draft202012Validator(baseline("agent-26ef2bbb")).is_valid(command)
+    port = RequestCommitPort(service, commits, ctx, lambda: None)
+    try:
+        port.head()
+        port.revision_closure(ctx["request"]["base_revision_id"])
+        result = port.accept(value)
+    finally:
+        port.close()
+    assert result["data"]["id_map"] == value["id_map"]
+    assert result["data"]["canonical_document"] == value["canonical_document"]
+    assert commits.history_entry(project, "main", result["receipt"]["receipt_id"])["records"] == value["records"]
+    accept(commits, proposal(service, commits, project, "main", "after-materialization"))
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        store = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        monkeypatch.setattr(store, "_check_shot_destinations", lambda *_: pytest.fail("retry checked live destinations"))
+        before = snapshot(restarted)
+        assert store.accept(ctx, value, authorize=lambda: None) == result
+        assert snapshot(restarted) == before
+    finally:
+        restarted.close()
+
+
+@pytest.mark.parametrize("damage", ["uncaptured", "closed", "owner", "source"])
+def test_source_bound_materialization_requires_open_exact_private_capture(realm, damage):
+    from runtime_protocol.errors import AuthorizationError, ValidationError
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    service, commits, _, _, _ = realm
+    ctx, value = source_bound_projection(realm)
+    port = RequestCommitPort(service, commits, ctx, lambda: None)
+    try:
+        port.head()
+        if damage != "uncaptured":
+            port.revision_closure(ctx["request"]["base_revision_id"])
+        if damage == "closed":
+            port.close()
+        elif damage == "owner":
+            value["records"]["commands"][0]["bindings"][-1]["ref"] = "occurrence:occ-1"
+        elif damage == "source":
+            value["records"]["commands"][0]["dependencies"][0]["pin"]["source"]["revision_id"] = "unproved"
+        before = snapshot(service)
+        with pytest.raises((AuthorizationError, ValidationError, CommitRejected)):
+            commits.accept(ctx, value, authorize=lambda: None, inputs=port)
+        assert snapshot(service) == before
+    finally:
+        port.close()
