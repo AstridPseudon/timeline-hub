@@ -387,7 +387,6 @@ def test_project_reference_mutations_roll_back_before_idempotency_replay(tmp_pat
     service.close()
 
 
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
 def test_project_shot_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
