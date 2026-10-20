@@ -20,6 +20,10 @@ TARGET = {"project_id": "p", "timeline_id": "t", "base_revision_id": "r", "base_
 PRODUCER = {"task_id": "task", "attempt_id": "attempt", "executor_id": "executor", "fence": 1, "runtime_epoch": 1}
 PIN = {**PRODUCER, "admitted_target": TARGET, "proposal_digest": DIGEST}
 CASES = ORDINARY_CASES + [
+    ("occurrence.move", "occurrence:o", {"start_ms": 1000}),
+    ("occurrence.resize", "occurrence:o", {"duration_ms": 1000}),
+    ("project-data.write", "parent", {"target": "voiceover", "key": "draft", "value": {"text": "hello"}, "mode": "replace"}),
+    ("timeline.migrate-groups", "parent", {"groups": [{"legacy_shot_id": "legacy", "shot_id": "shot", "occurrence_id": "occurrence"}]}),
     ("shot.set", "occurrence:o/shot", {"values": {"name": "Shot", "settings": {"enhancePrompt": False, "batchVideoFrames": 1.5}}, "clear": []}),
     ("clip.set-element", "parent/clip:c", {"elementRef": {"id": "element", "kind": "component", "revision": "r"}}),
     ("placement.create", "occurrence:o", {"id": "c", "on": 0, "hold": 1.5, "media": MEDIA, "consumed": ["existing"]}),
@@ -46,10 +50,10 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+    assert hashlib.sha256(raw).hexdigest() == "84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc8592386cbbc5"
     schema = json.loads(raw)
-    assert len(schema["$defs"]) == 55
-    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
+    assert len(schema["$defs"]) == 59
+    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 33
     expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS
     assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == expected_operations
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
