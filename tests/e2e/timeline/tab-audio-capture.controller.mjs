@@ -151,14 +151,6 @@ function packageGraphFingerprint() {
   };
 }
 
-function renderGraphFingerprint() {
-  const nodeModules = dirname(dirname(require.resolve('@remotion/player/package.json')));
-  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
-    relativePath,
-    sha256(readFileSync(join(nodeModules, relativePath))),
-  ]));
-}
-
 function browserFingerprint() {
   if (!existsSync(BROWSER_EXECUTABLE)) throw new Error(`Pinned Chrome executable is missing: ${BROWSER_EXECUTABLE}`);
   const executable = realpathSync(BROWSER_EXECUTABLE);
@@ -184,6 +176,14 @@ function browserFingerprint() {
     throw new Error('Chrome155 executable/version/full tree does not match the frozen environment');
   }
   return fingerprint;
+}
+
+export function renderGraphFingerprint() {
+  const nodeModules = dirname(dirname(dirname(require.resolve('@remotion/player/package.json'))));
+  return Object.fromEntries(Object.entries(FROZEN_RENDER_GRAPH_HASHES).map(([relativePath]) => [
+    relativePath,
+    sha256(readFileSync(join(nodeModules, relativePath))),
+  ]));
 }
 
 export function sourceFingerprint() {

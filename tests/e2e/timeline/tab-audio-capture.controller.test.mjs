@@ -6,6 +6,7 @@ import {
   BROWSER_EXECUTABLE,
   BROWSER_VERSION,
   PROFILE,
+  renderGraphFingerprint,
 } from './tab-audio-capture.controller.mjs';
 
 const fingerprint = {
@@ -87,4 +88,15 @@ test('postflight rejects a dependency graph change', () => {
     ...fingerprint,
     browser: {...fingerprint.browser, tree: {sha256: '9'.repeat(64)}},
   }), /browser/);
+});
+
+test('render graph fingerprint resolves the package root and all frozen files', () => {
+  assert.deepEqual(renderGraphFingerprint(), {
+    '@remotion/player/dist/cjs/PlayerUI.js': '5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
+    '@remotion/player/dist/cjs/use-player-methods.js': 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
+    '@remotion/player/dist/cjs/use-playback.js': '6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
+    '@remotion/player/dist/esm/index.mjs': 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
+    'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
+    'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
+  });
 });
