@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T09:33:52Z | dispatcher heartbeat 14s -->
+<!-- app | 2026-10-20T09:39:08Z | dispatcher heartbeat 11s -->
 # app — 2026-10-20 09:33 UTC
 Milestone: M0/M1 COMPLETE (PLAN03:55); M2 IN PROGRESS. TOP automatic placement, native guard/policy correction Agent-owned after executable0837 escalation. No M2/M3 exit. Capacity5 active/launching; worker table authoritative. Manager no product/git mutations.
 Integrated: App tl/integration18becfbede00038830b97e63345445eeef54fa42/tree44d514b44c864ff9dbb3b99aba2b0a41891af83f CLEAN, Composition8/client021. New bounded units e5c SDKexample(630PASS/narrowrealcompile),75df shotraw/settings(+53/-1product),763 ACPfixture2lines(62+625PASS),18bec automatic4legacypositives45lines(183PASS). D03purge4e7c(-20191),unusedquery5912(-81),rootf845,popupremapcc4,historyb806,deadshims564a(-246physical),canvasf345,assetDrop2d80,transitionopaque1be retained.
