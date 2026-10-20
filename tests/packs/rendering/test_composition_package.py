@@ -16,8 +16,8 @@ from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
-INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
+SHA256 = "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
+INTEGRITY = "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ=="
 REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
                     "./animations.generated", "./transitions.generated", "./registry.generated")
 
@@ -28,25 +28,28 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
     cli.write_text("// CLI")
     package = project / "node_modules/@banodoco/timeline-composition"
     package.parent.mkdir(parents=True)
-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
+    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz") as archive:
         archive.extractall(project)
     (project / "package").rename(package)
     return package, json.loads((package / "package.json").read_text())
 
 
 def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     lock = json.loads((REMOTION / "package-lock.json").read_text())
     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    assert package["version"] == "0.0.12"
-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    assert package["version"] == "0.0.13"
+    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert package["integrity"] == INTEGRITY
     with tarfile.open(artifact) as archive:
         manifest_file = archive.extractfile("package/package.json")
         assert manifest_file is not None
         manifest = json.load(manifest_file)
-        files = set(archive.getnames())
+        members = archive.getmembers()
+        files = {member.name for member in members}
+    assert len(members) == 77
+    assert all(member.isfile() for member in members)
     assert not any(name.startswith("package/typescript/") for name in files)
     for export in REQUIRED_EXPORTS:
         for target in manifest["exports"][export].values():
@@ -67,6 +70,40 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
     package, staged_manifest = _stage_locked_package(tmp_path / "valid")
     assert staged_manifest == manifest
     assert remotion_runtime.remotion_install_problem(package.parents[2]) is None
+
+
+def test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources(tmp_path):
+    project = tmp_path / "api"
+    _stage_locked_package(project)
+    script = r'''
+import assert from 'node:assert/strict';
+import {AudioEnvelopeError, encodedEnvelopeSource} from '@banodoco/timeline-composition/evaluation';
+
+const envelope = {keyframes: [{at: 0, value: 1}, {at: 1, value: 1}]};
+const prepared = {
+  file: 'https://example.test/prepared.wav',
+  envelope_key: '{"keyframes":[{"at":0,"value":1},{"at":1,"value":1}]}',
+  source_from: 2 / 30,
+  playback_rate: 1.5,
+};
+assert.equal(encodedEnvelopeSource(prepared, envelope, 2 / 30, 1.5), prepared.file);
+assert.equal('useAudioEnvelopeSource' in await import('@banodoco/timeline-composition/evaluation'), false);
+
+for (const [name, change] of Object.entries({
+  envelope: {envelope_key: '{}'},
+  sourceFrom: {source_from: 0.05},
+  playbackRate: {playback_rate: 1},
+  url: {file: 'blob:prepared'},
+})) {
+  const forged = {...prepared, ...change};
+  const before = JSON.stringify(forged);
+  assert.throws(() => encodedEnvelopeSource(forged, envelope, 2 / 30, 1.5),
+    (error) => error instanceof AudioEnvelopeError && error.code === 'ENVELOPE_UNRENDERED', name);
+  assert.equal(JSON.stringify(forged), before, name);
+}
+''';
+    subprocess.run([os.environ.get("ASTRID_NODE_EXECUTABLE", "node"), "--input-type=module", "-e", script],
+                   cwd=project, check=True, capture_output=True, text=True, timeout=30)
 
 
 @pytest.mark.parametrize("mutation, expected", [
