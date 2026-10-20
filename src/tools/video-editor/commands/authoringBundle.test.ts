@@ -4,6 +4,7 @@ import type { CanonicalDocument, JSON } from '@/integrations/runtime/timeline-co
 import type { AuthoredBundle } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBundle.ts';
 import fixture from './fixtures/authoringBundle.json';
+import correctedFixture from './fixtures/authoringBundleOpaque.json';
 
 /* From App root, check goldens against the actual Python provider/main opener:
  * PYTHONPATH=/home/user/work/wt/agt-m1-provider /home/user/work/venv-agent/bin/python -c 'from pathlib import Path; exec(Path("src/tools/video-editor/commands/authoringBundle.test.ts").read_text().split("PYTHON_GOLDEN\n")[1].split("\nPYTHON_GOLDEN")[0])'
@@ -14,6 +15,69 @@ const goldens = fixture.cases as unknown as Golden[];
 const named = (name: string) => goldens.find((golden) => golden.name === name)!;
 type ObjectValue = { [key: string]: JSON };
 const shared = () => structuredClone(named('repeated-source').document);
+const correctedGoldens = correctedFixture.cases as unknown as Golden[];
+
+describe('Agent 875a9aff schema-aware item remap', () => {
+  for (const golden of correctedGoldens) {
+    it(`matches the complete corrected native bundle: ${golden.name}`, async () => {
+      const input = structuredClone(golden.document);
+      expect(await authoringBundleFromDocument(input)).toEqual(golden.bundle);
+      expect(input).toEqual(golden.document);
+      expect(await authoringBundleFromDocument(input)).toEqual(golden.bundle);
+    });
+  }
+
+  for (const golden of correctedGoldens.filter((entry) => entry.name.startsWith('opaque-'))) {
+    it(`preserves foreign item values at every opaque scope: ${golden.name}`, async () => {
+      const input = structuredClone(golden.document);
+      const source = input.shot_revisions[0].payload;
+      const bundle = await authoringBundleFromDocument(input);
+      for (const placement of bundle.placements) {
+        const owner = placement.shot_id as string;
+        const shot = bundle.shots[owner];
+        const payload = shot.payload;
+        const remap = bundle.source_mapping.shots[owner].item_id_map;
+        for (const field of ['data', 'app', 'opaque', 'metadata', 'provenance', 'pools']) {
+          expect(payload[field]).toEqual(source[field]);
+        }
+        const items = payload.items as ObjectValue[];
+        const sourceItems = source.items as ObjectValue[];
+        for (const [index, item] of items.entries()) {
+          const original = sourceItems[index];
+          const originalId = (original.item_id ?? original.id) as string;
+          const derived = remap[originalId];
+          expect(derived).not.toBe(originalId);
+          expect(item.item_id ?? item.id).toBe(derived);
+          if ('id' in original) {
+            expect(item.id).toBe(original.id === originalId ? derived : original.id);
+          }
+          for (const field of ['data', 'app', 'opaque', 'selected_item_id', 'parent_item_id']) {
+            expect(item[field]).toEqual(original[field]);
+          }
+          const metadata = original.metadata;
+          const hasDescriptor = metadata !== null && typeof metadata === 'object' && !Array.isArray(metadata);
+          const descriptor = hasDescriptor ? item.metadata as ObjectValue : item;
+          expect(descriptor.source_item_id).toBe(remap['source-item-a']);
+          expect(descriptor.source_item).toBe(remap['source-item-b']);
+          if (hasDescriptor) {
+            expect((item.metadata as ObjectValue).data).toEqual((metadata as ObjectValue).data);
+            expect(item.source_item_id).toBe(original.source_item_id);
+          } else {
+            expect(item.metadata).toEqual(metadata);
+          }
+        }
+        expect(shot.base_payload).toEqual(payload);
+        expect(shot.internal_timeline).toEqual(input.internal_timeline_revisions[0].payload);
+      }
+      expect(bundle.parent.data).toEqual(input.parent_revision.payload.data);
+      expect(bundle.placements[0].data).toEqual((input.parent_revision.payload.occurrences as ObjectValue[])[0].data);
+      expect(bundle.source_mapping._runtime_document).toEqual(input);
+      expect(input).toEqual(golden.document);
+      const [first, sibling] = bundle.placements.map((placement) => placement.shot_id as string);
+      expect(bundle.source_mapping.shots[first].item_id_map).not.toEqual(bundle.source_mapping.shots[sibling].item_id_map);
+    });
+  }
+});
 
 describe('Runtime closure → main authoring bundle', () => {
   for (const golden of goldens) {
@@ -197,3 +261,85 @@ else:
     assert path.read_text() == encoded, "Python goldens changed; review and regenerate with --write"
 print(f"Python golden exact check: {len(cases)} complete closures/bundles passed")
 PYTHON_GOLDEN */
+
+/* PYTHON_OPAQUE_GOLDEN
+# Export using the exact read-only Agent 875a9aff4e658def3fa912cacd13f28a911fe89a source:
+# PYTHONPATH=<Agent source> /home/user/work/venv-agent/bin/python -c 'from pathlib import Path; exec(Path("src/tools/video-editor/commands/authoringBundle.test.ts").read_text().split("PYTHON_OPAQUE_GOLDEN\n")[1].split("\nPYTHON_OPAQUE_GOLDEN")[0])'
+# Append --write to regenerate; original fixture INPUTS are kept unchanged.
+import copy
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+
+def digest(value):
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+root = Path("src/tools/video-editor/commands/fixtures")
+originals = json.loads((root / "authoringBundle.json").read_text())["cases"]
+sources = [(case["name"], copy.deepcopy(case["document"])) for case in originals]
+shared = next(case["document"] for case in originals if case["name"] == "repeated-source")
+opaque = {"org.example.notes/v1": {
+    "foreign_item_id": "source-item-a", "foreign_item_ids": ["source-item-a", None, "source-item-b"],
+    "item_id": "source-item-a", "source_item_id": "source-item-b", "source_item": "source-item-a",
+    "selected_item_id": "source-item-a", "parent_item_id": "source-item-b",
+    "nested": [{"foreign_item_id": "source-item-a"}, None], "source-item-a": None,
+}}
+for codec, location in (("item_id", "metadata"), ("id", "root"),
+                        ("both", "null"), ("opaque-id", "array")):
+    source = copy.deepcopy(shared)
+    payload = source["shot_revisions"][0]["payload"]
+    for row in (source["parent_revision"]["payload"], payload,
+                source["internal_timeline_revisions"][0]["payload"],
+                *source["parent_revision"]["payload"]["occurrences"]):
+        for field in ("data", "app", "opaque"):
+            row[field] = copy.deepcopy(opaque)
+    for field in ("metadata", "provenance", "pools"):
+        payload[field] = copy.deepcopy(opaque) if field != "pools" else [copy.deepcopy(opaque)]
+    for item in payload["items"]:
+        if codec in ("id", "both", "opaque-id"):
+            item["id"] = item["item_id"] if codec != "opaque-id" else "opaque-identity"
+        if codec == "id":
+            del item["item_id"]
+        for field in ("data", "app", "opaque"):
+            item[field] = copy.deepcopy(opaque)
+        item["source_item_id"] = "source-item-a"
+        item["source_item"] = "source-item-b"
+        item["metadata"] = {"data": copy.deepcopy(opaque), "source_item_id": "source-item-a",
+                            "source_item": "source-item-b"}
+        if location == "root":
+            del item["metadata"]
+        elif location == "null":
+            item["metadata"] = None
+        elif location == "array":
+            item["metadata"] = [copy.deepcopy(opaque)]
+    for image in (source["parent_revision"], *source["shot_revisions"], *source["internal_timeline_revisions"]):
+        image["content_digest"] = digest(image["payload"])
+    source["dependency_manifest"]["shots"][0]["content_digest"] = source["shot_revisions"][0]["content_digest"]
+    source["dependency_manifest"]["internal_timelines"][0]["content_digest"] = source["internal_timeline_revisions"][0]["content_digest"]
+    sources.append((f"opaque-{codec}-{location}", source))
+
+cases = []
+for name, source in sources:
+    before = copy.deepcopy(source)
+    bundle = bundle_from_document(source)
+    direct = open_authoring_bundle(
+        {**source["parent_revision"], "project_id": source["project_id"], "timeline_id": source["timeline_id"]},
+        shot_revisions=[{**row, "project_id": source["project_id"]} for row in source["shot_revisions"]],
+        internal_timeline_revisions=[{**row, "project_id": source["project_id"]} for row in source["internal_timeline_revisions"]])
+    direct["source_mapping"]["_runtime_document"] = source
+    assert bundle == direct and source == before
+    cases.append({"name": name, "document": source, "bundle": bundle})
+path = root / "authoringBundleOpaque.json"
+encoded = json.dumps({"agent_source": "875a9aff4e658def3fa912cacd13f28a911fe89a", "cases": cases},
+                     ensure_ascii=False, allow_nan=False, separators=(",", ":")) + "\n"
+if "--write" in sys.argv:
+    path.write_text(encoded)
+else:
+    assert path.read_text() == encoded, "Corrected native goldens changed; review before regenerating"
+print(f"Agent 875a9aff exact native check: {len(cases)} complete closures/bundles passed")
+PYTHON_OPAQUE_GOLDEN */

@@ -72,18 +72,26 @@ async function identity(kind: string, ...parts: string[]): Promise<string> {
   return `${kind}-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function remapItems(value: JSON, remap: Map<string, string>): JSON {
-  if (Array.isArray(value)) return value.map((child) => remapItems(child, remap));
-  if (value === null || typeof value !== 'object') return value;
-  return Object.fromEntries(Object.entries(value).map(([key, child]) => {
-    if (typeof child === 'string' && (key === 'item_id' || key.endsWith('_item_id'))) {
-      return [key, remap.get(child) ?? child];
+function remapItems(payload: ObjectValue, remap: Map<string, string>): ObjectValue {
+  const result = structuredClone(payload);
+  for (const item of rows('items' in result ? result.items : [])) {
+    const identity = id('item_id' in item ? item.item_id : item.id);
+    for (const field of ['item_id', 'id']) {
+      if (field in item && item[field] === identity) {
+        item[field] = remap.get(identity) ?? identity;
+      }
     }
-    if (Array.isArray(child) && key.endsWith('_item_ids')) {
-      return [key, child.map((entry) => typeof entry === 'string' ? remap.get(entry) ?? entry : structuredClone(entry))];
+    // Match Agent's shot dependency codec: metadata owns source links when
+    // it is an object; otherwise the item does. Other namespaces are opaque.
+    const metadata = item.metadata;
+    const descriptor = metadata !== null && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? metadata : item;
+    for (const field of ['source_item_id', 'source_item']) {
+      const source = descriptor[field];
+      if (typeof source === 'string') descriptor[field] = remap.get(source) ?? source;
     }
-    return [key, remapItems(child, remap)];
-  }));
+  }
+  return result;
 }
 
 function validateEntities(payload: ObjectValue): void {
@@ -170,7 +178,7 @@ export async function authoringBundleFromDocument(input: CanonicalDocument): Pro
         const sourceItem = itemId(item);
         remap.set(sourceItem, await identity('shot-item-placement', project, timeline, occurrenceId, owner, sourceItem));
       }
-      payload = object(remapItems(payload, remap));
+      payload = remapItems(payload, remap);
     }
     for (const item of rows('items' in payload ? payload.items : [])) {
       const key = itemId(item);
