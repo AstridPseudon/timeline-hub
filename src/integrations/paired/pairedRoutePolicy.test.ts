@@ -391,7 +391,11 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
 
   // Reached through /api/astrid (nativeEditorConnection.ts:6); the Runtime alias deliberately has no capability catalog.
   const astridOnly = new Set(['listCapabilities']);
-  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection']);
+  // Verified media follows getProjectMediaSelection: both are local Runtime-door reads.
+  // Previously getProjectVerifiedMedia fell into pairedCalls, which expected
+  // /api/runtime -> runtime and /api/astrid -> astrid; the explicit mapping below
+  // replaces that with refusal through both aliases.
+  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia']);
   const pairedCalls = calls.filter(({ op }) => !localDoorOnly.has(op));
   const localDoorOnlyCalls = calls.filter(({ op }) => localDoorOnly.has(op));
 
@@ -406,7 +410,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
     expect(calls.every(({ path }) => path.startsWith('/v1/') && !path.includes('${'))).toBe(true);
     expect(calls.flatMap((call) => call.headers)).toEqual(expect.arrayContaining(['content-type', 'idempotency-key', 'x-original-name', 'range']));
     expect(new Set(localDoorOnlyCalls.map(({ op }) => op))).toEqual(localDoorOnly);
-    expect(localDoorOnlyCalls).toHaveLength(3);
+    expect(localDoorOnlyCalls).toHaveLength(4);
   });
 
   describe.each(pairedCalls)('$op: $method $path', ({ method, path, op }) => {
