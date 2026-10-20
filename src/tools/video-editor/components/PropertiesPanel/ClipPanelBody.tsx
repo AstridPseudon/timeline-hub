@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState, type ComponentType } from 'react';
+import { submitClipScalarEdit, type CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
+import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -48,6 +49,8 @@ export interface ClipPanelProps {
   precisionEnabled: boolean;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  /** Authoring hosts provide this; detached presentation panels may omit it. */
+  onScalarEditStart?: () => CapturedClipScalarEdit;
   onResetPosition: () => void;
   onClose: () => void;
   onDelete?: () => void;
@@ -96,6 +99,7 @@ export function ClipPanelBody({
   interactionMode,
   precisionEnabled,
   onChange,
+  onScalarEditStart,
   onResetPosition,
   onClose,
   onDelete,
@@ -123,6 +127,41 @@ export function ClipPanelBody({
 }: ClipPanelBodyProps) {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [editingEffect, setEditingEffect] = useState<EffectResource | null>(null);
+  const [holdDraft, setHoldDraft] = useState<number | null>(null);
+  const [holdError, setHoldError] = useState<string | null>(null);
+  const holdEditRef = useRef<{ captured?: CapturedClipScalarEdit; error?: string } | null>(null);
+  useEffect(() => {
+    holdEditRef.current = null;
+    setHoldDraft(null);
+    setHoldError(null);
+  }, [clip?.id]);
+  const changeHold = (value: number | null) => {
+    if (value === null || !onScalarEditStart) return;
+    if (!holdEditRef.current) {
+      try {
+        // Keep the original authored basis through typing and blur, including failures.
+        holdEditRef.current = { captured: onScalarEditStart() };
+      } catch (error) {
+        holdEditRef.current = { error: error instanceof Error ? error.message : String(error) };
+      }
+    }
+    setHoldDraft(value);
+    setHoldError(holdEditRef.current.error ?? null);
+  };
+  const commitHold = (value: number | null) => {
+    if (value === null || !holdEditRef.current) return;
+    try {
+      const { captured, error } = holdEditRef.current;
+      if (!captured) throw new Error(error ?? 'Clip hold capture is unavailable.');
+      submitClipScalarEdit(captured, { values: { hold: value }, clear: [] });
+      holdEditRef.current = null;
+      setHoldDraft(null);
+      setHoldError(null);
+    } catch (error) {
+      setHoldDraft(value);
+      setHoldError(error instanceof Error ? error.message : String(error));
+    }
+  };
   const visibleTabs = useMemo(() => getVisibleClipTabs(clip, track), [clip, track]);
   const clipDescriptor = clip
     ? getRegisteredClipTypeDescriptor(clip.clipType)
@@ -294,6 +333,7 @@ export function ClipPanelBody({
             <ClipEffectsTab
               clip={clip}
               onChange={onChange}
+              onScalarEditStart={onScalarEditStart}
               effectResources={effectResources}
               clipDescriptor={clipDescriptor}
               isClipTypeRegistered={Boolean(clipDescriptor || clipTypeRegistryRecord)}
@@ -330,13 +370,14 @@ export function ClipPanelBody({
                 <div className="space-y-2">
                   <FieldLabel>Duration (seconds)</FieldLabel>
                   <NumberInput
-                    value={clip.hold ?? holdTiming.defaultSeconds}
+                    value={holdDraft ?? clip.hold ?? holdTiming.defaultSeconds}
                     min={holdTiming.minSeconds}
                     max={holdTiming.maxSeconds}
                     step={holdTiming.stepSeconds}
-                    onChange={(value) => handleTimingValueChange('hold', value)}
-                    onValueCommitted={(value) => handleTimingValueCommitted('hold', value)}
+                    onChange={onScalarEditStart ? changeHold : (value) => handleTimingValueChange('hold', value)}
+                    onValueCommitted={onScalarEditStart ? commitHold : (value) => handleTimingValueCommitted('hold', value)}
                   />
+                  {holdError && <p role="alert" className="text-sm text-destructive">{holdError}</p>}
                 </div>
               ) : (
                 <>

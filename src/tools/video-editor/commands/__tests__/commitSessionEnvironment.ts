@@ -12,6 +12,7 @@ import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
+import { executeClipSet } from '../clipScalarCapture.ts';
 
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
@@ -91,12 +92,13 @@ export async function environment(initialDocument = document()) {
       response.data.previous_revision_id = serverHead.revisionId;
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
-      if (request.commands[0].op === 'clip.move' || request.commands[0].op === 'track.set') {
+      if (['clip.move', 'track.set', 'clip.set'].includes(request.commands[0].op)) {
         let result;
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);
           result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
-            : finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs);
+            : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
+              : finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs);
         }
         catch (error) {
           if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
