@@ -12,8 +12,8 @@ from runtime_protocol.store import RealmStore, expired_publication_result
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest
 from runtime_protocol.util import canonical_json
 
+from baseline_fixture import load_baseline_fixture
 from test_timeline_commit_port import PreparedProvider, prepared, request
-from test_timeline_cutover import _service as legacy_service
 
 
 def _canonical_from_public_reads(service, project_id, timeline_id, page):
@@ -175,7 +175,7 @@ def test_pinned_head_stays_readable_after_disjoint_advance(bootstrapped):
 
 
 def test_verified_legacy_baseline_exposes_manifest_without_replaying_compacted_result(tmp_path, monkeypatch):
-    service, project_id, _ = legacy_service(tmp_path)
+    service, project_id, _ = load_baseline_fixture(tmp_path)
     try:
         commits = TimelineCommitStore(service.store, validate_prepared=lambda value: None)
         head = commits.install_verified_baseline(project_id, "main", authorize=lambda: None)
@@ -204,7 +204,7 @@ def test_verified_legacy_baseline_exposes_manifest_without_replaying_compacted_r
 
 
 def test_unverified_or_missing_manifest_is_not_defaulted(tmp_path):
-    service, project_id, _ = legacy_service(tmp_path)
+    service, project_id, _ = load_baseline_fixture(tmp_path)
     try:
         revision = "parent-1"
         unverified = service.get_project_parent_composition_revision(
