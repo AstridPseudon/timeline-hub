@@ -1,0 +1,1 @@
+{"id":"banodoco-default","visual":{"canvas":{"fps":30,"height":1080,"width":1920},"color":{"accent":"#67E8F9","bg":"#050814","fg":"#FAFAFA"},"motion":{"fadeMs":450},"type":{"families":{"body":"Arial","heading":"Arial","mono":"monospace"},"lineHeight":1.2,"size":{"base":32,"large":84,"small":22},"weight":{"bold":600,"normal":400}}}}

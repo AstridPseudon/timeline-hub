@@ -59,7 +59,7 @@ but inactive until the current source join is qualified.
 
 ## Composition 0.0.12
 
-Current Composition source is `46bd700b2`; the restored Makefile is present and
+Current Composition source is `a62e7d266`; the restored Makefile is present and
 the package is immutable:
 
 ```text
@@ -71,7 +71,7 @@ SHA-256 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
 The exact package/API smoke `1020085340-3498` passed in a fresh private
 consumer (Node 20.19.4; ESM, SSR, scoped-host, strict NodeNext, peer identity,
 and immutable-package checks). The Composition full run
-`1020085808-8575` passed: **69 PASS, 0 FAIL, 0 SKIP**. The package’s default
+`1020091054-4980` passed: **69 PASS, 0 FAIL, 0 SKIP**. The package’s default
 theme is the existing Agent navy/Arial/cyan default; explicit film themes stay
 explicit.
 
@@ -85,8 +85,9 @@ npm run test:package -- \
   /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz
 ```
 
-`test:package` otherwise follows its historical script default (0.0.10); do
-not change the product script. The old 0.0.11 archive remains an immutable
+`test:package` defaults to the current package version (0.0.12). The standard
+`npm run build && npm pack --ignore-scripts && npm run test:package` also passed,
+rebuilding the exact immutable 77-file archive. The old 0.0.11 archive remains an immutable
 historical reference only. Do not rebuild or repack 0.0.12 in a consumer.
 
 ## Current delivery boundary
