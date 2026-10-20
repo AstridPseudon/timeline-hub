@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Protocol
+from typing import Protocol, TypedDict
 
 from . import timeline_commit_types as dto
 from .timeline_commit_producer import ProducerAttemptPin, VerifiedProducerAttempt
@@ -22,6 +22,12 @@ class StaleHead(Exception):
         super().__init__("timeline head changed")
 
 
+# Internal to the port: no HTTP route, not part of the generated contract.
+TextSelection = TypedDict("TextSelection", {"object_id": dto.Digest, "digest": dto.Digest, "size": int, "media_type": str})
+VerifiedText = TypedDict("VerifiedText", {"object_id": dto.Digest, "digest": dto.Digest, "size": int,
+                                          "media_type": str, "utf8": bool})
+
+
 class RuntimeCommitPort(Protocol):
     def head(self) -> dto.HeadPin: ...
     def revision_closure(self, revision_id: str) -> dto.CanonicalDocument: ...
@@ -36,6 +42,7 @@ class RuntimeCommitPort(Protocol):
     def history_entry(self, publication_id: str) -> dto.HistoryEntry: ...
     def selected_media(self, selection: dto.MediaSelection) -> dto.VerifiedMedia: ...
     def producer_attempt(self, pin: ProducerAttemptPin) -> VerifiedProducerAttempt: ...
+    def text_selection(self, selection: TextSelection) -> VerifiedText: ...
     def transcript_source(self, pin: dto.DocumentPin) -> dto.VerifiedDocument: ...
     def config_source(self, pin: dto.DocumentPin) -> dto.VerifiedDocument: ...
     def document_object(

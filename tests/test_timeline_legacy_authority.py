@@ -1,5 +1,8 @@
 """The retired timeline family cannot publish, including before retry lookup.
 
+publish_parent_composition is not in that family: it stays live for headless timelines
+until the App migration lands, and refuses only a tracked timeline (below).
+
 Run the whole file through the central restore-integration lane with the actual
 Agent checkout. Only the HTTP cases need sockets; service cases run directly.
 """
@@ -21,8 +24,7 @@ from test_shot_composition_runtime import restore_provider as actual_provider  #
 
 FAMILIES = (
     "update_timeline", "replace_timeline_clip", "create_timeline_document",
-    "publish_parent_composition", "replace_parent_composition_media",
-    "archive_timeline", "recover_timeline",
+    "replace_parent_composition_media", "archive_timeline", "recover_timeline",
 )
 STATES = ("tracked", "fresh", "unused")
 
@@ -164,6 +166,32 @@ def test_http_authenticated_legacy_family_refuses_without_writes(http_case, monk
             assert error.value.details["reason"] == "timeline_commit_required"
         assert snapshot(case.service) == before
         assert case.service.store.conn.total_changes == changes
+
+
+def test_service_publish_parent_composition_refuses_tracked_timeline_without_writes(service_case):
+    case = service_case
+    _, _, body = legacy_request(case, "publish_parent_composition", "tracked")
+    before, changes = snapshot(case.service), case.service.store.conn.total_changes
+    for key in ("legacy-key", "legacy-key"):
+        with pytest.raises(RuntimeErrorBase) as error:
+            call_service(case, "publish_parent_composition", "tracked", body, key)
+        assert error.value.status == 409
+        assert error.value.details["reason"] == "timeline_commit_required"
+        assert snapshot(case.service) == before
+        assert case.service.store.conn.total_changes == changes
+
+
+def test_http_publish_parent_composition_refuses_tracked_timeline_without_writes(http_case):
+    case = http_case
+    method, path, body = legacy_request(case, "publish_parent_composition", "tracked")
+    before, changes = snapshot(case.service), case.service.store.conn.total_changes
+    with pytest.raises(ApiError) as error:
+        case.client._request(method, path, body=json.dumps(body).encode(),
+                             headers={"Content-Type": "application/json", "Idempotency-Key": "legacy-key"})
+    assert error.value.status == 409
+    assert error.value.details["reason"] == "timeline_commit_required"
+    assert snapshot(case.service) == before
+    assert case.service.store.conn.total_changes == changes
 
 
 def command_body(case, commands):

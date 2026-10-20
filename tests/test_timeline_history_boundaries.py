@@ -180,6 +180,23 @@ def test_http_history_scope_auth_and_limits_refuse_without_leaking_data(http_run
         foreign.stop()
 
 
+def test_http_dry_run_needs_write_scope_and_reserves_nothing(http_runtime):
+    daemon, client, project_id, _ = http_runtime
+    reader_token, _ = daemon.credentials.provision("dry-reader", ["projects:read"])
+    reader = WorkspaceClient(daemon.endpoint, reader_token)
+    before = client.list_timeline_commits(project_id, "main", limit=50)
+    body = {**_commit_body(client, project_id, "main", "dry"), "dry_run": True}
+    with pytest.raises(ApiError) as error:
+        reader.commit_timeline(project_id, "main", body, idempotency_key="dry-read-only")
+    assert error.value.status == 401
+    assert client.list_timeline_commits(project_id, "main", limit=50) == before
+    preview = client.commit_timeline(project_id, "main", body, idempotency_key="dry-writer")
+    assert preview["data"]["status"] == "preview"
+    assert preview["receipt"] is None
+    assert client.list_timeline_commits(project_id, "main", limit=50) == before
+    assert client.get_project_timeline(project_id, "main")["head_publication_id"] == before["head"]["publication_id"]
+
+
 def test_http_revision_reads_keep_manifest_pinned_children_after_new_head(http_runtime):
     daemon, client, project_id, provider = http_runtime
     provider.action = lambda context, port: _child_candidate(context, port, context["idempotency_key"])

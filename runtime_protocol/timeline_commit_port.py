@@ -26,6 +26,11 @@ class CommitUnavailable(RuntimeErrorBase):
                          details={"reason": "runtime_unavailable"})
 
 
+TEXT_MEDIA_TYPE = "text/plain; charset=utf-8"
+TEXT_MAX_BYTES = 1_048_576
+_OBJECT_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
+
+
 def digest(value):
     return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
@@ -112,6 +117,7 @@ class RequestCommitPort:
         self.__shots = {}
         self.__media = {}
         self.__takes = {}
+        self.__texts = {}
         self.__documents = {}
         self.__document_objects = {}
         self.__producers = {}
@@ -273,6 +279,15 @@ class RequestCommitPort:
             return value
         return self._read(read)
 
+    def text_selection(self, selection):
+        def read():
+            if selection not in self.__declared:
+                raise refused("dependency_unavailable", "text selection was not declared")
+            value = MediaReads(self.__service).text(self.__project, selection)
+            self.__texts[canonical_json(selection)] = (copy.deepcopy(selection), value)
+            return value
+        return self._read(read)
+
     def narration_take(self, refs):
         def read():
             if refs not in self.__declared:
@@ -383,6 +398,9 @@ class RequestCommitPort:
         for selection, captured in self.__media.values():
             if reads.selected(self.__project, selection) != captured:
                 raise refused("dependency_unavailable", "captured media changed")
+        for selection, captured in self.__texts.values():
+            if reads.text(self.__project, selection) != captured:
+                raise refused("dependency_unavailable", "captured text changed")
         for refs, captured in self.__takes.values():
             if reads.narration(self.__project, refs) != captured:
                 raise refused("dependency_unavailable", "captured narration changed")
@@ -391,6 +409,7 @@ class RequestCommitPort:
                             for item in closure["dependency_manifest"]["media"]}
         authorized_media.update(item["media_id"] for closure in self.__shots.values() for item in closure["media"])
         authorized_media.update(value["selection"]["object_id"] for _, value in self.__media.values())
+        authorized_media.update(value["object_id"] for _, value in self.__texts.values())
         authorized_media.update(item for _, value in self.__takes.values() for item in value["dependency_objects"])
         if any(item["media_id"] not in authorized_media for item in manifest["media"]):
             raise refused("dependency_unavailable", "candidate media was not captured through this port")
@@ -560,6 +579,30 @@ def read_project_pack_object(service, project_id, pin, object_id):
                                      expected_kind=PROJECT_PACK_KIND, expected_schema=PROJECT_PACK_SCHEMA)
     descriptor, data, _ = _pack_object(service, project_id, capture, object_id)
     return {**descriptor, "bytes_base64": base64.b64encode(data).decode("ascii")}
+
+
+def verify_text_object(conn, cas, project_id, selection):
+    if (not isinstance(selection, dict) or set(selection) != {"object_id", "digest", "size", "media_type"}
+            or not all(isinstance(selection[k], str) and _OBJECT_ID.match(selection[k]) for k in ("object_id", "digest"))
+            or selection["object_id"] != selection["digest"]
+            or type(selection["size"]) is not int or not 0 <= selection["size"] <= TEXT_MAX_BYTES
+            or selection["media_type"] != TEXT_MEDIA_TYPE):
+        raise ValidationError(f"text selection requires object_id == digest, size within 1 MiB and {TEXT_MEDIA_TYPE}")
+    bare = selection["digest"][7:]
+    row = conn.execute("SELECT o.size, o.media_type FROM objects o JOIN project_objects p ON p.digest=o.digest "
+                       "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, bare)).fetchone()
+    if row is None:
+        raise NotFoundError("selected text is not a managed project object")
+    if row["size"] != selection["size"] or row["media_type"] != selection["media_type"]:
+        raise ConflictError("selected text size or media type changed")
+    data = cas.read(bare)
+    if len(data) != row["size"]:
+        raise ConflictError("selected text bytes changed")
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValidationError("selected text is not valid UTF-8") from exc
+    return {**selection, "utf8": True}
 
 
 class MediaReads:
@@ -765,6 +808,10 @@ class MediaReads:
         record = self._selected_project_media(project_id, selection)
         return {"selection": {key: record[key] for key in selection},
                 **{key: record["entry"][key] for key in ("media_type", "size", "duration_seconds", "width", "height") if key in record["entry"]}}
+
+    def text(self, project_id, selection):
+        """Exact UTF-8 text read; retention is the manifest media pin, as for selected media."""
+        return verify_text_object(self.store.conn, self.cas, project_id, selection)
 
     def narration(self, project_id, refs):
         from .timeline_commit_validation import validate_commit_value

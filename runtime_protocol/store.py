@@ -29,7 +29,7 @@ from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestErr
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
-from .snapshot_refs import prepare_snapshot, publish_snapshot, rewrite_spec_snapshots, validate_capture_scope, working_copy_binding
+from .snapshot_refs import check_working_copy_base, parent_revision_row, prepare_snapshot, publish_snapshot, rewrite_spec_snapshots, source_kind_of, validate_capture_scope, working_copy_binding
 from .util import canonical_json, new_id, now
 from .visual_seam import (
     admit_closure,
@@ -543,7 +543,7 @@ class RealmStore:
             ).fetchone() is None:
                 raise ConflictError("timeline snapshot reference is outside the task project")
             revision_id = ref.get("revision_id")
-            source_kind = ref.get("source_kind") or ("revision" if revision_id else "cas")
+            source_kind = source_kind_of(ref)
             snapshot = None
             if ref in capture_refs or source_kind == "working_copy":
                 try:
@@ -557,21 +557,11 @@ class RealmStore:
                 binding = working_copy_binding(snapshot, revision_id) if isinstance(snapshot, dict) else None
                 if binding is None or binding != ref.get("working_copy") or ref.get("revision_digest") != binding["candidate_digest"]:
                     raise ValidationError("working-copy snapshot binding differs from CAS content")
-                base = self.conn.execute(
-                    "SELECT content_digest FROM parent_composition_revisions "
-                    "WHERE id=? AND project_id=? AND timeline_id=?",
-                    (binding["base_revision_id"], project_id, ref.get("timeline_id")),
-                ).fetchone()
-                if base is None or base[0] != binding["base_revision_digest"]:
-                    raise NotFoundError("working-copy base parent revision is missing or changed")
+                check_working_copy_base(self.conn, binding, project_id, ref.get("timeline_id"))
             elif source_kind not in {"revision", "cas"}:
                 raise ValidationError("timeline snapshot reference source kind is invalid")
             elif revision_id is not None:
-                revision = self.conn.execute(
-                    "SELECT content_digest FROM parent_composition_revisions "
-                    "WHERE id=? AND project_id=? AND timeline_id=?",
-                    (revision_id, project_id, ref.get("timeline_id")),
-                ).fetchone()
+                revision = parent_revision_row(self.conn, revision_id, project_id, ref.get("timeline_id"))
                 if revision is None or revision[0] != ref.get("revision_digest"):
                     raise NotFoundError("timeline snapshot reference parent revision is missing or changed")
             if ref in capture_refs and capture_validator is not None:

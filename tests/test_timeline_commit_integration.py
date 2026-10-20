@@ -278,6 +278,42 @@ def test_real_same_value_publication_is_recorded_and_blocks_older_undo(editing):
     editing.assert_readback(same)
 
 
+@pytest.mark.parametrize("later", ["overwritten", "returned"])
+def test_real_inverse_refuses_when_target_was_overwritten_or_returned(editing, later):
+    first = editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-stale-target")
+    editing.commit(editing.body([editing.move("music-bed", 2)]), "undo-overwrite")
+    if later == "returned":
+        editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-return")
+    before, length = rows(editing.service), len(editing.history())
+    with pytest.raises(RuntimeErrorBase) as error:
+        editing.commit(editing.body([inverse(first["receipt"]["receipt_id"])]), "undo-stale-conflict")
+    assert error.value.status == 409
+    assert error.value.details["status"] == "conflict"
+    assert rows(editing.service) == before
+    assert len(editing.history()) == length
+
+
+def test_real_inverse_dry_run_and_exact_retry_write_only_the_undo_once(editing, monkeypatch):
+    first = editing.commit(editing.body([editing.move("music-bed", 1)]), "undo-dry-target")
+    undo = editing.body([inverse(first["receipt"]["receipt_id"])])
+    before = rows(editing.service)
+    preview = editing.commit({**copy.deepcopy(undo), "dry_run": True}, "undo-dry-run")
+    assert preview["data"]["status"] == "preview"
+    assert preview["receipt"] is None
+    assert rows(editing.service) == before
+    undone = editing.commit(copy.deepcopy(undo), "undo-real")
+    after = rows(editing.service)
+
+    def forbidden(self, context, port):
+        raise AssertionError("exact retry executed the semantic provider")
+
+    with monkeypatch.context() as retry:
+        retry.setattr(type(editing.service._timeline_commit_provider), "commit", forbidden)
+        assert editing.commit(copy.deepcopy(undo), "undo-real") == undone
+    assert rows(editing.service) == after
+    assert editing.history()[-1]["records"]["undo_of"] == [first["receipt"]["receipt_id"]]
+
+
 def test_real_track_create_and_inverse_keep_complete_film_closure(editing):
     original = editing.document()
     track = {"id": "new-audio", "kind": "audio", "extension": {"opaque": [None, "kept"]}}
@@ -295,30 +331,36 @@ def test_real_track_create_and_inverse_keep_complete_film_closure(editing):
     editing.assert_readback(undone)
 
 
-def test_real_door_lost_ack_restart_exact_retry_never_executes_provider(film, agent, tmp_path, monkeypatch):
+def _start_door(film, tmp_path):
     from runtime_protocol.daemon import RuntimeDaemon
     from runtime_protocol.door import DoorConfig
     from tests.door_helpers import HOSTED, DoorWorld
 
     credential = tmp_path / "product.json"
+    daemon = RuntimeDaemon(
+        film.fixture.duplicate_root, support_root=tmp_path / "support", authoring_profile="astrid",
+        door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
+    ).start()
+    world = DoorWorld(tmp_path, daemon, credential)
+    world.provision()
+    handshake = world.call("/api/runtime/v1/handshake", "POST", body=b"{}",
+                           headers={"Content-Type": "application/json"})
+    assert handshake.status == 200, handshake.body
+    return world
 
+
+def _post_door(world, path, body, key):
+    response = world.call("/api/runtime" + path, "POST", body=json.dumps(body).encode(),
+                          headers={"Content-Type": "application/json", "Idempotency-Key": key})
+    assert response.status == 200, response.body
+    return response.json()
+
+
+def test_real_door_lost_ack_restart_exact_retry_never_executes_provider(film, agent, tmp_path, monkeypatch):
     def start():
-        daemon = RuntimeDaemon(
-            film.fixture.duplicate_root, support_root=tmp_path / "support", authoring_profile="astrid",
-            door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
-        ).start()
-        world = DoorWorld(tmp_path, daemon, credential)
-        world.provision()
-        handshake = world.call("/api/runtime/v1/handshake", "POST", body=b"{}",
-                               headers={"Content-Type": "application/json"})
-        assert handshake.status == 200, handshake.body
-        return world
+        return _start_door(film, tmp_path)
 
-    def post(world, path, body, key):
-        response = world.call("/api/runtime" + path, "POST", body=json.dumps(body).encode(),
-                              headers={"Content-Type": "application/json", "Idempotency-Key": key})
-        assert response.status == 200, response.body
-        return response.json()
+    post = _post_door
 
     world = start()
     try:
@@ -370,3 +412,41 @@ def test_real_door_lost_ack_restart_exact_retry_never_executes_provider(film, ag
         edit.assert_baseline()
     finally:
         world.stop()
+
+
+def test_real_restart_undo_then_recorder_tamper_fails_closed(film, agent, tmp_path):
+    from runtime_protocol.errors import RealmAdmissionError
+    from runtime_protocol.util import canonical_json
+
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        edit.assert_baseline()
+        accepted = _post_door(world, edit.path, edit.body([edit.move("music-bed", 1)]), "restart-undo-target")
+    finally:
+        world.stop()
+
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        publication = accepted["receipt"]["receipt_id"]
+        undone = _post_door(world, edit.path, edit.body([inverse(accepted["receipt"]["receipt_id"])]), "restart-undo")
+        edit.assert_readback(undone)
+        assert edit.history()[-1]["records"]["undo_of"] == [publication]
+        # Tamper the durable recorder of the pre-restart edit; the live store must refuse it.
+        conn = world.daemon.service.store.conn
+        records = json.loads(conn.execute(
+            "SELECT records_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
+        ).fetchone()[0])
+        records["undo_of"] = ["other-publication"]
+        conn.execute("UPDATE timeline_commit_history SET records_json=? WHERE publication_id=?",
+                     (canonical_json(records), publication))
+        commits = world.daemon.service._timeline_commits()[0]
+        assert any(error["id"] == publication for error in commits.integrity_errors())
+    finally:
+        world.stop()
+
+    with pytest.raises(RealmAdmissionError) as error:
+        RuntimeService(film.fixture.duplicate_root)
+    assert not error.value.details["ok"]
+    assert any(item["table"] == "timeline_commit_history" for item in error.value.details["checks"]["revisions"]["errors"])

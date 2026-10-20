@@ -5,7 +5,7 @@ import copy
 import json
 
 from .errors import ConflictError, RuntimeErrorBase, ValidationError
-from .snapshot_refs import working_copy_binding
+from .snapshot_refs import source_kind_of, working_copy_binding
 from .timeline_commit import CommitRejected
 from .timeline_commit_port import detached, digest
 from .util import canonical_json
@@ -68,7 +68,7 @@ def validate_capture(service, snapshot, ref, inputs):
     A working copy sent without its candidate cannot be verified, so it is
     admitted CAS-only (uncertified) and never certified.
     """
-    source_kind = ref.get("source_kind") or ("revision" if ref.get("revision_id") else "cas")
+    source_kind = source_kind_of(ref)
     if source_kind == "cas":
         return False
     preview = detached(inputs.get("authoring_preview")) if source_kind == "working_copy" else None

@@ -291,6 +291,54 @@ def test_failure_after_receipt_rolls_back_every_row(realm):
     assert commits.lookup(ctx, authorize=lambda: None) is None
 
 
+@pytest.mark.parametrize("point", ["closure", "acceptance_event", "receipt"])
+def test_failure_between_projection_steps_rolls_back_and_restart_retry_publishes_once(realm, monkeypatch, point):
+    service, commits, project, head, root = realm
+    ctx = context(service, project, head)
+    value = prepared(commits, ctx)
+
+    def fail_after(owner, name, selected=lambda *args: True):
+        original = getattr(owner, name)
+
+        def failing(*args, **kwargs):
+            result = original(*args, **kwargs)
+            if selected(*args):
+                raise RuntimeError(f"crash after {point}")
+            return result
+        monkeypatch.setattr(owner, name, failing)
+
+    # Each point is a durable step inside the single acceptance transaction.
+    if point == "closure":
+        fail_after(commits, "_persist_closure")
+    elif point == "acceptance_event":
+        fail_after(service.store, "_append_timeline_event", lambda _, kind, *rest: kind == "timeline.commit.accepted")
+    else:
+        fail_after(service.store, "_record_command_receipt")
+    before = counts(service)
+    with pytest.raises(RuntimeError, match=f"crash after {point}"):
+        accept(commits, ctx, value)
+    assert counts(service) == before
+    assert commits.head(project, "main") == head
+    assert commits.lookup(ctx, authorize=lambda: None) is None
+    assert service.store.integrity_report()["ok"]
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        replay = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        original = accept(replay, ctx, value)
+        assert accept(replay, ctx, value) == original
+        assert replay.lookup(ctx, authorize=lambda: None) == original
+        after = counts(restarted)
+        assert after["timeline_commit_history"] == before["timeline_commit_history"] + 1
+        assert after["command_idempotency"] == before["command_idempotency"] + 1
+        assert after["timeline_events"] == before["timeline_events"] + 1
+        assert after["timeline_versions"] == before["timeline_versions"] + 1
+        assert replay.head(project, "main")["publication_id"] == original["receipt"]["receipt_id"]
+        assert restarted.store.integrity_report()["ok"]
+    finally:
+        restarted.close()
+
+
 def test_preview_is_validated_and_reserves_nothing(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head, dry_run=True)

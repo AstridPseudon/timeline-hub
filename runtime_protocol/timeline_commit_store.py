@@ -19,6 +19,7 @@ from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
+_TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
 
 
 def detached(value):
@@ -61,6 +62,28 @@ def request_identity(context):
 def scope(context):
     request = context["request"]
     return canonical_json([request["project_id"], request["timeline_id"]])
+
+
+_SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render_publications",
+                       "timeline_document_input_links", "timeline_commit_history")
+
+
+def timeline_scope_is_empty(conn, timeline_id):
+    """True when nothing is authored under the timeline: no scoped rows, dependencies, occurrences or non-empty snapshot."""
+    # Any row keyed to the timeline is authored data.
+    for table in _SHELL_SCOPE_TABLES:
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
+                conn.execute(f"SELECT 1 FROM {table} WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+            return False
+    # create_timeline snapshots the empty shell as timeline_revisions v1; only a non-empty snapshot is authored.
+    if conn.execute("SELECT 1 FROM timeline_revisions WHERE timeline_id=? AND (shots_json!='[]' OR references_json!='[]') LIMIT 1",
+                    (timeline_id,)).fetchone():
+        return False
+    for child in ("composition_revision_occurrences", "composition_revision_dependencies"):
+        if conn.execute(f"SELECT 1 FROM {child} c JOIN parent_composition_revisions r ON r.id=c.parent_revision_id "
+                        "WHERE r.timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+            return False
+    return True
 
 
 class TimelineCommitStore:
@@ -686,9 +709,83 @@ class TimelineCommitStore:
                         **{k: request[k] for k in _METADATA if k in request}}
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
+                self._project_text_bindings(candidate["canonical_document"], prepared["records"], result["receipt"]["receipt_id"])
                 if inputs is not None:
                     inputs.persist(prepared, result["receipt"]["receipt_id"], data["accepted_revision_id"])
                 return result
+
+    def _project_text_bindings(self, document, records, publication_id):
+        """Derive live text-binding rows and events from the accepted recorder's writes.
+
+        Runs in the acceptance transaction after _persist_closure; only this commit's
+        writes are projected, so historical reuse never repoints a live row.
+        """
+        project_id = document["project_id"]
+        shots = {o["occurrence_id"]: o["shot_id"] for o in document["parent_revision"]["payload"]["occurrences"]}
+        for record in records["commands"]:
+            for write in record["writes"]:
+                if "/text-binding:" not in write["ref"]:
+                    continue
+                match = _TEXT_BINDING_REF.fullmatch(write["ref"])
+                if match is None or write["path"]:
+                    reject("invalid_records", "malformed text binding write", status=422)
+                occurrence, kind, slot = match.groups()
+                owner = "occurrence:" + occurrence
+                read = next((r for r in record["reads"] if r["ref"] == owner + "/shot" and r["path"] == ["shot_id"]), None)
+                shot_id = shots.get(occurrence)
+                if shot_id is None or read is None or read["state"] != {"state": "present", "value": shot_id}:
+                    reject("text_binding_owner_changed", "text binding owner differs from the accepted shot")
+                self._project_text_binding(project_id, shot_id, kind, slot, write["before"], write["after"], publication_id)
+
+    def _project_text_binding(self, project_id, shot_id, kind, slot, before, after, publication_id):
+        from .service import RuntimeService
+        from .timeline_commit_port import verify_text_object
+        from .cas import ContentAddressedStore
+
+        owner = self.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (shot_id,)).fetchone()
+        if owner is None or owner["project_id"] != project_id:
+            reject("dependency_unavailable", "text binding shot is not in this project")
+        binding_id = RuntimeService._text_binding_id(project_id, shot_id, kind, slot)
+        row = self.conn.execute("SELECT * FROM shot_text_bindings WHERE id=? AND project_id=?", (binding_id, project_id)).fetchone()
+        live = None if row is None else "sha256:" + row["media_digest"]
+        recorded = None if before["state"] == "absent" else before["value"].get("media_id")
+        if live != recorded:
+            reject("text_binding_mismatch", "recorded text binding state differs from the live binding")
+        if after["state"] != "present":
+            # The binding tables keep append-only events and have no removal event kind.
+            reject("text_binding_clear_unsupported", "clearing a text binding is not projected", status=422)
+        value = after["value"]
+        selection = {"object_id": value.get("media_id"), "digest": value.get("content_hash"),
+                     "size": value.get("byte_size"), "media_type": value.get("mime_type")}
+        if (value.get("kind"), value.get("slot")) != (kind, slot):
+            reject("invalid_records", "text binding row differs from its key", status=422)
+        verify_text_object(self.conn, ContentAddressedStore(self.store.cas_root), project_id, selection)
+        object_digest = value["media_id"][7:]
+        timestamp = now()
+        if row is None:
+            self.conn.execute("INSERT INTO shot_text_bindings(id, project_id, shot_id, kind, slot, media_digest, event_stream_id, head_seq, created_at, updated_at) "
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)",
+                              (binding_id, project_id, shot_id, kind, slot, object_digest, binding_id + ":shot.text_binding", timestamp, timestamp))
+            head, previous_hash = 0, ""
+        elif row["media_digest"] == object_digest:
+            return
+        else:
+            head = row["head_seq"]
+            previous_hash = self.conn.execute("SELECT event_hash FROM shot_text_binding_events WHERE binding_id=? AND seq=?",
+                                              (binding_id, head)).fetchone()["event_hash"]
+        event_id, seq = new_id(), head + 1
+        event_kind = "shot.text_binding.created" if seq == 1 else "shot.text_binding.rebound"
+        payload = {"binding_id": binding_id, "project_id": project_id, "shot_id": shot_id, "kind": kind, "slot": slot,
+                   "media_id": value["media_id"], "content_hash": value["content_hash"], "byte_size": value["byte_size"],
+                   "mime_type": value["mime_type"], "publication_id": publication_id}
+        event_hash = hashlib.sha256(canonical_json({"event_id": event_id, "binding_id": binding_id, "seq": seq,
+                                                    "kind": event_kind, "payload": payload,
+                                                    "previous_hash": previous_hash}).encode()).hexdigest()
+        self.conn.execute("INSERT INTO shot_text_binding_events(event_id, binding_id, project_id, seq, kind, payload_json, previous_hash, event_hash, created_at) "
+                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (event_id, binding_id, project_id, seq, event_kind, canonical_json(payload), previous_hash, event_hash, timestamp))
+        self.conn.execute("UPDATE shot_text_bindings SET media_digest=?, head_seq=?, updated_at=? WHERE id=?",
+                          (object_digest, seq, timestamp, binding_id))
 
     def _persist_closure(self, document):
         project_id, timestamp = document["project_id"], now()
@@ -823,24 +920,12 @@ class TimelineCommitStore:
                                         (project_id, timeline_id)).fetchone()
             if current is None or current["revision_id"] is None or current["publication_id"] is not None:
                 reject("history_unavailable")
-            # Only a shell with no authored scope is empty: any row keyed to the timeline is authored data.
-            for table in self._SHELL_SCOPE_TABLES:
-                if self.conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
-                        self.conn.execute(f"SELECT 1 FROM {table} WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
-                    reject("history_unavailable")
-            # create_timeline snapshots the empty shell as timeline_revisions v1; only a non-empty snapshot is authored.
-            if self.conn.execute("SELECT 1 FROM timeline_revisions WHERE timeline_id=? AND (shots_json!='[]' OR references_json!='[]') LIMIT 1",
-                                 (timeline_id,)).fetchone() or \
-                    self.conn.execute("SELECT 1 FROM composition_revision_occurrences o JOIN parent_composition_revisions r "
-                                 "ON r.id=o.parent_revision_id WHERE r.timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
+            if not timeline_scope_is_empty(self.conn, timeline_id):
                 reject("history_unavailable")
             plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
                                           read_object=ContentAddressedStore(self.store.cas_root).read)
             self._install_entries(project_id, timeline_id, plan)
             return plan["entries"][0]["receipt"]["event_ids"][0]
-
-    _SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render_publications",
-                           "timeline_document_input_links", "timeline_commit_history")
 
     def bootstrap(self, project_id, timeline_id, *, authorize):
         from .cas import ContentAddressedStore
