@@ -785,6 +785,8 @@ class RuntimeCommitService:
                 validate_command(call)
             verified_producer = capture_producer(port, request)
             for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
                 if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
                     for key in ('old_media', 'media'):

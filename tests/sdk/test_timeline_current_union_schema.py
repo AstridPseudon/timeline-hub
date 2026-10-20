@@ -1,4 +1,4 @@
-"""The element successor preserves S1, current, and the published schema floors."""
+"""The text successor preserves complete S2 and the published schema floors."""
 from __future__ import annotations
 
 import copy
@@ -25,6 +25,22 @@ def baseline(name):
     raw = (FIXTURES / (name + '.json')).read_bytes()
     assert hashlib.sha256(raw).hexdigest() == SOURCES[name]
     return json.loads(raw)
+
+
+def without_text(schema):
+    candidate = copy.deepcopy(schema)
+    for name in ('ScopedId', 'EntityRef', 'TargetKey'):
+        branches = candidate['$defs'][name]['anyOf']
+        assert len(branches) == 3
+        legacy = json.loads((FIXTURES / 'runtime-0.2.2-6be97063.json').read_text())
+        assert branches[0] == legacy['$defs'][name]
+        candidate['$defs'][name] = branches[1]
+    del candidate['$defs']['TextBindingSetArgs']
+    conditions = candidate['$defs']['EditCommand']['allOf']
+    assert len([item for item in conditions if item['if']['properties']['op']['const'] == 'text-binding.set']) == 1
+    candidate['$defs']['EditCommand']['allOf'] = [
+        item for item in conditions if item['if']['properties']['op']['const'] != 'text-binding.set']
+    return candidate
 
 
 @pytest.mark.parametrize('name', SOURCES)
@@ -56,7 +72,7 @@ def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(n
 
 def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
     previous = baseline('agent-current-c456b328')
-    candidate = copy.deepcopy(_SCHEMA)
+    candidate = without_text(_SCHEMA)
     for definition in ('ProducerAdmittedTarget', 'ProducerIdentity', 'ProducerAttemptPin',
                        'ProducerGuardArgs', 'SettledProducerProposal'):
         del candidate['$defs'][definition]
@@ -71,7 +87,9 @@ def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
 
 def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
     previous = baseline('agent-frozen-s1-0a0ac7ba')
-    candidate = copy.deepcopy(_SCHEMA)
+    candidate = without_text(_SCHEMA)
+    assert len(candidate['$defs']) == 48
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 22
     element = candidate['$defs']['ClipSetElementArgs']
     assert element['properties'].pop('schema_source') == {'$ref': '#/$defs/DocumentPin'}
     assert element['required'] == ['elementRef'] and element['additionalProperties'] is False
@@ -82,8 +100,8 @@ def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
         'There is no clear: a clip keeps its element.')
     element['description'] = previous['$defs']['ClipSetElementArgs']['description']
     assert candidate == previous
-    assert len(_SCHEMA['$defs']) == 48
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 22
+    assert len(_SCHEMA['$defs']) == 49
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 23
 
 
 @pytest.mark.parametrize('name', SOURCES)
@@ -93,10 +111,10 @@ def test_existing_argument_narrowing_still_fails(name):
     assert compatibility_errors(baseline(name), candidate)
 
 
-def test_canonical_schema_is_byte_identical_to_approved_s2():
-    path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
+def test_text_delta_preserves_complete_approved_s2():
+    raw = json.dumps(without_text(_SCHEMA), sort_keys=True).encode()
+    assert hashlib.sha256(raw).hexdigest() == (
+        'f2d4d026a8605ed312fd48b6d6eaa9c14f03168c669c729501a728df5c4e4d07')
 
 
 def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
@@ -105,7 +123,7 @@ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_
     for version, source in sources.items():
         raw = (FIXTURES / source['file']).read_bytes()
         assert hashlib.sha256(raw).hexdigest() == source['sha256']
-        previous, candidate = json.loads(raw), copy.deepcopy(_SCHEMA)
+        previous, candidate = json.loads(raw), without_text(_SCHEMA)
         if version in ('0.2.1', '0.2.2'):
             # The conservative checker cannot prove regex inclusion. Verify
             # these exact additive alternatives, then check every other field.

@@ -108,6 +108,9 @@ def address(key, resolved):
 
 def logical_address(ref, path):
     path = tuple(path)
+    if '/text-binding:' in ref:
+        owner, identity = ref.rsplit('/text-binding:', 1)
+        return owner, ('payload', 'text_bindings', ('text-binding', identity), *path)
     if '/asset:' in ref:
         owner, identity = ref.rsplit('/asset:', 1)
         return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets', identity, *path)
@@ -188,6 +191,11 @@ class State:
             owner = ref.split('/', 1)[0]
             if self.entity(owner, optional=True) is None:
                 return None
+        if '/text-binding:' in ref:
+            from .native_text_binding import binding_key, binding_rows
+            owner, identity = ref.rsplit('/text-binding:', 1)
+            rows = binding_rows(self, owner)
+            return next((row for row in rows if binding_key(row) == identity), None)
         if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
             assets = self.config(owner).get('registry', {}).get('assets', {})
@@ -339,6 +347,27 @@ class State:
         return False
 
     def set(self, ref, path, state):
+        if '/text-binding:' in ref:
+            from .native_text_binding import binding_key, binding_rows
+            if path:
+                raise CommandError('text bindings are written whole', ref=ref)
+            owner, identity = ref.rsplit('/text-binding:', 1)
+            rows = binding_rows(self, owner)
+            existing = self.entity(ref, optional=True)
+            if state['state'] == 'present' and (not isinstance(state['value'], dict)
+                                               or binding_key(state['value']) != identity):
+                raise CommandError('text binding row differs from its key', ref=ref)
+            if existing is not None:
+                index = rows.index(existing)
+                if state['state'] == 'absent':
+                    rows.pop(index)
+                else:
+                    rows[index] = copy.deepcopy(state['value'])
+            elif state['state'] == 'present':
+                shot = self.occurrence(owner)['shot_id']
+                self.bundle['shots'][shot]['payload'].setdefault('text_bindings', rows)
+                rows.append(copy.deepcopy(state['value']))
+            return
         if '/asset:' in ref and not path:
             owner, identity = ref.rsplit('/asset:', 1)
             assets = self.config(owner)['registry']['assets']

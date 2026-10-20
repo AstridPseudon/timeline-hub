@@ -11,7 +11,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 from ._command_state import CommandError, address, equal, spelling
-from ._recording import Recording, guard, selection
+from ._recording import Recording, guard, selection, selection_matches
 
 _SCHEMA = json.loads((Path(__file__).parents[2] / 'core/timeline/schema/edit-command.schema.json').read_text())
 _VALIDATOR = Draft202012Validator(_SCHEMA)
@@ -46,8 +46,10 @@ def operations():
         placement_unplace,
     )
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
+    from .native_text_binding import TEXT_INTENT, text_binding_set
     from .producer import producer_guard
-    return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+    return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
+            'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
@@ -144,7 +146,7 @@ def _verify_claims(ctx, command):
         guard(ctx.state, read['ref'], read['path'], read['state'])
     for selected in command.get('selections', []):
         actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
-        if not equal(actual, selected):
+        if not selection_matches(selected, actual):
             raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
 
 
@@ -203,6 +205,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             if field not in command:
                 continue
             matches = equal(command[field], record['command'][field])
+            if field == 'selections':
+                matches = len(command[field]) == len(record['command'][field]) and all(
+                    selection_matches(claimed, actual)
+                    for claimed, actual in zip(command[field], record['command'][field]))
             if field == 'reads':
                 actual = record['command']['reads']
                 matches = len(command[field]) == len(actual) and all(
