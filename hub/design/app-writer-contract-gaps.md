@@ -34,8 +34,7 @@ duplication, gallery/catalog metadata, billing/task completion, and other
 relational placement projections are not authored timeline state. Keep UI
 preferences/session state and local IndexedDB recovery drafts. They must not be
 counted as published-command coverage, and they must not be converted into
-invented timeline opnames. The retired Supabase canonical append/registry lane
-is already closed; do not restore it.
+invented timeline opnames. The Supabase canonical append/registry purge is reviewed on held App d5000e35c, not yet integrated; do not restore it or count D03 as DELETED.
 
 ## Concrete next five writer results
 

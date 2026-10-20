@@ -45,3 +45,9 @@ None (no restarts, no recycling, no config changes).
 - Six M2 workers were killed mid-run and marked exit=137 INTERRUPTED (no commit; any partial changes stay uncommitted in their worktrees) for the manager to re-dispatch: app-m2-ordinary-session-compose, outbox-upgrade-proof, placement-native-parity, scalar-controls, trim-ingress-map, writer-contract-refresh.
 - Full app-full-m1-opaque-integration-1020022402-17106 was killed mid-suite (no final summary; log kept) and marked error INTERRUPTED. Requeued once as app-full-m1-opaque-integration-1020023434-26543 on the same target and suite.
 - Recovery is now scripted, so a future restart is restored the same way.
+
+## Lead 02:58Z: re orchestrator 02:50Z (leased source worktrees)
+- My mistake: the lead watcher's auto-recycle removed the leased /home/user/work/wt/app-m1-full-agent-source and app-m1-full-runtime-source. They looked "contained in another branch" and it did not check lease notes.
+- Done: after app-m1-full-collection-diagnose finished (diagnosis in managers/app/notes/full26543-collection-diagnosis.md), I cancelled 26543 (status cancelled, INVALID ENVIRONMENT; process group killed; markers and snapshot cleaned).
+- Recreated, detached and clean: app-m1-full-agent-source at Agent tl/integration 4a75f68f32049a69fd86135c645fa64c51175c14 (includes the numeric fix), and app-m1-full-runtime-source at Runtime tl/integration 4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136 (includes the null-speed fix d79758d). Lease notes are updated with these SHAs, and workers/<w>/KEEP is set on both.
+- Lead auto-recycle is now restricted to manager-listed (recyclable-finished-clean.txt) or merged App workers. It skips KEEP, lease and ACTIVE-named worktrees and those with queued or running tests, and runs under one lock. The corrected-environment App full is the manager's to request.
