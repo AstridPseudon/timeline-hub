@@ -60,7 +60,7 @@ def _build_actor() -> None:
 
 
 # fake-second-product.ts exits 1: its createProjectShot (RT02) and legacy composition publication (D04) get 410.
-@pytest.mark.xfail(strict=True, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); the actor is ported with their replacements")
+@pytest.mark.xfail(strict=True, raises=subprocess.CalledProcessError, reason="RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); the actor is ported with their replacements")
 def test_second_client_core_journey_is_executable(daemon: RuntimeDaemon) -> None:
     _build_actor()
     smoke = subprocess.run(["node", str(INDEPENDENT_CLIENT_SMOKE)], cwd=ROOT, check=True, capture_output=True, text=True)

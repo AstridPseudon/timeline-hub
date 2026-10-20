@@ -44,7 +44,7 @@ def test_executor_registration_requires_key_and_fences_stale_replay_after_restar
         restarted.stop()
 
 
-@pytest.mark.xfail(strict=True, reason="RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
 def test_timeline_shot_and_reference_creation_are_keyed_durable_and_non_overwriting(tmp_path):
     root = tmp_path / "realm"
     support = tmp_path / "support"
