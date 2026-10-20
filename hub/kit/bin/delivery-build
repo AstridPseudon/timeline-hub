@@ -76,10 +76,10 @@ def is_test(path):
             or ".test." in name or ".spec." in name)
 
 
-def line_split(repo):
+def line_split(repo, base):
     """{'product': [files, added, deleted], 'tests': [...]} for origin/main -> tl/integration."""
     totals = {"product": [0, 0, 0], "tests": [0, 0, 0]}
-    for line in git(repo, "diff", "--numstat", "--no-renames", BASE, BRANCH).splitlines():
+    for line in git(repo, "diff", "--numstat", "--no-renames", base, BRANCH).splitlines():
         added, deleted, path = line.split("\t", 2)
         total = totals["tests" if is_test(path) else "product"]
         total[0] += 1
@@ -88,15 +88,17 @@ def line_split(repo):
     return totals
 
 
-def squash(name, repo, patches, tmp):
+def squash(name, repo, base, tip, patches, tmp):
     """Write one patch: a commit on origin/main with tl/integration's tree.
 
     Works whether or not the two share history, because it compares trees. Returns the
     first-parent subjects of the range, which the commit message lists.
     """
     build = fresh_repo(os.path.join(tmp, name, "build"))
+    # Fetch immutable object IDs into real local refs.  Ref names from a linked
+    # worktree are not guaranteed to be advertised by every local transport.
     git(build, "fetch", "-q", "--no-tags", repo,
-        f"refs/remotes/{BASE}:refs/heads/main", f"refs/heads/{BRANCH}:refs/delivery/tip")
+        f"{base}:refs/heads/main", f"{tip}:refs/delivery/tip")
     subjects = git(build, "log", "--first-parent", "--reverse", "--format=%s",
                    "main..refs/delivery/tip").splitlines()
     message = os.path.join(tmp, name, "MESSAGE")
@@ -108,7 +110,7 @@ def squash(name, repo, patches, tmp):
     return subjects
 
 
-def verify(name, repo, bundle, patches, ranged, tmp, problems):
+def verify(name, repo, base, bundle, patches, ranged, tmp, problems):
     """Re-apply the patch to a fresh repo holding origin/main, and check the bundle.
 
     Both resulting trees must equal tl/integration's tree. Problems are appended to `problems`,
@@ -117,8 +119,10 @@ def verify(name, repo, bundle, patches, ranged, tmp, problems):
     want = git(repo, "rev-parse", f"{BRANCH}^{{tree}}")
 
     main = fresh_repo(os.path.join(tmp, name, "main"))
+    # Keep the prerequisite as a local branch, just as a fresh checkout does.
+    # The immutable base ID also makes this independent of source ref layout.
     attempt(problems, "fetch origin/main", git, main,
-            "fetch", "-q", "--no-tags", repo, f"refs/remotes/{BASE}:refs/heads/main")
+            "fetch", "-q", "--no-tags", repo, f"{base}:refs/heads/main")
     attempt(problems, "checkout main", git, main, "checkout", "-q", "main")
 
     # A ranged bundle needs origin/main as a prerequisite, so it is checked in the main clone.
@@ -151,28 +155,32 @@ def verify(name, repo, bundle, patches, ranged, tmp, problems):
 
 def build_repo(name, staging, tmp):
     repo = os.path.join(WORK, name)
-    ranged = git_ok(repo, "merge-base", "--is-ancestor", BASE, BRANCH)
+    base = git(repo, "rev-parse", f"{BASE}^{{commit}}")
+    tip = git(repo, "rev-parse", f"{BRANCH}^{{commit}}")
+    ranged = git_ok(repo, "merge-base", "--is-ancestor", base, tip)
     result = {
         "name": name,
-        "tip": git(repo, "rev-parse", BRANCH),
-        "base": git(repo, "rev-parse", BASE),
-        "ahead": int(git(repo, "rev-list", "--count", f"{BASE}..{BRANCH}")),
+        "tip": tip,
+        "base": base,
+        "ahead": int(git(repo, "rev-list", "--count", f"{base}..{tip}")),
         "ranged": ranged,
-        "shortstat": git(repo, "diff", "--shortstat", f"{BASE}..{BRANCH}"),
-        "split": line_split(repo),
+        "shortstat": git(repo, "diff", "--shortstat", base, tip),
+        "split": line_split(repo, base),
     }
     problems = []
 
     patches = os.path.join(staging, "patches", name)
     os.makedirs(patches)
-    attempt(problems, "squash", squash, name, repo, patches, tmp)
+    attempt(problems, "squash", squash, name, repo, base, tip, patches, tmp)
 
     bundle = os.path.join(staging, "bundles", f"{name}.bundle")
     os.makedirs(os.path.dirname(bundle), exist_ok=True)
-    bundle_args = ["bundle", "create", bundle, BRANCH, *([f"^{BASE}"] if ranged else [])]
+    # Keep the advertised integration ref as the bundle endpoint; git bundle
+    # requires a ref endpoint for this ranged form.  The exclusion is pinned.
+    bundle_args = ["bundle", "create", bundle, BRANCH, *([f"^{base}"] if ranged else [])]
     attempt(problems, "bundle create", git, repo, *bundle_args)
 
-    result.update(verify(name, repo, bundle, patches, ranged, tmp, problems))
+    result.update(verify(name, repo, base, bundle, patches, ranged, tmp, problems))
     result["problems"] = problems
     return result
 

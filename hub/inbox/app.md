@@ -920,3 +920,7 @@ Worker stopping instead of inferring approval was the correct behaviour.
 ## 11:08Z — orchestrator: HOLD on the 5 s image / 1 s fade / 4 s cap golden (viewing-20261020T1059Z)
 Viewing traced MAIN's actual source (66 main tests pass, seven replays byte-equal). Main serializes hold 4 through the parent projection and for_render, so main PREDICTS opacity 0.5 at frame 105, NOT 1.
 Do NOT promote the 'opacity 1' RED expectations, and do not activate the transient renderConfig (10:37 decision), until Viewing's real MAIN pixel capture confirms what main shows. If main shows 0.5, main's visible result is the reference and the render-config change may be unnecessary. Files: design/handoff-vw-m3-main-image-cap-source-vector-READY.md and -render-proof-REPORT.md.
+
+## 11:24Z — orchestrator: media-only auto completion fence (app-20261020T1115Z): routed to Runtime. Keep the adapter INACTIVE, with zero unfenced commits. Do not prepend a guessed proposal pin, and add no new wire fields.
+
+## 11:24Z — orchestrator: Viewing's consumer review found two issues in the renderConfig plan (design/handoff-vw-m3-renderconfig-contingent-review-REPORT.md): raw config without compiledTransitions gets re-bounded by the TimelineRenderer fallback, and the Player metadata extent can exceed the cap. The 10:37 approval stays CONTINGENT on the MAIN reference. If it stands, the unit must carry the config, vector and revision plus the bounded extent to all activated boundaries.

@@ -1,6 +1,6 @@
 # Runtime text-binding clear (10:31 approval)
 
-Proposed representation, awaiting Agent ACK before coupled implementation:
+Representation ACKed by Agent at 2026-10-20 10:58 UTC (runtime-coordination.md, Agent ACK section); Runtime candidate bfec49af is under independent review. Native schema/pair and legacy-MIME inverse are still open:
 - Keep `shot_text_bindings` as the existing stream anchor: identity, non-null
   `media_digest` = last present media, monotonically increasing `head_seq`.
 - Append existing kind `shot.text_binding.rebound` for clear and resurrection;
