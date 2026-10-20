@@ -4,6 +4,7 @@ import { useClipEditing } from './useClipEditing.ts';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { createTimelineEditability, type TimelineEditability } from '../lib/timeline-editability.ts';
 import { captureClipSplitEdit } from '../commands/clipSplitGesture.ts';
+import { splitIntersectingClipsAtPlayhead } from '../lib/clip-editing-utils.ts';
 import splitFixture from '../commands/fixtures/recipe_m2_clip_split.json';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -30,6 +31,9 @@ import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLa
 import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
 import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
+import { captureClipSplitBatchEdit, submitClipSplitBatchEdit } from '../commands/clipSplitBatchGesture.ts';
+import splitBatchFixture from '../commands/fixtures/recipe_m2_clip_split_batch.json';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -73,11 +77,13 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
     store.getState().syncSlices({
       data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
       ops: { ...store.getState().ops, clipMove: save.commands.port, clipSplit: save.commands.clipSplitPort,
+        clipSplitBatch: save.commands.clipSplitBatchPort,
         selectClip, setSelectedTrackId, applyEdit: legacyApplyEdit },
     });
     const editing = useClipEditing({ dataRef: save.dataRef, resolvedConfig: save.data?.resolvedConfig ?? null,
       selectedClipId: 'clip-a', selectedTrack: null, currentTime, editability,
-      selectClip, setSelectedTrackId, applyEdit: legacyApplyEdit, clipSplitPort: save.commands.clipSplitPort });
+      selectClip, setSelectedTrackId, applyEdit: legacyApplyEdit, clipSplitPort: save.commands.clipSplitPort,
+      clipSplitBatchPort: save.commands.clipSplitBatchPort });
     return { commands: save.commands, commit: save, history, editing };
   }, { wrapper, initialProps: { currentTime: 3, editability: undefined } });
   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
@@ -128,7 +134,232 @@ function splitDocument(children = false) {
   return raw;
 }
 
+function splitBatchDocument() {
+  const raw = commandDocument();
+  raw.parent_revision.payload = structuredClone(splitBatchFixture.input.parent_revision.payload);
+  raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+  return raw;
+}
+
 describe('mounted timeline command session', () => {
+  it('preserves the original visible multi-split result for literal media source windows', async () => {
+    const raw = splitBatchDocument();
+    const parent = raw.parent_revision.payload;
+    for (const row of parent.clips as Array<Record<string, JSON>>) {
+      delete row.hold;
+      delete ((row.app as Record<string, JSON>).astrid as Record<string, JSON>).for;
+    }
+    (parent.config as Record<string, unknown>).clips = structuredClone(parent.clips);
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const { hook, env, legacyApplyEdit } = await mounted(await environment(raw));
+    env.setFault('lost');
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
+    const before = hook.result.current.commit.data!;
+    const expected = splitIntersectingClipsAtPlayhead(before.resolvedConfig, before.rows, ['clip-b', 'clip-a'], 3);
+    expect(expected.didSplit).toBe(true);
+    act(() => hook.result.current.editing.handleSplitClipsAtPlayhead(['clip-b', 'clip-a']));
+    expect(hook.result.current.commit.data!.resolvedConfig.clips).toEqual(expected.config.clips);
+    expect(hook.result.current.commit.data!.rows[0].actions).toMatchObject([
+      { id: 'clip-a', start: 1, end: 3 }, { id: 'clip-a-123456', start: 3, end: 5 },
+      { id: 'clip-b', start: 1, end: 3 }, { id: 'clip-b-123456', start: 3, end: 5 },
+    ]);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    expect(env.commits()).toHaveLength(1);
+    hook.unmount();
+  });
+
+  it('splits two parent media clips through the UI in original order with one installation, exact reload retry and one undo', async () => {
+    const env = await environment(splitBatchDocument());
+    env.setFault('lost');
+    const first = await mounted(env);
+    const port = first.hook.result.current.commands.clipSplitBatchPort!;
+    expect(first.store.getState().ops.clipSplitBatch).toBe(port);
+    const capture = vi.spyOn(port, 'capture');
+    const submit = vi.spyOn(port, 'submit');
+    const before = first.hook.result.current.commit.data!;
+    before.sourceItemsBySchemaRef = { 'custom/v1': [{ id: 'source-1', shape: 'point', domain: 'timeline_seconds',
+      extent: { start: 0 }, schemaRef: 'custom/v1', payload: { keep: [null, false] },
+      sourceArtifactRef: { assetId: 'picture' }, provenance: { adapterId: 'test', adapterVersion: '1' } }] };
+    before.transcriptReferences = { schema: 'media.transcript.references/v1',
+      associations: [{ assetId: 'picture', documentId: 'transcript-1' }] };
+    const install = vi.fn();
+    first.hook.result.current.commit.eventBus.on('pruneSelection', install);
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
+    act(() => first.hook.result.current.editing.handleSplitClipsAtPlayhead(['missing', 'clip-b', 'clip-a', 'clip-b', 'uploading-x']));
+    expect(capture).toHaveBeenCalledExactlyOnceWith({ current: before, clipIds: ['clip-b', 'clip-a'], on: 3,
+      members: [{ clipId: 'clip-b', rightId: 'clip-b-123456' }, { clipId: 'clip-a', rightId: 'clip-a-123456' }] });
+    expect(submit).toHaveBeenCalledTimes(1);
+    const commands = structuredClone(submit.mock.calls[0][0].commands);
+    expect(commands.map((command) => command.select)).toEqual(['parent/clip:clip-b', 'parent/clip:clip-a']);
+    expect(commands[1].selections![0].order).toEqual(['parent/clip:clip-a', 'parent/clip:clip-b', 'parent/clip:clip-b-123456']);
+    const draft = first.hook.result.current.commit.data!;
+    expect(draft.config.clips).toEqual(splitBatchFixture.after_bundle.parent.clips.map((clip) => ({ ...clip,
+      id: clip.id === 'right:a' ? 'clip-a-123456' : clip.id === 'right:b' ? 'clip-b-123456' : clip.id })));
+    expect(draft.rows[0].actions).toMatchObject([
+      { id: 'clip-a', start: 1, end: 3 }, { id: 'clip-a-123456', start: 3, end: 5 },
+      { id: 'clip-b', start: 1, end: 3 }, { id: 'clip-b-123456', start: 3, end: 5 },
+    ]);
+    expect(draft.meta['clip-a-123456']).toMatchObject({ from: 6, to: 10, hold: 4, speed: 2 });
+    expect(draft.registry).toEqual(before.registry);
+    expect(draft.output).toEqual(before.output);
+    expect(draft.sourceItemsBySchemaRef).toEqual(before.sourceItemsBySchemaRef);
+    expect(draft.transcriptReferences).toEqual(before.transcriptReferences);
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(first.selectClip).not.toHaveBeenCalled();
+    expect(first.legacyApplyEdit).not.toHaveBeenCalled();
+    expect(first.snapshotSaves).not.toHaveBeenCalled();
+    expect(first.saveTimeline).not.toHaveBeenCalled();
+    expect(first.saveTimelineAtHead).not.toHaveBeenCalled();
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands).toEqual(commands);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+
+    const second = await mounted(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.recoverableOwners).toContain(owner));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    await waitFor(() => expect(second.hook.result.current.commands.state.status).toBe('saved'));
+    expect(env.commits()).toHaveLength(2);
+    expect(env.commits()[1].bodyBytes).toEqual(env.commits()[0].bodyBytes);
+    expect(env.commits()[1].key).toBe(env.commits()[0].key);
+    expect(env.commits()[1].body!.commands).toEqual(commands);
+    expect(second.hook.result.current.commit.data!.config.clips).toEqual(draft.config.clips);
+    await act(async () => { await second.hook.result.current.commands.undo(); });
+    await waitFor(() => expect(second.hook.result.current.commands.state.status).toBe('saved'));
+    expect(env.commits()).toHaveLength(3);
+    expect(env.commits()[2].body!.commands).toMatchObject([{ op: 'timeline.inverse', args: { publications: ['p1'] } }]);
+    expect(second.hook.result.current.commit.data!.config.clips).toEqual(before.config.clips);
+    expect(second.hook.result.current.commands.state.canUndo).toBe(false);
+    second.hook.unmount();
+  });
+
+  it('refuses a second media member during native capture without an installation, request or legacy write', async () => {
+    const raw = splitBatchDocument();
+    const parent = raw.parent_revision.payload;
+    (parent.clips as Array<Record<string, JSON>>)[0].hold = 9;
+    (parent.config as Record<string, unknown>).clips = structuredClone(parent.clips);
+    parent.opaque_batch = { keep: [null, false, {}] };
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const { hook, env, legacyApplyEdit, selectClip, snapshotSaves } = await mounted(await environment(raw));
+    const before = hook.result.current.commit.data!;
+    const capture = vi.spyOn(hook.result.current.commands.clipSplitBatchPort!, 'capture');
+    const install = vi.fn();
+    hook.result.current.commit.eventBus.on('pruneSelection', install);
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    act(() => hook.result.current.editing.handleSplitClipsAtPlayhead(['clip-b', 'clip-a']));
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(error).toHaveBeenCalledExactlyOnceWith('split requires matching hold and source window');
+    expect(hook.result.current.commit.data).toBe(before);
+    expect(install).not.toHaveBeenCalled();
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+
+  it('filters original outside/boundary targets using current data before batch capture', async () => {
+    const raw = splitBatchDocument();
+    const parent = raw.parent_revision.payload;
+    const rows = parent.clips as Array<Record<string, JSON>>;
+    rows.push({ ...structuredClone(rows[0]), id: 'outside', at: 10, time_map: {} },
+      { ...structuredClone(rows[0]), id: 'boundary', at: 3, animation: {} });
+    (parent.config as Record<string, unknown>).clips = structuredClone(rows);
+    raw.parent_revision.content_digest = fixtureDigest(parent);
+    const { hook, env, legacyApplyEdit } = await mounted(await environment(raw));
+    env.setFault('lost');
+    const current = hook.result.current.commit.data!;
+    const port = hook.result.current.commands.clipSplitBatchPort!;
+    const capture = vi.spyOn(port, 'capture');
+    const ui = renderHook(() => useClipEditing({ dataRef: hook.result.current.commit.dataRef,
+      resolvedConfig: { ...current.resolvedConfig, clips: [] }, selectedClipId: null,
+      selectedTrack: null, currentTime: 3, selectClip: vi.fn(), setSelectedTrackId: vi.fn(),
+      applyEdit: legacyApplyEdit, clipSplitBatchPort: port }));
+    act(() => ui.result.current.handleSplitClipsAtPlayhead(['outside', 'clip-b', 'boundary', 'clip-a']));
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(capture.mock.calls[0][0]).toMatchObject({ current,
+      clipIds: ['outside', 'clip-b', 'boundary', 'clip-a'], on: 3,
+      members: [{ clipId: 'clip-b' }, { clipId: 'clip-a' }] });
+    const after = hook.result.current.commit.data!;
+    expect(after.config.clips.slice(-2)).toEqual(current.config.clips.slice(-2));
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    expect(env.commits()).toHaveLength(1);
+    ui.unmount();
+    hook.unmount();
+  });
+
+  it('keeps native batches unchanged and visible on missing-port or read-only refusal', async () => {
+    const { hook, env, legacyApplyEdit, selectClip } = await mounted(await environment(splitBatchDocument()));
+    const current = hook.result.current.commit.data!;
+    const port = hook.result.current.commands.clipSplitBatchPort!;
+    const capture = vi.spyOn(port, 'capture');
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    const ui = renderHook(({ enabled, readOnly }) => useClipEditing({ dataRef: hook.result.current.commit.dataRef,
+      resolvedConfig: current.resolvedConfig, selectedClipId: null, selectedTrack: null, currentTime: 3,
+      selectClip, setSelectedTrackId: vi.fn(), applyEdit: legacyApplyEdit,
+      clipSplitBatchPort: enabled ? port : undefined, editability: createTimelineEditability({ readOnly }) }),
+    { initialProps: { enabled: false, readOnly: false } });
+    act(() => ui.result.current.handleSplitClipsAtPlayhead(['clip-b', 'clip-a']));
+    expect(error).toHaveBeenLastCalledWith('clip.split batch capture is unavailable.');
+    ui.rerender({ enabled: true, readOnly: true });
+    act(() => ui.result.current.handleSplitClipsAtPlayhead(['clip-b', 'clip-a']));
+    expect(error).toHaveBeenLastCalledWith('These clips cannot be split while timeline editing is locked.');
+    expect(error).toHaveBeenCalledTimes(2);
+    expect(capture).not.toHaveBeenCalled();
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(selectClip).not.toHaveBeenCalled();
+    ui.unmount();
+    hook.unmount();
+  });
+
+  it('fences the batch port and installs/reloads the complete refused native preview once', async () => {
+    const document = structuredClone(splitBatchFixture.input) as unknown as CanonicalDocument;
+    document.project_id = scope.projectId;
+    document.timeline_id = scope.timelineId;
+    document.parent_revision.revision_id = 'r0';
+    const env = await environment(document);
+    env.setFault('conflict');
+    const first = await scoped(env);
+    const port = first.hook.result.current.commands.clipSplitBatchPort!;
+    const current = first.hook.result.current.commit.data!;
+    const input = { clipIds: ['clip-b', 'clip-a'], members: [
+      { clipId: 'clip-b', rightId: 'right:b' }, { clipId: 'clip-a', rightId: 'right:a' },
+    ], on: 3, current };
+    first.setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const captured = captureClipSplitBatchEdit(port, current, input.clipIds, 3,
+      (_used, clipId) => `right:${clipId.slice(-1)}`)!;
+    first.setLegacyClean(false);
+    expect(() => port.finish(captured.basis)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const prepared = port.finish(captured.basis);
+    first.setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const install = vi.spyOn(first.hook.result.current.commit, 'commitData');
+    act(() => submitClipSplitBatchEdit(captured));
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(install.mock.calls[0][1]).toMatchObject({ save: false, skipHistory: true });
+    const expected = ['clip-a', 'right:a', 'clip-b', 'right:b'];
+    expect(first.hook.result.current.commit.data!.config.clips.map((clip) => clip.id)).toEqual(expected);
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('conflict'));
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    const second = await scoped(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.recoverableOwners).toContain(owner));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(second.hook.result.current.commit.data!.config.clips.map((clip) => clip.id)).toEqual(expected);
+    expect(second.hook.result.current.commands.state.status).toBe('conflict');
+    expect(env.commits()).toHaveLength(1);
+    second.hook.unmount();
+  });
+
   it.each(['selected', 'pointer', 'facade'] as const)('submits %s single split through the mounted native port with one installation', async (ingress) => {
     const env = await environment(splitDocument());
     env.setFault('lost');

@@ -13,6 +13,7 @@ import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
+import { executeClipSplitBatch } from '../clipSplitBatchCapture.ts';
 import { executeClipSplit } from '../clipSplitCapture.ts';
 import { executeClipTrim } from '../clipTrimCapture.ts';
 import { executeClipSet } from '../clipScalarCapture.ts';
@@ -114,7 +115,8 @@ export async function environment(initialDocument = document()) {
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);
           result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
-            : request.commands[0].op === 'clip.split' ? executeClipSplit(bundle, request.commands[0])
+            : request.commands[0].op === 'clip.split' ? request.commands.length > 1
+              ? executeClipSplitBatch(bundle, request.commands) : executeClipSplit(bundle, request.commands[0])
             : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
             : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
             : request.commands[0].op === 'track.set'

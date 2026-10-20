@@ -1,3 +1,6 @@
+import { captureClipSplitBatch, executeClipSplitBatch, finishClipSplitBatch } from './clipSplitBatchCapture.ts';
+import { clipSplitBatchPreview, type ClipSplitBatchCapturePort } from './clipSplitBatchGesture.ts';
+import type { TimelineData } from '../lib/timeline-data.ts';
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
 import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
@@ -596,22 +599,26 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue(entry.payload, preview, entry.basis);
     },
   };
+  function validateSplitTarget(current: TimelineData, clipId: string, rightId: string) {
+    if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+      || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+      throw new Error('Displayed timeline does not match the raw authoring basis');
+    }
+    const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+    const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+    const select = resolveOwnedClipRef(clipId, identity, undefined, 'Split requires one literal parent clip identity');
+    if (matches.length !== 1 || select !== `parent/clip:${clipId}`
+      || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))
+      || current.config.clips.some((clip) => clip.id === rightId)
+      || current.resolvedConfig.clips.some((clip) => clip.id === rightId)) {
+      throw new Error('Split requires one literal parent clip identity');
+    }
+    return select;
+  }
   const clipSplitPort: ClipSplitCapturePort = {
     capture({ clipId, on, rightId, current }) {
       assertReady();
-      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
-        throw new Error('Displayed timeline does not match the raw authoring basis');
-      }
-      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
-      const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
-      const select = resolveOwnedClipRef(clipId, identity, undefined, 'Split requires one literal parent clip identity');
-      if (matches.length !== 1 || select !== `parent/clip:${clipId}`
-        || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))
-        || current.config.clips.some((clip) => clip.id === rightId)
-        || current.resolvedConfig.clips.some((clip) => clip.id === rightId)) {
-        throw new Error('Split requires one literal parent clip identity');
-      }
+      const select = validateSplitTarget(current, clipId, rightId);
       return freezeJson(json({ ...captureClipSplit(bundle, select, { on, right_id: rightId }),
         localGeneration, localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipSplitCapturePort['capture']>;
     },
@@ -641,6 +648,47 @@ export async function createTimelineCommandSession(options: Options) {
         throw new Error('Split was not captured by this session or the timeline changed');
       }
       if (!equal(preview, entry.payload.preview)) throw new Error('Split requires its exact native preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const clipSplitBatchPort: ClipSplitBatchCapturePort = {
+    capture({ clipIds, members, on, current }) {
+      assertReady();
+      if (current.config.pinnedShotGroups?.some((group) => group.clipIds.some((id) => clipIds.includes(id)))
+        || members.some((member) => !clipIds.includes(member.clipId))) {
+        throw new Error('Split batch requires original ungrouped clip identities');
+      }
+      for (const { clipId, rightId } of members) validateSplitTarget(current, clipId, rightId);
+      return freezeJson(json({ ...captureClipSplitBatch(bundle, members, on), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipSplitBatchCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the split batch');
+      const original = finishClipSplitBatch(basis);
+      const result = executeClipSplitBatch(bundle, original.commands);
+      const raw = new AuthoredState(result.bundle);
+      const preview = clipSplitBatchPreview(result.commands.map((command) => ({
+        clipId: command.select!.slice('parent/clip:'.length), left: raw.entity(command.select!)!,
+        right: raw.entity(`parent/clip:${command.args.right_id}`)!,
+      })));
+      prepared.set(JSON.stringify(result.commands), { payload: {
+        commands: result.commands, before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { commands: result.commands, preview };
+    },
+    submit({ commands, preview }) {
+      assertReady();
+      assertFiniteJson(commands);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(commands);
+      const entry = prepared.get(key);
+      if (!commands.length || commands.some((command) => command.op !== 'clip.split') || !entry
+        || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Split batch was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Split batch requires its exact native preview');
       prepared.delete(key);
       enqueue(entry.payload, preview, entry.basis);
     },
@@ -754,6 +802,7 @@ export async function createTimelineCommandSession(options: Options) {
     clipParamsPort,
     parentClipAddPort,
     clipSplitPort,
+    clipSplitBatchPort,
     trackCreatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),

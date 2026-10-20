@@ -1,3 +1,4 @@
+import type { ClipSplitBatchCapturePort } from '../commands/clipSplitBatchGesture.ts';
 import type { ClipSplitCapturePort } from '../commands/clipSplitGesture.ts';
 import type { TimelineEditability } from '../lib/timeline-editability.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
@@ -38,6 +39,7 @@ export interface UseClipEditingArgs {
   setSelectedTrackId: Dispatch<SetStateAction<string | null>>;
   applyEdit: TimelineApplyEdit;
   clipSplitPort?: ClipSplitCapturePort;
+  clipSplitBatchPort?: ClipSplitBatchCapturePort;
   editability?: TimelineEditability;
 }
 
@@ -75,6 +77,7 @@ export function useClipEditing({
   setSelectedTrackId,
   applyEdit,
   clipSplitPort,
+  clipSplitBatchPort,
   editability,
 }: UseClipEditingArgs): UseClipEditingResult {
   const currentTimeRef = useRef(currentTime);
@@ -297,6 +300,7 @@ export function useClipEditing({
     applyRowsEdit,
     applyConfigEdit,
     clipSplitPort,
+    clipSplitBatchPort,
     editability,
     isPinnedGroupMember,
     notifyPinnedGroupEditBlocked,

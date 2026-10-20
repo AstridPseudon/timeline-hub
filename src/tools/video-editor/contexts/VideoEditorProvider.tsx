@@ -743,6 +743,7 @@ export function VideoEditorRuntimeContent({
     clipScalar: editor.clipScalar,
     clipTrim: editor.clipTrim,
     clipSplit: editor.clipSplit,
+    clipSplitBatch: editor.clipSplitBatch,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,

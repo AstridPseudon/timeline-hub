@@ -240,6 +240,70 @@ describe('useClipEditing unconverted nonmedia single splits', () => {
   });
 });
 
+describe('useClipEditing retained batch split ingresses', () => {
+  it.each([
+    ['text', { clipType: 'text', text: { content: 'keep' } }],
+    ['hold', { clipType: 'hold' }],
+    ['transition', { transition: { type: 'dissolve', duration: 0.5 } }],
+    ['animation', { animation: { keep: [null, false] } }],
+    ['animated params', { params: { fadeIn: 0.5 } }],
+    ['relational media', { app: { astrid: { on: 'anchor' } } }],
+    ['nonliteral duration', { app: { astrid: { for: 'until next cut' } } }],
+    ['nonfixed timing', { app: { astrid: { fixed_start: false } } }],
+    ['time map', { time_map: { keep: [null, false] } }],
+    ['moving media without a source window', { from: undefined, to: undefined }],
+  ])('preserves one original atomic %s batch edit before native capture', (_name, patch) => {
+    const current = makeConfigTimelineData({
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [
+        { id: 'a', track: 'V1', clipType: 'media', asset: 'video', at: 1, hold: 4, from: 0, to: 4, ...patch },
+        { id: 'b', track: 'V1', clipType: 'media', asset: 'video', at: 1, hold: 4, from: 0, to: 4 },
+      ],
+    }, { assets: { video: { type: 'video', file: 'video.mp4' } } });
+    const original = structuredClone(current.resolvedConfig.clips);
+    const applyEdit = vi.fn();
+    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const selectClip = vi.fn();
+    const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
+      selectedClipId: 'a', selectedTrack: null, currentTime: 3, selectClip,
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplitBatchPort: port }));
+    act(() => result.current.handleSplitClipsAtPlayhead(['b', 'a', 'b']));
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const [{ resolvedConfig }] = applyEdit.mock.calls[0];
+    expect(resolvedConfig.clips).toEqual([
+      { ...original[0], hold: 2 }, { ...original[0], id: expect.stringMatching(/^a-/), at: 3, hold: 2 },
+      { ...original[1], hold: 2 }, { ...original[1], id: expect.stringMatching(/^b-/), at: 3, hold: 2 },
+    ]);
+    expect(port.capture).not.toHaveBeenCalled();
+    expect(port.submit).not.toHaveBeenCalled();
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(current.resolvedConfig.clips).toEqual(original);
+  });
+
+  it('preserves the whole-selection pinned group guard even when the member is outside the playhead', () => {
+    vi.mocked(toast.error).mockClear();
+    const current = makeConfigTimelineData({
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [
+        { id: 'a', track: 'V1', clipType: 'media', at: 1, hold: 4 },
+        { id: 'grouped', track: 'V1', clipType: 'media', at: 10, hold: 4 },
+      ],
+      pinnedShotGroups: [makePinnedGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['grouped'] })],
+    }, { assets: {} });
+    const applyEdit = vi.fn();
+    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
+      selectedClipId: 'a', selectedTrack: null, currentTime: 3, selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplitBatchPort: port }));
+    act(() => result.current.handleSplitClipsAtPlayhead(['a', 'grouped']));
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith('Use Delete shot from the shot menu');
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(port.capture).not.toHaveBeenCalled();
+  });
+});
+
 describe('useClipEditing pinned group guards', () => {
   it('allows explicit full-group deletion through the shot menu path', () => {
     vi.mocked(toast.error).mockClear();
