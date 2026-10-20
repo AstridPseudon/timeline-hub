@@ -468,10 +468,12 @@ def test_creation_inverse_redo_reuses_exact_roots(root_ops):
     assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
 
 
-def test_public_registry_and_closed_track_args_are_unchanged():
-    for op in ('test.create-roots', 'shot.create', 'occurrence.create'):
+def test_fixture_root_ops_stay_private_and_public_create_args_stay_closed():
+    for op in ('test.create-roots', 'shot.create'):
         with pytest.raises(CommandError, match='unsupported operation'):
             commands.validate_command({**create_command(), 'op': op})
+    with pytest.raises(CommandError):
+        commands.validate_command({**create_command(), 'op': 'occurrence.create'})
     with pytest.raises(CommandError):
         commands.validate_command({'schema_version': 1, 'op': 'track.create', 'version': '1',
                                    'select': 'parent', 'args': {'row': {'id': 'v', 'kind': 'visual'},

@@ -13,7 +13,11 @@ from astrid.sdk.timeline.capture import capture_clip_delete
 from astrid.sdk.timeline.commands import execute, operations
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+from tests.editing_conformance.test_recipe_m1_commands import (
+    accepted_boundaries,
+    inverse,
+    later,
+)
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 FIXTURE = Path(__file__).parent / 'fixtures/recipe_clip_delete.json'
@@ -201,6 +205,33 @@ def test_unsupported_semantic_or_ownership_surfaces_refuse(surface):
     with pytest.raises(CommandError) as error:
         capture_clip_delete(original, 'parent/clip:clip-b')
     assert error.value.kind == ('unsupported_ownership' if surface in ('legacy-shot', 'nested') else 'unsupported_dependency')
+
+
+@pytest.mark.parametrize('transition', ['crossfade', {'type': 'crossfade', 'duration': .2},
+    {'id': 'crossfade', 'durationFrames': 6, 'params': {'label': 'parent/clip:clip-b'}}])
+def test_unrelated_child_transition_preserved_through_parent_delete_reload_inverse_redo(transition):
+    original = bundle_from_document(delete_document())
+    child = State(original).entity('occurrence:occ-a/clip:clip-b')
+    child['transition'] = copy.deepcopy(transition)
+    plan = execute(original, [capture_clip_delete(original, 'parent/clip:clip-b')])
+    assert plan.bundle['shots'] == original['shots']
+    reloaded = reload(plan.bundle)
+    undone = inverse(reloaded, plan.records)
+    assert document_from_bundle(undone.bundle) == document_from_bundle(original)
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, reloaded, undone.bundle))
+    assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+
+
+@pytest.mark.parametrize('transition', [True, ['crossfade'], {'owner_ref': 'parent/clip:clip-b'},
+    {'id': 'crossfade', 'clip_ref': 'parent/clip:clip-b'}, {'id': 'crossfade', 'params': []}])
+def test_unrecognized_child_transition_shapes_still_refuse_untouched(transition):
+    original = bundle_from_document(delete_document())
+    State(original).entity('occurrence:occ-a/clip:clip-b')['transition'] = transition
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_delete(original, 'parent/clip:clip-b')
+    assert error.value.kind == 'unsupported_dependency'
+    assert original == before
 
 
 @pytest.mark.parametrize('select', [None, 'parent', 'clip-b', 'parent/clip:', 'parent/clip:clip-b/extra',

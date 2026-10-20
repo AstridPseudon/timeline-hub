@@ -89,7 +89,8 @@ def seed_trusted_parent(service: Any, publication: dict, *, idempotency_key: str
     document = _closure(publication, current, digest)
     before = {key: current["parent_revision"][key] for key in ("revision_id", "content_digest")}
     after = {key: document["parent_revision"][key] for key in ("revision_id", "content_digest")}
-    command = {"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:seed", "args": {"on": 0}}
+    command = {"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:seed",
+               "args": {"on": 0}, "created": []}
     request = {"api_version": 1, "project_id": project, "timeline_id": timeline,
                "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
                "commands": [command], "rationale": "Trusted TEST SETUP for a saved parent; not Agent semantic acceptance"}

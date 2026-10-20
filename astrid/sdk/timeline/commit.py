@@ -163,8 +163,9 @@ def bundle_from_document(document):
 
 def _inverse_media_removals(records, bundle):
     """Only accepted edges can prove that a retained pin was introduced by writes."""
-    from ._collections import AcceptedRecords
-    from ._command_state import CommandError, State, equal
+    from ._collections import AcceptedRecords, arrange, restoration_orders
+    from ._command_state import ABSENT, CommandError, State, equal, root_identity
+    from ._recording import Recording
 
     if not records:
         return set()
@@ -196,12 +197,26 @@ def _inverse_media_removals(records, bundle):
         removed.difference_update(prior_media - accepted_media)
         if not introduced:
             continue
+        accepted = AcceptedRecords([entry], commands, records.load_boundary)
         state = State(copy.deepcopy(before))
         for record in commands:
             for write in [*record['writes'], *record['derived_writes']]:
                 if not state.matches(write['ref'], write['path'], write['before']):
                     raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
-                state.set(write['ref'], write['path'], write['after'])
+                root = root_identity(write['ref'])
+                created = ({'ref': write['ref'], 'kind': root[0],
+                            'owner': None if root[0] == 'shot' else 'parent'} if root else None)
+                if (root is not None and not write['path'] and write['before'] == ABSENT
+                        and write['after']['state'] == 'present' and created in record['created']):
+                    # Replaying authenticated semantic birth must retain the
+                    # recorder's source-free compiler marker, just like execution.
+                    Recording(state.bundle, record['command'], record['ordinal']).create_entity(
+                        write['ref'], kind=root[0], owner=created['owner'],
+                        value=write['after']['value'], restoring=True)
+                else:
+                    state.set(write['ref'], write['path'], write['after'])
+            for (owner, kind), (_, expected) in restoration_orders(accepted, only=record).items():
+                arrange(state, owner, kind, expected)
         replayed = document_from_bundle(state.bundle, source_bundles=(after,))
         if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
                 or any(not equal(replayed[key], images[1][key]) for key in (
@@ -213,6 +228,46 @@ def _inverse_media_removals(records, bundle):
             raise CommandError('unproven media boundary scope', kind='history_unavailable')
         removed.update(introduced)
     return removed
+
+
+def _inverse_clip_transcripts(records, bundle, *, pending=False):
+    """Release first-use pins owned by a created clip removed by this inverse."""
+    from ._collections import AcceptedRecords
+    from ._command_state import ABSENT, State, equal
+    from .inverse import coalesce
+
+    if not isinstance(records, AcceptedRecords):
+        return []
+    removed = {write['ref'] for write in coalesce(records) if not write['path']
+               and write['ref'].startswith('parent/clip:') and write['before'] == ABSENT
+               and (pending or State(bundle).get(write['ref'], []) == ABSENT)}
+    if not removed:
+        return []
+    parent = copy.deepcopy(bundle['parent'])
+    for container in (parent, parent.get('config', {})):
+        if isinstance(container.get('clips'), list):
+            container['clips'] = [row for row in container['clips']
+                                  if 'parent/clip:' + row['id'] not in removed]
+
+    def contains(value, pin):
+        if isinstance(value, dict):
+            return equal(value, pin) or any(contains(child, pin) for child in value.values())
+        return isinstance(value, list) and any(contains(child, pin) for child in value)
+
+    result = []
+    for entry in records.entries:
+        choices = [write['after'].get('value') for record in entry['records']['commands']
+                   for write in record['writes'] if write['ref'] in removed
+                   and write['path'][:3] == ['app', 'astrid', 'word_anchors']]
+        before, after = records.load_boundary(entry)
+        prior, accepted = (source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+                           for source in (before, after))
+        for pin in accepted:
+            if (pin not in prior and pin['document_id'].startswith('transcript:')
+                    and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
+                    and not contains([parent, bundle['shots'], bundle['placements']], pin)):
+                result.append(pin)
+    return result
 
 
 def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
@@ -283,6 +338,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         for capture in bundle['source_mapping'].get('pinned_documents', []):
             if capture['pin'] not in documents:
                 documents.append(copy.deepcopy(capture['pin']))
+        removals = _inverse_clip_transcripts(inverse_records, bundle)
+        documents = [pin for pin in documents if pin not in removals]
     # Retained inputs may include media consumed through a transcript or other
     # immutable binding rather than a selected clip. Keep those existing pins.
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
@@ -347,14 +404,35 @@ def _load(port, context, revision):
     return bundle_from_document(document)
 
 
-def _hydrate(port, bundle, calls=()):
+def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
     captures, schema_inputs = [], []
     document = bundle["source_mapping"]["_runtime_document"]
     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
+    removals = _inverse_clip_transcripts(inverse_records, bundle, pending=True)
+    pins = [pin for pin in pins if pin not in removals]
+    # Redo may restore the word source's media together with its anchored clip.
+    # Only the same pin/media pair in an authenticated accepted closure qualifies.
+    restored_pins = []
+    if inverse_records:
+        from .inverse import coalesce
+        from .native_word_anchor import _namespace
+
+        for write in coalesce(inverse_records):
+            if (write['ref'].startswith('parent/clip:') and not write['path']
+                    and write['before']['state'] == 'present'):
+                for choice in _namespace(write['before']['value']).get('word_anchors', {}).values():
+                    pin = _document_pin(choice['document'])
+                    restored_pins.append(pin)
+                    if pin not in pins:
+                        pins.append(pin)
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
         if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
             pin = _document_pin(pin)
+            if pin not in pins:
+                pins.append(pin)
+        if call['op'] == 'clip.anchor' and call.get('args', {}).get('choice') is not None:
+            pin = _document_pin(call['args']['choice']['document'])
             if pin not in pins:
                 pins.append(pin)
     for pin in pins:
@@ -377,8 +455,13 @@ def _hydrate(port, bundle, calls=()):
                      and isinstance(content.get("media_id"), str)
                      and _DIGEST.fullmatch(content["media_id"])
                      and _id(content.get("source_id"))
-                     and content["media_id"] in {
+                     and (content["media_id"] in {
                          row["media_id"] for row in document["dependency_manifest"]["media"]}
+                         or pin in restored_pins and any(
+                             pin in source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+                             and content['media_id'] in {row['media_id'] for row in
+                                 source['source_mapping']['_runtime_document']['dependency_manifest']['media']}
+                             for source in inverse_sources))
                      and pin["document_id"] == transcript_document_id(
                          bundle["project_id"], content.get("media_id"), content.get("source_id")),
                      "invalid transcript source identity")
@@ -530,7 +613,7 @@ def _reservation_refs(state):
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
     for owner in owners:
-        assets = state.config(owner).get('registry', {}).get('assets', {})
+        assets = state.registry(owner).get('assets', {})
         _require(isinstance(assets, dict), 'invalid asset identity collection')
         refs.update(owner + '/asset:' + identity for identity in assets)
         for kind in ('clip', 'track'):
@@ -617,7 +700,17 @@ def _check_reservations(port, plan, current, rejected, base):
                     from ._root_inverse import recover_source
                     recover_source(state, write['after']['value'], output)
                 before = _reservation_refs(state)
-                state.set(write['ref'], write['path'], write['after'])
+                root = root_identity(write['ref'])
+                created = ({'ref': write['ref'], 'kind': root[0],
+                            'owner': None if root[0] == 'shot' else 'parent'} if root else None)
+                if (root is not None and not write['path'] and write['before']['state'] == 'absent'
+                        and write['after']['state'] == 'present' and created in items):
+                    from ._recording import Recording
+                    Recording(state.bundle, record['command'], record['ordinal']).create_entity(
+                        write['ref'], kind=root[0], owner=created['owner'],
+                        value=write['after']['value'], restoring=True)
+                else:
+                    state.set(write['ref'], write['path'], write['after'])
                 if write['ref'] == 'timeline':
                     state = State(state.bundle, closures=state.closures)
                 after = _reservation_refs(state)
@@ -806,7 +899,9 @@ class RuntimeCommitService:
                 validate_command(call)
             verified_producer = capture_producer(port, request)
             for call in calls:
-                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
                     for key in ('old_media', 'media'):
                         if key in call['args']:
@@ -826,6 +921,11 @@ class RuntimeCommitService:
             if base_entry["revision_id"] != base["revision_id"]:
                 raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
                                               base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
             undo_of = []
             if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
                 raise CommitRejected(_failure("unsupported_operation",
@@ -907,7 +1007,8 @@ class RuntimeCommitService:
             for source in closures.values():
                 schema_inputs.extend(_hydrate(port, source))
             if not closures:
-                schema_inputs = _hydrate(port, bundle, calls)
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
             original = execute(bundle, calls, inverse_records=inverse_records,
@@ -917,6 +1018,11 @@ class RuntimeCommitService:
             for attempt in range(3):
                 if attempt:
                     current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
                 if current == base:
                     plan = original
                 else:
@@ -926,7 +1032,8 @@ class RuntimeCommitService:
                     entries = _history(port, current, base, CommitRejected, base)
                     head_bundle = _load(port, context, current["revision_id"])
                     if not closures:
-                        schema_inputs = _hydrate(port, head_bundle, calls)
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,

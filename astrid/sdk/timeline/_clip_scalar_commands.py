@@ -1,4 +1,4 @@
-"""Bounded raw clip fields; media assignment remains occurrence.swap-media."""
+"""Bounded raw clip fields; media assignment uses the scoped swap recipes."""
 from __future__ import annotations
 
 import copy
