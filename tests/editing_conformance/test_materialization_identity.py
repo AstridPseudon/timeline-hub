@@ -1,4 +1,4 @@
-"""Scoped compiler slots and the missing captured physical-birth carrier."""
+"""Scoped compiler slots and the ratified derived-allocation requirements."""
 from __future__ import annotations
 
 import copy
@@ -77,26 +77,26 @@ def test_exact_replay_keeps_compiled_slot_ids_without_mutating_source():
     assert original == before
 
 
-# M2 must record genuine physical births through the shared allocation primitive.
+# The physical-birth expectation was superseded by the ratified allocation map:
+# these authored virtual roots already exist; only semantic births use created.
 @pytest.mark.xfail(strict=True, raises=AssertionError,
-                   reason='M2 requires captured physical shot/item births, not virtual roots')
-def test_materialized_shot_and_items_have_genuine_typed_birth_facts():
+                   reason='M2 must retain source-bound derived id_map after paired carrier freeze')
+def test_materialization_retains_derived_map_without_false_semantic_births():
     original = bundle_from_document(source())
     plan = execute(original, [capture_move(original, 'occurrence:occ-a/clip:clip-a', 3.003)])
     output = document_from_bundle(plan.bundle)
     shot_id = output['parent_revision']['payload']['occurrences'][0]['shot_id']
     shot = next(row for row in output['shot_revisions'] if row['shot_id'] == shot_id)
     assert shot_id != 'chapter-shot'
-    required = [
-        {'ref': 'shot:' + shot_id, 'kind': 'shot', 'owner': None},
-        *({'ref': 'shot:' + shot_id + '/item:' + item['item_id'],
-           'kind': 'item', 'owner': 'shot:' + shot_id} for item in shot['payload']['items']),
-    ]
-    facts = [fact for record in plan.records for fact in record['created']]
-    assert all(fact in facts for fact in required)
+    assert State(original).entity('shot:' + shot_id) is not None
+    assert [fact for record in plan.records for fact in record['created']] == []
+    expected = {'shot:' + shot_id: shot_id,
+                **{'shot:' + shot_id + '/item:' + item['item_id']: item['item_id']
+                   for item in shot['payload']['items']}}
+    assert getattr(plan, 'id_map', {}) == expected
 
 
-# M2 item allocation needs a canonical carrier before normal Runtime regeneration.
+# Canonical item refs serve source bindings and separate semantic item births.
 @pytest.mark.parametrize('definition,value', [
     ('ScopedId', 'shot:allocated/item:allocated-item'),
     ('EntityRef', 'shot:allocated/item:allocated-item'),
@@ -104,6 +104,6 @@ def test_materialized_shot_and_items_have_genuine_typed_birth_facts():
     ('AnchorIdentity', 'shot:allocated/item:allocated-item'),
 ])
 @pytest.mark.xfail(strict=True, raises=ValidationError,
-                   reason='M2 physical item carrier needs canonical reference source and normal regeneration')
-def test_required_physical_item_address_has_a_command_carrier(definition, value):
+                   reason='M2 shot-owned item refs require paired canonical source/normal generation')
+def test_required_shot_owned_item_address_has_a_command_carrier(definition, value):
     Draft202012Validator({'$defs': _SCHEMA['$defs'], '$ref': '#/$defs/' + definition}).validate(value)
