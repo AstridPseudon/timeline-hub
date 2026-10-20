@@ -22,8 +22,10 @@ const exec = promisify(execFile);
 const test = parityTest.extend<{ pageLogs: ReturnType<typeof collectPageDiagnostics> }>({
   pageLogs: [async ({ page, harness, fixture }, provide, testInfo) => {
     const logs = collectPageDiagnostics(page, harness.doorBase, fixture.projectId);
+    await logs.observeMediaErrors();
     try { await provide(logs); } finally {
       logs.stop();
+      if (testInfo.status !== testInfo.expectedStatus) logs.discardResult();
       const diagnostics = await logs.result();
       await saveEvidence(testInfo, 'page-diagnostics', diagnostics);
       expect(diagnostics.failures).toEqual([]);
@@ -106,9 +108,11 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
     expect(completed.spec).toEqual(initial.spec);
     expect(assertTaskAuthority(completed, fixture, capability.definition_digest)).toEqual(frozen);
     const outputs = await readRuntimeJson<{ items: ManagedOutput[] }>(harness, `${taskPath}/managed-outputs?limit=50`);
+    expect(outputs.items.filter(item => item.filename.endsWith('.mp4'))).toHaveLength(1);
     const video = outputs.items.find(item => item.filename.endsWith('.mp4'));
     expect(video, 'real task must own its MP4 output association').toBeDefined();
     expect(video).toMatchObject({ task_id: admitted.task_id, project_id: fixture.projectId, media_type: 'video/mp4' });
+    expect(outputs.items.filter(item => item.filename.endsWith('.provenance.json'))).toHaveLength(1);
     const provenanceOutput = outputs.items.find(item => item.filename.endsWith('.provenance.json'));
     expect(provenanceOutput, 'real renderer provenance sidecar').toBeDefined();
     const provenanceResponse = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(provenanceOutput!.object_id)}`);
@@ -122,18 +126,24 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
       renderer: 'remotion', composition_id: 'TimelineComposition', project_dir: versions.remotionProject,
     });
 
+    const downloadHref = await downloadLink.getAttribute('href');
+    expect(downloadHref).toBe(`${new URL(harness.doorBase).origin}/api/astrid/v1/objects/${encodeURIComponent(video!.object_id)}`);
     const downloading = page.waitForEvent('download', { timeout: 30_000 });
     await downloadLink.click();
     const download = await downloading;
     await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
     const exportPath = testInfo.outputPath('viewing-parity/final-export.mp4');
     await download.saveAs(exportPath);
+    expect(await download.failure()).toBeNull();
+    expect(download.url()).toBe(downloadHref);
     expect((await stat(exportPath)).size).toBeGreaterThan(1_000);
+    expect((await stat(exportPath)).size).toBe(video!.size);
     const bytes = await readFile(exportPath);
     expect(bytes.subarray(4, 8).toString('ascii')).toBe('ftyp');
     expect(mediaHash(bytes), 'UI download must be the admitted task output').toBe(video!.digest);
-    const { stdout } = await exec('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', exportPath]);
-    const metadata = JSON.parse(stdout) as { streams: Array<Record<string, unknown>> };
+    const { stdout, stderr: probeStderr } = await exec('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', exportPath]);
+    expect(probeStderr).toBe('');
+    const metadata = JSON.parse(stdout) as { streams: Array<Record<string, unknown>>; format: Record<string, unknown> };
     expect(metadata.streams.find(stream => stream.codec_type === 'video')).toMatchObject({ codec_name: 'h264',
       width: PARITY_WIDTH, height: PARITY_HEIGHT, r_frame_rate: `${PARITY_FPS}/1`, nb_read_frames: '165' });
     // Normal Agent output_policy uses 48kHz AAC; the managed source is 44.1kHz.
@@ -143,7 +153,10 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
     const { stdout: ffmpeg } = await exec('ffmpeg', ['-version']);
     await saveEvidence(testInfo, 'real-render', { versions, ffmpeg: ffmpeg.split('\n')[0], capability,
       taskId: admitted.task_id, authority: frozen, outputs: outputs.items, provenance, metadata, downloadHash: mediaHash(bytes), polls, legacyWrites });
-    return { exportPath, taskId: admitted.task_id, authority: frozen, versions, capabilityDigest: capability.definition_digest };
+    return { exportPath, taskId: admitted.task_id, authority: frozen, versions, capabilityDigest: capability.definition_digest,
+      result: { initial, completed, fixture, capabilityDigest: capability.definition_digest, video: video!,
+        provenanceOutput: provenanceOutput!, provenanceBytes, downloadBytes: bytes, downloadFailure: await download.failure(),
+        downloadHref: downloadHref!, downloadUrl: download.url(), metadata, probeStderr, remotionProject: versions.remotionProject } };
   } finally { page.off('request', onRequest); }
 }
 
@@ -157,15 +170,17 @@ async function assertRenderUnchanged(harness: DirectHarness, fixture: FrameParit
 
 async function compareAllFrames(page: Page, exportPath: string, testInfo: TestInfo) {
   const comparisons = [];
+  const decodedFrames = [];
   for (const frame of PARITY_FRAMES) {
     const player = await capturePlayerFrame(page, frame, testInfo, 'positive');
     const exported = await decodeExportFrame(exportPath, frame);
     const comparison = compareRgbFrames(player, exported, frame);
     assertFrameWithinBound(comparison);
     comparisons.push(comparison);
+    decodedFrames.push({ frame, decoded: exported });
   }
   await saveEvidence(testInfo, 'comparisons', { fps: PARITY_FPS, dimensions: [PARITY_WIDTH, PARITY_HEIGHT], comparisons });
-  return comparisons;
+  return { comparisons, decodedFrames };
 }
 
 test.describe('ordinary media: mounted App Player versus real task export', () => {
@@ -177,12 +192,13 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     expect(firstFrame.height).toBe(PARITY_HEIGHT);
     expect(firstFrame.bytes).toHaveLength(PARITY_WIDTH * PARITY_HEIGHT * 3);
     await assertRenderUnchanged(harness, fixture, render);
-    expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'normal-render-action', {
       proof: 'normal App Render route and downloaded MP4 only; no Player/frame/audio parity or source-policy claim',
       revision: fixture.headRevisionId, taskId: render.taskId, authority: render.authority,
       firstFrame: { width: firstFrame.width, height: firstFrame.height, hash: mediaHash(firstFrame.bytes) },
     });
+    await pageLogs.completeResult({ ...render.result, decodedFrames: [{ frame: 0, decoded: firstFrame }] });
+    expect((await pageLogs.result()).failures).toEqual([]);
   });
 
   test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture, pageLogs }, testInfo) => {
@@ -210,8 +226,9 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     await openParityEditor(page, harness, fixture);
     const render = await renderAndDownload(page, harness, fixture, testInfo);
     const { exportPath } = render;
-    await compareAllFrames(page, exportPath, testInfo);
+    const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
     await assertRenderUnchanged(harness, fixture, render);
+    await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
     expect((await pageLogs.result()).failures).toEqual([]);
   });
 
@@ -219,7 +236,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     await openParityEditor(page, harness, fixture);
     const render = await renderAndDownload(page, harness, fixture, testInfo);
     const { exportPath } = render;
-    await compareAllFrames(page, exportPath, testInfo);
+    const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
     const selectedFrame = 52;
     const before = await capturePlayerFrame(page, selectedFrame, testInfo, 'negative-before-patch');
     const exported = await decodeExportFrame(exportPath, selectedFrame);
@@ -240,7 +257,8 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     expect(comparison.pixelsOutsideBound).toBeGreaterThan(0);
     expect(comparison.outsideBoundFraction).toBeGreaterThan(0.001);
     expect(comparison.maxChannelError).toBeGreaterThan(2);
-    expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'negative-comparison', { revision: fixture.headRevisionId, selectedFrame, baseline, exportHash, comparison });
+    await pageLogs.completeResult({ ...render.result, decodedFrames, comparisons });
+    expect((await pageLogs.result()).failures).toEqual([]);
   });
 });
