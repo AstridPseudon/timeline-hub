@@ -1,0 +1,26 @@
+{
+  "run": "composition-e2e-viewing-tab-short-owned-temp-capability-chrome155-1020133821-14480",
+  "artifact": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix/capability-1340-output/tab-audio-capture.probe.ts-8ea9e-rome155-MediaRecorder-clock-native-codec-chrome155-tab-audio/whole-tab.webm",
+    "bytes": 80477,
+    "sha256": "f35483bab8f4992489ccd617ca4c2375599dc9337f1fbc7b37c2e3d0820eb6c8"
+  },
+  "streams": {
+    "video": {"index": 1, "codec": "vp8", "timeBase": "1/1000", "packetCount": 5, "firstPts": 42, "lastPts": 3487, "monotonic": true},
+    "audio": {"index": 0, "codec": "opus", "sampleRate": 48000, "channels": 1, "timeBase": "1/1000", "packetCount": 66, "firstPts": 0, "lastPts": 3900, "monotonic": true}
+  },
+  "decodedAudio": {
+    "sampleCount": 190080,
+    "tones": [
+      {"frequency": 880, "amplitude": 0.04818113852883244},
+      {"frequency": 1320, "amplitude": 0.041814309247712324}
+    ]
+  },
+  "visualMarkerDiagnostic": {
+    "frameCount": 62,
+    "exactColorFrameCounts": [0, 42],
+    "phaseClaim": false,
+    "diagnosticOnly": true
+  },
+  "note": "Recomputed offline from the retained WebM because the central result directory retained whole-tab.webm but not the probe's attached JSON/raw RGB files."
+}

@@ -6,7 +6,7 @@ Viewing worker vw-m3-root-prep-lifetime-extract owns run.py +newPRIVATEroot-prep
 
 Explicit read-only queries reuse that exact prepared source lifetime without a fabricated successful capture or a renderer launch; normalrender caller behavior remains byte/semantically identical. Cache-row payload is a separately approved bounded change: successfulfresh callback only, exactkey/Rootsource/PNGhash, mismatchMISS; PNG-onlyfallback unchanged until ownqualification. D09 deletion stillwaitsbothseamsgreen ANDphysicalparity.
 
-Current normal Root source/client pin is official013; originalsource/extent/PCMcaller alreadyownerintegrated. User CAPstored4000forrender, editor/read originals preserved; no renderConfig.
+Current normal Runtime source/client pin is official0.2.13 (Composition remains0.0.12); originalsource/extent/PCMcaller alreadyownerintegrated. User CAPstored4000forrender, editor/read originals preserved; no renderConfig.
 
 
 ## Exact extracted seam — vw-m3-root-prep-lifetime-extract
