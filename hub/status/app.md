@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T02:30:12Z | dispatcher heartbeat 1s -->
+<!-- app | 2026-10-20T02:34:34Z | dispatcher heartbeat 12s -->
 # app — 2026-10-20 02:12 UTC
 Milestone: M1 App parity port LANDED; M0 COMPLETE. Orchestrator01:58 accepted App finalfull and approved parity. Global M1 remains unrecorded: Agent fix nowa610 merged/23actualPASS, Runtime null-speed fix pending/qualifying. ALL M2/M3 integration merges HELD.
 Integrated: app tl/integration c8566f12d114c538db8136b8c580a1e663af1ad1 CLEAN/tree6cd06f59a067907d266f721b24863468398fa482 (port+test-onlymovefixture). M1opaque candidate7cee9939c merged: exactAgent875/a610 context-aware remapper, unknownnamespaces preserved, trueidentity/source links remap. Manager independently189PASS/5files12.60s; all5originalfixtureinputs+case names unchanged; wrongsuffix-rewrite expectations corrected to native outputs, invalididentity checks strengthened. Native9completeexports match; ASThelper875→integrateda610 EXACT. Actual App tsc2oldonly. NoM2pin/code merged.

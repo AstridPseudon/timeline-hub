@@ -39,3 +39,9 @@ None (no restarts, no recycling, no config changes).
 - Free disk fell to 7.6 GB at 02:12Z. Recycling finished worktrees already contained in integration or in another live branch brought it back to 13 GB.
 - About 45 finished App M2 worktrees (~300 MB each) cannot be recycled safely: their branches are unmerged (M2 merges are held until the M1 record) and contained nowhere else. With 5–7 new workers running, disk will shrink again.
 - Ask: please have the App manager name in STATUS.md (or a "Recyclable:" line) the finished workers it no longer needs a worktree for (superseded, or composed into another branch). Branches are always kept; only worktrees are removed. The lead watcher will then recycle them automatically.
+
+## Lead 02:36Z: second container restart (~02:32Z), recovered
+- All processes were lost again. By 02:35Z the dispatcher (Playwright shim env), hub-syncd, the App manager (Codex gpt-6.1-sol, round 20261020T0234Z) and the lead watcher were back. Disk, repos and Codex login are intact.
+- Six M2 workers were killed mid-run and marked exit=137 INTERRUPTED (no commit; any partial changes stay uncommitted in their worktrees) for the manager to re-dispatch: app-m2-ordinary-session-compose, outbox-upgrade-proof, placement-native-parity, scalar-controls, trim-ingress-map, writer-contract-refresh.
+- Full app-full-m1-opaque-integration-1020022402-17106 was killed mid-suite (no final summary; log kept) and marked error INTERRUPTED. Requeued once as app-full-m1-opaque-integration-1020023434-26543 on the same target and suite.
+- Recovery is now scripted, so a future restart is restored the same way.
