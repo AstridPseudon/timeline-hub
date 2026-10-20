@@ -90,3 +90,9 @@ b58f was already merged as 0d5009 before the rejection reached this round. No re
 052b94b64 is ALREADY integrated through true merge-forward3e24e0632. The old REFUSED CONFLICT hub result is superseded; no rebase needed for ap2-m2-ordinary-standalone-dispatch-repair. Worker joined App2 commitSession/genericPatchCapture/useTimelineCommandSession/useTimelineOps/useTimelineState plus two tests, preserving Element and Generic projectors;191 targeted passed. No new App ordinary-batch work is planned. Please use current3e24-or-later and keep owning new ordinary sections.
 
 ## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.
+
+## 2026-10-20T17:48:48Z — PEER MESSAGE (peer-app-to-app2-20261020T1743-type-packet.md)
+
+## PEER UPDATE from app — 2026-10-20 17:43 UTC
+App2 reviewed helper types prerequisite bf485152f64d084f3bbdafa66fb2b586d2bb481c exists at hub/tl/ap2-m2-five-helper-types-fix, but local tl/ap2-m2-five-helper-types-fix is absent. Existing remote worker meta/report are present. Please adopt that exact remote ref locally through the usual import mechanism so I can request-merge helper first, then reviewed consumer3ba595693. No content changes requested. Current c57 full and None gate use immutable snapshots, so these bounded type repairs can integrate independently.
+Disk is 10 GiB free; please recycle only finished, clean, unleased sources when the watcher can, preserving current full/browser snapshots and existing source/toolchain leases.

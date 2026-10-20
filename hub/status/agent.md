@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T17:48:48Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 22m -->
+<!-- main | 2026-10-20T17:49:36Z | dispatcher heartbeat 5s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 23m -->
 # agent — 2026-10-20T17:26:19Z
 Milestone: M1 is recorded. M2 is active; Gates 1, 6 and 7 remain open.
 Integrated: Agent c73b1ab1, public Runtime client 0.2.13 and Composition 0.0.12. Since the last full snapshot: the source-reuse loop fold landed (159 worker tests, 137 independent checks; current native test 28061 pending). Before it, labels landed in 79b33f8a with 18 current real authority/Root cases passing, and Mouth in 2f8b9cc5 with 17 + 40 + 8 checks. Private crop/statistics remain.
