@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from runtime_protocol.errors import ConflictError, NotFoundError, ValidationErro
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_inspection import MAX_RESPONSE_BYTES
+from runtime_protocol.timeline_inspection import MAX_RESPONSE_BYTES, _clip as project_clip, _fraction, _parent_clip as project_parent_clip
 from runtime_protocol.util import canonical_json
 
 from astrid_runtime_client import WorkspaceClient
@@ -63,33 +64,116 @@ def _clip(clip_id, at_ms=0, duration_ms=500):
             "duration_ms": duration_ms, "text": clip_id}
 
 
-def _store_inspection_clip(service, project, scope, raw):
-    publication = _publication(project)
-    if scope == "parent":
-        publication["parent_composition"]["clips"] = [_clip(raw["id"])]
-    else:
-        _with_clips(publication, [_clip(raw["id"])])
-    service.publish_parent_composition(project, "main", publication, idempotency_key="publish-speed")
-    # Seed the exact read image: legacy visual admission rejects nullable and
-    # rational speeds before inspection. Native commit is covered separately.
-    table = "parent_composition_revisions" if scope == "parent" else "internal_timeline_revisions"
-    revision = "parent-1" if scope == "parent" else "internal-1"
-    row = service.store.conn.execute(
-        f"SELECT id, payload_json FROM {table} WHERE id=?", (revision,),
-    ).fetchone()
-    payload = json.loads(row["payload_json"])
-    payload["clips"] = [raw]
-    service.store.conn.execute(
-        f"UPDATE {table} SET payload_json=?, content_digest=? WHERE id=?",
-        (canonical_json(payload), service._revision_digest(payload), row["id"]),
-    )
-
-
 def _parent_clip(clip_id, *, clip_type="media", track="V1", at_ms=0, duration_ms=1000):
     return {
         "id": clip_id, "clipType": clip_type, "track": track,
         "at_ms": at_ms, "duration_ms": duration_ms,
     }
+
+
+@pytest.mark.parametrize(("speed_fields", "expected_speed", "expected_duration"), [
+    ({}, [1, 1], [1, 2]),
+    ({"speed": 1}, [1, 1], [1, 2]),
+    ({"speed": 2}, [2, 1], [1, 4]),
+    ({"speed": 0.5}, [1, 2], [1, 1]),
+])
+def test_known_clip_speed_defaults_preserve_published_bytes(
+        tmp_path, speed_fields, expected_speed, expected_duration):
+    service, project, root = _service(tmp_path)
+    try:
+        publication = _publication(project)
+        child = {**_clip("child"), **speed_fields}
+        parent = {**_parent_clip("parent", duration_ms=500), **speed_fields}
+        publication["internal_timeline_revisions"][0]["payload"]["clips"] = [child]
+        publication["parent_composition"]["clips"] = [parent]
+        published = service.publish_parent_composition(
+            project, "main", publication, idempotency_key="speed-publication",
+        )
+        images = {table: [tuple(row) for row in service.store.conn.execute(
+            f"SELECT * FROM {table} ORDER BY id",
+        )] for table in ("parent_composition_revisions", "shot_revisions", "internal_timeline_revisions")}
+        receipt = service.committed_receipt(
+            "parent_composition.publish", "main", "speed-publication", project_id=project,
+        )
+        assert receipt == published["receipt"]
+        service.close()
+        service = RuntimeService(root)
+        before = tuple(service.store.conn.iterdump())
+        for table, expected in images.items():
+            assert [tuple(row) for row in service.store.conn.execute(
+                f"SELECT * FROM {table} ORDER BY id",
+            )] == expected
+
+        for options in ({}, {"revision_id": "parent-1"}):
+            result = service.inspect_timeline(project, "main", options)
+            clips = [result["selected"][0]["clips"][0], result["selected_parent_clips"][0]]
+            for projected, authored in zip(clips, (child, parent)):
+                assert projected["speed"] == expected_speed
+                assert projected["duration"] == expected_duration
+                assert projected["authored_fields"] == authored
+                if "speed" in speed_fields:
+                    assert projected["authored_timing"]["speed"] == speed_fields["speed"]
+            assert service.get_project_timeline_revision(
+                project, "main", "internal-1",
+            )["payload"]["clips"] == [child]
+            assert service.get_project_parent_composition_revision(
+                project, "main", "parent-1",
+            )["payload"]["clips"] == [parent]
+            assert service.committed_receipt(
+                "parent_composition.publish", "main", "speed-publication", project_id=project,
+            ) == receipt
+            assert tuple(service.store.conn.iterdump()) == before
+    finally:
+        service.close()
+
+
+def _project_speed(scope, raw):
+    track_scope = {"kind": "parent_composition", "id": "parent-1"}
+    if scope == "parent":
+        return project_parent_clip(raw, [], track_scope, {})
+    occurrence = {"occurrence_id": "first", "shot_id": "shot-1"}
+    return project_clip(raw, [], occurrence, Fraction(0), Fraction(1), track_scope, {})
+
+
+@pytest.mark.parametrize("scope", ["child", "parent"])
+@pytest.mark.parametrize(("speed", "expected_speed", "expected_duration"), [
+    (None, [1, 1], [1, 2]),
+    ([3, 2], [3, 2], [1, 3]),
+    ("3/2", [3, 2], [1, 3]),
+])
+def test_known_clip_speed_null_and_rational_projection(scope, speed, expected_speed, expected_duration):
+    raw = {**_clip("speed"), "speed": speed}
+    before = canonical_json(raw)
+    projected = _project_speed(scope, raw)
+    assert projected["speed"] == expected_speed
+    assert projected["duration"] == expected_duration
+    assert canonical_json(projected["authored_fields"]) == before
+    assert canonical_json(projected["authored_timing"]["speed"]) == canonical_json(speed)
+    assert canonical_json(raw) == before
+
+
+@pytest.mark.parametrize("scope", ["child", "parent"])
+@pytest.mark.parametrize("speed", [True, False, -1, 0, "invalid", [1, 0]])
+def test_known_clip_speed_defaults_do_not_accept_invalid_values(scope, speed):
+    with pytest.raises((ValidationError, ConflictError), match="speed"):
+        _project_speed(scope, {**_clip("speed"), "speed": speed})
+
+
+@pytest.mark.parametrize("label", ["value", "fps"])
+def test_generic_fraction_still_rejects_null(label):
+    with pytest.raises(ValidationError, match=label):
+        _fraction(None, label)
+
+
+def test_publication_still_rejects_null_fps(tmp_path):
+    service, project, _ = _service(tmp_path)
+    try:
+        publication = _publication(project)
+        publication["parent_composition"]["config"]["output"] = {"fps": None}
+        with pytest.raises(ValidationError, match="fps"):
+            service.publish_parent_composition(project, "main", publication, idempotency_key="null-fps")
+    finally:
+        service.close()
 
 
 def test_config_only_parent_clips_project_maple_and_parent_media_rows(tmp_path):
@@ -358,71 +442,6 @@ def test_visible_time_vectors_apply_speed_once_clip_to_occurrence_and_keep_half_
         )
         assert ending_at_boundary["selection_status"] == "selector_miss"
         assert starting_at_boundary["selection_status"] == "selected"
-    finally:
-        service.close()
-
-
-@pytest.mark.parametrize("scope", ["parent", "internal"])
-@pytest.mark.parametrize("speed_fields,expected_speed,expected_duration", [
-    ({}, [1, 1], [1, 4]),
-    ({"speed": None}, [1, 1], [1, 4]),
-    ({"speed": 1}, [1, 1], [1, 4]),
-    ({"speed": 2}, [2, 1], [1, 8]),
-    ({"speed": 0.5}, [1, 2], [1, 2]),
-    ({"speed": [3, 2]}, [3, 2], [1, 6]),
-    ({"speed": "3/2"}, [3, 2], [1, 6]),
-])
-def test_inspection_speed_defaults_preserve_authored_and_stored_values(
-        tmp_path, scope, speed_fields, expected_speed, expected_duration):
-    service, project, _ = _service(tmp_path)
-    try:
-        raw = {**_clip("speed-default", duration_ms=250), **speed_fields}
-        _store_inspection_clip(service, project, scope, raw)
-
-        def stored_images():
-            return {
-                table: [tuple(row) for row in service.store.conn.execute(
-                    f"SELECT * FROM {table} ORDER BY id")]
-                for table in ("parent_composition_revisions", "shot_revisions", "internal_timeline_revisions")
-            }
-
-        before = stored_images()
-        document = service.get_project_parent_composition_revision(project, "main", "parent-1")
-        result = service.inspect_timeline(project, "main", {})
-        projected = (result["selected_parent_clips"][0] if scope == "parent"
-                     else result["selected"][0]["clips"][0])
-
-        assert projected["speed"] == expected_speed
-        assert projected["duration"] == expected_duration
-        assert canonical_json(projected["authored_fields"]) == canonical_json(raw)
-        assert ("speed" in projected["authored_timing"]) == ("speed" in speed_fields)
-        if speed_fields:
-            assert canonical_json(projected["authored_timing"]["speed"]) == canonical_json(speed_fields["speed"])
-        assert stored_images() == before
-        assert service.get_project_parent_composition_revision(project, "main", "parent-1") == document
-    finally:
-        service.close()
-
-
-@pytest.mark.parametrize("scope", ["parent", "internal"])
-@pytest.mark.parametrize("field,value,error", [
-    ("speed", True, ValidationError),
-    ("speed", False, ValidationError),
-    ("speed", -1, ValidationError),
-    ("speed", 0, ConflictError),
-    ("speed", "invalid", ValidationError),
-    ("speed", [1, 0], ValidationError),
-    ("at_ms", None, ValidationError),
-    ("duration_ms", None, ValidationError),
-])
-def test_inspection_speed_default_does_not_coerce_invalid_timing(tmp_path, scope, field, value, error):
-    service, project, _ = _service(tmp_path)
-    try:
-        raw = {**_clip("invalid-speed"), field: value}
-        _store_inspection_clip(service, project, scope, raw)
-
-        with pytest.raises(error, match="speed" if field == "speed" else "clip (start|duration)"):
-            service.inspect_timeline(project, "main", {})
     finally:
         service.close()
 
