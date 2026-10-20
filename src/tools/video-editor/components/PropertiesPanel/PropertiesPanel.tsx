@@ -235,6 +235,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
     patchRegistry,
     setSelectedTrackId,
     applyEdit,
+    clipTrim,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const { staleAssetKeys, dismissedAssetKeys, dismissAsset, updateAssetToCurrentVariant, applyVariantToAsset } = useStaleVariants({
@@ -559,6 +560,8 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
         ) : (
           <ClipPanel
             clip={selectedClip}
+            current={data ?? undefined}
+            clipTrimPort={clipTrim}
             track={selectedTrack}
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
