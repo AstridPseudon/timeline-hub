@@ -116,3 +116,35 @@ describe('BFCache transport recovery',()=>{
     expect(view.container.firstChild).toHaveAttribute('data-phase','ready');
   });
 });
+describe('onReady',()=>{
+  it('reports stops once, for the scene that becomes displayed, not for discarded candidates',async()=>{
+    const first=await makeSource({duration:100}),second=await makeSource({duration:50}),t=ownedChildren(),onReady=vi.fn();
+    const view=render(<SceneSurface source={first} sourceTime={1} width={10} height={10} onReady={onReady}/>);
+    const a=await t.mounted(view.container);
+    t.ack(a,{kind:'initialized',stops:[{time:20,name:'B'},{time:5,name:'A'},{time:500,name:'past'}]});
+    expect(onReady).not.toHaveBeenCalled();
+    t.ready(a);
+    expect(onReady).toHaveBeenCalledTimes(1);
+    expect(onReady).toHaveBeenLastCalledWith({stops:[{time:5,name:'A'},{time:20,name:'B'}]});
+    view.rerender(<SceneSurface source={first} sourceTime={2} width={10} height={10} onReady={onReady}/>);
+    t.ready(a);
+    expect(onReady).toHaveBeenCalledTimes(1);
+    // A replacement scene loads as a candidate; it announces only once it is displayed.
+    view.rerender(<SceneSurface source={second} sourceTime={2} width={10} height={10} onReady={onReady}/>);
+    const b=await t.mounted(view.container,'iframe[data-scene-role="candidate"]');
+    t.ack(b,{kind:'initialized'});
+    expect(onReady).toHaveBeenCalledTimes(1);
+    t.ready(b);
+    expect(onReady).toHaveBeenCalledTimes(2);
+    expect(onReady).toHaveBeenLastCalledWith({stops:[]});
+  });
+  it('does not report a candidate that errors or is superseded',async()=>{
+    const first=await makeSource(),second=await makeSource({duration:50}),t=ownedChildren(),onReady=vi.fn();
+    const view=render(<SceneSurface source={first} sourceTime={1} width={10} height={10} onReady={onReady}/>);
+    const a=await t.mounted(view.container);
+    t.ack(a,{kind:'initialized',stops:[{time:1,name:'x'}]});
+    view.rerender(<SceneSurface source={second} sourceTime={1} width={10} height={10} onReady={onReady}/>);
+    t.ready(a);
+    expect(onReady).not.toHaveBeenCalled();
+  });
+});

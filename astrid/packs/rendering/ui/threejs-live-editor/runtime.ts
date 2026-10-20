@@ -30,6 +30,10 @@ export type ValidatedScenePackage = {
   readonly assets: readonly ProjectObjectMetadata[];
   readonly __l1bTrace?: boolean;
 };
+/** A named moment a world declares: `window.astridScene.stops`, in source seconds. */
+export type SceneStop = { readonly time: number; readonly name: string };
+export const MAX_SCENE_STOPS = 64;
+export const MAX_SCENE_STOP_NAME = 80;
 export type SceneFrame = { sourceTime: number; width: number; height: number };
 export type SceneStatus = {
   phase: 'loading' | 'rendering' | 'ready' | 'error' | 'disposed';
@@ -44,6 +48,22 @@ const ENTRY_NAME = /^[\w./-]+\.html$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+/** Keeps the valid entries (finite time in [0, duration], 1-80 char trimmed name),
+ * at most 64 of them, sorted by time. Anything else is dropped, never an error.
+ * The iframe bridge in sceneDocument applies the same rules; the host re-checks. */
+export function sanitizeSceneStops(value: unknown, duration = Infinity): readonly SceneStop[] {
+  if (!Array.isArray(value) || value.length > MAX_SCENE_STOPS) return Object.freeze([]);
+  const stops: SceneStop[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry) || typeof entry.time !== 'number' || !Number.isFinite(entry.time)
+      || entry.time < 0 || entry.time > duration || typeof entry.name !== 'string') continue;
+    const name = entry.name.trim();
+    if (name.length < 1 || name.length > MAX_SCENE_STOP_NAME) continue;
+    stops.push(Object.freeze({ time: entry.time, name }));
+  }
+  return Object.freeze(stops.sort((a, b) => a.time - b.time));
 }
 
 function requireMetadata(value: unknown, label: string): ProjectObjectMetadata {
@@ -154,6 +174,7 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
   const bridge = `<script>(()=>{
     const identity=${identity}; let disposed=false; let chain=Promise.resolve();
     const diagnostic=${diagnostic};
+    const duration=${JSON.stringify(source.manifest.duration)}; let sceneStops=[];
     const trace=(stage,detail={})=>{if(diagnostic){const record={owner:{...identity,document:identity.instance},time:Date.now(),stage,detail};(window.__l1bChildTrace??=[]).push(record);console.warn('[L1b scene trace] '+JSON.stringify(record));parent.postMessage({protocol:'astrid.scene/trace',record},'*');}};
     trace('child-bridge-boot');
     let snapshot='';
@@ -170,6 +191,16 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
       trace('child-fonts-ready');
       await Promise.all(Array.from(document.images).map(img=>img.decode()));
       trace('child-images-ready');
+      // Optional named moments. Same rules as sanitizeSceneStops; never fails the scene.
+      try{
+        const raw=window.astridScene.stops,stops=[];
+        if(Array.isArray(raw)&&raw.length<=${MAX_SCENE_STOPS})for(const e of raw){
+          if(!e||typeof e!=='object'||typeof e.time!=='number'||!Number.isFinite(e.time)||e.time<0||e.time>duration||typeof e.name!=='string')continue;
+          const name=e.name.trim();if(name.length<1||name.length>${MAX_SCENE_STOP_NAME})continue;
+          stops.push({time:e.time,name});
+        }
+        stops.sort((a,b)=>a.time-b.time);sceneStops=stops;
+      }catch{sceneStops=[];}
     });
     initialized.catch(()=>{});
     addEventListener('message',event=>{
@@ -179,7 +210,7 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
       if(reason){trace('child-message-rejected',{reason,message:m});return;}
       trace('child-message-accepted',{message:m});
       if(m.kind==='initialize'){
-        initialized.then(()=>{if(!disposed)send({kind:'initialized'});}).catch(e=>{if(!disposed)send({kind:'error',error:String(e.message||e)});});
+        initialized.then(()=>{if(!disposed)send({kind:'initialized',stops:sceneStops});}).catch(e=>{if(!disposed)send({kind:'error',error:String(e.message||e)});});
         return;
       }
       if(m.kind==='dispose'){disposed=true;chain.finally(()=>window.astridScene?.dispose());return;}
@@ -205,6 +236,7 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
 export class SceneFrameHost {
   private serial = 0;
   private initialized = false;
+  private sceneStops: readonly SceneStop[] = Object.freeze([]);
   private disposed = false;
   private failed = false;
   private pending?: SceneFrame;
@@ -221,6 +253,8 @@ export class SceneFrameHost {
     private readonly timeoutMs = 30000,
     private readonly trace?: (stage: string, detail: Record<string, unknown>) => void,
   ) { this.report({ phase: 'loading', revision: source.package.revision }); this.arm(); }
+  /** Named moments the scene declared; valid once initialized (empty before). */
+  get stops(): readonly SceneStop[] { return this.sceneStops; }
   initialize() {
     if (this.disposed || this.failed || this.initialized) return;
     // Own the interval before sending: a synchronous acknowledgement may
@@ -266,7 +300,7 @@ export class SceneFrameHost {
   receive(message: Record<string, unknown>) {
     const reason = this.disposed ? 'disposed' : this.failed ? 'failed' : message.protocol !== 'astrid.scene/1' ? 'protocol' : message.instance !== this.instance ? 'instance' : message.revision !== this.source.package.revision ? 'revision' : null;
     if (reason) { this.trace?.('host-message-rejected', { reason, message }); return; }
-    if (message.kind === 'initialized') { if (this.initialized) { this.trace?.('host-message-rejected', { reason: 'duplicate-initialized', message }); return; } this.trace?.('host-message-accepted', { message }); this.initialized = true; this.stopInitializeRetry('initialized'); clearTimeout(this.timer); this.trace?.('host-timeout-clear', { reason: 'initialized' }); this.flush(); return; }
+    if (message.kind === 'initialized') { if (this.initialized) { this.trace?.('host-message-rejected', { reason: 'duplicate-initialized', message }); return; } this.trace?.('host-message-accepted', { message }); this.initialized = true; this.sceneStops = sanitizeSceneStops(message.stops, this.source.manifest.duration); this.stopInitializeRetry('initialized'); clearTimeout(this.timer); this.trace?.('host-timeout-clear', { reason: 'initialized' }); this.flush(); return; }
     if (message.kind === 'error') {
       if (message.requestId !== undefined && message.requestId !== this.active?.requestId) return;
       this.fail(String(message.error)); this.active = undefined; return;

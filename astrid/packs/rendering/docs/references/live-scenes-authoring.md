@@ -168,6 +168,8 @@ interface AstridScene {
   initialize(): Promise<void>;
   render(input: {sourceTime: number; width: number; height: number}): Promise<void>;
   dispose(): void;
+  // Optional display-only named moments for the host's travel bar (see Stops).
+  stops?: ReadonlyArray<{time: number; name: string}>;
 }
 ```
 
@@ -180,6 +182,36 @@ surface (including authored overlays/text/postprocessing) is complete.
 render requests, uses revision/instance/request identity to reject stale
 messages, retries initialization for a bounded period, and reports an error on
 timeout; do not use a sleep as a readiness proof.
+
+### Stops (optional named moments)
+
+A scene may declare named moments for the host's World Explorer travel bar:
+
+```ts
+window.astridScene = {
+  stops: [
+    {time: 12.5, name: 'The lantern bridge'},
+    {time: 4, name: 'Opening courtyard'},
+  ],
+  async initialize() { /* build the composition */ },
+  async render({sourceTime, width, height}) { /* draw sourceTime */ },
+  dispose() { /* release GPU resources */ },
+};
+```
+
+`time` uses source-time seconds, the same clock as `render`. Set `stops` before
+or during `initialize()`; the bridge reads it once after `initialize` resolves
+and returns it on the existing `initialized` acknowledgement, so no extra round
+trip is needed. Limits:
+
+- An array of at most 64 entries. A longer array is ignored entirely.
+- `time` is a finite number, `>= 0` and `<=` the manifest duration.
+- `name` is a string, trimmed, 1-80 characters.
+- Entries are sorted by time. Invalid entries are dropped; they never fail the
+  scene. An absent or invalid `stops` means no stops.
+
+Stops are display metadata only. They do not affect rendering, timeline timing,
+export, or the package digest/manifest.
 
 The host owns time. For a clip at composition time `at`, with source trim
 `from` and positive playback `speed`, the current source time is:
