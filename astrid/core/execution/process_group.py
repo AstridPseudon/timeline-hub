@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import select
 import signal
 import subprocess
 import sys
@@ -344,6 +345,45 @@ def _live_members(members: dict[int, str]) -> list[int]:
         for pid, birth in members.items()
         if (info := snapshot.get(pid)) is not None and info.birth == birth
     ]
+
+
+class _PidfdExitProof:
+    """Keep the bind-time kernel watch, never reconstruct it from fd metadata.
+
+    epoll keys membership by (fd number, open file description). MOD therefore
+    rejects a substituted pidfd even on kernels sharing one anonymous inode.
+    Final file release removes the watch before that file can be recycled.
+    The custody lock serializes capture, proof and close; this private epoll
+    instance must remain owned and its membership must never be extended.
+    """
+
+    def __init__(self, descriptor: int):
+        self._descriptor = descriptor
+        self._watch: Any = None
+        try:
+            self._watch = select.epoll()
+            self._watch.register(descriptor, select.EPOLLIN)
+        except (OSError, ValueError, AttributeError):
+            self.close()  # Custody still retains the pidfd, without exit proof.
+
+    def exited(self, descriptor: int) -> bool:
+        if self._watch is None or descriptor != self._descriptor:
+            return False
+        try:
+            self._watch.modify(descriptor, select.EPOLLIN)
+            events = self._watch.poll(0)
+            if (len(events) != 1 or events[0][0] != descriptor
+                    or events[0][1] not in (select.EPOLLIN, select.EPOLLIN | select.EPOLLHUP)):
+                return False
+            self._watch.modify(descriptor, select.EPOLLIN)
+        except (OSError, ValueError):
+            return False
+        return True
+
+    def close(self) -> None:
+        if self._watch is not None:
+            self._watch.close()
+            self._watch = None
 
 
 def _retained_incarnation_exited(process: subprocess.Popen, pid: int, birth: str) -> bool:
