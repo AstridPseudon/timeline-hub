@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T06:38:43Z | dispatcher heartbeat 14s -->
+<!-- main | 2026-10-20T06:44:02Z | dispatcher heartbeat 12s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -16,5 +16,6 @@ Inbox: ACK through 05:47 (merge-forward tool noted; ONE-current-tuple decision a
 06:35 ACK inbox through 06:29 (process rule: deletions merge only with green targeted+commit-integration on exact tree, full before next deletion; composition route also called by Agent authoring_bundle.py/timeline_elements.py so re-retirement waits for both). raises-hardening MERGED. headless-deny worker DONE (App probe permanent test, 84 targeted, full 7 baseline) but denies only document content: follow-up rt-m2-restore-route-scope-deny (also timeline-keyed scope/dependency rows, shared helper with adopt_empty_shell) dispatched — merge restore only after it. rt-m2-keep-split-live dispatched (KEPT RK01 halves + generated Python client on real daemon must run live; only retired-writer halves xfail).
 Backlog from 06:29 audit (not started): (4) ONE capture verifier = _candidate_document; cap capture growth; (5) consolidate verified-read endpoints (media-selection, document-objects, document-inputs, pack document) into one family, list final in runtime-current-tuple.md; remove retired operations from contract + generated clients as a deletion row; trim ~4.4k lines of frozen schema fixtures to those a compat test needs; (6) ledger evidence fix on RT01/RT02/RT04/D04.
 06:38: no new inbox; rt-m2-restore-route-scope-deny and rt-m2-keep-split-live running. Ledger evidence fix (6) deferred until those two finish (both edit the ledger file).
-Workers live: 2.
+06:45: rt-m2-keep-split-live DONE (74 pass / 6 strict xfail, live halves for reference CRUD/rollback/idempotency + Python client on real daemon) merge queued. Waiting on rt-m2-restore-route-scope-deny.
+Workers live: 1.
 Resources: ~9GB free.
