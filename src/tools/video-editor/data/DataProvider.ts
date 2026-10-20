@@ -21,6 +21,7 @@ import type { AssetResolver } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import type { ShotCompositionPort } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import type { VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import type {
   CanonicalDocument,
   CommitAcceptedMutation,
@@ -458,6 +459,8 @@ export interface DataProvider extends AssetResolver {
   loadGenerationForLightbox?(generationId: string): Promise<GenerationRow | null>;
   /** Read an exact immutable managed-media selection for this provider's project. */
   getProjectMediaSelection?(query: MediaSelectionQuery): Promise<MediaSelection>;
+  /** Read Runtime-verified metadata for the supplied immutable selection without refreshing it. */
+  getProjectVerifiedMedia?(selection: MediaSelection): Promise<VerifiedMedia>;
   /** Existing Runtime-managed object plane for editable project sources. */
   projectObjects?: ProjectObjectStorage;
   persistenceEnabled?: boolean;

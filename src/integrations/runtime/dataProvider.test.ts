@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { MediaSelection, MediaSelectionQuery } from './generated.ts';
+import type { VerifiedMedia } from './timeline-commit-types.ts';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
@@ -69,6 +70,95 @@ function compactParentComposition() {
 
 
 describe('RuntimeDataProvider', () => {
+  it('reads detached image and both video swap inputs with exact aliases through the negotiated session', async () => {
+    const fixture = runtimeFixture();
+    const inputs: VerifiedMedia[] = ['image', 'old', 'new'].map((name, index) => ({
+      selection: {
+        asset: `popup/${name} 音 +`, generation_id: `generation/${name}`, variant_id: `variant/${name}`,
+        object_id: `sha256:${String(index + 1).repeat(64)}`, catalog_digest: `sha256:${String(index + 4).repeat(64)}`,
+      },
+      media_type: name === 'image' ? 'image/png' : 'video/mp4', size: 123 + index,
+      ...(name === 'image' ? {} : { duration_seconds: 2 + index }), width: 64, height: 48,
+    }));
+    const paths: string[] = [];
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.includes('/media-selection/verified?')) {
+          paths.push(path);
+          return { status: 200, headers: {}, body: json(inputs[paths.length - 1]) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+    const pins = structuredClone(inputs.map(({ selection }) => selection));
+    for (const [index, pin] of pins.entries()) {
+      await expect(provider.getProjectVerifiedMedia(pin)).resolves.toEqual(inputs[index]);
+      expect(paths[index]).toBe(`/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection/verified?${new URLSearchParams(
+        Object.entries(pin).map(([key, value]) => [key, value]),
+      ).toString().replace(/\+/g, '%20')}`);
+    }
+    expect(pins).toEqual(inputs.map(({ selection }) => selection));
+    expect(fixture.requests.map(({ path }) => path)).toEqual(['/v1/health', '/v1/handshake', '/v1/realm']);
+  });
+
+  it.each(['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest', 'missing', 'extra', 'envelope'])(
+    'refuses a verified-media %s mismatch without resolving a new selection', async (field) => {
+      const pin: MediaSelection = {
+        asset: 'kept-alias', generation_id: 'generation', variant_id: 'variant',
+        object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}`,
+      };
+      const selection: Record<string, string> = { ...pin };
+      if (field === 'missing') delete selection.catalog_digest;
+      else if (field === 'extra') selection.latest = 'forbidden';
+      else if (field !== 'envelope') selection[field] = field.endsWith('digest') || field === 'object_id'
+        ? `sha256:${'c'.repeat(64)}` : 'different';
+      const media = { selection, media_type: 'video/mp4', size: 20, duration_seconds: 2 };
+      const fixture = runtimeFixture();
+      const reads: string[] = [];
+      const provider = new RuntimeDataProvider({
+        projectId: PROJECT_ID,
+        transport: async (method, path, headers, body) => {
+          if (path.includes('/media-selection')) {
+            reads.push(path);
+            return { status: 200, headers: {}, body: json(field === 'envelope' ? { data: media } : media) };
+          }
+          return fixture.transport(method, path, headers, body);
+        },
+      });
+      await expect(provider.getProjectVerifiedMedia(pin)).rejects.toMatchObject({ code: 'schema_incompatible' });
+      expect(reads).toHaveLength(1);
+      expect(reads[0]).toContain('/media-selection/verified?');
+      expect(pin.asset).toBe('kept-alias');
+      expect(pin.catalog_digest).toBe(`sha256:${'b'.repeat(64)}`);
+    },
+  );
+
+  it.each([[404, 'not_found'], [409, 'conflict'], [422, 'validation_error']])(
+    'retains verified-media refusal %s without refreshing the pin', async (status, code) => {
+      const fixture = runtimeFixture();
+      const reads: string[] = [];
+      const pin: MediaSelection = {
+        asset: 'old-alias', generation_id: 'generation', variant_id: 'variant',
+        object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}`,
+      };
+      const original = structuredClone(pin);
+      const provider = new RuntimeDataProvider({
+        projectId: PROJECT_ID,
+        transport: async (method, path, headers, body) => {
+          if (path.includes('/media-selection')) {
+            reads.push(path);
+            return { status: Number(status), headers: {}, body: json({ code, message: 'exact pin refused' }) };
+          }
+          return fixture.transport(method, path, headers, body);
+        },
+      });
+      await expect(provider.getProjectVerifiedMedia(pin)).rejects.toMatchObject({ status, code });
+      expect(reads).toHaveLength(1);
+      expect(pin).toEqual(original);
+    },
+  );
+
   it('reads both immutable selection query variants with exact pins and query encoding', async () => {
     const cases: Array<{
       query: MediaSelectionQuery;

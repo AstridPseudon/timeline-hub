@@ -34,6 +34,7 @@ import {
 } from './contract-metadata.ts';
 import { runtimeApiBase, runtimeOrigin } from './connection.ts';
 import { loadWorkspaceRuntimeConfig } from './workspaceRuntimeConfig.ts';
+import type { VerifiedMedia } from './timeline-commit-types.ts';
 
 // A client without an explicit `baseUrl` asks `runtimeApiBase()` on every request: same-origin
 // `/api/runtime` locally (the connector/proxy injects the product credential), or the loopback
@@ -634,6 +635,10 @@ export class AstridRuntimeClient {
     selection: MediaSelectionQuery,
   ): Promise<MediaSelection> {
     return this.withSession(() => this.client.getProjectMediaSelection(projectId, selection));
+  }
+
+  async getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia> {
+    return this.withSession(() => this.client.getProjectVerifiedMedia(projectId, selection));
   }
 
   async publishParentComposition(

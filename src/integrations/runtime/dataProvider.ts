@@ -75,6 +75,7 @@ import {
 import { listAllRuntimeVariants } from './generationAccess.ts';
 import { recordShotTimelinePhase } from '@/tools/video-editor/lib/shot-timeline-timing.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import type { VerifiedMedia } from './timeline-commit-types.ts';
 
 type RuntimeRecord = Record<string, unknown>;
 
@@ -737,6 +738,20 @@ export class RuntimeDataProvider implements DataProvider {
   async getProjectMediaSelection(query: MediaSelectionQuery): Promise<MediaSelection> {
     const selection = await this.client.getProjectMediaSelection(this.projectId, query);
     return validateMediaSelection(selection, query);
+  }
+
+  async getProjectVerifiedMedia(selection: MediaSelection): Promise<VerifiedMedia> {
+    const expected = { ...validateMediaSelection(selection, selection) };
+    const media = await this.client.getProjectVerifiedMedia(this.projectId, expected);
+    if (!asRecord(media)) {
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime returned invalid verified media');
+    }
+    const returned = validateMediaSelection(media.selection, expected);
+    if (returned.object_id !== expected.object_id || returned.catalog_digest !== expected.catalog_digest) {
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime returned verified media for a different selection');
+    }
+    // Capture validates supported media kinds and source windows against these detached inputs.
+    return media;
   }
 
   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
