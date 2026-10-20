@@ -1,4 +1,5 @@
 import type { ClipScalarCapturePort } from '../commands/clipScalarGesture.ts';
+import type { ClipParamsCapturePort } from '../commands/clipParamsGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
@@ -137,6 +138,7 @@ function useTimelineEditorContextValue({
   trackManagement,
   trackLabelPort,
   clipScalarPort,
+  selectedParamPort,
   elementPort,
   uploadFiles,
   applyEdit,
@@ -182,6 +184,7 @@ function useTimelineEditorContextValue({
   trackManagement: TimelineTrackManagementHook;
   trackLabelPort?: TrackLabelCapturePort;
   clipScalarPort?: ClipScalarCapturePort;
+  selectedParamPort?: ClipParamsCapturePort;
   elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
@@ -208,6 +211,7 @@ function useTimelineEditorContextValue({
 
   return useMemo<TimelineEditorContextValue>(() => ({
     clipScalar: clipScalarPort,
+    selectedParam: selectedParamPort,
     element: elementPort,
     trackLabel: trackLabelPort,
     data,
@@ -355,6 +359,7 @@ function useTimelineEditorContextValue({
     registerAsset,
     scale,
     scaleWidth,
+    selectedParamPort,
     selectedTrackId,
     selection.additiveSelectionRef,
     selection.primaryClipId,
@@ -1088,6 +1093,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackManagement,
     trackLabelPort: save.commands.trackLabelPort,
     clipScalarPort: save.commands.clipScalarPort,
+    selectedParamPort: save.commands.clipParamsPort,
     elementPort: save.commands.elementPort,
     uploadFiles,
     applyEdit,
@@ -1176,6 +1182,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
     clipScalar: save.commands.clipScalarPort,
+    selectedParam: save.commands.clipParamsPort,
     element: save.commands.elementPort,
     trackLabel: save.commands.trackLabelPort,
     transcriptHost,
@@ -1237,7 +1244,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
-    save.commands.port, save.commands.clipScalarPort, save.commands.elementPort, save.commands.trackLabelPort]);
+    save.commands.port, save.commands.clipScalarPort, save.commands.clipParamsPort, save.commands.elementPort, save.commands.trackLabelPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

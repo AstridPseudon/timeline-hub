@@ -98,6 +98,7 @@ export function useTimelineSave(
     onCanonicalReloadStart: invalidateRecoveryAction,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    paramReadClient: provider.paramReadClient,
     // Capture bootstrap only after the first display adoption and its draft check.
     initialReadReady: commit.data !== null && initialRecoveryChecked,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
