@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "agent": {
-    "sha": "ceb1b9ac9cf3720b39ba56a78242e25f9dd9ff02"
+    "sha": "52a50edd86948dd088e697a9cd3335773572bf27"
   },
   "runtime": {
-    "sha": "8dddb75c3cb62dac86554d29ea07d98d1a2e7441"
+    "sha": "0a710076d31cf70cda7d3d8333a13ec5cff1a771"
   },
   "tools": {
     "uv": {
