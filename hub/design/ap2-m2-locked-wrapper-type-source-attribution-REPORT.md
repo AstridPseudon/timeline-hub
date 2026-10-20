@@ -16,12 +16,15 @@ The relevant archive members byte-match App commit
 `48576cfa2783331f2c7c8309ff4069162a3afd11` (tree
 `126983e329d1ab85a59d7a62ebb96676f8aab622`). They do not byte-match the
 current HOME snapshot or the integrated fixes `39751fadd` and `b0efbffae`.
+The archive SHA-256 is
+`895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30`.
 Therefore the rerun's exit 2 is historical-source attribution, not evidence
 that current App source still has these ten errors.
 
 ## Ten diagnostics -> exact source and owner
 
-The ten sites are five unique App files. Hashes are SHA-256 of the complete
+The ten sites are five unique App files (there are not ten unique source
+files). Hashes are SHA-256 of the complete
 file contents. `HOME` is the current `/home/user/work/app` file; its content
 matches the current integration source for these files.
 
@@ -56,6 +59,13 @@ The `patch.ts` difference is historical source drift, not one of the ten
 reported diagnostic locations. The vendored schema/ops declaration packages
 are byte-identical.
 
+Archive/current/integrated metadata also matches exactly: `package.json`
+`4afacd8c57182a7ba7b2307ad285a083e63d1018ffef290081d8eeedbd155ffd`,
+`package-lock.json`
+`7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14`, and
+`tsconfig.app.json`
+`61f9b16cd7f141d23ce4520d7c5412728df8906dde981f6e5b33c8bc5b100516`.
+
 The wrapper's `node_modules` is the locked graph. Its TypeScript package is
 5.9.3 and its `package.json` hash
 `822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6`; HOME
@@ -63,7 +73,7 @@ has the same version and hash. `@types/react` is 18.3.28 and has the same
 package hash
 `be92045d849a5cadcdae48f1cd53c094a6645359380b3aea911a23a9e83c77e7`. The graph's Composition package is intentionally
 different from HOME: graph `@banodoco/timeline-composition` is 0.0.13,
-package hash `7c806b07...c7c1aa61`, and its 58 declaration files match all
+package hash `7c806b078b00bba1593336c49a3d2953b3f8f7afc7fa9919f6d5d7ccc7c1aa61`, and its 58 declaration files match all
 members of the locked 0.0.13 tar exactly. HOME's installed package is 0.0.8,
 package hash `3d93e0bbc1fd3cd5666a5e83e11da76b81a169b9423f90f1f8e7dd2cb733868b`; 11 of the 58 declaration files differ.
 This package distinction is graph integrity/source qualification, not the
