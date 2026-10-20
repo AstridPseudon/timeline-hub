@@ -71,6 +71,72 @@ def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_write
     assert client.reads
 
 
+def test_parent_publish_captures_transition_clear_and_undoes_without_legacy_writer(connected):
+    client, generated, _ = connected
+    generated.bundles['r0'] = bundle_from_document(
+        media_document(transition={'type': 'crossfade', 'duration': .25}))
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    tl = Checkout.attach(open_session(connected))
+    original = copy.deepcopy(tl.clip('parent/clip:clip-a').data)
+    neighbor = copy.deepcopy(tl.clip('parent/clip:clip-b').data)
+
+    clip = tl.clip('parent/clip:clip-a')
+    clip.set(transition=None)
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.set'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == {'values': {}, 'clear': ['transition']}
+    assert 'transition' not in clip.data
+
+    accepted = tl.publish('Clear the transition', idempotency_key='owned-transition-clear')
+    assert json.loads(generated.calls[-1][0])['commands'] == [command]
+    loaded = Checkout.attach(open_session(connected))
+    assert 'transition' not in loaded.clip('parent/clip:clip-a').data
+    assert loaded.clip('parent/clip:clip-b').data == neighbor
+    loaded.undo([accepted['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:clip-a').data == original
+    assert loaded.clip('parent/clip:clip-b').data == neighbor
+    assert client.reads
+
+
+@pytest.mark.parametrize('params', [
+    {'transition': 'crossfade'},
+    {'transition': ''},
+    {'transition': {}},
+    {'transition': None, 'text': 'Still local'},
+])
+def test_attached_transition_set_refuses_unsupported_or_mixed_calls_atomically(connected, params):
+    _, generated, path = connected
+    tl = Checkout.attach(open_session(connected))
+    before, draft = path.read_bytes(), copy.deepcopy(tl.bundle)
+
+    with pytest.raises(TimelineEditError, match='held'):
+        tl.clip('parent/clip:a').set(**params)
+
+    assert path.read_bytes() == before
+    assert tl.bundle == draft
+    assert generated.calls == []
+
+
+def test_attached_transition_clear_refuses_occurrence_owner_atomically(connected):
+    _, generated, path = connected
+    parent, shots, internals = app_closure()
+    parent.update(project_id='p', timeline_id='t')
+    for image in [*shots, *internals]:
+        image['project_id'] = 'p'
+    generated.bundles['r0'] = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    tl = Checkout.attach(open_session(connected))
+    before, draft = path.read_bytes(), copy.deepcopy(tl.bundle)
+
+    with pytest.raises(TimelineEditError, match='held'):
+        tl.clip('occurrence:f2-occurrence/clip:f2-agent-clip').set(transition=None)
+
+    assert path.read_bytes() == before
+    assert tl.bundle == draft
+    assert generated.calls == []
+
+
 def test_parent_publish_captures_source_trim_rebases_reloads_and_undoes(connected, monkeypatch):
     client, generated, _ = connected
     generated.bundles['r0'] = bundle_from_document(media_document())

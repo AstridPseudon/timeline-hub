@@ -46,8 +46,9 @@ def _publishable_parent_command(command):
         return True
     values = args.get('values') if isinstance(args, dict) else None
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
-            and args.get('clear') == [] and isinstance(values, dict)
-            and set(values) == {'hold'} and values['hold'] is not None)
+            and ((args.get('clear') == [] and isinstance(values, dict)
+                  and set(values) == {'hold'} and values['hold'] is not None)
+                 or (args.get('values') == {} and args.get('clear') == ['transition'])))
 
 
 class AttachedCheckout(Checkout):
@@ -254,6 +255,10 @@ class AttachedClip(Clip):
 
     def set(self, **params):
         allow_new = params.pop('_allow_new', False)
+        if not allow_new and params == {'transition': None}:
+            if self.shot_id != 'parent':
+                _held()
+            return self._command('clip.set', {'values': {}, 'clear': ['transition']})
         selected = self.data.get('elementRef') or self.data.get('element_ref')
         if isinstance(selected, dict) and selected.get('packId'):
             # Session queue currently has no exact selected-schema input reader.
