@@ -140,6 +140,22 @@ def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_revie
     assert compatibility_errors(previous, baseline())
 
 
+@pytest.mark.parametrize(('previous_changes', 'current_changes'), [
+    ({}, {'unrecognizedValidationKeyword': None}),
+    ({'unrecognizedValidationKeyword': None}, {}),
+    ({'unrecognizedValidationKeyword': None}, {'unrecognizedValidationKeyword': False}),
+    ({'unrecognizedValidationKeyword': None}, {'unrecognizedValidationKeyword': {}}),
+])
+def test_unknown_keyword_presence_and_null_values_require_review(previous_changes, current_changes):
+    previous = baseline()
+    current = baseline()
+    previous['$defs']['ID'].update(previous_changes)
+    current['$defs']['ID'].update(current_changes)
+    assert compatibility_errors(previous, current) == [
+        '$/$defs/ID/unrecognizedValidationKeyword: narrowing or unsupported change; review required'
+    ]
+
+
 def test_equivalent_refs_pass_but_unproductive_ref_cycles_require_review():
     current = baseline()
     current['$defs']['Alias'] = copy.deepcopy(current['$defs']['ClipMoveArgs'])
