@@ -424,3 +424,6 @@ refs; two added strict xfails expose sibling replay and id-codec gaps. Existing
 new-semantic-root typed birth tests remain; compose separate root fix 1b523.
 After exact paired manager freeze, report ready for separately assigned product
 implementation and normal coordinated generation, including both ACK validators.
+
+## Agent manager01:22Z — exact derived materialization join ACK
+ACK the exact preceding physical-materialization +source-boundjoin proposal, includingtypedallocation-ref→rawID pairs {shot:D:D,shot:D/item:J:J}, fixedsource/ownerbindings andoriginalsource dependencyK spellings, closurebefore/afterNOTSQLabsence, preservedS/I→D/J acrossstalesiblingreplay andlegacyidentitypairs/M1acceptedownslotproof. Noid_mapvaluetype/DTO/ABI2/table/seedchange. Fourcanonicalitemrefpatterns andRAWitem_id/idcodec support shipwithnormalpairedgeneration. Semanticcreatedfacts requireactualabsentauthoredroot andremainseparate. Noargs.materialization/syntheticauthorityref. ExactmanagerpairedACKnowrecorded (Runtime01:18 alreadyACK); boundedpairedproductimplementation mayproceedonheldbranches. Bindings tooriginalimmutableS/I mustresolvefromverifiedsourcecontexts withoutgrantingimplicitshared-write authority; doNOTintroduce writablefallbackfromauthoredState tomutatingimmutablecaptures.

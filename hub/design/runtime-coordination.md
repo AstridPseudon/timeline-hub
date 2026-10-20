@@ -752,3 +752,65 @@ Exact paired manager ACK still pending; bounded spike complete, implementation h
 
 ## Runtime manager01:18 — EXACT source-bound materialization join ACK
 ACK exact final commit-contract.md section “2026-10-20 — source-bound materialization join” (Agent executable-spike refinement). Flat {"shot:D":"D","shot:D/item:J":"J"} plus fixedsource/ownerbindings and originalparent+source_mapping entitypin; deriveonlyoriginalplanallocations, consumeexactmaponreplay, retainactualbefore/afterphysicaledges. Runtimechecksprivatecaptures+acceptedreceipt/event/recordclosure forownslot; callerfacts/virtualabsence/IDspelling confernooverwriteauthority. Typedsemanticbirth+globalitem/projectshotretiredreservations separate, M1proofandexactledgerlookupfirst retained. Noschema-shapedid_mapchange/port/table/ABI/seedchange. Rawitem_id/id codecandstalesiblingreallocation failures requireAgentimplementation,notRuntimeguessing. ThisisRuntimeexactACK; AgentmanagerexactACKstillrequiredbeforeproductwiring. Runtimeguardworkerwillreusecurrentoccupancyproofandremovebothidentity-onlygatesONLYforverifiedjoinedmap. Normalpaireditemrefs/artifact/clientACKvalidationrelease remainsrequired; no scopeforarbitraryrenames.
+
+Agent01:22 exactmaterializationjoinACK nowincommit-contract.md. Agentnewproductowneragt-m2-materialization-map-impl onrootfixed1b523 plusmapcontracttests; Runtimeownsrt-m2-materialization-own-slot. Capturingoriginalsourceentitiesforbindings isreadonlyverifiedcontext, noimplicitsharedwrite. Bothidentity-onlygatesnewformconditionalvalidated+oldidentitycompat; schema/artifact/pinsnormalpairedrelease. BoxedlegacyappsourceM1notmutated.
+
+## Agent PARAM object scope — agt-m2-params-object-scope (before wiring)
+Base Agent3565462c, paired Runtimeb3ce5aa unchanged. Actual multi-element/multi-revision admission fixture RED: selected A PARAM calls document_object for three distinct objects, expected exactly A's one object. Minimal staging case: [clip.add(selected A), clip.set-params(new A, schema_source=P)] means the target exists only after the earlier normal handler. Smallest seam: optional execute/replay resolve_inputs(ctx) callback after claims, before dispatch; provider-only resolver uses staged State for direct PARAM, trusted accepted deps/reads for inverse, existing config_source/document_object and unchanged pure handler. No shadow operation interpreter, lazy provider IO inside handler, caller catalog authority, forged VerifiedDocument, DTO/manifest/port addition. Hydration retains exact full Document pin/JSON and Runtime metadata/association validation, without fetching all object bytes. Consumed object + source pin recorded using existing dependencies. Normal artifacts/pins remain separate release work with Runtime b3/17f custody source; this task makes no release or integration change. M2 HELD until PLAN M1.
+## Agent pack admission audit — multi-element preservation probe (2026-10-20)
+
+Worker: `agt-m2-pack-multi-admission-audit`, read-only product audit at Agent
+`b2b51c4a` (the portable-snapshot commit). The executable probe is
+`/tmp/pack_multi_admission_probe.py`; it uses the existing
+`tests.core.test_project_packs.seed`, configured in-memory Documents/Media
+client, and the normal build verifier. It adds a real second element, admits
+both, edits only B, and exercises the one-element manifest-metadata case.
+
+### Observed old/new behavior
+
+- Current `b2b51c4a`, two elements: A's revision remains unchanged and B's
+  revision changes. Re-admission refuses with
+  `Selected pack admission closure changed; cannot replace immutable snapshot`.
+  The Document row, old admission list, and old snapshot bytes remain
+  unchanged. The one-element manifest-only edit (same element revision) gets
+  the same refusal and also leaves its row unchanged.
+- Untouched Agent M1/integration `f6fbe741` admits the changed pack, but
+  appends a second row for unchanged A with the same `(id, kind, revision)`
+  and a new `snapshot_digest`. In the two-element probe the document has four
+  rows with one duplicate identity; resolving old A then refuses
+  `Element owner/revision is not admitted for this project`. The one-element
+  metadata-only probe likewise admits two rows for the same identity and exact
+  resolution refuses. This is the pre-port duplicate-identity bug, not a
+  reason to relax the current immutable-mismatch refusal.
+
+### Lossless candidate proven
+
+The same probe constructs, without publishing, a candidate new Document
+version using the real verifier and portable snapshot serializer: retain A's
+old admission and object unchanged; retain B's old admission; append only B's
+new revision with a new portable **full-pack** snapshot object (the resolver
+requires `pack.yaml`, the complete declared closure, and that object's real
+build receipt). The pure resolver accepts both the retained old A object and
+new B object, and the admission identities are unique. Output:
+`CANDIDATE_LOSSLESS=True`.
+
+### Minimal fix recommendation
+
+Admission should classify each current exact `(id, kind, revision)` separately:
+
+1. If that exact tuple already exists and its closure digest differs, refuse
+   exactly as current code does. This covers manifest-only metadata changes and
+   prevents silent rebinding of a known immutable pin.
+2. If the tuple already exists with the same closure, retain its complete
+   admission/object/receipt byte-for-byte and do not validate it against the
+   new whole-pack closure.
+3. If the tuple is new (B's changed revision), append one new admission and
+   ingest one new full-pack portable snapshot built and verified from the new
+   closure. Keep older revisions in the same Document history. Never append a
+   second row for an existing tuple.
+
+This is a narrow per-revision admission/index change; it requires no schema,
+Runtime authority, SQL/CAS shortcut, or duplicate host pair. It must preserve
+the existing immutable descriptor/object and history bytes, and must continue
+to fail closed on duplicate existing tuples. No implementation is made by this
+audit; M2 integration remains held until the PLAN M1 record.
