@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:57:34Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 0m -->
+<!-- main | 2026-10-20T18:59:50Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 21 | status age 2m -->
 # runtime — 2026-10-20T18:57:26Z
 Milestone: M1 recorded. M2/M3 active; no completion or delivery claim.
 Integrated: Runtime tl/integration 601d533d. Archive/unarchive restore catalog visibility only; old-version flat-film recover refuses with timeline.restore guidance. Receipt/event provenance and original current-target regression are covered. Nine proof and eleven service checks pass; earlier 62 actual-provider neighbors pass. Public producer 2c4ac180/client0.2.13/artifacts unchanged.
