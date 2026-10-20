@@ -38,7 +38,7 @@ tests/packs/rendering/test_scene_only_executor.py                           1aa8
 tests/integrations/test_d09_managed_scene_only.py                           fde837eb92f170c3a10615a26ac3d2726de2e75d
 ```
 
-The first eleven source/control blobs match the reviewed donor blobs exactly. The integration-test blob includes only the candidate-tree preflight addition over the approved proof test.
+The SDK, executor, query-adapter, and direct-control blobs match the reviewed donor blobs exactly. `generic_host.py` matches the approved `3acb818c3` blob. `pack.yaml` combines the executor resource declaration with the approved `ASTRID_PACKS_PATH` addition, so its combined blob is intentionally new. The integration-test blob includes only the candidate-tree preflight addition over the approved proof test.
 
 The preflight checks the imported `timeline_filmstrip` SDK, `filmstrip_execution`, `scene_only`, `scene_answers`, `root_preparation`, and `verified_source` modules. All resolved under the candidate worktree, and the candidate root was present on `sys.path`; the test also sets `ASTRID_PACKS_PATH` to candidate pack directories. The managed fixture uses Runtime checkout `/home/user/work/runtime`, a private copy of the read-only public13 Remotion profile, pinned Node `v20.19.4`, and the installed timeline schema path. These are test inputs, not hidden Agent source imports.
 

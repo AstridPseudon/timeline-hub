@@ -483,3 +483,48 @@ At 2026-10-20T23:19:18Z Agent advanced to `0542b4291` with an
 timeline semantic or adapter source change, so no Gate1/Gate3 replay was
 needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `812a609ee`,
 Composition `e7ef7a0`.
+
+The pending `agt-m2-sheet-documented-client-preserve` candidate proposes
+restoring the documented detached `apply_sheet(..., client=None)` keyword and
+Runtime-history fallback removed by `1a7349eb9`; its local sheet/history lane
+passed 126 tests, while its central Runtime-history probe was unavailable
+(fixture absent, exit 5). It is unmerged, so no replay or new Gate claim was
+made; the API compatibility decision remains with the Agent manager.
+
+## Incremental watch: detached-sheet history compatibility merge
+
+Date: 2026-10-20T23:26:27Z
+
+Agent integration advanced to `19c3cfc1c` (`fb465b336`), restoring the
+documented detached `apply_sheet(..., client=None)` keyword and retained
+Runtime-history fallback. This directly affects Gate1 sheet/history behavior.
+
+The first three-node targeted request selected the Runtime-history test but
+that module yielded one skip and no collector for the node in the central
+snapshot; it did not produce an assertion failure. The two directly runnable
+nodes were then checked on actual integration:
+
+- Suite: `targeted`, invoked as `integration:agent`
+- Run: `agent-targeted-1020232605-24043`
+- Agent source tree: `7f005c0e121b2c3dd6c11203359ca305a5baa4ae`
+- Result: **2 passed in 1.05s**, exit 0
+- Nodes: `test_sheet_local_basis_does_not_cross_accepted_base` and
+  `test_applying_the_printed_sheet_changes_nothing`.
+
+The Runtime-history node
+`tests/sdk/test_timeline_checkout_history_runtime.py::test_checkout_reload_undo_cli_redo_uses_retained_history`
+remains unverified because the central Runtime fixture was unavailable (the
+prior attempt ended with one skip and no collector). No assertion was changed
+or weakened. Live heads: Agent `19c3cfc1c`, Runtime `9d1c43c`, App `e4ee1dceb`,
+Composition `e7ef7a0`.
+
+The pending `agt-m2-parent-clear-combined-current` candidate resolves the
+asset/transition clear allowlist overlap (7 SDK controls and 2 central HTTP
+passes) but is not merged into the live Agent head; no replay or current Gate
+claim was added.
+
+At 2026-10-20T23:23:30Z App advanced to `e4ee1dceb` with an ordinary-trim
+member/generic-patch capture change. It is App command-producer work and does
+not alter Agent Gate1/Gate3 nodes or the Agent save path, so no replay was
+needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `e4ee1dceb`,
+Composition `e7ef7a0`.
