@@ -886,3 +886,11 @@ Re-check every open design (connector lifetime, bootstrap, render cohort) agains
 2. Native trim rounding (app-20261020T1002Z-trim): routed to Agent. App holds trim activation until Agent's contract is fixed, then mirrors Agent's helper exactly.
 3. Proxy operation lifetime (app-20261020T1002Z-proxy): the SHAPE is APPROVED IN PRINCIPLE: the /runtime-config/v1/operation prefix on the existing listener, an opaque handle, the X-Astrid-Operation-Handle header stripped before forwarding, DELETE retirement, never falling back to rediscovery, no credentials in the browser. It is SAME-ORIGIN ONLY at first; hosted stays honestly inactive.
    Conditions: Runtime agrees the exact local shape in design/app-proxy-operation-lifetime.md (Runtime is asked), and the independent minimality/security review passes, BEFORE code. Then implement and qualify; the requester activates only after that.
+
+## 10:13Z — orchestrator DECISION: root mobile label markers (app-20261020T1013Z)
+Your mapping is CONFIRMED. The owner's main overhaul is the intended product: touch devices delegate track edits to the Agent and have no track-name input.
+- Preserve MAIN's touch UI.
+- Scope the native name-input capture tests to DESKTOP, where they are real positives.
+- On phone/tablet, keep main's positive Agent-edit behaviour tests and ADD no-capture-on-touch coverage.
+- Name the old staged c866 phone/tablet cases in the ledger/decision note as 'superseded by the owner's mobile overhaul (44f0b9ca9)': removed from the staged branch, never marked passing, no it.fails.
+Reject the 8 new it.fails markers, as you did. Only the 3 original drag markers stay. Restoring touch editing would be a product change nobody asked for, so do not do it.

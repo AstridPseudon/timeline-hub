@@ -3,7 +3,8 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 echo $$ > $O/dispatcher.pid; trap 'STOP=1' TERM INT   # on kill: finish the current item, then exit (queued work stays in pending/)
 while true; do
-  for f in $O/queue/pending/*; do [ -e "$f" ] || continue; n=$(basename $f); [ -n "$STOP" ] && break
+  # FIFO (2026-10-20): oldest request first by mtime, name as tie-break, so no area starves behind newer alphabetically-earlier names.
+  for f in $(cd $O/queue/pending && ls -1tr --time=mtime 2>/dev/null | sed "s#^#$O/queue/pending/#"); do [ -e "$f" ] || continue; n=$(basename $f); [ -n "$STOP" ] && break
     if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
     elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)
     else out=$(eval "$O/bin/dispatch $(cat $f)" 2>&1); rc=$?; fi

@@ -76,3 +76,10 @@ Manager next: verify final harness commit and S2 raw schema hash, explicitly app
 - Targeted Ruff and `git diff --check`: pass. No full* request.
 
 Exact commands/results and qualification limits are permanently recorded in the candidate's `notes/report.md`; the harness-assigned commit is still required for manager freeze.
+
+## Manager explicit S2 freeze — 2026-10-20 10:16 UTC
+
+APPROVED FOR NORMAL GENERATION as explicit additive successor to S1, not an in-place mutation:
+Agent source26ef2bbb, rawschemaSHAa6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef,48defs/22ops. Independent managercomparison confirms ONLY ClipSetElementArgs differs fromS1: optional existingDocumentPin schema_source + owner/pin description; existingrequiredfields/closedargs unchanged. AllS1defs/ops retained; Runtime94114269 lockunchanged. Sourceverdictreusesindependent98c38reviewplus287/331/23/250targeted,24actualelement/49centralcases asrecorded above.
+
+This is the preferred complete schema for final union+safety tuple generation (coordinate with Runtime), while S1remainsimmutable. No Agentproductmerge/newpin/produceracceptance/WC4closure or releasequalification: normalizedproducerguardpositive remainsstrictxfail; RuntimeF1/F2/view-scope release stillrequired. Parentclip.add-media and nativewordanchor remain separate unreviewed lateradditions and cannot silently replace thisfreeze.

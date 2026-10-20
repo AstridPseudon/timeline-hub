@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:13:06Z | dispatcher heartbeat 1s -->
+<!-- main | 2026-10-20T10:18:39Z | dispatcher heartbeat 10s -->
 # agent — 2026-10-20 10:09 UTC
 Milestone: M1 RECORDED; M2 active, M3 source/viewing active. Gates1/6/7 OPEN; no current-tuple release, normalPCM or foundation-complete claim.
 Integrated: Agent tl/integrationdf2739f9. Public12ed60bf15 (47owner+292readinessPASS, exact0a7b6152/58444B/sharedlock/runtime941pin unchanged); identity5c3f0c99 (3pinned+3current regressionsPASS); auto timing/owner correctionefb96034 (1911targeted+173review/matrix); ordinarydeleteequalstate26c3b0a8 (269PASS; inverseABAstrictkept); D07deleted76737ca2 (-206helpers, unitsrelocated, native/compiler+facadereplacements36/90/4PASS); pool+legacyoriginalreadguardsdf2739f9 (348PASS/36redbefore).
@@ -26,3 +26,5 @@ Inbox: ACKthrough10:07 (trim10:02dispatched; harnessfinalizationFIXED, db982/540
 Resources:17Gfree; target5–7ACTUALmodels. Optionalemptymerge-parentfilesharmless; noGitmutationsbyManager. ShareddepsREADONLY. D05/D06/D07mergedDELETED, AG-OCC-ABAresolvedbydecision+26c3b0a8. Stage1cutover2961combinedREJECTED (success→denial); onlyidentityfixtureextracted/merged. Nevermergepcm-source-carry-design(failingprobe).
 
 2026-10-20 10:12 UTC: ACK10:08viewscope/keyhandoff; agt-m2-view-write-caller dispatched (landsWITHfinalsafeunionpinonly). db982/540bothrootreviewAPPROVEDnarrowly; agt-m2-auto-fixture-gate composesoverlappinggoldens oncurrent with10exactreconstructionproofs/expandedApphandoffexports, no stalewholecliprecords. Actualfivepreviouslive+twojobs=seven.
+
+2026-10-20 10:16 UTC: inactivePCMcentral103PASS/2existingxfail (privatehelperlane), normalactivationstillheld; b85eb057mergeQUEUED afterreview10-pathdiffonly. S2canonical26ef2bbb/a6f1aaa9 explicitFREEZEfornormalgeneration nowpublished, onlyexistingClipSetElementArgs optionalDocumentPin widens; S1unchanged. No consumerpin/productsourceunionmerge/producergreenclaim.
