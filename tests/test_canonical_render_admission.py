@@ -201,8 +201,8 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
 
 @pytest.mark.parametrize(
     "picture_tracks,issue_code",
-    [(None, "boundary/empty-child-picture"), (["plate"], "boundary/child-picture-gap")],
-    ids=["custom-track-unclassified", "declared-picture-track-gap"],
+    [(None, "boundary/child-picture-gap"), (["plate"], "boundary/child-picture-gap")],
+    ids=["visual-track-inferred", "declared-picture-track-gap"],
 )
 def test_unsafe_occurrence_seam_is_advisory_and_materialized_for_render(canonical_scene, picture_tracks, issue_code):
     f = canonical_scene

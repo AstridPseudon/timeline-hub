@@ -685,11 +685,12 @@ def _custom_picture_closure():
     return parent, shots, internal
 
 
-def test_declared_custom_picture_lane_counts_opaque_content_without_mutating_pins():
+def test_custom_picture_on_visual_lane_counts_without_declaration_or_mutating_pins():
     parent, shots, internal = _custom_picture_closure()
     original = copy.deepcopy(internal)
     undeclared, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
-    assert [issue["code"] for issue in undeclared["structuralIssues"]] == ["boundary/empty-child-picture"] * 2
+    assert not any(issue["code"] == "boundary/empty-child-picture" for issue in undeclared["structuralIssues"])
+    assert all(span["primary"] for span in undeclared["spans"])
     parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
     report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
     assert not report["blocked"]
@@ -712,14 +713,23 @@ def test_film_shape_custom_picture_on_visual_plate_is_advisory_and_materialized(
     original = copy.deepcopy(internal)
     report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
 
-    assert report["blocked"]
-    assert [issue["code"] for issue in report["structuralIssues"]] == [
-        "boundary/empty-child-picture", "boundary/empty-child-picture"]
-    assert [span["primary"] for span in report["spans"]] == [False, False]
+    assert not any(issue["code"] == "boundary/empty-child-picture" for issue in report["structuralIssues"])
+    assert [span["primary"] for span in report["spans"]] == [True, True]
     assert len(report["opaqueElements"]) == 2
     assert [clip["clipType"] for clip in metadata["render_config"]["clips"]] == [clip_type, clip_type]
     assert [clip["track"] for clip in metadata["render_config"]["clips"]] == ["plate", "plate"]
     assert internal == original
+
+
+def test_empty_visual_plate_still_reports_empty_child_picture():
+    parent, shots, internal = _custom_picture_closure()
+    for child in internal.values():
+        child["payload"]["clips"] = []
+
+    report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+
+    assert [issue["code"] for issue in report["structuralIssues"]] == [
+        "boundary/empty-child-picture", "boundary/empty-child-picture"]
 
 
 def test_layered_picture_coverage_is_independent_of_strict_continuity_lanes():
@@ -744,14 +754,13 @@ def test_layered_picture_coverage_is_independent_of_strict_continuity_lanes():
     {"elementRef": {"id": "custom", "kind": "transition"}},
     {"active": False}, {"enabled": False}, {"disabled": True}, {"hidden": True}, {"deleted": True},
 ])
-def test_declared_picture_lane_never_turns_auxiliary_or_inactive_content_into_picture(change):
+def test_visual_picture_lane_never_counts_auxiliary_or_inactive_content(change):
     parent, shots, internal = _custom_picture_closure()
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
-    internal["ir-0"]["payload"]["clips"][0].update(change)
+    for child in internal.values():
+        child["payload"]["clips"][0].update(change)
     report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
-    assert report["blocked"]
-    assert any(i["code"] == "boundary/empty-child-picture" and i["path"][-1] == "o-0"
-               for i in report["structuralIssues"])
+    assert [i["code"] for i in report["structuralIssues"]] == [
+        "boundary/empty-child-picture", "boundary/empty-child-picture"]
 
 
 @pytest.mark.parametrize("track", [{"id": "plate", "kind": "audio"},
@@ -795,6 +804,8 @@ def test_declared_custom_picture_preserves_auxiliary_activation_and_context_boun
     parent, shots, internal = _custom_picture_closure()
     policy = {"continuityTracks": ["v"], "pictureTracks": ["plate"]}
     parent["config"]["app"] = {"visualSeamContract": policy}
+    for child in internal.values():
+        next(track for track in child["payload"]["tracks"] if track["id"] == "fx")["kind"] = "audio"
     internal["ir-1"]["payload"]["clips"].append(
         {"id": "custom-overlay", "clipType": "custom-overlay", "track": "fx", "at": 0, "hold": 1})
     report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
