@@ -4,7 +4,7 @@
 
 ## Corrected successor
 
-The successor changes two paths relative to `f511038ded7a0ae49e2935efc37800b63038d0b3` (`+86/-7`):
+The successor changes two paths relative to `f511038ded7a0ae49e2935efc37800b63038d0b3` (`+88/-7`):
 
 - `ProcessCustody` records a minimal `(dev, inode, mode, /proc fd type)` fingerprint for each real Linux pidfd at bind time. Exit proof requires that exact retained descriptor to still have the fingerprint and `anon_inode:[pidfd]` identity both before and after polling.
 - Poll results must contain exactly one event for that descriptor and be either `POLLIN` or `POLLIN|POLLHUP`; `POLLNVAL`, `POLLERR`, ordinary-file readiness, and poll errors fail closed.
@@ -15,16 +15,16 @@ Source hashes at the final uncommitted worker snapshot:
 
 - `astrid/core/execution/custody_broker.py`: `3ff9ff42cbf073bbc66eeedb4f36ba4e3ee1ba45cad734227447698b1d62e3ce`
 - `astrid/core/execution/process_group.py`: `df8d111c415b2700d1421a1a592bce38267b939395945adbf7600412db8d1cb1` (unchanged by successor delta)
-- `tests/core/execution/test_process_group.py`: `bac8f1dcff761a55396def90cf9d339b89944c5c80329ed89ab82bae4bbe938e`
-- central source snapshot: `3313970eba94cebaa108851dc7e96138ab008578`
+- `tests/core/execution/test_process_group.py`: `1065454547f4a6b9f9a04c4c6d4804640dc9bf13362136525971b466a7cc350c`
+- central source snapshot: `35ec0c4d7a11ac3d0c9689df1f803b8cb41748fb`
 
 The direct test file adds two Linux-only tests: a real live child with a closed descriptor and `/dev/null` descriptor reuse both refuse exit proof and conditional release; a genuinely exited child produces positive proof and retains that provenance after conditional release. All original assertions remain unchanged.
 
 Final evidence:
 
-- central `root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"`: **629 passed, 16 skipped** in 29.46s, exit 0, 0 deselected;
-- local focused pidfd/reuse selection: **3 passed, 66 deselected** in 0.32s;
-- local strict compatibility check for the pre-existing fake Linux admission case plus reuse tests: **3 passed, 642 deselected** in 1.66s;
+- central `root-prep-current-integration --files "tests/core/execution/test_process_group.py tests/core/execution/test_custody_broker.py"`: **629 passed, 16 skipped** in 40.51s, exit 0, 0 deselected;
+- local focused pidfd/reuse selection: **3 passed, 66 deselected** in 0.40s;
+- local pre-existing fake Linux admission case: **1 passed, 575 deselected** in 1.16s;
 - updated `probe_pidfd.py`: all live/closed/reused/release/genuine-exit controls passed, including refusal of the synthetic replacement census after descriptor loss/substitution.
 
 The first central run of the successor exposed and the follow-up fix corrected lazy bookkeeping initialization for an existing `object.__new__` fixture; the final central run above is the qualifying result. Darwin-native tests remain skipped on this Linux host. No full suite was run.
