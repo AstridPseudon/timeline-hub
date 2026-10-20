@@ -1,6 +1,6 @@
 # @banodoco/timeline-composition
 
-Version 0.0.8 ships built ESM and declarations for the timeline evaluator,
+Version 0.0.9 ships built ESM and declarations for the timeline evaluator,
 Remotion composition, theme API and default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
@@ -11,10 +11,17 @@ transitions and four 2rp effects relocated from App. The bundled 2rp source is
 **0.1.0**; equivalence to the separately referenced 0.1.1 theme is unverified.
 Fonts, media and project pack admission remain host responsibilities.
 
+In 0.0.9, `ComponentCapabilityContext.assetEntry?: Readonly<AssetRegistryEntry>`
+is the same selected entry passed to the rendered component, resolved by the
+existing asset lookup. The context always owns this property: `undefined` means
+no entry resolved (no asset or a missing reference). Older hosts may omit it,
+which means selection is unknown. Selection alone proves no media alpha; it
+does not fetch assets or change their authored registry.
+
 ## Scoped host elements
 
 `TimelineComposition` accepts an optional `registries` prop. The same input is
-the final argument of `prepareCompositionScene`. Effects and aliases, animations
+the `registries` argument of `prepareCompositionScene`. Effects and aliases, animations
 and their defaults/meta, and transitions and their defaults/meta use the public
 `CompositionRegistries` contract from the root or `./registries` export.
 Every supplied member is the host's **complete resolved map** for that category;
@@ -82,6 +89,50 @@ A clip's `transition` (on the clip that starts the boundary, i.e. the outgoing c
 
 The planning is pure and lives in `typescript/src/lib/transition-spans.ts`.
 
+For existing App films, each transition object can explicitly set
+`incomingPolicy: 'preroll-crossfade'`. This one opt-in advances incoming content
+from its draw origin throughout its half-open draw span and ramps incoming
+opacity over the whole window, keeping the outgoing transition contribution at
+1 even for `fade`. Omit it to retain the own-span clock and dip behavior above.
+It is supported on resolved `TransitionSpec`, `declareAppTransition` input, and
+renderer `TransitionReferenceObject` (`fade` or `cross-fade`). Unknown/custom
+implementations do not acquire support through this flag. No clip fields are
+rewritten, no endpoint is mounted, and the visual ramp never multiplies audio gain.
+
+At 30 fps, incoming authored frames 90..120 with a 12-frame end-aligned window
+start drawing at 78. With source trim 90..150 and speed 2, the opt-in supplies
+source-clock input 102 at frame 84 and 114 at frame 90; the default supplies 90
+at both frames. Source trim/end handling remains the media backend's responsibility.
+
+Canonical parent/internal documents define `clip.transition` as incoming for every
+producer. After resolving that document to projected tracks/clips, call
+`compileCanonicalTransitions(tracks, fps, theme, registries?)` once. Pass its
+serializable `CompiledCanonicalTransitions` result as the `compiledTransitions`
+prop of `TimelineComposition` and as the last argument of
+`prepareCompositionScene` (after `registries`). Both entry points consume the
+same resolved per-clip declarations. Native `TimelineConfig` inputs omit this
+compiler output and keep the outgoing behavior above. The compiler never
+rewrites authored clips or selects a contract from aliases or occurrence metadata.
+
+The canonical compiler supports registered `fade`, `crossfade` and `cross-fade`
+with linear opacity. It includes first clips, gaps, overlaps and oversized
+windows. For own start/duration S/D and rounded positive transition duration T,
+P is T with a same-track predecessor, otherwise zero. The draw origin is
+R=max(0,S−P) and the exclusive end is R+D+P, capped by existing admitted
+`app.canonicalTiming.occurrenceStartMs + occurrenceDurationMs` when present.
+Content advances from R; own frames remain clamped. The ramp is (frame−R)/T,
+clamped to [0,1]; outgoing opacity and audio gain stay unchanged. Unsupported
+implementations, parameters, conflicting policies and malformed durations fail
+explicitly. No caller-selected ownership policy is needed.
+
+Outgoing pair declarations cannot represent a transition on a lone first clip,
+a nonadjacent gap/overlap or a transition longer than a clip. Their admission
+and fit checks stay intact. The resolved compiler output therefore carries a
+separate incoming vector, which `prepareTrack` accepts as its optional third
+argument: one `{T}` or `null` per clip, with optional `ClipSpan.endCap` frame
+bounds. The scene API exposes it as `SceneTrackInput.incomingTransitions`.
+Incoming and outgoing vectors cannot both declare transitions.
+
 ## Pure planner API
 
 Import `@banodoco/timeline-composition/evaluation` to prepare one visual track
@@ -97,8 +148,8 @@ const track = prepareTrack(
 );
 const at25 = queryTrackFrame(track, 25);
 // {frame: 25, layers: [
-//   {clipIndex: 0, drawLocalFrame: 25, ownFrame: 25, opacity: 1},
-//   {clipIndex: 1, drawLocalFrame: 5, ownFrame: 0, opacity: 0.5},
+//   {clipIndex: 0, drawLocalFrame: 25, ownFrame: 25, contentFrame: 25, opacity: 1},
+//   {clipIndex: 1, drawLocalFrame: 5, ownFrame: 0, contentFrame: 0, opacity: 0.5},
 // ]}
 ```
 
@@ -119,11 +170,14 @@ enumeration or serialization. Preparation and each query scale with clip count,
 not film duration; no cache is installed by this API.
 
 `queryDrawFrame(plan, drawLocalFrame)` returns the same `drawLocalFrame`, clamped
-`ownFrame`, and transition `opacity` for a single plan. It does not filter by
+`ownFrame`, content clock `contentFrame`, and transition `opacity` for a single plan. It does not filter by
 mount interval: its caller supplies a frame inside the clip's draw Sequence.
-`TransitionLayer` uses this query for its Freeze frame and opacity;
-`TimelineComposition` uses `prepareTrack` for its Sequences. Both paths delegate
-to the original `ownFrame` / `layerOpacity` implementation. The subpath also
+`contentFrame` equals `ownFrame` by default. Opted-in incoming plans use the
+nonnegative draw-local frame instead, before media playback rate or element
+speed remapping. `TransitionLayer` freezes default extensions at this clock and
+leaves opted-in incoming content advancing; scene component capabilities receive
+the same clock after element speed remapping. `SceneLayer` also exposes
+`contentFrame`. `TimelineComposition` uses the same prepared plans for its Sequences. The subpath also
 exports the planner input/output types, including `ClipSpan`, `TransitionSpec`
 and `DrawPlan`.
 
@@ -132,6 +186,72 @@ track opacity, clip fades, component opacity, transforms, bounds, pixel coverage
 and occlusion. It does not establish rendered visibility. Component internals
 and coverage remain unknown here. Renderer-owner/Python caching and consumers,
 coverage findings, and App Player integration are separate work.
+
+## Scene occlusion and declared diagnostics (0.0.9 draft)
+
+`prepareCompositionScene` admits the selected component hooks; `querySceneFrame`
+evaluates each mounted component once at its speed-remapped content clock. The
+answer includes canvas `width`/`height` and layers in bottom-to-top painter order
+(within a track, the same draw order as rendering; `z=0` is frontmost).
+
+Root and `./evaluation` export
+`querySceneOcclusion(answer: SceneFrame, clipId: string, minimumFraction: number)`:
+
+```ts
+type SceneOcclusion =
+  | {status: 'known'; occluderId: string | null; fraction: number}
+  | {status: 'unknown'; reason: string};
+```
+
+It reads an existing frame answer, without invoking hooks again, and shares the
+canonical visibility pass. Supply a finite threshold in `(0, 1]`, such as `.90`
+or `.98`. It names the frontmost qualifying **single** upper layer whose admitted
+support is an opaque rectangle at opacity exactly 1. Fraction is intersection
+area divided by the target's **canvas-clipped output rectangle** area, in canvas
+units. This is rectangular support overlap, not pixel coverage of glyphs, holes,
+or media alpha. Partial offscreen target area is excluded from the denominator.
+It never unions upper layers or accumulates translucent alpha.
+
+Known no qualifying upper layer returns `known/null/0`, including when all known
+overlaps fall below the threshold. Undeclared upper bounds/alpha remain unknown
+unless known geometry rules out the threshold or a proven qualifying upper
+layer exists. Glyph/layout support (`none`) cannot establish an opaque rectangle;
+an overlapping glyph can leave the answer unknown. Missing/unmounted, declared
+absent, zero-opacity, zero-area and wholly offscreen targets return `known/null/0`;
+unknown target output bounds return unknown. `visible=false` alone is never an
+occlusion explanation. Visibility uses the same support calculation at threshold
+1; fraction thresholds remain consumer check policy.
+
+The existing `PreparedComponentCapability.frame(contentFrame)` may return
+`diagnostics?: ComponentDiagnostics`, forwarded to `SceneLayer.diagnostics`:
+
+```ts
+type ComponentDiagnostics = {
+  motion?: Readonly<Record<string, number>>;
+  face?: ModifierBounds;
+  mouth?: ModifierBounds;
+  text?: {bounds: ModifierBounds; minPx?: number};
+};
+```
+
+Each omitted field is unknown, never static motion or an empty region. Motion
+contains component-owned intrinsic scalars with component-defined names/units;
+it does not assert final positions or visibility. Face/mouth/text regions are
+declared canvas rectangles at that callback clock, using the same pure helpers
+as drawing. Text bounds describe declared layout, not glyph alpha; `minPx` is
+the component's minimum drawn font size in canvas pixels. Real measured glyph
+bounds still require the actual admitted fonts. No type name or font string
+produces geometry. These declarations do not establish opaque support.
+
+Semantic regions and `minPx` become unknown for undeclared animation/crop or
+modifier geometry. Even a bounds-preserving modifier does not establish internal
+region positions or text scale, so all modified semantic regions conservatively
+become unknown. Intrinsic motion remains available. Nonfinite motion/size values
+are omitted, invalid rectangles become unknown, and the layer reports
+`invalid-component-diagnostics`; diagnostic validation does not change visibility.
+No hook means no diagnostic field. These optional facts add no support to an
+uninstrumented component: AM/Personal owners still need real render helpers,
+admitted fonts/media and component tests before private viewer retirement.
 
 ## Transition authoring admission
 
@@ -187,7 +307,7 @@ npm ci
 npm run gen-registry:check
 npm run build
 npm pack
-npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.8.tgz"
+npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.9.tgz"
 ```
 
 Use a writable `npm_config_cache` if the environment's default npm cache is
@@ -247,7 +367,8 @@ origin or authored keys. Keys retain their payload units (App seconds, sprite
 frames). For a declared origin `o`, App key time at timeline second `t` is
 `t - (clip.at + o)`; sprite key frame at own local frame `f` is `f - o * fps`.
 The sprite then applies its existing step quantization and held-pose selection.
-Transition extensions still use the evaluator's existing clamped own frame.
+Default transition extensions use the evaluator's existing clamped own frame;
+the explicit incoming policy uses its advancing content clock.
 
 The pure `./evaluation` and component `./theme-api` subpaths expose
 `timelineKeyframeTime`, `spriteKeyframeFrame` and `declareKeyframeOrigin`.

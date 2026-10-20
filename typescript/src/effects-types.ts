@@ -97,6 +97,8 @@ export type TransitionReferenceObject<TParams = Record<string, unknown>> = {
   type?: string;
   duration?: number;
   durationFrames?: number;
+  align?: import('./lib/transition-spans').Align;
+  incomingPolicy?: import('./lib/transition-spans').IncomingTransitionPolicy;
   params?: TParams;
 };
 

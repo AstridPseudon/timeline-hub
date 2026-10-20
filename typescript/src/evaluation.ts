@@ -7,13 +7,14 @@ import {
   type ClipSpan,
   type DrawPlan,
   type TransitionSpec,
+  type IncomingTransitionSpec,
 } from './lib/transition-spans';
 import {admitDeclaredTransitions, type TransitionDeclaration} from './lib/transition-declarations';
 
 export {declareAppTransition, admitTransitionContribution, transitionContributionIdentity, TransitionAdmissionError} from './lib/transition-declarations';
 export type {AppTransition, TransitionDeclaration, TransitionImplementation, TransitionContributionResource, TransitionContributionReference, AdmittedTransitionContribution} from './lib/transition-declarations';
 
-export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec} from './lib/transition-spans';
+export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy, CompiledCanonicalTransitions, IncomingTransitionSpec} from './lib/transition-spans';
 
 export type PreparedTrack = {
   readonly plans: readonly DrawPlan[];
@@ -22,6 +23,8 @@ export type PreparedTrack = {
 export type DrawFrame = {
   drawLocalFrame: number;
   ownFrame: number;
+  // Content clock consumed by media and components, before their speed remap.
+  contentFrame: number;
   // Transition opacity only; excludes track/clip/component opacity and occlusion.
   opacity: number;
 };
@@ -38,7 +41,8 @@ export type TrackFrame = {
 export const prepareTrack = (
   spans: readonly ClipSpan[],
   transitions: readonly (TransitionSpec | null)[],
-): PreparedTrack => ({plans: planTrack([...spans], [...transitions])});
+  incomingTransitions?: readonly (IncomingTransitionSpec | null)[],
+): PreparedTrack => ({plans: planTrack([...spans], [...transitions], incomingTransitions)});
 
 // Strict authoring admission. Legacy prepareTrack inputs retain their behavior.
 export const prepareDeclaredTrack = (
@@ -53,6 +57,7 @@ export const prepareDeclaredTrack = (
 export const queryDrawFrame = (plan: DrawPlan, drawLocalFrame: number): DrawFrame => ({
   drawLocalFrame,
   ownFrame: ownFrame(plan, drawLocalFrame),
+  contentFrame: plan.incomingPolicy === 'preroll-crossfade' ? Math.max(0, drawLocalFrame) : ownFrame(plan, drawLocalFrame),
   opacity: layerOpacity(plan, drawLocalFrame),
 });
 
@@ -79,8 +84,8 @@ export type {ModifierBounds, ModifierContext, ModifierFinding} from './modifier-
 export {compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, AudioEnvelopeError} from './lib/audio-envelope';
 export type {AudioEnvelope, AudioCurve} from './lib/audio-envelope';
 
-export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame} from './scene-evaluation';
-export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput} from './scene-evaluation';
+export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame, querySceneOcclusion} from './scene-evaluation';
+export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput, SceneOcclusion} from './scene-evaluation';
 
-export type {MediaSceneEvidence, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext, SceneCapableComponent, SceneCapabilities} from './scene-capabilities';
+export type {MediaSceneEvidence, ComponentDiagnostics, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext, SceneCapableComponent, SceneCapabilities} from './scene-capabilities';
 export {VIDEO_INTERPRETATION, IMAGE_INTERPRETATION, provenOpaqueMedia} from './scene-capabilities';

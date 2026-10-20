@@ -3,8 +3,8 @@ import {AbsoluteFill, Freeze, useCurrentFrame} from 'remotion';
 import {queryDrawFrame, type DrawPlan} from './evaluation';
 
 // Wraps one clip's content inside its draw Sequence. Frames here are draw-local.
-// Extension frames (added by a transition) show the clip frozen at its boundary
-// frame; opacity applies the transition ramp.
+// Default extensions freeze at the own-span boundary. Opted-in incoming content
+// keeps this draw-local clock, including preroll; opacity is purely visual.
 export const composeTransitionLayer = ({
   plan,
   children,
@@ -14,8 +14,8 @@ export const composeTransitionLayer = ({
 }, frame: number): ReactElement => {
   const evaluated = queryDrawFrame(plan, frame);
   const extended = plan.drawDuration > plan.ownDuration;
-  const body = extended
-    ? <Freeze frame={evaluated.ownFrame}>{children}</Freeze>
+  const body = extended && plan.incomingPolicy !== 'preroll-crossfade'
+    ? <Freeze frame={evaluated.contentFrame}>{children}</Freeze>
     : children;
 
   // Decided per plan, not per frame, so the wrapper does not mount and unmount
