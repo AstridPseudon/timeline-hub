@@ -106,4 +106,33 @@ describe('useAddVariantAsGeneration', () => {
     expect(mocks.unpatchRegistry).not.toHaveBeenCalled();
     expect(mocks.toastError).toHaveBeenCalledWith('variant promotion disabled');
   });
+
+  it('awaits the prepared video insertion result from the manual production ingress', async () => {
+    mocks.promoteVariant.mockResolvedValue({
+      id: 'generation-promoted',
+      location: 'promoted.mp4',
+      thumbnail_url: 'promoted-thumb.png',
+    });
+    mocks.loadPrimaryVariantForGeneration.mockResolvedValue({
+      id: 'variant-primary',
+      location: 'primary.mp4',
+      thumbnail_url: 'primary-thumb.png',
+    });
+    mocks.addClip.mockResolvedValue({
+      ok: true,
+      data: { clipId: 'clip-2', trackId: 'V1' },
+    });
+
+    const { result } = renderHookWithProviders(() => useAddVariantAsGeneration());
+
+    await act(async () => {
+      await result.current.addVariantAsGenerationAfterClip('clip-1', variant);
+    });
+
+    expect(mocks.addClip).toHaveBeenCalledWith(expect.objectContaining({
+      afterClipId: 'clip-1',
+      preparedAsset: expect.objectContaining({ mediaType: 'video' }),
+    }));
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
 });
