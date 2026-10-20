@@ -262,6 +262,37 @@ def test_observation_uncertainty_persists_without_adopting_unknown_children(monk
         groups.terminate_tree(process, grace_seconds=0)
 
 
+def test_reaped_root_pid_reuse_does_not_poison_final_tree_observation(monkeypatch):
+    """A reaped root replacement is unrelated; known descendants remain fenced."""
+    process = SimpleNamespace(
+        pid=100,
+        returncode=0,
+        _astrid_process_birth="root",
+        _astrid_tree_members={100: "root", 200: "child"},
+        _astrid_custody=FakeCustody(),
+    )
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
+        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
+        200: groups._ProcessInfo(200, 1, 200, "child"),
+        900: groups._ProcessInfo(900, 1, 900, "unrelated"),
+    })
+
+    assert groups.observe_tree(process) == {200: "child"}
+    assert not hasattr(process, "_astrid_tree_uncertain")
+    process._astrid_custody.retained_incarnation_exited = (
+        lambda pid, birth: pid == 200 and birth == "child"
+    )
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {
+        100: groups._ProcessInfo(100, 1, 100, "replacement-root"),
+        200: groups._ProcessInfo(200, 1, 200, "replacement-child"),
+    })
+    assert groups.observe_tree(process) == {}
+    assert not hasattr(process, "_astrid_tree_uncertain")
+    process._astrid_custody.retained_incarnation_exited = lambda *_: False
+    with pytest.raises(groups.CleanupUncertainError, match="owned process identity was reused"):
+        groups.observe_tree(process)
+
+
 def test_keyboard_interrupt_during_first_census_fails_closed(monkeypatch):
     process = _process()
     signals = []

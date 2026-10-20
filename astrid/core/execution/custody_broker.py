@@ -3875,6 +3875,21 @@ class ProcessCustody:
                 except OSError:
                     pass
 
+    def retained_incarnation_exited(self, pid: int, birth: str) -> bool:
+        """Return whether this exact retained incarnation has exited."""
+        with self._lock:
+            entry = self._handles.get(pid)
+            if entry is None or entry[0] != birth:
+                return False
+            handle = entry[1]
+            if handle is _PIDFD_RELEASED:
+                return True
+            if type(handle) is not int:
+                return False
+            poller = select.poll()
+            poller.register(handle, select.POLLIN)
+            return bool(poller.poll(0))
+
     def observe(self, members: Mapping[int, str]) -> None:
         with self._lock:
             if self._uncertain is not None:

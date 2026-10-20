@@ -346,6 +346,12 @@ def _live_members(members: dict[int, str]) -> list[int]:
     ]
 
 
+def _retained_incarnation_exited(process: subprocess.Popen, pid: int, birth: str) -> bool:
+    custody = getattr(process, "_astrid_custody", None)
+    proof = getattr(custody, "retained_incarnation_exited", None)
+    return bool(proof(pid, birth)) if callable(proof) else False
+
+
 def _group_members_owned(
     process: subprocess.Popen,
     known: dict[int, str],
@@ -400,13 +406,17 @@ def _tree_members(
     if root_birth is None:
         return {}
     root = snapshot.get(process.pid)
+    reaped_root_reused = False
     if root is not None and root.birth != root_birth:
-        return {}
+        if process.returncode is None:
+            return {}
+        reaped_root_reused = True
     known[process.pid] = root_birth
     children: dict[int, list[_ProcessInfo]] = {}
     for info in snapshot.values():
         children.setdefault(info.ppid, []).append(info)
-    pending = [process.pid, *known]
+    pending = [pid for pid in (process.pid, *known)
+               if not (reaped_root_reused and pid == process.pid)]
     while pending:
         parent = pending.pop()
         # A PID in ``known`` is only an identity, not a permanent process.
@@ -487,6 +497,15 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
     for pid, birth in tuple(known.items()):
         current = snapshot.get(pid)
         if current is not None and current.birth != birth:
+            # Popen.poll()/wait() positively reaps the original leader before
+            # the final descendant census.  Its numeric PID may then already
+            # belong to another incarnation; that replacement is not part of
+            # the owned tree.  Linux pidfds provide the same positive exit
+            # proof for observed descendants. Unreaped roots and descendants
+            # without an exact retained exit proof still fail closed below.
+            if ((pid == process.pid and process.returncode is not None)
+                    or _retained_incarnation_exited(process, pid, birth)):
+                continue
             raise CleanupUncertainError("owned process identity was reused")
         if current is None and any(
             info.ppid == pid and info.pid not in known for info in snapshot.values()
