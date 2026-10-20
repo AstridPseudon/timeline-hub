@@ -13,22 +13,23 @@ export type ParentClipSwapMediaBasis = {
 
 /** Capture one raw parent clip replacement against its original authored asset. */
 export function captureParentClipSwapMedia(
-  bundle: AuthoredBundle, clipId: string, media: MediaSelection,
+  bundle: AuthoredBundle, clipId: string, media: MediaSelection, selectedOldMedia?: MediaSelection,
 ): ParentClipSwapMediaBasis {
-  const oldMedia = parentClipMediaSelection(bundle, clipId);
+  const oldMedia = parentClipMediaSelection(bundle, clipId, selectedOldMedia);
   const command: EditCommand = {
     schema_version: 1,
     op: 'clip.swap-media',
     version: '1',
     select: `parent/clip:${clipId}`,
     args: { old_media: copy(oldMedia), media: copy(media) },
-    intent: { ownership: 'parent' },
+    // Private014 only; public013 stays unsupported and its DTO is unchanged.
+    intent: { ownership: 'parent' } as unknown as EditCommand['intent'],
   };
-  // Verification of the new selection happens after the caller's one permitted await.
+  // Both selections are checked against detached Runtime inputs at finish.
   return freezeJson({ bundle: copy(bundle), command });
 }
 
-export function finishParentClipSwapMedia(basis: unknown, verifiedMedia: VerifiedMedia): {
+export function finishParentClipSwapMedia(basis: unknown, verifiedMedia: readonly VerifiedMedia[]): {
   command: EditCommand;
   bundle: AuthoredBundle;
   record: CommandRecord;
@@ -41,6 +42,6 @@ export function finishParentClipSwapMedia(basis: unknown, verifiedMedia: Verifie
   return executeParentClipSwapMedia(
     basis.bundle as AuthoredBundle,
     basis.command as EditCommand,
-    [verifiedMedia],
+    verifiedMedia,
   );
 }
