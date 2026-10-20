@@ -46,7 +46,7 @@ const EMPTY_DIAGNOSTIC_SNAPSHOT: readonly Diagnostic[] = Object.freeze([]);
 const EMPTY_PACKAGE_STATE_INVENTORY: readonly PackageStateInventoryEntry[] = Object.freeze([]);
 
 // ---------------------------------------------------------------------------
-// DEV-only: local (workspace) extensions
+// Built-in (bundled) extensions
 // ---------------------------------------------------------------------------
 
 interface BuiltInExtensionRow {
@@ -308,7 +308,12 @@ export function ExtensionManager() {
   return (
     <div
       className="flex flex-col gap-3"
-      onKeyDown={(event) => event.stopPropagation()}
+      // Contain keys so editor shortcuts cannot steal a toggle's activation,
+      // but let Escape through: the dialog's dismiss listener sits outside,
+      // and focus opens on the first toggle.
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape') event.stopPropagation();
+      }}
       data-video-editor-extension-manager="true"
     >
       {hasBuiltIns && (

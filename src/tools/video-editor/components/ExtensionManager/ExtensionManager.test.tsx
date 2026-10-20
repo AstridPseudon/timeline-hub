@@ -3596,6 +3596,25 @@ describe('ExtensionManager — built-in extensions section (T2.4)', () => {
     expect(outerKeyDown).not.toHaveBeenCalled();
   });
 
+  it('lets Escape through so the surrounding dialog can close while a toggle has focus', () => {
+    const outerKeyDown = vi.fn();
+    devLocalState.extensions.push(makeLocalExtension(LOCAL_ID, 'Local Fixture'));
+    mockUseVideoEditorRuntime.mockReturnValue({
+      extensionRuntime: makeRuntime([], [
+        { manifest: makeLocalExtension(LOCAL_ID, 'Local Fixture').manifest },
+      ]),
+      extensionStateRepository: null,
+      triggerExtensionRefresh: undefined,
+    });
+
+    render(<div onKeyDown={outerKeyDown}><ExtensionManager /></div>);
+    fireEvent.keyDown(screen.getByRole('button', {
+      name: /disable haus\.astrid\.dev\.local-fixture/i,
+    }), { key: 'Escape', code: 'Escape' });
+
+    expect(outerKeyDown).toHaveBeenCalledTimes(1);
+  });
+
   it('derives the contribution summary from the runtime for an active local', () => {
     devLocalState.extensions.push(makeLocalExtension(LOCAL_ID, 'Local Fixture'));
     mockUseVideoEditorRuntime.mockReturnValue({
