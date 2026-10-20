@@ -88,9 +88,9 @@ export interface ContributedClipRecord {
 }
 
 /**
- * Sprint 8 (final): provider-id taxonomy used by the render pipeline +
- * `renderPipeline.ts`. Each route maps 1:1 onto a provider id so middleware
- * can dispatch on the route without a separate lookup table.
+ * Sprint 8 (final): provider-id taxonomy used by the render router. Each
+ * route maps 1:1 onto a provider id so callers can dispatch on the route
+ * without a separate lookup table.
  *
  *   * `browser-remotion`  — client-side WebCodecs / Remotion path
  *                          (`useClientRender`, native + media clips).
@@ -104,10 +104,10 @@ export interface ContributedClipRecord {
  *                          planner selects `sidecar-export`, which requires
  *                          the plan to actually demand that route (see
  *                          `plannerRouteHasDemand`). No provider implements
- *                          it yet, so `renderPipeline` reports "no external
- *                          render provider is registered" — a route the plan
- *                          asked for and the host cannot serve, never a
- *                          silent fallback for a blocked browser/worker plan.
+ *                          it yet, so the router reports "no external render
+ *                          provider is registered" — a route the plan asked
+ *                          for and the host cannot serve, never a silent
+ *                          fallback for a blocked browser/worker plan.
  */
 export type RenderRoute =
   | 'browser-remotion'
