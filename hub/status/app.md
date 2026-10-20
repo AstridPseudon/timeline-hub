@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T01:38:17Z | dispatcher heartbeat 8s -->
+<!-- app | 2026-10-20T01:43:31Z | dispatcher heartbeat 5s -->
 # app — 2026-10-20 01:27 UTC
 Quiet window (lead) for app-full-m1-bounded-integration-1020011705-2755: peak 1-min load 4.69 on 4 CPUs; peak memory used 2129 MiB of 16093 MiB; paused 2 heavy non-suite processes; held requests released. Result: test app-full-m1-bounded-integration-1020011705-2755: fail exit=1 in 1068s — full-m1-bounded-integration on integration:app (app tree dd1fe6a725cf20015f7b8cb4a966bdf507319653) cmd: env ASTRID_CHECKOUT=/home/user/work/agent npm test -- --maxWorkers=2 counts: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯  Test Files  4 failed | 1454 passed (1458)       Tests  6 failed | 18301 passed |
 Milestone: M1 — final quiet full retry/classification pending; all App preservation proofs accepted. M0 COMPLETE. M2 branch work authorized, ALL M2 merges HELD until PLAN records M1.
