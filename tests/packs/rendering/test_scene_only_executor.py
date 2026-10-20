@@ -30,7 +30,7 @@ def _args(tmp_path: Path) -> Namespace:
     )
 
 
-def _authority() -> dict:
+def _authority(*, scene_clips=None, clips=None) -> dict:
     return {
         "mode": "scene_only",
         "capture_snapshot": {
@@ -38,19 +38,21 @@ def _authority() -> dict:
             "timeline_id": "timeline",
             "render_run_id": "capture:timeline:revision",
             "duration_frames": 4,
-            "config": {"tracks": [], "clips": [{"id": "compiled:clip"}]},
+            "config": {"tracks": [], "clips": clips if clips is not None else [{"id": "compiled:clip"}]},
             "registry": {"assets": {}},
             "metadata": {
                 "capture_authority": {"parent_revision_id": "revision"},
-                "scene_clips": {"compiled:clip": {"address": "c01.layer"}},
+                "scene_clips": (scene_clips if scene_clips is not None else
+                                {"compiled:clip": {"address": "c01.layer"}}),
             },
         },
     }
 
 
 class _Source:
-    def __init__(self, *, stale: bool = False):
+    def __init__(self, *, stale: bool = False, bound_snapshot=None):
         self.stale = stale
+        self.bound_snapshot = bound_snapshot or _authority()["capture_snapshot"]
         self.validations = []
 
     def validate_snapshot(self, snapshot):
@@ -59,12 +61,13 @@ class _Source:
             raise ValueError("capture source differs")
 
     def read(self):
-        return {"snapshot": _authority()["capture_snapshot"]}
+        return {"snapshot": self.bound_snapshot}
 
 
 def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monkeypatch):
     args = _args(tmp_path)
-    source = _Source()
+    authority = _authority(scene_clips={"forged": {"address": "wrong.layer"}})
+    source = _Source(bound_snapshot=_authority()["capture_snapshot"])
     calls = []
     label_sources = []
 
@@ -96,7 +99,7 @@ def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monke
         return [{"frame": frame, "width": 1920, "height": 1080, "layers": []} for frame in frames]
 
     monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", query)
-    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
+    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
 
     assert result["returncode"] == 0
     assert calls[0][2] == (0, 1, 2, 3)
@@ -142,6 +145,66 @@ def test_scene_only_unavailable_is_advisory_and_has_no_partial_answers(tmp_path,
         "actual_revision_id": None,
         "base_revision_id": None,
     }
+
+
+@pytest.mark.parametrize("clips", [None, [{"id": ""}], [{"id": "a"}, {"id": "a"}], ["not-a-clip"]])
+def test_scene_only_malformed_compiled_clips_are_unavailable(tmp_path, monkeypatch, clips):
+    args = _args(tmp_path)
+    authority = _authority(clips=clips) if clips is not None else _authority()
+    if clips is None:
+        del authority["capture_snapshot"]["config"]["clips"]
+    source = _Source(bound_snapshot=authority["capture_snapshot"])
+    monkeypatch.setattr(
+        "astrid.core.rendering.verified_source.inherited_source",
+        lambda timeline, assets: source,
+    )
+    monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", lambda *args, **kwargs: pytest.fail("query"))
+
+    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
+    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
+    assert result["returncode"] == 0
+    assert payload["snapshot_label"]["status"] == "unavailable"
+    assert payload["answers"] == [] and payload["scene_clips"] == {}
+
+
+def test_scene_only_query_must_cover_exact_extent_and_projected_ids(tmp_path, monkeypatch):
+    args = _args(tmp_path)
+    source = _Source()
+    monkeypatch.setattr(
+        "astrid.core.rendering.verified_source.inherited_source",
+        lambda timeline, assets: source,
+    )
+    monkeypatch.setattr(
+        filmstrip_execution,
+        "snapshot_label",
+        lambda snapshot, *, source: {"status": "committed", "label": "source", "actual_revision_id": "R1", "base_revision_id": None},
+    )
+    monkeypatch.setattr(
+        scene_answers,
+        "_prepared_host_frames_at",
+        lambda *args, **kwargs: [
+            {"frame": frame, "layers": [{"clipId": "not-in-source"}] if frame == 0 else []}
+            for frame in range(4)
+        ],
+    )
+
+    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
+    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
+    assert payload["snapshot_label"]["status"] == "unavailable"
+    assert payload["answers"] == [] and payload["scene_clips"] == {}
+
+
+def test_scene_only_missing_source_is_explicitly_unavailable(tmp_path, monkeypatch):
+    args = _args(tmp_path)
+    monkeypatch.setattr(
+        "astrid.core.rendering.verified_source.inherited_source",
+        lambda timeline, assets: None,
+    )
+    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
+    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
+    assert result["returncode"] == 0
+    assert payload["snapshot_label"]["status"] == "unavailable"
+    assert payload["answers"] == [] and payload["scene_clips"] == {}
 
 
 def test_prepared_scene_query_keeps_root_alive_and_validates_source(monkeypatch, tmp_path):
