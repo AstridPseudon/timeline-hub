@@ -907,21 +907,26 @@ class _ManagedWanChildAdapter:
                 if process.poll() is not None:
                     close_pipe_workers(self._pipe_reader, self._pipe_writer, timeout=self.release_timeout)
             # Close() or a clean leader exit alone cannot prove group release.
-            snapshot = _process_snapshot()
-            if not snapshot:
-                raise HostError("Wan child release census unavailable")
-            if sys.platform == "darwin":
-                # _process_snapshot is the bounded, complete native census on
-                # Darwin. A second ps process creates an avoidable descendant.
-                group_live = any(info.pgid == process.pid for info in snapshot.values())
+            if sys.platform == "win32":
+                # The retained Job's closed handle proves tree release on
+                # Windows; a POSIX census cannot provide that evidence.
+                verify_tree_absent(process)
             else:
-                ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
-                if ps.returncode != 0:
-                    raise HostError("Wan child release census failed")
-                members = [row.split() for row in ps.stdout.decode().splitlines()]
-                group_live = any(len(row) == 2 and row[1] == str(process.pid) for row in members)
-            if process.poll() is None or group_live or any(info.pgid == process.pid for info in snapshot.values()):
-                return {"ok": False, "released": False, "reason": reason}
+                snapshot = _process_snapshot()
+                if not snapshot:
+                    raise HostError("Wan child release census unavailable")
+                if sys.platform == "darwin":
+                    # _process_snapshot is the bounded, complete native census on
+                    # Darwin. A second ps process creates an avoidable descendant.
+                    group_live = any(info.pgid == process.pid for info in snapshot.values())
+                else:
+                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
+                    if ps.returncode != 0:
+                        raise HostError("Wan child release census failed")
+                    members = [row.split() for row in ps.stdout.decode().splitlines()]
+                    group_live = any(len(row) == 2 and row[1] == str(process.pid) for row in members)
+                if process.poll() is None or group_live or any(info.pgid == process.pid for info in snapshot.values()):
+                    return {"ok": False, "released": False, "reason": reason}
             # Retire the reader before closing/reusing pipe descriptors. The
             # command may be unwinding concurrently with MTS replacement.
             if not self._command_lock.acquire(timeout=self.release_timeout):
