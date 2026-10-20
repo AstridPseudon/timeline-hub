@@ -20,7 +20,6 @@ import {
 } from './tab-audio-capture.controller.mjs';
 
 const setupSource = join(import.meta.dirname, 'setup-private-pulse-stereo.sh');
-const BROWSER_LOCK = '/tmp/timeline-viewing-browser.lock';
 const PINNED_NODE_RUNTIME = {version: 'v20.19.4', execPath: NODE_EXECUTABLE};
 const LIVE_FLAGS = [
   'TAB_AUDIO_RUN',
@@ -49,6 +48,7 @@ function createFixture() {
   const recordPath = join(root, 'controller-record.ndjson');
   const daemonMarker = join(root, 'daemon-started');
   const browserMarker = join(root, 'browser-started');
+  const lockPath = join(root, 'unit-browser.lock');
   mkdirSync(timeline, {recursive: true});
   mkdirSync(join(nodeModules, 'playwright'), {recursive: true});
   mkdirSync(guardBin);
@@ -91,6 +91,7 @@ exit 0
     recordPath,
     daemonMarker,
     browserMarker,
+    lockPath,
     guardBin,
   };
 }
@@ -158,7 +159,7 @@ test('pure prepare receives neither live-run nor grant state', () => {
         TAB_AUDIO_RUN_MARKER: paths.marker,
         TAB_AUDIO_GRANT_PATH: paths.grant,
         PLAYWRIGHT_OUTPUT_DIR: paths.output,
-        TAB_AUDIO_LOCK_PATH: BROWSER_LOCK,
+        TAB_AUDIO_LOCK_PATH: fixture.lockPath,
         PRIVATE_PULSE_STATE_ROOT: paths.pulseStateRoot,
       });
 
@@ -193,7 +194,7 @@ test('live preflight keeps the original strict grant after private preparation',
         TAB_AUDIO_RUN_MARKER: paths.marker,
         TAB_AUDIO_GRANT_PATH: paths.grant,
         PLAYWRIGHT_OUTPUT_DIR: paths.output,
-        TAB_AUDIO_LOCK_PATH: BROWSER_LOCK,
+        TAB_AUDIO_LOCK_PATH: fixture.lockPath,
         PRIVATE_PULSE_STATE_ROOT: paths.pulseStateRoot,
       });
 
@@ -244,7 +245,7 @@ for (const invalidName of ['TAB_AUDIO_PREFLIGHT_PATH', 'TAB_AUDIO_RUN_MARKER', '
           TAB_AUDIO_RUN_MARKER: join(paths.runRoot, 'run.marker'),
           TAB_AUDIO_GRANT_PATH: join(paths.runRoot, 'strictgrant.json'),
           PLAYWRIGHT_OUTPUT_DIR: join(paths.runRoot, 'playwright-output'),
-          TAB_AUDIO_LOCK_PATH: BROWSER_LOCK,
+          TAB_AUDIO_LOCK_PATH: fixture.lockPath,
           PRIVATE_PULSE_STATE_ROOT: paths.pulseStateRoot,
         };
         values[invalidName] = join(tmpdir(), `outside-${invalidName.toLowerCase()}`);
