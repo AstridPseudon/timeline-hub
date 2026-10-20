@@ -1,9 +1,9 @@
-import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { EditCommand, TrackSetArgs } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, freezeJson, has, object } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 
-export type TrackLabelArgs = { values: { label: string }; clear: [] }
-  | { values: Record<string, never>; clear: ['label'] };
+export type TrackLabelArgs = TrackSetArgs & ({ values: { label: string }; clear: [] }
+  | { values: Record<string, never>; clear: ['label'] });
 export type TrackLabelBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
 
 const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const;
@@ -39,7 +39,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
   }
   ctx.dependency('scalar.images', 'entity', { parent: copy(bundle.base_parent) });
   ctx.bind('scalar.target', ref, ['scalar.images']);
-  if (has(supplied.args.values, 'label')) ctx.write(ref, ['label'], supplied.args.values.label);
+  if (typeof supplied.args.values.label === 'string') ctx.write(ref, ['label'], supplied.args.values.label);
   else ctx.clear(ref, ['label']);
   for (const key of CLAIMS) {
     if (has(supplied, key) && !equal(supplied[key], ctx.command[key])) {

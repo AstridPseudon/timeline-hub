@@ -105,13 +105,17 @@ export async function createTimelineCommandSession(options: Options) {
       while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
-        record = await box.dispatch((intent, head) => ({
-          method: 'POST',
-          path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
-          body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
-            base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-            commands: (intent.payload as unknown as Payload).commands, source: { via: 'app' } } satisfies CommitRequest),
-        }), async (request) => {
+        record = await box.dispatch((intent, head) => {
+          const commands = (intent.payload as unknown as Payload).commands;
+          if (!Array.isArray(commands) || commands.length === 0) throw new Error('Timeline commit requires commands');
+          return {
+            method: 'POST',
+            path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
+            body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
+              base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+              commands: [commands[0], ...commands.slice(1)], source: { via: 'app' } } satisfies CommitRequest),
+          };
+        }, async (request) => {
           try {
             if (stopped) throw new Error('Timeline command session is closed');
             const result = await options.send(JSON.parse(request.body) as CommitRequest, request.key);
