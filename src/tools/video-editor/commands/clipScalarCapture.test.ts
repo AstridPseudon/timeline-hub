@@ -55,6 +55,66 @@ describe('Agent built-in clip.set capture parity', () => {
     expect(captureClipClear(golden.bundle, transition.select!, 'transition')).toEqual(transition);
   });
 
+  it('captures a repaired incoming transition with its paired ref and predecessor guard', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    clip(input, ref).at = 3;
+    const values = {
+      transition: {
+        type: 'crossfade', duration: 0.75, revision: 'transition-r1',
+        params: JSON.parse('{"opaque":{"__proto__":["keep"],"a.b":false}}'), future: [null, 2],
+      },
+      elementRef: { id: 'crossfade', kind: 'transition', revision: 'transition-r1' },
+    } as unknown as Record<string, JsonValue>;
+    const command = captureClipSet(input, ref, { values });
+    const result = executeClipSet(input, command);
+    expect(command.args).toEqual({ values, clear: [] });
+    expect(command.selections).toEqual([{
+      key: 'transition.predecessor', query_version: 1, owner: ref,
+      members: ['parent/clip:f2-app-clip'],
+      order: ['parent/clip:f2-app-clip', ref],
+      boundaries: ['parent/track:V1'], policy: 'guard-membership',
+    }]);
+    expect(result.record.command).toEqual(command);
+    expect(result.record.writes).toEqual([
+      { ref, path: ['elementRef'], before: { state: 'absent' }, after: { state: 'present', value: values.elementRef } },
+      { ref, path: ['transition'], before: { state: 'present', value: { type: 'crossfade', duration: 0.5 } }, after: { state: 'present', value: values.transition } },
+    ]);
+    expect(clip(result.bundle, ref)).toMatchObject(values);
+    expect((clip(result.bundle, ref).transition as Record<string, JsonValue>).future).toEqual([null, 2]);
+    expect((clip(result.bundle, ref).transition as Record<string, JsonValue>).params).toMatchObject({ opaque: { 'a.b': false } });
+  });
+
+  it('refuses an adjacency gap or mismatched selected ref atomically before writes', () => {
+    const base = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const values = {
+      transition: { type: 'crossfade', duration: 0.75, revision: 'transition-r1' },
+      elementRef: { id: 'crossfade', kind: 'transition', revision: 'transition-r1' },
+    } as unknown as Record<string, JsonValue>;
+    const beforeGap = detached(base);
+    expect(() => captureClipSet(base, ref, { values })).toThrow('adjacent');
+    expect(base).toEqual(beforeGap);
+
+    const adjacent = detached(base);
+    clip(adjacent, ref).at = 3;
+    const beforeMismatch = detached(adjacent);
+    const wrongRef = { ...values, elementRef: { id: 'wipe', kind: 'transition', revision: 'transition-r1' } } as unknown as Record<string, JsonValue>;
+    expect(() => captureClipSet(adjacent, ref, { values: wrongRef })).toThrow('matching selected reference');
+    expect(adjacent).toEqual(beforeMismatch);
+  });
+
+  it('refuses a transition window longer than either adjacent clip', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    clip(input, ref).at = 3;
+    const values = {
+      transition: { type: 'crossfade', duration: 4, revision: 'transition-r1' },
+      elementRef: { id: 'crossfade', kind: 'transition', revision: 'transition-r1' },
+    } as unknown as Record<string, JsonValue>;
+    expect(() => captureClipSet(input, ref, { values })).toThrow('shorter adjacent clip');
+  });
+
   it('keeps shared occurrences isolated and preserves opaque/unrelated data', () => {
     const result = executeClipSetBatch(detached(golden.bundle), golden.commands);
     expect(clip(result.bundle, 'occurrence:shared-sibling/clip:f2-agent-clip')).toEqual(
@@ -81,7 +141,7 @@ describe('Agent built-in clip.set capture parity', () => {
     [{ asset: '' }, []],
     [{ asset: null }, []],
     [{ transition: null }, []],
-    [{ transition: { type: 'crossfade', duration: 0.5 } }, []],
+    [{ transition: { type: 'crossfade', duration: 0 } }, []],
     [{}, ['speed']],
     [{}, ['hold', 'hold']],
     [{}, []],

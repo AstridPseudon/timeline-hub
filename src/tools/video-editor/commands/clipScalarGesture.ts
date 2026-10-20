@@ -21,7 +21,11 @@ export interface CapturedClipScalarEdit {
 }
 
 export function clipScalarPreview(clipId: string, args: ClipScalarArgs): TimelinePatch {
-  return { version: 1, operations: [{ op: 'clip.update', target: clipId, payload: structuredClone(args.values), clear: [...args.clear] }] };
+  const transitionSet = Object.hasOwn(args.values, 'transition') || Object.hasOwn(args.values, 'elementRef');
+  return { version: 1, operations: [{
+    op: 'clip.update', target: clipId, payload: structuredClone(args.values),
+    ...(args.clear.length || !transitionSet ? { clear: [...args.clear] } : {}),
+  }] };
 }
 
 /** The session validates explicit ownership or resolves it from its raw authoring basis. */
