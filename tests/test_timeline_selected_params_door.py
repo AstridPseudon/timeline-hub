@@ -281,7 +281,9 @@ def test_selected_params_lost_ack_retains_v1_over_restart_and_guarded_inverse(
                "args": {"values": {"seed": 16}, "clear": [], "schema_source": pin}}
         refused = post(world, edit.path, json.dumps(edit.body([raw])).encode(), "params-invalid-16")
         assert refused.status == 409, refused.body
-        assert "16" in str(refused.json()) or "10" in str(refused.json())
+        failure = refused.json()
+        assert failure["details"]["reason"] == "invalid_edit_command"
+        assert failure["message"] == "16 is greater than the maximum of 10"
         assert _snapshot(edit.service) == before
 
         consumed = []
