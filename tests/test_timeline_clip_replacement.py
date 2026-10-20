@@ -260,7 +260,11 @@ def test_native_clip_swap_is_atomic_cas_and_exactly_replayable(native_editing):
     first = _native_commit(native_editing.service, native_editing.project, body, "native-swap")
     assert first["data"]["status"] in {"accepted", "rebased"}
     assert first["data"]["canonical_document"]["internal_timeline_revisions"][0]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
+    old_path = native_editing.service.cas.path_for(native_editing.old["object_id"].removeprefix("sha256:"))
+    old_bytes = old_path.read_bytes()
+    old_path.write_bytes(bytes([old_bytes[0] ^ 1]) + old_bytes[1:])
     assert _native_commit(native_editing.service, native_editing.project, body, "native-swap") == first
+    old_path.write_bytes(old_bytes)
     changed = copy.deepcopy(body)
     changed["commands"][0]["select"] = NATIVE_OWNER + "/clip:missing"
     with pytest.raises(RuntimeErrorBase) as error:
@@ -325,17 +329,52 @@ def test_native_clip_swap_rejects_malformed_source_before_native_commit(tmp_path
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(strict=True,
-                   reason="native Runtime selection currently does not rehash tampered CAS media")
 def test_native_clip_swap_rejects_tampered_cas_without_mutation(native_editing):
     digest = native_editing.old["object_id"].removeprefix("sha256:")
-    native_editing.service.cas.path_for(digest).write_bytes(b"tampered")
+    path = native_editing.service.cas.path_for(digest)
+    original = path.read_bytes()
+    path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
     command = _native_swap(native_editing)
     before = _native_rows(native_editing.service)
-    with pytest.raises(RuntimeErrorBase, match="immutable|changed|integrity"):
+    with pytest.raises(RuntimeErrorBase, match="immutable|changed|integrity|size"):
         _native_commit(native_editing.service, native_editing.project,
                        _native_body(native_editing.service, native_editing.project, [command]), "native-tampered")
     assert _native_rows(native_editing.service) == before
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_selected_source_corruption_between_capture_and_accept(native_editing, monkeypatch):
+    service = native_editing.service
+    digest = native_editing.new["object_id"].removeprefix("sha256:")
+    path = service.cas.path_for(digest)
+    before_rows = _native_rows(service)
+    before_head = service.get_project_timeline(native_editing.project, "film")
+    before_receipts = [tuple(row) for row in service.store.conn.execute(
+        "SELECT * FROM command_idempotency ORDER BY txn_id",
+    )]
+    original_verify = service._verify_child_object_bytes
+    corruption = {}
+
+    def verify_then_corrupt(object_digest, size, *, label):
+        result = original_verify(object_digest, size, label=label)
+        if object_digest == digest and not corruption:
+            data = path.read_bytes()
+            corruption["bytes"] = bytes([data[0] ^ 1]) + data[1:]
+            path.write_bytes(corruption["bytes"])
+        return result
+
+    monkeypatch.setattr(service, "_verify_child_object_bytes", verify_then_corrupt)
+    command = _native_swap(native_editing)
+    with pytest.raises(RuntimeErrorBase, match="immutable|changed|integrity|size"):
+        _native_commit(native_editing.service, native_editing.project,
+                       _native_body(service, native_editing.project, [command]), "native-capture-race")
+    assert corruption
+    assert _native_rows(service) == before_rows
+    assert service.get_project_timeline(native_editing.project, "film") == before_head
+    assert [tuple(row) for row in service.store.conn.execute(
+        "SELECT * FROM command_idempotency ORDER BY txn_id",
+    )] == before_receipts
+    assert path.read_bytes() == corruption["bytes"]
 
 
 @pytest.mark.integration
