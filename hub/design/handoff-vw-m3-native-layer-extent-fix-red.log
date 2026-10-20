@@ -1,0 +1,80 @@
+FFFFFFFFF                                                                [100%]
+=================================== FAILURES ===================================
+___ test_native_layer_keeps_original_extent_and_absolute_window[empty-pair0] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+___ test_native_layer_keeps_original_extent_and_absolute_window[empty-pair1] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+__ test_native_layer_keeps_original_extent_and_absolute_window[sparse-pair0] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+__ test_native_layer_keeps_original_extent_and_absolute_window[sparse-pair1] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+__ test_native_layer_keeps_original_extent_and_absolute_window[source-pair0] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+__ test_native_layer_keeps_original_extent_and_absolute_window[source-pair1] ___
+tests/packs/rendering/test_native_layer_extent.py:59: in test_native_layer_keeps_original_extent_and_absolute_window
+    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
+E   AssertionError: assert {'astrid_comp...review': '{}'} == {'astrid_comp...review': '{}'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'astrid_composition_duration_frames': '999999'} != {'astrid_composition_duration_frames': '300'}
+E     Use -v to get more diff
+_________ test_identical_empty_layers_retain_distinct_original_extents _________
+tests/packs/rendering/test_native_layer_extent.py:77: in test_identical_empty_layers_retain_distinct_original_extents
+    assert [first.metadata[EXTENT_KEY], second.metadata[EXTENT_KEY]] == ["300", "600"]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'astrid_composition_duration_frames'
+___________ test_caller_cannot_enlarge_original_layer_bounds[empty] ____________
+tests/packs/rendering/test_native_layer_extent.py:82: in test_caller_cannot_enlarge_original_layer_bounds
+    with pytest.raises(ValueError, match="beyond the full composition"):
+E   Failed: DID NOT RAISE <class 'ValueError'>
+___________ test_caller_cannot_enlarge_original_layer_bounds[source] ___________
+tests/packs/rendering/test_native_layer_extent.py:82: in test_caller_cannot_enlarge_original_layer_bounds
+    with pytest.raises(ValueError, match="beyond the full composition"):
+E   Failed: DID NOT RAISE <class 'ValueError'>
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[empty-pair0]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[empty-pair1]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[sparse-pair0]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[sparse-pair1]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[source-pair0]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_native_layer_keeps_original_extent_and_absolute_window[source-pair1]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_identical_empty_layers_retain_distinct_original_extents
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_caller_cannot_enlarge_original_layer_bounds[empty]
+FAILED tests/packs/rendering/test_native_layer_extent.py::test_caller_cannot_enlarge_original_layer_bounds[source]
+9 failed, 34 deselected in 3.07s

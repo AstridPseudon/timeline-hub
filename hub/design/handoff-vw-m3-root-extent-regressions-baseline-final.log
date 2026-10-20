@@ -1,0 +1,112 @@
+Command: node remotion/tests/root-metadata.test.cjs
+Working tree: /home/user/work/wt/vw-m3-root-extent-regressions
+Source baseline: abd41eb2a6a8fe9224028018ac65225018e490bd
+Expected result: red before Root producer change
+TAP version 13
+# Subtest: Root registers both compositions with actual metadata callbacks
+ok 1 - Root registers both compositions with actual metadata callbacks
+  ---
+  duration_ms: 92.744037
+  type: 'test'
+  ...
+# Subtest: native empty and sparse props retain the original 300-frame extent
+not ok 2 - native empty and sparse props retain the original 300-frame extent
+  ---
+  duration_ms: 29.234529
+  type: 'test'
+  location: '/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:111:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   durationInFrames: 1,
+    -   durationInFrames: 300,
+        fps: 30,
+        height: 1080,
+        width: 1920
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    width: 1920
+    height: 1080
+    fps: 30
+    durationInFrames: 300
+  actual:
+    width: 1920
+    height: 1080
+    fps: 30
+    durationInFrames: 1
+  operator: 'deepStrictEqual'
+  stack: |-
+    /home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:102:38
+    Array.forEach (<anonymous>)
+    assertSameMetadata (/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:102:12)
+    TestContext.<anonymous> (/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:117:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: without the internal override, empty and ordinary durations keep their existing values
+ok 3 - without the internal override, empty and ordinary durations keep their existing values
+  ---
+  duration_ms: 24.599204
+  type: 'test'
+  ...
+# Subtest: legacy local-window metadata remains a 30-frame composition
+ok 4 - legacy local-window metadata remains a 30-frame composition
+  ---
+  duration_ms: 23.896106
+  type: 'test'
+  ...
+# Subtest: default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+ok 5 - default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+  ---
+  duration_ms: 36.032821
+  type: 'test'
+  ...
+# Subtest: invalid, noninteger, unsafe and smaller overrides are refused
+not ok 6 - invalid, noninteger, unsafe and smaller overrides are refused
+  ---
+  duration_ms: 16.497415
+  type: 'test'
+  location: '/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:185:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection: invalid override 0'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:188:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an override conflicting with either legacy clock is refused
+not ok 7 - an override conflicting with either legacy clock is refused
+  ---
+  duration_ms: 19.706692
+  type: 'test'
+  location: '/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:201:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection: override conflicting with legacy local window'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/home/user/work/wt/vw-m3-root-extent-regressions/remotion/tests/root-metadata.test.cjs:202:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 4
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 263.336393
+EXIT_STATUS=1
+

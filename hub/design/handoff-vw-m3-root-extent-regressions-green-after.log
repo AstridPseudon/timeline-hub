@@ -1,0 +1,57 @@
+Command: private_root=$(mktemp -d /tmp/vw-m3-root-final.XXXXXX); cp /home/user/work/wt/vw-m3-native-layer-extent-fix/remotion/src/Root.tsx "$private_root/Root.tsx"; ROOT_SOURCE_DIR="$private_root" node remotion/tests/root-metadata.test.cjs; unlink "$private_root/Root.tsx"; rmdir "$private_root"
+Test worktree: /home/user/work/wt/vw-m3-root-extent-regressions
+Producer source: read-only private copy of /home/user/work/wt/vw-m3-native-layer-extent-fix/remotion/src/Root.tsx
+Result: green-after, 7 passed
+TAP version 13
+# Subtest: Root registers both compositions with actual metadata callbacks
+ok 1 - Root registers both compositions with actual metadata callbacks
+  ---
+  duration_ms: 89.613948
+  type: 'test'
+  ...
+# Subtest: native empty and sparse props retain the original 300-frame extent
+ok 2 - native empty and sparse props retain the original 300-frame extent
+  ---
+  duration_ms: 46.058432
+  type: 'test'
+  ...
+# Subtest: without the internal override, empty and ordinary durations keep their existing values
+ok 3 - without the internal override, empty and ordinary durations keep their existing values
+  ---
+  duration_ms: 30.663617
+  type: 'test'
+  ...
+# Subtest: legacy local-window metadata remains a 30-frame composition
+ok 4 - legacy local-window metadata remains a 30-frame composition
+  ---
+  duration_ms: 10.379022
+  type: 'test'
+  ...
+# Subtest: default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+ok 5 - default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+  ---
+  duration_ms: 22.136094
+  type: 'test'
+  ...
+# Subtest: invalid, noninteger, unsafe and smaller overrides are refused
+ok 6 - invalid, noninteger, unsafe and smaller overrides are refused
+  ---
+  duration_ms: 71.650555
+  type: 'test'
+  ...
+# Subtest: an override conflicting with either legacy clock is refused
+ok 7 - an override conflicting with either legacy clock is refused
+  ---
+  duration_ms: 16.631895
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 306.375504
+

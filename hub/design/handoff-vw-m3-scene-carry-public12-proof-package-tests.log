@@ -1,0 +1,139 @@
+{
+  "packageVersion": "0.0.12",
+  "rootExports": [
+    "DEFAULT_THEME",
+    "ElementRegistryProvider",
+    "HypeComposition",
+    "MODIFIER_REGISTRY",
+    "ModifierAdmissionError",
+    "THEME_PACKAGE_CLIP_TYPES",
+    "THEME_PACKAGE_REGISTRY",
+    "TIMELINE_COMPOSITION_SCAFFOLD",
+    "ThemeProvider",
+    "TimelineComposition",
+    "compileCanonicalTransitions",
+    "composeAnimations",
+    "composeModifiers",
+    "declareModifier",
+    "getTimelineDurationInFrames",
+    "mediaModifierBounds",
+    "normalizeAnimationReferences",
+    "prepareCompositionScene",
+    "prepareScene",
+    "queryCompositionSceneFrame",
+    "querySceneFrame",
+    "querySceneOcclusion",
+    "resolveAnimationReferences",
+    "resolveElementRegistries",
+    "toRuntimeTheme",
+    "useElementRegistries",
+    "useTheme"
+  ],
+  "subpathExportCounts": {
+    "root": 27,
+    "evaluation": 32,
+    "themeApi": 31,
+    "registry": 6,
+    "effects": 6,
+    "animations": 5,
+    "transitions": 5,
+    "registries": 3,
+    "packageJson": 1
+  },
+  "defaultTheme": {
+    "id": "banodoco-default",
+    "visual": {
+      "color": {
+        "fg": "#FAFAFA",
+        "bg": "#050814",
+        "accent": "#67E8F9"
+      },
+      "type": {
+        "families": {
+          "heading": "Arial",
+          "body": "Arial",
+          "mono": "monospace"
+        },
+        "size": {
+          "base": 32,
+          "small": 22,
+          "large": 84
+        },
+        "weight": {
+          "normal": 400,
+          "bold": 600
+        },
+        "lineHeight": 1.2
+      },
+      "motion": {
+        "fadeMs": 450
+      },
+      "canvas": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30
+      }
+    }
+  },
+  "agentDefaultThemeEqual": true,
+  "explicitThemePreserved": {
+    "id": "owner-explicit",
+    "visual": {
+      "color": {
+        "fg": "#FAFAFA",
+        "bg": "#112233",
+        "accent": "#67E8F9"
+      },
+      "type": {
+        "families": {
+          "heading": "Georgia",
+          "body": "Arial",
+          "mono": "monospace"
+        },
+        "size": {
+          "base": 32,
+          "small": 22,
+          "large": 84
+        },
+        "weight": {
+          "normal": 400,
+          "bold": 600
+        },
+        "lineHeight": 1.2
+      },
+      "motion": {
+        "fadeMs": 450
+      },
+      "canvas": {
+        "width": 640,
+        "height": 360,
+        "fps": 24
+      }
+    },
+    "color": {
+      "fg": "#FAFAFA",
+      "bg": "#112233",
+      "accent": "#67E8F9"
+    },
+    "type": {
+      "families": {
+        "heading": "Georgia",
+        "body": "Arial",
+        "mono": "monospace"
+      },
+      "size": {
+        "base": 32,
+        "small": 22,
+        "large": 84
+      },
+      "weight": {
+        "normal": 400,
+        "bold": 600
+      },
+      "lineHeight": 1.2
+    },
+    "motion": {
+      "fadeMs": 450
+    }
+  }
+}

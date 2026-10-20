@@ -1,0 +1,74 @@
+{
+  "compile_calls": 1,
+  "projector_calls": 1,
+  "compiled_clip": {
+    "id": "occ-1:voice-1",
+    "track": "A1",
+    "clipType": "media",
+    "asset": "occ-1:voice",
+    "at": 0.016682,
+    "from": 0.051,
+    "to": 1.8259769999999997,
+    "speed": 1.5,
+    "volume": 1.5,
+    "params": {
+      "fadeIn": 0.2,
+      "fadeOut": 0.2,
+      "fadeInCurve": "equal-power"
+    },
+    "app": {
+      "astrid_slice_origin": {
+        "at": 99
+      },
+      "opaque": [
+        null,
+        false
+      ],
+      "astrid_shot_composition": {
+        "project_id": "project-1",
+        "timeline_id": "main",
+        "shot_id": "shot-shared",
+        "shot_revision_id": "authoring-shot-revision-7827d086b301ae402c704c32f9b1a466370572a75bdf3bea0db550bd7ca20e58",
+        "internal_timeline_revision_id": "authoring-timeline-revision-6635254dd5324f28a8d17e021bda34af2ace8ad201c5d029d76ab1ffccc5adf8",
+        "occurrence_id": "occ-1",
+        "output_identity": "authoring-parent-revision-7a6244a5573bb632e211681a6f2d699ddd47b3b325ebb21b5301bc440ee540e4:occ-1",
+        "stable_deep_link": "astrid://projects/project-1/timelines/main/occurrences/occ-1",
+        "source_offset": {
+          "start": 0,
+          "end": 1000
+        },
+        "speed": 1.0,
+        "gain": 0.5,
+        "muted": false,
+        "source_clip_id": "voice-1"
+      }
+    },
+    "shot_id": "shot-shared",
+    "shot_occurrence_id": "occ-1"
+  },
+  "raw_child": {
+    "id": "voice-1",
+    "track": "A1",
+    "clipType": "media",
+    "asset": "voice",
+    "at": 0.016682,
+    "from": 0.051,
+    "to": 3.051,
+    "speed": 1.5,
+    "volume": 3,
+    "params": {
+      "fadeIn": 0.2,
+      "fadeOut": 0.2,
+      "fadeInCurve": "equal-power"
+    },
+    "app": {
+      "astrid_slice_origin": {
+        "at": 99
+      },
+      "opaque": [
+        null,
+        false
+      ]
+    }
+  }
+}

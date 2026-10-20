@@ -1,0 +1,11 @@
+{
+  "current_agent_head": "931d7ec56dadffc2efdc893fec80b4c4aadf8a8e",
+  "candidate_head": "abd41eb2a6a8fe9224028018ac65225018e490bd",
+  "public_pin": "0.0.12",
+  "snapshot_paths": [
+    "astrid",
+    "tests",
+    "pyproject.toml",
+    "remotion/package.json"
+  ]
+}

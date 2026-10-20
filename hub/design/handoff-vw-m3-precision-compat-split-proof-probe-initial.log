@@ -1,0 +1,112 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-full] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-window] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-layer] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-full] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-window] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-layer] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:76: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:61: in consume
+    result = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:172: in command
+    return real_subprocess(argv, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.11/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-precision-compat-split-proof/audio-project/compare.mjs']' returned non-zero exit status 1.
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-full]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-window]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-layer]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-full]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-window]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-layer]
+6 failed in 5.39s
