@@ -47,6 +47,28 @@ def test_parent_publish_rebases_original_capture_reloads_and_undoes(connected):
     assert client.reads
 
 
+def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_writer(connected):
+    client, generated, _ = connected
+    State(generated.bundles['r0']).entity('parent/clip:a')['speed'] = 2
+    tl = Checkout.attach(open_session(connected))
+    original = copy.deepcopy(tl.clip('a').data)
+    clip = tl.clip('parent/clip:a')
+    clip.hold_for(2)
+    command = state(connected)['pending'][0]
+    assert clip.duration == 2
+    assert command['op'] == 'clip.set'
+    assert command['select'] == 'parent/clip:a'
+    assert command['args'] == {'values': {'hold': 4}, 'clear': []}
+
+    accepted = tl.publish('Hold the opening', idempotency_key='owned-hold')
+    assert json.loads(generated.calls[-1][0])['commands'] == [command]
+    loaded = Checkout.attach(open_session(connected))
+    assert loaded.clip('parent/clip:a').data == dict(original, hold=4)
+    loaded.undo([accepted['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:a').data == original
+    assert client.reads
+
+
 def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):
     _, generated, _ = connected
     tl = Checkout.attach(open_session(connected))

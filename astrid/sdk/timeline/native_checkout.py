@@ -28,6 +28,19 @@ def _seconds(value):
     return number(value, 'literal timeline seconds')
 
 
+def _publishable_parent_command(command):
+    if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
+            or not command['select'].startswith('parent/clip:')):
+        return False
+    if command.get('op') == 'clip.move':
+        return True
+    args = command.get('args')
+    values = args.get('values') if isinstance(args, dict) else None
+    return (command.get('op') == 'clip.set' and isinstance(args, dict)
+            and args.get('clear') == [] and isinstance(values, dict)
+            and set(values) == {'hold'} and values['hold'] is not None)
+
+
 class AttachedCheckout(Checkout):
     """A raw scoped preview, never flattened or published as a candidate."""
 
@@ -100,11 +113,13 @@ class AttachedCheckout(Checkout):
         return result
 
     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
-        """Publish one captured parent move from an explicitly selected outbox.
+        """Publish one captured parent move or source-hold set from an explicitly selected outbox.
 
         The outbox path is this draft's recovery identity. Reattach that same
         session after a restart; detached checkouts never discover its intent.
-        Other attached verbs continue to use ``flush()``.
+        Other attached verbs continue to use ``flush()``. A hold remains a
+        source-unit scalar; ``AttachedClip.set_duration`` has already captured
+        that value through the native ``clip.set`` operation.
         """
         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
                 or (client is not None and client is not self.session.client)):
@@ -114,8 +129,7 @@ class AttachedCheckout(Checkout):
         def prepare(state):
             self._unchanged_basis(state)
             commands = state['pending']
-            if (len(commands) != 1 or commands[0]['op'] != 'clip.move'
-                    or not commands[0]['select'].startswith('parent/clip:')):
+            if len(commands) != 1 or not _publishable_parent_command(commands[0]):
                 _held()
             # Rationale and request are sealed in one existing outbox write.
             # A retry may omit the message, but cannot replace the original.
