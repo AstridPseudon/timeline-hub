@@ -528,6 +528,7 @@ class RemotionFrameProvider:
         self._capture_snapshot = None
         if renderer is None:
             if "config" in snapshot:
+                # File agreement, cache identity and scene FPS share this input.
                 self._capture_snapshot = deepcopy(dict(snapshot))
                 _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
             renderer = _acquire_shared_remotion_handle(
@@ -542,6 +543,7 @@ class RemotionFrameProvider:
             )
 
         self.worker = FrameCaptureWorker(renderer)
+        snapshot = self._capture_snapshot if self._capture_snapshot is not None else self.snapshot
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
     def reserve_scene_frames(self, frames: Sequence[int]) -> None:
@@ -581,7 +583,8 @@ class RemotionFrameProvider:
             if not isinstance(canvas, Mapping) or any(key not in canvas for key in ("fps", "width", "height")):
                 raise ValueError("captured Root props do not retain the full canvas/frame basis")
             fps = canvas["fps"]
-            if fps != float(Fraction(*self.snapshot["fps_rational"])):
+            snapshot = self._capture_snapshot if self._capture_snapshot is not None else self.snapshot
+            if fps != float(Fraction(*snapshot["fps_rational"])):
                 raise ValueError("captured Root frame rate differs from the frozen snapshot")
             requested = list(dict.fromkeys((*frames, *self._active_reserved_scene_frames)))
             answers = scene_answers.host_frames_at(props, canvas, requested)
@@ -643,9 +646,10 @@ class RemotionFrameProvider:
         frames_dir.mkdir(parents=True, exist_ok=True)
         misses: list[tuple[int, str, Path]] = []
         cached = 0
+        snapshot = self._capture_snapshot if self._capture_snapshot is not None else self.snapshot
         for card in cards:
             frame = int(card["frame"])
-            key = frame_cache_key(self.snapshot, frame, resolution)
+            key = frame_cache_key(snapshot, frame, resolution)
             destination = out_root / str(card["image"])
             # The cache stores PNGs only; a cached PNG carries no bounds, so bounds captures render every frame.
             data = None if self.wants_bounds else self.cache.read(key)
