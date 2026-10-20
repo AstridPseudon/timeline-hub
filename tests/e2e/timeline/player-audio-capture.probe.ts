@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CAPTURE_TIMELINE, TONES, createManagedTones, publishCaptureFixture, type Backend } from './player-audio-fixture';
 import { audibleEdges, decodeMonitor, privateMonitor, requireAudibleDuration } from './player-audio-monitor';
+import { gainDifferenceDb, requireUnchangedGain } from './player-audio-comparator';
 import { editorUrl, resetFakeRuntimeBaseline } from './support';
 
 type Monitor = Awaited<ReturnType<typeof privateMonitor>>;
@@ -134,15 +135,6 @@ function audibleMetrics(capture: Awaited<ReturnType<typeof decodeMonitor>>, freq
     return amplitude;
   });
   return { sampleCount: capture.sampleCount, onset, offset, left, right, amplitudes, phaseSteps, silentBlocks };
-}
-
-function gainDifferenceDb(actual: number, reference: number) {
-  return 20 * Math.log10(actual / reference);
-}
-
-function requireUnchangedGain(actual: number, reference: number) {
-  const db = gainDifferenceDb(actual, reference);
-  if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
 }
 
 // The idle diagnostic stays available without this opt-in. Expected bytes come
