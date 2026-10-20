@@ -1,0 +1,15 @@
+{
+  "result": "UNSAFE CANDIDATE REPRODUCED, NO PERSISTENCE",
+  "expected_head": null,
+  "missingRawKeys": [
+    "opaque",
+    "nullable",
+    "ordered",
+    "__proto__"
+  ],
+  "originalClipIds": [
+    "edited"
+  ],
+  "submittedClips": [],
+  "limitation": "App preflight only; this fake receiver deliberately stops before persistence. Real Runtime must check hidden authored shell state atomically."
+}

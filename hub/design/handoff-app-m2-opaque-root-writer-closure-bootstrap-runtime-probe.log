@@ -1,0 +1,35 @@
+{
+  "result": "DETACHED SERVICE ACCEPTED EMPTY PARENT OVER HIDDEN NONEMPTY SHELL",
+  "accepted_config": {
+    "clips": [],
+    "output": {
+      "background": null,
+      "background_scale": null,
+      "file": "output.mp4",
+      "fps": 30,
+      "resolution": "1280x720"
+    },
+    "tracks": [
+      {
+        "blendMode": "normal",
+        "fit": "contain",
+        "id": "V1",
+        "kind": "visual",
+        "label": "V1",
+        "opacity": 1,
+        "scale": 1
+      },
+      {
+        "blendMode": "normal",
+        "fit": "contain",
+        "id": "A1",
+        "kind": "audio",
+        "label": "A1",
+        "opacity": 1,
+        "scale": 1
+      }
+    ]
+  },
+  "legacy_recovery_bytes_retained": true,
+  "limitation": "Current integration Runtime service without provider; no HTTP/Door or deployed paired-tuple acceptance claimed."
+}

@@ -1,0 +1,109 @@
+{
+  "candidate": "a6c2db3d14c14da3be61c7e28b615c0e4202e619",
+  "scope": "real Agent RuntimeCommitService, detached MediaRealm/ABI, no real Runtime",
+  "pure_batch_execution": "succeeds",
+  "same_batch_provider": {
+    "http_status": 409,
+    "code": "conflict",
+    "message": "created identity was already reserved",
+    "details": {
+      "status": "conflict",
+      "reason": "identity_collision",
+      "base": {
+        "revision_id": "authoring-parent-revision-74c6cf4162b828775435bb3d0f16cce0bee766e8e2b8a775f20750cf6ca51761",
+        "publication_id": "publication-1"
+      },
+      "current": {
+        "revision_id": "authoring-parent-revision-74c6cf4162b828775435bb3d0f16cce0bee766e8e2b8a775f20750cf6ca51761",
+        "publication_id": "publication-1"
+      },
+      "conflicts": [
+        {
+          "kind": "identity_collision",
+          "ref": "occurrence:occ-a/clip:placed",
+          "path": [],
+          "base": {
+            "state": "absent"
+          },
+          "theirs": {
+            "state": "absent"
+          },
+          "ours": {
+            "state": "absent"
+          },
+          "choices": []
+        }
+      ]
+    }
+  },
+  "separate_recreate_provider": {
+    "http_status": 409,
+    "code": "conflict",
+    "message": "created identity was already reserved",
+    "details": {
+      "status": "conflict",
+      "reason": "identity_collision",
+      "base": {
+        "revision_id": "authoring-parent-revision-3723227fd6941428117f7b5cb364869cee76ccd6625e418b6c78e0c60c5e8a24",
+        "publication_id": "publication-2"
+      },
+      "current": {
+        "revision_id": "authoring-parent-revision-3723227fd6941428117f7b5cb364869cee76ccd6625e418b6c78e0c60c5e8a24",
+        "publication_id": "publication-2"
+      },
+      "conflicts": [
+        {
+          "kind": "identity_collision",
+          "ref": "occurrence:occ-a/clip:placed",
+          "path": [],
+          "base": {
+            "state": "absent"
+          },
+          "theirs": {
+            "state": "absent"
+          },
+          "ours": {
+            "state": "absent"
+          },
+          "choices": []
+        }
+      ]
+    }
+  },
+  "undo_remove": "accepted, exact post-create document restored",
+  "undo_create_after_undo_remove": {
+    "http_status": 409,
+    "code": "conflict",
+    "message": "an intervening publication wrote a guarded address",
+    "details": {
+      "status": "conflict",
+      "reason": "intervening_write",
+      "base": {
+        "revision_id": "authoring-parent-revision-74c6cf4162b828775435bb3d0f16cce0bee766e8e2b8a775f20750cf6ca51761",
+        "publication_id": "publication-3"
+      },
+      "current": {
+        "revision_id": "authoring-parent-revision-74c6cf4162b828775435bb3d0f16cce0bee766e8e2b8a775f20750cf6ca51761",
+        "publication_id": "publication-3"
+      },
+      "conflicts": [
+        {
+          "kind": "intervening_write",
+          "ref": "occurrence:occ-a/clip:placed",
+          "path": [],
+          "base": {
+            "state": "absent"
+          },
+          "theirs": {
+            "state": "absent"
+          },
+          "ours": {
+            "state": "absent"
+          },
+          "choices": []
+        }
+      ]
+    }
+  },
+  "all_refusals": "head/history/documents/accepted/prepared unchanged"
+}

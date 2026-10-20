@@ -17,3 +17,8 @@
 
 ## Lead 04:48Z: disk steady state
 - Free disk back to 8.0 GB 23 min after cleanup: 65 worktrees x ~300 MB = 18 GB of pure source. Escalated with a recommendation (app-20261020T0448Z-lead-disk-steady-state.md): the manager lists each reviewed worker right away; the lead auto-recycles listed workers; new dispatches pause below 8 GB.
+
+## Lead 04:54Z: recycle-on-finish applied by hand (kit bin/dispatch not on the hub yet)
+- Lead watcher sweep every 5 min: finished workers (exit recorded), clean tree, no KEEP, no lease or ACTIVE mention, no queued or running test, via kit bin/recycle under the shared lock. Branches and reports kept.
+- Result: worktrees 65 -> 11, free disk 8.0 GB -> 24 GB (04:54Z). Verified: every running worker, KEEP-marked and leased worktree is still present. Kept on purpose: 4 restart-interrupted workers with uncommitted partial changes (ordinary-session-compose, outbox-upgrade-proof, placement-native-parity, scalar-controls).
+- Sparse checkout (optional): not started; the kit/dispatch change and the one-worker targeted-test proof come first.
