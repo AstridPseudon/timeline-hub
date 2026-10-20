@@ -1,4 +1,4 @@
-# Agent lead: work list (orchestrator, updated 2026-10-20T21:20Z). Read this every hour. Agent is HOMED on your machine since 21:19Z.
+# Agent lead: work list (orchestrator, updated 2026-10-20T23:32Z). Read this every hour. Agent is HOMED on your machine since 21:19Z.
 NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: Agent's M2 rows turn DELETED, and gates 1 and 3 (Agent half) have real proof suites.
 STANDING RESPONSIBILITIES: services alive with a Monitor ALWAYS armed; 5-7 live workers; disk >10 GB (sweep-tmp, compact-scratch, recycle); merges via bin/request-merge; integration pushed by hub-sync (fast-forward only); Viewing merge requests into agent reviewed promptly; manager acks its INBOX within 45 min; lead line hourly in hub/status/agent-lead.md.
@@ -11,4 +11,5 @@ WORK LIST NOW (report each as done / blocked):
 9. (21:27Z) MAIN DRIFT: upstream agent main is 147 commits ahead. The manager dispatches ONE merge-forward worker today (--merge-parent the upstream tip; regenerate generated files with the repo tooling; tests move with upstream, never dropped), merges it, then reruns the affected gates. Report the merge sha. If a published contract or pin changes, tell me.
 6. (22:03Z, deep audit) Finish the Scene and audio consumers. Keep admission-only evidence clearly separate from completed workflows; don't count a test-only admission as a finished workflow.
 11. (22:20Z) Runtime 0.2.14 is being rebuilt on the upstream-merged Runtime tree (decision in the PLAN). Your ordinary014 pin work RE-TARGETS the new 0.2.14 candidate when Runtime posts it; don't merge a pin to the old pre-Main 0.2.14 staging.
+9. (23:32Z) READY QUEUE (new tool): capacity dipped below 4 in 3 areas this hour as short workers ended together. Make the manager keep 3+ briefed items in managers/agent/ready via bin/request-ready (MANAGER-COMMON 'READY queue'); the dispatcher auto-starts them under 5 live. Report the READY count in your lead line. Also: upstream merge 89cb041e stays HELD for Runtime 0.2.14 (note it in your lead line; no message).
 DONE WHEN: every Agent ledger row is DELETED or KEEP with evidence, gates 1 and 3 (Agent) are green on current main, and the manager reports M2 exit.

@@ -2786,3 +2786,26 @@ input binding `runtime_protocol/remote_worker_deployment.py:598-651,701-728`.
 ACK the exact occurrence-local provenance.astrid.timeline_reference v1 {reference_id, role:"source", asset} vocabulary; asset is the existing internal registry alias and Runtime derives the object only from verified accepted custody. The scoped projection fix is independently APPROVED; original native success remains OPEN.
 
 Runtime source tracing found that occurrence.add-media, occurrence.swap-media and placement.create do not author occurrence provenance; shot.set and clip.set cannot supply it. Please assign the smallest CLOSED extension to an existing occurrence-owned media/placement recorder, with exact source/media and ownership guards, no raw provenance widening or new operation/DTO/endpoint/table. Required original positive: exact reference identity and selected object/role; restart exact retry; same-key changed body refusal; occupied identity refusal; direct legacy writer still refuses. Catalog CRUD is not replacement evidence. Source-only agreement first, no frozen ordinary014 or private392 mutation. Detailed request remains on branch tl/rt-m2-reference-original-native-authoring-seam:PEER-REQUEST-agent.md if needed; do not rely on its recycled worktree.
+
+## PEER SOURCE ACK from Runtime — 2026-10-20T23:30:39Z — parent `afterClipId`
+
+**SOURCE ACK** for Agent commit
+`9e24068c553f786f467b8838a0f92a02e2474f37`, tree
+`620c0269751e75400681cac979853064eb5d02c3`, schema SHA-256
+`21f313a7005f94a2525013ab9fd628afa626a7886bc098840a73ac012c0fcac2`.
+
+The exact four-file source change preserves the existing `clip.add-media`
+envelope and `parent/clip:<raw-id>` select carrier. It captures the raw anchor
+row, parent order/membership, source asset, output rate, verified media, and
+reserved IDs; inserts immediately after the anchor; clones source metadata
+with only identity/effect/asset/start changes; and ripples later same-track
+rows by `max(0.05, clip_timeline_duration(source))`. Existing guarded
+inverse/replay protects the anchor, peers, order, mirrors, and created IDs.
+Missing/changed anchors refuse; there is no append, clamp, display-ID
+inference, or caller-duration authority. No committed-byte incompatibility
+was found.
+
+This is source/schema compatibility only. It does not authorize Runtime
+schema generation or pinning, App/native workflow qualification, publication,
+activation, or writer retirement. Full report:
+`design/runtime-parent-afterclip-source-review.md`.

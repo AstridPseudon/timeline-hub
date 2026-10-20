@@ -18,6 +18,14 @@ while true; do
     elif [ $rc = 3 ]; then echo "$(date -u +%FT%TZ) waiting: $out" > $O/queue/pending/.$n.why   # resource limit: retry later
     else echo "$out" > $O/queue/refused/$n; rm -f $f; fi
   done
+  # READY refill (2026-10-20): an area below 5 live workers gets its oldest READY item (bin/request-ready) queued, one per area per pass.
+  for a in agent runtime app viewing app2; do R=$O/managers/$a/ready; [ -d $R ] && [ ! -e $O/managers/$a/REMOTE ] || continue
+    case $a in agent) p=agt;; runtime) p=rt;; app) p=app;; viewing) p=vw;; app2) p=ap2;; esac
+    live=0; for d in $O/workers/$p-*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] && live=$((live+1)); done
+    q=$(grep -l . $O/queue/pending/$p-* 2>/dev/null | grep -v '/\.' | wc -l)   # already-queued dispatches count toward the target
+    [ $((live+q)) -lt 5 ] || continue; r=$(ls -1tr $R 2>/dev/null | grep -v '^\.' | head -1); [ -n "$r" ] || continue
+    if [ -e $O/workers/$r ] || [ -e $O/queue/pending/$r ]; then mv $R/$r $O/queue/refused/$r.ready-dup; else mv $R/$r $O/queue/pending/$r; echo "$(date -u +%FT%TZ) READY $a live=$live -> queued $r" >> $O/dispatcher.log; fi
+  done
   # reap: managers' finished rounds
   [ -n "$STOP" ] && exit 0; date -u +%FT%TZ > $O/dispatcher.heartbeat
   if [ -f $O/CODEX_UNAVAILABLE ] && [ $(( $(date +%s) - $(stat -c %Y $O/.codex-probe 2>/dev/null || echo 0) )) -ge 1200 ]; then touch $O/.codex-probe

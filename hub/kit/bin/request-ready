@@ -1,0 +1,10 @@
+#!/bin/bash
+# request-ready NAME <same args as bin/request / bin/dispatch>  — park a fully briefed worker in your area's READY queue.
+# The dispatcher starts the oldest READY item automatically whenever your area has fewer than 5 live workers, so capacity
+# never waits for your next round. Keep 3+ items here at all times (your Next 5). Area comes from the name prefix.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift; case $N in agt-*) A=agent;; rt-*) A=runtime;; app-*) A=app;; vw-*) A=viewing;; ap2-*) A=app2;; *) echo "name must start with agt-/rt-/app-/vw-/ap2-"; exit 2;; esac
+[ -e $O/workers/$N ] || [ -e $O/queue/pending/$N ] || [ -e $O/managers/$A/ready/$N ] && { echo "name $N already used"; exit 2; }
+for a in "$@"; do [ "$p" = --brief ] && { [ -f "$a" ] || { echo "brief $a not found"; exit 2; }; }; p=$a; done
+mkdir -p $O/managers/$A/ready; printf '%q ' "$N" "$@" > $O/managers/$A/ready/.$N.tmp && mv $O/managers/$A/ready/.$N.tmp $O/managers/$A/ready/$N
+echo "ready $N ($(ls $O/managers/$A/ready | wc -l) in $A READY; auto-starts when live < 5; result in $O/queue/done/$N)"

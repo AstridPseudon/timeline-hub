@@ -108,6 +108,7 @@ When a worker finishes, the harness removes its worktree automatically, provided
 
 ## HARD CAPACITY RULE (owner, 2026-10-20)
 Every manager keeps its area at the capacity target at ALL times: 5-7 running workers on Codex, 5 on the Claude fallback. Before ending ANY turn or round, and at least every 15 minutes, count your running workers. If you are below target, dispatch independent items from your Next 5, your INBOX or the PLAN milestone until you reach it.
+**READY queue (2026-10-20, fixes the dips when several short workers end together).** Besides your live workers, keep 3+ fully briefed items parked with `$ORCH/bin/request-ready NAME <same args as bin/request>`. The dispatcher starts the oldest one by itself whenever your area has fewer than 5 live plus queued workers, so capacity never waits for your next round. Each round: top the READY queue back up to 3 from your Next 5 (`ls $ORCH/managers/<you>/ready`). Use bin/request only for items that must start right now.
 Reviews, integration and merges are NOT a substitute: delegate long reviews to read-only review workers instead of doing them yourself in-session. Only a stated blocker in STATUS.md (what blocks, who owns it, since when) excuses running below target.
 
 ## Merging upstream main (or any branch) through a worker (2026-10-20)
