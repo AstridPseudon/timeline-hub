@@ -260,6 +260,8 @@ def test_service_visibility_receipt_proof_refuses_malformed_evidence(service_cas
         "tracked", {"expected_version": created["version"]}, idempotency_key="proof-archive",
     )
     body = {"expected_version": archived["data"]["version"]}
+    if evidence == "legacy_target_version":
+        body["version"] = archived["data"]["version"]
     event_version = archived["data"]["version"] + 1
     payloads = {
         "missing_event": None,
