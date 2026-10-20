@@ -265,7 +265,7 @@ def apply_inverse(ctx, records, intervening_records):
             ctx.select(selected['key'], selected['owner'], selected['members'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
-        if not write['path'] and write['after'] == ABSENT:
+        if not write['path'] and write['after'] == ABSENT and write['before'] != ABSENT:
             root = root_identity(write['ref'])
             if root is not None:
                 ctx.create_entity(write['ref'], kind=root[0],
