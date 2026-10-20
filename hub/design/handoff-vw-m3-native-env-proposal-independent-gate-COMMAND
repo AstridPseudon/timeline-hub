@@ -1,0 +1,44 @@
+# Independent-gate commands and results
+
+## Read-only source inspection
+
+```text
+git -C /home/user/work/agent status --short --branch
+git -C /home/user/work/agent log -1 --oneline
+sed -n '250,390p' /home/user/work/agent/astrid/core/execution/remotion_host_session.py
+sed -n '1100,1265p' /home/user/work/agent/astrid/packs/rendering/rendering/renderers/remotion/run.py
+sed -n '1360,1430p' /home/user/work/agent/tests/packs/rendering/test_remotion_backend.py
+```
+
+Result: `30fc8dd15`; clean Agent worktree. Receiver binds `projectDir` to
+`lease.project`; direct CLI test asserts the project-dir environment field.
+
+## Candidate host/env tests
+
+```text
+git -C /home/user/work/agent archive HEAD | tar -x -C <candidate-tmp>
+git -C <candidate-tmp> apply handoff-vw-m3-native-host-env-bounded-proposal-proposal.patch
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=<candidate-tmp>/tmp PYTHONPATH=<candidate-tmp> \
+  /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider \
+  --override-ini='addopts=' \
+  tests/core/test_subprocess_env.py::test_remotion_browser_executable_is_parent_owned_and_unlisted_env_is_dropped \
+  tests/core/execution/test_remotion_host_session.py::test_child_start_forwards_only_parent_owned_browser_selector \
+  tests/core/execution/test_remotion_host_session.py::test_child_start_environment_does_not_include_runtime_credentials \
+  tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt
+```
+
+Result: **7 passed in 0.60s**.
+
+## Direct CLI regression, baseline and candidate
+
+The existing `test_remotion_render_env_is_explicit_not_host_inherited` was
+invoked from private source archives with `_available_remotion_port` replaced
+by the fixed value `31500` in the test process. This avoids the sandbox's
+prohibited port probe and does not start a server or renderer.
+
+```text
+baseline: DIRECT_CLI_ENV=PASS; DIRECT_EXIT=0
+candidate: KeyError: 'ASTRID_REMOTION_PROJECT_DIR'; DIRECT_EXIT=1
+```
+
+The candidate failure is the existing assertion, not a rewritten test.

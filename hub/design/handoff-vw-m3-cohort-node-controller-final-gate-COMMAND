@@ -1,0 +1,35 @@
+# Fourcase Node-controller final-gate review commands
+
+Candidate commit and tree:
+
+```sh
+git -C /home/user/work/app rev-parse e26079c440d09d7712588581e369204b3e035db9^{commit} e26079c440d09d7712588581e369204b3e035db9^{tree}
+git -C /home/user/work/app diff-tree --no-commit-id --name-status -r e26079c440d09d7712588581e369204b3e035db9^ e26079c440d09d7712588581e369204b3e035db9
+git -C /home/user/work/app diff --check e26079c440d09d7712588581e369204b3e035db9^ e26079c440d09d7712588581e369204b3e035db9
+```
+
+Private review extract and targeted checks. The extract was temporary; its `node_modules` link pointed at the shared dependency tree read-only and was removed with the extract.
+
+```sh
+STATE=$(mktemp -d /tmp/timeline-composition-review.XXXXXX)
+trap 'find "$STATE" -depth -delete' EXIT
+APP=/home/user/work/app
+NODE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
+mkdir "$STATE/app"
+git -C "$APP" archive e26079c440d09d7712588581e369204b3e035db9 | tar -x -C "$STATE/app"
+ln -s /home/user/work/app/node_modules "$STATE/app/node_modules"
+sha256sum "$NODE"                         # 43d6...99490
+"$NODE" --version                          # v20.19.4
+env -u NODE_OPTIONS -u NODE_PATH PWTEST_CACHE_DIR="$STATE/pw-cache" \
+  "$NODE" --test "$STATE/app/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs"
+"$NODE" --check "$STATE/app/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs"
+env -u NODE_OPTIONS -u NODE_PATH PWTEST_CACHE_DIR="$STATE/pw-cache" \
+  PLAYWRIGHT_OUTPUT_DIR="$STATE/pw-output" \
+  "$NODE" "$STATE/app/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs" --discover "$STATE/app"
+env -u NODE_OPTIONS -u NODE_PATH PWTEST_CACHE_DIR="$STATE/pw-cache" \
+  PLAYWRIGHT_OUTPUT_DIR="$STATE/pw-output" \
+  "$NODE" "$STATE/app/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs" --ready \
+  "$STATE/app" /home/user/work/agent /home/user/work/runtime  # expected exit 1
+```
+
+The parent 322-test cohort was not rerun. No browser/render/socket/full-suite command was issued.

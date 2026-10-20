@@ -1,0 +1,24 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@
++    # Until the presenter owner lands its compatibility source, the public
++    # normalizer is not equivalent for absent or partial raw anchors: partial
++    # ``{x, y}`` is width 19 here while the legacy crop remains width 16.
++    # Require the complete source-shaped anchor so those inputs retain the
++    # established private crop/statistics fallback.
++    params = presenter.params if isinstance(presenter.params, Mapping) else {}
++    raw_mouth = params.get("mouth")
++    if (not isinstance(raw_mouth, Mapping)
++            or any(type(raw_mouth.get(key)) is not int for key in ("x", "y", "w"))
++            or not 0 <= raw_mouth["x"] < 320
++            or not 0 <= raw_mouth["y"] < 180
++            or not 1 <= raw_mouth["w"] <= 40):
++        return None
+diff --git a/tests/packs/rendering/presenter_selected_cut_query.mjs b/tests/packs/rendering/presenter_selected_cut_query.mjs
+@@
+ import {createHash} from 'node:crypto';
++import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@
++@pytest.mark.parametrize("raw_mouth", [None, {"x": 151, "y": 104}])
++def test_partial_or_default_raw_mouth_keeps_private_fallback(...):
++    ...

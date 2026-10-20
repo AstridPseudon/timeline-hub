@@ -17,7 +17,7 @@ index 6ce24f9e5..e0023e0b2 100644
              str(runtime_tools.node_executable),
              str(runtime_tools.remotion_cli),
 diff --git a/tests/core/execution/test_remotion_host_session.py b/tests/core/execution/test_remotion_host_session.py
-index 82b88e4c7..5bb5dbfe9 100644
+index 82b88e4c7..f48e46a4c 100644
 --- a/tests/core/execution/test_remotion_host_session.py
 +++ b/tests/core/execution/test_remotion_host_session.py
 @@ -405,7 +405,7 @@ def test_retire_records_group_that_cannot_be_confirmed_gone(tmp_path, monkeypatc

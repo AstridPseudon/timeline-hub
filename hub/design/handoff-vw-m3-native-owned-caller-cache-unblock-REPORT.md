@@ -8,9 +8,11 @@ Added direct regression coverage that the existing `HostRemotionSession` request
 
 Passed:
 
-`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt tests/core/execution/test_remotion_host_session.py::test_child_cannot_select_a_different_native_executable_or_project 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-text-card]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-image]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-frame-overlay]'` — **10 passed in 4.01s**.
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt tests/core/execution/test_remotion_host_session.py::test_child_cannot_select_a_different_native_executable_or_project 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-text-card]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-image]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-frame-overlay]'` — **10 passed in 3.67s**.
 
 `git diff --check` — passed.
+
+`PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B -m ruff check --no-cache astrid/packs/rendering/rendering/renderers/remotion/run.py tests/core/execution/test_remotion_host_session.py tests/packs/rendering/test_scene_source_carry.py` reports 16 diagnostics. The same 16 filename/code/message diagnostics are present on the three `HEAD` files; no new lint diagnostic was introduced.
 
 New controller preflight produced fingerprint `191f60f79a03d7d8dd690c1d4084dd36011fe02066bd19d87110d856319f50d4`. Its reviewed capture invocation was deliberately run only to verify the gate and exited 1 with: `physical capture refused: HostRemotionSession._start drops ASTRID_REMOTION_BROWSER_EXECUTABLE; wait for the Agent core fix and refresh this fingerprint`.
 

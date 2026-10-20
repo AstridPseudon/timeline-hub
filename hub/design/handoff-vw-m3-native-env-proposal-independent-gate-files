@@ -1,0 +1,22 @@
+# Review scope
+
+## Read-only Agent files
+
+- `astrid/core/execution/remotion_host_session.py`
+- `astrid/core/subprocess_env.py`
+- `astrid/packs/rendering/rendering/renderers/remotion/run.py`
+- `tests/core/execution/test_remotion_host_session.py`
+- `tests/core/test_subprocess_env.py`
+- `tests/packs/rendering/test_remotion_backend.py`
+
+## Unapplied proposal reviewed
+
+- `handoff-vw-m3-native-host-env-bounded-proposal-proposal.patch`
+- `handoff-vw-m3-native-host-env-bounded-proposal-REPORT.md`
+- `handoff-vw-m3-native-host-env-bounded-proposal-COMMAND`
+
+## Decision
+
+Reject the unconditional project-dir deletion. Reissue the Agent-owner patch
+with the field retained unless `(frame_mode and frame_session is not None)`;
+keep the parent-owned browser-selector projection and its focused test.
