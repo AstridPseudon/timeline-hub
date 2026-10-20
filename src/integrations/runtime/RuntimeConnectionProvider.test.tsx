@@ -134,9 +134,21 @@ describe('granted', () => {
   ])('shows update_needed for a %s health digest', async (_name, digest) => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ status: 'ok', ...(digest === undefined ? {} : { schema_digest: digest }) });
-    renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('update_needed'));
-    expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
+    // Keep the first admission probe separate from the provider's background health poll.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    let view: ReturnType<typeof renderProvider> | undefined;
+    try {
+      view = renderProvider(gateway, fakePermissions('granted').permissions);
+      await waitFor(() => expect(status()).toBe('update_needed'));
+      expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+      expect(status()).toBe('update_needed');
+      expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/health']);
+    } finally {
+      view?.unmount();
+      vi.useRealTimers();
+    }
   });
 
   it('keeps bounded update health polling and connects when Runtime becomes compatible', async () => {
