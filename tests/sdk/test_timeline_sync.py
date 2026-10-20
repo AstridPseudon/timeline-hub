@@ -47,7 +47,13 @@ class Generated:
         self.refusal = None
 
     def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
-        assert (project, timeline, limit) == ("p", "t", 1)
+        assert (project, timeline) == ("p", "t")
+        if limit == 200:
+            return {"items": [{"publication_id": response["receipt"]["receipt_id"],
+                               "receipt": copy.deepcopy(response["receipt"]),
+                               "records": {"commands": copy.deepcopy(self.records[response["receipt"]["receipt_id"]])}}
+                              for _, response in self.accepted.values()], "next_cursor": None}
+        assert limit == 1
         return {"head": copy.deepcopy(self.head), "items": [], "next_cursor": None}
 
     def commit_timeline(self, project, timeline, body, *, idempotency_key):
@@ -132,7 +138,12 @@ class Client:
                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
 
     def open_bundle(self, project, timeline, *, revision_id):
+        from astrid.sdk.timeline.commit import bundle_from_document
+
         self.reads.append(revision_id)
+        for _, result in self.generated.accepted.values():
+            if result['data']['accepted_revision_id'] == revision_id:
+                return DomainResult.success({'bundle': bundle_from_document(result['data']['canonical_document'])})
         return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
 
 
@@ -307,6 +318,12 @@ def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connec
         session.flush(idempotency_key="preview")
     accepted = session.flush()
     publication = accepted["receipt"]["receipt_id"]
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    # Inverse ACK verification reads the exact published boundary, not the
+    # fake transport's prepublication working copy with its older base pin.
+    generated.bundles[accepted["data"]["accepted_revision_id"]] = bundle_from_document(
+        accepted["data"]["canonical_document"])
     session.undo([publication])
     assert len({key for _, key in generated.calls}) == 3
     inverse = json.loads(generated.calls[-1][0])["commands"][0]
@@ -666,3 +683,234 @@ def test_blocked_read_does_not_hold_outbox_lock_or_overwrite_concurrent_work(con
     else:
         assert state["base"]["revision_id"] == "r1" and state["pending"] == [result]
         assert client.reads == ["r0", "r0", "r1"]
+
+
+def paired_ack():
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+    from tests.editing_conformance.test_materialization_identity import source
+
+    original = bundle_from_document(source())
+    call = capture_move(original, 'occurrence:occ-a/clip:clip-a', 3.003)
+    plan = execute(original, [call])
+    document = document_from_bundle(plan.bundle)
+    body = {'api_version': 1, 'project_id': 'project-1', 'timeline_id': 'film',
+            'base_revision_id': 'parent-1', 'base_publication_id': 'bootstrap', 'commands': [call]}
+    flight = {'key': 'paired-key', 'path': '/v1/projects/project-1/timelines/film/commit'}
+    identity = {'realm_id': 'realm', 'actor_id': 'actor'}
+    data = {'status': 'accepted', 'base_revision_id': 'parent-1', 'base_publication_id': 'bootstrap',
+            'previous_revision_id': 'parent-1', 'previous_publication_id': 'bootstrap',
+            'accepted_revision_id': document['parent_revision']['revision_id'],
+            'rebased_onto': None, 'publisher': 'actor', 'commands': plan.commands, 'id_map': plan.id_map,
+            'provider_version': 'astrid-v1', 'compiler_version': 'm1', 'canonical_document': document,
+            'document_digest': 'sha256:' + hashlib.sha256(canonical_json(document).encode()).hexdigest()}
+    receipt = {'receipt_id': 'paired-publication', 'command_kind': 'timeline.commit',
+               'idempotency_key': flight['key'], 'request_hash': hashlib.sha256(canonical_json({
+                   'operation': 'commitTimeline', 'path': flight['path'], 'publisher': 'actor',
+                   'request': body}).encode()).hexdigest(), 'project_id': 'project-1',
+               'project_seq': [1, 1], 'event_ids': ['paired-event'], 'result': copy.deepcopy(data),
+               'created_at': '2026-10-20T00:00:00Z'}
+    return {'data': data, 'receipt': receipt}, body, flight, identity, original
+
+
+def test_paired_ack_verifies_known_commands_original_source_and_output_closure():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    assert _ack(json.loads(json.dumps(result)), body, flight, identity,
+                source_bundle=original) == (result['data'], result['receipt'])
+
+
+@pytest.mark.parametrize('damage', [None, 'history-receipt', 'original-source'])
+def test_dependent_paired_ack_after_lost_ack_reload_and_disjoint_child_edit(tmp_path, monkeypatch, damage):
+    from astrid.core.receipts.contract import CommandReceipt
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+    from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+    from astrid.sdk.timeline.outbox import Outbox
+    from tests.editing_conformance.test_materialization_identity import source
+    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm, runtime_abi
+
+    runtime_abi.__wrapped__(monkeypatch)
+    realm = DetachedRealm(source())
+    identity = {'realm_id': 'realm', 'actor_id': 'actor-1'}
+    outbox = Outbox(tmp_path / 'dependent.json')
+    outbox.write({'scope': {**identity, 'project_id': 'project-1', 'timeline_id': 'film'},
+                  'base': copy.deepcopy(realm.head), 'pending': [], 'flight': None})
+    sent, accepted = [], {}
+
+    def commit(project, timeline, body, *, idempotency_key):
+        sent.append((request_bytes(body), idempotency_key))
+        if idempotency_key not in accepted:
+            context = realm.context(body['commands'], base={
+                'revision_id': body['base_revision_id'], 'publication_id': body['base_publication_id']})
+            context['request'] = {**body, 'rationale': ''}
+            context['idempotency_key'] = idempotency_key
+            context['request_hash'] = hashlib.sha256(canonical_json({
+                'operation': 'commitTimeline', 'path': '/v1/projects/project-1/timelines/film/commit',
+                'publisher': 'actor-1', 'request': body}).encode()).hexdigest()
+            accepted[idempotency_key] = create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+            accepted[idempotency_key]['receipt']['project_seq'] *= 2
+            if len(accepted) == 1:
+                raise ConnectionError('lost A acknowledgement')
+        return DomainResult.success(copy.deepcopy(accepted[idempotency_key]['data']),
+                                    receipt=CommandReceipt.from_dict(accepted[idempotency_key]['receipt']))
+
+    def history(*args, **kwargs):
+        entries = copy.deepcopy(realm.entries)
+        if damage == 'history-receipt' and len(accepted) > 1:
+            entries[1]['receipt']['result']['id_map'] = {}
+        return DomainResult.success({'items': entries, 'next_cursor': None})
+
+    def open_bundle(project, timeline, *, revision_id):
+        document = copy.deepcopy(realm.documents[revision_id])
+        if damage == 'original-source' and len(accepted) > 1 and revision_id == 'parent-1':
+            document['shot_revisions'][0]['payload']['name'] = 'forged immutable source'
+        return DomainResult.success({'bundle': bundle_from_document(document)})
+
+    client = SimpleNamespace(
+        _remote=SimpleNamespace(_transport=SimpleNamespace(_last_handshake=identity)),
+        timelines=SimpleNamespace(commit=commit, history=history, open_bundle=open_bundle))
+
+    def reload():
+        return TimelineSession(client, Outbox(outbox.path), identity, 'project-1', 'film')
+
+    session = reload()
+    ref = 'occurrence:occ-a/clip:clip-a'
+    session.queue_move(ref, 3.003)
+    with pytest.raises(ConnectionError):
+        session.flush(idempotency_key='original-A')
+    local = session._bundle(outbox.read())
+    b = session.queue(capture_clip_set(local, ref, values={'hold': 4}))
+    reload().flush()
+    assert sent[0] == sent[1]
+    assert outbox.read()['pending'] == [b]
+    head = bundle_from_document(realm.documents[realm.head['revision_id']])
+    realm.call([capture_clip_set_params(head, ref, values={'x': 3})])
+    if damage:
+        with pytest.raises((TimelineEditError, ValueError)):
+            reload().flush()
+        assert outbox.read()['pending'] == [b] and outbox.read()['flight']
+    else:
+        result = reload().flush()
+        assert result['data']['status'] == 'rebased'
+        assert result['data']['commands'] == [b]
+        assert sent[-1][1] != sent[0][1]
+        assert outbox.read()['pending'] == [] and outbox.read()['flight'] is None
+        current = bundle_from_document(result['data']['canonical_document'])
+        assert State(current).entity(ref)['params'] == {'x': 3}
+        assert State(current).entity(ref)['hold'] == 4
+
+
+@pytest.mark.parametrize('damage', ['missing', 'extra', 'wrong', 'commands', 'owner', 'item', 'scope', 'source'])
+def test_unverified_paired_ack_refuses_even_when_receipt_echoes_the_forgery(damage):
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    data = result['data']
+    if damage == 'missing':
+        data['id_map'] = {}
+    elif damage == 'extra':
+        data['id_map']['shot:extra'] = 'extra'
+    elif damage == 'wrong':
+        data['id_map'][next(iter(data['id_map']))] = 'other'
+    elif damage == 'commands':
+        data['commands'][0]['args']['on'] = 7
+    elif damage in ('owner', 'item'):
+        parent = data['canonical_document']['parent_revision']
+        row = parent['payload']['occurrences'][0]
+        row['shot_id' if damage == 'owner' else 'shot_revision_id'] = 'other'
+        parent['content_digest'] = 'sha256:' + hashlib.sha256(canonical_json(parent['payload']).encode()).hexdigest()
+        data['document_digest'] = 'sha256:' + hashlib.sha256(canonical_json(data['canonical_document']).encode()).hexdigest()
+    elif damage == 'scope':
+        original['project_id'] = 'other-project'
+    else:
+        original['source_mapping']['_runtime_document']['shot_revisions'][0]['payload']['name'] = 'forged'
+    result['receipt']['result'] = copy.deepcopy(data)
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=original)
+
+
+def paired_inverse_ack():
+    from astrid.sdk.timeline.commit import document_from_bundle
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    result, body, flight, identity, original = paired_ack()
+    plan = execute(original, body['commands'])
+    undone = inverse(plan.bundle, plan.records)
+    body['commands'] = [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
+                         'select': None, 'args': {'publications': ['known-publication']}}]
+    returned = copy.deepcopy(undone.commands)
+    returned[0]['args'] = copy.deepcopy(body['commands'][0]['args'])
+    data = result['data']
+    data['commands'], data['id_map'] = returned, undone.id_map
+    data['canonical_document'] = document_from_bundle(undone.bundle)
+    data['accepted_revision_id'] = data['canonical_document']['parent_revision']['revision_id']
+    data['document_digest'] = 'sha256:' + hashlib.sha256(canonical_json(data['canonical_document']).encode()).hexdigest()
+    result['receipt']['request_hash'] = hashlib.sha256(canonical_json({
+        'operation': 'commitTimeline', 'path': flight['path'], 'publisher': 'actor',
+        'request': body}).encode()).hexdigest()
+    result['receipt']['result'] = copy.deepcopy(data)
+    return result, body, flight, identity, plan
+
+
+def test_paired_inverse_ack_requires_the_known_accepted_source_allocation():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, plan = paired_inverse_ack()
+    assert _ack(result, body, flight, identity, source_bundle=plan.bundle,
+                inverse_records=plan.records)[0] == result['data']
+    with pytest.raises(TimelineEditError, match='nonidentity'):
+        _ack(result, body, flight, identity, source_bundle=plan.bundle)
+
+
+def test_paired_ack_distinguishes_boolean_from_numeric_read_claims():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    read = next(read for read in result['data']['commands'][0]['reads']
+                if read['state'] == {'state': 'present', 'value': 1})
+    read['state']['value'] = True
+    result['receipt']['result'] = copy.deepcopy(result['data'])
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=original)
+
+
+def test_ack_receipt_echo_distinguishes_boolean_from_numeric_claims(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    commit = generated.commit_timeline
+
+    def forged(*args, **kwargs):
+        result = commit(*args, **kwargs)
+        result['receipt']['result']['commands'][0]['args']['on'] = True
+        return result
+
+    monkeypatch.setattr(generated, 'commit_timeline', forged)
+    with pytest.raises(TimelineEditError):
+        session.move('parent/clip:a', 1)
+    assert json.loads(path.read_bytes())['flight']
+
+
+@pytest.mark.parametrize('damage', ['missing-map', 'read-bool', 'created', 'expect', 'bindings'])
+def test_inverse_ack_reconstructs_all_claims_from_accepted_records(damage):
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, plan = paired_inverse_ack()
+    data = result['data']
+    command = data['commands'][0]
+    if damage == 'missing-map':
+        data['id_map'] = {}
+    elif damage == 'read-bool':
+        read = next(read for read in command['reads'] if type(read['state'].get('value')) is int)
+        read['state']['value'] = bool(read['state']['value'])
+    elif damage == 'created':
+        command['created'] = ['shot:invented/item:invented']
+    elif damage == 'expect':
+        command['expect'] = {}
+    else:
+        command['bindings']['extra'] = 'shot:other'
+    result['receipt']['result'] = copy.deepcopy(data)
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=plan.bundle, inverse_records=plan.records)

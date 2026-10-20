@@ -169,7 +169,9 @@ def test_complete_s2_schema_is_retained_additively():
     from tests.sdk.test_timeline_current_union_schema import without_text
 
     assert len(schema['$defs']) == 55
-    schema = without_text(schema)
+    from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema
+
+    schema = without_text(ordinary_schema())
     for name in ('AssembledTargetArgs', 'ClipAddMediaArgs', 'WordAnchor', 'ClipAnchorArgs',
                  'OccurrenceCreateArgs'):
         del schema['$defs'][name]

@@ -146,7 +146,7 @@ def _verify_document(document):
                  row["timeline_id"], row["revision_id"])), "closure images must be sorted")
 
 
-def bundle_from_document(document):
+def bundle_from_document(document, *, capture_sources=True):
     """Open a complete immutable Runtime document without a Runtime dependency."""
     document = copy.deepcopy(document)
     _verify_document(document)
@@ -156,6 +156,7 @@ def bundle_from_document(document):
         shot_revisions=[{**row, "project_id": project} for row in document["shot_revisions"]],
         internal_timeline_revisions=[{**row, "project_id": project}
                                      for row in document["internal_timeline_revisions"]],
+        capture_sources=capture_sources,
     )
     bundle["source_mapping"]["_runtime_document"] = document
     return bundle
@@ -593,9 +594,10 @@ def _records(entries, rejected, base, current):
     for entry in entries:
         recorder = entry.get("records")
         if (entry.get("intent") != "recorded" or not isinstance(recorder, Mapping)
-                or recorder.get("schema_version") != 1
+                or type(recorder.get("schema_version")) is not int or recorder["schema_version"] != 1
                 or not isinstance(recorder.get("commands"), list) or not recorder["commands"]
-                or any(not isinstance(record, Mapping) or record.get("ordinal") != ordinal
+                or any(not isinstance(record, Mapping) or type(record.get("ordinal")) is not int
+                       or record["ordinal"] != ordinal
                        or set(record) != {"ordinal", "command", "writes", "reads", "selections",
                                           "bindings", "created", "dependencies", "derived_writes"}
                        for ordinal, record in enumerate(recorder["commands"]))):
@@ -612,6 +614,13 @@ def _reservation_refs(state):
             for identity in bundle['shots']}
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
+    for shot in bundle['shots'].values():
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
+    document = bundle['source_mapping'].get('_runtime_document', {})
+    for shot in document.get('shot_revisions', []):
+        for item in shot['payload'].get('items', []):
+            refs.add('item:' + item.get('item_id', item.get('id')))
     for owner in owners:
         assets = state.registry(owner).get('assets', {})
         _require(isinstance(assets, dict), 'invalid asset identity collection')
@@ -631,12 +640,15 @@ def _reservation_refs(state):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
-    from ._command_state import State, root_identity
+    from ._command_state import State, item_identity, root_identity
 
     def valid(item):
         if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
                 or not _id(item['ref']) or not _id(item['kind'])):
             return False
+        member = item_identity(item['ref'])
+        if member is not None:
+            return item['kind'] == 'item' and item['owner'] == member[0]
         root = root_identity(item['ref'])
         if root is not None:
             return (item['kind'] == root[0]
@@ -658,7 +670,11 @@ def _check_reservations(port, plan, current, rejected, base):
     # check project-wide shot occupancy/reservations before persisting a closure.
     # Inverse creates restore authenticated accepted writes. Ordinary creates
     # must never claim an identity retired by an earlier accepted publication.
-    created = [item["ref"] for record in plan.records
+    def reservation(ref):
+        member = item_identity(ref)
+        return 'item:' + member[1] if member else ref
+
+    created = [reservation(item["ref"]) for record in plan.records
                if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
     if not created:
         return
@@ -680,7 +696,7 @@ def _check_reservations(port, plan, current, rejected, base):
             check = ordinary and record['command']['op'] != 'timeline.inverse'
             claimed = set()
             for item in items:
-                ref = item['ref']
+                ref = reservation(item['ref'])
                 if check and (ref in reserved or ref in claimed):
                     raise CommandError('created identity was already reserved', kind='identity_collision', ref=ref)
                 claimed.add(ref)
@@ -982,6 +998,26 @@ class RuntimeCommitService:
                                                     if later['publication_id'] not in undo_of],
                                                    CommitRejected, base, current),
                                           state=State(_load(port, context, entry['revision_id'])))
+            source_closures = {source['base_parent']['revision_id']: source for source in inverse_sources}
+            materializations = []
+            if not undo_of and any(key.startswith('materialization.owner:')
+                                  for call in calls for key in call.get('bindings', {})):
+                from ._materialization import accepted_context
+
+                entries = [entry for entry in _history(port, base, None, CommitRejected, base)
+                           if entry.get('intent') == 'recorded']
+                materializations, sources = accepted_context(
+                    _records(entries, CommitRejected, base, current), calls,
+                    lambda revision: _load(port, context, revision))
+                source_closures.update(sources)
+            for record in inverse_records:
+                for dependency in record['dependencies']:
+                    if dependency['key'].startswith('materialization.source:'):
+                        revision = dependency['pin']['parent']['revision_id']
+                        if revision not in source_closures:
+                            source = _load(port, context, revision)
+                            source_closures[revision] = source
+                            inverse_sources.append(source)
             closures, restored_from = {}, None
             if restore:
                 restored_from = copy.deepcopy(calls[0]['args'])
@@ -1012,7 +1048,8 @@ class RuntimeCommitService:
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures,
+                               intervening_records=inverse_intervening, closures={**source_closures, **closures},
+                               materializations=materializations,
                                verified_media=verified_media, realm_id=context['realm_id'],
                                resolve_inputs=resolve_inputs, verified_producer=verified_producer)
             for attempt in range(3):
@@ -1038,7 +1075,7 @@ class RuntimeCommitService:
                                                       context=context, through=current)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures,
+                                      entries, CommitRejected, base, current)], closures={**source_closures, **closures},
                                   verified_media=verified_media, realm_id=context['realm_id'],
                                   resolve_inputs=resolve_inputs, verified_producer=verified_producer)
                 _check_reservations(port, plan, current, CommitRejected, base)
@@ -1049,7 +1086,7 @@ class RuntimeCommitService:
                     "document_digest": _digest(document),
                     "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
                                 "undo_of": undo_of, "restored_from": restored_from},
-                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "id_map": copy.deepcopy(plan.id_map), "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:

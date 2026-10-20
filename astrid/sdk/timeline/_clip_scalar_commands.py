@@ -7,6 +7,7 @@ import math
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
 from ._command_state import CommandError
+from ._materialization import capture_version
 from ._scalar_commands import _capture, _changes, _clip_basis, _selected_schema, _target
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
@@ -140,6 +141,6 @@ def capture_clip_set_element(bundle, select, *, element, schema_source=None,
     args = {'elementRef': copy.deepcopy(element)}
     if schema_source is not None:
         args['schema_source'] = copy.deepcopy(schema_source)
-    return execute(bundle, [{'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'clip.set-element', 'version': capture_version(bundle, select),
                              'select': select, 'args': args}], schema_inputs=schema_inputs,
                    realm_id=realm_id).commands[0]

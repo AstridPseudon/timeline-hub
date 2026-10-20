@@ -9,6 +9,7 @@ from ._command_state import (
     CommandError,
     State,
     equal,
+    item_identity,
     logical_address,
     overlaps,
     present,
@@ -22,6 +23,8 @@ def _row_identity(row, token):
     if token[0] == 'text-binding':
         from .native_text_binding import binding_key
         return binding_key(row)
+    if token[0] == 'item':
+        return row.get('item_id', row.get('id'))
     return row.get('id')
 
 
@@ -374,6 +377,14 @@ def _validate_inputs(state, record, records):
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
         ref = binding['ref']
+        if binding['key'].startswith('shot:'):
+            from ._materialization import id_map, source_entity, verify_sources
+            if binding['key'] in id_map([record]):
+                verify_sources(state, [record])
+                dep = next(dep for dep in record['dependencies']
+                           if dep['key'] in binding['dependencies'])
+                source_entity(state, ref, dep['pin'])
+                continue
         if ref not in created and state.entity(ref, optional=True) is None:
             if sites is None:
                 sites = proven_sites()
@@ -450,7 +461,10 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
         # no entity and must not allocate an identity or dereference a value.
         if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
             root = root_identity(write['ref'])
-            if root is not None:
+            if item_identity(write['ref']) is not None:
+                ctx.create_entity(write['ref'], kind='item', owner=item_identity(write['ref'])[0],
+                                  value=write['before']['value'], restoring=True)
+            elif root is not None:
                 ctx.create_entity(write['ref'], kind=root[0],
                                   owner=None if root[0] == 'shot' else 'parent',
                                   value=write['before']['value'], restoring=True)

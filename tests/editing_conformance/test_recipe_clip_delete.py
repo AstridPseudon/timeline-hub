@@ -49,7 +49,7 @@ def portable_golden():
     document['dependency_manifest']['shots'] = document['dependency_manifest']['internal_timelines'] = []
     from astrid.sdk.timeline.commit import _digest
     document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=False)
     select = 'parent/clip:clip-b'
     command = capture_clip_delete(bundle, select)
     plan = execute(bundle, [command])

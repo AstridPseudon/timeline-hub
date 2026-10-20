@@ -32,9 +32,9 @@ CASES = {'image-append': ('image', None, None), 'video-append': ('video', None, 
          'image-shift': ('image', CLIP_B_START, None), 'video-overlay-anchor': ('video', None, 'clip-c')}
 
 
-def build(kind, *, frame=None, anchor=None, wide=True, **kwargs):
+def build(kind, *, frame=None, anchor=None, wide=True, capture_sources=True, canonical=False, **kwargs):
     document, _, new, verified = inputs(kind)
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     state = State(bundle)
     if wide:
         state.occurrence(OWNER)['duration_ms'] = 20000
@@ -42,19 +42,23 @@ def build(kind, *, frame=None, anchor=None, wide=True, **kwargs):
     internal['tracks'].append({'id': 'overlay', 'kind': 'visual'})
     internal['clips'].append({'id': 'clip-c', 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
                               'at': 1, 'hold': 8})
+    if canonical:
+        # Finish arranging the fixture before capturing any request claims.
+        document = document_from_bundle(bundle)
+        bundle = bundle_from_document(document, capture_sources=capture_sources)
     result = auto_place_shared(bundle, OWNER, 'placed', new, ownership='occurrence',
                                verified_media=verified, frame=frame, anchor=anchor, **kwargs)
     return document, bundle, result, verified
 
 
-def case(name):
+def case(name, **kwargs):
     kind, frame, anchor = CASES[name]
-    return build(kind, frame=frame, anchor=anchor)
+    return build(kind, frame=frame, anchor=anchor, **kwargs)
 
 
 @pytest.mark.parametrize('name', CASES)
 def test_portable_goldens(name):
-    _, bundle, result, verified = case(name)
+    _, bundle, result, verified = case(name, capture_sources=False)
     plan = execute(bundle, result['commands'], verified_media=verified)
     golden = json.loads(FIXTURE.read_text())[name]
     assert golden == {'commands': result['commands'], 'capture': result['capture'],
@@ -287,8 +291,7 @@ def test_unplace_removes_the_image_expression_keeps_the_binding_and_is_guarded()
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
 def test_provider_accepts_shared_placement_with_exact_undo_and_redo(kind):
-    _, bundle, result, verified = build(kind)
-    document = document_from_bundle(bundle)
+    document, bundle, result, verified = build(kind, canonical=True)
     realm = MediaRealm(document, verified)
     created = realm.call(result['commands'])
     undo = realm.call([inverse_call([created['receipt']['receipt_id']])])

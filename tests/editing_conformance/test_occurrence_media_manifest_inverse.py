@@ -97,7 +97,7 @@ def test_recorded_registry_creation_and_child_inverse_preserve_authored_state(po
     assert inverse(plan.bundle, plan.records).bundle == original
     assert document_from_bundle(inverse(plan.bundle, plan.records).bundle) == document
     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
-    undone = inverse(reloaded, plan.records)
+    undone = inverse(reloaded, plan.records, closures={original['base_parent']['revision_id']: original})
     restored = document_from_bundle(undone.bundle, source_bundles=(original,))
     assert State(undone.bundle).config(OWNER)['registry'] == State(original).config(OWNER)['registry']
     assert restored['parent_revision']['payload'] == document['parent_revision']['payload']
@@ -130,7 +130,7 @@ def test_compiled_popup_inverse_restores_exact_original_document(popup_edit):
     # the baseline, drop the manifest comparison or accept a different revision.
     document, original, plan = popup_edit
     reloaded = bundle_from_document(document_from_bundle(plan.bundle))
-    undone = inverse(reloaded, plan.records)
+    undone = inverse(reloaded, plan.records, closures={original['base_parent']['revision_id']: original})
     realm, created, records = accepted_popup(popup_edit)
     assert document_from_bundle(undone.bundle, source_bundles=(original,)) != document
     assert document_from_bundle(undone.bundle, source_bundles=(original,), inverse_records=records) == document
@@ -206,7 +206,7 @@ def test_corrupt_media_boundary_refuses(popup_edit, damage):
     document, original, plan = popup_edit
     realm, created, records = accepted_popup(popup_edit)
     reloaded = bundle_from_document(created['data']['canonical_document'])
-    undone = inverse(reloaded, records)
+    undone = inverse(reloaded, records, closures={original['base_parent']['revision_id']: original})
     before, after = records.load_boundary(records.entries[0])
     if damage == 'missing':
         with pytest.raises(CommandError, match='accepted boundaries'):
@@ -256,7 +256,8 @@ def test_multiple_target_pin_changes_use_reverse_publication_order(popup_edit, p
 def test_retained_document_scope_is_required_before_removing_media(popup_edit, source):
     _, original, _ = popup_edit
     realm, created, records = accepted_popup(popup_edit)
-    undone = inverse(bundle_from_document(created['data']['canonical_document']), records)
+    undone = inverse(bundle_from_document(created['data']['canonical_document']), records,
+                     closures={original['base_parent']['revision_id']: original})
     content = {'media_id': NEW if source == 'dependent' else 'sha256:' + '8' * 64}
     pin = {'document_id': 'example.config', 'version': 1, 'content_digest': _digest(content)}
     if source != 'missing':

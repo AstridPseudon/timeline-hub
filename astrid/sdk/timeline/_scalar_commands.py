@@ -9,6 +9,7 @@ from referencing import Registry
 from referencing.exceptions import Unresolvable
 
 from ._command_state import CommandError, equal, present
+from ._materialization import capture_version
 
 
 def _target(ctx, command, kind):
@@ -159,6 +160,6 @@ def _capture(bundle, op, select, values, clear, *, schema_source=None, schema_in
     args = {'values': copy.deepcopy({} if values is None else values), 'clear': list(clear)}
     if schema_source is not None:
         args['schema_source'] = copy.deepcopy(schema_source)
-    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': capture_version(bundle, select),
                              'select': select, 'args': args}], schema_inputs=schema_inputs,
                    realm_id=realm_id).commands[0]

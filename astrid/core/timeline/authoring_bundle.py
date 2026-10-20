@@ -318,6 +318,7 @@ def open_authoring_bundle(
     *,
     shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
     internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    capture_sources: bool = False,
 ) -> dict[str, Any]:
     """Open one exact immutable closure as a detached, lossless working copy.
 
@@ -470,6 +471,10 @@ def open_authoring_bundle(
         "source_mapping": {
             "placements": base_placements,
             "shots": shot_sources,
+            **({"_source_closure": {"parent_revision": _copy(dict(parent)),
+                                   "shot_revisions": _copy(list(shot_index.values())),
+                                   "internal_timeline_revisions": _copy(list(internal_index.values()))}}
+               if capture_sources else {}),
         },
     }
 

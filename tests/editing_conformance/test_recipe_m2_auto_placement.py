@@ -31,9 +31,9 @@ CASES = {'image-anchor': ('image', 'clip-a'), 'image-absent': ('image', 'gone'),
          'video-anchor': ('video', 'clip-a'), 'video-absent': ('video', None)}
 
 
-def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
+def build(kind, anchor, *, duration=None, wide=False, overlay=False, capture_sources=True, **saved):
     document, _, new, verified = inputs(kind)
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     if wide:
         State(bundle).occurrence(OWNER)['duration_ms'] = 20000
     if overlay:
@@ -50,7 +50,7 @@ def case(name, **kwargs):
 
 @pytest.mark.parametrize('name', CASES)
 def test_portable_goldens(name):
-    _, bundle, result, verified = case(name)
+    _, bundle, result, verified = case(name, capture_sources=False)
     plan = execute(bundle, result['commands'], verified_media=verified)
     child = State(plan.bundle).entity(CHILD)
     golden = json.loads(FIXTURE.read_text())[name]

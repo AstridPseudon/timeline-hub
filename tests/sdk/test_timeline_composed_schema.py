@@ -28,10 +28,20 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
-    conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
+    conditions = {condition['if']['properties']['op']['const']: condition['then']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
-        ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
+        branches = conditions[op].get('anyOf', [conditions[op]])
+        for branch in branches:
+            assert branch['properties']['args'] == branches[0]['properties']['args']
+            version = branch['properties'].get('version', {}).get('const', '1')
+            validator.validate({**commands[op], 'version': version})
+            unknown = copy.deepcopy(commands[op])
+            unknown['version'] = version
+            unknown['args']['unsupported_argument'] = None
+            with pytest.raises(ValidationError):
+                validator.validate(unknown)
+        ref = branches[0]['properties']['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
         assert operation.parameters['additionalProperties'] is False
         validator.validate(commands[op])

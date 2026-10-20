@@ -237,6 +237,31 @@ def test_dependent_original_capture_handoff_after_move_ack_and_same_child_revisi
     assert State(current(realm)).entity(ref)['params'] == {'x': 3, 'y': 2}
 
 
+@pytest.mark.parametrize('damage', ['source-binding', 'item-binding', 'owner-binding',
+                                   'missing-binding', 'original-closure'])
+def test_dependent_capture_requires_original_accepted_allocation_and_verified_source(damage):
+    realm = DetachedRealm()
+    original = current(realm)
+    ref = 'occurrence:occ-a/clip:clip-a'
+    a = capture_clip_set_params(original, ref, values={'x': 1, 'y': None})
+    b = capture_clip_set_params(execute(original, [a]).bundle, ref, values={'y': 2})
+    realm.call([a])
+    if damage == 'original-closure':
+        realm.documents[original['base_parent']['revision_id']]['project_id'] = 'foreign-project'
+    else:
+        key = next(key for key in b['bindings'] if (
+            key.startswith('materialization.owner:') if damage == 'owner-binding'
+            else '/item:' in key if damage == 'item-binding' else key.startswith('shot:')))
+        if damage == 'missing-binding':
+            del b['bindings'][key]
+        else:
+            b['bindings'][key] += '-forged'
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents, realm.prepared))
+    with pytest.raises(CommitRejected):
+        realm.call([b])
+    assert (realm.head, realm.entries, realm.documents, realm.prepared) == before
+
+
 @pytest.mark.parametrize('op', ['track.set', 'clip.set-params'])
 @pytest.mark.parametrize('aba', [False, True])
 def test_scalar_unchanged_publications_and_aba_refuse_guarded_undo(op, aba):
