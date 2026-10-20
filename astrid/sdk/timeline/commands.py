@@ -175,6 +175,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                         verified_producer=verified_producer)
         _verify_claims(ctx, command)
         if resolve_inputs is not None:
+            ctx.prior_records = records
             ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:

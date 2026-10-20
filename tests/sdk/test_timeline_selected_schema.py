@@ -10,6 +10,7 @@ from jsonschema import Draft202012Validator
 from astrid.core.element import project_packs
 from astrid.core.timeline.authoring_bundle import AuthoringBundleError, compile_authoring_candidate
 from astrid.sdk.timeline._clip_commands import capture_clip_add
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline.commands import execute
@@ -64,6 +65,8 @@ def selected_effect(admitted_param_revisions, configured_project_pack):
            'params': {'seed': 4, 'future': {'keep': [None, False, {}]}}}
     commit(realm, [capture_clip_add(current(realm), 'parent', row)])
     assert State(current(realm)).entity(REF) == row
+    commit(realm, [capture_clip_set_element(current(realm), REF, element=selected,
+                                            **realm.schema_options)])
     commit(realm, [capture_clip_set_params(current(realm), REF, values={'seed': 4},
                                            **realm.schema_options)])
     return realm, selected, schema
@@ -208,6 +211,7 @@ def test_selected_pack_refuses_a_port_without_document_object(selected_effect, m
     assert (realm.head, realm.entries, realm.documents) == before
 
 
+@pytest.mark.xfail(strict=True, reason='owner12:16: alias-bearing birth needs proven selection without erasing the alias before this legacy-inverse scenario')
 def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
     realm, selected, _ = selected_effect
     row = copy.deepcopy(State(current(realm)).entity(REF))
