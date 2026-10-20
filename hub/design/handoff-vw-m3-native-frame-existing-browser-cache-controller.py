@@ -174,7 +174,13 @@ def inventory(root: Path) -> dict[str, object]:
         "runtime_commit": RUNTIME,
         "runtime_archive_sha256": sha(runtime),
         "node_sha256": NODE_SHA,
-        "chrome": {"path": str(CHROME), "sha256": CHROME_SHA, "version": "155.0.8059.84", **browser_tree()},
+        "chrome": {
+            "path": str(CHROME),
+            "executable_sha256": CHROME_SHA,
+            "version": "155.0.8059.84",
+            "tree_sha256": browser_tree()["sha256"],
+            "fileCount": 255,
+        },
         "python": file_manifest(PYTHON.parent.parent),
     }
 

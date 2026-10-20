@@ -1,2 +1,2 @@
-UTC: 2026-10-20T14:48:23Z (area lead)
-Lead decided: NO manager restart after the 14:28Z capacity alarm — it dispatched 11 Luna workers since 14:28, all exit 0 in 2–6 min each (gates/reviews/ports), so the live-count snapshot understates throughput (~11 tasks/20 min). 1 running at 14:48. Disk 12 GB, hub fresh. Link repairs: awaiting owner confirmation here.
+UTC: 2026-10-20T16:00:20Z (area lead)
+Shared App graph audit (read-only, design/handoff-lead-app-graph-audit-1551.md): cap3a worker overwrote @banodoco/timeline-composition in the SHARED App node_modules with 0.0.12 bytes at 15:47:02Z (18 modified, 4 added chunks; GlobalQUIET hashes mismatch; lock still 0.0.8). Link-only repair cannot restore; correct fix = npm ci re-provision of the shared App install (also removes the 6 audited links). Awaiting owner confirmation in this session for that + the 106-link scene repair. Shared App stays UNQUALIFIED; manager warned about aliasing private graphs.

@@ -1,0 +1,57 @@
+# D09 UNAPPLIED SDK proposal — deliberately no product hunk
+#
+# Base inspected: Agent tl/integration 30fc8dd154015a7c58cf4ce7b065ccc46f470ee
+# Root helper prerequisite: 04c24768cbfa758d1a2c41c107140a051cda8773 (integrated)
+# Prepared-query consumer: 413fd427b3ebcf417bea313d2c51431e1ce2e09e
+#
+# This artifact is intentionally not an executable product patch.  There is no
+# honest SDK hunk to apply yet: Checkout.check() has no retained render-input
+# carrier, while scene_answers._prepared_host_frames_at() requires the exact
+# source paths and the invocation-scoped Root lifetime.  Adding a guessed
+# serialized payload, source path, provider, DTO, or factory would violate D09.
+#
+# Exact current call sites:
+#
+#   astrid/sdk/timeline/check.py:577-584
+#       Checkout._check(diagnostics=True) calls self._on_screen() and then
+#       _scene_problems/_sprite_problems.  It has only the resolved authored
+#       Checkout document.  _check_core() remains renderer-free.
+#
+#   astrid/packs/timeline/cli.py:3555-3565
+#       the explicit `timelines check` caller loads Checkout and calls check()
+#       without a retained render source.  It cannot synthesize one from the
+#       bundle or from a revision label.
+#
+#   astrid/core/timeline/scene_answers.py:_prepared_host_frames_at()
+#       the existing seam requires timeline_path, assets_path, staged_video,
+#       provenance_out_path, project_dir, composition_id, theme_path,
+#       materialization inputs, and frame_output_dir.  It derives profile/basis
+#       from prepared Root props and queries host_frames_at while the exact
+#       AssetMaterializer/server/staged-effect lifetime is live.
+#
+#   astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+#       _prepared_remotion_root() is the only approved carrier of those exact
+#       verified values.  Do not recreate or export a second carrier.
+#
+# Required owner grant before an executable SDK hunk exists (two product files
+# plus one test, with no save-path edits):
+#
+#   1. The explicit read consumer that already owns the retained
+#      _prepared_remotion_root() context must invoke the SDK diagnostic only
+#      inside that context and retain the exact post-resolve Checkout/source
+#      identity together with the prepared props/profile.  The current CLI
+#      caller does not own this context, so cli.py cannot be patched safely.
+#   2. check.py may then receive the existing private prepared-query closure at
+#      its explicit diagnostic boundary only; _check_core(), publish.py and
+#      transaction.py remain unchanged.  The closure must call
+#      _prepared_host_frames_at() with the same verified paths/profile/root
+#      lifetime and return UNKNOWN/UNAVAILABLE advisory findings on failure.
+#   3. Add one acceptance test at that consumer boundary asserting that the
+#      prepared query receives the exact retained source/profile and that the
+#      current role/presence, UNKNOWN/unavailable, EMPTY/GAP/DIP and OFFCANVAS
+#      findings remain unchanged.  The test must fail if self._on_screen() is
+#      used as a fallback for a source that was not prepared.
+#
+# No such existing explicit consumer/carrier is present in the inspected SDK.
+# Therefore this task stops at this unapplied handoff rather than inventing a
+# private source object or changing product files.

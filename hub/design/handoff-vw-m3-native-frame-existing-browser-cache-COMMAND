@@ -1,0 +1,23 @@
+Native fresh-PNG handoff: offline only; no central request or live capture was made.
+
+Source/worktree:
+  /home/user/work/wt/vw-m3-native-frame-existing-browser-cache
+  source fingerprint: 196b7ba77f6ef4ced08633267260a8f4c35a00de2d51cb56e9ed1a1313a1413a
+  controller SHA256: 93ee44ac0b041b6a6a0f976fe212e768841e0287e1380e0c36e0cf0ac30cb088
+  manifest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-frame-existing-browser-cache-manifest.json
+
+Controller:
+  C=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-frame-existing-browser-cache-controller.py
+  PYTHONDONTWRITEBYTECODE=1 python3 -B "$C" preflight --source /home/user/work/wt/vw-m3-native-frame-existing-browser-cache --node node
+  PASS: 3,080 Agent files; 21,455 frozen peer entries; public12 has 77 members.
+  PASS: owned HOME/cache mode 0700, existing shared-browser layout, helper-selected realpath /opt/google/chrome/chrome.
+  PASS: executable SHA cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76.
+  PASS: Chrome 155.0.8059.84; full tree 255 entries, SHA 5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e.
+  OBSERVED: native worker's no-argument sharedBrowserExecutable() => null; no browser override was present.
+
+Fail-closed probe (not a capture request; launches no browser/daemon/socket):
+  PYTHONDONTWRITEBYTECODE=1 python3 -B "$C" capture --source /home/user/work/wt/vw-m3-native-frame-existing-browser-cache --node node --reviewed-sha256 196b7ba77f6ef4ced08633267260a8f4c35a00de2d51cb56e9ed1a1313a1413a
+  EXPECTED exit 1: native frame worker no-argument lookup returns null because its default project root is the parent of ASTRID_REMOTION_PROJECT_DIR, while @remotion/renderer/package.json is under the admitted project; HostRemotionSession._start also drops ASTRID_REMOTION_BROWSER_EXECUTABLE.
+
+Future command after the Agent core forwarding fix and a fresh review:
+  Re-run preflight to obtain a new fingerprint, then use the exact reviewed command above only after an independent review and fresh grant. Do not reuse this blocked fingerprint for capture.

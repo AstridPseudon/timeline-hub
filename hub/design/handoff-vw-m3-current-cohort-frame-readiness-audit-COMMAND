@@ -1,0 +1,40 @@
+# Pure gate-6 readiness audit commands
+
+Run from `/home/user/work/wt/vw-m3-current-cohort-frame-readiness-audit` with the
+retained Node:
+
+```sh
+NODE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
+APP=/home/user/work/wt/vw-m3-current-cohort-frame-readiness-audit
+PRIVATE_DEPS=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules
+
+"$NODE" --check "$APP/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs"
+"$NODE" --test "$APP/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs"
+"$NODE" "$APP/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs" \
+  --ready "$APP" /home/user/work/agent /home/user/work/runtime
+# Expected exit 1: App13 consumer adoption is pending; --ready remains refused.
+
+RUN=$(mktemp -d /tmp/timeline-readiness-audit.XXXXXX)
+mkdir -p "$RUN/tmp" "$RUN/cache" "$RUN/app"
+git -C "$APP" archive HEAD | tar -x -C "$RUN/app"
+ln -s "$PRIVATE_DEPS" "$RUN/app/node_modules"
+TMPDIR="$RUN/tmp" XDG_CACHE_HOME="$RUN/cache" \
+  "$NODE" "$APP/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs" \
+  --discover "$RUN/app"
+# Exit 0: discovered exactly five native-codec-chrome155 parity cases.
+find "$RUN" -depth -delete
+
+for spec in \
+  '/home/user/work/app 9d518546d' \
+  '/home/user/work/app d08e969b0' \
+  '/home/user/work/app 3a4350f9d' \
+  '/home/user/work/app e4c7a3792' \
+  '/home/user/work/agent 30fc8dd154015a7c58cf4ce7b065ccc46f470ee8' \
+  '/home/user/work/runtime tl/integration'; do
+  set -- $spec
+  git -C "$1" show -s --format='%H %T %s' "$2"
+done
+```
+
+No command above starts a browser, Runtime, socket, render, capture, install,
+network operation, full suite, or grant.
