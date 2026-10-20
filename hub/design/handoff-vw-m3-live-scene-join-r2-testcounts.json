@@ -1,0 +1,24 @@
+{
+  "base": "86d7cf9b1fcaab7afb7a2e1ba66f57ef84935e31",
+  "public12_targeted": {
+    "passed": 53,
+    "failed": 0,
+    "seconds": 7.08,
+    "new_adapter_cases": 20,
+    "unchanged_neighbors": 33
+  },
+  "current_public10_compatibility": {
+    "passed": 20,
+    "failed": 0,
+    "seconds": 6.15
+  },
+  "public12_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "initial_fixture_run": {
+    "passed": 10,
+    "failed": 4,
+    "reason": "Missing test-host astrid source alias; corrected fixture symlink"
+  },
+  "full_browser_socket_render": "not run",
+  "new_skips": 0,
+  "new_xfails": 0
+}

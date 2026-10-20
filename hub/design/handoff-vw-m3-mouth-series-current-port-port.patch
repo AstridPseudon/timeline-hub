@@ -1,0 +1,153 @@
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+index 94f03ccb6..1c5d2d486 100644
+--- a/tests/packs/rendering/presenter_crop_geometry.mjs
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -1,8 +1,9 @@
+ // Public facts from the ordinary generated host; no renderer or clock mirror.
+ import assert from 'node:assert/strict';
+ import {DEFAULT_THEME} from '@banodoco/timeline-composition';
+-import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {queryDrawFrame, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+ import {prepareHostScene as prepareRoot, source as shared} from './query.mjs';
++export {prepareRoot};
+ 
+ // Erase control uses the actual drawing helpers, never a copied crop formula.
+ export const eraseRegion = (raw, frame, fps) => {
+@@ -35,6 +36,36 @@ export const inspect = (props, b = basis, selected = frames) => {
+   });
+ };
+ 
++// The legacy series holds component-zero geometry. Resolve that frame through
++// the existing public DrawPlan clock, then query this same prepared Root once.
++// Source/owner qualification belongs to the generated-host fixture, not this
++// clip lookup; this helper is not a production source admission boundary.
++export const seriesInspection = (scene, props, clipId = 'presenter') => {
++  const targets = props.timeline.clips.filter(clip => clip.id === clipId);
++  assert.equal(targets.length, 1);
++  const target = targets[0];
++  assert.deepEqual(target.elementRef, {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
++  const matches = scene.tracks.flatMap(track => track.clips.flatMap((clip, clipIndex) =>
++    clip.id === target.id ? [{track, clip, clipIndex, plan: track.prepared.plans[clipIndex]}] : []));
++  assert.equal(matches.length, 1);
++  const {track, clip, clipIndex, plan} = matches[0];
++  assert.deepEqual(clip, target);
++  assert.equal(track.track.id, target.track);
++  const frame = Math.max(0, plan.drawStart);
++  assert.ok(frame < plan.drawStart + plan.drawDuration);
++  assert.equal(queryDrawFrame(plan, frame - plan.drawStart).contentFrame, 0);
++  const answer = querySceneFrame(scene, frame); // the only series ROI read
++  const layers = answer.layers.filter(layer => layer.clipId === target.id);
++  assert.equal(layers.length, 1);
++  const layer = layers[0];
++  assert.equal(layer.track, target.track);
++  assert.equal(layer.clipIndex, clipIndex);
++  assert.equal(layer.contentFrame, 0);
++  assert.equal(layer.diagnostics?.mouth?.status, 'known');
++  return {frame, componentFrame: 0, clipId: target.id,
++    mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++};
++
+ if (process.argv[2] === 'geometry') {
+   const cases = {
+     default: {mouth: undefined}, partial: {mouth: {x: 151, y: 104}}, custom: {}, fractional: {mouth: {x: 152.5, y: 103.7, w: 20.6}},
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+index 48f0e968f..61bdfe76f 100644
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -20,8 +20,12 @@ pytestmark = pytest.mark.integration
+ 
+ @pytest.fixture(scope="module")
+ def presenter_query(tmp_path_factory):
+-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
+-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
++    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
++        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz")))
++    # Explicit immutable releases only; this override does not change the host pin.
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
++        SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
++    }
+     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
+         ROOT / "remotion/node_modules"))).resolve()
+     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+diff --git a/tests/packs/rendering/presenter_series_inspection.mjs b/tests/packs/rendering/presenter_series_inspection.mjs
+new file mode 100644
+index 000000000..91c8e0e77
+--- /dev/null
++++ b/tests/packs/rendering/presenter_series_inspection.mjs
+@@ -0,0 +1,41 @@
++// Pure queries of the actual generated host; no capture or source admission.
++import assert from 'node:assert/strict';
++import {basis, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++
++const props = propsFor();
++const original = JSON.stringify(props);
++const scene = prepareRoot(props, basis, {});
++let reads = 0;
++for (const capability of Object.values(scene.capabilities.components)) {
++  const frame = capability.frame;
++  capability.frame = contentFrame => { reads++; return frame(contentFrame); };
++}
++const zero = seriesInspection(scene, props);
++assert.equal(reads, 1);
++assert.equal(zero.frame, 0);
++assert.equal(zero.componentFrame, 0);
++assert.deepEqual(zero.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++assert.equal(JSON.stringify(props), original);
++
++// Selection failures never read another region or silently choose a presenter.
++assert.throws(() => seriesInspection(scene, props, 'missing'));
++assert.throws(() => seriesInspection(scene, {...props, timeline: {...props.timeline,
++  clips: [...props.timeline.clips, props.timeline.clips[0]]}}));
++assert.throws(() => seriesInspection(scene, propsFor(params,
++  {elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}})));
++assert.throws(() => seriesInspection(scene, propsFor({...params, seed: 9})));
++assert.equal(reads, 1);
++
++// The public clock, not authored zero or a guessed source offset, locates zero.
++const delayed = propsFor(params, {at: 5, from: 17, to: 18, speed: 2});
++assert.equal(seriesInspection(prepareRoot(delayed, basis, {}), delayed).frame, 150);
++const clipped = propsFor(params, {at: -1});
++assert.throws(() => seriesInspection(prepareRoot(clipped, basis, {}), clipped));
++
++// Unknown diagnostics and an empty scene cannot become a known replacement ROI.
++const unknown = propsFor({...params, mosaicIn: {frames: 8}});
++assert.throws(() => seriesInspection(prepareRoot(unknown, basis, {}), unknown));
++const empty = {...props, timeline: {...props.timeline, clips: []}};
++assert.throws(() => seriesInspection(prepareRoot(empty, basis, {}), empty));
++assert.throws(() => seriesInspection(undefined, props));
++console.log(JSON.stringify({ok: true, reads, zero}));
+diff --git a/tests/packs/rendering/test_presenter_series_inspection.py b/tests/packs/rendering/test_presenter_series_inspection.py
+new file mode 100644
+index 000000000..3479dd3f0
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_series_inspection.py
+@@ -0,0 +1,29 @@
++"""Component-zero ROI prerequisite through the existing generated-host seam."""
++
++import json
++import shutil
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++
++
++def test_series_inspection_retains_one_component_zero_query(presenter_query):
++    for name in ("presenter_crop_geometry.mjs", "presenter_series_inspection.mjs"):
++        shutil.copyfile(Path(__file__).with_name(name), presenter_query.project / name)
++    result = subprocess.run(
++        [str(presenter_query.node), "presenter_series_inspection.mjs"],
++        cwd=presenter_query.project, env=presenter_query.env,
++        capture_output=True, text=True, timeout=60,
++    )
++    assert result.returncode == 0, result.stdout + result.stderr
++    answer = json.loads(result.stdout)
++    assert answer["ok"] is True
++    assert answer["reads"] == 1

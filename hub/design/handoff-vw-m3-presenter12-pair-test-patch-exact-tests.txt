@@ -1,0 +1,35 @@
+Overlay:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay
+
+1. Presenter/crop + strict declaration checks — 17 passed
+
+cd /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_presenter_scene_capability.py tests/packs/rendering/test_presenter_crop_equivalence.py --basetemp=/tmp/vw-m3-presenter12-pair-pytest
+
+Result: 17 passed in 9.51s.
+
+2. Real 0.0.12 package/readiness checks — 5 passed, 1 deselected
+
+cd /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short -m 'not integration' tests/packs/rendering/test_composition_package.py --basetemp=/tmp/vw-m3-presenter12-pair-package-pytest-rerun
+
+Result: 5 passed, 1 deselected in 0.21s.
+
+3. JavaScript syntax
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/tests/packs/rendering/presenter_scene_capability.mjs
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/tests/packs/rendering/presenter_crop_geometry.mjs
+
+Result: both passed.
+
+4. Python lint
+
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F,I,BLE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/tests/packs/rendering/test_presenter_scene_capability.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/tests/packs/rendering/test_presenter_crop_equivalence.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/tests/packs/rendering/test_composition_package.py
+
+Result: All checks passed.
+
+5. Proposal scope/applicability
+
+git -C /home/user/work/wt/vw-m3-presenter12-pair-test-patch apply --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-proposal.patch
+
+Result: applies cleanly in check-only mode. No patch was applied.

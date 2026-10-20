@@ -1,0 +1,420 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py b/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+index d35a96d9c..52e899085 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+@@ -7,6 +7,7 @@ frames.
+ """
+ from __future__ import annotations
+ 
++import copy
+ import hashlib
+ import json
+ import os
+@@ -25,6 +26,82 @@ DEFAULT_MAX_BYTES = 512 * 1024 * 1024
+ _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
+ 
+ 
++class CaptureSceneLabels:
++    """One capture's observer, supplied with frozen inputs by the source owner.
++
++    This does not admit sources. The owner must bind final Root props, the
++    canonical render basis and exact projected IDs/addresses to its retained
++    revision/candidate before passing ``observe`` to ``on_scene_props``. Call
++    ``retain`` only with that successful batch's fresh output, never PNG-cache
++    entries. No production source owner currently supplies this contract.
++    """
++
++    def __init__(self, *, source_identity: str, props: Mapping[str, Any],
++                 basis: Mapping[str, Any], addresses: Mapping[str, str]) -> None:
++        if not source_identity:
++            raise ValueError("capture source identity required")
++        self._source_identity = source_identity
++        self._props = copy.deepcopy(dict(props))
++        self._basis = copy.deepcopy(dict(basis))
++        self._addresses = dict(addresses)
++        self._answers: dict[int, dict[str, Any]] = {}
++        self._frames: tuple[int, ...] | None = None
++        self._retained = False
++
++    def observe(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
++        """Query the public host once, inside the existing capture lifetime."""
++        from astrid.core.timeline.scene_answers import (
++            SceneQueryUnavailable,
++            host_frames_at,
++        )
++
++        if self._frames is not None:
++            self._retained = False
++            self._answers.clear()
++            raise SceneQueryUnavailable("scene observer already used for a capture")
++        self._frames = tuple(frames)
++        if (props != self._props or not frames
++                or any(type(frame) is not int or frame < 0 for frame in frames)
++                or tuple(sorted(set(frames))) != self._frames):
++            raise SceneQueryUnavailable("capture props or selected frames mismatch")
++        clips = props.get("timeline", {}).get("clips", [])
++        ids = [clip["id"] for clip in clips]
++        if len(set(ids)) != len(ids) or set(ids) != set(self._addresses):
++            raise SceneQueryUnavailable("exact projected clip address mapping required")
++        answers = host_frames_at(props, self._basis, frames)
++        if ([answer.get("frame") for answer in answers] != list(frames)
++                or any(answer.get("width") != self._basis["width"]
++                       or answer.get("height") != self._basis["height"] for answer in answers)
++                or any(layer["clipId"] not in self._addresses
++                       for answer in answers for layer in answer["layers"])):
++            raise SceneQueryUnavailable("capture scene response mismatch")
++        self._answers = copy.deepcopy(dict(zip(frames, answers)))
++
++    def retain(self, produced: Mapping[int, Path]) -> None:
++        """Publish answers only after the same entire fresh capture succeeds."""
++        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
++
++        if (self._retained or not self._answers or set(produced) != set(self._answers)
++                or any(not Path(path).is_file() for path in produced.values())):
++            self._retained = False
++            self._answers.clear()
++            raise SceneQueryUnavailable("scene requires the complete successful fresh capture")
++        self._retained = True
++
++    def frame(self, frame: int, *, source_identity: str) -> dict[str, Any]:
++        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
++
++        if not self._retained or source_identity != self._source_identity or frame not in self._answers:
++            raise SceneQueryUnavailable("scene unavailable for this capture source/frame")
++        return copy.deepcopy(self._answers[frame])
++
++    def labels(self, frame: int, *, source_identity: str):
++        from .overlays.labels import labels_for_scene
++
++        answer = self.frame(frame, source_identity=source_identity)
++        return labels_for_scene(answer, self._addresses), {key: answer[key] for key in ("width", "height")}
++
++
+ def _close_renderer(renderer: object, *, force: bool = False) -> None:
+     close = getattr(renderer, "close", None)
+     if not callable(close):
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+index ba18717d2..73a850974 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+@@ -3,6 +3,7 @@ from __future__ import annotations
+ 
+ import math
+ from collections.abc import Mapping, Sequence
++from dataclasses import dataclass
+ from typing import Any
+ 
+ MIN_OPACITY = 0.05
+@@ -12,6 +13,33 @@ BACKING = "#0b1220"
+ DEFAULT_CANVAS = (1920, 1080)
+ 
+ 
++@dataclass(frozen=True)
++class SceneLabel:
++    address: str
++    z: int
++    role: str
++    opacity: float | None
++    bounds: tuple[float, float, float, float] | None
++    bounds_source: str
++    visible: bool | str
++
++
++def labels_for_scene(answer: Mapping[str, Any], addresses: Mapping[str, str]) -> list[SceneLabel]:
++    """Format public rows and owner-provided addresses without evaluating visibility."""
++    labels = []
++    for z, layer in enumerate(reversed(answer["layers"])):
++        if layer["visible"] is False:
++            continue
++        bounds = layer["bounds"]
++        rect = bounds.get("rect") if bounds["status"] == "known" else None
++        box = None if rect is None else (rect["x"], rect["y"],
++                                         rect["x"] + rect["width"], rect["y"] + rect["height"])
++        labels.append(SceneLabel(addresses[layer["clipId"]], z, layer["role"], layer["opacity"],
++                                 box, "unknown" if box is None else "full" if layer["fullFrame"] else "declared",
++                                 layer["visible"]))
++    return labels
++
++
+ def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
+     """Return the declared visual canvas, defaulting to 1920 by 1080."""
+     canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
+@@ -49,9 +77,11 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+     draw = ImageDraw.Draw(out)
+     sx = float(tile_size[0]) / float(canvas["width"])
+     sy = float(tile_size[1]) / float(canvas["height"])
+-    shown = sorted((item for item in layers if item.opacity >= MIN_OPACITY), key=lambda item: item.z)
+-    boxed_all = [item for item in shown if item.bounds_source != "full" and item.bounds is not None]
+-    legend = [item for item in shown if item.bounds_source == "full" or item.bounds is None]
++    shown = sorted((item for item in layers if item.opacity is None or item.opacity >= MIN_OPACITY),
++                   key=lambda item: item.z)
++    boxed_all = [item for item in shown if item.bounds_source != "full" and item.bounds is not None
++                 and item.opacity is not None and getattr(item, "visible", True) is True]
++    legend = [item for item in shown if item not in boxed_all]
+     boxed = boxed_all[:max_labels]
+     size = 11
+     for item in boxed:
+@@ -62,7 +92,9 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+         tx = max(0, min(rect[0], float(tile_size[0]) - 4))
+         ty = rect[1] - size - 6 if rect[1] - size - 6 >= 0 else rect[1] + 2
+         _backed_text(draw, (tx, ty), item.address, size, colour, text_width, draw_text)
+-    lines = [(item.address + f" ({item.role})" + ("" if item.bounds is not None else " bounds unknown"),
++    lines = [(item.address + f" ({item.role})" + ("" if item.bounds is not None else " bounds unknown")
++              + (" opacity unknown" if item.opacity is None else "")
++              + (" visibility unknown" if getattr(item, "visible", True) == "unknown" else ""),
+               ROLE_COLOURS.get(item.role, DEFAULT_COLOUR)) for item in legend]
+     hidden = len(boxed_all) - len(boxed)
+     if hidden > 0:
+@@ -72,8 +104,12 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+     return out
+ 
+ 
+-def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float):
++def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float, *,
++                         capture=None, source_identity: str = ""):
+     """Draw the visible addresses for one exact decoded frame on a display copy."""
++    if capture is not None:
++        layers, canvas = capture.labels(frame, source_identity=source_identity)
++        return draw_labels(image, layers, canvas=canvas, tile_size=image.size)
+     canvas = canvas_of(config)
+     return draw_labels(image, labels_for(config, frame, fps, canvas), canvas=canvas, tile_size=image.size)
+ 
+diff --git a/tests/packs/rendering/test_capture_scene_labels.py b/tests/packs/rendering/test_capture_scene_labels.py
+new file mode 100644
+index 000000000..f74147e35
+--- /dev/null
++++ b/tests/packs/rendering/test_capture_scene_labels.py
+@@ -0,0 +1,233 @@
++"""The bounded owner/capture seam; native public queries, no renderer or sockets."""
++from __future__ import annotations
++
++import copy
++import hashlib
++import json
++import os
++import shutil
++import tarfile
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
++from astrid.core.theme import builtin_theme
++from astrid.core.timeline import scene_answers
++from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
++    CaptureSceneLabels,
++)
++from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
++    overlay_labels_frame,
++)
++from scripts import gen_effect_registry
++
++ROOT = Path(__file__).resolve().parents[3]
++REMOTION = ROOT / "remotion"
++BASIS = {"width": 200, "height": 100, "fps": 30000 / 1001}
++SOURCE = "retained-revision-and-projection"
++ADDRESSES = {"exact:with:colons": "c08.title"}
++
++
++@pytest.fixture(scope="module")
++def host(tmp_path_factory):
++    root = tmp_path_factory.mktemp("capture-label-host")
++    (root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
++    project = root / "remotion"
++    project.mkdir()
++    (project / "src").mkdir()
++    modules = project / "node_modules"
++    modules.mkdir()
++    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
++    for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
++        target = modules / peer
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.symlink_to((peers / peer).resolve(), target_is_directory=True)
++        assert target.is_dir(), f"missing provisioned peer: {target}"
++    artifact = Path(os.environ.get("ASTRID_TEST_COMPOSITION_ARTIFACT", REMOTION /
++                                  json.loads((REMOTION / "package.json").read_text())["dependencies"]
++                                  ["@banodoco/timeline-composition"].removeprefix("file:")))
++    expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
++                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"}
++    with tarfile.open(artifact) as archive:
++        version = json.load(archive.extractfile("package/package.json"))["version"]
++        assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
++        archive.extractall(project, filter="data")
++    package = modules / "@banodoco/timeline-composition"
++    package.parent.mkdir()
++    (project / "package").rename(package)
++    for name in ("scene-query.mjs", "native-scene.mjs", "webpack-alias.mjs", "package.json"):
++        shutil.copyfile(REMOTION / name, project / name)
++    for name in ("host-scene.ts", "host-registries.ts"):
++        shutil.copyfile(REMOTION / "src" / name, project / "src" / name)
++    for kind in ("effects", "animations", "transitions"):
++        (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
++    return project
++
++
++@pytest.fixture
++def native(host, monkeypatch):
++    node = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert node.ok and node.version == "v20.19.4"
++    for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
++        monkeypatch.delenv(key, raising=False)
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        RemotionRuntimeStatus(True, host, node_executable=node.path))
++
++
++def props(kind="text-card"):
++    return {"timeline": {"tracks": [{"id": "content", "kind": "visual"}], "clips": [
++        {"id": "exact:with:colons", "track": "content", "clipType": kind, "at": 0, "hold": 1,
++         "params": {"text": "Ordinary title"}}]},
++            "assets": {"assets": {}}, "theme": builtin_theme()}
++
++
++def adapter(p=None, addresses=None):
++    return CaptureSceneLabels(source_identity=SOURCE, props=p or props(), basis=BASIS,
++                              addresses=ADDRESSES if addresses is None else addresses)
++
++
++def retain(capture, tmp_path, frames=(0, 30)):
++    produced = {}
++    for frame in frames:
++        path = tmp_path / f"{frame}.png"
++        Image.new("RGB", (100, 50)).save(path)
++        produced[frame] = path
++    capture.retain(produced)
++
++
++def test_real_host_labels_are_retained_once_and_drawn_without_private_math(native, tmp_path, monkeypatch):
++    p = props()
++    capture = adapter(p)
++    calls = []
++    query = scene_answers.host_frames_at
++
++    def observe(*args):
++        calls.append(copy.deepcopy(args))
++        return query(*args)
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", observe)
++    capture.observe(p, (0, 30))
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        capture.frame(0, source_identity=SOURCE)  # preparation alone is not capture success
++    retain(capture, tmp_path)
++    assert calls == [(p, BASIS, (0, 30))]
++    answer = capture.frame(0, source_identity=SOURCE)
++    assert answer["layers"][0]["clipId"] == "exact:with:colons"
++    layers, canvas = capture.labels(0, source_identity=SOURCE)
++    assert layers[0].address == "c08.title"  # supplied projection, no colon parsing
++    assert canvas == {"width": 200, "height": 100}
++    assert layers[0].opacity == answer["layers"][0]["opacity"]
++    assert capture.frame(30, source_identity=SOURCE)["layers"] == []
++    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail("private visibility"))
++    image = Image.new("RGB", (100, 50))
++    out = overlay_labels_frame(image, {}, 0, BASIS["fps"], capture=capture, source_identity=SOURCE)
++    assert out.tobytes() != image.tobytes()
++    assert overlay_labels_frame(image, {}, 30, BASIS["fps"], capture=capture,
++                                source_identity=SOURCE).tobytes() == image.tobytes()
++    assert len(calls) == 1
++    answer["layers"].clear()
++    assert capture.frame(0, source_identity=SOURCE)["layers"]
++
++
++@pytest.mark.parametrize("changed", ["timeline", "assets", "theme"])
++def test_stale_root_inputs_refuse_before_query(tmp_path, monkeypatch, changed):
++    p = props()
++    capture = adapter(p)
++    p[changed]["stale"] = True
++    monkeypatch.setattr(scene_answers, "host_frames_at", lambda *a: pytest.fail("stale query"))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="mismatch"):
++        capture.observe(p, (0,))
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        capture.retain({})
++
++
++@pytest.mark.parametrize("addresses", [{}, {"title": "c08.title"}])
++def test_missing_or_guessed_projected_identity_refuses(monkeypatch, addresses):
++    monkeypatch.setattr(scene_answers, "host_frames_at", lambda *a: pytest.fail("identity query"))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="projected"):
++        adapter(addresses=addresses).observe(props(), (0,))
++
++
++@pytest.mark.parametrize("frames", [(), (1, 0), (0, 0), (-1,), (False,)])
++def test_only_actual_sorted_unique_capture_frames_are_accepted(frames):
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="mismatch"):
++        adapter().observe(props(), frames)
++
++
++def test_mixed_or_missing_capture_cannot_retain_facts(native, tmp_path):
++    capture = adapter()
++    capture.observe(props(), (0, 30))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="complete"):
++        retain(capture, tmp_path, (0,))
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        capture.frame(0, source_identity=SOURCE)
++
++
++def test_other_source_or_uncaptured_frame_never_falls_back(native, tmp_path):
++    capture = adapter()
++    capture.observe(props(), (0,))
++    retain(capture, tmp_path, (0,))
++    for source, frame in (("current-head", 0), (SOURCE, 1)):
++        with pytest.raises(scene_answers.SceneQueryUnavailable):
++            overlay_labels_frame(Image.new("RGB", (100, 50)), props()["timeline"], frame, 30,
++                                 capture=capture, source_identity=source)
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="already used"):
++        capture.observe(props(), (0,))
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        capture.frame(0, source_identity=SOURCE)
++
++
++def test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty(native, tmp_path, monkeypatch):
++    p = props("undeclared-component")
++    capture = adapter(p)
++    capture.observe(p, (0,))
++    retain(capture, tmp_path, (0,))
++    answer = capture.frame(0, source_identity=SOURCE)
++    assert answer["coverage"] == "UNKNOWN"
++    labels, _ = capture.labels(0, source_identity=SOURCE)
++    assert labels[0].bounds is None and labels[0].opacity is None
++    assert labels[0].visible == "unknown"
++    def unavailable(*args):
++        raise scene_answers.SceneQueryUnavailable("host missing")
++    monkeypatch.setattr(scene_answers, "host_frames_at", unavailable)
++    capture = adapter(p)
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="host missing"):
++        capture.observe(p, (0,))
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        capture.frame(0, source_identity=SOURCE)
++
++
++def test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha(native, tmp_path):
++    p = props("image")
++    p["timeline"]["clips"][0]["asset"] = "portrait"
++    p["assets"]["assets"]["portrait"] = {"file": "portrait.png", "type": "image", "resolution": "100x200"}
++    capture = adapter(p)
++    capture.observe(p, (0,))
++    retain(capture, tmp_path, (0,))
++    labels, canvas = capture.labels(0, source_identity=SOURCE)
++    assert labels[0].bounds == (75, 0, 125, 100)
++    assert labels[0].opacity is None  # resolved geometry does not establish media alpha
++    assert canvas == {"width": 200, "height": 100}
++
++
++def test_cache_only_has_no_observation_to_retain(tmp_path):
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="complete"):
++        retain(adapter(), tmp_path)
++
++
++@pytest.mark.parametrize("changed", ["frame", "width", "height", "clipId"])
++def test_mismatched_public_response_is_not_relabelled(native, monkeypatch, changed):
++    query = scene_answers.host_frames_at
++    def wrong_response(*args):
++        answers = query(*args)
++        if changed == "clipId":
++            answers[0]["layers"][0]["clipId"] = "foreign:title"
++        else:
++            answers[0][changed] += 1
++        return answers
++    monkeypatch.setattr(scene_answers, "host_frames_at", wrong_response)
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="response mismatch"):
++        adapter().observe(props(), (0,))

@@ -1,0 +1,104 @@
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -1,4 +1,4 @@
+-"""Actual registered presenter draw and capability against immutable public10."""
++"""Actual registered presenter draw and capability against immutable public12."""
+ import hashlib
+ import json
+ import os
+@@ -11,7 +11,8 @@
+ 
+ from astrid.core.rendering.node_pin import resolve_pinned_node
+ from scripts import gen_effect_registry
+-from tests.packs.rendering.test_composition_package import SHA256
++
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
+@@ -20,7 +21,7 @@
+ 
+ @pytest.fixture(scope="module")
+ def presenter_query(tmp_path_factory):
+-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
+         ROOT / "remotion/node_modules"))).resolve()
+@@ -104,7 +105,7 @@
+     assert presenter_query(case)["ok"] is True
+ 
+ 
+-def test_presenter_public10_declarations(presenter_query, tmp_path):
++def test_presenter_public12_declarations(presenter_query, tmp_path):
+     # Check copied source against the archive's declarations through ordinary
+     # node_modules lookup; no source alias or installed package is patched.
+     project = tmp_path / "typecheck"
+--- a/tests/packs/rendering/test_composition_package.py
++++ b/tests/packs/rendering/test_composition_package.py
+@@ -16,8 +16,8 @@
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ REMOTION = ROOT / "remotion"
+-SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
+-INTEGRITY = "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg=="
++SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
++INTEGRITY = "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA=="
+ REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
+                     "./animations.generated", "./transitions.generated", "./registry.generated")
+ 
+@@ -28,19 +28,19 @@
+     cli.write_text("// CLI")
+     package = project / "node_modules/@banodoco/timeline-composition"
+     package.parent.mkdir(parents=True)
+-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz") as archive:
++    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz") as archive:
+         archive.extractall(project)
+     (project / "package").rename(package)
+     return package, json.loads((package / "package.json").read_text())
+ 
+ 
+ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+     lock = json.loads((REMOTION / "package-lock.json").read_text())
+     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+-    assert package["version"] == "0.0.10"
+-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    assert package["version"] == "0.0.12"
++    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.12.tgz"
+     assert package["integrity"] == INTEGRITY
+     with tarfile.open(artifact) as archive:
+         manifest_file = archive.extractfile("package/package.json")
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -46,7 +46,27 @@
+     undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
+ };
+ const basis = {width: 1920, height: 1080, fps: 30};
+-const theme = DEFAULT_THEME;
++// Composition 0.0.12's package default is Agent's navy theme. The historical
++// SSR hashes intentionally use this explicit pre-12 theme so the presenter
++// preservation check does not silently turn an old fixture into a new default.
++assert.deepEqual(DEFAULT_THEME, {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#FAFAFA', bg: '#050814', accent: '#67E8F9'},
++    type: {families: {heading: 'Arial', body: 'Arial', mono: 'monospace'},
++      size: {base: 32, small: 22, large: 84}, weight: {normal: 400, bold: 600}, lineHeight: 1.2},
++    motion: {fadeMs: 450}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++});
++const theme = {
++  id: 'banodoco-default',
++  visual: {
++    color: {fg: '#ffffff', bg: '#000000', accent: '#ffffff'},
++    type: {families: {heading: 'Georgia, serif', body: 'Georgia, serif'},
++      size: {base: 64, small: 36, large: 96}, weight: {normal: 400, bold: 700}, lineHeight: 1.1},
++    motion: {fadeMs: 250}, canvas: {width: 1920, height: 1080, fps: 30},
++  },
++};
+ const runtimeTheme = toRuntimeTheme(theme);
+ const registries = source.resolveHostRegistries(runtimeTheme);
+ const owner = {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'};
