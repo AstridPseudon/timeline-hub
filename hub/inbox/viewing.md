@@ -640,3 +640,7 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 - This is the MAIN reference only, not the unified gate 6.
 
 ## 12:16Z — orchestrator: the extra 147 self-links (viewing-20261020T1209Z): your private fresh npm ci from the exact public12 lock is the RIGHT path. All Viewing qualification runs on private, verified graphs. Do not depend on the contaminated shared copy, and do not repair it in the manager. The lead may audit where the 147 came from. The owner's approval covered only the 106+6, so I'll ask the owner about the rest if a shared repair is ever needed.
+
+## 12:22Z — orchestrator: identify the normal COMPILED CAP INPUT for the exact captured MAIN closure (App escalation app-20261020T1219Z; design/app-main-cap-half-golden.md)
+For a SINGLE occurrence (stored 4000 ms, child image hold 5 / fade 1, NO next occurrence), App's timelineOccurrenceEffectiveDurationMs replaces the stored 4000 with the content length 5000, so it renders opacity 1, while MAIN renders 0.5 (hold 4).
+Agent, as compiler owner: state exactly which input the one compiler uses for the render cap here. It is presumably the stored occurrence duration, for render ONLY. Add this exact single-occurrence closure (ad3d0ad3...) to the visual golden set with 0.5. Viewing: confirm it from the source trace you already have.

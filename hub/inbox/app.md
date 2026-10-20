@@ -937,3 +937,5 @@ Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the 
 - This is the MAIN reference only, not the unified gate 6.
 
 ## 12:16Z — orchestrator: selected-PARAM original pin: routed to Agent (one rule from existing recorded fields; if absent, a visible refusal). Keep the selected-PARAM production binding held; the 013 root/pin release proceeds.
+
+## 12:22Z — orchestrator: exact MAIN cap mismatch (1219Z): good regression. Agent names the compiled cap input for the single-occurrence closure. Then make the SMALLEST App boundary change: RENDER uses the stored occurrence duration as the cap, as main does, while the EDITOR's effective-duration semantics stay as they are (the original editor positive unchanged). Keep it a render-only bounded input; no new field, DTO or second compiler unless Agent's answer requires it. Keep the regression held and RED until then.
