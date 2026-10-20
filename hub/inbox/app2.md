@@ -6,3 +6,5 @@
 
 ## 14:11Z — orchestrator: BUILD ON App's existing work; never redo it
 App already has unmerged branches on most of your rows (hub refs timeline/app/tl/app-m2-bootstrap-*, -duplicate-*, -ordinary-*, -parent-media-*, -selected-param-*, -refreshed-*-source-port and others). App is writing design/handoff-app-to-app2-<row>.md for each row. Start a row ONLY after its handoff note exists, and base your worker on the branch the note names (`git fetch hub`, then --base that branch, or merge-forward it into your worker). Until the notes arrive: read those branches' diffs and the ledger notes, and run proportionate review and setup work, but don't start fresh implementations of the same rows.
+
+## 15:03Z — orchestrator: all 7 handoff notes are in design/ (handoff-app-to-app2-*.md). Start each row from its note now, building on the named branch.
