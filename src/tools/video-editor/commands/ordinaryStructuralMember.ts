@@ -435,10 +435,16 @@ export function projectOrdinaryStructuralPreview(patch: TimelinePatch, current: 
     for (const target of [config, resolvedConfig]) {
       if (operation.op === 'track.add') {
         target.tracks ??= [];
-        target.tracks.push({ id: operation.target, ...copy(operation.payload ?? {}) });
+        target.tracks.push(Object.assign(
+          { id: operation.target, kind: 'visual', label: '' } satisfies NonNullable<TimelineData['config']['tracks']>[number],
+          copy(operation.payload ?? {}),
+        ));
       } else if (operation.op === 'clip.add') {
         target.clips ??= [];
-        target.clips.push({ id: operation.target, ...copy(operation.payload ?? {}) });
+        target.clips.push(Object.assign(
+          { id: operation.target, at: 0, track: '' } satisfies TimelineData['config']['clips'][number],
+          copy(operation.payload ?? {}),
+        ));
       } else if (operation.op === 'clip.remove') {
         target.clips = (target.clips ?? []).filter((row) => row.id !== operation.target);
       }
