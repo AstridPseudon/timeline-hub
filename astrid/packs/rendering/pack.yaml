@@ -907,7 +907,8 @@ actions:
       required: false
       type: file
     - description: 'Qualified renderer id: rendering.remotion, rendering.ffmpeg, or
-        rendering.threejs.'
+        rendering.threejs. When omitted, the host chooses rendering.remotion if this
+        host can run it, else rendering.ffmpeg.'
       name: selector
       required: false
       type: string
@@ -1012,7 +1013,7 @@ actions:
       - correction_version
       - timing_method
       - speech_coverage
-      requires_remotion: true
+      requires_remotion: selected
       requires_timeline: false
       command_builder: astrid.packs.video_editing.actions.hype.run.build_pool_steps
       pipeline_step: render

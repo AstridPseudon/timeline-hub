@@ -4,6 +4,7 @@ import copy
 import dataclasses
 import importlib
 import json
+import shutil
 import struct
 import subprocess
 import zlib
@@ -197,6 +198,167 @@ def _evaluate(
 def _build_command(tmp_path: Path, timeline_data: dict, assets: dict) -> list[str]:
     _evaluate(tmp_path, timeline_data, assets)
     return command.build_render_command(_request(tmp_path), tmp_path)
+
+
+def test_empty_default_visual_track_is_not_a_reason(tmp_path: Path) -> None:
+    # A visual track with no clips and default track semantics draws nothing.
+    timeline_data = _timeline()
+    timeline_data["tracks"].insert(0, {"id": "empty", "kind": "visual", "label": "Empty"})
+
+    report = _evaluate(tmp_path, timeline_data, _assets(tmp_path))
+
+    assert report.supported is True
+    assert report.reasons == []
+    # The command builder reads clips, so the empty track adds nothing to it.
+    with_empty = command.build_render_command(_request(tmp_path), tmp_path)
+    without = _build_command(tmp_path, _timeline(), _assets(tmp_path))
+    assert with_empty == without
+
+
+@pytest.mark.parametrize(
+    ("semantics", "reason"),
+    [({"opacity": 0.5}, "non-default opacity"), ({"scale": 2}, "visual transform semantics"),
+     ({"blendMode": "screen"}, "visual transform semantics")],
+)
+def test_empty_visual_track_with_non_default_semantics_is_still_refused(
+    tmp_path: Path, semantics: dict, reason: str
+) -> None:
+    timeline_data = _timeline()
+    timeline_data["tracks"].insert(0, {"id": "empty", "kind": "visual", "label": "Empty", **semantics})
+
+    report = _evaluate(tmp_path, timeline_data, _assets(tmp_path))
+
+    assert report.supported is False
+    assert any("'empty'" in item and reason in item for item in report.reasons)
+
+
+def _lavfi(tmp_path: Path, name: str, *args: str) -> Path:
+    path = tmp_path / name
+    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args, str(path)], check=True)
+    return path
+
+
+def _mean_colour(video: Path, at: str) -> tuple[int, int, int]:
+    frame = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-ss", at, "-i", str(video), "-frames:v", "1", "-vf", "scale=1:1",
+         "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
+    return (frame[0], frame[1], frame[2])
+
+
+def test_a_render_tail_ffmpeg_would_drop_is_refused(tmp_path: Path) -> None:
+    # Remotion renders past the authored end into app.astrid_render_clock's tail; ffmpeg ends at the authored extent.
+    timeline_data = _timeline()
+    timeline_data["app"] = {"astrid_render_clock": {
+        "authored_duration_frames": 120, "render_duration_frames": 150,
+        "tail": {"policy": "unmapped_excess_rendered_region", "source_asset": "video", "start_frame": 120,
+                 "end_frame": 150, "source_start_frame": 120, "source_end_frame": 150},
+    }}
+
+    report = _evaluate(tmp_path, timeline_data, _assets(tmp_path))
+
+    assert report.supported is False
+    assert any("app.astrid_render_clock" in reason for reason in report.reasons)
+
+
+def test_a_source_window_ffmpeg_does_not_apply_is_refused(tmp_path: Path) -> None:
+    # Remotion trims the film to metadata.source_window_* and takes its length from metadata.duration_seconds.
+    timeline_data = _timeline()
+    timeline_data["metadata"] = {"source_window_start_seconds": 1.0, "source_window_end_seconds": 3.0, "duration_seconds": 2.0}
+
+    report = _evaluate(tmp_path, timeline_data, _assets(tmp_path))
+
+    assert report.supported is False
+    assert any("metadata.source_window_end_seconds, metadata.source_window_start_seconds" in reason for reason in report.reasons)
+
+
+def _theme_request(tmp_path: Path, theme: dict | None) -> RenderRequest:
+    config: dict = {ffmpeg.BACKEND_ID: {}}
+    if theme is not None:
+        (tmp_path / "theme.json").write_text(json.dumps(theme), encoding="utf-8")
+        config["rendering.remotion"] = {"theme_path": str(tmp_path / "theme.json")}
+    return dataclasses.replace(_request(tmp_path), backend_config=config)
+
+
+def _theme(width: int, height: int, fps: int = 30) -> dict:
+    from astrid.core.theme import builtin_theme
+
+    theme = builtin_theme()
+    theme["id"] = "portrait"
+    theme["visual"]["canvas"] = {"width": width, "height": height, "fps": fps}
+    return theme
+
+
+def test_a_resolved_theme_canvas_ffmpeg_would_not_draw_on_is_refused(tmp_path: Path) -> None:
+    # Remotion falls back to the resolved theme's canvas when the timeline overrides none; ffmpeg falls back to 1920x1080@30.
+    timeline_data = _timeline()
+    del timeline_data["theme_overrides"]
+
+    report = _evaluate(tmp_path, timeline_data, _assets(tmp_path), request=_theme_request(tmp_path, _theme(1080, 1920)))
+
+    assert report.supported is False
+    assert any("resolved theme 'portrait' declares 1080x1920 at 30 fps" in reason for reason in report.reasons)
+
+
+def test_a_theme_canvas_matching_ffmpegs_is_not_a_reason_and_an_override_wins(tmp_path: Path) -> None:
+    timeline_data = _timeline()
+    del timeline_data["theme_overrides"]
+    same = _evaluate(tmp_path, timeline_data, _assets(tmp_path), request=_theme_request(tmp_path, _theme(1920, 1080)))
+    assert not any("resolved theme" in reason for reason in same.reasons)
+    builtin = _evaluate(tmp_path, timeline_data, _assets(tmp_path), request=_theme_request(tmp_path, None))
+    assert not any("resolved theme" in reason for reason in builtin.reasons)
+    # The timeline's own canvas is what Remotion uses first, so the theme's other canvas is irrelevant.
+    overridden = _evaluate(tmp_path, _timeline(), _assets(tmp_path), request=_theme_request(tmp_path, _theme(1080, 1920)))
+    assert not any("resolved theme" in reason for reason in overridden.reasons)
+
+
+def test_composed_occurrence_projection_renders_with_ffmpeg(tmp_path: Path) -> None:
+    """The Runtime's render projection of a shot occurrence, rendered by real ffmpeg.
+
+    The projection keeps the occurrence's parent host track (S1, now empty),
+    the parent's audio track (A1) and adds the shot's own picture track (V2).
+    """
+    assert shutil.which("ffmpeg") and shutil.which("ffprobe"), "this test runs real ffmpeg"
+    size = "size=320x180:rate=30:duration=2"
+    codec = ("-c:v", "libx264", "-pix_fmt", "yuv420p")
+    _lavfi(tmp_path, "marker.mp4", "-f", "lavfi", "-i", f"color=c=0xe8452c:{size}", *codec)
+    _lavfi(tmp_path, "scene.mp4", "-f", "lavfi", "-i", f"color=c=0x2c84e8:{size}", *codec)
+    _lavfi(tmp_path, "tone.wav", "-f", "lavfi", "-i", "sine=frequency=440:duration=4")
+    registry = {"assets": {
+        "marker": {"file": "marker.mp4", "type": "video/mp4", "duration": 2.0, "resolution": "320x180", "fps": 30},
+        "scene": {"file": "scene.mp4", "type": "video/mp4", "duration": 2.0, "resolution": "320x180", "fps": 30},
+        "tone": {"file": "tone.wav", "type": "audio/wav", "duration": 4.0},
+    }}
+    media = {"clipType": "media", "speed": 1, "from": 0, "to": 2}
+    timeline_data = {
+        "theme": "banodoco-default",
+        "theme_overrides": {"visual": {"canvas": {"width": 320, "height": 180, "fps": 30}}},
+        "tracks": [
+            {"id": "S1", "kind": "visual", "label": "S1"},
+            {"id": "A1", "kind": "audio", "label": "A1"},
+            {"id": "V2", "kind": "visual", "label": "V2"},
+        ],
+        "clips": [
+            {**media, "id": "occ:m", "at": 0, "track": "V2", "asset": "marker"},
+            {**media, "id": "occ:v", "at": 2, "track": "V2", "asset": "scene"},
+            {"id": "tone", "at": 0, "track": "A1", "clipType": "media", "asset": "tone", "from": 0, "to": 4,
+             "speed": 1, "volume": 1},
+        ],
+    }
+    (tmp_path / "timeline.json").write_text(json.dumps(timeline_data), encoding="utf-8")
+    (tmp_path / "assets.json").write_text(json.dumps(registry), encoding="utf-8")
+
+    result = ffmpeg._protocol_render(_request(tmp_path), workspace=tmp_path)
+
+    output = tmp_path / result.video.path
+    streams = json.loads(subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,codec_name", "-of", "json", str(output)],
+        capture_output=True, check=True, text=True).stdout)["streams"]
+    assert {(item["codec_type"], item["codec_name"]) for item in streams} == {("video", "h264"), ("audio", "aac")}
+    # The first picture is the marker clip (red), the second the scene clip (blue).
+    red, _, blue = _mean_colour(output, "0.5")
+    assert red > blue
+    red, _, blue = _mean_colour(output, "3")
+    assert blue > red
 
 
 def test_supported_report_exposes_request_specific_evidence(tmp_path: Path) -> None:
@@ -897,7 +1059,6 @@ def test_support_accepts_text_window_boundaries(
     [
         ("text_only_no_media", "needs at least one visual media clip"),
         ("extra_visual_media_track", "exactly one visual track carrying media clips"),
-        ("empty_extra_visual_track", "has no clips"),
         ("text_from", "must not declare from"),
         ("text_position", "unsupported transforms"),
         ("text_audio_track", "must sit on a visual track"),
@@ -941,8 +1102,6 @@ def test_support_fails_closed_for_text_semantics(
                 "volume": 0,
             }
         )
-    elif case == "empty_extra_visual_track":
-        timeline_data["tracks"].append({"id": "v2", "kind": "visual", "label": "B"})
     elif case == "text_from":
         timeline_data["clips"].append(_text_clip(**{"from": 0}))
     elif case == "text_position":

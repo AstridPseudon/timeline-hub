@@ -808,13 +808,12 @@
    "disposition": "required",
    "evidence_reason": "Required managed rendering path; Node/Remotion/FFmpeg readiness is explicit.",
    "adapter_family": "render",
-   "requires_remotion": true,
+   "requires_remotion": "selected",
    "resource_keys": [
     "render"
    ],
    "required_env": [],
    "required_binaries": [
-    "node",
     "ffmpeg"
    ],
    "required_packages": []

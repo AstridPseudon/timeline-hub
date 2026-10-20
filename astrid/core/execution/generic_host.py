@@ -36,7 +36,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
 from urllib.parse import quote, urlsplit
 
 from runtime_protocol import platform
@@ -1400,7 +1400,20 @@ class AdapterSpec:
     required_binaries: tuple[str, ...] = ()
     required_packages: tuple[str, ...] = ()
     requires_network: bool = False
-    requires_remotion: bool = False
+    # never: no Remotion check. always: Remotion gates readiness. selected:
+    # Remotion is required only by tasks that render with rendering.remotion.
+    remotion: Literal["never", "always", "selected"] = "never"
+
+
+def _parse_remotion_requirement(value: Any, *, owner: str) -> Literal["never", "always", "selected"]:
+    """Strictly map a declared ``requires_remotion`` value; no truthiness."""
+    if value is True:
+        return "always"
+    if value is False:
+        return "never"
+    if isinstance(value, str) and value == "selected":
+        return "selected"
+    raise HostError(f"{owner}: requires_remotion must be true, false or 'selected', got {value!r}")
 
 
 class AdapterRegistry:
@@ -1434,7 +1447,8 @@ class AdapterRegistry:
             base.required_binaries,
             base.required_packages,
             base.requires_network,
-            bool(metadata.get("requires_remotion", base.requires_remotion)),
+            _parse_remotion_requirement(metadata["requires_remotion"], owner=definition.id)
+            if "requires_remotion" in metadata else base.remotion,
         )
 
     @classmethod
@@ -1455,7 +1469,8 @@ class AdapterRegistry:
             tuple(entry["required_binaries"] if "required_binaries" in entry else builtin.required_binaries),
             tuple(entry["required_packages"] if "required_packages" in entry else builtin.required_packages),
             builtin.requires_network,
-            bool(entry.get("requires_remotion", base.requires_remotion)),
+            _parse_remotion_requirement(entry["requires_remotion"], owner=definition.id)
+            if "requires_remotion" in entry else base.remotion,
         )
 
 
@@ -1595,6 +1610,57 @@ def _confined_cwd(
     return resolved
 
 
+REMOTION_GATE_DESCRIPTION = "tasks that render with rendering.remotion"
+
+
+def _task_selector(task_data: Mapping[str, Any]) -> str | None:
+    """The renderer selector the admitted task names, or None when it omits one."""
+    spec = _admitted_task_spec(task_data)
+    for section in ("inputs", "params"):
+        values = spec.get(section)
+        if isinstance(values, Mapping) and values.get("selector"):
+            return str(values["selector"])
+    return None
+
+
+def _renderer_selection(record: "CapabilityRecord", task_data: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Decide the renderer of a ``remotion == 'selected'`` task at lease admission.
+
+    The renderer stays an explicit choice: a named selector runs as given, and a
+    task that names ``rendering.remotion`` on a host that cannot run it fails
+    here, before any child exists. Only an omitted selector is chosen by the
+    host: Remotion when this host can run it, else ffmpeg.
+    """
+    if record.adapter.remotion != "selected":
+        return None
+    from astrid.core.rendering.contracts import FFMPEG_RENDERER_ID, REMOTION_RENDERER_ID
+
+    check = record.preflight.get("remotion")
+    check = check if isinstance(check, Mapping) else {}
+    remotion_ok = check.get("ok") is True
+    reason = None if remotion_ok else str(check.get("reason") or "remotion check failed")
+    requested = _task_selector(task_data)
+    if requested is None:
+        selector, chosen_by = (REMOTION_RENDERER_ID if remotion_ok else FFMPEG_RENDERER_ID), "host"
+    else:
+        selector, chosen_by = requested, "task"
+    if selector == REMOTION_RENDERER_ID and not remotion_ok:
+        raise HostError(
+            f"{record.id}: this task renders with {REMOTION_RENDERER_ID}, which this host cannot run: {reason}"
+        )
+    return {"selector": selector, "chosen_by": chosen_by, "remotion_ok": remotion_ok, "remotion_reason": reason}
+
+
+def _gated_remotion_faults(records: Any) -> dict[str, str]:
+    """Ready capabilities whose per-task Remotion check fails, with the reason."""
+    faults: dict[str, str] = {}
+    for record in records:
+        check = record.preflight.get("remotion")
+        if record.ready and isinstance(check, Mapping) and check.get("gates") and check.get("ok") is not True:
+            faults[record.id] = str(check.get("reason") or "remotion check failed")
+    return faults
+
+
 def _preflight_unavailable_reason(record: "CapabilityRecord") -> str:
     """Return a stable, secret-free reason for a failed capability preflight."""
     gpu = record.preflight.get("gpu")
@@ -1603,8 +1669,8 @@ def _preflight_unavailable_reason(record: "CapabilityRecord") -> str:
     failures: list[str] = []
     for check_name in sorted(record.preflight):
         check = record.preflight[check_name]
-        if not isinstance(check, Mapping) or check.get("ok") is not False:
-            continue
+        if not isinstance(check, Mapping) or check.get("ok") is not False or check.get("gates"):
+            continue  # A gated check blocks only the tasks it names, not readiness.
         missing = check.get("missing")
         if isinstance(missing, (list, tuple)) and missing:
             values = ",".join(sorted(str(value) for value in missing))
@@ -1702,7 +1768,7 @@ def _record_may_render(record: 'CapabilityRecord') -> bool:
     if str(record.definition.metadata.get('source_pack') or '') == 'rendering':
         return True
     try:
-        return AdapterRegistry.from_matrix(record.definition, record.matrix).requires_remotion
+        return AdapterRegistry.from_matrix(record.definition, record.matrix).remotion != 'never'
     except HostError:
         return True  # Unknown adapter: stay strict rather than skip validation.
 
@@ -6105,7 +6171,7 @@ class GenericPackHost:
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
         gpu_detection = None
-        remotion_context = self._remotion_idle_context() if any(record.adapter.requires_remotion for record in selected) else None
+        remotion_context = self._remotion_idle_context() if any(record.adapter.remotion != "never" for record in selected) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
             gpu = windows_gpu_status(record.id, detection=gpu_detection)
@@ -6141,7 +6207,7 @@ class GenericPackHost:
             # Only the final Remotion compositor needs the JavaScript render
             # tree. Other rendering-pack executors are offline Python/FFmpeg
             # work; the matrix must opt into this requirement explicitly.
-            if adapter.requires_remotion:
+            if adapter.remotion != "never":
                 if full_remotion:
                     owner = self._handoff_accounting_owner
                     with owner._handoff_condition:
@@ -6177,6 +6243,8 @@ class GenericPackHost:
                             "reason": "full Remotion validation required for current host context",
                         }
                     )
+                if adapter.remotion == "selected":
+                    checks["remotion"] = {**checks["remotion"], "gates": REMOTION_GATE_DESCRIPTION}
             policy = _network_policy(record)
             if adapter.requires_network and not record.definition.isolation.network:
                 checks["network"] = {"ok": False, "reason": "adapter_requires_network"}
@@ -6214,7 +6282,11 @@ class GenericPackHost:
                 }
             if record.approval_reason:
                 checks["approval"] = {"ok": False, "reason": record.approval_reason}
-            ready = all(value is True or (isinstance(value, dict) and value.get("ok") is True) for value in checks.values())
+            ready = all(
+                value is True or (isinstance(value, dict) and value.get("ok") is True)
+                for name, value in checks.items()
+                if not (name == "remotion" and adapter.remotion == "selected")
+            )
             updated[record.id] = CapabilityRecord(**{**record.__dict__, "preflight": checks, "ready": ready})
         self.capabilities = updated
         return tuple(updated[key] for key in sorted(updated) if capability_id is None or key == capability_id)
@@ -8881,6 +8953,7 @@ class GenericPackHost:
         # Idle advertisement reuses only the native observation. Every leased
         # task must prove the complete selected runtime again before any work;
         # exceptions as well as unavailable results settle the exact lease.
+        renderer_selection: dict[str, Any] | None = None
         try:
             self.preflight(capability_id)
             record = self.capabilities[capability_id]
@@ -8889,6 +8962,7 @@ class GenericPackHost:
             registration_error = self._registration_admission_reason()
             if registration_error:
                 raise HostError(registration_error)
+            renderer_selection = _renderer_selection(record, task_data)
         except Exception as exc:
             fail_admission(exc)
 
@@ -8974,6 +9048,7 @@ class GenericPackHost:
         storage_failure_receipt: dict[str, Any] | None = None
         command_cleanup_error: CommandCleanupUnresolved | None = None
         deadline_failed = False
+        render_child_pending = False
         storage_receipt: dict[str, int] | None = None
         # Every network attempt gets a fresh host-issued nonce.  It is part of
         # the immutable admission presented to an observable broker, so a
@@ -9258,6 +9333,9 @@ class GenericPackHost:
                     if port.type == "file"
                 ),
             )
+            if renderer_selection is not None and not inputs.get("selector"):
+                # The child never relies on its own default renderer.
+                inputs["selector"] = renderer_selection["selector"]
             _iteration_video_discovery(
                 self, task_data, record, child_bridge, inputs, attempt_id=attempt_id,
                 lease_id=lease_token, fence=fence, runtime_epoch=claim_epoch, cancelled=cancelled)
@@ -9556,6 +9634,7 @@ class GenericPackHost:
                     cancelled_attempt = True
                     return {"task_id": task_id, "status": "cancelled", "cancelled": True}
                 lifetime.begin_execution()
+                render_child_pending = True
                 if capability_id == "wan2gp.generate_video":
                     result = self._run_wan_session(
                         inputs=inputs,
@@ -9643,6 +9722,7 @@ class GenericPackHost:
                 # The outer run_task finally owns lease-pump shutdown and
                 # cleanup; this boundary only preserves child env cleanup.
                 pass
+            render_child_pending = False
             lifetime.begin_collection(collection_limit)
             if child_bridge is not None:
                 child_bridge.finish()
@@ -9800,6 +9880,8 @@ class GenericPackHost:
                 "source_digest": record.source_digest,
                 "dependency_digest": record.dependency_digest,
             }
+            if renderer_selection is not None:
+                payload["renderer_selection"] = dict(renderer_selection)
             if "gpu" in record.preflight:
                 payload["gpu_qualification"] = dict(record.preflight["gpu"])
             if publication_result is not None:
@@ -9915,6 +9997,14 @@ class GenericPackHost:
             if isinstance(original_error, StorageEnvelopeError):
                 storage_failure_receipt = dict(original_error.diagnostic)
             failure_message = str(exc)
+            if (render_child_pending and renderer_selection is not None
+                    and renderer_selection["chosen_by"] == "host" and not renderer_selection["remotion_ok"]):
+                # The host chose ffmpeg only because Remotion was unavailable, so
+                # a timeline ffmpeg refuses still needs Remotion: say both.
+                failure_message += (
+                    f"; {record.id} chose {renderer_selection['selector']} because rendering.remotion "
+                    f"is unavailable on this host: {renderer_selection['remotion_reason']}"
+                )
             gpu = record.preflight.get("gpu")
             if isinstance(gpu, Mapping) and not gpu.get("qualified"):
                 failure_message += " " + str(gpu["reason"])
@@ -13906,6 +13996,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
             "event": "registered", "executor_id": host.executor_id, "pid": os.getpid(),
             "capabilities": len(host.capabilities), "ready": len(host.capabilities) - len(unready),
             "unready": unready, "withdrawn": registration.get("withdrawn_capabilities") or [],
+            "gated": _gated_remotion_faults(host.capabilities.values()),
             "full_registration": str(ready_path) if ready_path is not None else None,
         }, sort_keys=True, default=_json_safe), flush=True)
     if stdin_shutdown is not None and stdin_shutdown.shutdown_requested.is_set():
@@ -13928,6 +14019,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
             "capability_count": len(host.capabilities),
             "ready_capabilities": sorted(record.id for record in host.capabilities.values() if record.ready),
             "unready_capabilities": sorted(record.id for record in host.capabilities.values() if not record.ready),
+            "gated_checks": _gated_remotion_faults(host.capabilities.values()),
             "registration": registration,
             "ready_file": str(ready_path),
             "credential_file": str(credential_path) if credential_path else None,
