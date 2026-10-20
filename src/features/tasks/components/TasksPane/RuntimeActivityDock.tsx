@@ -14,6 +14,7 @@ import {
   type RuntimeTaskAction,
 } from './hooks/useRuntimeTasks';
 import { runtimeTaskLabel, runtimeTaskModality, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
+import { RuntimeTaskRecovery, type OpenRuntimeTaskOutput } from './RuntimeTaskRecovery';
 
 const MAX_VISIBLE_ROWS = 3;
 const INSPECTOR_WIDTH = 344;
@@ -44,6 +45,7 @@ interface RuntimeActivityDockProps {
   isExportTaskPending: (taskId: string) => boolean;
   requestedTaskInspection?: RuntimeTaskInspectionRequest | null;
   onTaskInspectionRequestHandled?: () => void;
+  onOpenOutput?: OpenRuntimeTaskOutput;
 }
 
 interface SafeTaskEvent {
@@ -152,6 +154,7 @@ function ActivityTaskInspector({
   timelineId,
   onExportManagedOutput,
   isExportTaskPending,
+  onOpenOutput,
 }: {
   task: RuntimeTask;
   projectId: string;
@@ -166,6 +169,7 @@ function ActivityTaskInspector({
   timelineId: string | null;
   onExportManagedOutput: RuntimeActivityDockProps['onExportManagedOutput'];
   isExportTaskPending: RuntimeActivityDockProps['isExportTaskPending'];
+  onOpenOutput?: OpenRuntimeTaskOutput;
 }) {
   const client = useMemo(() => new AstridRuntimeClient(), []);
   const [events, setEvents] = useState<RuntimeEvent[]>([]);
@@ -276,6 +280,7 @@ function ActivityTaskInspector({
           <h4 className="mb-1.5 flex items-center gap-1 font-medium"><FileOutput className="h-3 w-3" />Results</h4>
           {outputs.length > 0 ? <ul className="space-y-1.5">{outputs.map((output) => <li key={output.association_id} className="flex min-w-0 items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1.5"><span className="truncate">{safeOutputName(output)}</span><span className="shrink-0 text-muted-foreground">{/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(output.media_type) ? output.media_type : 'Result'}</span></li>)}</ul> : <p className="text-muted-foreground">{loading ? 'Checking results…' : 'No managed results yet.'}</p>}
         </section>
+        <RuntimeTaskRecovery task={task} projectId={projectId} onOpenOutput={onOpenOutput} />
 
         <section>
           <h4 className="mb-1.5 flex items-center gap-1 font-medium"><Clock3 className="h-3 w-3" />Activity</h4>
@@ -295,6 +300,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onTemporaryHistoryLeave, onOpenHistory,
     onCancelTask, onRetryTask, isTaskActionPending, onExportManagedOutput, isExportTaskPending,
     requestedTaskInspection, onTaskInspectionRequestHandled,
+    onOpenOutput,
   } = props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [pinnedTaskId, setPinnedTaskId] = useState<string | null>(null);
@@ -484,6 +490,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
       timelineId={timelineId}
       onExportManagedOutput={onExportManagedOutput}
       isExportTaskPending={isExportTaskPending}
+      onOpenOutput={onOpenOutput}
     />}
   </section>;
 }

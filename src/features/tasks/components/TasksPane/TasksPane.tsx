@@ -159,10 +159,11 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     lightboxProps,
     handleOpenImageLightbox,
     handleOpenVideoLightbox,
+    handleOpenRuntimeTaskOutput,
     handleCloseLightbox,
     handleOpenExternalGeneration,
   } = useTasksLightbox({
-    selectedProjectId,
+    selectedProjectId: runtimeProjectId ?? selectedProjectId,
     currentShotId,
     lastAffectedShotId,
     setActiveTaskId,
@@ -379,6 +380,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             {isRuntimeActivityDock && runtimeProjectId ? (
               <RuntimeActivityDock
                 projectId={runtimeProjectId}
+                onOpenOutput={handleOpenRuntimeTaskOutput}
                 timelineId={runtimeTimelineId}
                 tasks={runtimeActivityTasks}
                 links={agentTaskLinks.data ?? []}
@@ -632,6 +634,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               >
                 {isRuntimeMode ? (
                   <RuntimeTaskList
+                    projectId={runtimeProjectId ?? undefined}
+                    onOpenOutput={handleOpenRuntimeTaskOutput}
                     tasks={runtimeTaskData?.tasks ?? []}
                     isLoading={isPaginatedLoading}
                     error={runtimeTaskError}
@@ -711,7 +715,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             showTaskDetails: true,
           }}
           taskDetailsData={taskDetailsData ?? undefined}
-          shotWorkflow={{
+          // Runtime recovery has no selected-timeline command chooser yet.
+          shotWorkflow={runtimeProjectId ? undefined : {
             allShots: simplifiedShotOptions,
             selectedShotId: lightboxSelectedShotId || currentShotId || lastAffectedShotId || undefined,
             onShotChange: setLightboxSelectedShotId,

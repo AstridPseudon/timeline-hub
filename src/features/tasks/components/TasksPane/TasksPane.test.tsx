@@ -27,6 +27,7 @@ const setActiveTaskIdMock = vi.fn();
 const setLightboxSelectedShotIdMock = vi.fn();
 const handleOpenImageLightboxMock = vi.fn();
 const handleOpenVideoLightboxMock = vi.fn();
+const handleOpenRuntimeTaskOutputMock = vi.fn();
 const handleCloseLightboxMock = vi.fn();
 const handleOpenExternalGenerationMock = vi.fn();
 const handleAddToShotMock = vi.fn();
@@ -36,6 +37,10 @@ const handleOptimisticUnpositionedMock = vi.fn();
 const useTasksPaneSlidingPaneOptionsMock = vi.fn();
 
 let paneControlProps: any = null;
+let runtimeListProps: any = null;
+let runtimeDockProps: any = null;
+let mediaLightboxProps: any = null;
+let lightboxOpen = false;
 
 vi.mock('react-dom', async () => {
   const actual = await vi.importActual<typeof import('react-dom')>('react-dom');
@@ -131,7 +136,10 @@ vi.mock('@/shared/hooks/layout/useBottomOffset', () => ({
 }));
 
 vi.mock('@/domains/media-lightbox/MediaLightbox', () => ({
-  MediaLightbox: () => <div data-testid="media-lightbox" />,
+  MediaLightbox: (props: any) => {
+    mediaLightboxProps = props;
+    return <div data-testid="media-lightbox" />;
+  },
 }));
 
 vi.mock('@/shared/contexts/ShotsContext', () => ({
@@ -168,19 +176,26 @@ vi.mock('./TaskList', () => ({
 }));
 
 vi.mock('./RuntimeTaskList', () => ({
-  RuntimeTaskList: ({ tasks }: { tasks: Array<{ task_id: string }> }) => (
+  RuntimeTaskList: (props: any) => {
+    runtimeListProps = props;
+    const { tasks } = props;
+    return (
     <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''}>
       {tasks.length === 0 ? 'No tasks yet' : null}
     </div>
-  ),
+    );
+  },
 }));
 
 vi.mock('./RuntimeActivityDock', () => ({
-  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
+  RuntimeActivityDock: (props: any) => {
+    runtimeDockProps = props;
+    return <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
     <button type="button" aria-label={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} title={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
     <button type="button" aria-label={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} title={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
-  </div>,
+  </div>;
+  },
 }));
 
 vi.mock('./components/PaginationControls', () => ({
@@ -189,13 +204,14 @@ vi.mock('./components/PaginationControls', () => ({
 
 vi.mock('./hooks/useTasksLightbox', () => ({
   useTasksLightbox: () => ({
-    lightboxData: null,
+    lightboxData: lightboxOpen ? { task: { id: 'task-output' } } : null,
     lightboxSelectedShotId: null,
     setLightboxSelectedShotId: setLightboxSelectedShotIdMock,
     taskDetailsData: null,
-    lightboxProps: null,
+    lightboxProps: lightboxOpen ? { media: { id: 'generation-output' } } : null,
     handleOpenImageLightbox: handleOpenImageLightboxMock,
     handleOpenVideoLightbox: handleOpenVideoLightboxMock,
+    handleOpenRuntimeTaskOutput: handleOpenRuntimeTaskOutputMock,
     handleCloseLightbox: handleCloseLightboxMock,
     handleOpenExternalGeneration: handleOpenExternalGenerationMock,
   }),
@@ -286,6 +302,10 @@ function renderTasksPane() {
 describe('TasksPane', () => {
   beforeEach(() => {
     paneControlProps = null;
+    runtimeListProps = null;
+    runtimeDockProps = null;
+    mediaLightboxProps = null;
+    lightboxOpen = false;
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
@@ -317,6 +337,7 @@ describe('TasksPane', () => {
     setLightboxSelectedShotIdMock.mockReset();
     handleOpenImageLightboxMock.mockReset();
     handleOpenVideoLightboxMock.mockReset();
+    handleOpenRuntimeTaskOutputMock.mockReset();
     handleCloseLightboxMock.mockReset();
     handleOpenExternalGenerationMock.mockReset();
     handleAddToShotMock.mockReset();
@@ -652,6 +673,36 @@ describe('TasksPane', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
     expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
     expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
+  });
+
+  it('wires both Runtime surfaces to the existing lightbox and withholds the legacy chooser writer', () => {
+    lightboxOpen = true;
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeTaskData: { tasks: [{ task_id: 'runtime-task-1' }], total: 1, totalPages: 1 },
+    });
+    renderTasksPane();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
+    expect(runtimeListProps.projectId).toBe('runtime-project');
+    expect(runtimeListProps.onOpenOutput).toBe(handleOpenRuntimeTaskOutputMock);
+    expect(runtimeDockProps.onOpenOutput).toBe(handleOpenRuntimeTaskOutputMock);
+    expect(screen.getByTestId('media-lightbox')).toBeInTheDocument();
+    expect(mediaLightboxProps.features).toEqual({ showDownload: true, showTaskDetails: true });
+    expect(mediaLightboxProps.shotWorkflow).toBeUndefined();
+    expect(handleAddToShotMock).not.toHaveBeenCalled();
+    expect(handleAddToShotWithoutPositionMock).not.toHaveBeenCalled();
+  });
+
+  it('retains the existing manual shot workflow outside Runtime mode', () => {
+    lightboxOpen = true;
+    renderTasksPane();
+    expect(mediaLightboxProps.shotWorkflow.onAddToShot).toBe(handleAddToShotMock);
+    expect(mediaLightboxProps.shotWorkflow.onAddToShotWithoutPosition).toBe(handleAddToShotWithoutPositionMock);
   });
 
   it('opens Runtime history on the newest completed task status', () => {

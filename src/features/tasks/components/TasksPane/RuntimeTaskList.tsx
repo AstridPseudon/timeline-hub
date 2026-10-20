@@ -8,6 +8,7 @@ import {
   type RuntimeTaskAction,
 } from './hooks/useRuntimeTasks';
 import { runtimeTaskLabel, runtimeTaskStateLabel } from './activityPresentation';
+import { RuntimeTaskRecovery, type OpenRuntimeTaskOutput } from './RuntimeTaskRecovery';
 
 interface RuntimeTaskListProps {
   tasks: RuntimeTask[];
@@ -21,6 +22,8 @@ interface RuntimeTaskListProps {
   onExportManagedOutput: (taskId: string, timelineId: string) => void;
   isExportTaskPending: (taskId: string) => boolean;
   onInspectTask: (taskId: string, anchor: { top: number; right: number }) => void;
+  projectId?: string;
+  onOpenOutput?: OpenRuntimeTaskOutput;
 }
 
 function RuntimeTaskItem({
@@ -32,6 +35,8 @@ function RuntimeTaskItem({
   onExportManagedOutput,
   isExportTaskPending,
   onInspectTask,
+  projectId,
+  onOpenOutput,
 }: Omit<RuntimeTaskListProps, 'tasks' | 'isLoading' | 'error' | 'actionError'> & { task: RuntimeTask }) {
   const cancelPending = isTaskActionPending(task.task_id, 'cancel');
   const retryPending = isTaskActionPending(task.task_id, 'retry');
@@ -42,6 +47,7 @@ function RuntimeTaskItem({
     <article
       className="rounded-md border border-border bg-card/60 p-3 text-xs text-card-foreground"
       data-runtime-task-row="true"
+      data-runtime-task-id={task.task_id}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
@@ -100,6 +106,7 @@ function RuntimeTaskItem({
           )}
         </div>
       </div>
+      {projectId && <RuntimeTaskRecovery task={task} projectId={projectId} onOpenOutput={onOpenOutput} />}
     </article>
   );
 }
@@ -116,6 +123,8 @@ export function RuntimeTaskList({
   onExportManagedOutput,
   isExportTaskPending,
   onInspectTask,
+  projectId,
+  onOpenOutput,
 }: RuntimeTaskListProps) {
   if (error) {
     return (
@@ -150,6 +159,8 @@ export function RuntimeTaskList({
             onExportManagedOutput={onExportManagedOutput}
             isExportTaskPending={isExportTaskPending}
             onInspectTask={onInspectTask}
+            projectId={projectId}
+            onOpenOutput={onOpenOutput}
           />
         ))
       )}

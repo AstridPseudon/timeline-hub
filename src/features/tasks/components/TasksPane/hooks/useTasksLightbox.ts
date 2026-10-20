@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { fetchGenerationRecordById } from '@/integrations/supabase/repositories/generationRepository';
 import { Task } from '@/types/tasks';
@@ -7,6 +7,9 @@ import { deriveTaskInputImages } from '../utils/task-utils';
 import { usePrefetchTaskData } from '@/shared/hooks/tasks/useTaskPrefetch';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { expandShotData } from '@/shared/lib/shots/shotData';
+import { asRecord } from '@/shared/lib/typeCoercion';
+import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import type { OpenRuntimeTaskOutput } from '../RuntimeTaskRecovery';
 
 interface LightboxData {
   type: 'image' | 'video';
@@ -60,12 +63,39 @@ export function useTasksLightbox({
     setIsTasksPaneOpen(true);
   }, [setActiveTaskId, setIsTasksPaneOpen]);
 
+  const handleOpenRuntimeTaskOutput: OpenRuntimeTaskOutput = useCallback((task, output, selection) => {
+    if (!task.project_id || task.project_id !== selectedProjectId || output.task_id !== task.task_id
+      || output.project_id !== task.project_id || selection.object_id !== output.object_id) return;
+    const spec = asRecord(task.spec.spec) ?? task.spec;
+    const projectedTask: Task = {
+      id: task.task_id, projectId: task.project_id, status: 'Complete',
+      taskType: typeof spec.family === 'string' ? spec.family : task.capability_id,
+      params: asRecord(spec.params) ?? {}, createdAt: task.created_at, updatedAt: task.updated_at,
+    };
+    const location = bridgeMediaUrl(task.project_id, output.object_id);
+    const media: GenerationRow = {
+      id: selection.generation_id, generation_id: selection.generation_id,
+      primary_variant_id: selection.variant_id, media_id: selection.object_id,
+      source_task_id: task.task_id, location,
+      imageUrl: location, type: output.media_type.startsWith('video/') ? 'video' : 'image',
+      createdAt: task.updated_at,
+    };
+    if (media.type === 'video') handleOpenVideoLightbox(projectedTask, [media], 0, selection.variant_id);
+    else handleOpenImageLightbox(projectedTask, media, selection.variant_id);
+  }, [selectedProjectId, handleOpenImageLightbox, handleOpenVideoLightbox]);
+
   const handleCloseLightbox = useCallback(() => {
     // Reset dropdown to current shot when closing
     setLightboxSelectedShotId(currentShotId || lastAffectedShotId || undefined);
     setLightboxData(null);
     setActiveTaskId(null);
   }, [currentShotId, lastAffectedShotId, setActiveTaskId]);
+
+  const previousProjectId = useRef(selectedProjectId);
+  useEffect(() => {
+    if (previousProjectId.current !== selectedProjectId) handleCloseLightbox();
+    previousProjectId.current = selectedProjectId;
+  }, [selectedProjectId, handleCloseLightbox]);
 
   // Handler for opening external generation (for "Based On" navigation)
   const handleOpenExternalGeneration = useCallback(async (
@@ -217,6 +247,7 @@ export function useTasksLightbox({
     // Handlers
     handleOpenImageLightbox,
     handleOpenVideoLightbox,
+    handleOpenRuntimeTaskOutput,
     handleCloseLightbox,
     handleOpenExternalGeneration,
   };

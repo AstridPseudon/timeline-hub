@@ -169,7 +169,7 @@ export async function transitionRuntimeTask(
     : client.retryTask(current.task_id, key, current.version);
 }
 
-async function listAllRuntimeManagedOutputs(
+export async function listAllRuntimeManagedOutputs(
   client: Pick<AstridRuntimeClient, 'listManagedOutputs'>,
   taskId: string,
 ): Promise<ManagedOutput[]> {
