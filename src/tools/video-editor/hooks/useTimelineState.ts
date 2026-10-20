@@ -66,7 +66,8 @@ import {
   resolveTimelineDeviceClass,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle.ts';
+import type { ResolvedTimelineConfig, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { useTimelineOps } from '@/tools/video-editor/hooks/useTimelineOps';
 import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
@@ -86,6 +87,47 @@ type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineHistoryHook = ReturnType<typeof useTimelineHistory>;
 type RenderStateHook = ReturnType<typeof useRenderState>;
+
+function visualSeamContractWithoutReport(value: unknown): Record<string, unknown> | undefined {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const contract = {...value as Record<string, unknown>};
+  delete contract.report;
+  return contract;
+}
+
+/**
+ * Prepare the legacy seam acknowledgement snapshot while the native command
+ * seam is still being qualified. The render admission report is a local,
+ * derived diagnostic; only authored declarations and opaque app data belong
+ * in this ordinary snapshot carrier.
+ */
+export function prepareVisualSeamSnapshotConfig(
+  currentConfig: TimelineConfig,
+  acknowledgedConfig: ResolvedTimelineConfig,
+): TimelineConfig | null {
+  const acknowledgedContract = acknowledgedConfig.app?.visualSeamContract;
+  if (acknowledgedContract === null || typeof acknowledgedContract !== 'object' || Array.isArray(acknowledgedContract)) {
+    throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
+  }
+  const persistedContract = visualSeamContractWithoutReport(acknowledgedContract)!;
+  const currentContractValue = currentConfig.app?.visualSeamContract;
+  const currentContract = visualSeamContractWithoutReport(currentContractValue);
+  if (canonicalJsonStringify(persistedContract) === canonicalJsonStringify(currentContract)) return null;
+  if (
+    currentContractValue !== null &&
+    typeof currentContractValue === 'object' &&
+    !Array.isArray(currentContractValue) &&
+    Object.prototype.hasOwnProperty.call(currentContractValue, 'report')
+  ) {
+    // Keep a legacy report already in the snapshot opaque; never copy the
+    // newly derived report from the acknowledged render configuration.
+    persistedContract.report = (currentContractValue as Record<string, unknown>).report;
+  }
+  return {
+    ...currentConfig,
+    app: { ...currentConfig.app, visualSeamContract: persistedContract },
+  };
+}
 
 export function useTimelineRenderRequest(
   timelineId: string,
@@ -668,14 +710,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     if (permission && !permission.allowed) {
       throw new Error(`Timeline edits are temporarily unavailable (${permission.reason ?? 'read-only'}).`);
     }
-    const contract = acknowledgedConfig.app?.visualSeamContract;
-    if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
-      throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
-    }
-    const config = {
-      ...current.config,
-      app: { ...current.config.app, visualSeamContract: contract },
-    };
+    const config = prepareVisualSeamSnapshotConfig(current.config, acknowledgedConfig);
+    if (!config) return;
     const nextData = await buildTimelineData(
       config,
       current.registry,
