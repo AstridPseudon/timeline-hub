@@ -12,14 +12,14 @@ from pathlib import Path
 
 import pytest
 
-from tests.helpers.runtime import use_runtime
+from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
 def film(tmp_path, monkeypatch):
-    runtime = use_runtime()
+    runtime = use_runtime(commit=vendored_runtime_commit())
     # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
     # provider lane does. Never create a second bootstrap or DB model here.
     monkeypatch.syspath_prepend(str(runtime / "tests"))
@@ -59,6 +59,45 @@ def film(tmp_path, monkeypatch):
 
 @pytest.fixture
 def renderer_off(film, monkeypatch):
+    _disable_scene(monkeypatch)
+
+
+@pytest.fixture
+def auto_film(film):
+    from runtime_protocol.service import RuntimeService
+
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline.capture import rate
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    fixture, _, _ = film
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        parent = service.get_project_parent_composition_revision(
+            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")["payload"]
+        document = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")
+        owner = "occurrence:" + parent["occurrences"][0]["occurrence_id"]
+        fps = rate(State(bundle_from_document(document)).config(owner).get("output", {}).get("fps"))
+        assert fps.denominator == 1
+        parent["config"]["output"]["fps"] = fps.numerator
+        parent["occurrences"][0]["duration_ms"] = 12000
+        service.publish_parent_composition(fixture.project_id, fixture.timeline_id, {
+            "project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+            "expected_head": "m1-journey-baseline", "parent_revision_id": "auto-baseline",
+            "parent_composition": parent,
+        }, idempotency_key="auto-baseline")
+    finally:
+        service.close()
+    return fixture, parent
+
+
+@pytest.fixture
+def auto_renderer_off(auto_film, monkeypatch):
+    _disable_scene(monkeypatch)
+
+
+def _disable_scene(monkeypatch):
     class NoSceneImports:
         def find_spec(self, fullname, path=None, target=None):
             if (fullname.startswith(("composition", "remotion",
@@ -195,13 +234,8 @@ def assert_readback(client, fixture, accepted):
     assert entry["publisher"] == "owner"
 
 
-# Restore this complete positive after the normal S2 + views generated-client pin.
-# The old pinned client cannot forward the new explicit view idempotency key.
-@pytest.mark.parametrize("touched_basis", [
-    pytest.param(False, marks=pytest.mark.xfail(
-        strict=True, reason="S2 + views: normal generated-client pin restores keyed view creation")),
-    True,
-], ids=["disjoint-rebase-undo", "touched-basis-conflict"])
+@pytest.mark.parametrize("touched_basis", [False, True],
+                         ids=["disjoint-rebase-undo", "touched-basis-conflict"])
 def test_cli_python_outbox_restart_and_guarded_inverse(
     tmp_path: Path, monkeypatch, capsys, film, wire, real_runtime, touched_basis,
 ):
@@ -373,3 +407,163 @@ def _wrong_scope(daemon, fixture, outbox):
     other = open_client(daemon, actor="second-editor", credential=credential)
     return TimelineSession.open(fixture.project_id, fixture.timeline_id,
                                 client=other, outbox_path=outbox)
+
+
+def test_keyed_view_lost_ack_restart_and_fresh_head(film, renderer_off, real_runtime,
+                                                  tmp_path, monkeypatch):
+    from runtime_protocol.server import RuntimeHandler
+
+    from astrid.sdk.timeline.sync import TimelineSession
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    fixture, _, _ = film
+    support = tmp_path / "support"
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile="astrid")
+    client = open_client(daemon)
+    options = {"formats": ["md"]}
+    observed = []
+    send = RuntimeHandler._send
+
+    def lose_ack(handler, status, payload=None, **kwargs):
+        if handler.command == "POST" and handler.path.endswith("/views") and status == 200:
+            observed.append((handler.headers["Idempotency-Key"], copy.deepcopy(payload)))
+            if len(observed) == 1:
+                raise ConnectionError("view accepted before lost ACK")
+        return send(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, "_send", lose_ack)
+    with pytest.raises(WorkspaceClientError):
+        client._remote._transport.create_timeline_view(
+            fixture.project_id, fixture.timeline_id, options, idempotency_key="original-view")
+    original = observed[0][1]
+    moved = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client,
+                                outbox_path=tmp_path / "move.json").move("parent/clip:music-bed", 2)
+    revision = moved["data"]["accepted_revision_id"]
+    assert revision != original["inspection"]["revision_id"]
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, port=port,
+                          authoring_profile="astrid")
+    client = open_client(daemon)
+    transport = client._remote._transport
+    assert transport.create_timeline_view(fixture.project_id, fixture.timeline_id, options,
+                                          idempotency_key="original-view") == original
+    with pytest.raises(WorkspaceClientError) as conflict:
+        transport.create_timeline_view(fixture.project_id, fixture.timeline_id, {"formats": ["png"]},
+                                       idempotency_key="original-view")
+    assert conflict.value.status == 409
+    for _ in range(2):
+        fresh = client.timelines.visualize(fixture.project_id, fixture.timeline_id,
+                                           mode="inputs", formats=("md",))
+        assert fresh.ok, fresh.as_dict()
+        assert observed[-1][1]["inspection"]["revision_id"] == revision
+    assert observed[:2] == [("original-view", original)] * 2
+    assert len({key for key, _ in observed}) == 3
+
+
+def test_keyed_view_requires_write_but_inspection_remains_read_only(
+    film, renderer_off, real_runtime, tmp_path, monkeypatch,
+):
+    from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
+
+    fixture, _, _ = film
+    daemon = real_runtime(fixture.duplicate_root, support_root=tmp_path / "support",
+                          authoring_profile="astrid")
+    reader, _ = daemon.credentials.provision("view-reader", ["projects:read"])
+    writer, _ = daemon.credentials.provision("view-writer", ["projects:write"])
+    transport = WorkspaceClient(daemon.endpoint, reader)
+
+    def no_ingest(*args, **kwargs):
+        pytest.fail("read-only view request reached persistence")
+
+    with monkeypatch.context() as denied:
+        denied.setattr(daemon.service, "ingest", no_ingest)
+        with pytest.raises(WorkspaceClientError) as error:
+            transport.create_timeline_view(fixture.project_id, fixture.timeline_id,
+                                            {"formats": ["md"]}, idempotency_key="reader-view")
+        assert error.value.status == 401
+        inspection = transport.inspect_timeline(fixture.project_id, fixture.timeline_id,
+                                                 {"formats": ["md"]})
+        assert inspection["revision_id"] == "m1-journey-baseline"
+    result = WorkspaceClient(daemon.endpoint, writer).create_timeline_view(
+        fixture.project_id, fixture.timeline_id, {"formats": ["md"]}, idempotency_key="writer-view")
+    assert result["inspection"] == inspection
+    assert "md" in result["artifacts"]
+
+
+@pytest.mark.parametrize("kind", ["image", "video"])
+@pytest.mark.parametrize("mode", ["anchor", "fallback", "shared"])
+def test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo(
+    auto_film, auto_renderer_off, real_runtime, tmp_path, kind, mode,
+):
+    import hashlib
+
+    from test_generation_publish_v1_settlement import CAPABILITY, _effect, _output, _settle
+
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_auto_placement import auto_place_completion, auto_place_shared
+    from astrid.sdk.timeline.sync import TimelineSession
+    from astrid_runtime_client import WorkspaceClient as GeneratedWorkspaceClient
+
+    fixture, parent = auto_film
+    support = tmp_path / "support"
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, authoring_profile="astrid")
+    service = daemon.service
+    effect = _effect(fixture.project_id, groups=[{"group_key": "main", "selectors": [
+        {"selector": "completed", "ordinal": 0, "variant_key": "completed", "output_port": kind}]}])
+    effect["payload"]["metadata"]["params"] = {"duration_seconds": 6} if kind == "video" else {}
+    service.register_executor({"executor_id": "auto-worker", "capabilities": [CAPABILITY]},
+                              idempotency_key="auto-executor")
+    task = service.create_task({"project": fixture.project_id, "capability_id": CAPABILITY,
+        "capability_digest": "sha256:" + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
+        "settlement_effect": effect, "idempotency_key": "auto-task"})
+    attempt = service.claim_next({"executor_id": "auto-worker", "capability_ids": [CAPABILITY],
+        "runtime_epoch": service.health()["runtime_epoch"]}, idempotency_key="auto-claim")
+    _settle(service, attempt, [_output(b"completed", output_port=kind, group_key="main",
+        variant_key="completed", ordinal=0, filename="completed." + ("png" if kind == "image" else "mp4"),
+        media_type="image/png" if kind == "image" else "video/mp4")], effect=effect)
+    association = service.managed_outputs(task["task"]["id"])[0]
+    native = GeneratedWorkspaceClient(daemon.endpoint, daemon.token)
+    selection = native.get_project_media_selection(fixture.project_id, {
+        "association_id": association["association_id"], "object_id": association["object_id"],
+        "version": association["lifecycle"]["version"]})
+    verified = native.get_project_verified_media(fixture.project_id, selection)
+    client = open_client(daemon)
+    transport = client._remote._transport
+    head = history(client, fixture)["head"]
+    baseline = service._timeline_commits()[0].revision_closure(
+        fixture.project_id, fixture.timeline_id, head["revision_id"])
+    bundle = bundle_from_document(baseline)
+    owner = "occurrence:" + parent["occurrences"][0]["occurrence_id"]
+    builder = auto_place_shared if mode == "shared" else auto_place_completion
+    clips = State(bundle).config(owner)["clips"]
+    options = {"anchor": clips[0]["id"]} if mode == "anchor" else {"anchor": "absent", "fallback_at": 1}
+    if mode == "shared":
+        options = {"frame": 24}
+    planned = builder(bundle, owner, "auto-child", selection, ownership="occurrence",
+                      verified_media=[verified], **options)
+    request = {"api_version": 1, "project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+        "commands": planned["commands"]}
+    preview = transport.commit_timeline(fixture.project_id, fixture.timeline_id,
+        {**request, "dry_run": True}, idempotency_key="auto-preview")
+    assert preview["receipt"] is None and history(client, fixture)["head"] == head
+    accepted = transport.commit_timeline(fixture.project_id, fixture.timeline_id, request,
+                                          idempotency_key="auto-accept")
+    assert accepted["data"]["canonical_document"] == preview["data"]["canonical_document"]
+    assert accepted["data"]["commands"] == planned["commands"]
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = real_runtime(fixture.duplicate_root, support_root=support, port=port,
+                          authoring_profile="astrid")
+    client = open_client(daemon)
+    transport = client._remote._transport
+    assert transport.commit_timeline(fixture.project_id, fixture.timeline_id, request,
+                                     idempotency_key="auto-accept") == accepted
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client,
+                                    outbox_path=tmp_path / "auto-undo.json")
+    undone = session.undo([accepted["receipt"]["receipt_id"]])
+    assert undone["data"]["canonical_document"] == baseline
+    redone = session.undo([undone["receipt"]["receipt_id"]])
+    assert redone["data"]["canonical_document"] == accepted["data"]["canonical_document"]

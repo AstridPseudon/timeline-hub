@@ -106,9 +106,6 @@ def submit(case, request, key):
         invocation_path=route_path(case.target['project_id'], 'film'), authorize=lambda: None)
 
 
-# D13 qualification requires Runtime to accept the native recorder's guard
-# metadata; 6023cfb compares that record to the necessarily bare request guard.
-@pytest.mark.xfail(strict=True, reason='D13: Runtime must accept native captured producer.guard records')
 def test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes(settled):
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
