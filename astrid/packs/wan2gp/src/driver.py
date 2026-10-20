@@ -14,7 +14,7 @@ is absent, GenericPackHost rejects admission before the child starts.
 
 import json
 import hashlib
-import os
+from runtime_protocol.dirfd import filesystem as os
 import shutil
 import stat
 import threading

@@ -15,7 +15,8 @@ import hashlib  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import mimetypes  # noqa: E402
-import os  # noqa: E402
+from runtime_protocol.dirfd import filesystem as os  # noqa: E402
+from runtime_protocol import platform  # noqa: E402
 import re  # noqa: E402
 import secrets  # noqa: E402
 import socket  # noqa: E402
@@ -744,6 +745,7 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
     fd, temporary = tempfile.mkstemp(prefix=".review-session-", dir=path.parent)
     try:
         with os.fdopen(fd, "wb") as stream:
+            platform.owner_only(stream.fileno())
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
@@ -751,8 +753,8 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
         # a stale or foreign observation left by another owner.
         os.link(temporary, path, follow_symlinks=False)
         os.unlink(temporary)
-        info = path.lstat()
-        directory = os.open(path.parent, os.O_RDONLY)
+        info = os.lstat(path)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
             os.fsync(directory)
         finally:
@@ -780,9 +782,9 @@ def _retire_receiver_session(owner: tuple[Path, int, int, bytes]) -> None:
             or (info.st_dev, info.st_ino) != (device, inode) or raw != payload
             or expected["process_pid"] != os.getpid()
             or expected["process_birth_id"] != process_birth_identity()
-            or (path.lstat().st_dev, path.lstat().st_ino) != (device, inode)):
+            or (os.lstat(path).st_dev, os.lstat(path).st_ino) != (device, inode)):
         raise HumanReviewInputError("review receiver cleanup owner mismatch")
-    path.unlink()
+    os.unlink(path)
 
 
 def _publish_saved_state(

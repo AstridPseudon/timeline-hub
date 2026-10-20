@@ -13,7 +13,7 @@ import hashlib
 import hmac
 import json
 import math
-import os
+from runtime_protocol.dirfd import filesystem as os
 import shutil
 import stat
 import tempfile
@@ -111,7 +111,7 @@ def _paged_rows(reader: Any, *args: Any) -> list[Any] | None:
 def _register_rehydrated_pack(root: Path) -> None:
     """Record one exact temp root created by this process."""
 
-    stat = root.lstat()
+    stat = os.lstat(root)
     with _REHYDRATED_PACKS_LOCK:
         _REHYDRATED_PACKS[root] = (
             os.getpid(),
@@ -152,8 +152,8 @@ def _remove_owned_directory(
     deleted; the original may be left empty at its moved location instead.
     """
 
-    open_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-    open_flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    open_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    open_flags |= getattr(os, "O_CLOEXEC", 0)
     parent_fd: int | None = None
     root_fd: int | None = None
 
