@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 
 import pytest
 
@@ -150,3 +151,55 @@ def test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_hist
     assert other.clip('music-bed').params['opaque'] == {'literal': [None, False, 0]}
     with pytest.raises(CommitConflict):
         other.undo([accepted['receipt']['receipt_id']])
+
+
+def test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable(
+    tmp_path, monkeypatch, film, renderer_off, real_runtime,
+):
+    """The Runtime door accepts authoring while the production renderer is stopped."""
+    fixture, _, _ = film
+    daemon = real_runtime(
+        fixture.duplicate_root,
+        support_root=tmp_path / 'support',
+        authoring_profile='astrid',
+    )
+    client = m1.open_client(daemon)
+    outbox = tmp_path / 'gate3-outbox.json'
+
+    def attach():
+        return Checkout.attach(TimelineSession.open(
+            fixture.project_id,
+            fixture.timeline_id,
+            client=client,
+            outbox_path=outbox,
+        ))
+
+    def renderer_process(*_args, **_kwargs):
+        raise AssertionError('the stopped renderer must not be launched by commit, reload, undo, or preview')
+
+    with monkeypatch.context() as stopped:
+        stopped.setattr(subprocess, 'Popen', renderer_process)
+        stopped.setattr(subprocess, 'run', renderer_process)
+
+        editing = attach()
+        editing.clip('parent/clip:music-bed').on(1)
+        accepted = editing.flush(idempotency_key='gate3-stopped-renderer')
+        assert accepted['data']['accepted_revision_id']
+
+        reloaded = attach()
+        assert reloaded.clip('parent/clip:music-bed').start == 1
+        undone = reloaded.undo([accepted['receipt']['receipt_id']])
+        assert undone['data']['accepted_revision_id']
+
+        after_undo = attach()
+        assert after_undo.clip('parent/clip:music-bed').start == 0
+        preview = client.timelines.visualize(
+            fixture.project_id,
+            fixture.timeline_id,
+            mode='composed',
+            options={'formats': ['png']},
+        )
+
+    assert not preview.ok
+    detail = str(preview.error).lower()
+    assert 'unavailable' in detail
