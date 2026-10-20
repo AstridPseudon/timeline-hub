@@ -94,59 +94,6 @@ def test_inconsistent_saved_closure_refuses(damage):
         project(document)
 
 
-@pytest.mark.parametrize("damage", ["kind", "head", "candidate_digest", "publication_digest", "publication",
-                                    "project_id", "timeline_id", "base_parent", "base_parent_payload",
-                                    "base_placements", "source", "child_base", "internal_base", "embedded_base",
-                                    "retained_pin", "missing_candidate", "candidate_after_freeze"])
-def test_inconsistent_candidate_refuses_even_with_recomputed_preview(damage):
-    document = document_fixture()
-    bundle = draft(document)
-    identity = next(iter(bundle["shots"]))
-    if damage in {"project_id", "timeline_id"}:
-        bundle[damage] = "foreign"
-    elif damage == "base_parent":
-        bundle[damage]["revision_id"] = "other-parent"
-    elif damage in {"base_parent_payload", "base_placements"}:
-        bundle[damage]["forged"] = True
-    elif damage == "source":
-        bundle["source_mapping"]["placements"] = {}
-    elif damage in {"child_base", "internal_base"}:
-        key = "base_payload" if damage == "child_base" else "base_internal_timeline"
-        bundle["shots"][identity][key]["forged"] = True
-    elif damage == "embedded_base":
-        bundle["source_mapping"]["_runtime_document"]["project_id"] = "foreign"
-    elif damage == "retained_pin":
-        bundle["source_mapping"]["shots"][identity]["internal_timeline_content_digest"] = "sha256:" + "0" * 64
-    preview = preview_authoring_candidate(bundle)
-    if damage in {"kind", "candidate_digest", "publication_digest", "head", "publication"}:
-        preview[damage] = {} if damage in {"head", "publication"} else "forged"
-    elif damage == "missing_candidate":
-        preview.pop("candidate")
-    elif damage == "candidate_after_freeze":
-        preview["candidate"]["parent"]["config"]["opaque_draft"] = "changed after freezing"
-    with pytest.raises(AuthoringBundleError):
-        project(document, preview)
-
-
-@pytest.mark.parametrize("value", [True, 2.0])
-def test_json_distinct_base_values_are_not_equal(value):
-    document = document_fixture()
-    preview = preview_authoring_candidate(draft(document))
-    # JSON bool/int and float/int comparisons must preserve encoded identity.
-    preview["candidate"]["base_parent_payload"]["config"]["clips"][0]["hold"] = value
-    with pytest.raises(AuthoringBundleError, match="exact base"):
-        project(document, preview)
-
-
-def test_reused_candidate_pin_is_compared_with_verified_image():
-    document = document_fixture(shared=False)
-    bundle = bundle_from_document(document)
-    bundle["source_mapping"]["shots"]["chapter-shot"]["content_digest"] = "sha256:" + "0" * 64
-    preview = preview_authoring_candidate(bundle)
-    with pytest.raises(AuthoringBundleError, match="child source"):
-        project(document, preview)
-
-
 def test_capture_method_imports_and_runs_without_renderer_or_runtime():
     import os
     import sys

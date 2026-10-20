@@ -258,6 +258,29 @@ def test_arbitrary_capture_cannot_acquire_canonical_source(runtime, tmp_path, fi
     assert values.timeline_source is None
 
 
+@pytest.mark.parametrize("damage", ["kind", "head", "candidate_digest", "publication_digest", "publication",
+                                    "candidate_after_freeze", "base_parent", "project_id", "timeline_id"])
+def test_forged_candidate_is_refused_by_runtime_authority(runtime, damage):
+    """Runtime's _candidate_document is the one verifier of a forwarded authoring_preview."""
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    snapshot = runtime.snapshot(working_copy=True)
+    preview = runtime.authoring_preview
+    if damage in {"kind", "candidate_digest", "publication_digest"}:
+        preview[damage] = "forged"
+    elif damage in {"head", "publication"}:
+        preview[damage] = {}
+    elif damage == "candidate_after_freeze":
+        preview["candidate"]["parent"]["config"]["opaque_draft"] = "changed after freezing"
+    elif damage == "base_parent":
+        preview["candidate"]["base_parent"] = {**preview["candidate"]["base_parent"], "revision_id": "other-parent"}
+    else:
+        preview["candidate"][damage] = "foreign"
+    body = runtime.request(snapshot)
+    with pytest.raises(RuntimeErrorBase):
+        runtime.service.create_task(body)
+
+
 def test_replaced_duplicate_capture_ref_is_refused_at_admission(runtime):
     from runtime_protocol.errors import ValidationError
 

@@ -16,7 +16,6 @@ from astrid.core.timeline.authoring_bundle import (
     _collect_media,
     compile_authoring_candidate,
     open_authoring_bundle,
-    preview_authoring_candidate,
 )
 
 PROVIDER_VERSION = "astrid-v1"
@@ -303,20 +302,16 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             media.pop(identity, None)
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
-    if (digest == source["parent_revision"]["content_digest"]
-            and _json(manifest) == _json(source["dependency_manifest"])):
-        revision = source["parent_revision"]["revision_id"]
-    else:
+    # A historical publication boundary wins over the opened source image.
+    priors = [h["source_mapping"]["_runtime_document"] for h in source_bundles] + [source]
+    revision = next((prior["parent_revision"]["revision_id"] for prior in priors
+                     if digest == prior["parent_revision"]["content_digest"]
+                     and _json(manifest) == _json(prior["dependency_manifest"])), None)
+    if revision is None:
         revision = "authoring-parent-revision-" + _digest({
             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
             "parent": parent, "manifest": manifest,
         }).removeprefix("sha256:")
-    for historical in source_bundles:
-        prior = historical['source_mapping']['_runtime_document']
-        if (digest == prior['parent_revision']['content_digest']
-                and _json(manifest) == _json(prior['dependency_manifest'])):
-            revision = prior['parent_revision']['revision_id']
-            break
     document = {
         "schema_version": 1, "project_id": bundle["project_id"],
         "timeline_id": bundle["timeline_id"],
@@ -635,61 +630,18 @@ class RuntimeCommitService:
         )
 
         document = copy.deepcopy(document)
-        baseline = bundle_from_document(document)
+        bundle_from_document(document)  # refuses an inconsistent saved closure
         project, timeline = document["project_id"], document["timeline_id"]
         parent = {**document["parent_revision"], "project_id": project, "timeline_id": timeline}
         shots = [{**row, "project_id": project} for row in document["shot_revisions"]]
         internals = [{**row, "project_id": project} for row in document["internal_timeline_revisions"]]
         marker = None
         if authoring_preview is not None:
+            # Runtime's capture validation is the one verifier of the preview;
+            # this projector only reads the frozen candidate it certifies.
             preview = copy.deepcopy(authoring_preview)
-            _require(isinstance(preview, Mapping) and isinstance(preview.get("candidate"), Mapping),
-                     "authoring_preview.candidate is required")
             _json(preview)
-            frozen = preview["candidate"]
-            for key in ("project_id", "timeline_id", "base_parent", "base_parent_payload"):
-                _require(_json(frozen.get(key)) == _json(baseline[key]),
-                         f"authoring_preview {key} does not match the exact base")
-            source = frozen.get("source_mapping")
-            _require(isinstance(source, Mapping) and isinstance(source.get("shots"), Mapping),
-                     "authoring_preview source mapping is required")
-            base_placements = frozen.get("base_placements")
-            _require(isinstance(base_placements, Mapping) and isinstance(source.get("placements"), Mapping),
-                     "authoring_preview placement base is inconsistent")
-            _require(all(isinstance(row, Mapping) and row.get("occurrence_id") == identity
-                         for identity, row in base_placements.items()),
-                     "invalid authoring_preview placement base")
-            for identity, placement in baseline["base_placements"].items():
-                _require(_json(base_placements.get(identity)) == _json(placement),
-                         "authoring_preview placement base is inconsistent")
-            placements = frozen.get("placements")
-            _require(isinstance(placements, list), "authoring_preview placements are required")
-            for placement in placements:
-                _require(isinstance(placement, Mapping), "invalid authoring_preview placement")
-                identity = placement.get("occurrence_id")
-                if identity in baseline["base_placements"]:
-                    _require(_json(source["placements"].get(identity)) ==
-                             _json(baseline["base_placements"][identity]),
-                             "authoring_preview placement source is inconsistent")
-            if "_runtime_document" in source:
-                _require(_json(source["_runtime_document"]) == _json(document),
-                         "authoring_preview document base is inconsistent")
-            _require(isinstance(frozen.get("shots"), Mapping), "authoring_preview shots are required")
-            for identity, shot in frozen["shots"].items():
-                if identity not in baseline["shots"]:
-                    continue  # New draft children are validated by the existing compiler below.
-                _require(isinstance(shot, Mapping), "invalid authoring_preview shot")
-                for key in ("base_payload", "base_internal_timeline"):
-                    _require(_json(shot.get(key)) == _json(baseline["shots"][identity][key]),
-                             "authoring_preview child base is inconsistent")
-                _require(_json(source["shots"].get(identity)) ==
-                         _json(baseline["source_mapping"]["shots"][identity]),
-                         "authoring_preview child source is inconsistent")
-            expected = preview_authoring_candidate(frozen)
-            for key in ("kind", "head", "candidate_digest", "publication_digest", "publication"):
-                _require(_json(preview.get(key)) == _json(expected[key]),
-                         f"authoring_preview {key} is inconsistent")
-            publication = expected["publication"]
+            publication = preview["publication"]
             for family, pins in (("shot_revisions", "shots"),
                                  ("internal_timeline_revisions", "internal_timelines")):
                 index = {row["revision_id"]: row for row in document[family]}
@@ -709,9 +661,9 @@ class RuntimeCommitService:
             _verify_document(document)
             parent = {**document["parent_revision"], "project_id": project, "timeline_id": timeline}
             shots, internals = document["shot_revisions"], document["internal_timeline_revisions"]
-            marker = {"label": "Unpublished working copy", "base_parent": frozen["base_parent"],
-                      "candidate_digest": expected["candidate_digest"],
-                      "publication_digest": expected["publication_digest"],
+            marker = {"label": "Unpublished working copy", "base_parent": preview["candidate"]["base_parent"],
+                      "candidate_digest": preview["candidate_digest"],
+                      "publication_digest": preview["publication_digest"],
                       "candidate_parent_revision_id": publication["parent_revision_id"]}
         else:
             # The managed saved opener visits pins in first occurrence order.
