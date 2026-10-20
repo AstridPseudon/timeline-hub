@@ -1,4 +1,8 @@
-import { projectedClipCounterparts, serializeProjectedTimelineConfig } from '@/tools/video-editor/lib/serialize.ts';
+import {
+  projectedClipCounterparts,
+  serializeProjectedTimelineConfig,
+  verifiedRetainedRawClipIds,
+} from '@/tools/video-editor/lib/serialize.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
 import {
@@ -134,6 +138,12 @@ export function createShotTimelineInitialData(
 }
 
 function createCanonicalTimeline(config: TimelineConfig, composition: PreparedShotComposition): Record<string, unknown> {
+  const retainedRawClipIds = verifiedRetainedRawClipIds(composition);
+  for (const clip of config.clips) {
+    if (retainedRawClipIds.has(clip.id)) {
+      throw new Error(`The shot draft clip ${clip.id} collides with a retained raw clip ID; keep the draft`);
+    }
+  }
   const counterparts = projectedClipCounterparts(composition, config.clips);
   const clips = (config.clips ?? []).map((clip) => {
     const raw = counterparts.get(clip.id);

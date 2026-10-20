@@ -1027,6 +1027,24 @@ describe('verified projection serialization', () => {
       .toThrow('unambiguous');
   });
 
+  it('refuses a retained raw child ID used in place of its projected ID and keeps the draft unchanged', () => {
+    const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
+    const config = projectCanonicalComposition(composition).config;
+    const alias = {
+      ...config,
+      clips: config.clips.map((clip) => clip.id === 'occ-1:alpha-video'
+        ? { ...clip, id: 'alpha-video' }
+        : clip),
+    };
+    const before = JSON.stringify(alias);
+
+    expect(() => serializeProjectedTimelineConfig(alias, composition))
+      .toThrow('collides with a retained raw clip ID');
+    expect(JSON.stringify(alias)).toBe(before);
+    expect(alias.clips.find((clip) => clip.id === 'alpha-video')?.app?.visualBoundary)
+      .toEqual({ intentionalPause: true });
+  });
+
   it('requires an explicit raw basis for a declared derived exit without changing the draft', () => {
     const config = projectCanonicalComposition(createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture)).config;
     const before = JSON.stringify(config);

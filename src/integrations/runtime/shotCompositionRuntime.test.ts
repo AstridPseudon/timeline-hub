@@ -345,6 +345,31 @@ describe('Runtime shot-composition port', () => {
       expect(copied).toEqual(rawTimeline);
     });
 
+    it('refuses a retained raw child ID alias before publication and keeps the popup draft', async () => {
+      resetFakeIndexedDB();
+      const fixtureRuntime = fixtureTransport();
+      const runtime = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixtureRuntime.transport });
+      const adapter = createShotCompositionAdapter(runtime.shotComposition);
+      const composition = adapter.prepare(await runtime.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
+      const source = composition.occurrences.find((item) => item.occurrenceId === 'occ-1')!;
+      const config = projectCanonicalComposition({ ...composition, occurrences: [source] }).config;
+      const draft = {
+        ...config,
+        clips: config.clips.map((clip) => clip.id === 'occ-1:alpha-video'
+          ? { ...clip, id: 'alpha-video' }
+          : clip),
+      };
+      const before = JSON.stringify(draft);
+      const popup = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
+
+      await expect(popup.saveTimeline(`${TIMELINE_ID}:shot:occ-1`, draft, 1))
+        .rejects.toThrow('collides with a retained raw clip ID');
+      expect(JSON.stringify(draft)).toBe(before);
+      expect(fixtureRuntime.requests.filter(({ method, path }) => (
+        method === 'POST' && path.endsWith('/composition-revisions')
+      ))).toHaveLength(0);
+    });
+
   });
 
   it('replays a lost popup publication through Runtime with the same candidate and preserves stale-head drafts', async () => {
