@@ -39,6 +39,7 @@ describe('staged native independent occurrence duplicate capture', () => {
 
   it('preserves shared source owners and isolates exactly one independent copy', () => {
     const result = finishOccurrenceDuplicate(capture());
+    expect(result.bundle.parent.config).toEqual(golden.bundle.parent.config);
     expect(result.bundle.placements.slice(0, -1)).toEqual(golden.bundle.placements);
     for (const [id, shot] of Object.entries(golden.bundle.shots)) expect(result.bundle.shots[id]).toEqual(shot);
     const state = new AuthoredState(result.bundle);
@@ -75,11 +76,29 @@ describe('staged native independent occurrence duplicate capture', () => {
     const shot = document.shot_revisions.find((row) => row.shot_id === copied.shot_id && row.revision_id === copied.shot_revision_id)!;
     expect(shot).toBeDefined();
     expect(document.internal_timeline_revisions.some((row) => row.revision_id === shot.internal_timeline_revision_id)).toBe(true);
+    const sourceShot = document.shot_revisions.find((row) => row.shot_id === source.shot_id && row.revision_id === source.shot_revision_id)!;
+    const sourceInternal = document.internal_timeline_revisions.find((row) => row.revision_id === sourceShot.internal_timeline_revision_id)!;
+    const copiedInternal = document.internal_timeline_revisions.find((row) => row.revision_id === shot.internal_timeline_revision_id)!;
+    expect(shot.shot_revision_id).not.toBe(source.shot_revision_id);
+    expect(shot.internal_timeline_revision_id).not.toBe(sourceShot.internal_timeline_revision_id);
+    expect(copiedInternal.payload).toEqual(sourceInternal.payload);
     // Opening the accepted closure retains the raw values; the App does not repair them on read.
     const opened = await authoringBundleFromDocument(copy(document) as unknown as CanonicalDocument);
     expect(opened.placements.find((row) => row.occurrence_id === 'occ-copy')!.stable_deep_link).toBe(copied.stable_deep_link);
     expect(opened.source_mapping._runtime_document).toEqual(document);
     expect(golden.after_bundle.placements.at(-1)!.stable_deep_link).toBe(copied.stable_deep_link);
+  });
+
+  it('keeps linked source reuse while assigning the copy its own shot revision', () => {
+    const result = finishOccurrenceDuplicate(capture());
+    const source = result.bundle.placements.find((row) => row.occurrence_id === 'occ-0')!;
+    const copied = result.bundle.placements.find((row) => row.occurrence_id === 'occ-copy')!;
+
+    expect(new AuthoredState(result.bundle).config('occurrence:occ-1'))
+      .toEqual(new AuthoredState(result.bundle).config('occurrence:occ-0'));
+    expect(copied.shot_id).toBe('shot-copy');
+    expect(copied.shot_id).not.toBe(source.shot_id);
+    expect(copied.stable_deep_link).not.toBe(source.stable_deep_link);
   });
 
   it.each(['parent', 'shot:chapter-shot', 'occ-0', 'occurrence:missing', 'occurrence:occ-0/clip:clip-a'])('refuses unknown or non-occurrence owner %s', (ref) => {

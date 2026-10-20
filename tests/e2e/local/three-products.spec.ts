@@ -1201,6 +1201,187 @@ test('M1 real dependency conflict retains B original guards and pending identity
   await sniff.expectClean(page, seed3.timelineId);
 });
 
+test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restart, exact retry and guarded undo', async ({ page, context, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const wire = await faultFirstCommit(page);
+  await openCommandTimeline(page, harness, seed3);
+  const realmBefore = await expectSameRealm(page, harness, astrid);
+  const before = await history(harness, seed3);
+  const beforeParent = await revisionBody(harness, before.head.revision_id);
+  const beforeDocument = beforeParent.payload;
+  const sourceBefore = (beforeDocument.occurrences as Array<Record<string, any>>)
+    .find((occurrence) => occurrence.occurrence_id === seed3.occurrenceId)!;
+  expect(sourceBefore, 'the seeded canonical occurrence is present in the raw Runtime document').toBeTruthy();
+  const beforeShotResponse = await harness.runtimeJson('GET',
+    `/v1/projects/${harness.seed.projectId}/shots/${seed3.shotId}/revisions/${sourceBefore.shot_revision_id}`);
+  expect(beforeShotResponse.status, JSON.stringify(beforeShotResponse.body)).toBe(200);
+  const beforeShot = beforeShotResponse.body as Record<string, any>;
+  const beforeInternalResponse = await harness.runtimeJson('GET',
+    `${timelineBase(harness, seed3)}/revisions/${beforeShot.internal_timeline_revision_id}`);
+  expect(beforeInternalResponse.status, JSON.stringify(beforeInternalResponse.body)).toBe(200);
+  const beforeInternal = beforeInternalResponse.body as Record<string, any>;
+
+  const gesturePosts: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST') gesturePosts.push(new URL(request.url()).pathname);
+  });
+  const shotLabel = page.locator('[data-shot-group-key]').first();
+  await expect(shotLabel, 'the real canonical occurrence is rendered as a shot group').toHaveCount(1);
+  await shotLabel.click({ button: 'right' });
+  await page.getByRole('button', { name: 'Duplicate shot', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+
+  const duplicatePost = wire.posts[0];
+  const duplicateRequest = JSON.parse(duplicatePost.body) as CommitRequest;
+  expect(duplicateRequest.commands).toHaveLength(1);
+  expect(duplicateRequest.commands[0]).toMatchObject({
+    op: 'occurrence.duplicate', select: `occurrence:${seed3.occurrenceId}`,
+    args: { occurrence_id: expect.stringMatching(new RegExp(`^${seed3.occurrenceId}-copy-`)), shot_id: expect.stringMatching(new RegExp(`^${seed3.shotId}-copy-`)) },
+    intent: { ownership: 'occurrence' },
+  });
+  const duplicate = accepted(duplicatePost);
+  const duplicateCommand = duplicateRequest.commands[0];
+  const duplicateOccurrenceId = duplicateCommand.args.occurrence_id as string;
+  const duplicateShotId = duplicateCommand.args.shot_id as string;
+  const duplicateDocument = duplicate.data.canonical_document as any;
+  const duplicateOccurrence = (duplicateDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .find((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId)!;
+  expect(duplicateOccurrence, 'the accepted document contains the new occurrence').toBeTruthy();
+  expect(duplicateOccurrence.shot_id).toBe(duplicateShotId);
+  for (const key of ['duration_ms', 'placement', 'source_offset', 'speed', 'track', 'transform', 'gain', 'mute', 'provenance']) {
+    expect(duplicateOccurrence[key], `${key} is preserved on the copied raw occurrence`).toEqual(sourceBefore[key]);
+  }
+  const sourceShot = duplicateDocument.shot_revisions.find((shot) => shot.shot_id === seed3.shotId)!;
+  const copiedShot = duplicateDocument.shot_revisions.find((shot) => shot.shot_id === duplicateShotId)!;
+  expect(copiedShot.payload.metadata).toEqual(sourceShot.payload.metadata);
+  const sourceInternal = duplicateDocument.internal_timeline_revisions.find((revision) => revision.revision_id === sourceShot.internal_timeline_revision_id)!;
+  const copiedInternal = duplicateDocument.internal_timeline_revisions.find((revision) => revision.revision_id === copiedShot.internal_timeline_revision_id)!;
+  const sourceOpaqueClip = sourceInternal.payload.clips.find((clip: any) => clip.id === seed3.agentClipId);
+  const copiedOpaqueClip = copiedInternal.payload.clips.find((clip: any) => clip.id === seed3.agentClipId);
+  expect(copiedOpaqueClip?.app?.f2Opaque, 'opaque child data survives the independent copy').toEqual(sourceOpaqueClip?.app?.f2Opaque);
+  expect(duplicateDocument.parent_revision.payload.config.x_f2_opaque, 'opaque parent data survives the independent copy')
+    .toEqual(seed3.opaque.config);
+  expect(gesturePosts.filter((pathname) => !COMMITS.test(pathname)), 'the gesture emits no legacy graph/task save traffic').toEqual([]);
+
+  // A disjoint Agent publication lands after the duplicate but before its ACK reaches the App.
+  const agentEdit = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(duplicate),
+    { kind: 'label', trackId: 'S1', label: 'F2 Agent duplicate sibling' }, 'f2-duplicate-agent-label');
+  expect((agentEdit.data.canonical_document as any).parent_revision.payload.config.x_f2_opaque).toEqual(seed3.opaque.config);
+
+  // B is captured over A and remains local until A's uncertain result is recovered.
+  await editFirstTrackName(page, 'F2 duplicate local label');
+  await expect.poll(async () => {
+    const candidates = await commandOutboxes(page, seed3.timelineId);
+    return candidates.find((candidate) => candidate.pending?.request.key === duplicatePost.key && candidate.intents.length === 2) ?? null;
+  }, CEILING).toBeTruthy();
+  const owner = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.pending?.request.key === duplicatePost.key)!;
+  expect(commandsOf(owner.intents[0].payload)).toEqual(duplicateRequest.commands);
+  expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+  expect(owner.intents[1].readyBase).toBeUndefined();
+  expect(commandsOf(owner.intents[1].payload)).toEqual([expect.objectContaining({
+    op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'F2 duplicate local label' }, clear: [] },
+  })]);
+  await wire.loseAck();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const afterReload = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(afterReload.pending?.request).toEqual(owner.pending?.request);
+  expect(afterReload.intents).toEqual(owner.intents);
+  expect(wire.posts).toHaveLength(1);
+  await page.close();
+
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).toBe(realmBefore.runtimeInstanceId);
+  const reopened = await context.newPage();
+  sniff.attach(reopened);
+  await wire.attach(reopened);
+  await openApp(reopened, harness);
+  await expectConnected(reopened);
+  await openSeededTimeline(reopened, harness);
+  const realmAfter = await expectSameRealm(reopened, harness, astrid);
+  expect(realmAfter.realmId).toBe(realmBefore.realmId);
+  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
+  const persisted = (await commandOutboxes(reopened, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(persisted.pending?.request).toEqual(owner.pending?.request);
+  expect(persisted.intents).toEqual(owner.intents);
+  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(wire.posts[1], 'the retry is byte-identical after client and Runtime restart').toEqual(wire.posts[0]);
+  const retriedDuplicate = accepted(wire.posts[1]);
+  const localLabel = accepted(wire.posts[2]);
+  expect(localLabel.data.status).toBe('rebased');
+  expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
+  expect((localLabel.data.canonical_document as any).parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: 'F2 duplicate local label' }),
+      expect.objectContaining({ id: 'S1', label: 'F2 Agent duplicate sibling' }),
+    ]),
+    x_f2_opaque: seed3.opaque.config,
+  });
+  const postRecoveryDocument = localLabel.data.canonical_document;
+  expect((postRecoveryDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .some((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId && occurrence.shot_id === duplicateShotId)).toBe(true);
+  expect(retriedDuplicate.data.canonical_document).toEqual(duplicate.data.canonical_document);
+  await expect.poll(async () => (await commandOutboxes(reopened, seed3.timelineId)).every((candidate) => !candidate.pending && !candidate.intents.length), CEILING).toBe(true);
+
+  // Undo the newer local label first, then the duplicate. Both inverses are guarded and preserve the Agent edit.
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(4);
+  const undoLabel = accepted(wire.posts[3]);
+  expect(JSON.parse(wire.posts[3].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [localLabel.receipt.receipt_id] },
+  }]);
+  expect((undoLabel.data.canonical_document as any).parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'S1', label: 'F2 Agent duplicate sibling' })]),
+  });
+  expect((undoLabel.data.canonical_document.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .some((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId)).toBe(true);
+
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(5);
+  const undoDuplicate = accepted(wire.posts[4]);
+  expect(JSON.parse(wire.posts[4].body).commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [duplicate.receipt.receipt_id] },
+  }]);
+  const expectedPostUndoParent = structuredClone(beforeDocument) as Record<string, any>;
+  const expectedIndependentTrack = (expectedPostUndoParent.config.tracks as Array<Record<string, any>>)
+    .find((track) => track.id === 'S1');
+  expect(expectedIndependentTrack, 'the pre-A fixture has the independent Agent track').toBeTruthy();
+  expectedIndependentTrack!.label = 'F2 Agent duplicate sibling';
+  const finalDocument = undoDuplicate.data.canonical_document;
+  expect(finalDocument.parent_revision.payload)
+    .toEqual(expectedPostUndoParent);
+  expect((finalDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .some((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId)).toBe(false);
+  expect((finalDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .filter((occurrence) => occurrence.occurrence_id === seed3.occurrenceId)).toHaveLength(1);
+  expect(finalDocument.shot_revisions).toEqual([{
+    shot_id: seed3.shotId,
+    revision_id: beforeShot.revision_id,
+    internal_timeline_revision_id: beforeShot.internal_timeline_revision_id,
+    content_digest: beforeShot.content_digest,
+    payload: beforeShot.payload,
+  }]);
+  expect(finalDocument.internal_timeline_revisions).toEqual([{
+    timeline_id: seed3.timelineId,
+    revision_id: beforeInternal.revision_id,
+    content_digest: beforeInternal.content_digest,
+    payload: beforeInternal.payload,
+  }]);
+  expect(finalDocument.dependency_manifest).toEqual(beforeParent.dependency_manifest);
+  expect(wire.legacy).toEqual([]);
+  await expectImmutableClosure(harness, seed3, undoDuplicate);
+  await expectOpaqueDataKept(harness, seed3);
+  journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), duplicate: { occurrenceId: duplicateOccurrenceId, shotId: duplicateShotId },
+    agentEdit: pinOf(agentEdit), localLabel: pinOf(localLabel), retryKey: duplicatePost.key, legacySaveCount: wire.legacy.length };
+  await sniff.expectClean(reopened, seed3.timelineId);
+});
+
 // Complements track-label-command.spec.ts: Unicode + disjoint undo there; exact retained-label recovery here.
 test('M2 mixed editing: accepted pointer move and rename survive lost ACK, reload, exact recovery and guarded undo', async ({ page, harness, astrid, seed3 }) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));

@@ -629,38 +629,6 @@ export function duplicateLinkedOccurrence(
   return reorderOccurrences(next);
 }
 
-export function duplicateIndependentShot(
-  graph: ShotCompositionContract,
-  sourceOccurrenceId: string,
-  ids: Readonly<{ shotId: string; revisionId: string; internalTimelineRevisionId: string; occurrenceId: string }>,
-): ShotCompositionContract {
-  const next = clone(graph);
-  const sourceOccurrence = next.occurrences[occurrenceIndex(next, sourceOccurrenceId)];
-  if (next.occurrences.some((occurrence) => occurrence.occurrence_id === ids.occurrenceId)) {
-    throw new Error(`canonical occurrence ${ids.occurrenceId} already exists`);
-  }
-  if (next.shot_revisions.some((revision) => revision.shot_id === ids.shotId && revision.revision_id === ids.revisionId)) {
-    throw new Error(`canonical revision ${ids.shotId}/${ids.revisionId} already exists`);
-  }
-  const sourceRevision = next.shot_revisions.find((revision) => (
-    revision.shot_id === sourceOccurrence.shot_id && revision.revision_id === sourceOccurrence.revision_id
-  ));
-  if (!sourceRevision) throw new Error('source shot revision is missing');
-  const independentRevision = clone(sourceRevision);
-  independentRevision.shot_id = ids.shotId;
-  independentRevision.revision_id = ids.revisionId;
-  independentRevision.publish = true;
-  const internal = independentRevision.internal_timeline_revision as JsonObject;
-  independentRevision.internal_timeline_revision = { ...internal, revision_id: ids.internalTimelineRevisionId, publish: true };
-  next.shot_revisions.push(independentRevision);
-  next.occurrences.push(withOccurrenceIdentity(next, {
-    ...sourceOccurrence,
-    shot_id: ids.shotId,
-    revision_id: ids.revisionId,
-  }, ids.occurrenceId));
-  return reorderOccurrences(next);
-}
-
 export class CanonicalShotCompositionHistory {
   private readonly past: ShotCompositionContract[] = [];
   private readonly future: ShotCompositionContract[] = [];
