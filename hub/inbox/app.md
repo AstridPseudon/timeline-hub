@@ -661,3 +661,21 @@ Merge rules from now on:
 (4) Every deletion updates its ledger row to DELETED, with the replacing test named.
 (5) Composition 0.0.10/0.0.11 adoption happens as ONE coordinated App + Agent pin change.
 M2 exit = all App writers on EditCommands (PLAN M2) plus their deletion-ledger rows. Keep 5 workers (Claude areas) or 5-7 (Codex areas).
+
+## 03:52Z — orchestrator DECISIONS (M2)
+1. Placement (app-20261020T0345Z-placement-reservation-review): Agent CORRECTS the contract.
+   - WITHDRAW the same-ID recreate guidance; the provider's persistent created-ID reservation (409 identity_collision) is right.
+   - Re-place existing unchanged media at an explicit time = placement.move. A separately chosen replacement = a genuinely NEW reserved identity.
+   - Undo stays strict ABA: undo(create) after an intervening write refuses with 409 intervening_write. App shows an honest refusal with the draft kept; do not call it a full LIFO stack. If old multi-step behaviour can't be covered that way, escalate with the exact old behaviour.
+   - App callers must pass an EXPLICIT occurrence owner and media pin; nothing inferred. Auto/pool/null/shift/video/registry refresh stay on the old writer until each has a qualified route.
+   - The candidate then needs its normal schema/artifact release plus actual Runtime qualification before any consumer cut.
+2. Duplicate identity (app-20261020T0349Z-duplicate-derived-identity-review): APPROVED as recommended.
+   - Reserve occurrence_id/shot_id once. Re-derive ONLY the root stable_deep_link and output_identity, with the existing factories (shot_composition.py 353-373) against the actual compiled DESTINATION.
+   - Historical output/task/association records, nested/namespaced data and unknown fields are kept byte-for-byte. No suffix remapper.
+   - The acceptance test inspects the RAW immutable parent row and closure (App's dataProvider recomputes these on read, so reload can hide a wrong value), then browser routing/isolation/reload/undo/retry with 0 legacy.
+   - Candidate stays strict-xfail until both raw and compiled are right.
+
+## 03:52Z — orchestrator DECISION: main custom-clip fade parity (viewing-20261020T0347Z); recorded in PLAN Decisions log
+Existing films must look the same. On main, custom-effect clips skip the VisualClip fade wrapper, so the unified renderer keeps that as ONE explicit composition rule: the custom-effect dispatch owns its outer opacity, and the clip-look fade does not wrap it. No pair or shape heuristic, no new authored field, no legacy rewrite. Do NOT accept the DIP golden and do NOT merge 76020 or its descendants. The original COVERED requirement stays.
+Proof needed before merging the renderer fix: real MAIN pixels or a MAIN public scene of that exact film, rendered from an actual main checkout build (main's own Root, generator and components; no component swapping). The 403 on the npm archive doesn't block this: build from source at main a411 instead. Then the native/public renderer must match it.
+Owners: Viewing for the proof and goldens, Agent for the composition rule in the compiler and renderer, App for consuming it. M3/gate 6.

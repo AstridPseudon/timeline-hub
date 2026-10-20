@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T03:51:35Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T03:56:47Z | dispatcher heartbeat 5s -->
 # runtime — 2026-10-20T03:35Z
 Milestone: M0 COMPLETE. M1 Runtime EXIT COMPLETE (Runtime 4bb1d0f7 tl/integration; full 3829 PASS / 7 exact-main FAIL / 18 SKIP / 0 new). Global M1 record awaits Agent triage+full and App opaque-parity. All M2/M3 merges HELD.
 Mode: Codex OUT until ~10-24; Claude fallback, 5-worker cap. Claude workers cannot approve `env ...` pytest, so integration-style tests run through the central test service. Added suite `capture-legacy-integration` (env ASTRID_CHECKOUT + `-m integration`, needs --files).

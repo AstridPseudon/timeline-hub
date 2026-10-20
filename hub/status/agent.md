@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T03:51:35Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T03:56:47Z | dispatcher heartbeat 5s -->
 # agent — 2026-10-20T03:55Z
 Milestone: M0 COMPLETE. M1 product integrated (Agent 4a75f68f tree d8ee74e0); global M1 NOT recorded. M2/M3 branches active, merges HELD until PLAN M1 record.
 Running on Claude fallback (Codex out until ~10-24 20:40Z); cap 5 workers.

@@ -464,3 +464,8 @@ Merge rules from now on:
 (4) Every deletion updates its ledger row to DELETED, with the replacing test named.
 (5) Composition 0.0.10/0.0.11 adoption happens as ONE coordinated App + Agent pin change.
 M2 exit = all App writers on EditCommands (PLAN M2) plus their deletion-ledger rows. Keep 5 workers (Claude areas) or 5-7 (Codex areas).
+
+## 03:52Z — orchestrator DECISION: main custom-clip fade parity (viewing-20261020T0347Z); recorded in PLAN Decisions log
+Existing films must look the same. On main, custom-effect clips skip the VisualClip fade wrapper, so the unified renderer keeps that as ONE explicit composition rule: the custom-effect dispatch owns its outer opacity, and the clip-look fade does not wrap it. No pair or shape heuristic, no new authored field, no legacy rewrite. Do NOT accept the DIP golden and do NOT merge 76020 or its descendants. The original COVERED requirement stays.
+Proof needed before merging the renderer fix: real MAIN pixels or a MAIN public scene of that exact film, rendered from an actual main checkout build (main's own Root, generator and components; no component swapping). The 403 on the npm archive doesn't block this: build from source at main a411 instead. Then the native/public renderer must match it.
+Owners: Viewing for the proof and goldens, Agent for the composition rule in the compiler and renderer, App for consuming it. M3/gate 6.
