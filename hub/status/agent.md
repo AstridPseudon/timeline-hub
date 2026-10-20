@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T04:12:24Z | dispatcher heartbeat 9s -->
+<!-- main | 2026-10-20T04:17:36Z | dispatcher heartbeat 2s -->
 # agent — 2026-10-20T03:55Z
 Milestone: M0 COMPLETE. M1 product integrated (Agent 4a75f68f tree d8ee74e0); global M1 NOT recorded. M2/M3 branches active, merges HELD until PLAN M1 record.
 Running on Claude fallback (Codex out until ~10-24 20:40Z); cap 5 workers.
@@ -11,7 +11,8 @@ Reviewed -b worker reports (03:50): all five are PARTIAL, commits exist on branc
 - occurrence-duplicate-b: complete; strict xfail: stable_deep_link/output_identity copied verbatim (embed occurrence ID) -> need App-supplied replacements or args extension.
 - capture-pair-compose-b: applied only; paired Runtime run not done -> agt-m3-capture-paired-qualify.
 04:10 results: transition-set-c DONE (153 pass/1 strict xfail: DocumentPin removal on undo needs ~100 lines + Runtime; windows/rational goldens added). opaque-remap-fixtures DONE (shared fixture opaque_remap.json + contract doc + __proto__ test pass; App must compare canonical text for 0 vs 0.0). capture-paired-qualify DONE (golden passes on Runtime 4bb1d0f; 12 forgery + 2 candidate xfails stay strict until Runtime lands; remove stray tests/sdk/test_zz_probe_forgery_unmarked.py before merge). group-delete BLOCKED: draft already exists as tl/agt-m2-occurrence-delete 1d3ead87 (base a31d712d, needs Bundle2 stack); its worktree is dirty/conflicted — DO NOT MERGE tl/agt-m2-group-delete; publish occurrence-delete as the candidate for the group bundle.
-In flight: agt-m2-property-review-compose-b (running); agt-m2-placement-dup-corrections (Sol, 03:52 decisions: placement contract correction + duplicate identity re-derive).
+04:20: property-review-compose-b DONE (opacity+position+transition+effects composed, 449 pass/4 xfail; 3388 pass editing_conformance+sdk; diffcheck and byte-identical-goldens not verified; old outgoing validator on held tl/agt-m2-transition-validator still to compose). placement-dup-corrections DONE: placement contract corrected (strict ABA); duplicate re-derive NOT implemented — needs parent_document_id + destination shot_revision_id (design/m2-occurrence-duplicate.md; Agent-owned carry vs App-supplied: decision pending, will propose Agent carries parent_document_id and re-derives in compile step).
+In flight (queued 04:15): agt-qual-d05, agt-qual-d06 (deletion qualification), agt-public10-adoption (Sol), agt-m2-bundle2-popup-init (Sol), agt-compile-contracts. Not yet dispatched: occurrence-delete continuation (cap 5).
 Next5: 1) full result -> M1 record escalation + baseline doc; 2) review effects/placement/duplicate/opacity/position, compose property bundle; 3) Bundle2 popup (media add/swap, child asset replace, hold set/clear) + empty-bootstrap init ops; 4) audio/visual compile contract docs (03:17, 03:46 popup A 8s/B 10s vector); 5) real pack-host helper, canonical source port, subprocess_env fix, giant-file rationale entry.
 Blocked/needs: global M1 record pending full result.
 Gates: 1/6/7 OPEN. Ledger only design/deletion-ledger.agent.md.
