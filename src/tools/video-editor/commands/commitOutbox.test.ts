@@ -175,6 +175,52 @@ describe('durable command outbox', () => {
     });
   });
 
+  it('installs an explicitly complete compound atomically across abort, reload before dispatch and exact retry', async () => {
+    const env = environment();
+    let owner = '';
+    let nextId = '';
+    let oldKey = '';
+    let request!: OutboxRequest;
+    const payload = { commands: [...move(9).commands, ...move(11).commands] };
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      const a = await box.append(move(5), { head: h0 });
+      const b = await box.append(move(7), { after: a });
+      await box.dispatch(build, async () => ({ kind: 'rejected', error: 'changed' }));
+      const original = await box.read();
+      oldKey = original.pending!.request.key;
+      await expect(box.resolveRejected([a, b], { payload, head: ha, resolvedIntentIds: [a] })).rejects.toThrow();
+      env.fault.abortNextWrite = true;
+      await expect(box.resolveRejected([a, b], { payload, head: ha, resolvedIntentIds: [a, b] })).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(original);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const original = await box.read();
+      const ids = original.intents.map((intent) => intent.id);
+      const next = await box.resolveRejected(ids, { payload, head: ha, resolvedIntentIds: ids });
+      expect(next.intents).toHaveLength(1);
+      nextId = next.intents[0].id;
+      expect(ids).not.toContain(nextId);
+      expect(next.pending).toBeUndefined();
+      expect(next.intents[0]).toMatchObject({ payload, basis: { head: ha }, readyBase: ha });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).intents[0].id).toBe(nextId);
+      await box.dispatch(build, async (flight) => {
+        request = flight;
+        expect(flight.key).not.toBe(oldKey);
+        return { kind: 'retry', error: 'lost' };
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      await box.dispatch(() => { throw new Error('Must retry exact compound'); }, async (flight) => {
+        expect(flight).toEqual(request);
+        return accepted();
+      });
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
   it('reopens exact A before dependent B, then gives B a fresh key/base with original guards and IDs', async () => {
     const env = environment();
     const first = env.open();

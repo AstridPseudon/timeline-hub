@@ -2,7 +2,7 @@ import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
 import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
 import { clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
-import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
+import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
 import { captureParentClipAdd, executeParentClipAdd, finishParentClipAdd } from './parentClipAddCapture.ts';
 import { parentClipAddPreview, type ParentClipAddCapturePort } from './parentClipAddGesture.ts';
@@ -26,6 +26,7 @@ import { trackCreatePreview, type TrackCreateCapturePort } from './trackCreateGe
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+export type RejectedIntentSupport = { intentId: string; supported: boolean; reason?: string };
 export type CommandSessionState = {
   status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
   error: string | null;
@@ -48,6 +49,8 @@ type Options = {
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
+const payloadPreviews = (payload: Payload): TimelinePatch[] => !payload.preview ? [] : payload.commands.length > 1
+  ? payload.preview.operations.map((operation) => ({ version: 1, operations: [operation] })) : [payload.preview];
 const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values(bundle.shots).some((shot) =>
   Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
     track !== null && typeof track === 'object' && !Array.isArray(track) && track.id === trackId));
@@ -85,11 +88,7 @@ export async function createTimelineCommandSession(options: Options) {
     return !!box && !resolving && !persistenceFailed && !pendingAppends.length
       && record?.pending?.outcome?.kind === 'rejected' && record.pending.intentId === record.intents[0]?.id;
   }
-  function labelIntent() {
-    if (record?.intents.length !== 1) return;
-    const commands = (record.intents[0].payload as unknown as Payload).commands;
-    if (commands?.length !== 1) return;
-    const command = commands[0];
+  function labelCommand(command: EditCommand) {
     if (command.schema_version !== 1 || command.op !== 'track.set' || command.version !== '1'
       || typeof command.select !== 'string' || !/^parent\/track:[^/]+$/.test(command.select) || command.select.includes('::')
       || (command.intent !== undefined && !equal(command.intent, {}))) return;
@@ -99,6 +98,11 @@ export async function createTimelineCommandSession(options: Options) {
     if (!(equal(Object.keys(args.values), ['label']) && typeof args.values.label === 'string' && equal(args.clear, []))
       && !(equal(args.values, {}) && equal(args.clear, ['label']))) return;
     return { select: command.select, args: copy(args) as TrackLabelArgs };
+  }
+  function labelIntent() {
+    if (record?.intents.length !== 1) return;
+    const commands = (record.intents[0].payload as unknown as Payload).commands;
+    if (commands?.length === 1) return labelCommand(commands[0]);
   }
   function publish(status: CommandSessionState['status'], error: string | null = null) {
     if (stopped) return;
@@ -645,6 +649,113 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue(entry.payload, preview, entry.basis);
     },
   };
+  function reauthor(payload: Payload, before: AuthoredBundle) {
+    if (payload.commands?.length !== 1) throw new Error('Keep requires one supported native command per original intention');
+    const command = payload.commands[0];
+    const label = labelCommand(command);
+    if (label) {
+      const trackId = label.select.slice('parent/track:'.length);
+      if (hasChildTrack(before, trackId)) throw new Error('Track label requires one unambiguous parent track identity');
+      const result = finishTrackLabel(captureTrackLabel(before, label.select), label.args);
+      return { ...result, preview: { version: 1, operations: [{ op: 'track.update', target: trackId,
+        payload: { label: 'label' in label.args.values ? label.args.values.label : trackId } }] } as TimelinePatch };
+    }
+    if (command.schema_version !== 1 || command.op !== 'clip.set' || command.version !== '1'
+      || typeof command.select !== 'string' || (command.intent !== undefined && !equal(command.intent, {}))) {
+      throw new Error('Keep supports only parent track labels and native clip.set hold/clear intentions');
+    }
+    // Native capture validates the closed args and stable owner selector. No display ID selects raw state.
+    const captured = captureClipSet(before, command.select, command.args as ClipScalarArgs);
+    const result = executeClipSet(before, captured);
+    const preview = payload.preview;
+    const target = preview?.operations[0]?.target;
+    if (typeof target !== 'string' || !equal(preview, clipScalarPreview(target, command.args as ClipScalarArgs))) {
+      throw new Error('Keep requires the original scalar leaf preview');
+    }
+    return { ...result, preview: copy(preview) as TimelinePatch };
+  }
+  function rejectedIntentSupport(): RejectedIntentSupport[] {
+    return (record?.intents ?? []).map((intent) => {
+      try {
+        const payload = intent.payload as unknown as Payload;
+        reauthor(payload, payload.before);
+        return { intentId: intent.id, supported: true };
+      } catch (error) { return { intentId: intent.id, supported: false, reason: message(error) }; }
+    });
+  }
+  async function keepChanges(selectedIntentIds: string[]) {
+    if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
+    const ids = record!.intents.map((intent) => intent.id);
+    const selected = [...selectedIntentIds];
+    const support = rejectedIntentSupport();
+    if (selected.length !== ids.length || new Set(selected).size !== ids.length
+      || ids.some((id) => !selected.includes(id)) || support.some((intent) => !intent.supported)) {
+      return { applied: false, reason: 'Atomic Keep requires every retained intention to be explicitly selected and supported', intents: support.map((intent) => ({ ...intent,
+        ...(!selected.includes(intent.intentId) ? { reason: 'Select every retained intention for an atomic Keep; originals remain unchanged' } : {}) })) };
+    }
+    const originals = record!.intents.map((intent) => intent.payload as unknown as Payload);
+    const originalBasis = originals[0].displayBasis ?? acceptedBasis;
+    const originalPreviews = originals.map((payload) => payload.preview).filter((patch): patch is TimelinePatch => patch !== null);
+    let projected = false;
+    let replaced = false;
+    resolving = true;
+    projectionGeneration++;
+    publish('loading');
+    try {
+      await chain;
+      await sending;
+      const fresh = await options.loadLatest();
+      const document = fresh.canonicalDocument;
+      if (document.project_id !== options.scope.projectId || document.timeline_id !== options.scope.timelineId
+        || !fresh.head.revisionId || !fresh.head.publicationId || document.parent_revision.revision_id !== fresh.head.revisionId) {
+        throw new Error('Resolution requires a verified closure in the current project and timeline');
+      }
+      const before = await authoringBundleFromDocument(document) as AuthoredBundle;
+      let after = before;
+      const commands: EditCommand[] = [];
+      const previews: TimelinePatch[] = [];
+      for (const [index, original] of originals.entries()) {
+        try {
+          const result = reauthor(original, after);
+          commands.push(result.command);
+          previews.push(result.preview);
+          after = result.bundle;
+        } catch (error) {
+          support[index] = { intentId: ids[index], supported: false, reason: message(error) };
+        }
+      }
+      if (support.some((intent) => !intent.supported)) return { applied: false, intents: support };
+      if (stopped) throw new Error('Timeline command session is closed');
+      const payload: Payload = { commands, before, after, preview: { version: 1,
+        operations: previews.flatMap((preview) => preview.operations) }, displayBasis: fresh };
+      // Exercise the complete fresh projection before changing durable work. No capture uses its display rows.
+      projected = true;
+      await project(fresh, previews);
+      record = await box!.resolveRejected(ids, { payload: json(payload), head: fresh.head, resolvedIntentIds: ids }, () => !stopped);
+      replaced = true;
+      localGeneration++;
+      appendedGeneration = localGeneration;
+      lastIntent = record.intents[0].id;
+      prepared.clear();
+      intentIds.clear();
+      bundle = after;
+      known = fresh;
+      acceptedBasis = fresh;
+    } catch (error) {
+      if (projected && !replaced && !stopped) {
+        try { await project(originalBasis, originalPreviews); }
+        catch (restoreError) { publish('error', `${message(error)}; restoring draft preview failed: ${message(restoreError)}`); throw error; }
+      }
+      publish('error', message(error));
+      throw error;
+    } finally {
+      resolving = false;
+      if (!replaced) publishRefusal();
+    }
+    publish('dirty');
+    await pump();
+    return { applied: true, intents: support };
+  }
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -724,8 +835,7 @@ export async function createTimelineCommandSession(options: Options) {
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : displayBasis;
         // Submission advances with A's ACK; B's display retains its original closure.
-        await project(displayBasis,
-          record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
+        await project(displayBasis, record.intents.flatMap((intent) => payloadPreviews(intent.payload as unknown as Payload)));
       }
       if (!publishRefusal()) publish(record.intents.length ? 'dirty' : 'saved');
       ready();
@@ -757,6 +867,8 @@ export async function createTimelineCommandSession(options: Options) {
     trackCreatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
+    getRejectedIntentSupport: rejectedIntentSupport,
+    keepChanges,
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');
@@ -791,8 +903,7 @@ export async function createTimelineCommandSession(options: Options) {
         lastIntent = record.intents[record.intents.length - 1]?.id;
         localGeneration++;
         appendedGeneration = localGeneration;
-        await project(acceptedBasis, record.intents.map((intent) => (intent.payload as unknown as Payload).preview)
-          .filter((patch): patch is TimelinePatch => patch !== null));
+        await project(acceptedBasis, record.intents.flatMap((intent) => payloadPreviews(intent.payload as unknown as Payload)));
         publish(record.intents.length ? 'dirty' : 'saved');
         return;
       }

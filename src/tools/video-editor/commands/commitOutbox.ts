@@ -57,7 +57,7 @@ export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
   append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
   cancel(intentId: string): Promise<void>;
-  resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
+  resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead; resolvedIntentIds?: string[] }, isCurrent?: () => boolean): Promise<OutboxRecord>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
@@ -66,6 +66,7 @@ export interface ClaimedOutbox {
 
 const DATABASE = 'astrid.command-outbox';
 const STORE = 'owners';
+const equalIds = (a: string[] | undefined, b: string[]) => JSON.stringify(a) === JSON.stringify(b);
 
 const browserLock: OutboxExclusiveLock = async (name, work) => {
   if (!globalThis.navigator?.locks) throw new Error('Exclusive browser locks are unavailable');
@@ -234,6 +235,7 @@ export function createCommitOutbox(options: {
         },
         resolveRejected(intentIds, replacement, isCurrent = () => true) {
           const ids = detached(intentIds);
+          const resolvedIds = replacement?.resolvedIntentIds ? detached(replacement.resolvedIntentIds) : undefined;
           const intent = replacement ? newIntent(replacement.payload, { head: replacement.head }) : undefined;
           return access('readwrite', (record) => {
             if (!isCurrent()) throw new Error('Timeline command session is closed');
@@ -244,7 +246,12 @@ export function createCommitOutbox(options: {
             if (!ids.length || JSON.stringify(ids) !== JSON.stringify(record.intents.map((item) => item.id))) {
               throw new Error('Retained work changed before explicit resolution');
             }
-            if (intent && ids.length !== 1) throw new Error('Cannot replace a predecessor of retained work');
+            if (intent && ids.length !== 1 && !equalIds(resolvedIds, ids)) {
+              throw new Error('Cannot replace a predecessor of retained work without an explicit complete compound selection');
+            }
+            if (resolvedIds && !equalIds(resolvedIds, ids)) {
+              throw new Error('Retained work changed before explicit resolution');
+            }
             record.intents = intent ? [intent] : [];
             delete record.pending;
             return detached(record);

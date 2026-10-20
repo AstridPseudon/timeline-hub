@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CanonicalDocument, CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { ApiError } from '@/integrations/runtime/generated.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { ResolvedTimelineConfig } from '../types/index.ts';
 import type { PreparedShotComposition } from '../data/shotCompositionAdapter.ts';
@@ -13,6 +14,10 @@ import { captureClipScalarEdit, submitClipScalarEdit, type ClipScalarArgs } from
 import { captureTrackLabelEdit, submitTrackLabelEdit } from './trackLabelGesture.ts';
 import { environment, scope } from './__tests__/commitSessionEnvironment.ts';
 import { AuthoredState, copy } from './clipMovePrimitives.ts';
+import { authoringBundleFromDocument } from './authoringBundle.ts';
+import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
+import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import fixture from './fixtures/recipe_m2_app_clip_scalar_fields.json';
 
 const golden = fixture;
@@ -80,6 +85,8 @@ async function setup(raw = rawDocument()) {
   const storage = await environment();
   let current = display(raw);
   const initial: TimelineCommandBasis = { head, canonicalDocument: raw };
+  let latest = initial;
+  const loadLatest = vi.fn(async () => latest);
   const requests: Array<{ body: string; key: string }> = [];
   // Unit transport deliberately remains uncertain: no Runtime scalar acceptance is simulated.
   let send: (request: CommitRequest, key: string) => Promise<TimelineCommitResult> = async () => { throw new Error('unknown outcome'); };
@@ -92,16 +99,206 @@ async function setup(raw = rawDocument()) {
     }
   });
   const mount = (basis = initial) => createTimelineCommandSession({ scope, initial: basis, outboxes: storage.outboxes,
+    loadLatest,
     send: (request, key) => { requests.push({ body: JSON.stringify(request), key }); return send(request, key); },
     preview: (patch) => {
       const compiled = compileTimelinePatch(patch, current);
       if (!compiled.nextData) throw new Error('invalid scalar preview');
       current = compiled.nextData;
     }, project, changed: () => {} });
-  return { ...storage, initial, mount, requests, project, current: () => current,
+  return { ...storage, initial, mount, requests, project, loadLatest, current: () => current,
+    setLatest: (basis: TimelineCommandBasis) => { latest = basis; },
     setSend: (next: typeof send) => { send = next; } };
 }
 const rawRow = (bundle: unknown, ref: string) => new AuthoredState(bundle as never).entity(ref)!;
+
+async function rejectedPair(ref: string, args: ClipScalarArgs, label: TrackLabelArgs = { values: { label: 'My label' }, clear: [] }) {
+  const env = await setup();
+  const session = await env.mount();
+  let reject!: () => void;
+  const gate = new Promise<void>((done) => { reject = done; });
+  env.setSend(async () => {
+    await gate;
+    throw new ApiError(409, 'conflict', 'same property changed', '', { status: 'conflict' });
+  });
+  submitTrackLabelEdit(captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1'), copy(label));
+  await vi.waitFor(() => expect(env.requests).toHaveLength(1));
+  submitClipScalarEdit(captureClipScalarEdit(session.clipScalarPort, env.current(), displayId(ref), owner(ref)), args);
+  reject();
+  await expect(session.flush()).rejects.toThrow('same property changed');
+  const [original] = await env.outboxes.list(scope);
+  expect(original.intents).toHaveLength(2);
+  const fresh = copy(env.initial);
+  fresh.head = { revisionId: 'agent-r1', publicationId: 'agent-p1' };
+  fresh.canonicalDocument.parent_revision.revision_id = fresh.head.revisionId;
+  const parent = fresh.canonicalDocument.parent_revision.payload;
+  (parent.config as { tracks: Array<{ label?: string }> }).tracks[0].label = 'Agent label';
+  parent.independent_agent_edit = { preserve: [null, false, 17] };
+  if ('hold' in args.values) {
+    const clips = owner(ref) === 'parent' ? parent.clips : fresh.canonicalDocument.internal_timeline_revisions[0].payload.clips;
+    (clips as Array<Record<string, JSON>>).find((clip) => clip.id === ref.split('/clip:')[1])!.hold = 2;
+  }
+  fresh.canonicalDocument.parent_revision.content_digest = fixtureDigest(parent);
+  env.setLatest(fresh);
+  env.setSend(async () => { throw new Error('new ACK unknown'); });
+  return { env, session, original, fresh, ids: original.intents.map((intent) => intent.id) };
+}
+
+describe('explicit compound Keep on definitive rejection (unit transport only)', () => {
+  it.each([...cases, [transitionRef, { values: { hold: 4 }, clear: [] }] as [string, ClipScalarArgs]])(
+    're-captures label + %s at one fresh head, preserving independent work and exact new retry', async (ref, args) => {
+    const { env, session, original, fresh, ids } = await rejectedPair(ref, args);
+    expect(session.getRejectedIntentSupport()).toEqual(ids.map((intentId) => ({ intentId, supported: true })));
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    const before = await authoringBundleFromDocument(fresh.canonicalDocument);
+    const label = finishTrackLabel(captureTrackLabel(before, 'parent/track:V1'), { values: { label: 'My label' }, clear: [] });
+    const scalar = executeClipSet(label.bundle, captureClipSet(label.bundle, ref, args));
+    expect(await session.keepChanges(ids)).toEqual({ applied: true, intents: ids.map((intentId) => ({ intentId, supported: true })) });
+    expect(env.loadLatest).toHaveBeenCalledOnce();
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(1);
+    expect(ids).not.toContain(stored.intents[0].id);
+    expect(stored.intents[0].basis).toEqual({ head: fresh.head });
+    expect(stored.intents[0].payload).toMatchObject({ commands: [label.command, scalar.command], before, after: scalar.bundle });
+    expect(stored.pending!.request.key).not.toBe(original.pending!.request.key);
+    expect(stored.pending!.request.body).not.toBe(original.pending!.request.body);
+    expect(JSON.parse(stored.pending!.request.body)).toMatchObject({ base_revision_id: fresh.head.revisionId,
+      base_publication_id: fresh.head.publicationId, commands: [label.command, scalar.command] });
+    expect(label.command.expect).not.toEqual((original.intents[0].payload as { commands: EditCommand[] }).commands[0].expect);
+    expect((stored.intents[0].payload as { after: { parent: object } }).after.parent).toHaveProperty('independent_agent_edit', { preserve: [null, false, 17] });
+    const row = env.current().config.clips.find((clip) => clip.id === displayId(ref))!;
+    for (const key of args.clear) expect(row).not.toHaveProperty(key);
+    if ('hold' in args.values) expect(row.hold).toBe(args.values.hold);
+    expect(rawRow(scalar.bundle, 'occurrence:shared-sibling/clip:f2-agent-clip')).toEqual(rawRow(before, 'occurrence:shared-sibling/clip:f2-agent-clip'));
+    // Retained snapshots and the refused request are never refreshed in place.
+    expect(original.pending!.request).toMatchObject(env.requests[0]);
+    expect(original.intents[1].basis).toEqual({ after: ids[0] });
+    await session.dispose();
+    const reopened = await env.mount();
+    expect(reopened.getState().status).toBe('recovery');
+    await reopened.recover(stored.ownerId);
+    expect(env.requests.at(-1)).toEqual(env.requests[1]);
+    expect((await env.outboxes.list(scope))[0].pending!.request).toEqual(stored.pending!.request);
+    expect(JSON.parse(env.requests.at(-1)!.body).commands).toEqual([label.command, scalar.command]);
+    expect(env.requests).toHaveLength(3);
+    await reopened.dispose();
+  });
+
+  it.each([{ values: { label: '' }, clear: [] }, { values: {}, clear: ['label'] }] as TrackLabelArgs[])(
+    'preserves label empty versus explicit clear in a compound: %j', async (args) => {
+      const { env, session, ids } = await rejectedPair(...cases[2], args);
+      expect((await session.keepChanges(ids)).applied).toBe(true);
+      const [stored] = await env.outboxes.list(scope);
+      const payload = stored.intents[0].payload as { commands: EditCommand[]; after: unknown };
+      expect(payload.commands[0].args).toEqual(args);
+      const track = rawRow(payload.after, 'parent/track:V1');
+      if ('label' in args.values) expect(track.label).toBe('');
+      else expect(track).not.toHaveProperty('label');
+      await session.dispose();
+    },
+  );
+
+  it('refuses Keep for an unknown acceptance without loading or changing the original request', async () => {
+    const env = await setup();
+    const session = await env.mount();
+    submitClipScalarEdit(captureClipScalarEdit(session.clipScalarPort, env.current(), displayId(assetRef)), cases[1][1]);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const [original] = await env.outboxes.list(scope);
+    await expect(session.keepChanges(original.intents.map((intent) => intent.id))).rejects.toThrow('definitively rejected');
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    expect(env.loadLatest).not.toHaveBeenCalled();
+    await session.dispose();
+  });
+
+  it('reports an unsupported real native suffix separately and leaves the whole draft unchanged', async () => {
+    const env = await setup();
+    const session = await env.mount();
+    let reject!: () => void;
+    const gate = new Promise<void>((done) => { reject = done; });
+    env.setSend(async () => { await gate; throw new ApiError(409, 'conflict', 'changed', '', { status: 'conflict' }); });
+    submitTrackLabelEdit(captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1'), { values: { label: 'Keep' }, clear: [] });
+    await vi.waitFor(() => expect(env.requests).toHaveLength(1));
+    submitClipMove(captureClipMove(session.port, env.current(), 'f2-app-clip'), 1);
+    reject();
+    await expect(session.flush()).rejects.toThrow();
+    const [original] = await env.outboxes.list(scope);
+    const result = await session.keepChanges(original.intents.map((intent) => intent.id));
+    expect(result.applied).toBe(false);
+    expect(result.intents).toEqual([
+      { intentId: original.intents[0].id, supported: true },
+      { intentId: original.intents[1].id, supported: false, reason: expect.stringContaining('only parent track labels') },
+    ]);
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    expect(env.loadLatest).not.toHaveBeenCalled();
+    await session.dispose();
+  });
+
+  it('retains the entire original selection when any intention is unchosen', async () => {
+    const { env, session, original, ids } = await rejectedPair(...cases[0]);
+    const result = await session.keepChanges([ids[0]]);
+    expect(result.applied).toBe(false);
+    expect(result.intents[1]).toMatchObject({ intentId: ids[1], supported: true, reason: expect.stringContaining('Select every retained') });
+    expect(env.loadLatest).not.toHaveBeenCalled();
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    await session.dispose();
+  });
+
+  it.each(['load', 'projection'] as const)('fences compound replacement when dispose races %s', async (phase) => {
+    const { env, session, original, fresh, ids } = await rejectedPair(...cases[0]);
+    let finish!: () => void;
+    const gate = new Promise<void>((done) => { finish = done; });
+    if (phase === 'load') env.loadLatest.mockImplementationOnce(async () => { await gate; return fresh; });
+    else env.project.mockImplementationOnce(async () => { await gate; });
+    const resolving = session.keepChanges(ids);
+    const refused = expect(resolving).rejects.toThrow();
+    await vi.waitFor(() => expect(phase === 'load' ? env.loadLatest : env.project).toHaveBeenCalledOnce());
+    await session.dispose();
+    finish();
+    await refused;
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    expect(env.requests).toHaveLength(1);
+  });
+
+  it.each(['deleted scalar', 'deleted track', 'hold contract', 'wrong scope', 'wrong revision', 'load', 'preview', 'storage'] as const)(
+    'keeps every original command, guard, identity and suffix on %s failure', async (failure) => {
+      const { env, session, original, fresh, ids } = await rejectedPair(...cases[0]);
+      if (failure === 'deleted scalar') fresh.canonicalDocument.internal_timeline_revisions[0].payload.clips = [];
+      if (failure === 'deleted track') (fresh.canonicalDocument.parent_revision.payload.config as { tracks: unknown[] }).tracks = [];
+      if (failure === 'hold contract') {
+        const clips = fresh.canonicalDocument.internal_timeline_revisions[0].payload.clips as Array<Record<string, JSON>>;
+        clips.find((clip) => clip.id === 'f2-agent-clip')!.app = { astrid: { for: 3 } };
+      }
+      if (failure === 'wrong scope') fresh.canonicalDocument.project_id = 'other-project';
+      if (failure === 'wrong revision') fresh.head.revisionId = 'unverified';
+      if (failure === 'load') env.loadLatest.mockRejectedValueOnce(new Error('cannot load'));
+      if (failure === 'preview') env.project.mockRejectedValueOnce(new Error('cannot preview'));
+      const open = env.factory.open;
+      if (failure === 'storage') {
+        const project = env.project.getMockImplementation()!;
+        env.project.mockImplementationOnce(async (...args) => {
+          await project(...args);
+          env.factory.open = () => { throw new Error('disk full'); };
+        });
+      }
+      if (['deleted scalar', 'deleted track', 'hold contract'].includes(failure)) {
+        const result = await session.keepChanges(ids);
+        expect(result.applied).toBe(false);
+        expect(result.intents).toHaveLength(2);
+        expect(result.intents.some((intent) => !intent.supported && intent.reason)).toBe(true);
+      } else await expect(session.keepChanges(ids)).rejects.toThrow();
+      env.factory.open = open;
+      expect((await env.outboxes.list(scope))[0]).toEqual(original);
+      expect(env.requests).toHaveLength(1);
+      expect(session.getState().canDiscardRejected).toBe(true);
+      await session.dispose();
+      const reopened = await env.mount();
+      await reopened.recover(original.ownerId);
+      expect((await env.outboxes.list(scope))[0].pending).toEqual(original.pending);
+      expect(env.requests).toHaveLength(1);
+      await reopened.dispose();
+    },
+  );
+});
 
 describe('clip scalars in the existing durable session (unit transport only)', () => {
   it('refuses a stale binding to a shared sibling before capture or local mutation', async () => {
