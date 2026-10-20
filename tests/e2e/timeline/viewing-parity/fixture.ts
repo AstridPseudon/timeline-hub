@@ -110,7 +110,7 @@ export async function prepareFrameParityFixture(harness: DirectHarness): Promise
         tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }], clips: [] },
       occurrences: [{ occurrence_id: occurrenceId, shot_id: shotId, shot_revision_id: shotRevisionId,
         placement: { start_ms: 0 }, source_offset: 0, duration_ms: 5500, speed: 1, track: 'S1',
-        transform: {}, gain: 1, mute: false, provenance: {} }],
+        transform: {}, gain: 1, muted: false, provenance: {} }],
     });
     Object.assign(publication, {
       internal_timeline_revisions: [{ timeline_id: timelineId, revision_id: internalRevisionId, payload: {
