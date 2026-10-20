@@ -216,3 +216,22 @@ def test_selected_declaration_is_required_without_param_writes(damage):
     with pytest.raises(CommandError):
         execute(original, [command], **inputs)
     assert original == snapshot
+
+
+@pytest.mark.parametrize('change', ['membership', 'order'])
+def test_element_source_scan_captures_membership_and_order(change):
+    original = seeded()
+    plan = execute(original, [call(ADMITTED)])
+    selection = plan.commands[0]['selections'][0]
+    assert selection['key'] == 'element.targets'
+    assert selection['members'] == selection['order'] == [REF, 'occurrence:occ-1/clip:voice-1']
+    head = copy.deepcopy(original)
+    rows = State(head).collection('occurrence:occ-1', 'clip')
+    if change == 'membership':
+        rows.append({**copy.deepcopy(rows[0]), 'id': 'new-sibling'})
+    else:
+        rows.reverse()
+    with pytest.raises(CommandError, match='selection'):
+        replay(plan, head)
+    with pytest.raises(CommandError):
+        inverse(head, plan.records)
