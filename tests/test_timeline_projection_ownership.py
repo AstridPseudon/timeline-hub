@@ -414,9 +414,8 @@ def shared_editing(film, request):
 from test_timeline_commit_integration import agent, film  # noqa: E402,F401
 
 
-# M2 requirement: shared-occurrence inverse restores the exact authored/source closure.
+# Shared-occurrence inverse restores the exact authored/source closure.
 @pytest.mark.integration
-@pytest.mark.xfail(strict=True, reason="M2 shared-occurrence inverse must restore exact source images; Agent retains an extra slot")
 def test_actual_provider_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
     from test_timeline_commit_integration import inverse
 
@@ -467,3 +466,45 @@ def test_missing_accepted_history_fails_closed_before_fresh_allocation(realm, mo
     service.store.conn.execute("DELETE FROM timeline_commit_history WHERE publication_id=?", (result["receipt"]["receipt_id"],))
     pair = proposal(service, commits, project, "main", "fresh-with-missing-history", shots=[image("free", "free-v1")])
     refuses(service, commits, pair, monkeypatch)
+
+
+@pytest.mark.parametrize("raw", ["raw-item", "with:colon", "with spaces"])
+def test_item_reservation_identity_compares_raw_ids_across_shot_owners(raw):
+    assert TimelineCommitStore._reservation_identity("item", "shot:first/item:" + raw) == raw
+    assert TimelineCommitStore._reservation_identity("item", "shot:second/item:" + raw) == raw
+    assert TimelineCommitStore._reservation_identity("shot", "shot:first") == "shot:first"
+    assert TimelineCommitStore._reservation_identity("shot", "shot:second") == "shot:second"
+
+
+@pytest.mark.parametrize("ref", ["shot:owner/item:", "shot:owner/item: ", "shot:owner/item:i/extra",
+                                 "shot:owner/item:i::x", "occurrence:owner/item:i", "raw-item"])
+def test_item_reservation_rejects_noncanonical_refs(ref):
+    with pytest.raises(CommitRejected) as error:
+        TimelineCommitStore._reservation_identity("item", ref)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
+
+
+@pytest.mark.parametrize("kind", ["shot", "item"])
+@pytest.mark.parametrize("occupant", ["live", "retired", "archived", "foreign"])
+def test_detached_native_birth_checks_actual_live_and_retained_destinations(realm, kind, occupant):
+    service, commits, project, _, _ = realm
+    owner = service.create_project({"slug": "foreign-birth-owner", "name": "Foreign"})["id"] if occupant == "foreign" else project
+    new_timeline(service, commits, owner, "birth-owner")
+    item = media_item(service, owner, "reserved-raw-item")
+    accept(commits, with_media(proposal(service, commits, owner, "birth-owner", "birth-physical-owner",
+        shots=[image("reserved-shot", "birth-owner-v1", items=[item], archived=occupant == "archived")]), item))
+    if occupant == "retired":
+        accept(commits, proposal(service, commits, owner, "birth-owner", "remove-physical-item",
+                                shots=[image("reserved-shot", "birth-owner-v2")]))
+        accept(commits, proposal(service, commits, owner, "birth-owner", "remove-physical-shot", shots=[]))
+        assert service.store.conn.execute("SELECT 1 FROM shot_items WHERE id='reserved-raw-item'").fetchone() is None
+    ref = "shot:reserved-shot" if kind == "shot" else "shot:another-owner/item:reserved-raw-item"
+    claim = (kind, commits._reservation_identity(kind, ref))
+    before = snapshot(service)
+    # Exercise the internal occupancy check directly. The frozen artifact still
+    # cannot carry complete native typed root records; no schema is overridden.
+    with pytest.raises(CommitRejected) as error:
+        commits._check_birth_destinations([claim])
+    assert error.value.failure["details"]["reason"] == ("destination_occupied" if kind == "shot" else "identity_collision")
+    commits._check_birth_destinations([("shot", "shot:free"), ("item", "free-raw-item")])
+    assert snapshot(service) == before
