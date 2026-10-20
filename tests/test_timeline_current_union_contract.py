@@ -29,6 +29,15 @@ CASES = ORDINARY_CASES + [
     ("occurrence.delete", "occurrence:o", {}),
     ("producer.guard", None, {"pin": PIN}),
 ]
+NEW_OPERATIONS = {
+    "timeline.assembled-target",
+    "clip.add-media",
+    "timeline.init",
+    "clip.anchor",
+    "occurrence.create",
+    "clip.swap-media",
+    "text-binding.set",
+}
 
 
 def command(op, select, args):
@@ -37,10 +46,12 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef"
+    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
     schema = json.loads(raw)
-    assert len(schema["$defs"]) == 48
-    assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == {c[0] for c in CASES}
+    assert len(schema["$defs"]) == 55
+    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
+    expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS
+    assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == expected_operations
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
     assert bundle["resources"]["https://astrid.haus/workspace/v1/schemas/edit-command.json"] == schema
 
@@ -102,7 +113,7 @@ def test_packaged_read_shape_keeps_token_paths_and_presence(read):
 def test_public_python_union_types_and_nested_item_references_resolve():
     schema = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
     names = [name for name in schema["$defs"] if name.endswith("Args") or name.startswith("Producer")]
-    names += ["ElementRef", "SettledProducerProposal"]
+    names += ["ElementRef", "SettledProducerProposal", "WordAnchor"]
     for name in names:
         assert getattr(client, name) is getattr(dto, name)
         assert name in client.__all__
@@ -143,7 +154,7 @@ def test_recorder_target_key_patterns_are_retained(key, valid):
 
 def test_s2_only_adds_the_optional_retained_element_document_pin_to_s1():
     s1 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-0a0ac7ba.json").read_bytes())
-    s2 = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
+    s2 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes())
     before = copy.deepcopy(s2)
     element = s2["$defs"]["ClipSetElementArgs"]
     assert element["properties"].pop("schema_source") == {"$ref": "#/$defs/DocumentPin"}
