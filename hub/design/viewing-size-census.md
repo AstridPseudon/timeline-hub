@@ -1,143 +1,125 @@
-# Viewing Timeline Core census — reviewed 2026-10-20
+# Viewing Timeline Core — current M4 census
 
-This is the ORCH review of `tl/vw-m4-core-size-census` against the 08:00Z
-boundary: authored product code implementing timeline Read/See/Edit. It is a
-size census, not a target-achievement claim. Counts are committed Git blob
-bytes and nonblank physical UTF-8 lines; delta is current snapshot minus the
-`origin/main` baseline.
+Frozen 2026-10-20T09:05:52Z from the three `tl/integration` branches before
+measurement. This is a size census, not a target-achievement claim. Counts are
+committed Git blob bytes and nonblank physical UTF-8 lines.
 
-## Verdict
+## Frozen inputs
 
-The candidate arithmetic is reproducible, but its `tl/integration` labels are
-wrong for Agent and App. The pinned candidate SHAs are Agent `f7584fad` (08:05)
-and App `1be0efdd` (06:59), while the observed live integration heads are Agent
-`0e951d689`, App `75df44e99`, and Composition `024f69501`. Composition
-`5e06f401` is also a historical integration snapshot. This report therefore
-names the exact pinned snapshots and does not call them current.
+| repo | baseline (`origin/main`) | current (`tl/integration`, frozen) |
+|---|---|---|
+| Composition | `67b8aa3d0d6831d3e3504a340ff583c3da253707` | `46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8` |
+| Agent | `a411628f8fd6129f9c58c332019b56769d997384` | `931d7ec56dadffc2efdc893fec80b4c4aadf8a8e` |
+| App | `580508eed1bf6ed95caaf476c9d69a4672472a2f` | `18becfbede00038830b97e63345445eeef54fa42` |
 
-The candidate’s broad total is exact for its broad path manifest:
+Runtime is intentionally absent: its commit/inspection and visual-seam paths
+belong to the Runtime-owned census. No branch name or unstable `HEAD` default
+is used by the reproducer.
 
-| snapshot | files | bytes | nonblank lines |
-| --- | ---: | ---: | ---: |
-| `origin/main` | 143 | 2,036,935 | 46,000 |
-| pinned candidate snapshots | 208 | 2,208,967 | 49,161 |
-| delta | +65 | +172,032 | +3,161 |
+## Confirmed canonical scope
 
-Three unchanged Remotion files are not confirmed Timeline Core under the
-08:00 definition: the frame worker is execution infrastructure, and the two
-`LiveScene`/Three.js files are the adjacent live-scene path. They are listed,
-not hidden, as an unresolved/adjacent bucket:
+The exact flat manifest and counting code are:
 
-| excluded adjacent path | baseline/current bytes | baseline/current lines | reason |
-| --- | ---: | ---: | --- |
-| `remotion/src/astrid-frame-worker.mjs` | 18,569 / 18,569 | 365 / 365 | renderer execution worker |
-| `remotion/src/LiveSceneClip.tsx` | 1,114 / 1,114 | 16 / 16 | live-scene adapter |
-| `remotion/src/ThreeTimelineComposition.tsx` | 16,837 / 16,837 | 437 / 437 | live-scene/Three.js composition |
-| **adjacent subtotal** | **36,520 / 36,520** | **818 / 818** | **not in confirmed core** |
-
-Thus the corrected confirmed-core reading is:
-
-| snapshot | files | bytes | nonblank lines |
-| --- | ---: | ---: | ---: |
-| `origin/main` | 140 | 2,000,415 | 45,182 |
-| pinned candidate snapshots | 205 | 2,172,447 | 48,343 |
-| delta | +65 | +172,032 | +3,161 |
-
-If the orchestrator later decides that the Three.js/live-scene path belongs
-to this core, add the adjacent subtotal back explicitly; do not silently mix
-the two readings. No target achievement is claimed.
-
-## Confirmed canonical boundary and counts
-
-The flat reproducer is
-[`handoff-vw-m4-size-census-gate-review-script.mjs`](./handoff-vw-m4-size-census-gate-review-script.mjs).
-It is independent of the candidate repository helper and reads only the pinned
-committed blobs from the three absolute repo paths. Run:
-
-```sh
-node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs > /tmp/viewing-size-census-reviewed.json
+```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs
 ```
 
-The canonical rows below are per repository/path boundary. The JSON output
-contains the exact flat path manifest for every row.
+It reads only committed blobs from the three absolute repository paths. The
+JSON produced from those exact refs is:
 
-| repo/path boundary | baseline files / bytes / lines | pinned current files / bytes / lines | delta files / bytes / lines |
-| --- | ---: | ---: | ---: |
-| Composition `typescript/src/**`, excluding generated registries/curves and `remotion-timer-compat.d.ts` | 16 / 45,621 / 1,398 | 79 / 190,523 / 4,097 | +63 / +144,902 / +2,699 |
+```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-current-core-census-freeze.json
+```
+
+| manifest row | baseline files / bytes / lines | current files / bytes / lines | delta files / bytes / lines |
+|---|---:|---:|---:|
+| Composition `typescript/src/**`, excluding generated registries/curves and timer declaration | 16 / 45,621 / 1,398 | 79 / 190,523 / 4,097 | +63 / +144,902 / +2,699 |
 | Agent `astrid/packs/rendering/actions/timeline_visualize/**`, excluding schemas, stage/docs, fonts, inspector assets | 54 / 1,253,951 / 24,911 | 55 / 1,270,190 / 25,256 | +1 / +16,239 / +345 |
-| Agent explicit rendering/evaluator adapters and `rendering/elements/**` text source | 29 / 375,489 / 10,993 | 29 / 366,756 / 10,744 | 0 / −8,733 / −249 |
+| Agent explicit render/evaluator adapters and `rendering/elements/**` text | 29 / 375,489 / 10,993 | 29 / 366,756 / 10,744 | 0 / −8,733 / −249 |
 | Agent `astrid/core/timeline/onscreen.py`, `scene_answers.py` | 1 / 18,156 / 375 | 2 / 24,116 / 469 | +1 / +5,960 / +94 |
-| Agent Remotion host source, excluding the three adjacent paths above and generated/declaration/test files | 11 / 42,215 / 573 | 10 / 27,058 / 613 | −1 / −15,157 / +40 |
-| App non-test source in `src/tools/video-editor/components/PreviewPanel/**`, `compositions/**`, `render/**`, excluding fallback | 29 / 282,934 / 6,932 | 30 / 293,804 / 7,164 | +1 / +10,870 / +232 |
-| **confirmed canonical total** | **140 / 2,000,415 / 45,182** | **205 / 2,172,447 / 48,343** | **+65 / +172,032 / +3,161** |
+| Agent Remotion host source, excluding adjacent paths and generated/declaration/test files | 11 / 24,264 / 573 | 10 / 27,058 / 613 | −1 / +2,794 / +40 |
+| App non-test source in `PreviewPanel/**`, `compositions/**`, `render/**`, excluding fallback | 29 / 282,934 / 6,932 | 30 / 293,804 / 7,164 | +1 / +10,870 / +232 |
+| **Confirmed canonical total** | **140 / 2,000,415 / 45,182** | **205 / 2,172,447 / 48,343** | **+65 / +172,032 / +3,161** |
 
-The baseline/current rows are all exact blob measurements. In particular, the
-Composition source includes authored built-in components/defaults/metadata, and
-the Agent element rows include authored `component` and `element.yaml` files;
-those are not generated contracts.
+The manifest path arrays are the source of truth for every row; no product path
+was inferred from a line-count total.
 
-## Exclusions and duplicate accounting
+## Explicit exclusions
 
-Generated, tests, documentation, archives, and generic infrastructure are not
-in the canonical total:
+The following remain outside the confirmed total. They are classified in the
+JSON manifest and are not silently folded into a deletion or policy decision.
 
 | excluded category | baseline → current files / bytes / lines |
-| --- | ---: |
+|---|---:|
 | Composition generated registries/curves/timer declaration | 4 → 7 / 5,228 → 12,628 / 88 → 405 |
 | Agent visualize schemas | 10 → 10 / 70,613 → 70,613 / 1,925 → 1,925 |
 | Agent Remotion generated/declaration/test source | 5 → 4 / 14,636 → 14,228 / 419 → 408 |
 | App fallback registries/theme shims | 4 → 0 / 4,785 → 0 / 229 → 0 |
 | Agent old Composition reference `docs/reference/timeline-composition-v0.0.6/**` | 21 → 21 / 57,156 → 57,156 / 1,612 → 1,612 |
+| App vendored Composition `vendor/timeline-composition/typescript/src/**` | 21 → 21 / 51,742 → 51,742 / 1,504 → 1,504 |
+| App vendored Agent/browser text under the named vendor roots | 169 → 169 / 1,319,619 → 1,319,619 / 35,024 → 35,024 |
+| package archives | 0 → 2 / 0 → 108,672 / 0 → 429 |
 
-App vendored sources are not folded into App active source or Composition:
+Tests are excluded from App active source: the scoped roots classify 26
+baseline and 27 current test files separately. The Agent Remotion test is in
+the generated/declaration/test bucket. Composition tests are outside its exact
+`typescript/src/**` source manifest. The current App vendor Agent tree has 123
+exact Agent-snapshot blob matches (882,979 bytes / 21,122 lines), including 15
+matches to selected canonical Agent paths (24,931 bytes / 933 lines); all are
+excluded, so there is no App/Agent double count.
 
-| vendored source (excluded) | baseline → current files / bytes / lines | duplicate finding at pinned current |
-| --- | ---: | --- |
-| App `vendor/timeline-composition/typescript/src/**` text | 21 → 21 / 51,742 → 51,742 / 1,504 → 1,504 | old Composition copy; not canonical |
-| App vendored Agent/browser text under those roots’ Agent `astrid/**` and `remotion/src/**` trees | 169 → 169 / 1,319,619 → 1,319,619 / 35,024 → 35,024 | 123 files / 882,979 bytes / 21,122 lines have exact Agent-snapshot blob matches |
-| of that vendored Agent source matching selected canonical Agent paths | — | 15 files / 24,931 bytes / 933 lines; excluded, so no App/Agent double count |
+## Adjacent execution/live-scene bucket
 
-The Agent old Composition reference is also excluded. At the baseline it has
-12 exact blob matches to Composition source (30,421 bytes); it is documentation
-reference material, not a second canonical evaluator. Current Composition
-changed, so it has no exact current-blob matches. Package archives are excluded:
-Agent `remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz` is 58,008
-bytes and App `vendor/artifacts/banodoco-timeline-composition-0.0.8.tgz` is
-50,664 bytes at the pinned current snapshots.
+These three unchanged paths are explicitly excluded from the 818-line
+execution/live-scene bucket at both snapshots:
 
-The candidate’s App Composition duplicate row was therefore correct but
-incomplete: App’s vendored Agent/browser trees also need explicit accounting.
-Neither vendor tree was added to the canonical total, so the confirmed total
-does not double count them.
+```text
+remotion/src/astrid-frame-worker.mjs       18,569 bytes / 365 lines
+remotion/src/LiveSceneClip.tsx              1,114 bytes / 16 lines
+remotion/src/ThreeTimelineComposition.tsx  16,837 bytes / 437 lines
+subtotal                                  36,520 bytes / 818 lines
+```
 
-## Boundary decisions and unresolved items
+They are adjacent execution/live-scene infrastructure, not confirmed Timeline
+Core. No target claim or policy escalation is made for these already-excluded
+paths.
 
-- Included: Composition evaluator/defaults, authored Agent visualize/read views,
-  evaluator/render adapters and element seam, the Agent Remotion host pieces
-  needed by the normal timeline viewer, and App preview/player/render source.
-- Excluded exactly: generated registries/curves/schemas/declarations, tests,
-  docs/reference material, package archives, App fallback generated shims,
-  Agent’s execution worker, and the two live-scene/Three.js files above.
-- Unresolved: whether the orchestrator wants the Three.js/live-scene path in
-  the final Viewing slice. Its exact 818-line subtotal is isolated so either
-  policy is auditable. No other path was discounted speculatively.
-- Runtime is intentionally absent: its commit/inspection and visual seam code
-  belong to the Runtime-owned census, per the area ownership split.
-- The shared dependency graph was not inspected or modified; no environment
-  qualification, browser, socket, renderer, install, or full-suite run was
-  performed.
+## Five largest remaining ledger-scope path buckets
 
-## M4-scoped deletion opportunities
+These are current measured facts for existing open/held viewing-ledger scope,
+not new cleanup units or deletion claims. Several buckets contain retained
+code, so their full size must not be read as removable size.
 
-These are only existing, already-tracked M4 rows; they are not new cleanup:
+| existing ledger scope | current manifest bucket | files / bytes / lines |
+|---|---|---:|
+| D10 App vendored Agent/browser copies | `vendor/astrid-browser/{astrid/**,remotion/src/**}` plus `vendor/astrid-build-inputs/primary/astrid/**` | 169 / 1,319,619 / 35,024 |
+| D09 Agent visualize private/evaluator area | `astrid/packs/rendering/actions/timeline_visualize/**` authored subset | 55 / 1,270,190 / 25,256 |
+| D09 Agent scene/render adapters | explicit adapters plus `astrid/packs/rendering/rendering/elements/**` text | 29 / 366,756 / 10,744 |
+| D08 App duplicate viewer math area | active non-test `PreviewPanel/**`, `compositions/**`, `render/**` | 30 / 293,804 / 7,164 |
+| D10 App vendored Composition copy | `vendor/timeline-composition/typescript/src/**` | 21 / 51,742 / 1,504 |
 
-- D08: retire App duplicate visual math only after the existing frame/audio
-  parity behavior tests pass; do not subtract it from this census beforehand.
-- D09: retire Agent private evaluator/visibility math only after the existing
-  positive/pixel coverage and caller migration evidence; do not subtract it
-  from this census beforehand.
-- D10: remove App/Agent vendored Composition copies only after coordinated
-  package adoption and its existing behavior tests; no vendor bytes are
-  counted as canonical today.
+The D09 and D08 buckets deliberately include public/retained neighboring code
+because the corrected manifest measures the settled path boundaries; ledger
+status and existing behavior evidence still govern any future deletion.
 
-No target-achievement claim is made.
+## Reproduction and coverage checks
+
+```sh
+node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs
+node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-current-core-census-freeze.json
+node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-size-census-gate-review-script.mjs > /tmp/vw-m4-current-core-census-freeze.repeat.json
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-current-core-census-freeze.json /tmp/vw-m4-current-core-census-freeze.repeat.json
+```
+
+The repeated JSON is byte-identical. The coverage check reconciles every path
+under each measured source root: Composition source = authored + generated;
+Agent visualize = authored + schemas + stage/docs/fonts/inspector assets;
+Agent Remotion = core + adjacent + generated/declaration/test; and App active
+roots = active + tests + fallback. The explicit Agent/elements lists, old
+reference, vendor trees, and archives are each emitted as path arrays too.
+
+The previous document’s historical candidate result (broad 143 → 208 files,
+2,036,935 → 2,208,967 bytes, 46,000 → 49,161 lines; confirmed 140 → 205,
+2,000,415 → 2,172,447 bytes, 45,182 → 48,343 lines) is retained only as a
+minimal provenance footnote. Its Agent `f7584fad`, App `1be0efdd`, and
+Composition `5e06f401` current pins are not this current census.

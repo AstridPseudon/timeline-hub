@@ -1,0 +1,20 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_valid_original_window_remains_renderable_after_layer_filter[empty-layer] _
+../test_review_layer_duration.py:46: in test_valid_original_window_remains_renderable_after_layer_filter
+    assert _native_window_argument(native.window, filtered, profile) == '--frames=150-179'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+_ test_valid_original_window_remains_renderable_after_layer_filter[layer-ended-before-window] _
+../test_review_layer_duration.py:46: in test_valid_original_window_remains_renderable_after_layer_filter
+    assert _native_window_argument(native.window, filtered, profile) == '--frames=150-179'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+=========================== short test summary info ============================
+FAILED ../test_review_layer_duration.py::test_valid_original_window_remains_renderable_after_layer_filter[empty-layer]
+FAILED ../test_review_layer_duration.py::test_valid_original_window_remains_renderable_after_layer_filter[layer-ended-before-window]
+2 failed in 2.99s

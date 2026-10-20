@@ -1,0 +1,48 @@
+[
+  {
+    "host": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-current-final-review/tmp/pytest-source/capture-label-host0",
+    "real_scope_directories": true,
+    "scopes": {
+      "@remotion": {
+        "layout-utils": {
+          "symlink": true,
+          "resolved": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules/@remotion/layout-utils"
+        },
+        "media": {
+          "symlink": true,
+          "resolved": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules/@remotion/media"
+        }
+      },
+      "@banodoco": {
+        "timeline-composition": {
+          "symlink": false,
+          "resolved": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-current-final-review/tmp/pytest-source/capture-label-host0/remotion/node_modules/@banodoco/timeline-composition"
+        }
+      }
+    },
+    "composition_private_extracted": true
+  },
+  {
+    "host": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-current-final-review/tmp/pytest-source/capture-label-host1",
+    "real_scope_directories": true,
+    "scopes": {
+      "@remotion": {
+        "layout-utils": {
+          "symlink": true,
+          "resolved": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules/@remotion/layout-utils"
+        },
+        "media": {
+          "symlink": true,
+          "resolved": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules/@remotion/media"
+        }
+      },
+      "@banodoco": {
+        "timeline-composition": {
+          "symlink": false,
+          "resolved": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-current-final-review/tmp/pytest-source/capture-label-host1/remotion/node_modules/@banodoco/timeline-composition"
+        }
+      }
+    },
+    "composition_private_extracted": true
+  }
+]

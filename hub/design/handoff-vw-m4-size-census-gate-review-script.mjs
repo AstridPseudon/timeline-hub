@@ -12,13 +12,14 @@ const repos = {
   app: '/home/user/work/app',
 };
 
-// These are the source snapshots used by tl/vw-m4-core-size-census.  The
-// Agent and App values are historical candidate snapshots, not current
-// tl/integration heads; keeping them pinned makes this audit reproducible.
+// These are the source snapshots used by the 2026-10-20 current census.  All
+// current values were frozen from tl/integration before the census began;
+// keeping every value pinned makes this audit reproducible even if a branch
+// advances later.
 const refs = {
-  composition: {baseline: '67b8aa3d0d6831d3e3504a340ff583c3da253707', current: '5e06f40146573a529896cc812229eb890c53c81a'},
-  agent: {baseline: 'a411628f8fd6129f9c58c332019b56769d997384', current: 'f7584fad7c7cbd548cf340bb501d09d3520ea9e3'},
-  app: {baseline: '580508eed1bf6ed95caaf476c9d69a4672472a2f', current: '1be0efdde5b9ec14f6ef85e0cbcd6bf6b27c80ff'},
+  composition: {baseline: '67b8aa3d0d6831d3e3504a340ff583c3da253707', current: '46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8'},
+  agent: {baseline: 'a411628f8fd6129f9c58c332019b56769d997384', current: '931d7ec56dadffc2efdc893fec80b4c4aadf8a8e'},
+  app: {baseline: '580508eed1bf6ed95caaf476c9d69a4672472a2f', current: '18becfbede00038830b97e63345445eeef54fa42'},
 };
 
 const adjacentRemotion = new Set([

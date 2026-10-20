@@ -1,0 +1,14 @@
+{
+  "donor": "28d4e515da6c8c8c9180c7cd0076eec0f510989c",
+  "donor_base": "56409ab287007ed44eede6fd634096421c824951",
+  "ported_paths": {
+    "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": "a9beb7081917196ddccd0034b8b957d92248e718d720505ea2c91d774061dcca",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py": "dd568a78b9b4d9d1e8bb1335e651af79b4477026085047398f2ec669c3697756",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py": "457d4d44c5179777dd7758f5b2d4f5ee5a114c555e35448deffc4d4c9df1f7ca",
+    "astrid/sdk/timeline_filmstrip.py": "c6e19d6674b68b327f39caac1fb774bc452e283b11e36f01db673f4461e70b57",
+    "tests/packs/rendering/test_scene_source_carry.py": "3de783351aa3cf71f2ab46bcfb1bc6edfe7973f0bf409e2eed8837bd4d4187ec"
+  },
+  "all_ported_files_byte_equal_donor": true,
+  "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-scene-carry-final-review-REPORT.md",
+  "independent_review_verdict": "APPROVE; no blocking implementation defect"
+}

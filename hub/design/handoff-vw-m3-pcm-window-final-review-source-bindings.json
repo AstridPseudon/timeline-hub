@@ -1,0 +1,22 @@
+{
+  "astrid.core.rendering.service": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/astrid/core/rendering/service.py",
+    "sha256": "930f7d6914bc4cb36d65e266e7fbaf83e625e6ed9466ce6426551631f477ec22"
+  },
+  "astrid.core.timeline.banodoco_composer": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/astrid/core/timeline/banodoco_composer.py",
+    "sha256": "5cf8139312e813143adaf84c5a9a9e45d9ad6ce6be9a5dabd667df0048203a4f"
+  },
+  "astrid.packs.rendering.rendering.renderers.remotion.run": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "sha256": "37a43a6bfcc2806d09f0b9149c9301c2c833cd6a807c624c77e19076151b284a"
+  },
+  "astrid.packs.rendering.rendering.renderers.remotion.normal_audio": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py",
+    "sha256": "00e46437f1199488260fa6b3409297eddbb2b827ec7a1d0be1b6fff3fbf2b74a"
+  },
+  "tests.packs.rendering.test_normal_audio_run": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/tests/packs/rendering/test_normal_audio_run.py",
+    "sha256": "b49a1413f96a9569bf6dd9569cc0d455e2b13dc54fac77bbb56881cb01c7340c"
+  }
+}

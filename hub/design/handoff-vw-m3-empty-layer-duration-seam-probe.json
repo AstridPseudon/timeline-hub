@@ -1,0 +1,232 @@
+{
+  "(30, 1):empty": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 1
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "(30, 1):source-only-longer": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 1
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "(30, 1):sparse": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 31
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "(30000, 1001):empty": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 1
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "(30000, 1001):source-only-longer": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 1
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "(30000, 1001):sparse": {
+    "False": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": null,
+      "selected_clip_extent": 1
+    },
+    "True": {
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "unrelated": {
+          "keep": true
+        }
+      },
+      "native_argument_or_error": "Remotion window extends beyond the full composition",
+      "selected_clip_extent": 30
+    },
+    "original_frames": 300,
+    "selected_output_frames": 30
+  },
+  "existing_render_clock_after_filtering": "render clock authored_duration_frames must match the authored clip extent",
+  "information_loss": {
+    "identical_filtered_props": true,
+    "original_frame_counts": [
+      300,
+      600
+    ]
+  },
+  "precision:(30, 1)": {
+    "render_at": 0.016682,
+    "start_frames": [
+      1,
+      1,
+      1
+    ],
+    "stored_at": 0.017
+  },
+  "precision:(30000, 1001)": {
+    "render_at": 0.016682,
+    "start_frames": [
+      0,
+      1,
+      1
+    ],
+    "stored_at": 0.017
+  }
+}

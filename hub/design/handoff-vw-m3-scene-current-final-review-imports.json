@@ -1,0 +1,38 @@
+{
+  "astrid.sdk.timeline_filmstrip": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/sdk/timeline_filmstrip.py",
+    "sha256": "c6e19d6674b68b327f39caac1fb774bc452e283b11e36f01db673f4461e70b57"
+  },
+  "astrid.core.timeline.authoring_bundle": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/core/timeline/authoring_bundle.py",
+    "sha256": "b42c9daba6dc01fe4e051de9d99b749cc97ffe0e5efc0bd30e1ef9ca407ab629"
+  },
+  "astrid.core.timeline.shot_composition_projection": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/core/timeline/shot_composition_projection.py",
+    "sha256": "433dce617f10e31fe6066d55c6bff125e4328a84e01426f4d2e45756b432253a"
+  },
+  "astrid.core.rendering.profile": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/core/rendering/profile.py",
+    "sha256": "c9bb77d94cb35518c005eef4e4466e2782ca45cfcc6187129bc7bc9f4f87b4bb"
+  },
+  "astrid.packs.rendering.actions.timeline_visualize.composed_frame": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py",
+    "sha256": "a9beb7081917196ddccd0034b8b957d92248e718d720505ea2c91d774061dcca"
+  },
+  "astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py",
+    "sha256": "dd568a78b9b4d9d1e8bb1335e651af79b4477026085047398f2ec669c3697756"
+  },
+  "astrid.packs.rendering.actions.timeline_visualize.filmstrip_execution": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py",
+    "sha256": "457d4d44c5179777dd7758f5b2d4f5ee5a114c555e35448deffc4d4c9df1f7ca"
+  },
+  "astrid.packs.rendering.shared.rendering_backend": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/packs/rendering/shared/rendering_backend/__init__.py",
+    "sha256": "671632535737ac1c6a22f869f20347de6c6005808a90243a4fea80ef6895a967"
+  },
+  "astrid.packs.rendering.rendering.renderers.remotion.run": {
+    "path": "/home/user/work/wt/vw-m3-scene-current-final-review/astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "sha256": "992e926b81472cd191bb777061e99504b572aff3ecf4c73db833f1ddcecf8e28"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "current_base": "931d7ec56dadffc2efdc893fec80b4c4aadf8a8e",
+  "donor": "28d4e515da6c8c8c9180c7cd0076eec0f510989c",
+  "ported_paths": {
+    "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": "a9beb7081917196ddccd0034b8b957d92248e718d720505ea2c91d774061dcca",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py": "dd568a78b9b4d9d1e8bb1335e651af79b4477026085047398f2ec669c3697756",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py": "457d4d44c5179777dd7758f5b2d4f5ee5a114c555e35448deffc4d4c9df1f7ca",
+    "astrid/sdk/timeline_filmstrip.py": "c6e19d6674b68b327f39caac1fb774bc452e283b11e36f01db673f4461e70b57",
+    "tests/packs/rendering/test_scene_source_carry.py": "3de783351aa3cf71f2ab46bcfb1bc6edfe7973f0bf409e2eed8837bd4d4187ec"
+  },
+  "preserved_paths": {
+    "astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py": "e314b7e2991dd9246f07639357c6356f47fdd7de77823e6ff4b930369495fb39",
+    "tests/packs/rendering/test_capture_scene_labels.py": "03a8f6e99f26dba9b1b8a7c9ed4f9e71e688483d9ca4cddc4916060ade94d9b9",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "992e926b81472cd191bb777061e99504b572aff3ecf4c73db833f1ddcecf8e28",
+    "remotion/package.json": "386eb4123f8f926c6f3a1c6ea9357fd2f3e4991291718e09771bab64d2f76510",
+    "remotion/package-lock.json": "390a29eed8c4c95e448807c522622fc7bc174e1daedd92d93d811ff7372708d7",
+    "pyproject.toml": "3f3f79ae22fb2ce42ff6b2018a99e9290af2c74c50d89a8b51b6f322cd53baa9"
+  },
+  "tested_modules": {
+    "astrid.sdk.timeline_filmstrip": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/sdk/timeline_filmstrip.py",
+      "sha256": "c6e19d6674b68b327f39caac1fb774bc452e283b11e36f01db673f4461e70b57"
+    },
+    "astrid.core.timeline.authoring_bundle": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/core/timeline/authoring_bundle.py",
+      "sha256": "b42c9daba6dc01fe4e051de9d99b749cc97ffe0e5efc0bd30e1ef9ca407ab629"
+    },
+    "astrid.core.timeline.shot_composition_projection": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/core/timeline/shot_composition_projection.py",
+      "sha256": "433dce617f10e31fe6066d55c6bff125e4328a84e01426f4d2e45756b432253a"
+    },
+    "astrid.core.rendering.profile": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/core/rendering/profile.py",
+      "sha256": "c9bb77d94cb35518c005eef4e4466e2782ca45cfcc6187129bc7bc9f4f87b4bb"
+    },
+    "astrid.packs.rendering.actions.timeline_visualize.composed_frame": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py",
+      "sha256": "a9beb7081917196ddccd0034b8b957d92248e718d720505ea2c91d774061dcca"
+    },
+    "astrid.packs.rendering.shared.rendering_backend": {
+      "path": "/home/user/work/wt/vw-m3-scene-current-owner-unit/astrid/packs/rendering/shared/rendering_backend/__init__.py",
+      "sha256": "671632535737ac1c6a22f869f20347de6c6005808a90243a4fea80ef6895a967"
+    }
+  },
+  "current_integration_tuple_observed": {
+    "agent": "931d7ec56dadffc2efdc893fec80b4c4aadf8a8e",
+    "runtime": "6023cfb10307b4c0004642b5fa1995d72ba4f6d1",
+    "app": "76316e78c43da695abe65037ea449f3352eb6d12",
+    "composition": "46bd700b2b46ae1cab1e8a1502ed6504e81aa8d8"
+  },
+  "qualification": "Source join only. Native shared graph qualification remains held; no graph baseline accepted.",
+  "tracked_changed_paths": [
+    "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py",
+    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py",
+    "astrid/sdk/timeline_filmstrip.py"
+  ],
+  "untracked_paths": [
+    "tests/packs/rendering/test_scene_source_carry.py"
+  ],
+  "existing_CaptureSceneLabels_class_byte_preserved": true,
+  "patch_sha256": "9d39653d720e362c6f038e1d573f638e7531609648681a71428c48ed394d2919",
+  "patch_replay": "patch -p1 --batch --fuzz=0 -i <exact.patch>; exit 0 on disposable CURRENT base files, all five byte-equal final; copy removed"
+}
