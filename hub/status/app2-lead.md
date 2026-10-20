@@ -1,3 +1,4 @@
+LEAD 15:45Z | workers 6 live (target 5-7) | disk 21G free | no restart since 15:14Z (dispatcher 15:33 intended) | merges pending 0, none finished-with-commits requested | STATUS 15:41Z fresh, INBOX acked
 LEAD 15:33Z | lead decided: dispatcher upgraded to kit version, 4 orphans finalized | workers 4 live (target 5-7; resume workers requested via LEAD NOTE)
 LEAD 15:28Z | workers 4 live (target 5-7; LEAD NOTE sent; 4 stale running rows) | disk 24G free | rows DELETED 0/9, in progress 7 | merges pending 0 | lead decisions: no restarts needed, daemons+manager alive since 15:14Z, STATUS fresh 15:26Z
 LEAD 15:16Z | workers 0 live (4 stale running rows, all killed by restart; manager told to relaunch) | disk 25G free | rows DELETED 0/9, in progress 7 | merges pending 0 | lead decisions: restarted dispatcher, hub-syncd, manager at 15:14Z after session restart; LEAD NOTE sent to INBOX
