@@ -507,8 +507,13 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 - The line prints `Astrid was unregistered; some files remain.` Copy each `Remaining:` line. On Windows, run the
   uninstall line again and say whether the list got shorter.
 
-**Delete the workspace after testing.** This removes Astrid's workspace and projects. Run the uninstall line with
-`--delete-data` twice to check that the command is safe to repeat.
+**Delete the workspace after testing.** Before continuing, copy the doctor bundle and install log to a folder
+outside Astrid's workspace and program folders, such as a folder on your Desktop. Use the paths printed by doctor
+and listed under [Where things live](#where-things-live). On Windows, both artifacts normally live inside the
+workspace and will be deleted with it. Confirm the copied files open before proceeding.
+
+This removes Astrid's workspace and projects. Run the uninstall line with `--delete-data` twice to check that the
+command is safe to repeat.
 
 macOS and Linux:
 
@@ -522,8 +527,8 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --uninstall --delete-data
 ```
 
-After the first run, confirm the workspace path from the table above is gone. Keep the doctor bundle and install log
-for your report.
+After the first run, confirm the workspace path from the table above is gone. Keep the copies of the doctor bundle
+and install log outside that path for your report.
 
 ## Reporting
 
