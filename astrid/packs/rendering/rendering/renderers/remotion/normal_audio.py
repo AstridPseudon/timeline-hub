@@ -1,8 +1,4 @@
-"""Inactive PCM preparation inside the existing render lock/asset lifetime.
-
-The source owner must validate the actual compiled input pair before calling.
-This module neither admits a source nor activates the normal rendering path.
-"""
+"""PCM preparation inside the existing render lock and managed asset lifetime."""
 
 from __future__ import annotations
 
@@ -26,8 +22,9 @@ from astrid.core.rendering.service import RenderService
 
 def prepare_normal_audio_sources(
     props: Mapping[str, Any], *, materializer: AssetMaterializer,
-    asset_server: AssetURLResolver, attempt_directory: Path,
+    asset_server: AssetURLResolver | None, attempt_directory: Path,
     project_dir: Path, runtime_tools: RemotionRuntimeTools,
+    fps: float | None = None,
     original_clips: Mapping[str, Mapping[str, Any]] | None = None,
     window: FrameWindow | None = None, tracks: Sequence[str] | None = None,
 ) -> dict[str, Any]:
@@ -36,11 +33,10 @@ def prepare_normal_audio_sources(
     ``original_clips`` maps current clip IDs to original compiled occurrences,
     retained by the trusted source owner before a window/track transform. It is
     internal input, not authority. Never construct it from caller app metadata.
-    The owner must thread this seam through source validation and serialization
-    before activating window/layer rendering. Omitting it is for unsliced input.
+    Omitting it keeps the original clip clock, as the native window path does.
     Alternatively, ``window`` takes that unsliced input and retains the originals
     across the existing host slicer here; ``tracks`` optionally selects a layer.
-    Neither form validates source authority or activates a rendering route.
+    Neither form validates source authority.
 
     The caller owns an attempt directory under materializer.serving_root and
     keeps it and the server alive through consumption, usually via ExitStack.
@@ -68,15 +64,17 @@ def prepare_normal_audio_sources(
     expected = materializer.resolved_registry(asset_server)
     if encode(props["assets"]) != encode(expected):
         raise ValueError("audio Root registry differs from materialized source")
-    tracks = {row["id"] for row in props["timeline"]["tracks"] if row["kind"] == "audio"}
+    audio_tracks = {row["id"] for row in props["timeline"]["tracks"] if row["kind"] == "audio"}
     indexed = []
     for index, clip in enumerate(props["timeline"]["clips"]):
         if "render_source" in (clip.get("audio") or {}):
             raise ValueError("audio source already prepared")
-        if clip.get("track") in tracks:
+        if clip.get("track") in audio_tracks:
             indexed.append((index, clip))
     if not indexed:
         return copy.deepcopy(dict(props))
+    if asset_server is None:
+        raise ValueError("audio preparation requires the managed asset server")
     project = project_dir.resolve(strict=True)
     helper = (project / "normal-audio-sources.mjs").resolve(strict=True)
     helper.relative_to(project)
@@ -103,7 +101,7 @@ def prepare_normal_audio_sources(
     try:
         result = subprocess.run(
             [str(runtime_tools.node_executable), str(helper)],
-            input=json.dumps({"clips": clips, "fps": props["compiledTransitions"]["fps"],
+            input=json.dumps({"clips": clips, "fps": fps if fps is not None else props["compiledTransitions"]["fps"],
                               "attemptDirectory": str(directory)}, allow_nan=False),
             cwd=project, env=environment, capture_output=True, text=True, timeout=30, check=False,
         )

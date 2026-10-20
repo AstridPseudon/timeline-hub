@@ -21,6 +21,7 @@ import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
 
 type ReviewProps = TimelineCompositionProps & {
+  astridCompositionDurationInFrames?: number;
   review?: ReviewContext | null;
   astridFrameDiagnostics?: boolean;
   astridBounds?: boolean;
@@ -139,7 +140,7 @@ const getCanvas = (props: TimelineCompositionProps): CanvasOverride => {
 const getMetadata = async ({
   props,
 }: {
-  props: TimelineCompositionProps;
+  props: ReviewProps;
 }): Promise<{
   width: number;
   height: number;
@@ -153,11 +154,27 @@ const getMetadata = async ({
   const windowDuration = metadata?.source_window_start_seconds !== undefined
     && typeof metadata.duration_seconds === 'number'
     ? Math.round(metadata.duration_seconds * fps) : undefined;
+  const originalDuration = props.astridCompositionDurationInFrames;
+  if (originalDuration !== undefined) {
+    if (!Number.isSafeInteger(originalDuration) || originalDuration < 1
+      || originalDuration < getTimelineDurationInFrames(props.timeline, fps)) {
+      throw new Error('composition duration must be a positive safe integer covering the isolated clips');
+    }
+    const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
+    if (metadata?.source_window_start_seconds !== undefined
+      || (app?.astrid_render_clock !== undefined && (!clock
+        || clock.render_duration_frames !== originalDuration
+        || !Number.isSafeInteger(clock.authored_duration_frames)
+        || clock.authored_duration_frames < getTimelineDurationInFrames(props.timeline, fps)
+        || clock.authored_duration_frames >= originalDuration))) {
+      throw new Error('composition duration conflicts with an existing render clock');
+    }
+  }
   return {
     width: canvas.width ?? 1920,
     height: canvas.height ?? 1080,
     fps,
-    durationInFrames: Math.max(1, windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
+    durationInFrames: Math.max(1, originalDuration ?? windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
   };
 };
 
