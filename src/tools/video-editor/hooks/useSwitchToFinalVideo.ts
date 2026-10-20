@@ -18,6 +18,9 @@ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/pro
 import type { PlacePreparedMediaCommand } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
+import type { PreparedMediaImport } from '@/tools/video-editor/data/AssetResolver.ts';
+import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+import type { ParentClipSwapMediaPreparationPort } from '@/tools/video-editor/commands/commitSession.ts';
 
 interface UseSwitchToFinalVideoArgs {
   applyEdit: TimelineApplyEdit;
@@ -26,6 +29,13 @@ interface UseSwitchToFinalVideoArgs {
   /** Production supplies the mounted command facade; the fallback keeps the
    * hook easy to exercise in focused unit tests. */
   commands?: Pick<TimelineCommands, 'addClip'>;
+  prepareGenerationAsset?: UseAssetManagementResult['prepareGenerationAsset'];
+  prepareMediaImport?: (file: File, options?: {
+    filename?: string;
+    mediaType?: string;
+    durationSeconds?: number;
+  }) => Promise<PreparedMediaImport>;
+  parentClipSwapMedia?: Pick<ParentClipSwapMediaPreparationPort, 'prepare' | 'assertPreparationCurrent'>;
   /** Kept for compatibility with older embedders; compound paths ignore them. */
   patchRegistry?: unknown;
   unpatchRegistry?: unknown;
@@ -80,7 +90,52 @@ export function useSwitchToFinalVideo({
   dataRef,
   finalVideoMap,
   commands,
+  prepareGenerationAsset,
+  prepareMediaImport,
+  parentClipSwapMedia,
 }: UseSwitchToFinalVideoArgs) {
+  const prepareNativeReplacementAsset = useCallback(async (finalVideo: ShotFinalVideo) => {
+    if (!prepareGenerationAsset || !prepareMediaImport) return null;
+
+    const response = await fetch(finalVideo.location);
+    if (!response.ok) {
+      throw new Error(`Unable to prepare final video media (${response.status})`);
+    }
+    const blob = await response.blob();
+    const mediaType = blob.type || 'video/mp4';
+    const file = new File([blob], `${finalVideo.id}.mp4`, { type: mediaType });
+    const imported = await prepareMediaImport(file, {
+      filename: file.name,
+      mediaType,
+      ...(typeof finalVideo.durationSeconds === 'number' ? { durationSeconds: finalVideo.durationSeconds } : {}),
+    });
+    const mediaSelection = imported.mediaSelection;
+    if (!mediaSelection) {
+      throw new Error('Final video preparation did not return the original Runtime media selection');
+    }
+
+    const frozenImport: PreparedMediaImport = {
+      ...imported,
+      mediaSelection: Object.freeze(structuredClone(mediaSelection)),
+    };
+    const prepared = prepareGenerationAsset({
+      generationId: frozenImport.generationId,
+      variantId: frozenImport.variantId,
+      variantType: 'video',
+      assetId: frozenImport.assetId,
+      mediaId: frozenImport.assetId,
+      imageUrl: frozenImport.entry.file ?? finalVideo.location,
+      thumbUrl: finalVideo.thumbnailUrl ?? undefined,
+      durationSeconds: frozenImport.entry.duration ?? finalVideo.durationSeconds ?? undefined,
+      metadata: { content_type: mediaType, original_filename: file.name },
+      mediaImport: frozenImport,
+    });
+    if (!prepared?.mediaSelection) {
+      throw new Error('Final video preparation is not eligible for native parent replacement');
+    }
+    return prepared;
+  }, [prepareGenerationAsset, prepareMediaImport]);
+
   const applyPreparedPlacement = useCallback(async (input: AddClipCommandInput, command: PlacePreparedMediaCommand) => {
     if (commands) {
       const result = await commands.addClip(input);
@@ -205,15 +260,35 @@ export function useSwitchToFinalVideo({
   }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
 
   const updateToLatestVideo = useCallback(async ({ shotId, rowId }: { shotId: string; rowId: string }) => {
-    const finalVideo = finalVideoMap.get(shotId);
-    if (!finalVideo) {
+    const selectedFinalVideo = finalVideoMap.get(shotId);
+    if (!selectedFinalVideo) {
       return;
     }
+    // Freeze the UI selection before any producer or verification await.
+    const finalVideo = Object.freeze({ ...selectedFinalVideo });
 
     const targetFingerprint = getTargetFingerprint(dataRef.current, shotId, rowId);
     const currentGroup = dataRef.current
       ? findGroupForTrack(dataRef.current.config.pinnedShotGroups ?? [], shotId, rowId, dataRef.current.rows)
       : undefined;
+    const replacementClipId = currentGroup?.clipIds[0];
+    if (commands && replacementClipId && prepareGenerationAsset && prepareMediaImport && parentClipSwapMedia) {
+      const nativePreparation = parentClipSwapMedia.prepare();
+      const preparedAsset = await prepareNativeReplacementAsset(finalVideo);
+      if (!preparedAsset) {
+        throw new Error('Final video preparation is not eligible for native parent replacement');
+      }
+      if (getTargetFingerprint(dataRef.current, shotId, rowId) !== targetFingerprint) {
+        throw new Error('The timeline changed while preparing the final video; the replacement was not inserted.');
+      }
+      parentClipSwapMedia.assertPreparationCurrent(nativePreparation);
+      const result = await commands.addClip({ preparedAsset, replaceClipId: replacementClipId });
+      if (!result.ok) {
+        throw new Error(result.error.message);
+      }
+      return;
+    }
+
     const { plan, assetDurationSeconds } = await planFinalVideoAssetRegistration(finalVideo, dataRef.current);
     if (getTargetFingerprint(dataRef.current, shotId, rowId) !== targetFingerprint) {
       return;
@@ -230,7 +305,6 @@ export function useSwitchToFinalVideo({
       return;
     }
 
-    const replacementClipId = currentGroup?.clipIds[0];
     const preparedAsset: TimelineProvisionedAsset = {
       assetKey: plan.assetId,
       mediaType: 'video',
@@ -241,7 +315,8 @@ export function useSwitchToFinalVideo({
     const placement = buildPreparedPlacement(mutation, preparedAsset, replacementClipId);
     if (!placement) return;
     await applyPreparedPlacement(placement.input, placement.command);
-  }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
+  }, [applyPreparedPlacement, buildPreparedPlacement, commands, dataRef, finalVideoMap, getTargetFingerprint,
+    parentClipSwapMedia, prepareGenerationAsset, prepareMediaImport, prepareNativeReplacementAsset]);
 
   const switchToImages = useCallback(({ shotId, rowId }: { shotId: string; rowId: string }) => {
     const mutation = buildSwitchShotGroupToImagesMutation({

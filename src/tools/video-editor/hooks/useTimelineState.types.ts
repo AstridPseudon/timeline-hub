@@ -3,7 +3,7 @@ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackL
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
 import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
-import type { ParentClipAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+import type { ParentClipAddMediaCapturePort, ParentClipSwapMediaPreparationPort } from '@/tools/video-editor/commands/commitSession.ts';
 import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
@@ -148,6 +148,7 @@ export interface TimelineEditorOpsContextValue {
   trackLabel?: TrackLabelCapturePort;
   shotSet?: ShotSetCapturePort;
   parentClipAddMedia?: ParentClipAddMediaCapturePort;
+  parentClipSwapMedia?: ParentClipSwapMediaPreparationPort;
   occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
