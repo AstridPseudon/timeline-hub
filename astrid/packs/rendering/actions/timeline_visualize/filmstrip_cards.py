@@ -1690,7 +1690,7 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, lab
 
 
 
-def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frames=(), label_batches=None, label_canvas=None):
+def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frames=(), label_batches=None, label_canvas=None, scene_shared=None):
     """Compose the selected bounds and address overlays for contact tiles."""
     selected = set(layer_names or ())
     if not selected.intersection({"bounds", "labels"}):
@@ -1712,7 +1712,7 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
         if contact_elements is not None:
             from .layers.builtin import overlay_bounds
 
-            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
+            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight, shared=scene_shared)
         if "labels" in selected and config is not None:
             from .overlays.labels import overlay_labels_at
 
@@ -1917,10 +1917,16 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         duration = float(Fraction(int(snapshot['duration_frames']), 1) / Fraction(*snapshot['fps_rational']))
         components = set(options.get('components') or ('output', 'text', 'audio'))
         contact_fps = float(Fraction(*snapshot['fps_rational']))
+        scene_shared = None
+        if hasattr(frame_provider, 'scene_frames'):
+            scene_shared = {name: getattr(frame_provider, name, None)
+                            for name in ('scene_frames', 'scene_clip_identities')}
+            scene_shared['scene_unavailable'] = (capture_info or {}).get('scene_unavailable')
         overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'),
                                               frames=[int(math.floor(float(card.get('time_seconds') or 0) * contact_fps + 0.5))
                                                       for card in display_cards],
-                                              label_batches=label_batches, label_canvas=label_canvas)
+                                              label_batches=label_batches, label_canvas=label_canvas,
+                                              scene_shared=scene_shared)
         from .contact_sheet import contact_band_width, contact_silence_findings
         audio = _audio_envelope(snapshot, asset_files, 0.0, duration, contact_band_width(columns))
         paths = {'png': static_contact_png(

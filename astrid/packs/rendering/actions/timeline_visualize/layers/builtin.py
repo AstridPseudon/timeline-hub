@@ -561,6 +561,7 @@ def render_strip(ctx: LayerContext) -> LayerResult:
     for event in ctx.events:
         event_frames.setdefault(int(round(event.t * ctx.fps)), []).append(event)
     bounds = "bounds" in ctx.shared.get("layer_names", ())
+    bounds_shared = _bounds_handoff(ctx.shared) if bounds else None
     labels_config = ctx.shared.get("config") if "labels" in ctx.shared.get("layer_names", ()) else None
     cut_frame = int(round(float(ctx.cut["start"]) * ctx.fps))
     findings = []
@@ -573,8 +574,9 @@ def render_strip(ctx: LayerContext) -> LayerResult:
             continue
         thumb = source.resize((thumb_w, thumb_h), Image.LANCZOS)
         if bounds:
-            thumb = overlay_bounds(thumb, ctx.elements, frame / ctx.fps, ctx.fps, labels=False,
-                                   highlight=ctx.shared.get("highlight"))
+            thumb = overlay_bounds(thumb, ctx.all_elements if bounds_shared is not None else ctx.elements,
+                                   frame / ctx.fps, ctx.fps, labels=False,
+                                   highlight=ctx.shared.get("highlight"), shared=bounds_shared)
         if labels_config:
             from ..overlays.labels import overlay_labels_frame
 
@@ -854,26 +856,111 @@ FROZEN_CHECK = Check("frozen", "pixel holds longer than max_frozen_s in the capt
 BOUND_COLOURS = {"face": "#ef4444", "text": "#facc15", "card": "#38bdf8", "sprite": "#4ade80", "panel": "#c084fc"}
 
 
-def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: float, fps: float, *, labels: bool = True,
-                   highlight: str | None = None) -> Image.Image:
-    """Declared element bounds plus title/action-safe margins, drawn on a frame of any size.
+def _bounds_handoff(shared: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    # Legacy/bundle contexts initialize empty maps too. A provider handoff also
+    # retains curve_frames when cached pixels have no fresh public scene facts.
+    return shared if ("curve_frames" in shared or shared.get("scene_frames")
+                      or shared.get("scene_clip_identities")) else None
 
-    ``highlight`` (a clip id) outlines that one layer thick and labelled; the others go thin and grey."""
+
+def _captured_bounds(elements: Sequence[model.Element], frame: int, shared: Mapping[str, Any]):
+    """Adapt this captured frame's explicit source/occurrence joins and regions."""
+    notes = []
+
+    def missing(reason):
+        notes.append(f"BOUNDS frame {frame}: {reason}")
+
+    def number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    frames = shared.get("scene_frames")
+    row = frames.get(str(frame)) if isinstance(frames, Mapping) else None
+    if shared.get("scene_unavailable"):
+        missing(str(shared["scene_unavailable"]))
+        return [], None, notes
+    if (not isinstance(row, Mapping) or row.get("frame") != frame
+            or not all(number(row.get(axis)) and row[axis] > 0 for axis in ("width", "height"))):
+        missing("exact public frame/canvas is missing or stale")
+        return [], None, notes
+    canvas = (row["width"], row["height"])
+    layers = row.get("layers")
+    identities = shared.get("scene_clip_identities")
+    if (not isinstance(layers, list) or any(not isinstance(layer, Mapping) for layer in layers)
+            or not isinstance(identities, Mapping)):
+        missing("public layers or explicit clip identities are missing")
+        return [], canvas, notes
+
+    def identity(element):
+        source = (element.clip.get("app") or {}).get("astrid_shot_composition") or {}
+        return {"clip_id": source.get("source_clip_id") or element.clip.get("id", element.id),
+                "occurrence_id": element.occurrence_id}
+
+    boxes = []
+    for layer in layers:
+        clip_id = layer.get("clipId")
+        source = identities.get(clip_id) if isinstance(clip_id, str) else None
+        matches = [e for e in elements if not e.audio and identity(e) == source] if source else []
+        if (len(matches) != 1 or sum(value == source for value in identities.values()) != 1
+                or sum(other.get("clipId") == clip_id for other in layers) != 1):
+            missing(f"{clip_id}: source clip/occurrence identity is missing or ambiguous")
+            continue
+        element = matches[0]
+        if layer.get("visible") is False:
+            continue
+        if layer.get("visible") is not True:
+            missing(f"{element.label}: public visibility is unknown")
+            continue
+
+        def region(value, kind, label):
+            raw = value.get("rect") if isinstance(value, Mapping) and value.get("status") == "known" else None
+            if (not isinstance(raw, Mapping) or not all(number(raw.get(k)) for k in ("x", "y", "width", "height"))
+                    or raw["width"] < 0 or raw["height"] < 0):
+                missing(f"{element.label}: {label} unavailable")
+                return
+            boxes.append(model.Box(element, kind, (raw["x"], raw["y"], raw["x"] + raw["width"],
+                                                   raw["y"] + raw["height"]), label))
+
+        kind = ("plate" if element.type in model.PLATE_TYPES or element.type == "am-presenter" else
+                "sprite" if element.type == "am-sprite" else "card" if element.type == "am-callout" else
+                "text" if element.type in ("am-type", "am-flap") else "panel")
+        region(layer.get("bounds"), kind, element.label)
+        diagnostics = layer.get("diagnostics")
+        if isinstance(diagnostics, Mapping):
+            for name in ("face", "mouth", "text"):
+                if name in diagnostics:
+                    value = diagnostics[name]
+                    if name == "text" and isinstance(value, Mapping):
+                        value = value.get("bounds")
+                    region(value, name, name)
+    return boxes, canvas, notes
+
+
+def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: float, fps: float, *, labels: bool = True,
+                   highlight: str | None = None, shared: Mapping[str, Any] | None = None) -> Image.Image:
+    """Captured public regions, or declared legacy bounds without a public handoff."""
     out = image.copy()
     draw = ImageDraw.Draw(out)
-    sx, sy = out.size[0] / model.CANVAS[0], out.size[1] / model.CANVAS[1]
+    if shared is None:
+        boxes = [box for element in elements for box in model.boxes_at(element, t, fps)]
+        canvas, notes = model.CANVAS, []
+    else:
+        boxes, canvas, notes = _captured_bounds(elements, int(math.floor(t * fps + 0.5)), shared)
+    if canvas is not None:
+        sx, sy = out.size[0] / canvas[0], out.size[1] / canvas[1]
 
-    def scaled(rect):
-        return (rect[0] * sx, rect[1] * sy, rect[2] * sx, rect[3] * sy)
+        def scaled(rect):
+            return (rect[0] * sx, rect[1] * sy, rect[2] * sx, rect[3] * sy)
 
-    for fraction, colour in ((model.ACTION_SAFE, "#64748b"), (model.TITLE_SAFE, "#94a3b8")):
-        draw.rectangle(scaled(model.safe_rect(fraction)), outline=colour, width=1)
-    for element in elements:
-        chosen = bool(highlight) and (str(element.id) == highlight or str(element.id).endswith(":" + highlight)
-                                      or str(element.id).endswith(highlight))
-        for box in model.boxes_at(element, t, fps):
+        for fraction, colour in ((model.ACTION_SAFE, "#64748b"), (model.TITLE_SAFE, "#94a3b8")):
+            margin_x, margin_y = canvas[0] * (1 - fraction) / 2, canvas[1] * (1 - fraction) / 2
+            draw.rectangle(scaled((margin_x, margin_y, canvas[0] - margin_x, canvas[1] - margin_y)),
+                           outline=colour, width=1)
+        for box in boxes:
             if box.kind == "plate":
                 continue
+            element = box.element
+            chosen = bool(highlight) and (str(element.id) == highlight or str(element.id).endswith(":" + highlight)
+                                          or str(element.id).endswith(highlight))
             if highlight:
                 colour = "#ff7a2e" if chosen else "#64748b"
                 draw.rectangle(scaled(box.rect), outline=colour, width=3 if chosen else 1)
@@ -887,12 +974,19 @@ def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: flo
                 name = "face" if box.kind == "face" else box.label.split(" ", 1)[-1][:14]
                 x, y = max(0, box.rect[0] * sx + 2), max(0, box.rect[1] * sy + 1)
                 draw_text(draw, (x, y), name, 10, colour)
+    if notes:
+        draw_text(draw, (4, 4), "bounds unavailable: " + notes[0].split(": ", 1)[-1], 10, PALETTE["warn"])
     return out
 
 
 def render_bounds(ctx: LayerContext) -> LayerResult:
-    """A marker layer: the strip and contact tiles draw bounds when it is selected."""
-    return LayerResult(None, [], "bounds", page="frames")
+    """The strip/contact tiles draw regions; motion findings retain advisories."""
+    shared = _bounds_handoff(ctx.shared)
+    notes = []
+    if shared is not None:
+        for frame in _sorted_frames(ctx):
+            notes.extend(_captured_bounds(ctx.all_elements, frame, shared)[2])
+    return LayerResult(None, list(dict.fromkeys(notes))[:6], "bounds", page="frames")
 
 
 def render_labels(ctx: LayerContext) -> LayerResult:
