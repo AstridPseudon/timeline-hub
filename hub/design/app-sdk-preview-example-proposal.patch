@@ -1,0 +1,122 @@
+diff --git a/src/examples/transcript-panel-example.ts b/src/examples/transcript-panel-example.ts
+--- a/src/examples/transcript-panel-example.ts
++++ b/src/examples/transcript-panel-example.ts
+@@ -4,8 +4,10 @@
+  * typed against the versioned SDK surface.
+  */
+ import type {
+   ImmutableProjectPackageDescriptor,
++  PanelFrameAnchor,
+   PanelRenderProps,
++  PanelPreviewService,
+   PanelVideoAdapter,
+   ProjectObjectMetadata,
+   ProjectObjectStorage,
+@@ -146,11 +148,39 @@ export function createTranscriptPanelExampleAdapter(): TranscriptPanelAdapter {
+ /** A panel renderer reads the host-provided adapter and leaves playback mutation to the host. */
+ export function readTranscriptPanelExample(props: PanelRenderProps): TranscriptPanelSnapshot | undefined {
+   const video: PanelVideoAdapter | undefined = props.video;
+   return video?.transcript?.getSnapshot();
+ }
+
++/** Start a word preview on hover; the caller invokes the returned cleanup on leave or teardown. */
++export function previewTranscriptWordOnHover(
++  props: PanelRenderProps,
++  word: TranscriptWordProjection,
++  target: Pick<HTMLElement, 'getBoundingClientRect'>,
++): (() => void) | undefined {
++  const preview: PanelPreviewService | undefined = props.video?.preview;
++  if (
++    !props.visible
++    || !preview
++    || word.timing !== 'word'
++    || word.timelineStart === null
++    || !Number.isFinite(word.timelineStart)
++    || word.timelineStart < 0
++  ) {
++    return undefined;
++  }
++
++  const rect = target.getBoundingClientRect();
++  const anchor: PanelFrameAnchor = {
++    left: rect.left,
++    top: rect.top,
++    width: rect.width,
++    height: rect.height,
++  };
++  const handle = preview.showFrame({ seconds: word.timelineStart, anchor });
++  return () => { handle.dispose(); };
++}
+
+ /** Import a transcript package through immutable host storage and keep its digest as the revision. */
+ export async function ingestTranscriptPackage(
+   storage: ProjectObjectStorage,
+   bytes: Uint8Array,
+diff --git a/src/sdk/examples-governance.test.ts b/src/sdk/examples-governance.test.ts
+--- a/src/sdk/examples-governance.test.ts
++++ b/src/sdk/examples-governance.test.ts
+@@ -38,9 +38,10 @@ import { overlayExample, OVERLAY_RENDER_ID } from '../examples/overlay-example';
+ import { stageCanaryExample } from '../examples/stage-canary-example';
+ import {
+   createTranscriptPanelExampleAdapter,
+   ingestTranscriptPackage,
+   readTranscriptPanelExample,
++  previewTranscriptWordOnHover,
+ } from '../examples/transcript-panel-example';
+ import {
+   createTimelineOverlayGeometry,
+   validateManifest,
+@@ -568,5 +569,53 @@ describe('Transcript panel SDK example contract', () => {
+     expect(descriptor.revision).toBe('sha256:fixture');
+     expect(descriptor.entry.object_id).toBe('transcript-object-1');
+     expect(descriptor.assets).toEqual([]);
+   });
++
++  it('uses the optional hover preview with a DOM anchor and disposes it on leave', () => {
++    let received: unknown;
++    let disposed = 0;
++    const stop = previewTranscriptWordOnHover(
++      {
++        instanceId: 'transcript-example',
++        visible: true,
++        video: {
++          view: {} as never,
++          seek: () => undefined,
++          transcript: createTranscriptPanelExampleAdapter(),
++          preview: {
++            showFrame(input) {
++              received = input;
++              return { dispose: () => { disposed += 1; } };
++            },
++          },
++        },
++      },
++      wordProjection,
++      {
++        getBoundingClientRect: () => ({
++          left: 10,
++          top: 20,
++          width: 30,
++          height: 12,
++        } as DOMRect),
++      },
++    );
++
++    expect(received).toEqual({
++      seconds: 2,
++      anchor: { left: 10, top: 20, width: 30, height: 12 },
++    });
++    stop?.();
++    expect(disposed).toBe(1);
++    expect(previewTranscriptWordOnHover({
++      instanceId: 'transcript-example',
++      visible: true,
++      video: {
++        view: {} as never,
++        seek: () => undefined,
++      },
++    }, wordProjection, {
++      getBoundingClientRect: () => ({} as DOMRect),
++    })).toBeUndefined();
++  });
+ });
