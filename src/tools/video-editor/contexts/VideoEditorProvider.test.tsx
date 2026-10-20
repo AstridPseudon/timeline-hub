@@ -43,6 +43,7 @@ import {
   INTERNAL_GESTURE_TIMELINE_MUTATIONS,
   PUBLIC_TIMELINE_COMMAND_NAMES,
   PUBLIC_TIMELINE_COMMAND_SCOPE,
+  createTimelineCommands,
   isPublicTimelineCommandName,
   useTimelineCommandsService,
   useTimelineCommandsServiceSafe,
@@ -66,6 +67,8 @@ import { runLiveSceneAcpRoundtrip } from '@/tools/video-editor/runtime/liveScene
 import { applyPreparedMediaCommand, type PlacePreparedMediaCommand } from '@/tools/video-editor/commands/media';
 import { VIDEO_EDITOR_HOST_PORT_NAMES } from '@/tools/video-editor/runtime/ports';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types';
+import type { ParentClipAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession';
 import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog';
 import { useExtensionLoaderWiring } from '@/tools/video-editor/runtime/useExtensionLoaderWiring';
 import type { BundleContentStore } from '@/tools/video-editor/runtime/useExtensionLoaderWiring';
@@ -2363,6 +2366,66 @@ describe('VideoEditorProvider', () => {
     expect(materialized!.nextData.resolvedConfig.clips).toContainEqual(expect.objectContaining({
       asset: 'prepared-image', at: 2, hold: 5, track: 'V1',
     }));
+  });
+
+  it('carries a video source span as hold for native parent-media capture', async () => {
+    const capture = vi.fn<ParentClipAddMediaCapturePort['capture']>(() => (
+      {} as ReturnType<ParentClipAddMediaCapturePort['capture']>
+    ));
+    const finish = vi.fn<ParentClipAddMediaCapturePort['finish']>(() => ({
+      command: { schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', args: { row: {}, media: {} } },
+      preview: { version: 1, operations: [] },
+    }));
+    const submit = vi.fn<ParentClipAddMediaCapturePort['submit']>();
+    const parentClipAddMedia: ParentClipAddMediaCapturePort = {
+      capture,
+      finish,
+      submit,
+      prepare: vi.fn(() => ({} as ReturnType<ParentClipAddMediaCapturePort['prepare']>)),
+      assertPreparationCurrent: vi.fn(),
+    };
+    const current = buildCommandTimelineData();
+    const store = buildCommandTestStore({ data: current });
+    store.getState().syncOpsSlice({ ...store.getState().ops, parentClipAddMedia });
+    const selection: MediaSelection = {
+      asset: 'asset-native-video',
+      generation_id: 'generation-native-video',
+      variant_id: 'variant-native-video',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const verified: VerifiedMedia = {
+      selection,
+      media_type: 'video/mp4',
+      size: 1,
+      duration_seconds: 2,
+    };
+    const commands = createTimelineCommands(store, {
+      parentMediaRuntime: {
+        projectId: 'project-1',
+        getProjectVerifiedMedia: vi.fn(async () => verified),
+      },
+    });
+
+    await expect(commands.addClip({
+      preparedAsset: {
+        assetKey: selection.asset,
+        mediaType: 'video',
+        durationSeconds: 2,
+        source: 'registered',
+        entry: { file: 'https://example.com/native-video.mp4', type: 'video/mp4', duration: 2 },
+        mediaSelection: selection,
+      },
+      trackId: 'V1',
+      time: 2,
+    })).resolves.toEqual({ ok: true, data: expect.anything() });
+
+    expect(capture.mock.calls[0]?.[0].row).toEqual(expect.objectContaining({
+      from: 0,
+      to: 2,
+      hold: 2,
+    }));
+    expect(submit).toHaveBeenCalledTimes(1);
   });
 
   it('accepts public registerAsset into canonical saving without an independent durable write', async () => {

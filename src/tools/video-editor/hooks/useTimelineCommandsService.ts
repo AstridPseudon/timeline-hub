@@ -532,6 +532,14 @@ export function createTimelineCommands(
           // the only await. Verification must never observe the caller's
           // mutable selection object after this point.
           const row = structuredClone(clip) as unknown as Record<string, JSON>;
+          // The native parent-media contract records the visible span as
+          // `hold` alongside the video source window. The regular timeline
+          // row carries the equivalent span as `to - from`; add the carrier
+          // field only to the detached native capture row, leaving the local
+          // preview/document shape unchanged.
+          if (typeof row.from === 'number' && typeof row.to === 'number') {
+            row.hold = row.to - row.from;
+          }
           try {
             const basis = port.capture({ row, media: suppliedSelection, current });
             const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);
