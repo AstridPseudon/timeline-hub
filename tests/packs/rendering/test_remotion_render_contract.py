@@ -22,17 +22,6 @@ from astrid.core.rendering.remotion_runtime import resolve_remotion_project_dir
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-TEXT_CARD = (
-    ROOT
-    / "astrid"
-    / "packs"
-    / "rendering"
-    / "rendering"
-    / "elements"
-    / "effects"
-    / "text-card"
-    / "component.tsx"
-)
 
 
 class RemotionAugmentationImportTest(unittest.TestCase):
@@ -147,12 +136,13 @@ import {
   toRuntimeTheme,
 } from '@banodoco/timeline-composition';
 import {Internals} from 'remotion';
-import PublicTextCard from './component.mjs';
 
 const registryTextCard = EFFECT_REGISTRY['text-card'];
-if (PublicTextCard !== registryTextCard) {
-  throw new Error('the rendering wrapper did not re-export the public text-card registry identity');
+const resolvedTextCard = resolveElementRegistries(DEFAULT_THEME).effects['text-card'];
+if (resolvedTextCard !== registryTextCard) {
+  throw new Error('the public text-card registry identity is inconsistent');
 }
+const PublicTextCard = resolvedTextCard;
 
 const composition = {
   id: 'TextCardSSR',
@@ -236,7 +226,6 @@ process.stdout.write(renderToStaticMarkup(tree));
         with tempfile.TemporaryDirectory(prefix="astrid-text-card-ssr-") as temp:
             stage = Path(temp)
             (stage / "node_modules").symlink_to(node_modules, target_is_directory=True)
-            (stage / "component.mjs").write_bytes(TEXT_CARD.read_bytes())
             script = stage / "render.mjs"
             script.write_text(node_script, encoding="utf-8")
             result = subprocess.run(

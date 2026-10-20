@@ -26,6 +26,7 @@ from astrid.core.rendering.contracts import (
     RenderProfile,
     RenderRequest,
 )
+from astrid.core.rendering.remotion_runtime import resolve_remotion_project_dir
 from astrid.core.rendering.service import RenderService
 from astrid.core.timeline.duration import (
     timeline_duration_frames,
@@ -198,8 +199,17 @@ def _root_probe(tmp_path: Path, props: dict[str, object]) -> dict[str, object]:
     duration_path.write_bytes(extract.stdout)
     node = shutil.which("node")
     assert node is not None, "Root callback probe requires Node"
-    typescript = "/home/user/work/app/node_modules/typescript/lib/typescript.js"
-    assert Path(typescript).is_file(), "Root callback probe requires TypeScript"
+    typescript = (
+        resolve_remotion_project_dir()
+        / "node_modules"
+        / "typescript"
+        / "lib"
+        / "typescript.js"
+    )
+    assert typescript.is_file(), (
+        "Root callback probe requires TypeScript from the selected Remotion runtime: "
+        f"{typescript}"
+    )
     completed = subprocess.run(
         [
             node,
@@ -208,7 +218,7 @@ def _root_probe(tmp_path: Path, props: dict[str, object]) -> dict[str, object]:
             str(_ROOT_TSX),
             str(duration_path),
             json.dumps(props),
-            typescript,
+            str(typescript),
         ],
         check=False,
         capture_output=True,
