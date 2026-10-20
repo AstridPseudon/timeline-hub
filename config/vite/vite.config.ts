@@ -119,9 +119,11 @@ export default defineConfig(({ command }) => {
     __dirname,
     "../../src/tools/video-editor/lib/timeline-schema.fallback.ts",
   );
+  const timelineCompositionRoot = process.env.VITE_TIMELINE_COMPOSITION_ROOT?.trim();
 
   return {
     customLogger: logger,
+    ...(process.env.VITE_CACHE_DIR?.trim() ? { cacheDir: process.env.VITE_CACHE_DIR.trim() } : {}),
     server: {
       host: "::",
       port: port,
@@ -158,6 +160,9 @@ export default defineConfig(({ command }) => {
         "@astrid/editor-sdk": path.resolve(__dirname, "../../src/sdk/index.ts"),
         ...(astridSource ? { "@astrid": astridSource.sourceRoot } : {}),
         ...(astridPublicSource ? { "@astrid-public": astridPublicSource.sourceRoot } : {}),
+        ...(timelineCompositionRoot
+          ? { "@banodoco/timeline-composition": path.join(timelineCompositionRoot, "dist") }
+          : {}),
         // Share one React/Remotion runtime with Composition and linked host elements.
         "react": path.resolve(__dirname, "../../node_modules/react"),
         "react-dom": path.resolve(__dirname, "../../node_modules/react-dom"),

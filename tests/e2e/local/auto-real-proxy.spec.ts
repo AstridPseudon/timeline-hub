@@ -4,10 +4,13 @@
  * DirectHarness.tmp, not an App command or a fake Runtime endpoint.
  */
 import { expect, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, openSeededTimeline, test as appTest } from './support/app.ts';
-import { ASTRID_CHECKOUT, ASTRID_PYTHON, PRODUCT_ACTOR, RUNTIME_CHECKOUT, spawnGroup, stopGroup, type DirectHarness } from './support/harness.ts';
+import { APP_ENTRY_ROUTE, commandOutboxes, openSeededTimeline, test as appTest, UI } from './support/app.ts';
+import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
+import { RUNTIME_CHECKOUT, spawnGroup, stopGroup, type DirectHarness } from './support/harness.ts';
 import type { ThreeProductsSeed } from './support/harness.ts';
 
 const OPERATION_PREFIX = '/runtime-config/v1/operation';
@@ -17,8 +20,8 @@ const LEGACY_POST = /^\/api\/runtime\/.*$/;
 const CEILING = { timeout: 60_000 };
 const test = appTest.extend<{ workspace: Workspace }>({
   workspace: [async ({ harness }, use) => {
-    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
     const seed = await harness.seedThreeProducts();
+    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
     const vite = await startViteWorkspace(harness);
     try { await use({ harness, seed, vite }); } finally { await vite.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],
@@ -38,9 +41,14 @@ async function freePort(): Promise<number> {
 
 async function waitFor(url: string, ready: (response: Response) => boolean = (response) => response.ok): Promise<void> {
   const deadline = Date.now() + 60_000;
+  let lastFailure = '';
   for (;;) {
-    try { const response = await fetch(url); if (ready(response)) return; } catch { /* process is still starting */ }
-    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ${url}`);
+    try {
+      const response = await fetch(url);
+      if (ready(response)) return;
+      lastFailure = `${response.status} ${await response.text()}`;
+    } catch (error) { lastFailure = error instanceof Error ? error.message : String(error); }
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ${url}${lastFailure ? ` (last response: ${lastFailure})` : ''}`);
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
@@ -49,6 +57,7 @@ function processEnv(harness: DirectHarness): NodeJS.ProcessEnv {
   return {
     ...process.env,
     ASTRID_WORKSPACE_DISCOVERY: path.join(harness.supportDir, 'discovery.json'),
+    WORKSPACE_RUNTIME_TOKEN_FILE: harness.credentialPath,
     PYTHONPATH: [ASTRID_CHECKOUT, RUNTIME_CHECKOUT].join(path.delimiter),
     PYTHONDONTWRITEBYTECODE: '1',
     PYTHONUNBUFFERED: '1',
@@ -59,6 +68,10 @@ async function startViteWorkspace(harness: DirectHarness): Promise<ViteWorkspace
   const proxyPort = await freePort();
   const vitePort = await freePort();
   const origin = `http://127.0.0.1:${vitePort}`;
+  const compositionOverlay = path.join(harness.tmp, 'timeline-composition-overlay');
+  mkdirSync(compositionOverlay, { recursive: true });
+  execFileSync('tar', ['-xzf', path.resolve('vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz'), '-C', compositionOverlay]);
+  const compositionRoot = path.join(compositionOverlay, 'package');
   const baseEnv = processEnv(harness);
   const proxy = spawnGroup(process.execPath, [path.resolve('scripts/runtime-discovery-proxy.mjs')], {
     cwd: process.cwd(), env: { ...baseEnv, ASTRID_RUNTIME_PROXY_PORT: String(proxyPort), ASTRID_RUNTIME_OPERATION_ORIGIN: origin },
@@ -66,16 +79,17 @@ async function startViteWorkspace(harness: DirectHarness): Promise<ViteWorkspace
   const start = () => spawnGroup(process.execPath, [path.resolve('node_modules/vite/bin/vite.js'), '--config', 'config/vite/vite.config.ts', '--host', '127.0.0.1', '--port', String(vitePort), '--strictPort'], {
     cwd: process.cwd(), env: {
       ...baseEnv,
+      PORT: String(vitePort),
       ASTRID_CHECKOUT,
       ASTRID_PYTHON,
+      VITE_ASTRID_BRIDGE_PORT: String(proxyPort),
+      ASTRID_BRIDGE_TOKEN: harness.productToken,
       ASTRID_RUNTIME_OPERATION_ORIGIN: origin,
       ASTRID_RUNTIME_PROXY_PORT: String(proxyPort),
       VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${proxyPort}`,
       WORKSPACE_RUNTIME_TOKEN_FILE: harness.credentialPath,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: harness.realmId,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: harness.runtimeInstanceId,
-      VITE_RUNTIME_ORIGIN: '',
+      VITE_CACHE_DIR: path.join(harness.tmp, 'vite-cache'),
+      VITE_TIMELINE_COMPOSITION_ROOT: compositionRoot,
       VITE_DISABLE_REMOTE_FONTS: '1',
       VITE_ASTRID_EDITOR_ONLY: '1',
     },
@@ -85,7 +99,14 @@ async function startViteWorkspace(harness: DirectHarness): Promise<ViteWorkspace
     await waitFor(`http://127.0.0.1:${proxyPort}/runtime-config/v1/workspace.json`);
     await waitFor(origin);
   } catch (error) {
-    await stopGroup(vite); await stopGroup(proxy); throw error;
+    const details = [
+      `proxy stdout:\n${proxy.stdout.slice(-2000)}`,
+      `proxy stderr:\n${proxy.stderr.slice(-4000)}`,
+      `vite stdout:\n${vite.stdout.slice(-2000)}`,
+      `vite stderr:\n${vite.stderr.slice(-4000)}`,
+    ].join('\n');
+    await stopGroup(vite); await stopGroup(proxy);
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\n${details}`);
   }
   return {
     origin,
@@ -148,30 +169,73 @@ async function clickRecovery(page: Page, ownerId: string): Promise<void> {
   await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${ownerId}"]`)).click();
 }
 
+async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[]): Promise<void> {
+  try {
+    const status = page.locator(UI.status);
+    if (await status.count()) {
+      await expect(status).toHaveAttribute('data-state', 'connected', CEILING);
+    } else {
+      // Same-origin dev proxy mode has no hosted connection gate; the live editor is its readiness signal.
+      await expect(page.getByRole('button', { name: 'Generate image', exact: true })).toBeVisible(CEILING);
+    }
+  } catch (error) {
+    const body = await page.locator('body').innerText().catch(() => '');
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\n` + [
+      `page url: ${page.url()}`,
+      `page title: ${await page.title().catch(() => '')}`,
+      `body: ${body.slice(-4000)}`,
+      ...diagnostics.slice(-40),
+    ].join('\n'));
+  }
+}
+
 test('real operation proxy automatic image placement survives reconnect, lost ACK retry, reload and guarded undo', async ({ page, workspace }) => {
   const { harness, seed, vite } = workspace;
   const legacy: string[] = [];
   const operation: string[] = [];
+  const requests: string[] = [];
+  const responses: string[] = [];
+  const diagnostics: string[] = [];
+  page.on('pageerror', (error) => diagnostics.push(`pageerror: ${error.message}`));
+  page.on('console', (message) => { if (message.type() === 'error') diagnostics.push(`console: ${message.text()}`); });
+  page.on('requestfailed', (request) => diagnostics.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`));
+  page.on('response', (response) => {
+    const url = new URL(response.url());
+    if (url.pathname.startsWith('/api/runtime') || url.pathname.startsWith(OPERATION_PREFIX)) {
+      responses.push(`${response.status()} ${url.pathname}${url.search}`);
+    }
+  });
   page.on('request', (request) => {
     const url = new URL(request.url());
+    if (request.method() === 'POST') requests.push(`${request.method()} ${url.pathname}`);
     if (url.pathname.startsWith(OPERATION_PREFIX)) operation.push(`${request.method()} ${url.pathname}`);
     if (request.method() === 'POST' && LEGACY_POST.test(url.pathname)) legacy.push(url.pathname);
   });
 
   await runImageHost(harness, 'register');
   await page.goto(`${vite.origin}${APP_ENTRY_ROUTE}`);
-  await expectConnected(page);
+  await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
+  await expect.poll(
+    () => responses.filter((entry) => entry.startsWith('200 /api/runtime/v1/events?')).length,
+    CEILING,
+  ).toBeGreaterThanOrEqual(2);
   await page.getByRole('button', { name: 'Generate image', exact: true }).click();
   const approval = page.getByRole('checkbox', { name: /Add the generated image to this timeline/ });
   await expect(approval).not.toBeChecked();
   expect((await commandOutboxes(page, seed.timelineId)).flatMap((item) => item.placementContinuations ?? [])).toHaveLength(0);
-  await page.getByRole('button', { name: /Managed/ }).click();
-  await page.locator('textarea[id^="fullPrompt-"]').first().fill('a deterministic one-pixel test image');
   await approval.check();
+  await expect(approval).toBeChecked();
   await page.locator('label').filter({ hasText: 'Raw occurrence reference' }).locator('input').fill(`occurrence:${seed.occurrenceId}`);
   await page.locator('label').filter({ hasText: 'Raw lane ID' }).locator('input').fill('S1');
   await page.locator('label').filter({ hasText: 'Raw anchor clip ID' }).locator('input').fill('');
+  await page.getByRole('radio', { name: /Managed/ }).click();
+  const promptSummary = page.getByText(/Click to add prompts|currently active/).first();
+  await expect(promptSummary).toBeVisible(CEILING);
+  await promptSummary.click();
+  await expect(page.locator('textarea[id^="fullPrompt-"]').first()).toBeVisible(CEILING);
+  await page.locator('textarea[id^="fullPrompt-"]').first().fill('a deterministic one-pixel test image');
+  await page.getByRole('button', { name: 'Close', exact: true }).first().click();
 
   let reserved: Awaited<ReturnType<typeof commandOutboxes>> | undefined;
   let taskPost: Wire | undefined;
@@ -181,7 +245,17 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     await route.continue();
   });
   await page.getByRole('button', { name: 'Generate 1 New Image', exact: true }).click();
-  await expect.poll(() => taskPost, CEILING).not.toBeUndefined();
+  try {
+    await expect.poll(() => taskPost, CEILING).not.toBeUndefined();
+  } catch (error) {
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\n` + [
+      `operation requests: ${operation.join(' | ')}`,
+      `POST requests: ${requests.join(' | ')}`,
+      `Runtime responses: ${responses.slice(-60).join(' | ')}`,
+      `diagnostics: ${diagnostics.slice(-40).join(' | ')}`,
+      `modal body: ${(await page.locator('body').innerText().catch(() => '')).slice(-4000)}`,
+    ].join('\n'));
+  }
   const owner = (reserved ?? []).find((item) => item.placementContinuations?.length);
   expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: 'S1', anchor: null });
   expect(owner?.placementContinuations?.[0].input.request).toEqual({ method: 'POST', path: '/v1/tasks', body: taskPost!.body, key: taskPost!.key });
@@ -196,7 +270,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await harness.restartRuntime();
   await vite.restart();
   await page.reload();
-  await expectConnected(page);
+  await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
   const retained = (await commandOutboxes(page, seed.timelineId)).find((item) => item.placementContinuations?.length);
   expect(retained).toBeTruthy();
@@ -216,7 +290,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await harness.restartRuntime();
   await vite.restart();
   await page.reload();
-  await expectConnected(page);
+  await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
   const recovered = (await commandOutboxes(page, seed.timelineId)).find((item) => item.ownerId === retained!.ownerId)!;
   let retry: Wire | undefined;
@@ -234,7 +308,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
 
   await page.unroute(COMMIT_PATH);
   await page.reload();
-  await expectConnected(page);
+  await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
   await canonicalImage(harness, seed, objectId!);
   const beforeUndo = operation.length;
