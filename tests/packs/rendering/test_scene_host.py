@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
     project = project_root / "remotion"
     (project / "src").mkdir(parents=True)
     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
-    # Reuse a coherent peer graph read-only, with the actual pinned public12
+    # Reuse a coherent peer graph read-only, with the actual pinned public13
     # extracted into this test's private project. No install or shared mutation.
     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to(source.resolve(), target_is_directory=True)
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
     with tarfile.open(artifact) as archive:
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
@@ -87,7 +87,7 @@ def host_project(tmp_path_factory):
         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -206,12 +206,16 @@ def test_native_host_preserves_root_painter_order_and_current_roles(native_host)
         {"id": "occ:plate", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
     ])
     p["timeline"]["tracks"] = [
-        {"id": "front", "kind": "visual"}, {"id": "plate", "kind": "visual"},
+        {"id": "front", "kind": "visual", "opacity": 0.8},
+        {"id": "plate", "kind": "visual"},
         {"id": "music", "kind": "audio"},
     ]
     answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
     assert [(layer["clipId"], layer["role"]) for layer in answer["layers"]] == [
         ("occ:plate", "picture"), ("occ:front", "content")]
+    # The public evaluator returns bottom-to-top painter order. Its registered
+    # draw path also multiplies clip opacity by the owning track opacity.
+    assert answer["layers"][1]["opacity"] == pytest.approx(0.5 * 0.8)
     assert answer["coverage"] == "COVERED" and answer["content"] == "CONTENT"
 
 
