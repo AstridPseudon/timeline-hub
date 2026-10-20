@@ -8,6 +8,7 @@ import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const packageJson = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'));
+const builtinInputs = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'builtin-inputs.json'), 'utf8'));
 const tarball = resolve(process.argv[2] ?? `banodoco-timeline-composition-${packageJson.version}.tgz`);
 const files = execFileSync('tar', ['-tzf', tarball], {encoding: 'utf8'}).trim().split('\n');
 assert.ok(files.every(file => /^package\/(?:dist\/.*\.(?:js|d\.ts)|package\.json|README\.md|LICENSE)$/.test(file)),
@@ -78,7 +79,7 @@ assert.strictEqual(root.querySceneOcclusion, evaluation.querySceneOcclusion);
 const api = await import('@banodoco/timeline-composition/theme-api');
 const helpers = await import('@banodoco/timeline-composition/registries');
 const themes = await import('@banodoco/timeline-composition/registry.generated');
-const expectedThemeClipTypes = ['art-card', 'cta-card', 'resource-card', 'section-hook'];
+const expectedThemeClipTypes = ${JSON.stringify(builtinInputs.themes.flatMap(theme => theme.effects))};
 assert.deepEqual(themes.THEME_PACKAGE_CLIP_TYPES, expectedThemeClipTypes);
 assert.deepEqual(Object.keys(themes.THEME_PACKAGE_REGISTRY).sort(), [...expectedThemeClipTypes].sort());
 for (const clipType of expectedThemeClipTypes) {
