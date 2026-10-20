@@ -1003,6 +1003,72 @@ def test_helper_retains_max10_after_max20_restart_and_explicit_revision_reselect
         assert all(call['args']['schema_source'] == second for call in reselected.receipt.result['commands'])
 
 
+def test_attached_selected_param_p1_survives_lost_ack_restart_and_undo(
+        retained_pack, helper_client, monkeypatch, tmp_path):
+    """Attached PARAM capture keeps the accepted P1 declaration, not live V2."""
+    from runtime_protocol.service import RuntimeService
+
+    from astrid.sdk.timeline.sync import TimelineSession
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    case, client = retained_pack, helper_client
+    first = copy.deepcopy(case.pin)
+    owner = client.connect()
+    facade = SimpleNamespace(_remote=SimpleNamespace(_transport=owner._client), timelines=owner)
+    outbox = tmp_path / 'support/timeline-outbox/attached-param.json'
+    session = TimelineSession.open(case.project, 'film', client=facade, outbox_path=outbox)
+    editing = Checkout.attach(session)
+    editing.clip(REF).set(seed=8)
+    draft = json.loads(outbox.read_bytes())
+    assert client.calls == []
+    assert draft['pending'][0]['op'] == 'clip.set-params'
+    assert draft['pending'][0]['args']['schema_source'] == first
+
+    client.lost_ack[0] = True
+    with pytest.raises(WorkspaceClientError):
+        editing.publish('keep the selected P1 effect', idempotency_key='attached-param-p1')
+    flight = json.loads(outbox.read_bytes())['flight']
+    assert json.loads(flight['body'])['commands'][0]['args']['schema_source'] == first
+    accepted = case.submit(json.loads(flight['body']), flight['key'])
+
+    case.definition['schema']['properties']['seed']['maximum'] = 20
+    case.path.write_text(yaml.safe_dump(case.definition))
+    packs.admit_project_pack('realm', case.project)
+    document = case.service.get_document(case.project, first['document_id'])
+    case.service.update_document(case.project, first['document_id'], {
+        'expected_version': document['version'],
+        'content': {**document['content'], 'admissions': []}},
+        idempotency_key='remove-attached-param-selection')
+    shutil.rmtree(case.source_root)
+    shutil.rmtree(case.artifact_root)
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+
+    restarted_owner = client.connect()
+    restarted_facade = SimpleNamespace(
+        _remote=SimpleNamespace(_transport=restarted_owner._client), timelines=restarted_owner)
+    restarted = Checkout.attach(TimelineSession.open(
+        case.project, 'film', client=restarted_facade, outbox_path=outbox))
+    with monkeypatch.context() as retry:
+        retry.setattr('astrid.sdk.timeline_elements.execute',
+                      lambda *a, **kw: pytest.fail('retry recaptured selected PARAM'))
+        retried = restarted.publish()
+    assert retried['receipt'] == accepted['receipt']
+    assert client.calls[0] == client.calls[1]
+    assert restarted.clip(REF).params['seed'] == 8
+
+    before_refusal = copy.deepcopy(json.loads(outbox.read_bytes()))
+    with pytest.raises(TimelineEditError, match='10|16'):
+        restarted.clip(REF).set(seed=16)
+    assert json.loads(outbox.read_bytes()) == before_refusal
+    undone = restarted.undo([retried['receipt']['receipt_id']])
+    assert restarted.clip(REF).params == State(case.bundle()).entity(REF)['params']
+    assert undone['receipt']['receipt_id'] != retried['receipt']['receipt_id']
+
+
 @pytest.mark.parametrize('retained_pack', [False], indirect=True)
 @pytest.mark.parametrize('params,clear', [({'seed': 8}, []), ({'seed': 4}, []), ({}, ['seed'])])
 def test_helper_param_cannot_bootstrap_unselected_clip(retained_pack, helper_client, params, clear):
