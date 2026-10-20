@@ -134,6 +134,32 @@ def command_source(path: Path) -> bytes:
     return raw
 
 
+def render_python_package_init(template: str, command_schema: Mapping[str, Any]) -> str:
+    """Render the package root, appending newly generated canonical Args.
+
+    The checked-in template keeps its established export order. Only source
+    definitions named ``*Args`` are projected into the root; names such as
+    the generator's internal ``*Variant`` aliases never qualify.
+    """
+    definitions = command_schema.get("$defs", {})
+    if not isinstance(definitions, Mapping):
+        raise SystemExit("command schema definitions must be an object")
+    existing = set(re.findall(r"^    (\w+),$", template, flags=re.MULTILINE))
+    additions = [
+        name for name in definitions
+        if isinstance(name, str)
+        and name.endswith("Args")
+        and name not in existing
+    ]
+    imports = "".join(f"    {name},\n" for name in additions)
+    all_exports = ", ".join(repr(name) for name in additions) + (", " if additions else "")
+    rendered = template.replace("    # __CANONICAL_ARGS_IMPORTS__\n", imports)
+    rendered = rendered.replace('"__CANONICAL_ARGS_ALL__", ', all_exports)
+    if "__CANONICAL_ARGS_IMPORTS__" in rendered or "__CANONICAL_ARGS_ALL__" in rendered:
+        raise SystemExit("Python package exports template is missing canonical Args markers")
+    return rendered
+
+
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
     """Render the checked-in Python client from its tracked template.
 
@@ -300,11 +326,14 @@ def main() -> int:
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
-    generated["packages/python/astrid_runtime_client/__init__.py"] = _regular(
-        ROOT / "generators/python_client_init_template.py", "Python package exports template"
-    ).decode("utf-8").replace(
-        "Authoritative Python package exports; rendered by generators/generate.py.",
-        "Generated, product-neutral client for the workspace.v1 protocol.",
+    generated["packages/python/astrid_runtime_client/__init__.py"] = render_python_package_init(
+        _regular(
+            ROOT / "generators/python_client_init_template.py", "Python package exports template"
+        ).decode("utf-8").replace(
+            "Authoritative Python package exports; rendered by generators/generate.py.",
+            "Generated, product-neutral client for the workspace.v1 protocol.",
+        ),
+        json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "command schema")),
     )
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()

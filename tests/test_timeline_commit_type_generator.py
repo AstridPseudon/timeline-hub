@@ -11,6 +11,7 @@ from typing import TypedDict, Union, get_args, get_origin, get_type_hints, is_ty
 import pytest
 
 from generators import timeline_commit_types
+from generators.generate import render_python_package_init
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -156,3 +157,21 @@ def test_typescript_registered_command_versions_args_and_public_exports():
         "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
         str(ROOT / "tests/fixtures/timeline-current-union-types.mts"),
     ], check=True)
+
+
+def test_python_root_appends_only_new_canonical_args():
+    template = (ROOT / "generators/python_client_init_template.py").read_text()
+    schema = {"$defs": {
+        "ClipDeleteArgs": {},
+        "ProjectDataWriteArgs": {},
+        "EditCommandVariant1": {},
+        "FutureArgs": {},
+    }}
+    rendered = render_python_package_init(template, schema)
+    assert "    ProjectDataWriteArgs,\n" in rendered
+    assert "    FutureArgs,\n" in rendered
+    assert "ProjectDataWriteArgs', 'FutureArgs', \"CONTRACT_VERSION\"" in rendered
+    assert "EditCommandVariant1" not in rendered
+    assert "    # __CANONICAL_ARGS_IMPORTS__" not in rendered
+    assert "__CANONICAL_ARGS_ALL__" not in rendered
+    assert "    WordAnchor,\n    ProjectDataWriteArgs,\n    FutureArgs,\n)" in rendered
