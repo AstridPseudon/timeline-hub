@@ -15,6 +15,7 @@ import type {
   TimelinePreviewResult,
   TimelineDiff,
 } from './patch';
+import type { ClipSetParamsArgs } from '@/integrations/runtime/timeline-commit-types.ts';
 
 /**
  * Stable host adapter for atomic timeline mutations.
@@ -25,6 +26,13 @@ import type {
  * internal mutation APIs, provider handles, or raw timeline stores.
  */
 export interface TimelineOps {
+  /**
+   * Stage one selected-pack clip command at its original basis and retained
+   * schema pin. Resolution means queued, not accepted; the command session
+   * owns pending/error/retry and projects only the provider's accepted closure.
+   */
+  setClipParams?(clipId: string, args: ClipSetParamsArgs, signal?: AbortSignal): Promise<void>;
+
   /**
    * Validate a patch batch without mutating timeline state.
    * Returns structured diagnostics for every invalid operation.

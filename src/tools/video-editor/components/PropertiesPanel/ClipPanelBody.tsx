@@ -35,11 +35,16 @@ import { getEffectDisplayLabel } from './clip-effect-helpers.tsx';
 import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
+import type { SelectedElementParamFieldsProps } from './SelectedElementParamFields.tsx';
 
 export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
 
 export interface ClipPanelProps {
+  /** Explicit source-stage binding; the host supplies the exact retained pin. */
+  retainedDocumentPin?: SelectedElementParamFieldsProps['retainedDocumentPin'];
+  timelineOps?: SelectedElementParamFieldsProps['timelineOps'];
+  commandState?: SelectedElementParamFieldsProps['commandState'];
   readOnly?: boolean;
   clip: ResolvedTimelineClip | null;
   track: TrackDefinition | null;

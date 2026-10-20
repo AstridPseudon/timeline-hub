@@ -31,6 +31,8 @@ import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-edit
 import type { CommitDataOptions } from '@/tools/video-editor/hooks/useTimelineCommit';
 import type { Checkpoint } from '@/tools/video-editor/types/history';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
+import { captureClipParamsEdit, submitClipParamsEdit, type ClipParamsCapturePort } from '../commands/clipParamsGesture.ts';
+import { selectedParamsCommand } from '../commands/clipParamsCapture.ts';
 import {
   captureTrackLabelEdit,
   submitTrackLabelEdit,
@@ -74,6 +76,7 @@ export interface UseTimelineOpsArgs {
 
   /** Original authored track-label capture and the shared command outbox. */
   trackLabelPort?: TrackLabelCapturePort;
+  clipParamsPort?: ClipParamsCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -123,6 +126,7 @@ export function useTimelineOps({
   getConfigVersion,
   flushPendingSave,
   trackLabelPort,
+  clipParamsPort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -157,6 +161,22 @@ export function useTimelineOps({
       );
     }
   }, [editability]);
+
+  const setClipParams = useCallback<NonNullable<TimelineOps['setClipParams']>>(async (clipId, args, signal) => {
+    signal?.throwIfAborted();
+    assertTimelineEditable('setClipParams');
+    const current = dataRef.current;
+    if (!current) throw new Error('TimelineOps.setClipParams: timeline data is not yet loaded.');
+    const clip = current.resolvedConfig.clips.find((row) => row.id === clipId);
+    if (!clip) throw new Error('TimelineOps.setClipParams: clip is unavailable.');
+    const permission = editability?.check({ clipId, sourceTrackId: clip.track, targetTrackId: clip.track });
+    if (permission?.allowed === false) throw new Error('TimelineOps.setClipParams: clip edit denied.');
+    const captured = captureClipParamsEdit(clipParamsPort, current, clipId);
+    const original = selectedParamsCommand(captured.basis.select as string, args).args as typeof args;
+    await captured.port.prefetch(captured.basis, original.schema_source!);
+    signal?.throwIfAborted();
+    submitClipParamsEdit(captured, original);
+  }, [assertTimelineEditable, clipParamsPort, dataRef, editability]);
 
   // ---- validate -----------------------------------------------------------
 
@@ -461,11 +481,12 @@ export function useTimelineOps({
       validate,
       preview,
       apply,
+      setClipParams,
       flush,
       checkpoint,
       rollback,
       setAllTracksMuted,
     }),
-    [validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted],
+    [validate, preview, apply, setClipParams, flush, checkpoint, rollback, setAllTracksMuted],
   );
 }
