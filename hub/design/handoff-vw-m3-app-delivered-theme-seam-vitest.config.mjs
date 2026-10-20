@@ -6,14 +6,14 @@ const root=path.join(work,'offline-app');
 const modules='/home/user/work/app/node_modules';
 export default defineConfig({
  plugins:[{name:'offline-empty-admissions',resolveId(id){if(id==='virtual:astrid-element-admissions')return '\0offline-admissions';},load(id){if(id==='\0offline-admissions')return 'export const configured=false; export const projectId=null; export const selectionDigest="empty"; export const realmId=null; export const projects=[]; export const elements=[]; export const components={};';}}],
- server:{fs:{allow:[root,work,'/home/user/work/wt/vw-m3-resolved-theme-common-source',modules]}},
+ server:{fs:{allow:[root,work,path.join(work,'agent-source'),modules]}},
  root, cacheDir:path.join(work,'vite-cache'),
  oxc:{jsx:{runtime:'automatic'}},
  resolve:{alias:[
   {find:/^@banodoco\/timeline-composition$/,replacement:path.join(work,'public10/package/dist/index.js')},
   {find:/^@banodoco\/timeline-composition\/(.*)$/,replacement:path.join(work,'public10/package/dist/$1.js')},
   {find:'@astrid/editor-sdk',replacement:path.join(root,'src/sdk/index.ts')},
-  {find:'@astrid',replacement:'/home/user/work/wt/vw-m3-resolved-theme-common-source/astrid'},
+  {find:'@astrid',replacement:path.join(work,'agent-source/astrid')},
   {find:'@test-react-refresh',replacement:path.join(modules,'@vitejs/plugin-react-swc/refresh-runtime.js')},
   {find:'@',replacement:path.join(root,'src')},
   {find:'fake-indexeddb',replacement:path.join(root,'vendor/fake-indexeddb/index.js')},

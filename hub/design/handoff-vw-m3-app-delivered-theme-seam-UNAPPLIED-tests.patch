@@ -1,0 +1,415 @@
+--- a/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
+@@ -1,8 +1,10 @@
++import commonTheme from '../../../../agent-theme-common.json';
++import agentTheme from '../../../../agent-theme.json';
+ // @vitest-environment jsdom
+ import { act, render, screen, waitFor } from '@testing-library/react';
+ import { beforeEach, describe, expect, it, vi } from 'vitest';
+-import { compilePlayerTransitions } from './playerEvaluation.ts';
+ import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
++import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
+ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
+ import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
+ import type { ComponentProps, FC, PropsWithChildren } from 'react';
+@@ -86,88 +88,10 @@
+ });
+ 
+ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
+-  const reactModule = await import('react');
+-  const runtimeThemeValue = {
+-    color: {
+-      accent: '#ffffff',
+-      bg: '#000000',
+-      fg: '#ffffff',
+-    },
+-    type: {
+-      families: {
+-        heading: 'Georgia, serif',
+-        body: 'Inter, system-ui, sans-serif',
+-        mono: 'JetBrains Mono, ui-monospace, monospace',
+-      },
+-      size: {
+-        base: 56,
+-        small: 32,
+-        large: 128,
+-      },
+-      weight: {
+-        normal: 300,
+-        bold: 500,
+-      },
+-      lineHeight: 1.1,
+-    },
+-    motion: {
+-      fadeMs: 500,
+-    },
+-    canvas: {
+-      width: 1920,
+-      height: 1080,
+-      fps: 30,
+-    },
+-  };
+-
+-  const DEFAULT_THEME = {
+-    id: 'default',
+-    visual: runtimeThemeValue,
+-  };
+-
+-  const toRuntimeTheme = (value: unknown) => {
+-    if (
+-      value
+-      && typeof value === 'object'
+-      && 'visual' in value
+-      && value.visual
+-      && typeof value.visual === 'object'
+-    ) {
+-      return {
+-        ...runtimeThemeValue,
+-        ...value.visual,
+-        color: {
+-          ...runtimeThemeValue.color,
+-          ...(typeof value.visual.color === 'object' ? value.visual.color : {}),
+-        },
+-        type: {
+-          ...runtimeThemeValue.type,
+-          ...(typeof value.visual.type === 'object' ? value.visual.type : {}),
+-          families: {
+-            ...runtimeThemeValue.type.families,
+-            ...(typeof value.visual.type === 'object' && typeof value.visual.type.families === 'object'
+-              ? value.visual.type.families
+-              : {}),
+-          },
+-        },
+-      };
+-    }
+-    return runtimeThemeValue;
+-  };
+-
+-  const ThemeContext = reactModule.createContext(runtimeThemeValue);
+-
+-  return {
+-    DEFAULT_THEME,
+-    ThemeProvider: ({
+-      children,
+-      value,
+-    }: PropsWithChildren<{ value: typeof DEFAULT_THEME }>) => (
+-      <ThemeContext.Provider value={toRuntimeTheme(value)}>{children}</ThemeContext.Provider>
+-    ),
+-    useTheme: () => reactModule.useContext(ThemeContext),
+-    composeAnimations: () => ({}),
+-  };
++  const actual = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
++    '@banodoco/timeline-composition/theme-api',
++  );
++  return { ...actual, composeAnimations: () => ({}) };
+ });
+ 
+ vi.mock('@/tools/video-editor/compositions/AudioAnalysisProvider', async () => {
+@@ -257,38 +181,6 @@
+         mockShaderRegistryHas(lookup.shaderId, lookup.ownerExtensionId)
+       ),
+     }),
+-  };
+-});
+-
+-vi.mock('@banodoco/timeline-composition/theme-api', async () => {
+-  const React = await import('react');
+-  const DEFAULT_THEME = {
+-    id: 'default',
+-    visual: {
+-      color: {
+-        accent: '#ffffff',
+-        bg: '#000000',
+-      },
+-      type: {
+-        families: {
+-          heading: 'Georgia, serif',
+-        },
+-      },
+-    },
+-  };
+-  const ThemeContext = React.createContext(DEFAULT_THEME.visual);
+-  return {
+-    DEFAULT_THEME,
+-    ThemeProvider: ({
+-      children,
+-      value,
+-    }: PropsWithChildren<{ value: unknown }>) => (
+-      <ThemeContext.Provider value={(value as typeof DEFAULT_THEME)?.visual ?? DEFAULT_THEME.visual}>
+-        {children}
+-      </ThemeContext.Provider>
+-    ),
+-    useTheme: () => React.useContext(ThemeContext),
+-    composeAnimations: () => ({}),
+   };
+ });
+ 
+@@ -314,6 +206,7 @@
+       data-testid="registered-sequence"
+       data-clip-id={clip.id}
+       data-title={params?.title ?? ''}
++      data-runtime-theme={JSON.stringify(theme)}
+       data-accent={theme.color.accent}
+       data-bg={theme.color.bg}
+       data-heading={theme.type.families.heading}
+@@ -393,87 +286,6 @@
+ });
+ 
+ describe('TimelineRenderer registered sequences', () => {
+-  it('passes shared image crossfade plans through native media dispatch', () => {
+-    const config = buildConfig();
+-    config.clips = [
+-      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+-      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+-        transition: { type: 'crossfade', duration: 0.4 } },
+-    ];
+-    render(<TimelineRenderer config={config} />);
+-    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+-      clip: expect.objectContaining({ id: 'a' }),
+-      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 30, fadeOut: null }),
+-    }));
+-    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+-      clip: expect.objectContaining({ id: 'b' }),
+-      drawPlan: expect.objectContaining({ drawStart: 18, drawDuration: 42, ownOffset: 12 }),
+-    }));
+-  });
+-
+-  it('passes the compiled incoming fade and occurrence cap through the actual renderer without host reclamping', () => {
+-    const config = buildConfig();
+-    config.clips = [
+-      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+-      { id: 'b', clipType: 'hold', track: 'V1', at: 1, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+-        transition: { type: 'fade', duration: 2 },
+-        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
+-    ];
+-    const compiled = compilePlayerTransitions(config)!;
+-    expect(compiled).toBeDefined();
+-    visualClipMock.mockClear();
+-    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
+-    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+-      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 2 } }),
+-      drawPlan: expect.objectContaining({ drawStart: 0, drawDuration: 60, incomingPolicy: 'preroll-crossfade',
+-        fadeIn: { from: 0, to: 60, kind: 'dissolve' } }),
+-    }));
+-  });
+-
+-  it('preserves a host component overriding a native name and keeps its neighboring transition host-timed', () => {
+-    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
+-      ? () => <div data-testid="host-picture" /> : undefined);
+-    const config = buildConfig();
+-    config.clips = [
+-      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+-      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+-        transition: { type: 'fade', duration: 0.4 } },
+-    ];
+-    render(<TimelineRenderer config={config} />);
+-    expect(screen.getByTestId('host-picture')).toBeInTheDocument();
+-    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+-      clip: expect.objectContaining({ id: 'b' }), drawPlan: null,
+-    }));
+-  });
+-
+-  it('retains host bounds and neighboring timing when an injected component overrides a compiled media name', () => {
+-    astridElementComponentMock.mockImplementation((id: string) => id === 'hold'
+-      ? () => <div data-testid="compiled-host-picture" /> : undefined);
+-    const config = buildConfig();
+-    config.clips = [
+-      { id: 'a', clipType: 'hold', track: 'V1', at: 0, hold: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/a.png' } },
+-      { id: 'b', clipType: 'media', track: 'V1', at: 1, from: 0, to: 1,
+-        assetEntry: { type: 'image/png', src: 'https://example.test/b.png' },
+-        transition: { type: 'fade', duration: 2 },
+-        app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 } } },
+-    ];
+-    const compiled = compilePlayerTransitions(config)!;
+-    expect(compiled).toBeDefined();
+-    visualClipMock.mockClear();
+-    render(<TimelineRenderer config={config} compiledTransitions={compiled} />);
+-    expect(screen.getByTestId('compiled-host-picture')).toBeInTheDocument();
+-    expect(visualClipMock).toHaveBeenCalledWith(expect.objectContaining({
+-      clip: expect.objectContaining({ id: 'b', transition: { type: 'fade', duration: 1 } }), drawPlan: null,
+-    }));
+-  });
+-
+   it('keeps a canonical visual image absent at the half-open end after transition expansion', async () => {
+     const { VisualClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/VisualClip.tsx')>(
+       '@/tools/video-editor/compositions/VisualClip.tsx',
+@@ -730,13 +542,34 @@
+     expect(sequence).toHaveAttribute('data-heading', "'Sixtyfour', 'Sixtyfour Variable', monospace");
+   });
+ 
+-  it('uses the DEFAULT_THEME fallback when the timeline has no theme', () => {
++  it('uses the DEFAULT_THEME fallback when the timeline has no theme', async () => {
++    const { DEFAULT_THEME: publicDefaultTheme } = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
++      '@banodoco/timeline-composition/theme-api',
++    );
+     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
+ 
++    expect(resolveTimelineRenderTheme(buildConfig())).toEqual(publicDefaultTheme);
+     const sequence = screen.getByTestId('registered-sequence');
+-    expect(sequence).toHaveAttribute('data-accent', '#ffffff');
+-    expect(sequence).toHaveAttribute('data-bg', '#000000');
+-    expect(sequence).toHaveAttribute('data-heading', 'Georgia, serif');
++    expect(sequence).toHaveAttribute('data-accent', publicDefaultTheme.visual.color.accent);
++    expect(sequence).toHaveAttribute('data-bg', publicDefaultTheme.visual.color.bg);
++    expect(sequence).toHaveAttribute('data-heading', publicDefaultTheme.visual.type.families.heading);
++    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({
++      backgroundColor: publicDefaultTheme.visual.color.bg,
++    });
++  });
++
++  it('paints the live canvas from the resolved authored background', () => {
++    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({
++      theme_overrides: {
++        visual: {
++          color: {
++            bg: '#123456',
++          },
++        },
++      },
++    })} />);
++
++    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ backgroundColor: '#123456' });
+   });
+ 
+   it('materializes registry asset keys into component-facing preview URLs for registered sequences', () => {
+@@ -2041,3 +1874,44 @@
+     expect(screen.queryByText('wrong owner')).not.toBeInTheDocument();
+   });
+ });
++
++// PLAN 2026-10-20 06:07: Agent export resolution is the common authority.
++// Delivery-only prototype: no producer or runtime custom-theme claim.
++it('delivers the actual Agent implicit default to the mounted canvas and component', () => {
++  const config = buildConfig();
++  const before = JSON.stringify(config);
++  render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} resolvedTheme={agentTheme.implicit} />);
++  expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ backgroundColor: agentTheme.implicit.visual.color.bg });
++  expect(screen.getByTestId('registered-sequence')).toHaveAttribute('data-heading', agentTheme.implicit.visual.type.families.heading);
++  expect(screen.getByTestId('registered-sequence')).toHaveAttribute('data-accent', agentTheme.implicit.visual.color.accent);
++  expect(JSON.parse(screen.getByTestId('registered-sequence').getAttribute('data-runtime-theme')!)).toEqual({
++    ...commonTheme.cases.implicit.theme,
++    color: commonTheme.cases.implicit.theme.visual.color,
++    type: commonTheme.cases.implicit.theme.visual.type,
++    motion: commonTheme.cases.implicit.theme.visual.motion,
++  });
++  expect(JSON.stringify(config)).toBe(before);
++  expect(config.theme_overrides).toBeUndefined();
++});
++
++it('uses the complete Agent explicit result without remerging or authoring it', () => {
++  const config = buildConfig({theme: agentTheme.explicitConfig.theme, theme_overrides: agentTheme.explicitConfig.theme_overrides});
++  const before = JSON.stringify(config);
++  render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} resolvedTheme={agentTheme.explicit} />);
++  expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ backgroundColor: agentTheme.explicit.visual.color.bg });
++  expect(screen.getByTestId('registered-sequence')).toHaveAttribute('data-accent', agentTheme.explicit.visual.color.accent);
++  expect(screen.getByTestId('registered-sequence')).toHaveAttribute('data-heading', agentTheme.explicit.visual.type.families.heading);
++  expect(JSON.stringify(config)).toBe(before);
++});
++
++it('preserves the full Agent authored visual override result as a complete mounted value', () => {
++  const {config: authored, theme} = commonTheme.cases.full_visual_override;
++  const config = buildConfig({theme_overrides: authored.theme_overrides});
++  const before = JSON.stringify(config);
++  render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} resolvedTheme={theme} />);
++  expect(JSON.parse(screen.getByTestId('registered-sequence').getAttribute('data-runtime-theme')!)).toEqual({
++    ...theme, color: theme.visual.color, type: theme.visual.type, motion: theme.visual.motion,
++  });
++  expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({backgroundColor: theme.visual.color.bg});
++  expect(JSON.stringify(config)).toBe(before);
++});
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
+@@ -1,3 +1,5 @@
++import agentTheme from '../../../../../agent-theme.json';
++import type { Theme } from '@banodoco/timeline-composition/theme-api';
+ // @vitest-environment jsdom
+ import React, { createRef } from 'react';
+ import { act, cleanup, render, screen } from '@testing-library/react';
+@@ -80,15 +82,16 @@
+   }
+   expect(raf.size, 'finite RAF work exhausted').toBe(0);
+ }
+-function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevision) {
++function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevision, initialTheme?: Theme) {
+   const ref = createRef<PreviewHandle>();
+   const container = createRef<HTMLDivElement>();
+   const onTimeUpdate = vi.fn();
+-  const draw = (c: ResolvedTimelineConfig, revision = initialRevision) => (
++  const draw = (c: ResolvedTimelineConfig, revision = initialRevision, theme = initialTheme) => (
+     <RemotionPreview
+       ref={ref}
+       config={c}
+       previewRevision={revision}
++      resolvedTheme={theme}
+       onTimeUpdate={onTimeUpdate}
+       playerContainerRef={container}
+     />
+@@ -97,7 +100,7 @@
+   return {
+     ref,
+     view,
+-    replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)),
++    replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision, theme?: Theme) => view.rerender(draw(c, revision, theme)),
+   };
+ }
+ beforeEach(() => {
+@@ -325,3 +328,52 @@
+   expect(screen.queryByTestId('preview-revision-unavailable')).toBeNull();
+   expect(boundary.props.inputProps.previewRevision).toEqual({ kind: 'committed', revisionId: 'R1' });
+ });
++
++// PLAN 2026-10-20 06:07: actual Agent result, never copied default literals.
++it('defers config, actual theme and factual revision as one paused delivery', () => {
++  const first = config('theme-first'), second = config('theme-second');
++  const h = preview(first, {kind: 'committed', revisionId: 'R1'}, agentTheme.implicit);
++  h.replace(second, {kind: 'local', baseRevisionId: 'R1'}, agentTheme.explicit);
++  advance(149);
++  expect(boundary.props.inputProps.config).toBe(first);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.implicit);
++  expect(boundary.props.inputProps.previewRevision).toEqual({kind: 'committed', revisionId: 'R1'});
++  advance(1);
++  expect(boundary.props.inputProps.config).toBe(second);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.explicit);
++  expect(boundary.props.inputProps.previewRevision).toEqual({kind: 'local', baseRevisionId: 'R1'});
++});
++
++it('changes theme on the same config identity only through the delivery mailbox', () => {
++  const current = config('theme-arrival');
++  const h = preview(current, {kind: 'committed', revisionId: 'R1'}, agentTheme.implicit);
++  h.replace(current, {kind: 'committed', revisionId: 'R1'}, agentTheme.explicit);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.implicit);
++  advance(150);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.explicit);
++});
++
++it('keeps theme while an M1 metadata-only failed-target notice arrives and recovers', () => {
++  const current = config('theme-metadata');
++  const h = preview(current, {kind: 'committed', revisionId: 'R1'}, agentTheme.explicit);
++  h.replace(current, {kind: 'committed', revisionId: 'R1', unavailableTarget: {targetRevisionId: 'R2', reason: 'read failed'}}, agentTheme.explicit);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.explicit);
++  expect(boundary.props.inputProps.previewRevision.unavailableTarget.targetRevisionId).toBe('R2');
++  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
++  h.replace(current, {kind: 'committed', revisionId: 'R1'}, agentTheme.explicit);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.explicit);
++  expect(boundary.props.inputProps.previewRevision.unavailableTarget).toBeUndefined();
++});
++
++it('keeps only the newest playing config and resolved theme pair', () => {
++  const first = config('theme-play-first'), stale = config('theme-play-stale'), newest = config('theme-play-newest');
++  const h = preview(first, {kind: 'committed', revisionId: 'R1'}, agentTheme.implicit);
++  settle();
++  act(() => h.ref.current!.play());
++  h.replace(stale, {kind: 'committed', revisionId: 'R2'}, agentTheme.explicit);
++  h.replace(newest, {kind: 'local', baseRevisionId: 'R2'}, agentTheme.implicit);
++  flushFrame();
++  expect(boundary.props.inputProps.config).toBe(newest);
++  expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.implicit);
++  expect(boundary.props.inputProps.previewRevision).toEqual({kind: 'local', baseRevisionId: 'R2'});
++});

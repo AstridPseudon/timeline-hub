@@ -1,0 +1,21 @@
+{
+  "patch_check": "PASS",
+  "restored_product_matches_published_patch": true,
+  "public10_unchanged_files": 77,
+  "agent_resolver_matches_frozen_git_objects": true,
+  "assigned_worktree_status": "",
+  "full_suite_requested": false,
+  "targeted": {
+    "files": 7,
+    "passed": 132,
+    "seconds": 10.64
+  },
+  "red": {
+    "selected": 7,
+    "failed": 6,
+    "passed": 1,
+    "filtered": 59
+  },
+  "type_probe": "PASS",
+  "scoped_product_eslint": "PASS"
+}

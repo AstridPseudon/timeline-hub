@@ -1,0 +1,265 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-delivered-theme-seam/offline-app
+
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx (48 tests | 2 failed | 45 skipped) 155ms
+   × delivers the actual Agent implicit default to the mounted canvas and component 114ms
+   × uses the complete Agent explicit result without remerging or authoring it 16ms
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx (18 tests | 4 failed | 14 skipped) 74ms
+   × defers config, actual theme and factual revision as one paused delivery 46ms
+   × changes theme on the same config identity only through the delivery mailbox 9ms
+   × keeps theme while an M1 metadata-only failed-target notice arrives and recovers 8ms
+   × keeps only the newest playing config and resolved theme pair 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx > delivers the actual Agent implicit default to the mounted canvas and component
+Error: expect(element).toHaveStyle()
+
+- Expected
+
+- backgroundColor: rgb(5, 8, 20);
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx:1884:53
+    1882|   const before = JSON.stringify(config);
+    1883|   render(<TimelineRenderer astridElementHost={fixtureAstridElementHost…
+    1884|   expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ back…
+       |                                                     ^
+    1885|   expect(screen.getByTestId('registered-sequence')).toHaveAttribute('d…
+    1886|   expect(screen.getByTestId('registered-sequence')).toHaveAttribute('d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx > uses the complete Agent explicit result without remerging or authoring it
+Error: expect(element).toHaveAttribute("data-heading", "Arial") // element.getAttribute("data-heading") === "Arial"
+
+Expected the element to have attribute:
+  data-heading="Arial"
+Received:
+  data-heading="Georgia, serif"
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx:1903:53
+    1901|   expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ back…
+    1902|   expect(screen.getByTestId('registered-sequence')).toHaveAttribute('d…
+    1903|   expect(screen.getByTestId('registered-sequence')).toHaveAttribute('d…
+       |                                                     ^
+    1904|   expect(JSON.stringify(config)).toBe(before);
+    1905| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx > defers config, actual theme and factual revision as one paused delivery
+AssertionError: expected undefined to be { id: 'banodoco-default', …(1) } // Object.is equality
+
+- Expected:
+{
+  "id": "banodoco-default",
+  "visual": {
+    "canvas": {
+      "fps": 30,
+      "height": 1080,
+      "width": 1920,
+    },
+    "color": {
+      "accent": "#67E8F9",
+      "bg": "#050814",
+      "fg": "#FAFAFA",
+    },
+    "motion": {
+      "fadeMs": 450,
+    },
+    "type": {
+      "families": {
+        "body": "Arial",
+        "heading": "Arial",
+        "mono": "monospace",
+      },
+      "lineHeight": 1.2,
+      "size": {
+        "base": 32,
+        "large": 84,
+        "small": 22,
+      },
+      "weight": {
+        "bold": 600,
+        "normal": 400,
+      },
+    },
+  },
+}
+
++ Received:
+undefined
+
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx:339:51
+    337|   advance(149);
+    338|   expect(boundary.props.inputProps.config).toBe(first);
+    339|   expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.impl…
+       |                                                   ^
+    340|   expect(boundary.props.inputProps.previewRevision).toEqual({kind: 'co…
+    341|   advance(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx > changes theme on the same config identity only through the delivery mailbox
+AssertionError: expected undefined to be { id: 'banodoco-default', …(1) } // Object.is equality
+
+- Expected:
+{
+  "id": "banodoco-default",
+  "visual": {
+    "canvas": {
+      "fps": 30,
+      "height": 1080,
+      "width": 1920,
+    },
+    "color": {
+      "accent": "#67E8F9",
+      "bg": "#050814",
+      "fg": "#FAFAFA",
+    },
+    "motion": {
+      "fadeMs": 450,
+    },
+    "type": {
+      "families": {
+        "body": "Arial",
+        "heading": "Arial",
+        "mono": "monospace",
+      },
+      "lineHeight": 1.2,
+      "size": {
+        "base": 32,
+        "large": 84,
+        "small": 22,
+      },
+      "weight": {
+        "bold": 600,
+        "normal": 400,
+      },
+    },
+  },
+}
+
++ Received:
+undefined
+
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx:351:51
+    349|   const h = preview(current, {kind: 'committed', revisionId: 'R1'}, ag…
+    350|   h.replace(current, {kind: 'committed', revisionId: 'R1'}, agentTheme…
+    351|   expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.impl…
+       |                                                   ^
+    352|   advance(150);
+    353|   expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.expl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx > keeps theme while an M1 metadata-only failed-target notice arrives and recovers
+AssertionError: expected undefined to be { id: 'banodoco-default', …(1) } // Object.is equality
+
+- Expected:
+{
+  "id": "banodoco-default",
+  "visual": {
+    "canvas": {
+      "fps": 30,
+      "height": 1080,
+      "width": 1920,
+    },
+    "color": {
+      "accent": "#654321",
+      "bg": "#123456",
+      "fg": "#FAFAFA",
+    },
+    "motion": {
+      "fadeMs": 450,
+    },
+    "type": {
+      "families": {
+        "body": "Arial",
+        "heading": "Arial",
+        "mono": "monospace",
+      },
+      "lineHeight": 1.2,
+      "size": {
+        "base": 32,
+        "large": 84,
+        "small": 22,
+      },
+      "weight": {
+        "bold": 600,
+        "normal": 400,
+      },
+    },
+  },
+}
+
++ Received:
+undefined
+
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx:360:51
+    358|   const h = preview(current, {kind: 'committed', revisionId: 'R1'}, ag…
+    359|   h.replace(current, {kind: 'committed', revisionId: 'R1', unavailable…
+    360|   expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.expl…
+       |                                                   ^
+    361|   expect(boundary.props.inputProps.previewRevision.unavailableTarget.t…
+    362|   expect(screen.getByTestId('preview-revision-label')).toHaveTextConte…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx > keeps only the newest playing config and resolved theme pair
+AssertionError: expected undefined to be { id: 'banodoco-default', …(1) } // Object.is equality
+
+- Expected:
+{
+  "id": "banodoco-default",
+  "visual": {
+    "canvas": {
+      "fps": 30,
+      "height": 1080,
+      "width": 1920,
+    },
+    "color": {
+      "accent": "#67E8F9",
+      "bg": "#050814",
+      "fg": "#FAFAFA",
+    },
+    "motion": {
+      "fadeMs": 450,
+    },
+    "type": {
+      "families": {
+        "body": "Arial",
+        "heading": "Arial",
+        "mono": "monospace",
+      },
+      "lineHeight": 1.2,
+      "size": {
+        "base": 32,
+        "large": 84,
+        "small": 22,
+      },
+      "weight": {
+        "bold": 600,
+        "normal": 400,
+      },
+    },
+  },
+}
+
++ Received:
+undefined
+
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx:377:51
+    375|   flushFrame();
+    376|   expect(boundary.props.inputProps.config).toBe(newest);
+    377|   expect(boundary.props.inputProps.resolvedTheme).toBe(agentTheme.impl…
+       |                                                   ^
+    378|   expect(boundary.props.inputProps.previewRevision).toEqual({kind: 'lo…
+    379| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 1 passed | 59 skipped (66)
+   Start at  06:24:15
+   Duration  2.73s (transform 921ms, setup 208ms, import 1.34s, tests 230ms, environment 718ms)
+

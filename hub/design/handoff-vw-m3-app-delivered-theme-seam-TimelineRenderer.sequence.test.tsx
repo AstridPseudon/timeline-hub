@@ -88,62 +88,10 @@ vi.mock('remotion', async () => {
 });
 
 vi.mock('@banodoco/timeline-composition/theme-api', async () => {
-  const reactModule = await import('react');
   const actual = await vi.importActual<typeof import('@banodoco/timeline-composition/theme-api')>(
     '@banodoco/timeline-composition/theme-api',
   );
-  const { DEFAULT_THEME } = actual;
-  const runtimeThemeValue = {
-    ...DEFAULT_THEME,
-    color: DEFAULT_THEME.visual.color,
-    type: DEFAULT_THEME.visual.type,
-    motion: DEFAULT_THEME.visual.motion,
-  };
-
-  const toRuntimeTheme = (value: unknown) => {
-    if (
-      value
-      && typeof value === 'object'
-      && 'visual' in value
-      && value.visual
-      && typeof value.visual === 'object'
-    ) {
-      return {
-        ...runtimeThemeValue,
-        ...value.visual,
-        color: {
-          ...runtimeThemeValue.color,
-          ...(typeof value.visual.color === 'object' ? value.visual.color : {}),
-        },
-        type: {
-          ...runtimeThemeValue.type,
-          ...(typeof value.visual.type === 'object' ? value.visual.type : {}),
-          families: {
-            ...runtimeThemeValue.type.families,
-            ...(typeof value.visual.type === 'object' && typeof value.visual.type.families === 'object'
-              ? value.visual.type.families
-              : {}),
-          },
-        },
-      };
-    }
-    return runtimeThemeValue;
-  };
-
-  const ThemeContext = reactModule.createContext(runtimeThemeValue);
-
-  return {
-    ...actual,
-    DEFAULT_THEME,
-    ThemeProvider: ({
-      children,
-      value,
-    }: PropsWithChildren<{ value: typeof DEFAULT_THEME }>) => (
-      <ThemeContext.Provider value={toRuntimeTheme(value)}>{children}</ThemeContext.Provider>
-    ),
-    useTheme: () => reactModule.useContext(ThemeContext),
-    composeAnimations: () => ({}),
-  };
+  return { ...actual, composeAnimations: () => ({}) };
 });
 
 vi.mock('@/tools/video-editor/compositions/AudioAnalysisProvider', async () => {
