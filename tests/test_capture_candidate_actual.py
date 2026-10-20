@@ -243,10 +243,26 @@ def test_original_working_copy_forgeries_refuse_before_writes(candidate, field, 
 
 
 @pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
-def test_candidate_claim_without_actual_preview_refuses_before_writes(candidate, inline):
+def test_working_copy_without_candidate_is_admitted_uncertified(candidate, tmp_path, inline):
     snapshot, _ = _candidate_snapshot(candidate)
-    refused = _assert_refused_without_writes(candidate.service, _request(candidate, snapshot, None, inline=inline))
-    assert 'source_kind "cas"' in str(refused) and "UNCERTIFIED" in str(refused)
+    request = _request(candidate, snapshot, None, inline=inline)
+    task = candidate.service.create_task(request)["task"]
+    claim = candidate.service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
+                                          "runtime_epoch": candidate.service.health()["runtime_epoch"]})
+    assert claim["task_id"] == task["id"]
+    ref = claim["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
+    assert ref == {"digest": snapshot_digest(snapshot), "project_id": candidate.project,
+                   "timeline_id": "main", "source_kind": "cas"}
+    assert "authoring_preview" not in claim["spec"]["spec"]["inputs"]
+
+
+@pytest.mark.parametrize("candidate_given", [True, False], ids=["with-candidate", "without-candidate"])
+@pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
+def test_forged_working_copy_certificate_refuses_before_writes(candidate, inline, candidate_given):
+    snapshot, preview = _candidate_snapshot(candidate)
+    snapshot["metadata"]["working_copy"]["candidate_digest"] = "sha256:" + "a" * 64
+    request = _request(candidate, snapshot, preview if candidate_given else None, inline=inline)
+    _assert_refused_without_writes(candidate.service, request)
 
 
 def test_explicit_cas_candidate_is_native_without_binding(candidate, tmp_path):

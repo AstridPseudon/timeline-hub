@@ -136,10 +136,7 @@ def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid
         service.close()
 
 
-# 02:28 capture certification requires a real authoring_preview and projector;
-# restore this positive with an authoritative candidate instead of marker-only data.
-@pytest.mark.xfail(strict=True, reason="capture certification requires a verified authoring_preview (02:28 decision)")
-def test_working_copy_uses_cas_and_requires_its_saved_base_at_claim(tmp_path):
+def test_working_copy_without_candidate_is_admitted_uncertified_and_requires_its_saved_base(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -183,7 +180,10 @@ def test_working_copy_uses_cas_and_requires_its_saved_base_at_claim(tmp_path):
         with pytest.raises(NotFoundError, match="base parent revision"):
             service.claim_next(claim)
         insert_base()
-        assert service.claim_next(claim)["task_id"] == task["id"]
+        claimed = service.claim_next(claim)
+        assert claimed["task_id"] == task["id"]
+        view = claimed["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
+        assert view == {"digest": ref["digest"], "project_id": project_id, "timeline_id": "main", "source_kind": "cas"}
     finally:
         service.close()
 
