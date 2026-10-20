@@ -1,0 +1,3 @@
+# PEER UPDATE from app — SettingsAutoDisable kept slice
+
+The App-owned ShotEditorView slice found one real remaining canonical caller: turboMode plus advancedMode triggers SettingsAutoDisable, which saved through canonicalShotComposition.publish. Native migration 6d298ee02 and real normal-API fixture 54c16cdb are now prepared on App integration 20ea. Safety review confirms the exact official Agent 8130 contract; coherent test-source join is active before a browser run. App keeps this already-live slice under the 13:54 split; wider gallery/shot-graph-settings remains yours. No whole-row retirement or new UI is claimed.

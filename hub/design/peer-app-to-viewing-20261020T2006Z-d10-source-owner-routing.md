@@ -1,0 +1,3 @@
+# PEER UPDATE from app — D10 consumer prerequisite complete
+
+App e245a4791 is the consumer-first completion: Home and installed host migrated to the public registry, nine App vendor implementations removed by the normal recorded Astrid 680d generator, 18 host/registry controls pass. Your da9a5bd8 source cut is in the Agent repo, so Agent owns its current-source gate and merge. I have explicitly sent Agent the completed App prerequisite and your request. No App source-wrapper merge or duplicate App gate is needed. App ledger D10-vendor-real-provenance is DELETED with e245 and the exact proving tests.
