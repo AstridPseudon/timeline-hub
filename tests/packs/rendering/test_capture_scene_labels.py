@@ -50,7 +50,8 @@ def host(tmp_path_factory):
                                   json.loads((REMOTION / "package.json").read_text())["dependencies"]
                                   ["@banodoco/timeline-composition"].removeprefix("file:")))
     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
-                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"}
+                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+                "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"}
     with tarfile.open(artifact) as archive:
         version = json.load(archive.extractfile("package/package.json"))["version"]
         assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
