@@ -404,13 +404,14 @@ def _candidate_shot_row(shot: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "shot_id": shot["shot_id"],
         "revision_id": shot["revision_id"],
+        "content_digest": shot["content_digest"],
         "name": str(metadata.get("name") or metadata.get("title") or payload.get("name") or shot["shot_id"]),
         "text_bindings": list(payload.get("text_bindings") or []) if isinstance(payload.get("text_bindings"), list) else [],
     }
 
 
 def _open_candidate_input_closure(
-    client: Any, *, project_id: str, preview: Mapping[str, Any],
+    client: Any, *, project_id: str, timeline_id: str, preview: Mapping[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Like ``_open_current_input_closure``, but for an unpublished working copy (a frozen candidate)."""
     from astrid.sdk.authoring_render_preview import candidate_projection
@@ -421,8 +422,11 @@ def _open_candidate_input_closure(
         _fail(f"The working copy cannot be projected for inspection: {exc}")
     projected = built["projected"]
     publication = built["publication"]
+    if publication["project_id"] != project_id or publication["timeline_id"] != timeline_id:
+        _fail("The working copy targets a different project or timeline.")
     authority = {
         "parent_revision_id": publication["parent_revision_id"],
+        "parent_content_digest": publication["content_digest"],
         "children": [
             {"timeline_id": row["timeline_id"], "revision_id": row["revision_id"],
              "config_version": 1, "config_hash": row["content_digest"]}
@@ -716,7 +720,9 @@ def prepare_filmstrip(
         )
         if isinstance(inputs.get('authoring_preview'), Mapping):
             config, registry, closure = _open_candidate_input_closure(
-                client, project_id=project_id, preview=inputs['authoring_preview'])
+                client, project_id=project_id,
+                timeline_id=str(_identifier(timeline_row, 'timeline_id', 'id')),
+                preview=inputs['authoring_preview'])
         else:
             requested_revision = inputs.get('revision_id')
             if requested_revision not in (None, '') and (
@@ -807,7 +813,9 @@ def prepare_filmstrip(
             _fail('Composed frame capture requires an immutable parent revision.')
         if isinstance(inputs.get('authoring_preview'), Mapping):
             config, registry, closure = _open_candidate_input_closure(
-                client, project_id=project_id, preview=inputs['authoring_preview'])
+                client, project_id=project_id,
+                timeline_id=str(_identifier(capture_row, 'timeline_id', 'id')),
+                preview=inputs['authoring_preview'])
             requested_revision = None
         else:
             try:
@@ -819,19 +827,17 @@ def prepare_filmstrip(
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
             except Exception as exc:
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
-        # The parent projection carries canonical media identities, but the
-        # generic host only accepts a runtime-admitted registry snapshot. Keep
-        # this composed-capture path aligned with managed render admission so
-        # every asset is authorized and materializable before Remotion runs.
+        # The parent projection carries canonical media identities. Check them
+        # against managed render admission so every asset is authorized and
+        # materializable before Remotion runs, but send the projection itself:
+        # Runtime admits a capture only when its registry equals that projection.
         from astrid.packs.rendering.actions.render.managed_timeline import (
             _runtime_snapshot_registry,
         )
         registry_client = remote if callable(
             getattr(getattr(remote, 'media', None), 'list', None)
         ) else client
-        registry = _runtime_snapshot_registry(
-            registry, project_ref=canonical_project, client=registry_client
-        )
+        _runtime_snapshot_registry(registry, project_ref=canonical_project, client=registry_client)
         parent_revision = (
             closure.get('parent_revision_id')
             or capture_row.get('head_revision_id')
