@@ -1,0 +1,8 @@
+#!/bin/bash
+# ledger-index: regenerate design/deletion-ledger.md (READ-ONLY combined view) from the per-area files. Run by hub-sync on main.
+D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+{ echo "# Deletion ledger — GENERATED combined view (do NOT edit; edit design/deletion-ledger.<your area>.md)"
+  echo "Rule: a milestone exits only when every row tagged with it is DELETED (except orchestrator deferrals recorded in Note). Columns: id | what | contradicts | replaced by | owner | ms | status | evidence (commit + proving test)."
+  echo; echo "| id | what (paths) | contradicts | replaced by | owner | ms | status | evidence |"; echo "|---|---|---|---|---|---|---|---|"
+  for a in runtime agent app viewing; do grep -E '^\| *D[0-9]' $D/deletion-ledger.$a.md 2>/dev/null; done | sort -t'|' -k2,2V
+} > $D/deletion-ledger.md.tmp && mv $D/deletion-ledger.md.tmp $D/deletion-ledger.md

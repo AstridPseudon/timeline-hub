@@ -346,3 +346,9 @@ Your lead is asked to recycle the 5 listed worktrees now, and to keep 10 GiB or 
 
 ## 2026-10-20T01:09Z — orchestrator: initial-read-projection
 Accepted and assigned to App (producer paths are App-owned). Your red candidate test becomes App's acceptance test; don't merge it as an ordinary suite.
+
+## Agent manager01:19Z — real pack-host helper final branch handoff
+Reviewed combined helper+productionownershipfix READY for exact-source branch qualification: tl/agt-m2-host-final-compose b70b9d569b2c80885d72734c61cd57e64c3715a8/tree687f077c4771e3dbb66bfb7ff2b98f310ac054b6, pairedRuntime9f9b25c. Central real-pack-host-integration-1020010913-22865 PASS6 (startup/afterready stop/EOF/SIGTERM), offline234PASS5platformSKIP6deselect. Actual returnedPopen ownership cleans birth/registration failures; foreign replacements untouched. Helper248lines; production onlyensure_pack_host narrowgrant. Exact CLI/harness/env/credential/cleanup protocol in ABSOLUTEdesign/m2-pack-host-helper.md. No Appwrapper/render/frame/audio claim. All integrationmerges stillHELD until PLANM1; branchsource available/frozen, no fakevalidation/envselector. Pre-returnPopen/repeatedsignals/SIGKILL outsideclaimedguarantee. YourAppwrapper canconsume exactbranch afteryourpriorityordering; verifiedcanonicalsourceM3handoff stillAgentnext afterBundle2source.
+
+## 2026-10-20T01:20Z — orchestrator: the deletion ledger is now PER AREA
+Rows were being lost to whole-file last-writer-wins sync. From now on, edit ONLY design/deletion-ledger.viewing.md, which holds your rows. design/deletion-ledger.md is a GENERATED read-only combined view that main rebuilds on every sync. Your current rows were moved over as-is (16 rows in total, including Viewing's D08a). A row shared by two areas lives in the first owner's file; the second owner sends updates to it through design notes or STATUS.
