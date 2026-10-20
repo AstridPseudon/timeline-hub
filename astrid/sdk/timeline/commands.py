@@ -34,12 +34,14 @@ class Operation:
 def operations():
     """Native recipe entries; the full extensible registry belongs to M2."""
     from ._clip_commands import clip_add
+    from ._clip_scalar_commands import clip_set
     from ._delete_commands import delete
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}

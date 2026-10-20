@@ -47,11 +47,7 @@ def track_set(ctx, command):
         ctx.clear(ref, [key])
 
 
-def clip_set_params(ctx, command):
-    from astrid.sdk.timeline_address import element_schema
-
-    ref = _target(ctx, command, 'clip')
-    values, clear = _changes(command)
+def _clip_basis(ctx, ref):
     identity = {key: ctx.read(ref, [key]) for key in (
         'clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id',
         'elementRef', 'element_ref')}
@@ -64,6 +60,15 @@ def clip_set_params(ctx, command):
         registry_ref = ref.rsplit('/', 1)[0] + '/registry'
         for key in ('media_id', 'object_id', 'digest', 'content_digest'):
             ctx.read(registry_ref, ['assets', identity[selector], key])
+    return identity
+
+
+def clip_set_params(ctx, command):
+    from astrid.sdk.timeline_address import element_schema
+
+    ref = _target(ctx, command, 'clip')
+    values, clear = _changes(command)
+    identity = _clip_basis(ctx, ref)
     element = identity['clipType'] or identity['clip_type'] or 'media'
     if not isinstance(element, str):
         raise CommandError('clip type must be a string', ref=ref)
