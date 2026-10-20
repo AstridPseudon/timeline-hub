@@ -74,7 +74,8 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
 }
 
-async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
+async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>,
+  paramReadClient?: Parameters<typeof useTimelineCommandSession>[0]['paramReadClient']) {
   const env = existingEnv ?? await environment();
   installStorage(env);
   const initial = env.current();
@@ -90,7 +91,7 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
     const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => legacyClean,
       resolveAssetUrl: async (file) => file, loaded, snapshotWriteBlockedRef, headRevisionRef,
-      configVersionRef, lastSavedSignatureRef, store, recoveryConfig, shots: { shots: undefined, isLoading: false, error: null,
+      configVersionRef, lastSavedSignatureRef, store, recoveryConfig, paramReadClient, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
     return { commit, commands };
   }, { initialProps: { provider: env.provider as DataProvider, timelineId: 'timeline-commit', loaded: undefined as timelineData.TimelineData | undefined } });
@@ -102,6 +103,47 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it.each(['display', 'head', 'legacy save', 'close'] as const)(
+    'fences selected PARAM prefetch when %s changes during loading', async (change) => {
+      const raw = commandDocument();
+      const selected = { packId: 'test-pack', id: 'reveal', kind: 'effect', revision: `sha256:${'1'.repeat(64)}` };
+      (raw.parent_revision.payload.clips as Record<string, unknown>[])[0].elementRef = selected;
+      raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
+      raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+      const env = await environment(raw);
+      const pin = { document_id: 'original-pack', version: 1, content_digest: `sha256:${'2'.repeat(64)}` };
+      const descriptor = { object_id: `sha256:${'3'.repeat(64)}`, digest: `sha256:${'3'.repeat(64)}`,
+        size: 2, media_type: 'application/json' as const };
+      let release!: () => void;
+      const pending = new Promise<void>((resolve) => { release = resolve; });
+      const reads = {
+        getProjectVerifiedDocument: vi.fn(async () => ({ pin, document: { document_id: pin.document_id,
+          project_id: scope.projectId, kind: 'astrid.project-pack', version: 1,
+          created_at: '2026-10-19T00:00:00Z', updated_at: '2026-10-19T00:00:00Z',
+          content: { schema: 'astrid.project-pack/v1', pack_id: selected.packId, source_binding_key: 'project-packs',
+            relative_manifest: `${scope.realmId}/${scope.projectId}/packs/${selected.packId}/pack.yaml`,
+            admissions: [{ ...selected, snapshot_object: descriptor }] } } })),
+        getProjectVerifiedDocumentObject: vi.fn(async () => { await pending; return { ...descriptor, bytes_base64: 'e30=' }; }),
+      };
+      const { hook, headRevisionRef, setLegacyClean } = await scoped(env, reads);
+      const port = hook.result.current.commands.clipParamsPort!;
+      const before = hook.result.current.commit.dataRef.current!;
+      const captured = captureClipParamsEdit(port, before, 'x');
+      const loading = port.prefetch!(captured.basis, pin);
+      const refusal = expect(loading).rejects.toThrow(/changed|unavailable|earlier timeline saves/);
+      await waitFor(() => expect(reads.getProjectVerifiedDocumentObject).toHaveBeenCalledTimes(1));
+      if (change === 'display') hook.result.current.commit.dataRef.current = { ...before };
+      if (change === 'head') headRevisionRef.current = { ...headRevisionRef.current! };
+      if (change === 'legacy save') setLegacyClean(false);
+      if (change === 'close') hook.unmount();
+      release();
+      await refusal;
+      expect(env.commits()).toHaveLength(0);
+      expect(env.previews).not.toHaveBeenCalled();
+      expect(captured.basis.select).toBe('parent/clip:x');
+      if (change !== 'close') hook.unmount();
+    },
+  );
   it('exposes only explicit parent deletion and fences capture, finish and submit behind earlier saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipDeletePort!;

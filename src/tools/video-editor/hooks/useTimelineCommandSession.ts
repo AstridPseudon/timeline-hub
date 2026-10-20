@@ -30,6 +30,7 @@ export function useTimelineCommandSession(options: {
   store: TimelineStoreApi;
   shots: VideoEditorShotsHost;
   recoveryConfig?: ReturnType<typeof import('./useTimelineSave.draftConfig.ts').createRecoveryConfig>;
+  paramReadClient?: Parameters<typeof createTimelineCommandSession>[0]['paramReadClient'];
 }) {
   const { provider, timelineId, snapshotWriteBlockedRef } = options;
   const latest = useRef(options);
@@ -130,6 +131,7 @@ export function useTimelineCommandSession(options: {
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
+        paramReadClient: options.paramReadClient,
         changed,
         preview: (patch) => {
           if (disposed) throw new Error('Timeline command session is closed');
@@ -182,6 +184,21 @@ export function useTimelineCommandSession(options: {
         };
         session.clipParamsPort = {
           capture(input) { requireCleanParamsEdit(); return paramsPort.capture(input); },
+          invalidatePrefetch() { paramsPort.invalidatePrefetch?.(); },
+          async prefetch(basis, pin) {
+            requireCleanParamsEdit();
+            if (!paramsPort.prefetch) throw new Error('Selected clip parameter input reads are unavailable; draft preserved');
+            const data = latest.current.commit.dataRef.current;
+            const head = latest.current.headRevisionRef.current;
+            const generation = readGenerationRef.current;
+            const inputs = await paramsPort.prefetch(basis, pin);
+            requireCleanParamsEdit();
+            if (disposed || sessionRef.current !== session || data !== latest.current.commit.dataRef.current
+              || head !== latest.current.headRevisionRef.current || generation !== readGenerationRef.current) {
+              throw new Error('Selected clip parameter display changed during loading; draft preserved');
+            }
+            return inputs;
+          },
           finish(basis, args) { requireCleanParamsEdit(); return paramsPort.finish(basis, args); },
           submit(input) { requireCleanParamsEdit(); paramsPort.submit(input); },
         };
@@ -231,7 +248,7 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
+  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef, options.paramReadClient]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;

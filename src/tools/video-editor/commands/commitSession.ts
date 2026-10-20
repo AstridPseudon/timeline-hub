@@ -9,6 +9,7 @@ import { parentClipAddPreview, type ParentClipAddCapturePort } from './parentCli
 import { stableOutputIdentity } from '../data/shotComposition.ts';
 import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
 import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
+import { readRetainedParamInputs } from '@/integrations/runtime/retainedParamInputs.ts';
 import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
 import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
@@ -44,6 +45,7 @@ type Options = {
   preview(patch: TimelinePatch): void;
   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
   changed(state: CommandSessionState): void;
+  paramReadClient?: Parameters<typeof readRetainedParamInputs>[0];
 };
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
@@ -80,6 +82,9 @@ export async function createTimelineCommandSession(options: Options) {
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
   const prepared = new Map<string, { payload: Payload; generation: number; basis: OutboxBasis }>();
+  let paramsCapture: { basis: ReturnType<ClipParamsCapturePort['capture']>; bundle: AuthoredBundle;
+    head: OutboxHead; displayed: OutboxHead; projection: number } | undefined;
+  let paramsReadGeneration = 0;
   let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
   function rejected() {
     return !!box && !resolving && !persistenceFailed && !pendingAppends.length
@@ -490,6 +495,8 @@ export async function createTimelineCommandSession(options: Options) {
   };
   const clipParamsPort: ClipParamsCapturePort = {
     capture({ clipId, current }) {
+      paramsReadGeneration++;
+      paramsCapture = undefined;
       assertReady();
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
         || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
@@ -504,7 +511,40 @@ export async function createTimelineCommandSession(options: Options) {
       const basis = { bundle: copy(bundle), select, clipId, localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } };
       assertFiniteJson(basis);
-      return freezeJson(json(basis)) as ReturnType<ClipParamsCapturePort['capture']>;
+      paramsCapture = { basis: freezeJson(json(basis)) as ReturnType<ClipParamsCapturePort['capture']>,
+        bundle, head: known.head, displayed: displayHead, projection: projectionGeneration };
+      return paramsCapture.basis;
+    },
+    invalidatePrefetch() { paramsReadGeneration++; paramsCapture = undefined; },
+    async prefetch(basis, originalPin) {
+      assertReady();
+      if (!options.paramReadClient) throw new Error('Selected clip parameter input reads are unavailable; draft preserved');
+      if (!paramsCapture || !equal(paramsCapture.basis, basis) || basis.localGeneration !== localGeneration
+        || paramsCapture.bundle !== bundle || !sameHead(paramsCapture.head, known.head)
+        || !sameHead(paramsCapture.displayed, displayHead) || paramsCapture.projection !== projectionGeneration) {
+        throw new Error('Selected clip parameter capture changed; draft preserved');
+      }
+      // Freeze target, owner, pin and all original guards before either read.
+      const captured = paramsCapture;
+      const original = captured.basis;
+      const pin = freezeJson(copy(originalPin));
+      const raw = new AuthoredState(original.bundle as AuthoredBundle).entity(original.select as string)!;
+      const truthy = (value: JSON | undefined) => !!value
+        && (!object(value) || Object.keys(value).length > 0) && (!Array.isArray(value) || value.length > 0);
+      const selected = freezeJson(copy(truthy(raw.elementRef) ? raw.elementRef : raw.element_ref));
+      const generation = ++paramsReadGeneration;
+      const before = bundle, head = known.head, displayed = displayHead, projection = projectionGeneration;
+      const context = freezeJson({ project_id: options.scope.projectId, realm_id: options.scope.realmId });
+      const inputs = await readRetainedParamInputs(options.paramReadClient, context, pin, selected);
+      assertReady();
+      if (generation !== paramsReadGeneration || captured !== paramsCapture || before !== bundle
+        || original.localGeneration !== localGeneration || !sameHead(head, known.head)
+        || !sameHead(displayed, displayHead) || projection !== projectionGeneration) {
+        throw new Error('Selected clip parameter capture changed during loading; draft preserved');
+      }
+      return freezeJson({ basis: original, schema_source: pin,
+        schema_inputs: [[copy(inputs.verified), copy(inputs.objects)]] as [typeof inputs.verified, typeof inputs.objects][],
+        realm_id: context.realm_id });
     },
     finish(basis, args) {
       assertReady();

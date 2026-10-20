@@ -14,6 +14,35 @@ const CAPABILITY_DIGEST = `sha256:${'a'.repeat(64)}`;
 const INPUT_OBJECT_ID = `sha256:${'1'.repeat(64)}`;
 const MEDIA_OBJECT_ID = 'object-r4-media';
 const MEDIA_OBJECT_DIGEST = `sha256:${'c'.repeat(64)}`;
+const VERIFIED_MEDIA_SELECTION = {
+  asset: 'asset/verified',
+  generation_id: 'generation/verified',
+  variant_id: 'variant/verified',
+  object_id: `sha256:${'e'.repeat(64)}`,
+  catalog_digest: `sha256:${'f'.repeat(64)}`,
+};
+const VERIFIED_MEDIA = {
+  selection: VERIFIED_MEDIA_SELECTION,
+  media_type: 'video/mp4',
+  size: 4096,
+  duration_seconds: 4,
+};
+const VERIFIED_DOCUMENT_PIN = {
+  document_id: 'document/verified',
+  version: 7,
+  content_digest: `sha256:${'1'.repeat(64)}`,
+};
+const VERIFIED_DOCUMENT = {
+  pin: VERIFIED_DOCUMENT_PIN,
+  document: { kind: 'config', version: 7, content: { params: { count: 8 } } },
+};
+const VERIFIED_DOCUMENT_OBJECT = {
+  object_id: `sha256:${'2'.repeat(64)}`,
+  digest: `sha256:${'3'.repeat(64)}`,
+  size: 48,
+  media_type: 'application/json' as const,
+  bytes_base64: 'eyJwYXJhbXMiOnsiY291bnQiOjJ9fQ==',
+};
 const MANAGED_OUTPUT_ASSOCIATION_ID = 'managed-output-r3';
 const MANAGED_OUTPUT_OBJECT_ID = `sha256:${'d'.repeat(64)}`;
 const EXPECTED_IDENTITY = {
@@ -91,6 +120,7 @@ function receipt(commandKind: string, key: string, projectId = PROJECT_ID) {
 
 function createTransport(options: {
   revokeFirstMediaRead?: boolean;
+  verifiedReadFailure?: 'media' | 'document' | 'object';
   schemaDigest?: string;
   capabilities?: string[];
   actorId?: string;
@@ -190,6 +220,18 @@ function createTransport(options: {
     }
     if (method === 'GET' && path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/tasks?limit=1&cursor=tasks-2`) {
       return { status: 200, headers: {}, body: json({ items: [task], next_cursor: 'tasks-3' }) };
+    }
+    if (method === 'GET' && path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection/verified?asset=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.asset)}&generation_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.generation_id)}&variant_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.variant_id)}&object_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.object_id)}&catalog_digest=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.catalog_digest)}`) {
+      if (options.verifiedReadFailure === 'media') return { status: 409, headers: {}, body: json({ code: 'verified_read_refused', message: 'media selection refused' }) };
+      return { status: 200, headers: {}, body: json(VERIFIED_MEDIA) };
+    }
+    if (method === 'GET' && path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/document-inputs/verified?document_id=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.document_id)}&version=${VERIFIED_DOCUMENT_PIN.version}&content_digest=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.content_digest)}`) {
+      if (options.verifiedReadFailure === 'document') return { status: 409, headers: {}, body: json({ code: 'verified_read_refused', message: 'document pin refused' }) };
+      return { status: 200, headers: {}, body: json(VERIFIED_DOCUMENT) };
+    }
+    if (method === 'GET' && path === `/v1/projects/${encodeURIComponent(PROJECT_ID)}/document-objects/verified?document_id=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.document_id)}&version=${VERIFIED_DOCUMENT_PIN.version}&content_digest=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.content_digest)}&object_id=${encodeURIComponent(VERIFIED_DOCUMENT_OBJECT.object_id)}`) {
+      if (options.verifiedReadFailure === 'object') return { status: 409, headers: {}, body: json({ code: 'verified_read_refused', message: 'document object refused' }) };
+      return { status: 200, headers: {}, body: json(VERIFIED_DOCUMENT_OBJECT) };
     }
     if (method === 'POST' && path === `/v1/managed-outputs/${MANAGED_OUTPUT_ASSOCIATION_ID}/export`) {
       expect(headers['Content-Type']).toBe('application/json');
@@ -363,6 +405,48 @@ describe('AstridRuntimeClient paired restart detection without build-time ids', 
 });
 
 describe('AstridRuntimeClient canonical Runtime reads and browser task seam', () => {
+  it('forwards verified reads through the authenticated session without adapting responses', async () => {
+    const fixture = createTransport();
+    const client = clientFor(fixture, { token: true });
+
+    const media = await client.getProjectVerifiedMedia(PROJECT_ID, VERIFIED_MEDIA_SELECTION);
+    const document = await client.getProjectVerifiedDocument(PROJECT_ID, VERIFIED_DOCUMENT_PIN);
+    const object = await client.getProjectVerifiedDocumentObject(
+      PROJECT_ID,
+      VERIFIED_DOCUMENT_PIN,
+      VERIFIED_DOCUMENT_OBJECT.object_id,
+    );
+
+    expect(media).toEqual(VERIFIED_MEDIA);
+    expect(document).toEqual(VERIFIED_DOCUMENT);
+    expect(object).toEqual(VERIFIED_DOCUMENT_OBJECT);
+    expect(media).not.toHaveProperty('receipt');
+    expect(document).not.toHaveProperty('receipt');
+    expect(object).not.toHaveProperty('receipt');
+    expect(fixture.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
+      'GET /v1/health',
+      'POST /v1/handshake',
+      'GET /v1/realm',
+      `GET /v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection/verified?asset=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.asset)}&generation_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.generation_id)}&variant_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.variant_id)}&object_id=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.object_id)}&catalog_digest=${encodeURIComponent(VERIFIED_MEDIA_SELECTION.catalog_digest)}`,
+      `GET /v1/projects/${encodeURIComponent(PROJECT_ID)}/document-inputs/verified?document_id=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.document_id)}&version=${VERIFIED_DOCUMENT_PIN.version}&content_digest=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.content_digest)}`,
+      `GET /v1/projects/${encodeURIComponent(PROJECT_ID)}/document-objects/verified?document_id=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.document_id)}&version=${VERIFIED_DOCUMENT_PIN.version}&content_digest=${encodeURIComponent(VERIFIED_DOCUMENT_PIN.content_digest)}&object_id=${encodeURIComponent(VERIFIED_DOCUMENT_OBJECT.object_id)}`,
+    ]);
+    expect(fixture.requests.slice(3).every(({ headers }) => headers.Authorization === 'Bearer fixture-token')).toBe(true);
+    expect(fixture.requests.slice(3).every(({ method }) => method === 'GET')).toBe(true);
+  });
+
+  it('propagates a verified-read refusal without fallback or mutation traffic', async () => {
+    const fixture = createTransport({ verifiedReadFailure: 'document' });
+    const client = clientFor(fixture, { token: true });
+
+    await expect(client.getProjectVerifiedDocument(PROJECT_ID, VERIFIED_DOCUMENT_PIN)).rejects.toMatchObject({
+      status: 409,
+      code: 'verified_read_refused',
+    });
+    expect(fixture.requests.filter(({ method, path }) => method !== 'GET' && path !== '/v1/handshake')).toEqual([]);
+    expect(fixture.requests.filter(({ path }) => path.includes('/document-inputs/verified'))).toHaveLength(1);
+  });
+
   it('rejects a replacement Runtime instance on reconnect without rebinding or writing', async () => {
     const options = { runtimeInstanceId: EXPECTED_IDENTITY.runtimeInstanceId };
     const fixture = createTransport(options);

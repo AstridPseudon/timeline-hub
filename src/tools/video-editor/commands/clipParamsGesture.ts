@@ -1,4 +1,4 @@
-import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { DocumentPin, EditCommand, JSON, VerifiedDocument, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 import { assertFiniteJson, equal, freezeJson, object } from './clipMovePrimitives.ts';
@@ -7,6 +7,14 @@ import type { JsonObject } from './types.ts';
 
 export interface ClipParamsCapturePort {
   capture(input: { clipId: string; current: TimelineData }): JsonObject;
+  // Detached native capture inputs only; prefetch never submits or refreshes a basis.
+  prefetch?(basis: JsonObject, pin: DocumentPin): Promise<{
+    basis: JsonObject;
+    schema_source: DocumentPin;
+    schema_inputs: [VerifiedDocument, Record<string, VerifiedDocumentObject>][];
+    realm_id: string;
+  }>;
+  invalidatePrefetch?(): void;
   // A null previewParams means no local preview, never a params container value.
   finish(basis: JsonObject, args: ClipParamsArgs): { command: EditCommand; previewParams: Record<string, JSON> | null };
   submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
