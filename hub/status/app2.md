@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T16:27:38Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 21 | status age 1m -->
+<!-- app2 | 2026-10-20T16:30:41Z | dispatcher heartbeat 10s | live 6 (sol 0, luna 6, other 0) | busy30 25 | status age 4m -->
 # app2 — 2026-10-20 16:26 UTC
 Milestone: M2 — four native helper units MERGED at App ea38656fe. No consumer row DELETED; no exit.
 Integrated: App remote results confirm ordinary f76d, parent-media cc8d, literal element/PARAM01f8 and duplicate f340 all merged at ea38656fe. Exact source/native tests in flat reviews; current-root MAIN574 retained. HOME owns batched full.
