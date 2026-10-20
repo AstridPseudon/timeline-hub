@@ -3,13 +3,12 @@
  *
  * Verifies that:
  *   1. A clipType registered in `@banodoco/timeline-composition/registry.generated`
- *      (e.g. `section-hook` from `@banodoco/timeline-theme-2rp`) renders the
+ *      (e.g. the bundled `section-hook` from theme `2rp`) renders the
  *      theme component, NOT the Sprint-3 placeholder.
  *   2. A clipType NOT in the registry (e.g. `theme:not-installed`) falls
  *      through to the loud placeholder (UnknownClipPlaceholder).
  *
- * The registry is the codegenned table from
- * `packages/timeline-composition/typescript/src/registry.generated.ts`.
+ * The registry is a public export of the built Composition package.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -27,7 +26,7 @@ describe('Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d)', () => {
     expect(ids).toContain('resource-card');
   });
 
-  it('section-hook entry resolves to a component from @banodoco/timeline-theme-2rp', () => {
+  it('section-hook entry resolves to the bundled 2rp component', () => {
     const entry = THEME_PACKAGE_REGISTRY['section-hook'];
     expect(entry).toBeDefined();
     expect(entry.themeId).toBe('2rp');

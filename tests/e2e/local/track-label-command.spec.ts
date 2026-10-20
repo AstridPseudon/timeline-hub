@@ -517,3 +517,118 @@ test('M2 real label conflict retains an unsupported suffix across reload and Use
   expect(traffic.commits).toHaveLength(1);
   expect(traffic.legacy).toEqual([]);
 });
+
+test('M2 cold-open ordinary Unicode track rename uses the initial head and guarded UI undo', async ({ page, harness, astrid, seed3 }) => {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const identity = await astrid.preflight();
+  console.log('[track-label-cold] identity', JSON.stringify(revisionSet(identity)));
+
+  // This is the fresh Runtime/API seed path: the first App edit is the label rename itself.
+  const traffic = attachTraffic(page);
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  expect(traffic.commits).toHaveLength(0);
+  expect(traffic.legacy).toEqual([]);
+
+  const initialHead = (await history(harness, seed3)).head;
+  expect(initialHead).toEqual({ revision_id: seed3.headRevisionId, publication_id: expect.any(String) });
+  const initialBody = await revisionBody(harness, initialHead.revision_id);
+  expect(initialBody).toMatchObject({ revision_id: initialHead.revision_id, timeline_id: seed3.timelineId });
+  const initialPayload = initialBody.payload as Record<string, any>;
+  const initialConfig = JSON.parse(JSON.stringify(initialPayload.config)) as Record<string, any>;
+  const initialTrack = (initialConfig.tracks as Array<Record<string, any>>).find((track) => track.id === 'V1');
+  expect(initialTrack, 'the cold-open source has an editable parent V1 track').toBeTruthy();
+  expect(initialTrack).toMatchObject({ id: 'V1', kind: 'visual', label: 'V1' });
+  expect(initialConfig.x_f2_opaque).toEqual(seed3.opaque.config);
+  await expect(firstTrackName(page)).toHaveValue('V1');
+
+  const hold = await holdCommandRequests(page);
+  const label = firstTrackName(page);
+  const renameResponse = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await label.click();
+  await label.press('Control+A');
+  await label.type(NEW_LABEL);
+  await label.blur();
+  await expect.poll(() => hold.requests.length, CEILING).toBe(1);
+
+  // The native durable outbox carries the real initial revision/publication pair into the request.
+  const renameRequest = hold.requests[0];
+  expect(renameRequest.postDataJSON()).toMatchObject({
+    base_revision_id: initialHead.revision_id,
+    base_publication_id: initialHead.publication_id,
+    commands: [{
+      op: 'track.set', select: 'parent/track:V1', args: { values: { label: NEW_LABEL }, clear: [] },
+      expect: { 'parent/track:V1::label': { state: 'present', value: 'V1' } },
+      reads: [{ ref: 'parent/track:V1', path: ['id'], state: { state: 'present', value: 'V1' } }],
+      bindings: { 'scalar.target': 'parent/track:V1' },
+    }],
+  });
+  const pendingOwners = await commandOutboxes(page, seed3.timelineId);
+  expect(pendingOwners).toHaveLength(1);
+  expect(pendingOwners[0].pending?.request.key).toBe(renameRequest.headers()['idempotency-key']);
+  expect(pendingOwners[0].pending?.request.body).toBe(renameRequest.postData());
+  expect(pendingOwners[0].intents).toHaveLength(1);
+  expect(traffic.legacy).toEqual([]);
+
+  await hold.release(true);
+  const renamedResponse = await renameResponse;
+  expect(renamedResponse.status(), await renamedResponse.text()).toBe(200);
+  await waitForCommitCount(traffic.commits, 1);
+  const renamed = await renamedResponse.json() as CommitAcceptedMutation;
+  expect(renamed.data.status).toBe('accepted');
+  expect(trackIn(renamed.data.canonical_document)).toHaveProperty('label', NEW_LABEL);
+  expectOpaqueClosure(renamed.data.canonical_document, seed3);
+  const renamedConfig = renamed.data.canonical_document.parent_revision.payload.config as Record<string, any>;
+  const expectedRenamedConfig = JSON.parse(JSON.stringify(initialConfig)) as Record<string, any>;
+  expectedRenamedConfig.tracks.find((track: Record<string, any>) => track.id === 'V1').label = NEW_LABEL;
+  expect(renamedConfig).toEqual(expectedRenamedConfig);
+  await expectReadback(harness, renamed.data.canonical_document);
+
+  const renamedHead = pinOf(renamed);
+  expect(await history(harness, seed3)).toMatchObject({ head: renamedHead });
+  await expect(label).toHaveValue(NEW_LABEL);
+
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect(firstTrackName(page)).toHaveValue(NEW_LABEL);
+  expect((await history(harness, seed3)).head).toEqual(renamedHead);
+
+  const undoResponse = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  const undoneResponse = await undoResponse;
+  expect(undoneResponse.status(), await undoneResponse.text()).toBe(200);
+  await waitForCommitCount(traffic.commits, 2);
+  expect(traffic.commits[1].body.commands).toEqual([{
+    schema_version: 1,
+    op: 'timeline.inverse',
+    version: '1',
+    select: null,
+    args: { publications: [renamedHead.publication_id] },
+  }]);
+  const undone = await undoneResponse.json() as CommitAcceptedMutation;
+  expect(undone.data.previous_revision_id).toBe(renamedHead.revision_id);
+  expect(undone.data.previous_publication_id).toBe(renamedHead.publication_id);
+  expect(trackIn(undone.data.canonical_document)).toHaveProperty('label', 'V1');
+  expect(undone.data.canonical_document.parent_revision.payload.config).toEqual(initialConfig);
+  expectOpaqueClosure(undone.data.canonical_document, seed3);
+  await expectReadback(harness, undone.data.canonical_document);
+
+  const finalHead = pinOf(undone);
+  const finalHistory = await history(harness, seed3);
+  expect(finalHistory.head).toEqual(finalHead);
+  expect(finalHistory.items.find((entry) => entry.publication_id === finalHead.publication_id)?.records?.undo_of)
+    .toEqual([renamedHead.publication_id]);
+  expect(traffic.commits.map((post) => post.body.commands[0].op)).toEqual(['track.set', 'timeline.inverse']);
+  expect(traffic.commits.every((post) => !Object.prototype.hasOwnProperty.call(post.body, 'parent_composition'))).toBe(true);
+  expect(traffic.legacy).toEqual([]);
+
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect(firstTrackName(page)).toHaveValue('V1');
+  expect((await history(harness, seed3)).head).toEqual(finalHead);
+});

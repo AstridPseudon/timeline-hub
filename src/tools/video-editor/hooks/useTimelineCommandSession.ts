@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import type { DataProvider, TimelineHeadRevision } from '../data/DataProvider.ts';
+import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
@@ -42,6 +43,8 @@ export function useTimelineCommandSession(options: {
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
+    const initialData = latest.current.commit.dataRef.current;
+    const initialHead = latest.current.headRevisionRef.current;
     const invalidateReads = () => { readGenerationRef.current++; };
     const disposeSession = () => {
       void session?.dispose().catch((error) => console.error('[TimelineCommandSession] Unsaved moves on close', error));
@@ -58,12 +61,56 @@ export function useTimelineCommandSession(options: {
         provider.getRecoverableIdentity!(), provider.loadTimelineCommandBasis!(timelineId),
       ]);
       if (disposed) return;
-      const head = latest.current.headRevisionRef.current;
-      if (head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
-        && basis.canonicalDocument.timeline_id === timelineId
-        && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
-        latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+      if (basis.canonicalDocument.timeline_id !== timelineId
+        || !basis.head.revisionId || !basis.head.publicationId
+        || basis.canonicalDocument.parent_revision.revision_id !== basis.head.revisionId
+        || (initialHead?.timelineId === timelineId && initialHead.projectId !== basis.canonicalDocument.project_id)) {
+        throw new Error('Initialization requires a verified closure in the current project and timeline');
       }
+      const project = async (accepted: TimelineCommandBasis, previews: TimelinePatch[], initial = false) => {
+        if (disposed) return;
+        const generation = initial ? projectGeneration : ++projectGeneration;
+        const context = latest.current;
+        const document = accepted.canonicalDocument;
+        const parent = document.parent_revision.payload;
+        let config = { ...(parent.config as TimelineConfig), clips: parent.clips as TimelineConfig['clips'] };
+        let registry = parent.registry as AssetRegistry;
+        let composition;
+        if (Array.isArray(parent.occurrences) && parent.occurrences.length) {
+          if (!accepted.graph || !provider.shotComposition) throw new Error('Accepted shot closure cannot be projected');
+          composition = createShotCompositionAdapter(provider.shotComposition).prepare(accepted.graph);
+          const projection = projectCanonicalComposition(composition);
+          config = projection.config;
+          registry = { assets: projection.config.registry };
+        }
+        const rawBundle = (parent.config as Record<string, unknown>).bundle;
+        const source = rawBundle == null ? undefined : parseTimelineBundle(rawBundle);
+        const head = { projectId: document.project_id, timelineId, headRevisionId: accepted.head.revisionId,
+          headPublicationId: accepted.head.publicationId };
+        const resolve = provider.resolveTimelineCommandAsset
+          ? (file: string) => provider.resolveTimelineCommandAsset!(file, registry) : context.resolveAssetUrl;
+        let data = await buildTimelineData(config, registry, resolve,
+          context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
+        for (const preview of previews) {
+          const compiled = compileTimelinePatch(preview, data);
+          if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
+          data = compiled.nextData;
+        }
+        if (disposed || generation !== projectGeneration) return;
+        // Bootstrap yields to any intervening display, head, local edit or recovery.
+        if (initial && (context.commit.dataRef.current !== initialData || initialData?.editProjection
+          || context.headRevisionRef.current !== initialHead || (initialHead && initialHead.timelineId !== timelineId)
+          || !latest.current.legacyClean())) return;
+        data.editProjection = accepted.head.revisionId && accepted.head.publicationId
+          ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
+            : { kind: 'accepted', head: { ...accepted.head } } : undefined;
+        context.configVersionRef.current = data.configVersion;
+        context.headRevisionRef.current = head;
+        context.recoveryConfig?.remember(head, parent.config);
+        context.store.getState().setConfigVersion(data.configVersion);
+        context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
+        if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
+      };
       session = await createTimelineCommandSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
         loadLatest: async () => {
@@ -93,49 +140,19 @@ export function useTimelineCommandSession(options: {
           compiled.nextData.editProjection = base ? { kind: 'local', base, generation: projectGeneration } : undefined;
           commit.commitData(compiled.nextData, { save: false, skipHistory: true });
         },
-        project: async (accepted, previews) => {
-          if (disposed) return;
-          const generation = ++projectGeneration;
-          const context = latest.current;
-          const document = accepted.canonicalDocument;
-          const parent = document.parent_revision.payload;
-          let config = { ...(parent.config as TimelineConfig), clips: parent.clips as TimelineConfig['clips'] };
-          let registry = parent.registry as AssetRegistry;
-          let composition;
-          if (Array.isArray(parent.occurrences) && parent.occurrences.length) {
-            if (!accepted.graph || !provider.shotComposition) throw new Error('Accepted shot closure cannot be projected');
-            composition = createShotCompositionAdapter(provider.shotComposition).prepare(accepted.graph);
-            const projection = projectCanonicalComposition(composition);
-            config = projection.config;
-            registry = { assets: projection.config.registry };
-          }
-          const rawBundle = (parent.config as Record<string, unknown>).bundle;
-          const source = rawBundle == null ? undefined : parseTimelineBundle(rawBundle);
-          const head = { projectId: document.project_id, timelineId, headRevisionId: accepted.head.revisionId,
-            headPublicationId: accepted.head.publicationId };
-          const resolve = provider.resolveTimelineCommandAsset
-            ? (file: string) => provider.resolveTimelineCommandAsset!(file, registry) : context.resolveAssetUrl;
-          let data = await buildTimelineData(config, registry, resolve,
-            context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
-          for (const preview of previews) {
-            const compiled = compileTimelinePatch(preview, data);
-            if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
-            data = compiled.nextData;
-          }
-          if (disposed || generation !== projectGeneration) return;
-          data.editProjection = accepted.head.revisionId && accepted.head.publicationId
-            ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
-              : { kind: 'accepted', head: { ...accepted.head } } : undefined;
-          context.configVersionRef.current = data.configVersion;
-          context.headRevisionRef.current = head;
-          context.recoveryConfig?.remember(head, parent.config);
-          context.store.getState().setConfigVersion(data.configVersion);
-          context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
-          if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
-        },
+        project,
       });
       if (disposed) disposeSession();
       else {
+        const head = latest.current.headRevisionRef.current;
+        if (latest.current.commit.dataRef.current === initialData && head === initialHead
+          && head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
+          && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
+          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+        }
+        // A retained outbox owns its original display basis until explicit recovery.
+        if (session.getState().status === 'saved') await project(basis, [], true);
+        if (disposed) return;
         const realPort = session.port;
         session.port = { ...realPort, capture: (input) => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
@@ -153,8 +170,11 @@ export function useTimelineCommandSession(options: {
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
-    })().catch((error) => changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
-      ownerId: null, recoverableOwners: [], canUndo: false }));
+    })().catch((error) => {
+      disposeSession();
+      changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
+        ownerId: null, recoverableOwners: [], canUndo: false });
+    });
     return () => {
       disposed = true;
       invalidateReads();
