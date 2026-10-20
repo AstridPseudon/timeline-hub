@@ -40,15 +40,18 @@ def host(tmp_path_factory):
     (project / "src").mkdir()
     modules = project / "node_modules"
     modules.mkdir()
-    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
+    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", str(runtime_project / "node_modules"))).resolve()
     for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to((peers / peer).resolve(), target_is_directory=True)
         assert target.is_dir(), f"missing provisioned peer: {target}"
-    artifact = Path(os.environ.get("ASTRID_TEST_COMPOSITION_ARTIFACT", REMOTION /
-                                  json.loads((REMOTION / "package.json").read_text())["dependencies"]
-                                  ["@banodoco/timeline-composition"].removeprefix("file:")))
+    artifact = Path(os.environ.get(
+        "ASTRID_TEST_COMPOSITION_ARTIFACT",
+        str(runtime_project / json.loads((runtime_project / "package.json").read_text())["dependencies"][
+            "@banodoco/timeline-composition"].removeprefix("file:")),
+    )).resolve()
     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
                 "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
                 "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"}
@@ -70,7 +73,8 @@ def host(tmp_path_factory):
 
 @pytest.fixture
 def native(host, monkeypatch):
-    node = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
+    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
+    node = resolve_pinned_node(runtime_project, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok and node.version == "v20.19.4"
     for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
         monkeypatch.delenv(key, raising=False)
