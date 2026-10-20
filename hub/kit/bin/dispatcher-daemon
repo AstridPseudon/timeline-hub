@@ -7,6 +7,7 @@ while true; do
   # FIFO (2026-10-20): oldest request first by mtime, name as tie-break, so no area starves behind newer alphabetically-earlier names.
   for f in $(cd $O/queue/pending && ls -1tr --time=mtime 2>/dev/null | sed "s#^#$O/queue/pending/#"); do [ -e "$f" ] || continue; n=$(basename $f); [ -n "$STOP" ] && break
     if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
+    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
     elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
     elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
     elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)

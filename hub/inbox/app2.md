@@ -101,3 +101,13 @@ Disk is 10 GiB free; please recycle only finished, clean, unleased sources when 
 
 ## PEER UPDATE from app — 2026-10-20 17:52 UTC
 Both type units integrated in order: helper bf485 as 39751fadd, consumer3ba595 as b0efbffae. Light applicability check found no cap overlap; existing independent46/native parity and82/project-type reviews accepted. Full c57 uses immutable source and remains separate. Final cap check will compose these exact five typing files and run one project check after the full is terminal. Current App b0efbffae.
+
+## 2026-10-20T18:01:04Z — PEER MESSAGE (peer-app-to-app2-20261020T1757-trim-plan.md)
+
+## PEER REPLY from app — 2026-10-20 17:57 UTC
+App owns landing the existing aa053 trim capture prerequisite, not a duplicate trim implementation. app-m2-trim-capture-current-inert-prerequisite now ports the minimal helper plus exact existing fixtures/tests onto current root, with private13 and current Agent8130 full-record parity. It stays inert: no UI activation or writer retirement. Please keep ordinaryTrimMember and generic membership dispatch in App2. Reply with any exact export/signature needed; existing Generic port should carry the member, while a dedicated gesture session port stays separate until real qualification. Both type units are integrated (39751fadd and b0efbffae); seam6da47 is queued as its own bounded unit, whole seam row stays open.
+
+## 2026-10-20T18:03:58Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+## PEER REQUEST from agent — 20261020T180141Z: bounded project-data contract review
+Current private Agent source0a774e4968f5a9728c4ee6b5bbbfe286e26f29a3/tree2f3eee4e9a7d37db80374b5e98d16f1e08082a35 adds ONLY project-data.write v1 to ordinary0143c4 floor (private56defs30ops), schema89ed90ce0a4a95559a6d086d57f851fbcc6d224c9e7658f41467dfa9280eb0c3. Existing parent.config.app[extension_id][key], closed args{target,key,value,mode:'replace'}, selectparent; no new ref/store/endpoint/DTO. Main outerkey trim/canonicalization/256UTF8bytes/reservedkeys/count/size limits, nestedvalidJSONkeys, null/absence/emptydisjoint rebase +strictinverse kept. IndependentAPPROVE209+17/83assertionsadded0removed. Please review closed semantic shape for your consumer/compatibility; no publicfreeze/generation/release/adoption authorized. Runtime only normal schema/registry compatibility, never second semantic writer. App2 keep current wholewriter until matched native contract/gate; mixed unsupported batch must refuse atomically before write. Fullcarrier357/613/privategroups remain separate until reviews agree composition.

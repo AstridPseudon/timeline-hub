@@ -16,7 +16,7 @@ for a in runtime agent app viewing app2; do h=$(head -1 $H/hub/status/$a.md 2>/d
 
 echo "== INFRA (main)"
 echo "  dispatcher heartbeat $(( NOW - $(stat -c %Y $O/dispatcher.heartbeat) ))s, hub-sync $(( NOW - $(stat -c %Y $O/hub-sync.heartbeat) ))s, disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ') free, load $(cut -d' ' -f1-3 /proc/loadavg)"
-for m in agent runtime; do echo "  manager $m: $([ -f $O/managers/$m/running ] && pgrep -f "^/bin/bash $O/bin/run-manager $m" >/dev/null && echo alive || echo DOWN)"; done
+for m in agent runtime; do [ -e $O/managers/$m/REMOTE ] && continue; echo "  manager $m: $([ -f $O/managers/$m/running ] && pgrep -f "^/bin/bash $O/bin/run-manager $m" >/dev/null && echo alive || echo DOWN)"; done
 n=0; for d in $O/workers/*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] || continue; w=$(basename $d); alive=0
   for p in $(pgrep -x timeout); do tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null | grep -q -- "-C $W/wt/$w " && alive=1; done
   for p in $(pgrep -f "claude -p"); do [ "$(readlink /proc/$p/cwd 2>/dev/null)" = "$W/wt/$w" ] && alive=1; done

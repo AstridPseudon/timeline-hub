@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:01:04Z | dispatcher heartbeat 9s | live 7 (sol 1, luna 6, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-20T18:03:58Z | dispatcher heartbeat 14s | live 6 (sol 1, luna 5, other 0) | busy30 14 | status age 3m -->
 # agent — 2026-10-20T18:00:11Z
 Milestone: M1 is recorded. M2 is active. Gates 1, 6 and 7 remain open.
 Integrated: Agent d999197a, public Runtime client 0.2.13, Composition 0.0.12. The source-reuse fold c73b1ab1 passes 10 current native cases (28061), plus 159 worker and 137 independent checks. Verified-source labels and Mouth remain integrated; private crop/statistics remain.
