@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Literal, Mapping
 from urllib.parse import urlsplit
 
-from .timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery, VerifiedMedia
+from .timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, DocumentPin, HistoryPage, MediaSelection, MediaSelectionQuery, VerifiedDocumentObject, VerifiedMedia
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
@@ -916,6 +916,10 @@ class WorkspaceClient:
     def get_project_verified_media(self, project_id: str, selection: MediaSelection) -> VerifiedMedia:
         query = "&".join(f"{_path_part(k)}={_path_part(str(v))}" for k, v in selection.items())
         return self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection/verified?{query}")[2])
+
+    def get_project_verified_document_object(self, project_id: str, pin: DocumentPin, object_id: str) -> VerifiedDocumentObject:
+        query = "&".join(f"{_path_part(k)}={_path_part(str(v))}" for k, v in {**pin, "object_id": object_id}.items())
+        return self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/document-objects/verified?{query}")[2])
 
     def inspect_timeline(self, project_id: str, timeline_id: str, options: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         payload = dict(options or {})

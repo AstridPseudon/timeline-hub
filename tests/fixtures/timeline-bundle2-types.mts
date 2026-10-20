@@ -14,7 +14,12 @@ function readVerified(client: WorkspaceClient): Promise<VerifiedMedia> {
   client.getProjectVerifiedMedia("p", { asset: "a", generation_id: "g", variant_id: "v" });
   return client.getProjectVerifiedMedia("p", media);
 }
-void [verified, readVerified];
+function readObject(client: WorkspaceClient): Promise<VerifiedDocumentObject> {
+  // @ts-expect-error The retained object read requires the complete DocumentPin.
+  client.getProjectVerifiedDocumentObject("p", { document_id: "pack" }, media.object_id);
+  return client.getProjectVerifiedDocumentObject("p", source, media.object_id);
+}
+void [verified, readVerified, readObject];
 const added: ClipAddArgs = { row: { id: "c", clipType: "element", track: "v", at: 0, hold: 1, opaque: { nil: null } } };
 const popup: OccurrenceAddMediaArgs = { row: added.row, media };
 const swapped: OccurrenceSwapMediaArgs = { old_media: media, media };
