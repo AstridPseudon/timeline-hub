@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T07:00:16Z | dispatcher heartbeat 4s -->
+<!-- viewing | 2026-10-20T07:05:29Z | dispatcher heartbeat 11s -->
 # viewing — 2026-10-20 06:40:16 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 delivery not complete. No frame/audio parity, owner-film or macOS claim.
 Integrated: Composition ff0536bb (old immutable0.0.11), prior central65PASS/build/repeatpack/consumerPASS. Agent public10 adopted; App b8064ecf still root8, current release waits matching official Runtime/Agent/App tuple. New source landings listed below are pending, not integrated.

@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.viewing.frame12.ready-only/v1",
+  "candidate": "vw-m3-frame12-current-ready-20261020",
+  "status": "READY_ONLY_NO_GRANT",
+  "source": {
+    "app_render_staging": "320784f828a47738b542222111286744c7bf53cc",
+    "capture_fix": "1ba0800af20bd8bcb51439c0c977d486f645b43d",
+    "theme_ground": "eeddb47c0c824a6639a310c9a6c4f70631f64ff2",
+    "composition_release": "5e06f40146573a529896cc812229eb890c53c81a",
+    "composition_artifact_sha256": "sha256:0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "composition_artifact_files": 77
+  },
+  "pending_inputs": [
+    "actual App 0.0.12 consumer commit and tree after owner pin prep",
+    "Agent 0.0.12 consumer commit and tree after consumer12 lands",
+    "official matching Runtime source commit and generated client commit/pin",
+    "App and Agent six-file Remotion/Player peer manifests for the final tuple",
+    "final source freeze produced after all pending owners publish"
+  ],
+  "fixture": {
+    "config": "playwright.viewing-parity.normal-profile-native1920.config.ts",
+    "profile": "native-codec-chrome155",
+    "cases": 4,
+    "canvas": { "width": 1920, "height": 1080, "fps": "30/1" },
+    "comparison": { "max_channel_delta": 2, "outside_fraction": 0.001 },
+    "baseline": "original640",
+    "pngs": "unmodified",
+    "input": "real managed Runtime/App input",
+    "export": "full native MP4 download",
+    "seek": "same mounted Player seek/readiness path"
+  },
+  "environment": {
+    "node": "20.19.4",
+    "player_browser": "Chrome 155.0.8059.84",
+    "export_browser": "pinned headless export browser",
+    "peer_files_per_consumer": 6,
+    "finally_postflight": true,
+    "exclusive_flock": "/tmp/timeline-viewing-browser.lock",
+    "quiet_marker_must_be_absent": true
+  },
+  "run_policy": {
+    "actual_run": false,
+    "grant": false,
+    "run_marker": false,
+    "controller": "handoff-vw-m3-frame12-current-ready-controller.mjs"
+  }
+}

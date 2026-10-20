@@ -1,0 +1,69 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -126,7 +126,7 @@
+     "test:remotion-audio-resume-patch": "node --test scripts/patches/remotion-4.0.509-audio-resume.test.mjs scripts/patches/remotion-4.0.509-audio-resume.semantic.test.mjs"
+   },
+   "dependencies": {
+-    "@banodoco/timeline-composition": "file:vendor/artifacts/banodoco-timeline-composition-0.0.10.tgz",
++    "@banodoco/timeline-composition": "file:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+     "@banodoco/timeline-ops": "file:vendor/timeline-ops",
+     "@banodoco/timeline-schema": "file:vendor/timeline-schema",
+     "@base-ui/react": "^1.2.0",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -9,7 +9,7 @@
+       "version": "0.0.0",
+       "hasInstallScript": true,
+       "dependencies": {
+-        "@banodoco/timeline-composition": "file:vendor/artifacts/banodoco-timeline-composition-0.0.10.tgz",
++        "@banodoco/timeline-composition": "file:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+         "@banodoco/timeline-ops": "file:vendor/timeline-ops",
+         "@banodoco/timeline-schema": "file:vendor/timeline-schema",
+         "@base-ui/react": "^1.2.0",
+@@ -208,9 +208,9 @@
+       }
+     },
+     "node_modules/@banodoco/timeline-composition": {
+-      "version": "0.0.10",
+-      "resolved": "file:vendor/artifacts/banodoco-timeline-composition-0.0.10.tgz",
+-      "integrity": "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg==",
++      "version": "0.0.12",
++      "resolved": "file:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz",
++      "integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==",
+       "peerDependencies": {
+         "@remotion/layout-utils": "4.0.509",
+         "@remotion/media": "4.0.509",
+diff --git a/config/vite/timelineCompositionPackage.test.mjs b/config/vite/timelineCompositionPackage.test.mjs
+--- a/config/vite/timelineCompositionPackage.test.mjs
++++ b/config/vite/timelineCompositionPackage.test.mjs
+@@ -19,16 +19,16 @@
+   'scripts/astrid-landing/public-host-browser/vite.config.ts',
+ ];
+ 
+-test('root and lock use the approved immutable public10 artifact', () => {
+-  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.10.tgz';
++test('root and lock use the approved immutable public12 artifact', () => {
++  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz';
+   const bytes = fs.readFileSync(path.join(appRoot, artifact));
+   const root = JSON.parse(fs.readFileSync(path.join(appRoot, 'package.json'), 'utf8'));
+   const lock = JSON.parse(fs.readFileSync(path.join(appRoot, 'package-lock.json'), 'utf8'));
+   const installed = lock.packages[`node_modules/${packageName}`];
+-  assert.equal(bytes.length, 58008);
+-  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7');
++  assert.equal(bytes.length, 58444);
++  assert.equal(createHash('sha256').update(bytes).digest('hex'), '0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3');
+   assert.equal(root.dependencies[packageName], `file:${artifact}`);
+   assert.equal(lock.packages[''].dependencies[packageName], root.dependencies[packageName]);
+-  assert.equal(installed.version, '0.0.10');
++  assert.equal(installed.version, '0.0.12');
+   assert.equal(installed.resolved, `file:${artifact}`);
+   assert.equal(installed.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
+   assert.equal(root.dependencies['@remotion/layout-utils'], '4.0.509');
+@@ -49,7 +49,7 @@
+         path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
+       ];
+      assert.equal(manifest.version, '0.0.10');
++      assert.equal(manifest.version, '0.0.12');
+       for (const [subpath, entry] of Object.entries(manifest.exports)) {
