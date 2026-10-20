@@ -62,6 +62,20 @@ def test_exact_capture_inverse_and_same_value_write(original):
     assert again.records[0]['writes'][0]['before'] == again.records[0]['writes'][0]['after']
 
 
+def test_capture_preserves_text_binding_authorship_key_for_runtime_schema(original):
+    pin = descriptor(b'voice')
+    call = capture_text_binding_set(
+        original, OWNER, VOICE, text=pin, verified_text=[{**pin, 'utf8': True}])
+
+    # The empty property path is part of the stable text-binding identity. Do
+    # not drop authorship or normalize this to a shot/property path: Runtime
+    # uses the same TargetKey when validating the sealed recorder claim.
+    key = REF + '::'
+    assert call['expect'] == {key: ABSENT}
+    assert call['authorship'] == {key: 'direct'}
+    validate_command(call)
+
+
 def test_empty_clear_and_original_noncanonical_order(original):
     first = apply(original, TRANSCRIPT)
     second = apply(first.bundle, VOICE, b'')
