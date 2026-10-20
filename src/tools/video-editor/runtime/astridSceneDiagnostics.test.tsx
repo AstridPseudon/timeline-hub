@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import {render, cleanup, act, waitFor} from '@testing-library/react';
 import {afterEach, expect, it, vi} from 'vitest';
-import {SceneSurface} from '@astrid/packs/rendering/ui/live-scenes/SceneSurface';
-import {sceneTrace, traceId} from '@astrid/packs/rendering/ui/live-scenes/diagnostics';
+import {SceneSurface} from '@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface';
+import {sceneTrace, traceId} from '@astrid/packs/rendering/ui/threejs-live-editor/diagnostics';
 
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.clearAllTimers();vi.useRealTimers();document.getElementById('astrid-l1b-trace-ledger')?.remove();});
 const records=()=>JSON.parse(document.getElementById('astrid-l1b-trace-ledger')!.textContent!);

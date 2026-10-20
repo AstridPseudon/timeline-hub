@@ -553,7 +553,7 @@ export class DirectHarness {
     };
     const html = sceneEntryHtml();
     const entry = await ingest(html, 'text/html', 'scene.html');
-    // The package object: validateScenePackage (ui/live-scenes/runtime.ts) wants the manifest, the entry's object metadata and an assets array.
+    // The package object: validateScenePackage (ui/threejs-live-editor/runtime.ts) wants the manifest, the entry's object metadata and an assets array.
     const packageBody = JSON.stringify({
       manifest: { formatVersion: 1, entry: 'scene.html', duration: 5, authoredFps: 30 },
       entry: { object_id: entry.objectId, digest: entry.digest, media_type: entry.mediaType, size: entry.size, filename: entry.filename },

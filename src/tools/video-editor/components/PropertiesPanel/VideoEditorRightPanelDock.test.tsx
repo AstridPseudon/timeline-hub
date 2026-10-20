@@ -44,7 +44,7 @@ beforeEach(() => {
   state.timelineData = {};
   state.inventory = null;
   state.extensions = [
-    { manifest: { id: 'haus.astrid.live-scenes', label: 'Three.js Live Editor' } },
+    { manifest: { id: 'haus.astrid.threejs-live-editor', label: 'Three.js Live Editor' } },
     { manifest: { id: 'haus.astrid.transcript-lane', label: 'Transcript' } },
   ];
 }); afterEach(cleanup);

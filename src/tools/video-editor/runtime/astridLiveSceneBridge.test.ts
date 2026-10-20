@@ -7,9 +7,9 @@ import {
 } from '@astrid/packs/rendering/editor/catalog';
 import {
   LIVE_SCENE_CLIP_TYPE_ID,
-  LIVE_SCENE_EXTENSION_ID,
-  liveSceneExtension,
-} from '@astrid/packs/rendering/ui/live-scenes/extension';
+  THREEJS_LIVE_EDITOR_EXTENSION_ID,
+  threejsLiveEditorExtension,
+} from '@astrid/packs/rendering/ui/threejs-live-editor/extension';
 import type {
   ExtensionContext,
   ExtensionDiagnostic,
@@ -116,7 +116,7 @@ function createHostProject(
         sourceEnd: clip.to,
         rate: clip.speed,
         managed: clip.clipType === LIVE_SCENE_CLIP_TYPE_ID,
-        managedBy: clip.clipType === LIVE_SCENE_CLIP_TYPE_ID ? LIVE_SCENE_EXTENSION_ID : undefined,
+        managedBy: clip.clipType === LIVE_SCENE_CLIP_TYPE_ID ? THREEJS_LIVE_EDITOR_EXTENSION_ID : undefined,
         sourceRefs: [],
       })),
       tracks: state.tracks,
@@ -280,13 +280,13 @@ async function preparedSceneBytes(): Promise<Uint8Array> {
 describe('Astrid pack editor extension bridge', () => {
   it('discovers the declared pack entry without a second extension catalogue', () => {
     const liveSceneEntry = ASTRID_EDITOR_EXTENSION_CATALOG.find((entry) =>
-      entry.entryPath === 'ui/live-scenes/extension.tsx');
+      entry.entryPath === 'ui/threejs-live-editor/extension.tsx');
     const transcriptEntry = ASTRID_EDITOR_EXTENSION_CATALOG.find((entry) =>
       entry.entryPath === 'ui/transcript/extension.tsx');
     expect(liveSceneEntry).toMatchObject({
       packId: 'rendering',
-      entryPath: 'ui/live-scenes/extension.tsx',
-      extension: liveSceneExtension,
+      entryPath: 'ui/threejs-live-editor/extension.tsx',
+      extension: threejsLiveEditorExtension,
     });
     expect(transcriptEntry).toMatchObject({
       packId: 'rendering',
@@ -296,11 +296,11 @@ describe('Astrid pack editor extension bridge', () => {
     expect(ASTRID_EDITOR_EXTENSIONS).toEqual(
       ASTRID_EDITOR_EXTENSION_CATALOG.map(({ extension }) => extension),
     );
-    expect(ASTRID_EDITOR_EXTENSIONS).toContain(liveSceneExtension);
+    expect(ASTRID_EDITOR_EXTENSIONS).toContain(threejsLiveEditorExtension);
     expect(ASTRID_EDITOR_EXTENSIONS).toContain(transcriptEntry!.extension);
-    expect(devLocalExtensions).toContain(liveSceneExtension);
+    expect(devLocalExtensions).toContain(threejsLiveEditorExtension);
     expect(devLocalExtensions).toContain(transcriptEntry!.extension);
-    expect(REVIEWED_PRODUCTION_EXTENSION_IDS).toContain(LIVE_SCENE_EXTENSION_ID);
+    expect(REVIEWED_PRODUCTION_EXTENSION_IDS).toContain(THREEJS_LIVE_EDITOR_EXTENSION_ID);
     expect(REVIEWED_PRODUCTION_EXTENSION_IDS).toContain('haus.astrid.transcript-lane');
   });
 
@@ -314,7 +314,7 @@ describe('Astrid pack editor extension bridge', () => {
       diagnostics: reported,
     };
     const clipTypes = createClipTypeRegistrationService({
-      extension: liveSceneExtension,
+      extension: threejsLiveEditorExtension,
       clipTypeRegistry,
       diagnosticsService: diagnostics,
     });
@@ -330,11 +330,11 @@ describe('Astrid pack editor extension bridge', () => {
       liveSceneAuthoring: { register: vi.fn(() => ({ dispose: vi.fn() })) },
     } as unknown as ExtensionContext;
 
-    const activation = liveSceneExtension.activate(context);
+    const activation = threejsLiveEditorExtension.activate(context);
     expect(context.liveSceneAuthoring!.register).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
     expect(clipTypeRegistry.resolve(LIVE_SCENE_CLIP_TYPE_ID)).toMatchObject({
       clipTypeId: LIVE_SCENE_CLIP_TYPE_ID,
-      ownerExtensionId: LIVE_SCENE_EXTENSION_ID,
+      ownerExtensionId: THREEJS_LIVE_EDITOR_EXTENSION_ID,
       status: 'active',
     });
 
@@ -343,27 +343,27 @@ describe('Astrid pack editor extension bridge', () => {
     expect(clipTypeRegistry.resolve(LIVE_SCENE_CLIP_TYPE_ID)).toBeUndefined();
     expect(reported.map(({ code }) => code)).toEqual([
       'clipTypes/registered',
-      'live-scenes/registered',
-      'live-scenes/disposed',
+      'threejs-live-editor/registered',
+      'threejs-live-editor/disposed',
     ]);
   });
 
   it('keeps the authoring implementation out of extension-entry evaluation', async () => {
     let authoringEvaluated = false;
     vi.resetModules();
-    vi.doMock('@astrid/packs/rendering/ui/live-scenes/authoring', () => {
+    vi.doMock('@astrid/packs/rendering/ui/threejs-live-editor/authoring', () => {
       authoringEvaluated = true;
       return {};
     });
     try {
-      const entry = await import('@astrid/packs/rendering/ui/live-scenes/extension');
-      expect(entry.liveSceneExtension.manifest.contributions).toEqual(expect.arrayContaining([
+      const entry = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
+      expect(entry.threejsLiveEditorExtension.manifest.contributions).toEqual(expect.arrayContaining([
         expect.objectContaining({ kind: 'clipType', clipTypeId: LIVE_SCENE_CLIP_TYPE_ID }),
         expect.objectContaining({ kind: 'command', command: entry.LIVE_SCENE_IMPORT_COMMAND_ID }),
       ]));
       expect(authoringEvaluated).toBe(false);
     } finally {
-      vi.doUnmock('@astrid/packs/rendering/ui/live-scenes/authoring');
+      vi.doUnmock('@astrid/packs/rendering/ui/threejs-live-editor/authoring');
       vi.resetModules();
     }
   });
@@ -386,7 +386,7 @@ describe('Astrid pack editor extension bridge', () => {
       })),
     };
     vi.resetModules();
-    vi.doMock('@astrid/packs/rendering/ui/live-scenes/authoring', () => {
+    vi.doMock('@astrid/packs/rendering/ui/threejs-live-editor/authoring', () => {
       authoringEvaluated = true;
       return imported;
     });
@@ -399,7 +399,7 @@ describe('Astrid pack editor extension bridge', () => {
       this.dispatchEvent(new Event('change'));
     });
     try {
-      const entry = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+      const entry = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
       const diagnostics: ExtensionDiagnosticsService = { report: vi.fn(), diagnostics: [] };
       const context = {
         services: { diagnostics, i18n: { t: (key: string) => key } },
@@ -414,7 +414,7 @@ describe('Astrid pack editor extension bridge', () => {
         },
       } as unknown as ExtensionContext;
 
-      const activation = entry.liveSceneExtension.activate(context);
+      const activation = entry.threejsLiveEditorExtension.activate(context);
       expect(commandHandler).toBeDefined();
       expect(authoringEvaluated).toBe(false);
       await commandHandler!();
@@ -424,7 +424,7 @@ describe('Astrid pack editor extension bridge', () => {
       activation.dispose();
     } finally {
       click.mockRestore();
-      vi.doUnmock('@astrid/packs/rendering/ui/live-scenes/authoring');
+      vi.doUnmock('@astrid/packs/rendering/ui/threejs-live-editor/authoring');
       vi.resetModules();
     }
   });
@@ -432,7 +432,7 @@ describe('Astrid pack editor extension bridge', () => {
   it('reports a lazy authoring chunk failure after the picker returns', async () => {
     let commandHandler: (() => Promise<void>) | undefined;
     vi.resetModules();
-    vi.doMock('@astrid/packs/rendering/ui/live-scenes/authoring', async () => {
+    vi.doMock('@astrid/packs/rendering/ui/threejs-live-editor/authoring', async () => {
       throw new Error('authoring chunk unavailable');
     });
     const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function click(this: HTMLInputElement) {
@@ -443,7 +443,7 @@ describe('Astrid pack editor extension bridge', () => {
       this.dispatchEvent(new Event('change'));
     });
     try {
-      const entry = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+      const entry = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
       const diagnostics: ExtensionDiagnosticsService = { report: vi.fn(), diagnostics: [] };
       const context = {
         services: { diagnostics, i18n: { t: (key: string) => key } },
@@ -458,17 +458,17 @@ describe('Astrid pack editor extension bridge', () => {
         },
       } as unknown as ExtensionContext;
 
-      const activation = entry.liveSceneExtension.activate(context);
+      const activation = entry.threejsLiveEditorExtension.activate(context);
       await expect(commandHandler!()).rejects.toThrow();
       expect(diagnostics.report).toHaveBeenCalledWith(expect.objectContaining({
-        severity: 'error', code: 'live-scenes/authoring-failed',
+        severity: 'error', code: 'threejs-live-editor/authoring-failed',
         detail: expect.objectContaining({ stage: 'import-prepared-scene', error: expect.any(String) }),
       }));
       expect(context.chrome!.toast).toHaveBeenCalledWith(expect.stringContaining('Prepared scene import failed:'), 'error');
       activation.dispose();
     } finally {
       click.mockRestore();
-      vi.doUnmock('@astrid/packs/rendering/ui/live-scenes/authoring');
+      vi.doUnmock('@astrid/packs/rendering/ui/threejs-live-editor/authoring');
       vi.resetModules();
     }
   });
@@ -478,12 +478,12 @@ describe('Astrid pack editor extension bridge', () => {
     const loadGate = new Promise<void>((resolve) => { releaseLoad = resolve; });
     const executeLiveSceneAuthoring = vi.fn();
     vi.resetModules();
-    vi.doMock('@astrid/packs/rendering/ui/live-scenes/authoring', async () => {
+    vi.doMock('@astrid/packs/rendering/ui/threejs-live-editor/authoring', async () => {
       await loadGate;
       return { executeLiveSceneAuthoring };
     });
     try {
-      const entry = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+      const entry = await import('@astrid/packs/rendering/ui/threejs-live-editor/extension');
       let registeredHandler: ((request: never, execution: { signal: AbortSignal; assertActive(): void }) => Promise<unknown>) | undefined;
       let active = true;
       const registration = {
@@ -497,7 +497,7 @@ describe('Astrid pack editor extension bridge', () => {
         clipTypes: { registerClipType: vi.fn(() => ({ dispose: vi.fn() })) },
         liveSceneAuthoring: registration,
       } as unknown as ExtensionContext;
-      const activation = entry.liveSceneExtension.activate(context);
+      const activation = entry.threejsLiveEditorExtension.activate(context);
       expect(registeredHandler).toBeDefined();
 
       const controller = new AbortController();
@@ -514,7 +514,7 @@ describe('Astrid pack editor extension bridge', () => {
       await expect(pending).rejects.toThrow('cancelled or disposed');
       expect(executeLiveSceneAuthoring).not.toHaveBeenCalled();
     } finally {
-      vi.doUnmock('@astrid/packs/rendering/ui/live-scenes/authoring');
+      vi.doUnmock('@astrid/packs/rendering/ui/threejs-live-editor/authoring');
       vi.resetModules();
     }
   });
@@ -523,16 +523,16 @@ describe('Astrid pack editor extension bridge', () => {
     const project = createHostProject();
     const mounted = mountLiveSceneHost(project);
     try {
-      const lifecycle = mounted.host.lifecycles.get(LIVE_SCENE_EXTENSION_ID);
+      const lifecycle = mounted.host.lifecycles.get(THREEJS_LIVE_EDITOR_EXTENSION_ID);
       expect(lifecycle?.state).toBe('active');
-      expect(mounted.commandRegistry.getCommand(`${LIVE_SCENE_EXTENSION_ID}.importPreparedScene`)).toMatchObject({
-        extensionId: LIVE_SCENE_EXTENSION_ID,
+      expect(mounted.commandRegistry.getCommand(`${THREEJS_LIVE_EDITOR_EXTENSION_ID}.importPreparedScene`)).toMatchObject({
+        extensionId: THREEJS_LIVE_EDITOR_EXTENSION_ID,
       });
 
       const record = mounted.clipTypeRegistry.resolve(LIVE_SCENE_CLIP_TYPE_ID);
       expect(record).toMatchObject({
         clipTypeId: LIVE_SCENE_CLIP_TYPE_ID,
-        ownerExtensionId: LIVE_SCENE_EXTENSION_ID,
+        ownerExtensionId: THREEJS_LIVE_EDITOR_EXTENSION_ID,
         status: 'active',
         renderability: {
           defaultRoute: 'preview',
@@ -577,7 +577,7 @@ describe('Astrid pack editor extension bridge', () => {
     });
 
     try {
-      await expect(mounted.commandRegistry.executeCommand(`${LIVE_SCENE_EXTENSION_ID}.importPreparedScene`)).resolves.toBe(true);
+      await expect(mounted.commandRegistry.executeCommand(`${THREEJS_LIVE_EDITOR_EXTENSION_ID}.importPreparedScene`)).resolves.toBe(true);
       expect(project.calls).toEqual(expect.arrayContaining([
         'ingest:u05-scene.html',
         'ingest:scene.package.json',
@@ -616,7 +616,7 @@ describe('Astrid pack editor extension bridge', () => {
       const reloaded = mountLiveSceneHost(reloadedProject);
       try {
         const reloadedClip = reloadedProject.reader.snapshot().clips[0];
-        expect(reloaded.host.lifecycles.get(LIVE_SCENE_EXTENSION_ID)?.state).toBe('active');
+        expect(reloaded.host.lifecycles.get(THREEJS_LIVE_EDITOR_EXTENSION_ID)?.state).toBe('active');
         expect(reloadedClip).toMatchObject({
           id: 'live-scene-import',
           clipType: LIVE_SCENE_CLIP_TYPE_ID,

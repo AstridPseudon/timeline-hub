@@ -13,7 +13,7 @@ catalog-bound Tool at `/tools/video-editor`. This declaration does not contain
 the editor page or create a route.
 
 Editor-only code is declared separately as `type: editor`. For example,
-Astrid's `rendering` pack declares `live-scenes` as an editor contribution and
+Astrid's `rendering` pack declares `threejs-live-editor` as an editor contribution and
 the generated editor-extension catalog includes editor declarations while the
 Tool catalog includes Tool declarations. Existing effect, animation,
 transition, overlay, panel, inspector, and command surfaces continue to use

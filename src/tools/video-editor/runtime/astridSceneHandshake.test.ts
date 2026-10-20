@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import {createHash} from 'node:crypto';
 import {afterEach,describe,expect,it,vi} from 'vitest';
-import {sceneDocument,SceneFrameHost,validateScenePackage} from '@astrid/packs/rendering/ui/live-scenes/runtime';
+import {sceneDocument,SceneFrameHost,validateScenePackage} from '@astrid/packs/rendering/ui/threejs-live-editor/runtime';
 
 afterEach(()=>{vi.clearAllTimers();vi.useRealTimers();});
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};

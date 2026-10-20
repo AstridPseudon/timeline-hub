@@ -25,7 +25,7 @@ function fixture() {
     kind: 'published' as const, projectId: scope.projectId, timelineId: scope.timelineId, revision: `sha256:${'c'.repeat(64)}`,
     entryRevision: `sha256:${'d'.repeat(64)}`, affectedPlacements: ['scene-a'], acknowledgedTimelineVersion: 8, flushReceipt: { version: 8 },
   });
-  const binding = port.registration('haus.astrid.live-scenes')!.register(handler);
+  const binding = port.registration('haus.astrid.threejs-live-editor')!.register(handler);
   return { port, current, handler, binding };
 }
 
@@ -85,10 +85,10 @@ describe('bounded live-scene ACP request/result bridge', () => {
   it('disposes the callback through host context cleanup even if activation never returns a handle', async () => {
     const { port, binding, handler } = fixture();
     binding.dispose();
-    const extension = defineExtension({ manifest: { id: 'haus.astrid.live-scenes' as never, version: '1.0.0', label: 'Scene', apiVersion: 1, contributions: [] },
+    const extension = defineExtension({ manifest: { id: 'haus.astrid.threejs-live-editor' as never, version: '1.0.0', label: 'Scene', apiVersion: 1, contributions: [] },
       activate: () => ({ dispose() {} }) });
     const ctx = createExtensionContext(extension, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
-      port.registration('haus.astrid.live-scenes'));
+      port.registration('haus.astrid.threejs-live-editor'));
     ctx.liveSceneAuthoring!.register(handler);
     disposeExtensionContextServices(ctx);
     await expect(executeLiveSceneRequest(port, read(), scope, controller().signal)).rejects.toThrow('unavailable');

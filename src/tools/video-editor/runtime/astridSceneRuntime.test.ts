@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SceneFrameHost, sceneDocument, validateScenePackage, type SceneStatus } from '@astrid/packs/rendering/ui/live-scenes/runtime';
+import { SceneFrameHost, sceneDocument, validateScenePackage, type SceneStatus } from '@astrid/packs/rendering/ui/threejs-live-editor/runtime';
 import { clipSourceTime } from '../clip-types/sourceTime';
 
 const entry = {object_id:'entry-object',digest:`sha256:${'1'.repeat(64)}`,media_type:'text/html',size:39,filename:'scene.html'};

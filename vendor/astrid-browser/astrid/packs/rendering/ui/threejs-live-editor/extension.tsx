@@ -8,12 +8,12 @@ import {
   type ExtensionContext,
   type ExtensionId,
 } from '@astrid/editor-sdk';
-import { LIVE_SCENE_CLIP_TYPE_ID, LIVE_SCENE_EXTENSION_ID } from './identity';
+import { LIVE_SCENE_CLIP_TYPE_ID, THREEJS_LIVE_EDITOR_EXTENSION_ID } from './identity';
 import type { CommandContribution } from '@astrid/editor-sdk';
 
 /** Stable first-party identity used by the host release allowlist. */
 // IDs are validated by defineExtension; these casts only attach the SDK brands.
-export { LIVE_SCENE_CLIP_TYPE_ID, LIVE_SCENE_EXTENSION_ID } from './identity';
+export { LIVE_SCENE_CLIP_TYPE_ID, THREEJS_LIVE_EDITOR_EXTENSION_ID } from './identity';
 export type {
   LiveSceneObjectInput,
   LiveScenePackageInput,
@@ -32,11 +32,11 @@ function loadLiveSceneAuthoring(): Promise<LiveSceneAuthoringModule> {
 }
 
 // IDs are validated by defineExtension; this cast only attaches the SDK brand.
-const LIVE_SCENE_EXTENSION_ID_BRANDED = LIVE_SCENE_EXTENSION_ID as unknown as ExtensionId;
-export const LIVE_SCENE_CLIP_CONTRIBUTION_ID = 'live-scene-clip' as unknown as ContributionId;
-export const LIVE_SCENE_IMPORT_COMMAND_ID = `${LIVE_SCENE_EXTENSION_ID}.importPreparedScene`;
+const THREEJS_LIVE_EDITOR_EXTENSION_ID_BRANDED = THREEJS_LIVE_EDITOR_EXTENSION_ID as unknown as ExtensionId;
+export const LIVE_SCENE_CLIP_CONTRIBUTION_ID = 'threejs-live-editor-scene-clip' as unknown as ContributionId;
+export const LIVE_SCENE_IMPORT_COMMAND_ID = `${THREEJS_LIVE_EDITOR_EXTENSION_ID}.importPreparedScene`;
 // Acceptance-only helper identity; deliberately not a normal contribution.
-export const LIVE_SCENE_EDIT_COMMAND_ID = `${LIVE_SCENE_EXTENSION_ID}.applyMapleCameraEdit`;
+export const LIVE_SCENE_EDIT_COMMAND_ID = `${THREEJS_LIVE_EDITOR_EXTENSION_ID}.applyMapleCameraEdit`;
 // Compatibility alias for existing command callers.
 export const LIVE_SCENE_AUTHORING_COMMAND_ID = LIVE_SCENE_IMPORT_COMMAND_ID;
 
@@ -88,25 +88,25 @@ const LIVE_SCENE_CONTRIBUTION = {
 } satisfies ClipTypeContribution;
 
 const LIVE_SCENE_AUTHORING_COMMAND = {
-  id: 'live-scene-import-prepared-scene' as unknown as ContributionId,
+  id: 'threejs-live-editor-import-prepared-scene' as unknown as ContributionId,
   kind: 'command',
   command: LIVE_SCENE_IMPORT_COMMAND_ID,
   label: 'Import prepared scene',
-  category: 'Astrid Live Scenes',
+  category: 'Three.js Live Editor',
   order: 10,
 } satisfies CommandContribution;
 
-export const liveSceneExtension = defineExtension({
+export const threejsLiveEditorExtension = defineExtension({
   manifest: {
-    id: LIVE_SCENE_EXTENSION_ID_BRANDED,
+    id: THREEJS_LIVE_EDITOR_EXTENSION_ID_BRANDED,
     version: '1.0.0',
     label: 'Three.js Live Editor',
-    description: 'Pack-owned live-scene clip entry for the Astrid App editor.',
+    description: 'Live Three.js scene clips and prepared-scene import for the Astrid App editor.',
     apiVersion: 1,
     contributions: [LIVE_SCENE_CONTRIBUTION, LIVE_SCENE_AUTHORING_COMMAND],
     messages: {
-      activated: 'Astrid live-scene clip registered.',
-      disposed: 'Astrid live-scene clip disposed.',
+      activated: 'Three.js Live Editor registered.',
+      disposed: 'Three.js Live Editor disposed.',
     },
   },
 
@@ -121,7 +121,7 @@ export const liveSceneExtension = defineExtension({
     );
     ctx.services.diagnostics.report({
       severity: 'info',
-      code: 'live-scenes/registered',
+      code: 'threejs-live-editor/registered',
       message: ctx.services.i18n.t('activated'),
     });
 
@@ -156,7 +156,7 @@ export const liveSceneExtension = defineExtension({
             const message = error instanceof Error ? error.message : String(error);
             ctx.services.diagnostics.report({
               severity: 'error',
-              code: 'live-scenes/authoring-failed',
+              code: 'threejs-live-editor/authoring-failed',
               message: `Import prepared scene failed: ${message}`,
               detail: { stage: 'import-prepared-scene', error: message },
             });
@@ -165,7 +165,7 @@ export const liveSceneExtension = defineExtension({
           }
           await importPreparedSceneFile(ctx, bytes, pickerAbortController.signal);
         },
-        { label: 'Import prepared scene', category: 'Astrid Live Scenes' },
+        { label: 'Import prepared scene', category: 'Three.js Live Editor' },
       )
       : undefined;
 
@@ -177,7 +177,7 @@ export const liveSceneExtension = defineExtension({
         importCommandRegistration?.dispose();
         ctx.services.diagnostics.report({
           severity: 'info',
-          code: 'live-scenes/disposed',
+          code: 'threejs-live-editor/disposed',
           message: ctx.services.i18n.t('disposed'),
         });
       },
@@ -249,4 +249,4 @@ function openPreparedSceneFile(signal: AbortSignal): Promise<Uint8Array> {
   });
 }
 
-export default liveSceneExtension;
+export default threejsLiveEditorExtension;

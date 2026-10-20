@@ -35,13 +35,13 @@ describe('extension operational telemetry server validator', () => {
       event: 'extension.activation',
       outcome: 'success',
       releaseRevision: 'rc1',
-      extensionId: 'haus.astrid.live-scenes',
+      extensionId: 'haus.astrid.threejs-live-editor',
       extensionVersion: '1.0.0',
     })).toEqual({
       event: 'extension.activation',
       outcome: 'success',
       release_revision: 'rc1',
-      extension_id: 'haus.astrid.live-scenes',
+      extension_id: 'haus.astrid.threejs-live-editor',
       extension_version: '1.0.0',
     });
   });
