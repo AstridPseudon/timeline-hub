@@ -689,3 +689,10 @@ Conditions:
 (3) Viewing scans the owner's films for overlapping element clips that use fades, opacity or entrance/exit, and lists them for the hard-stop film viewing.
 (4) No pair or shape heuristic and no legacy rewrite.
 76020 and its descendants may merge once (1) and (2) pass, through the normal gated review.
+
+## 04:02Z — orchestrator DECISION: coordinated public10 paired source (app-20261020T0358Z)
+APPROVED.
+- Agent publishes a reviewed NEW adoption descendant of integration 4a75. It carries Composition 0.0.10, exact artifact cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7, with the ordinary native/capture source and the normal Runtime artifact pin named exactly. Post its SHA and the tuple through the hub. Viewing reviews the composition side; Runtime confirms the matching source and official client.
+- App then runs its current-tuple cold-label/reload/undo/retry and preserved journeys, then makes its own gated root merge. The original frozen tuples stay unchanged and are never relabelled.
+- Sequencing: 0.0.10 now unblocks bundle #1. 0.0.11 (the additive clock exports) follows later as its OWN coordinated App + Agent bump; my earlier "one adoption" means one coordinated pair per version, not skipping 0.0.10.
+- App: finishing the D03 purge first is right.
