@@ -20,6 +20,7 @@ export interface OutboxIntent {
   basis: OutboxBasis;
   // Complete original commands, guards, bindings and allocated IDs, never rebased here.
   payload: OutboxJson;
+  afterAcceptRender?: OutboxJson;
   readyBase?: OutboxHead;
   conflict?: OutboxJson;
 }
@@ -36,6 +37,21 @@ export type OutboxOutcome =
   | { kind: 'rejected'; error: OutboxJson }
   | { kind: 'retry'; error: OutboxJson };
 
+export interface OutboxAcceptance {
+  intentId: string;
+  head: OutboxHead;
+  value: OutboxJson;
+}
+
+export type OutboxRenderTarget = Pick<OutboxAcceptance, 'intentId' | 'head'>;
+
+export interface OutboxRenderContinuation {
+  intent: OutboxJson;
+  accepted: OutboxAcceptance;
+  // Prevalidated by the adapter; storage never decodes a target or task DTO.
+  admission?: { request: OutboxRequest; taskLocator?: OutboxJson };
+}
+
 export interface OutboxRecord {
   scope: OutboxScope;
   ownerId: string;
@@ -43,7 +59,8 @@ export interface OutboxRecord {
   intents: OutboxIntent[];
   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
   // Only the last acknowledged prefix, also usable by a late dependent append.
-  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
+  accepted?: OutboxAcceptance;
+  renderContinuations?: OutboxRenderContinuation[];
 }
 
 export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
@@ -55,8 +72,10 @@ export type OutboxRequestBuilder = (
 
 export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
-  append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
+  append(payload: OutboxJson, basis: OutboxBasis, afterAcceptRender?: OutboxJson): Promise<string>;
   cancel(intentId: string): Promise<void>;
+  reserveRenderAdmission(target: OutboxRenderTarget, request: OutboxRequest): Promise<OutboxRenderContinuation>;
+  recordRenderTask(target: OutboxRenderTarget, request: OutboxRequest, taskLocator: OutboxJson): Promise<OutboxRenderContinuation>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
@@ -93,6 +112,27 @@ function scopeKey(scope: OutboxScope, ownerId: string): string {
   const parts = [scope.realmId, scope.actorId, scope.projectId, scope.timelineId, ownerId];
   if (parts.some((part) => typeof part !== 'string' || !part)) throw new Error('Incomplete outbox scope');
   return JSON.stringify(parts);
+}
+
+function renderFor(record: OutboxRecord, target: OutboxRenderTarget): OutboxRenderContinuation {
+  const render = record.renderContinuations?.find((item) => item.accepted.intentId === target.intentId);
+  if (!render || render.accepted.head.revisionId !== target.head.revisionId
+    || render.accepted.head.publicationId !== target.head.publicationId) {
+    throw new Error('Render continuation does not match accepted intent and head');
+  }
+  return render;
+}
+
+function renderRequest(input: OutboxRequest): OutboxRequest {
+  const { method, path, body, key } = input;
+  if (!method || !path || !key || [method, path, body, key].some((item) => typeof item !== 'string')) {
+    throw new Error('Incomplete render admission request');
+  }
+  return detached({ method, path, body, key });
+}
+
+function sameRequest(a: OutboxRequest, b: OutboxRequest): boolean {
+  return a.method === b.method && a.path === b.path && a.body === b.body && a.key === b.key;
 }
 
 /** No cached/sessionStorage owner: every new editor starts a fresh durable owner. */
@@ -198,8 +238,9 @@ export function createCommitOutbox(options: {
 
       const outbox: ClaimedOutbox = {
         read: () => access('readonly', detached),
-        async append(payload, basis) {
-          const intent = detached({ id: crypto.randomUUID(), payload, basis });
+        async append(payload, basis, afterAcceptRender) {
+          const intent = detached({ id: crypto.randomUUID(), payload, basis,
+            ...(afterAcceptRender !== undefined ? { afterAcceptRender } : {}) });
           return access('readwrite', (record) => {
             const predecessor = record.intents[record.intents.length - 1];
             let readyBase = 'head' in intent.basis ? intent.basis.head : undefined;
@@ -224,6 +265,35 @@ export function createCommitOutbox(options: {
               throw new Error('Cannot cancel a predecessor of retained work');
             }
             record.intents = record.intents.filter((intent) => intent.id !== intentId);
+          });
+        },
+        async reserveRenderAdmission(targetInput, requestInput) {
+          const target = detached(targetInput);
+          const request = renderRequest(requestInput);
+          return access('readwrite', (record) => {
+            const render = renderFor(record, target);
+            if (render.admission && !sameRequest(render.admission.request, request)) {
+              throw new Error('Render admission request cannot change');
+            }
+            render.admission ??= { request };
+            return detached(render);
+          });
+        },
+        async recordRenderTask(targetInput, requestInput, taskLocatorInput) {
+          const target = detached(targetInput);
+          const request = renderRequest(requestInput);
+          const taskLocator = detached(taskLocatorInput);
+          return access('readwrite', (record) => {
+            const render = renderFor(record, target);
+            if (!render.admission || !sameRequest(render.admission.request, request)) {
+              throw new Error('Render task requires the exact reserved admission request');
+            }
+            if (render.admission.taskLocator !== undefined
+              && JSON.stringify(render.admission.taskLocator) !== JSON.stringify(taskLocator)) {
+              throw new Error('Render task locator cannot change');
+            }
+            render.admission.taskLocator = taskLocator;
+            return detached(render);
           });
         },
         async dispatch(build, transmit) {
@@ -260,6 +330,10 @@ export function createCommitOutbox(options: {
                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
               if (outcome.kind === 'accepted') {
                 record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
+                const intent = record.intents[0];
+                if (intent.afterAcceptRender !== undefined) {
+                  (record.renderContinuations ??= []).push({ intent: intent.afterAcceptRender, accepted: record.accepted });
+                }
                 record.intents.shift();
                 delete record.pending;
                 const next = record.intents[0];

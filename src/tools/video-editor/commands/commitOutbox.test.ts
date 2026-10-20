@@ -8,6 +8,7 @@ import {
   type OutboxIntent,
   type OutboxOutcome,
   type OutboxRequest,
+  type OutboxRenderTarget,
 } from './commitOutbox.ts';
 
 const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project', timelineId: 'timeline' };
@@ -28,6 +29,12 @@ const build = (intent: OutboxIntent, base: OutboxHead) => ({
 const accepted = (head = ha): Extract<OutboxOutcome, { kind: 'accepted' }> => ({
   kind: 'accepted', head, value: { receipt: { receipt_id: head.publicationId }, closure: { opaque: null } },
 });
+const renderIntent = { format: 'video', settings: { fps: 24 }, opaque: null };
+// Opaque, adapter-prevalidated bytes: this suite tests persistence, not admission DTOs.
+const admission: OutboxRequest = {
+  method: 'POST', path: '/v1/tasks', body: ' { "local_test_target": "RA/PA" }\n', key: 'original-render-key',
+};
+const taskLocator = { task: 'original-task', run: 'original-run' };
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>((done) => { resolve = done; });
@@ -89,6 +96,235 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it.each(['lost ACK', 'aborted ACK'] as const)(
+    'reopens the original A request after %s and atomically retains its requested render before pruning', async (window) => {
+      const env = environment();
+      let owner = '';
+      let a = '';
+      let b = '';
+      let original!: OutboxRequest;
+      await env.open().create(scope, async (box, ownerId) => {
+        owner = ownerId;
+        a = await box.append(move(5), { head: h0 }, renderIntent);
+        b = await box.append(move(7), { after: a });
+        const sending = box.dispatch(build, async (request) => {
+          original = request;
+          if (window === 'lost ACK') throw new Error('unknown outcome');
+          env.fault.abortNextWrite = true;
+          return accepted();
+        });
+        if (window === 'aborted ACK') await expect(sending).rejects.toThrow('aborted');
+        else await sending;
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const before = await box.read();
+        expect(before.pending?.request).toEqual(original);
+        expect(before.renderContinuations).toBeUndefined();
+        expect(before.intents.map((intent) => intent.id)).toEqual([a, b]);
+        expect(before.intents[0].afterAcceptRender).toEqual(renderIntent);
+        // Local storage must replay the reserved request without consulting today's live state.
+        // Runtime's accepted-before-producer-check ordering is separately qualified there.
+        const liveChecks = vi.fn(() => { throw new Error('must not rebuild from head C or check producer eligibility'); });
+        const after = await box.dispatch(liveChecks, async (request) => {
+          expect(request).toEqual(original);
+          return accepted();
+        });
+        expect(liveChecks).not.toHaveBeenCalled();
+        expect(after.pending).toBeUndefined();
+        expect(after.intents).toEqual([{ ...before.intents[1], readyBase: ha }]);
+        expect(after.renderContinuations).toEqual([
+          { intent: renderIntent, accepted: { intentId: a, head: ha, value: accepted().value } },
+        ]);
+      });
+      // Crash after local ACK and before any admission: a fresh owner claim still exposes A.
+      await env.open().recover(scope, owner, async (box) => {
+        const retainedA = (await box.read()).renderContinuations![0];
+        await box.dispatch(build, async () => ({ kind: 'retry', error: 'render unavailable; B still independent' }));
+        expect((await box.read()).renderContinuations).toEqual([retainedA]);
+        await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
+        await box.append(move(9), { head: { revisionId: 'RB', publicationId: 'PB' } }, { format: 'other-render' });
+        const afterC = await box.dispatch(build, async () => accepted({ revisionId: 'RC', publicationId: 'PC' }));
+        expect(afterC.accepted?.head).toEqual({ revisionId: 'RC', publicationId: 'PC' });
+        expect(afterC.renderContinuations).toHaveLength(2);
+        expect(afterC.renderContinuations![0]).toEqual(retainedA);
+        expect(afterC.intents).toEqual([]);
+        expect(afterC.pending).toBeUndefined();
+      });
+      await env.open().recover(scope, owner, async (box) => {
+        const render = await box.reserveRenderAdmission({ intentId: a, head: ha }, admission);
+        expect(render.accepted).toEqual({ intentId: a, head: ha, value: accepted().value });
+        expect(render.admission).toEqual({ request: admission });
+        const send = vi.fn(async () => accepted());
+        await expect(box.dispatch(build, send)).rejects.toThrow('empty');
+        expect(send).not.toHaveBeenCalled();
+        expect((await box.read()).renderContinuations).toHaveLength(2);
+      });
+    },
+  );
+
+  it('reopens every admission write window and commits the original task locator before marking admission complete', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      target = { intentId: await box.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await box.dispatch(build, async () => accepted());
+      env.fault.abortNextWrite = true;
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('aborted');
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).renderContinuations![0].admission).toBeUndefined();
+      const render = await box.reserveRenderAdmission(target, admission);
+      expect(render.admission).toEqual({ request: admission });
+    });
+    // Crash after reservation/before send, or admission ACK lost: both retain the exact bytes/key.
+    for (let restart = 0; restart < 2; restart += 1) {
+      await env.open().recover(scope, owner, async (box) => {
+        const before = await box.read();
+        expect(before.renderContinuations![0].admission).toEqual({ request: admission });
+        expect((await box.reserveRenderAdmission(target, admission)).admission?.request).toEqual(admission);
+        expect(await box.read()).toEqual(before);
+      });
+    }
+    await env.open().recover(scope, owner, async (box) => {
+      env.fault.abortNextWrite = true;
+      await expect(box.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('aborted');
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      expect(before.renderContinuations![0].admission).toEqual({ request: admission });
+      const completed = await box.recordRenderTask(target, admission, taskLocator);
+      expect(completed.admission).toEqual({ request: admission, taskLocator });
+      expect(completed.accepted).toEqual(before.renderContinuations![0].accepted);
+      expect((await box.read()).accepted).toEqual(before.accepted);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await box.recordRenderTask(target, admission, taskLocator);
+      await box.reserveRenderAdmission(target, admission);
+      await expect(box.recordRenderTask(target, admission, { task: 'replacement' })).rejects.toThrow('cannot change');
+      expect(await box.read()).toEqual(before);
+      expect(before.renderContinuations![0].admission).toEqual({ request: admission, taskLocator });
+    });
+  });
+
+  it('refuses changed admission bytes, identity, target and scope without replacing the original reservation', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      target = { intentId: await box.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('accepted intent and head');
+      await box.dispatch(build, async () => accepted());
+      await expect(box.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('exact reserved');
+      await box.reserveRenderAdmission(target, admission);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      for (const changed of [
+        { ...admission, body: admission.body.trim() },
+        { ...admission, body: '{ "local_test_target": "RC/PC" }' },
+        { ...admission, method: 'PUT' },
+        { ...admission, path: '/v1/other-project/tasks' },
+        { ...admission, key: 'new-render-identity' },
+      ]) {
+        await expect(box.reserveRenderAdmission(target, changed)).rejects.toThrow('cannot change');
+        await expect(box.recordRenderTask(target, changed, taskLocator)).rejects.toThrow('exact reserved');
+      }
+      for (const changed of [
+        { ...target, intentId: 'other-intent' },
+        { ...target, head: { ...ha, revisionId: 'RC' } },
+        { ...target, head: { ...ha, publicationId: 'PC' } },
+      ]) {
+        await expect(box.reserveRenderAdmission(changed, admission)).rejects.toThrow('accepted intent and head');
+        await expect(box.recordRenderTask(changed, admission, taskLocator)).rejects.toThrow('accepted intent and head');
+      }
+      expect(await box.read()).toEqual(before);
+    });
+    for (const field of ['realmId', 'actorId', 'projectId', 'timelineId']) {
+      const work = vi.fn(async (box: ClaimedOutbox) => box.reserveRenderAdmission(target, admission));
+      await expect(env.open().recover({ ...scope, [field]: 'other' }, owner, work)).rejects.toThrow('explicit claim');
+      expect(work).not.toHaveBeenCalled();
+    }
+    await env.open().create(scope, async (box) => {
+      await expect(box.reserveRenderAdmission(target, admission)).rejects.toThrow('accepted intent and head');
+    });
+  });
+
+  it('detaches render inputs and results, rejects nonfinite local carriers and fences released render writers', async () => {
+    const env = environment();
+    let owner = '';
+    let target!: OutboxRenderTarget;
+    let stale!: ClaimedOutbox;
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      stale = box;
+      await expect(box.append(move(5), { head: h0 }, { fps: Infinity })).rejects.toThrow('finite JSON');
+      const intent = structuredClone(renderIntent);
+      target = { intentId: await box.append(move(5), { head: h0 }, intent), head: { ...ha } };
+      intent.settings.fps = 999;
+      await box.dispatch(build, async () => accepted());
+      const request = { ...admission };
+      const reserving = box.reserveRenderAdmission(target, request);
+      request.body = 'mutated';
+      target.head.revisionId = 'mutated';
+      const reserved = await reserving;
+      target.head = { ...ha };
+      reserved.intent = 'mutated';
+      reserved.accepted.head.revisionId = 'mutated';
+      reserved.admission!.request.key = 'mutated';
+      await expect(box.recordRenderTask(target, admission, { progress: NaN })).rejects.toThrow('finite JSON');
+      const locator = { ...taskLocator };
+      const completing = box.recordRenderTask(target, admission, locator);
+      locator.task = 'mutated';
+      (await completing).admission!.taskLocator = 'mutated';
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await expect(stale.reserveRenderAdmission(target, admission)).rejects.toThrow('Stale');
+      await expect(stale.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('Stale');
+      expect(await box.read()).toEqual(before);
+      expect(before.renderContinuations).toEqual([{
+        intent: renderIntent, accepted: { ...target, value: accepted().value }, admission: { request: admission, taskLocator },
+      }]);
+    });
+  });
+
+  it('creates continuations only for explicit accepted render intents, never for cancelled or rejected work', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const cancelled = await box.append(move(5), { head: h0 }, renderIntent);
+      await box.cancel(cancelled);
+      await box.append(move(7), { head: h0 });
+      await box.dispatch(build, async () => accepted());
+      expect((await box.read()).renderContinuations).toBeUndefined();
+      await box.append(move(9), { head: ha }, renderIntent);
+      await box.dispatch(build, async () => ({ kind: 'rejected', error: { reason: 'Runtime producer refusal' } }));
+      expect((await box.read()).renderContinuations).toBeUndefined();
+      expect((await box.read()).intents[0].afterAcceptRender).toEqual(renderIntent);
+      expect((await box.read()).accepted?.head).toEqual(ha);
+    });
+  });
+
+  it('fences a still-active render writer by persisted generation even if its browser lock is lost', async () => {
+    const env = environment();
+    const service = createCommitOutbox({ indexedDB: env.factory, exclusiveLock: async (_name, work) => work() });
+    await service.create(scope, async (old, owner) => {
+      const target = { intentId: await old.append(move(5), { head: h0 }, renderIntent), head: ha };
+      await old.dispatch(build, async () => accepted());
+      await old.reserveRenderAdmission(target, admission);
+      await service.recover(scope, owner, async (box) => {
+        const before = await box.read();
+        await expect(old.reserveRenderAdmission(target, admission)).rejects.toThrow('Stale');
+        await expect(old.recordRenderTask(target, admission, taskLocator)).rejects.toThrow('Stale');
+        expect(await box.read()).toEqual(before);
+        await box.recordRenderTask(target, admission, taskLocator);
+      });
+    });
+  });
+
   it('reopens exact A before dependent B, then gives B a fresh key/base with original guards and IDs', async () => {
     const env = environment();
     const first = env.open();
