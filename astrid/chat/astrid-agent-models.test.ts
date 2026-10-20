@@ -140,7 +140,7 @@ setInterval(() => {}, 1000);
 `, { mode: 0o755 });
     const started = Date.now();
     await assert.rejects(getAstridAgentModelCatalog({ command, cwd: directory }), error => {
-      assert.equal((error as Error).message, 'Astrid model operation failed. Run `astrid agent models` in a terminal for details.');
+      assert.equal((error as Error).message, 'Astrid model operation failed. Try again.');
       return true;
     });
     assert.ok(Date.now() - started < 9_000, 'a hanging catalog must finish before the browser deadline');
@@ -179,7 +179,7 @@ setInterval(() => {}, 1000);
     process.env.OMP_BIN = omp;
     process.env.PYTHONPATH = [fileURLToPath(new URL('../../', import.meta.url)), previous.PYTHONPATH].filter(Boolean).join(delimiter);
     await assert.rejects(getAstridAgentModelCatalog({ command, cwd: directory }), {
-      message: 'Astrid model operation failed. Run `astrid agent models` in a terminal for details.',
+      message: 'Astrid model operation failed. Try again.',
     });
     const children = readFileSync(pids, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; role: string; args?: string[] });
     assert.deepEqual(children.map(child => child.role), ['wrapper', 'omp', 'nested-cli']);

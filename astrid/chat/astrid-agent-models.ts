@@ -37,7 +37,7 @@ async function runAstrid(options: AstridModelOptions, args: string[]): Promise<s
   } catch {
     // Child diagnostics can contain private context. Astrid owns discovery,
     // authentication and persistence; the bridge exposes no raw child output.
-    throw new Error('Astrid model operation failed. Run `astrid agent models` in a terminal for details.');
+    throw new Error('Astrid model operation failed. Try again.');
   }
 }
 
