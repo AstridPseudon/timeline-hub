@@ -1,0 +1,3 @@
+Ruff before/after: [Counter({'BLE001': 5, 'I001': 1}), Counter({'BLE001': 5, 'I001': 1})]
+Helper clean.
+Service inventory 2298 vs 2314: PASS

@@ -1,0 +1,26 @@
+cd /home/user/work/wt/vw-m4-service-window-source-extract
+
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -p no:cacheprovider -q -o addopts= tests/core/rendering/test_service.py tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_live_scene_composition.py -k 'not real_ffmpeg and not real_render_scene'
+# PASS: 139 passed, 4 deselected in 20.05s. Excludes real renderer tests under the task's no-local-render rule. Includes M2 ThreeJS final-payload/alpha native and legacy cases.
+
+env ASTRID_INTERNAL_INVOCATION=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-service-window-source-extract-identity.py
+# PASS: identical moved AST; 78 before/after payload/error/immutability examples. First invocation without the required internal-invocation environment stopped at the pack import guard; corrected above.
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m4-service-window-source-extract targeted --files tests/packs/rendering/test_remotion_native_window.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test vw-m4-service-window-source-extract-targeted-1020133240-23843
+# PASS: 25 passed in 3.47s, exit 0; central exact tree 3db1e03e44304891884b9f4db61bcdb7de1e2503.
+# Initial request 1020133148-25647 was rejected before execution because --files cannot contain pytest flags; corrected file-only request above.
+
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -p no:cacheprovider -q -o addopts= tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+# FAIL: 1 failed in 0.24s. service.py passes; next entry run.py records 1851 vs actual 1929 (78 drift), owned by the other worker. No threshold/test/doc edits made.
+
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/core/rendering/window_inputs.py
+# PASS: All checks passed.
+/home/user/work/venv-agent/bin/ruff check --no-cache astrid/core/rendering/service.py astrid/core/rendering/window_inputs.py
+# Six pre-existing service findings (I001=1, BLE001=5); before/after stdin comparison under the SAME service filename showed identical code counts. New helper has zero findings.
+
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m mypy --follow-imports=silent --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-service-window-source-extract/mypy-cache astrid/core/rendering/window_inputs.py
+# PASS: Success: no issues found in 1 source file.
+
+git diff --check
+# PASS.

@@ -1,0 +1,5242 @@
+[
+  {
+    "case": "(30, 1)/empty/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07d78aff3eda69d3c392f68aad9d1fe7006e3d6ef8baac9c1c3f3e5c5f522fd7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07d78aff3eda69d3c392f68aad9d1fe7006e3d6ef8baac9c1c3f3e5c5f522fd7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "a0b5a3bf74b7ad854c97583c3ef3f738dd15842252e3d5782982faa2199a3aa5"
+    },
+    "payload_sha256": "a0b5a3bf74b7ad854c97583c3ef3f738dd15842252e3d5782982faa2199a3aa5",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.0,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.0,
+          "track": "bottom"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d2b5e28e3207c90c115c49ff6ada560655bfcef89325fb60bda1488ba9133796"
+    },
+    "payload_sha256": "d2b5e28e3207c90c115c49ff6ada560655bfcef89325fb60bda1488ba9133796",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/empty/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "8ff7fdce555ce2145db64b573979cf168f26b4e651a0f86898e4c237bb22bf7a"
+    },
+    "payload_sha256": "8ff7fdce555ce2145db64b573979cf168f26b4e651a0f86898e4c237bb22bf7a",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/sparse/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "600b220fa33b15231ab9965b6c0170fae83206e1f46afac3a9b71cf28fadbae6"
+    },
+    "payload_sha256": "600b220fa33b15231ab9965b6c0170fae83206e1f46afac3a9b71cf28fadbae6",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.0,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.0,
+          "track": "bottom"
+        },
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "7194051309bb8dffc8d9fa2dba3ad7501e05aa0e088c32739f1c1f6b84608eef"
+    },
+    "payload_sha256": "7194051309bb8dffc8d9fa2dba3ad7501e05aa0e088c32739f1c1f6b84608eef",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/sparse/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "76cd904fc09d7742f121c7384072b712b2269aca2ecf471e3796f2cf56a143cc"
+    },
+    "payload_sha256": "76cd904fc09d7742f121c7384072b712b2269aca2ecf471e3796f2cf56a143cc",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/source/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "1a3786b38662715e70e29b78f788362bbddc9a47d62a43b139633eadcc785da7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        },
+        {
+          "id": "reference",
+          "kind": "visual",
+          "label": "Reference",
+          "role": "source"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "reference",
+          "track": "reference",
+          "asset": "reference",
+          "at": 0,
+          "hold": 40
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "1a3786b38662715e70e29b78f788362bbddc9a47d62a43b139633eadcc785da7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        },
+        {
+          "id": "reference",
+          "kind": "visual",
+          "label": "Reference",
+          "role": "source"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "reference",
+          "track": "reference",
+          "asset": "reference",
+          "at": 0,
+          "hold": 40
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': False}/z=None",
+    "identical": true,
+    "error_type": "ValueError",
+    "error": "media clip must declare a source to bound"
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d2b5e28e3207c90c115c49ff6ada560655bfcef89325fb60bda1488ba9133796"
+    },
+    "payload_sha256": "d2b5e28e3207c90c115c49ff6ada560655bfcef89325fb60bda1488ba9133796",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/source/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "8ff7fdce555ce2145db64b573979cf168f26b4e651a0f86898e4c237bb22bf7a"
+    },
+    "payload_sha256": "8ff7fdce555ce2145db64b573979cf168f26b4e651a0f86898e4c237bb22bf7a",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/fades/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "600b220fa33b15231ab9965b6c0170fae83206e1f46afac3a9b71cf28fadbae6"
+    },
+    "payload_sha256": "600b220fa33b15231ab9965b6c0170fae83206e1f46afac3a9b71cf28fadbae6",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.0,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.0,
+          "track": "bottom"
+        },
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "7194051309bb8dffc8d9fa2dba3ad7501e05aa0e088c32739f1c1f6b84608eef"
+    },
+    "payload_sha256": "7194051309bb8dffc8d9fa2dba3ad7501e05aa0e088c32739f1c1f6b84608eef",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30, 1)/fades/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "76cd904fc09d7742f121c7384072b712b2269aca2ecf471e3796f2cf56a143cc"
+    },
+    "payload_sha256": "76cd904fc09d7742f121c7384072b712b2269aca2ecf471e3796f2cf56a143cc",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.983318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.983318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.0,
+        "source_window_start_seconds": 5.0
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/empty/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07d78aff3eda69d3c392f68aad9d1fe7006e3d6ef8baac9c1c3f3e5c5f522fd7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07d78aff3eda69d3c392f68aad9d1fe7006e3d6ef8baac9c1c3f3e5c5f522fd7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "62b085f8aa9cd6a0a15a3b344eaca3875b5342795c8ca6641e25b3ec5e5fed17"
+    },
+    "payload_sha256": "62b085f8aa9cd6a0a15a3b344eaca3875b5342795c8ca6641e25b3ec5e5fed17",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.005,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.006,
+          "track": "bottom"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "0ab5e480702c429589ce0a8e500fd1c7ddb55dc9e909f4f48606be3c3c9e0c03"
+    },
+    "payload_sha256": "0ab5e480702c429589ce0a8e500fd1c7ddb55dc9e909f4f48606be3c3c9e0c03",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/empty/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "872e544700b063d2265e98f2a5f9275569a5f5a25d5359c80db398d0dcaaab18"
+    },
+    "payload_sha256": "872e544700b063d2265e98f2a5f9275569a5f5a25d5359c80db398d0dcaaab18",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/sparse/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "39b9c4e32cf7a58fb67079c5c871e19f487cc7d00dcac142c9f781406860d508"
+    },
+    "payload_sha256": "39b9c4e32cf7a58fb67079c5c871e19f487cc7d00dcac142c9f781406860d508",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.005,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.006,
+          "track": "bottom"
+        },
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "c08c5fab157f891c172f5bf04b737c6af009b0e11b8a9b162860437af0963efa"
+    },
+    "payload_sha256": "c08c5fab157f891c172f5bf04b737c6af009b0e11b8a9b162860437af0963efa",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/sparse/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "aa26808f30ef9696aa7083ff121779d58260cf9390b0fd9124a654485ffb5858"
+    },
+    "payload_sha256": "aa26808f30ef9696aa7083ff121779d58260cf9390b0fd9124a654485ffb5858",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/source/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "1a3786b38662715e70e29b78f788362bbddc9a47d62a43b139633eadcc785da7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        },
+        {
+          "id": "reference",
+          "kind": "visual",
+          "label": "Reference",
+          "role": "source"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "reference",
+          "track": "reference",
+          "asset": "reference",
+          "at": 0,
+          "hold": 40
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "1a3786b38662715e70e29b78f788362bbddc9a47d62a43b139633eadcc785da7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        },
+        {
+          "id": "reference",
+          "kind": "visual",
+          "label": "Reference",
+          "role": "source"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "reference",
+          "track": "reference",
+          "asset": "reference",
+          "at": 0,
+          "hold": 40
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564"
+    },
+    "payload_sha256": "081efec137332f945807bac8fb56fda315b0e2bfe8c272024d5107e1071b1564",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d"
+    },
+    "payload_sha256": "d4b8c3541dec33e36b60800ec30f93e9a6d82c530797ae8db2c55ecca27e9f3d",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': False}/z=None",
+    "identical": true,
+    "error_type": "ValueError",
+    "error": "media clip must declare a source to bound"
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "0ab5e480702c429589ce0a8e500fd1c7ddb55dc9e909f4f48606be3c3c9e0c03"
+    },
+    "payload_sha256": "0ab5e480702c429589ce0a8e500fd1c7ddb55dc9e909f4f48606be3c3c9e0c03",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/source/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "872e544700b063d2265e98f2a5f9275569a5f5a25d5359c80db398d0dcaaab18"
+    },
+    "payload_sha256": "872e544700b063d2265e98f2a5f9275569a5f5a25d5359c80db398d0dcaaab18",
+    "timeline": {
+      "clips": [],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/fades/{}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': True}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {},
+    "payload_sha256": "07e4ad6df13894d41d455834f68e3d15b701b3f779c4a25b7e94fae7fdf398a7",
+    "timeline": {
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ],
+      "clips": [
+        {
+          "id": "plate",
+          "track": "bottom",
+          "asset": "plate",
+          "at": 0,
+          "hold": 10,
+          "from": 0,
+          "to": 10
+        },
+        {
+          "id": "early",
+          "track": "top",
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "to": 10,
+          "speed": 1,
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      }
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': True}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6"
+    },
+    "payload_sha256": "1f6d5f70537a9789629722f99decd3b065d5381a38cd94b4eb727f62663aa5e6",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': True}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 150,
+        "end_frame": 180,
+        "fps_rational": [
+          30000,
+          1001
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "300"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f"
+    },
+    "payload_sha256": "fd4d634c4962c05b06ee19849d35555fd37f621103b73d278365570207fa478f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "id": "forged"
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.016682,
+          "from": 1,
+          "id": "early",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 10,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 999,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        }
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': False}/z=None",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "39b9c4e32cf7a58fb67079c5c871e19f487cc7d00dcac142c9f781406860d508"
+    },
+    "payload_sha256": "39b9c4e32cf7a58fb67079c5c871e19f487cc7d00dcac142c9f781406860d508",
+    "timeline": {
+      "clips": [
+        {
+          "asset": "plate",
+          "at": 0.0,
+          "from": 5.005,
+          "hold": 10,
+          "id": "plate_150_180",
+          "to": 6.006,
+          "track": "bottom"
+        },
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "bottom",
+          "kind": "visual",
+          "label": "bottom"
+        },
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': False}/z=0",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "c08c5fab157f891c172f5bf04b737c6af009b0e11b8a9b162860437af0963efa"
+    },
+    "payload_sha256": "c08c5fab157f891c172f5bf04b737c6af009b0e11b8a9b162860437af0963efa",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "(30000, 1001)/fades/{'supports_windows': False}/z=1",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "aa26808f30ef9696aa7083ff121779d58260cf9390b0fd9124a654485ffb5858"
+    },
+    "payload_sha256": "aa26808f30ef9696aa7083ff121779d58260cf9390b0fd9124a654485ffb5858",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "astrid_slice_origin": {
+              "at": 0.016682,
+              "from": 1,
+              "id": "early",
+              "to": 10
+            },
+            "opaque": [
+              null,
+              false
+            ]
+          },
+          "asset": "top",
+          "at": 0.0,
+          "from": 5.988318,
+          "id": "early_150_180",
+          "params": {
+            "fadeIn": 2,
+            "fadeOut": 1
+          },
+          "speed": 1,
+          "to": 6.989318,
+          "track": "top"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.001,
+        "opaque": {
+          "keep": [
+            null,
+            false
+          ]
+        },
+        "source_window_end_seconds": 6.006,
+        "source_window_start_seconds": 5.005
+      },
+      "theme": "banodoco-default",
+      "tracks": [
+        {
+          "id": "top",
+          "kind": "visual",
+          "label": "top"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "threejs/z=0/native=True",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 180,
+        "end_frame": 210,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "360"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "29dccf67e504f68fe43b00149590c1567205254b24ed6016753b1ee4cb1115b1"
+    },
+    "payload_sha256": "29dccf67e504f68fe43b00149590c1567205254b24ed6016753b1ee4cb1115b1",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "liveScene": {
+              "html": "<html></html>",
+              "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+              "source": {
+                "objectId": "package-object",
+                "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+              }
+            },
+            "sentinel": "retained"
+          },
+          "at": 2,
+          "clipType": "haus.astrid.liveScene",
+          "from": 55,
+          "hold": 20,
+          "id": "scene",
+          "speed": 2,
+          "to": 75,
+          "track": "scene"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        }
+      },
+      "theme": "banodoco-default",
+      "theme_overrides": {
+        "visual": {
+          "canvas": {
+            "fps": 30,
+            "height": 180,
+            "width": 320
+          }
+        }
+      },
+      "tracks": [
+        {
+          "id": "scene",
+          "kind": "visual",
+          "label": "Scene"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "threejs/z=0/native=False",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "4f40a304bf976381f569233a8a7426d468128f94df7c9ed9748e8f70950dee77"
+    },
+    "payload_sha256": "4f40a304bf976381f569233a8a7426d468128f94df7c9ed9748e8f70950dee77",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "liveScene": {
+              "html": "<html></html>",
+              "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+              "source": {
+                "objectId": "package-object",
+                "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+              }
+            },
+            "sentinel": "retained"
+          },
+          "at": 0.0,
+          "clipType": "haus.astrid.liveScene",
+          "from": 63.0,
+          "hold": 2.0,
+          "id": "scene_180_210",
+          "speed": 2,
+          "to": 65.0,
+          "track": "scene"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": false,
+          "z": 0
+        },
+        "duration_seconds": 1.0,
+        "source_window_end_seconds": 7.0,
+        "source_window_start_seconds": 6.0
+      },
+      "theme": "banodoco-default",
+      "theme_overrides": {
+        "visual": {
+          "canvas": {
+            "fps": 30,
+            "height": 180,
+            "width": 320
+          }
+        }
+      },
+      "tracks": [
+        {
+          "id": "scene",
+          "kind": "visual",
+          "label": "Scene"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "threejs/z=1/native=True",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": {
+        "start_frame": 180,
+        "end_frame": 210,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null
+      },
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}",
+        "astrid_composition_duration_frames": "360"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "d5038f58221efafac182238faa4c056f193c8afd60dc549d50fcd42511127f78"
+    },
+    "payload_sha256": "d5038f58221efafac182238faa4c056f193c8afd60dc549d50fcd42511127f78",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "liveScene": {
+              "html": "<html></html>",
+              "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+              "source": {
+                "objectId": "package-object",
+                "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+              }
+            },
+            "sentinel": "retained"
+          },
+          "at": 2,
+          "clipType": "haus.astrid.liveScene",
+          "from": 55,
+          "hold": 20,
+          "id": "scene",
+          "speed": 2,
+          "to": 75,
+          "track": "scene"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        }
+      },
+      "theme": "banodoco-default",
+      "theme_overrides": {
+        "visual": {
+          "canvas": {
+            "fps": 30,
+            "height": 180,
+            "width": 320
+          }
+        }
+      },
+      "tracks": [
+        {
+          "id": "scene",
+          "kind": "visual",
+          "label": "Scene"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": true
+  },
+  {
+    "case": "threejs/z=1/native=False",
+    "identical": true,
+    "request": {
+      "schema_version": 1,
+      "timeline_path": "<workspace>/segment-inputs/0000-timeline.json",
+      "assets_registry_path": null,
+      "output_name": "out.mp4",
+      "window": null,
+      "audio": null,
+      "profile": null,
+      "backend_config": {},
+      "metadata": {
+        "review": "{}"
+      }
+    },
+    "sidecar": {
+      "materialized_timeline": "831a26dbd75c3f5ecbf92a3ad05c3050383226cce05e1c7e68a313610e2efd4f"
+    },
+    "payload_sha256": "831a26dbd75c3f5ecbf92a3ad05c3050383226cce05e1c7e68a313610e2efd4f",
+    "timeline": {
+      "clips": [
+        {
+          "app": {
+            "liveScene": {
+              "html": "<html></html>",
+              "packageBody": "{\"manifest\":{\"formatVersion\":1,\"entry\":\"scene.html\",\"duration\":100,\"authoredFps\":30},\"entry\":{\"object_id\":\"entry-object\",\"digest\":\"sha256:b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628\",\"media_type\":\"text/html\",\"size\":13,\"filename\":\"scene.html\"},\"assets\":[]}",
+              "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227",
+              "source": {
+                "objectId": "package-object",
+                "revision": "sha256:e2192e7f266af25f567c6cb695b919eec6f3cfd4f291da990b639c54da007227"
+              }
+            },
+            "sentinel": "retained"
+          },
+          "at": 0.0,
+          "clipType": "haus.astrid.liveScene",
+          "from": 63.0,
+          "hold": 2.0,
+          "id": "scene_180_210",
+          "speed": 2,
+          "to": 65.0,
+          "track": "scene"
+        }
+      ],
+      "metadata": {
+        "astrid_layer": {
+          "alpha": true,
+          "z": 1
+        },
+        "duration_seconds": 1.0,
+        "source_window_end_seconds": 7.0,
+        "source_window_start_seconds": 6.0
+      },
+      "theme": "banodoco-default",
+      "theme_overrides": {
+        "visual": {
+          "canvas": {
+            "fps": 30,
+            "height": 180,
+            "width": 320
+          }
+        }
+      },
+      "tracks": [
+        {
+          "id": "scene",
+          "kind": "visual",
+          "label": "Scene"
+        }
+      ]
+    },
+    "same_request": false,
+    "same_window": false
+  },
+  {
+    "case": "invalid/[]",
+    "identical": true,
+    "error_type": "ValueError",
+    "error": "error backend must be a qualified id '<pack>.<name>' whose dot-separated segments use lowercase letters, digits, and hyphens"
+  },
+  {
+    "case": "invalid/{'tracks': [], 'clips': []}",
+    "identical": true,
+    "error_type": "ValueError",
+    "error": "planned window extends beyond the full composition"
+  }
+]

@@ -1,0 +1,2 @@
+/home/user/work/wt/vw-m4-service-window-source-extract/astrid/core/rendering/service.py
+/home/user/work/wt/vw-m4-service-window-source-extract/astrid/core/rendering/window_inputs.py

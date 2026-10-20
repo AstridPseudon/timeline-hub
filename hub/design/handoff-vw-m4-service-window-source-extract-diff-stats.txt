@@ -1,0 +1,7 @@
+origin/main to starting HEAD:
+63	10	astrid/core/rendering/service.py
+origin/main to current service:
+28	44	astrid/core/rendering/service.py
+worker diff:
+8	77	astrid/core/rendering/service.py
+new helper: 106 physical lines
