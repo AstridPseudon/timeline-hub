@@ -36,6 +36,7 @@ def operations():
     from ._split_commands import clip_split
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
+    from .native_initialize import initialize
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
@@ -46,7 +47,8 @@ def operations():
         placement_unplace,
     )
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
-    return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+    return {'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
+            'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,

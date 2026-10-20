@@ -793,6 +793,11 @@ class RuntimeCommitService:
             if base_entry["revision_id"] != base["revision_id"]:
                 raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
                                               base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
             undo_of = []
             if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
                 raise CommitRejected(_failure("unsupported_operation",
@@ -883,6 +888,11 @@ class RuntimeCommitService:
             for attempt in range(3):
                 if attempt:
                     current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
                 if current == base:
                     plan = original
                 else:
