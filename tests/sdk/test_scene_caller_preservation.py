@@ -197,5 +197,6 @@ def test_private_scene_only_request_reuses_managed_capture_without_caller_source
     assert request['mode'] == 'scene_only'
     assert request['formats'] == ['md']
     assert request['composed_capture'] is True
+    assert request['include_media'] is False
     assert 'source_ref' not in request and 'authority_context' not in request
     assert seen['inputs'] == request

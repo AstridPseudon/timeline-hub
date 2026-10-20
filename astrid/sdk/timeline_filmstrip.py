@@ -1307,9 +1307,7 @@ def _scene_only_authority(context: Mapping[str, Any]) -> dict[str, Any] | None:
         for key, value in clip_map.items()
     ):
         return None
-    if not all(isinstance(context.get(key), str) and context[key] for key in (
-        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
-    )):
+    if not isinstance(context.get("capture_identity"), str) or not context["capture_identity"]:
         return None
     capture_authority = metadata.get("capture_authority")
     if not isinstance(capture_authority, Mapping):
@@ -1319,9 +1317,6 @@ def _scene_only_authority(context: Mapping[str, Any]) -> dict[str, Any] | None:
         return None
     return {
         "capture_identity": context["capture_identity"],
-        "video_digest": context["video_digest"],
-        "video_object_id": context["video_object_id"],
-        "managed_object_reference": context["managed_object_reference"],
         "scene_clips": deepcopy(dict(clip_map)),
         "snapshot_label": expected_label,
         "timeline_id": snapshot.get("timeline_id"),
@@ -1373,7 +1368,7 @@ def _scene_only_request(
         "view": "filmstrip",
         "formats": list(_SCENE_ONLY_FORMATS),
         "composed_capture": True,
-        "include_media": True,
+        "include_media": False,
         "every_frames": 1,
     })
     context = prepare_filmstrip(request, project=project, client=client)
@@ -1643,6 +1638,8 @@ def _invoke_scene_only(
         client=client,
         inputs=request, wait=True, read_managed_outputs=True,
     )
+    if not result.ok:
+        raise RuntimeError(result.to_dict())
     return _scene_only_spans(result, context, client=client), context
 
 

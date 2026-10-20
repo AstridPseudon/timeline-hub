@@ -54,6 +54,7 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
         }:
             monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime")
+    monkeypatch.setenv("ASTRID_CHECKOUT", str(ROOT))
     private_profile = tmp_path / "public13-profile"
     shutil.copytree(
         REMOTION,
@@ -195,12 +196,26 @@ def _run_one(host: GenericPackHost, operation: Any) -> Any:
 
     thread = threading.Thread(target=serve, name="d09-pack-host")
     thread.start()
+    operation_error: BaseException | None = None
     try:
         result = operation()
+    except BaseException as exc:
+        operation_error = exc
+        raise
     finally:
-        if thread.is_alive():
+        cleanup_error: BaseException | None = None
+        try:
+            # Always close the owned host, including admission/query failures
+            # after its claim loop has already exited.  shutdown() reaps the
+            # host's child process groups before the Runtime fixture tears
+            # down its server.
             host.shutdown()
-        thread.join(timeout=30)
+        except BaseException as exc:
+            cleanup_error = exc
+        finally:
+            thread.join(timeout=30)
+        if cleanup_error is not None and operation_error is None:
+            raise cleanup_error
     assert not thread.is_alive(), "pack host did not settle the managed task"
     assert not errors, errors[0] if errors else None
     return result
@@ -241,32 +256,6 @@ def _assert_managed_scene_bundle(client: AstridClient, rows: list[dict[str, Any]
     return {"row": row, "manifest": manifest, "payload": payload}
 
 
-def _render(client: AstridClient, host: GenericPackHost, project_id: str) -> None:
-    result = _run_one(
-        host,
-        lambda: client.invoke_result(
-            "rendering.render",
-            kind="executor",
-            project=project_id,
-            inputs={
-                "timeline_ref": "main",
-                "selector": "rendering.remotion",
-                "output_name": "d09-base.mp4",
-                "backend_config": {
-                    "rendering.remotion": {
-                        "project_dir": os.environ["ASTRID_REMOTION_PROJECT_DIR"],
-                        "composition_id": "TimelineComposition",
-                    }
-                },
-            },
-            wait=True,
-            timeout_seconds=300,
-            poll_seconds=0.05,
-        ),
-    )
-    assert result.ok, result.to_dict()
-
-
 def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
     tmp_path: Path, real_runtime: Any
 ) -> None:
@@ -274,16 +263,20 @@ def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
     with _connect(daemon) as client:
         project_id, parent_revision = _publish(client, suffix="positive")
         host = _host(daemon, tmp_path)
-        _render(client, host, project_id)
-
-        host = _host(daemon, tmp_path)
         saved_spans, saved_context = _run_one(
             host,
             lambda: timeline_filmstrip._invoke_scene_only(
                 {"timeline_ref": "main"}, project=project_id, client=client
             ),
         )
-        assert saved_spans[0].cls == "COVERED"
+        if saved_spans[0].cls != "COVERED":
+            saved_scene, saved_output_rows = _latest_scene_task(client, project_id)
+            raise AssertionError({
+                "findings": saved_spans[0].findings,
+                "context": saved_context,
+                "scene": saved_scene,
+                "managed_outputs": saved_output_rows,
+            })
         assert saved_context["snapshot_label"] == {
             "status": "committed",
             "label": f"committed revision {parent_revision}",
