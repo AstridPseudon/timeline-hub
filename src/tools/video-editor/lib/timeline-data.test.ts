@@ -80,6 +80,33 @@ const buildSequenceConfig = (): TimelineConfig => ({
 });
 
 describe('timeline data sequence clip persistence', () => {
+  it('carries arbitrary own roots from load through rows, resolver refresh and snapshot recovery', async () => {
+    const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"empty":[],"ordered":[3,1,2],"__proto__":{"constructor":{"prototype":null}},"constructor":false,"prototype":0}');
+    const config = { ...buildSequenceConfig(), ...opaque } as TimelineConfig;
+    const before = JSON.stringify(config);
+    const data = await buildTimelineData(config, registry);
+    const refreshed = await buildTimelineDataWithResolver(config, registry, { resolveAssetUrl: async (file) => file });
+    const rowsConfig = rowsToConfig(data.rows, data.meta, data.output, data.clipOrder, data.tracks, data.config.pinnedShotGroups, data.config);
+    const { buildDataFromCurrentRegistry, buildDataFromSnapshot } = await import('./timeline-save-utils');
+    const rebuilt = buildDataFromCurrentRegistry(rowsConfig, data);
+    const recovered = buildDataFromSnapshot(config, registry, data);
+    for (const result of [data, refreshed, rebuilt, recovered]) {
+      expect(result.config).toMatchObject({ opaque: { retained: [null, false, []] } });
+      for (const projected of [result.config, result.resolvedConfig]) {
+        expect(JSON.stringify(Object.fromEntries(Object.keys(opaque).map((key) => [key, (projected as unknown as Record<string, unknown>)[key]])))).toBe(JSON.stringify(opaque));
+        for (const key of Object.keys(opaque)) expect(Object.hasOwn(projected, key)).toBe(true);
+        expect(Object.hasOwn(projected, 'absent')).toBe(false);
+        expect(Object.getPrototypeOf(projected)).toBe(Object.prototype);
+        expect(projected.output).toEqual(config.output);
+      }
+      expect(result.config).not.toHaveProperty('editProjection');
+    }
+    expect(JSON.stringify(config)).toBe(before);
+    // Disk/wire policy is unchanged; the display fact stays outside config.
+    data.editProjection = { kind: 'accepted', head: { revisionId: 'r1', publicationId: 'p1' } };
+    expect(JSON.stringify(serializeForDisk(data.resolvedConfig))).not.toContain('editProjection');
+  });
+
   it('preserves sequence clip schema-lift fields and top-level extras through buildTimelineData and rowsToConfig', async () => {
     const config = buildSequenceConfig();
 

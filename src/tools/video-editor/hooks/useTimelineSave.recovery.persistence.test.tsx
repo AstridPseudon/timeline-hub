@@ -208,8 +208,8 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
       baseHeadRevisionId: 'original', draft: { config: opaque } });
     expect(kept!.draft.config).not.toHaveProperty('x_today');
     expect(kept!.draft.config).not.toHaveProperty('x_absent');
-    expect(hook.result.current.data!.config).not.toHaveProperty('x_null');
-    expect(hook.result.current.data!.resolvedConfig).not.toHaveProperty('x_null');
+    expect(hook.result.current.data!.config).toMatchObject(opaque);
+    expect(hook.result.current.data!.resolvedConfig).toMatchObject(opaque);
     expect(saveTimelineAtHead.mock.calls[0][2]).toEqual({ projectId: 'project', timelineId, headRevisionId: 'original' });
     expect(hook.result.current.schemaIncompatible).toEqual([]);
     hook.unmount();
