@@ -13,7 +13,7 @@ Known source-link consumers are `astrid/packs/shots/dependencies.py::_meta/_desc
 
 Permanent fixture/test sources on the integrated commit:
 
-- `tests/timeline/test_authoring_bundle.py`: eight direct item-codec/remapper/compiler cases at the end of the file; all three codecs (`item_id`, `id`, equal mirrors), non-mirror opaque `id`, metadata versus record fallback, unknown nested namespaces, null/order/source immutability and known-source-link positives.
+- `tests/timeline/test_authoring_bundle.py`: test_materialization_remaps_only_item_codec_and_declared_source_links (eight parameterized direct remapper/compiler cases, line265); all three codecs (`item_id`, `id`, equal mirrors), non-mirror opaque `id`, metadata versus record fallback, unknown nested namespaces, null/order/source immutability and known-source-link positives.
 - `tests/editing_conformance/test_commit_runtime_opaque_items.py`: `opaque()`, parameterized `opaque_film`, `assert_preserved`; six REAL Runtime cases across the three codecs. The namespace fixture is `org.example.notes/v1`, with foreign IDs/list/null/nested item-like keys. Move→accept→immutable readback→restart/exact persisted request/key retry→undo preserves all namespaces and the complete original canonical closure. No xfail.
 - `tests/editing_conformance/test_commit_runtime_shared_inverse.py`: ten REAL shared-source cases, including exact undo→redo→second undo and stable rematerialization, newer disjoint siblings/parent and ABA refusals.
 - `tests/editing_conformance/test_recipe_m1_commands.py::test_reverse_materialization_alias_requires_exact_source_and_occurrence`: exact scoped identity positive and source/project/timeline/owner refusal controls.

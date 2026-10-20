@@ -188,3 +188,24 @@ Final focused own-domain run: **1618 passed, 4 existing skips, 74 integration de
 One mistaken direct invocation included daemon scalar/first-clip tests; interrupted exit130 with incomplete `FFx` output, not qualification. Replaced by the completed socket-free selection above. Nullable-speed test expectation/marker unchanged, not requalified; no socket/HTTP/browser success claim. Official0.2.3 and central exact-pair/App popup/legacy journeys remain pending. M2 integration **HELD until PLAN M1**; frozen d474 and Bundle1 untouched.
 
 Exact commands, decisions, source manifest and logs: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-reviewed-successor/notes/report.md`. Full diff including new opaque test: `notes/final.patch`, SHA256 `08e36e213132675502816a89205ceb80579b64710c2f53ce1178ecaa78aed973`. Both worker-root commit-message files ready; manager should record harness SHA here after commit, then coordinate the official pair without changing this task's pin.
+
+## Release composition in progress — agt-m2-bundle2-release-compose
+
+Working from exact `a31d712d4a5c9ad08f385e12d71d3f1f7cbfef83` in
+`/home/user/work/wt/agt-m2-bundle2-release-compose`. Applied only f423's six-file
+normal d691 pin/test delta, a95c native batches and 2590 ordinary replay delta,
+retaining M2 state-aware inverse and PARAM forwarding. Added the missing a76
+shared sibling/ABA/redo controls and exact reverse-source-alias tests; retained
+the existing roundtrip and M2 provider. Initial modified recipe/sync/CLI run:
+424 passed (30.25s); normal vendor and CLI surface checks pass. Direct official
+d691 service-only popup/PARAM/scalar/identity/opaque qualification is running.
+
+Numeric source `3eae37799447d476c7b82abddef66d230436384f` is now committed;
+composition awaits explicit manager review, as assigned. Runtime null-speed
+successor `65abc5d` is explicitly awaiting replacement of its rejected SQL-based
+fixture (Runtime manager02:04); d691 remains the pin here. No central request
+has been submitted: preserve the single final larger-cohort request for the
+reviewed final producer/numeric tuple. Until that coordination finishes this
+candidate is **HOLD**, with no App readiness claim. Frozen d474/schema472622 and
+Bundle1 remain untouched. This paragraph records progress, not a final source
+identity or release approval.

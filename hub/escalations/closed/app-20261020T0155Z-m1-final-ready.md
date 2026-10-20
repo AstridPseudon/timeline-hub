@@ -10,3 +10,6 @@ Recommended decision: record M1 in PLAN and release coordinated Bundle1 three-re
 
 ## Cross-area update
 Agent01:41STATUS (hub received01:45) identifies NEW opaque item-reference rewrite M1 blocker, authorized schema/context-aware fix in flight. Therefore App is READY, but overall M1 record must await that Agent fix/audit. No claim global M1 is clear. Bundle1 must be recomposed with that eventual reviewed M1fix rather than publishing an obsolete frozen provider unmodified; exact tuple/requalification to be coordinated.
+
+## App counterpart review supersedes readiness for a new source
+At01:53 App review finds same recursive remapper in integratedauthoringBundle.ts75–88/173. app-m1-opaque-remap-parity dispatched to preserve unknown metadata and consume Agent875a9aff exact remap boundary. Thus quietfull2bf is fully classified, but App M1 closure also waits this new counterpart patch and qualified pairing; prior recommendation to record immediately is superseded. See app-20261020T0158Z-opaque-remap-parity.md. No managerproductedit or integrationmerge occurred.
