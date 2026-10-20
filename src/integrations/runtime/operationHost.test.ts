@@ -61,6 +61,39 @@ afterEach(() => { hosts.splice(0).forEach(host => host.dispose()); vi.restoreAll
 
 // These exercise the real handwritten client and generated Transport with local bytes only.
 describe('same-origin operation owner (inactive)', () => {
+  it('reads the frozen Runtime numeric event cursor through the same operation', async () => {
+    const f = env(), op = await f.host.bind();
+    // Cursor present in central 1020175019-31635's subsequent polling URLs.
+    const cursor = 'eyJrIjpbIjAiXSwibnVtZXJpYyI6dHJ1ZSwicyI6ImV2ZW50czoqIiwidiI6MX0';
+    const page = { items: [], next_cursor: cursor };
+    f.setData(page);
+    await expect(op.listEvents(undefined, true)).resolves.toEqual(page);
+    await expect(op.listEvents(cursor)).resolves.toEqual(page);
+    expect(op.isCurrentIdentity(launch)).toBe(true);
+    const reads = f.calls.filter(call => call.path.includes('/v1/events?'));
+    expect(reads.map(call => call.path)).toEqual([
+      `${O}/runtime/v1/events?limit=50&from=latest`,
+      `${O}/runtime/v1/events?limit=50&cursor=${cursor}`,
+    ]);
+    expect(reads.every(call => new Headers(call.options.headers).get(H) === '1'.padStart(64, '0'))).toBe(true);
+  });
+
+  it('rejects a successful event body that finishes after its operation retires', async () => {
+    const f = env(), op = await f.host.bind(), entered = deferred<void>(), body = deferred<ArrayBuffer>();
+    f.intercept((path, _options, response) => path.includes('/v1/events?')
+      ? { ...response, arrayBuffer: () => { entered.resolve(); return body.promise; } } as Response
+      : response);
+    const pending = op.listEvents(undefined, true);
+    const caught = pending.catch(error => error);
+    await entered.promise;
+    const replacement = await f.host.reconnect();
+    body.resolve(new TextEncoder().encode(JSON.stringify({ items: [],
+      next_cursor: 'eyJrIjpbIjAiXSwibnVtZXJpYyI6dHJ1ZSwicyI6ImV2ZW50czoqIiwidiI6MX0' })).buffer);
+    expect(await caught).toBeInstanceOf(Error);
+    expect(op.isCurrentIdentity(launch)).toBe(false);
+    expect(replacement.isCurrentIdentity(launch)).toBe(true);
+  });
+
   it('uses one handle for negotiation, admission, reads and original UTF-8 transmission', async () => {
     const f = env();
     const op = await f.host.bind();

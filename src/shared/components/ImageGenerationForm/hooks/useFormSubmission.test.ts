@@ -77,6 +77,20 @@ describe('useFormSubmission', () => {
     });
   });
 
+  it('does not reach onGenerate from the default reference mode without a reference', async () => {
+    const props = buildProps({ imagesPerPrompt: 1, associatedShotId: null }, {
+      generationSourceRef: { current: 'by-reference' },
+      styleReferenceImageGeneration: null,
+    });
+    const { result } = renderHook(() => useFormSubmission(props));
+    await act(async () => {
+      await result.current.handleSubmit({ preventDefault: vi.fn() } as unknown as React.FormEvent);
+    });
+    expect(mocks.toastError).toHaveBeenCalledWith('Please upload a style reference image for by-reference mode.');
+    expect(mocks.runTaskPlaceholder).not.toHaveBeenCalled();
+    expect(props.effects.onGenerate).not.toHaveBeenCalled();
+  });
+
   it('uses the managed submission branch to queue incoming work and call onGenerate', async () => {
     const props = buildProps();
     const event = { preventDefault: vi.fn() } as unknown as React.FormEvent;
