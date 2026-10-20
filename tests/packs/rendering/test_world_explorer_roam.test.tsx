@@ -5,6 +5,7 @@ import { act, cleanup, createEvent, fireEvent, render, waitFor, within } from '@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorldExplorerPanel } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel';
 import { quatRotate, type ViewPose } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/camera';
+import { KEY_MAP } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/model';
 import { ingestPreparedPackage, parsePreparedScenePackage } from '../../../astrid/packs/rendering/ui/threejs-live-editor/authoring';
 import { SAMPLE_WORLD } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
@@ -579,7 +580,7 @@ describe('World Explorer free roam', () => {
     const wheel = createEvent.wheel(viewer, { deltaY: -100 });
     fireEvent(viewer, wheel);
     expect(wheel.defaultPrevented).toBe(true);
-    expect(view.getByLabelText('Camera speed')).toHaveTextContent('1.25×');
+    expect(view.getByLabelText('Camera speed')).toHaveTextContent('1.5×');
 
     press(viewer, 'w');
     stepAck(10);
@@ -688,7 +689,7 @@ describe('World Explorer free roam', () => {
     fireEvent.change(select, { target: { value: '1' } });
     expect(slider).toHaveAttribute('aria-valuemin', '3');
     expect(slider).toHaveAttribute('aria-valuemax', '6');
-    expect(view.getByText(/Stretch 0:03\.0 – 0:06\.0/)).toBeTruthy();
+    expect(view.getByText(/0:03\.0–0:06\.0/)).toBeTruthy();
   });
 
   it('a world with no cameras gets one implicit camera covering the whole world', async () => {
@@ -720,12 +721,12 @@ describe('World Explorer free roam', () => {
     const view = mount(harness);
     await openReady(EXPLORE, { cameras: CAMERAS });
 
+    // The world is already open, so following the clip does not reload the scene.
     harness.selectClip(['c1']);
-    await openReady(EXPLORE, { cameras: CAMERAS });
 
-    expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy();
+    await waitFor(() => expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy());
     expect(view.getByRole('combobox', { name: 'Camera' })).toHaveValue('0');
-    expect(view.getByText(/Stretch 0:01\.0 – 0:04\.0 · 3\.0 s at 1×/)).toBeTruthy();
+    expect(view.getByText(/0:01\.0–0:04\.0 · 3 s/)).toBeTruthy();
     expect(view.getByText('Editing clip on V1 at 0:02')).toBeTruthy();
   });
 
@@ -840,6 +841,138 @@ describe('World Explorer free roam', () => {
     expect(settings.store.get('worldLibrary:p1')).toEqual([lantern]);
     expect(view.queryByRole('button', { name: /^Spare/ })).toBeNull();
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
+  });
+
+  it('in Cameras mode, Space toggles the travel and is prevented from reaching the page', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { cameras: CAMERAS });
+    harness.selectClip(['c1']);
+    await waitFor(() => expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy());
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+    expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
+
+    const event = press(viewer, ' ');
+    expect(event.defaultPrevented).toBe(true);
+    expect(view.getByRole('button', { name: 'Pause' })).toBeTruthy();
+
+    press(viewer, ' ');
+    expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
+  });
+
+  it('in Cameras mode, ArrowRight on the viewer moves the travel position by one second', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { cameras: CAMERAS });
+    harness.selectClip(['c1']);
+    await waitFor(() => expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy());
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+    const travelSlider = view.getByRole('slider', { name: 'Travel position' });
+    // The travel opens at the stretch start (1 s).
+    expect(travelSlider).toHaveAttribute('aria-valuenow', '1');
+
+    const event = press(viewer, 'ArrowRight');
+    expect(event.defaultPrevented).toBe(true);
+    expect(travelSlider).toHaveAttribute('aria-valuenow', '2');
+  });
+
+  it('in Cameras mode, o ends the stretch at the travel position', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { cameras: CAMERAS });
+    harness.selectClip(['c1']);
+    await waitFor(() => expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy());
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+
+    press(viewer, 'ArrowRight');
+    press(viewer, 'o');
+    expect(view.getByText(/0:01\.0–0:02\.0 · 1 s/)).toBeTruthy();
+  });
+
+  it('in Cameras mode, i starts the stretch at the travel position', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { cameras: CAMERAS });
+    harness.selectClip(['c1']);
+    await waitFor(() => expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy());
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+
+    press(viewer, 'ArrowRight');
+    press(viewer, 'i');
+    expect(view.getByText(/0:02\.0–0:04\.0 · 2 s/)).toBeTruthy();
+  });
+
+  it('the hint survives a single drag of more than 12 px, and only fades once the user has also pressed W', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE);
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+    expect(view.getByRole('note')).toHaveTextContent(HINT_TEXT);
+
+    pointer(viewer, 'pointerdown', 100, 100);
+    pointer(viewer, 'pointermove', 120, 100);
+    pointer(viewer, 'pointerup', 120, 100);
+    stepAck(5);
+    expect(view.getByRole('note')).toHaveTextContent(HINT_TEXT);
+
+    press(viewer, 'w');
+    release(viewer, 'w');
+    await waitFor(() => expect(view.queryByRole('note')).toBeNull(), { timeout: 3000 });
+  });
+
+  it('the hint does not fade on W alone; a later drag starts the fade', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE);
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+
+    press(viewer, 'w');
+    release(viewer, 'w');
+    stepAck(5);
+    expect(view.getByRole('note')).toHaveTextContent(HINT_TEXT);
+
+    pointer(viewer, 'pointerdown', 100, 100);
+    pointer(viewer, 'pointermove', 130, 100);
+    pointer(viewer, 'pointerup', 130, 100);
+    // The drag completes the pair, so the fade starts now; the note leaves only when its timer runs out.
+    await waitFor(() => expect(view.queryByRole('note')).toBeNull(), { timeout: 3000 });
+  });
+
+  it('? on the focused viewer shows the Key map with every key, and ? again hides it', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE);
+    const viewer = viewerOf(view);
+    act(() => viewer.focus());
+    expect(view.queryByLabelText('Key map')).toBeNull();
+
+    press(viewer, '?');
+    const keyMap = view.getByLabelText('Key map');
+    const keys = [...keyMap.querySelectorAll('dt')].map((term) => term.textContent);
+    expect(keys).toEqual(KEY_MAP.map((row) => row.keys));
+    expect(keys.join(' ')).toMatch(/Space/);
+
+    press(viewer, '?');
+    expect(view.queryByLabelText('Key map')).toBeNull();
+  });
+
+  it('clicking an event chip in Explore moves focus to the viewer', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { events: EVENTS });
+    const viewer = viewerOf(view);
+    const chip = within(view.getByRole('group', { name: 'Events' })).getByRole('button', { name: /Dawn/ });
+    act(() => (chip as HTMLElement).focus());
+    expect(document.activeElement).not.toBe(viewer);
+
+    fireEvent.click(chip);
+    expect(document.activeElement).toBe(viewer);
   });
 });
 

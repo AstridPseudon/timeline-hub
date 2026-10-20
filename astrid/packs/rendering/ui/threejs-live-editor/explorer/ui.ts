@@ -1,7 +1,7 @@
 // Shared control chrome and small formatters for the World Explorer. Same look as the Transcript panel;
 // pack TSX is compiled by the app's Tailwind scan, but keep layout-critical sizes inline.
 export const button = 'min-h-10 sm:min-h-8 rounded-md px-2 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
-export const select = 'min-h-10 sm:min-h-8 min-w-0 max-w-full rounded-md border border-border/70 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+export const select = 'min-h-10 sm:min-h-8 min-w-0 max-w-full appearance-none rounded-md border border-border/70 bg-transparent py-0 pl-2 pr-6 text-xs text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 export const chip = 'h-7 rounded-full border border-border/70 px-2 text-[11px] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 export const VIEWER_STYLE = { background: '#05060f' } as const;
 export const OVERLAY_STYLE = { background: 'rgba(5, 6, 15, 0.92)', color: 'rgba(255, 255, 255, 0.72)' } as const;

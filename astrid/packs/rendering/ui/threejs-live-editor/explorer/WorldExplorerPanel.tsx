@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import type { ExtensionContext, PanelRenderProps, TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 import type { SceneExplore, SceneInfo, SceneStatus } from '../runtime';
@@ -15,6 +15,7 @@ import {
   freeVisualTrack,
   HINT_DISMISSED_KEY,
   keyAction,
+  KEY_MAP,
   lastWorldKey,
   newClipId,
   readLibrary,
@@ -25,6 +26,7 @@ import {
   SHIFT_BOOST,
   speedScaleLabel,
   stretchDuration,
+  stretchMatches,
   TravelClock,
   wheelSpeedScale,
   worldKey,
@@ -35,8 +37,9 @@ import {
   type WorldEvent,
 } from './model';
 import { buildRows, rowFromEntry, type Row } from './rows';
+import { Select } from './Select';
 import { TimeBar, type BarMarker } from './TimeBar';
-import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, select, speedLabel, VIEWER_STYLE } from './ui';
+import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
 import { WorldList } from './WorldList';
 
 type AuthoringModule = typeof import('../authoring');
@@ -53,14 +56,21 @@ const MIN_VIEW_WIDTH = 160;
 const FALLBACK_VIEW_WIDTH = 320;
 const FALLBACK_ASPECT = 16 / 9;
 /** At this container width the panel uses its side column (the popped-out layout). */
-const WIDE_REM = 44;
-const SIDE_COLUMN = '15rem';
+const WIDE_REM = 38;
+const SIDE_COLUMN = '13rem';
+/** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
+const CONTROLS_MIN_HEIGHT = '10rem';
 const VIEW_FOV = 60;
 /** Radians of turn per dragged pixel. */
 const LOOK_PER_PIXEL = 0.0035;
 /** Touch pans and pinches move this many seconds of travel per 120 px. */
 const TOUCH_PIXELS_PER_SECOND = 120;
 const HINT_TEXT = 'Drag to look · WASD to move · Scroll for speed';
+const TOUCH_HINT_TEXT = 'Drag to look · Two fingers to move';
+/** The hint fades this long after the user has both looked and moved. */
+const HINT_FADE_MS = 700;
+/** A drag counts as looking once it has gone this far. */
+const LOOKED_PIXELS = 12;
 
 type Mode = 'explore' | 'cameras';
 type Frame = { time: number; worldTime?: number; view?: ViewPose };
@@ -127,6 +137,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const [worldPaused, setWorldPaused] = useState(false);
   const [speedScale, setSpeedScale] = useState(1);
   const [hintDismissed, setHintDismissed] = useState(() => readSetting<boolean>(ctx, HINT_DISMISSED_KEY) === true);
+  const [hintFading, setHintFading] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
+  const [touchSeen, setTouchSeen] = useState(false);
   const [cameraIndex, setCameraIndex] = useState(0);
   const [stretch, setStretch] = useState<Stretch>({ from: 0, to: 1, speed: 1 });
   const [loop, setLoop] = useState(false);
@@ -169,11 +182,16 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const liveClipRef = useRef<string | null>(null);
   const projectRef = useRef<string | null | undefined>(undefined);
   const hintRef = useRef(hintDismissed);
+  const lookedRef = useRef(false);
+  const movedRef = useRef(false);
+  const dragPixels = useRef(0);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      clearTimeout(hintTimer.current);
       worldClock.current = null;
       travelClock.current = null;
     };
@@ -257,23 +275,22 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const sampleSaved = library.some((entry) => entry.name === SAMPLE_LABEL);
   const projectReady = Boolean(snap?.projectId && snap?.timelineId);
   const followedUse = followedClipId ? rows.timeline.flatMap((row) => row.uses).find((use) => use.clipId === followedClipId) : undefined;
-  const followedDiffers = Boolean(followedUse)
-    && (followedUse!.from !== stretch.from || followedUse!.to !== stretch.to || followedUse!.speed !== stretch.speed);
+  const followedDiffers = Boolean(followedUse) && !stretchMatches(followedUse!, stretch, snap?.outputMetadata?.fps ?? 30);
   const stretchValid = stretch.to > stretch.from && stretch.speed > 0;
   const addReason = !selected ? 'Choose a world to add.'
     : !projectReady ? 'Open a timeline to add worlds to a video.'
     : !storage ? 'Project storage is unavailable.'
     : !liveScene ? 'Opening world…'
     : busy ? 'Working…'
-    : !stretchValid ? 'The stretch is empty.'
+    : !stretchValid ? 'The range is empty.'
     : null;
   const speedOptions = [...new Set([...SPEEDS, stretch.speed])].sort((a, b) => a - b);
   const cameraEvents = useMemo(() => (camera ? eventsInCamera(events, camera) : []), [events, camera]);
   const eventMarkers: BarMarker[] = events.map((event, i) => ({
-    key: `${i}:${event.start}:${event.name}`, from: event.start, to: event.end ?? event.start, title: event.name,
+    key: `${i}:${event.start}:${event.name}`, from: event.start, to: event.end ?? event.start, title: event.name, time: clockText(event.start, 1),
   }));
   const cameraMarkers: BarMarker[] = cameraEvents.map(({ event, from, to }, i) => ({
-    key: `${i}:${event.start}:${event.name}`, from, to: event.end === undefined ? from : to, title: event.name,
+    key: `${i}:${event.start}:${event.name}`, from, to: event.end === undefined ? from : to, title: event.name, time: clockText(from, 1),
   }));
 
   // The viewer is a free box in the side layout and a full-width strip when docked.
@@ -317,7 +334,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       if (next === scaleRef.current) return;
       scaleRef.current = next;
       setSpeedScale(next);
-      dismissHint();
     };
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => element.removeEventListener('wheel', onWheel);
@@ -387,6 +403,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     const use = world?.uses.find((candidate) => candidate.clipId === liveClipId);
     const row = world ? buildRows(snapshot, readLibrary(settings, snapshot.projectId)).timeline.find((candidate) => candidate.key === worldKey(world)) : undefined;
     if (!row || !use) return;
+    if (selected?.key === row.key && readyRef.current) {
+      // The world is already open (say, the clip was just added from it): follow the clip without reloading the scene.
+      followOpenClip(use, liveClipId);
+      return;
+    }
     openWorld(row, { stretch: { from: use.from, to: use.to, speed: use.speed }, clipId: liveClipId, mode: 'cameras' });
   }, [liveClipId]);
 
@@ -402,6 +423,21 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     sentKey.current = key;
     inFlight.current = true;
     setFrame(view ? { time: clock.time, worldTime: clock.time, view: view.pose(VIEW_FOV) } : { time: clock.time });
+  }
+
+  /** Follows a clip of the open world: Cameras mode on the camera holding its start, with its stretch. */
+  function followOpenClip(use: { from: number; to: number; speed: number }, clipId: string) {
+    const travel = travelClock.current;
+    if (!travel || !selected) return;
+    const next = clampStretch({ from: use.from, to: use.to, speed: use.speed }, selected.duration);
+    const index = cameraIndexAt(camerasRef.current, next.from);
+    modeRef.current = 'cameras';
+    setModeChoice('cameras');
+    enterCamera(index, next.from);
+    travel.setSpeed(next.speed);
+    setStretch(next);
+    setFollowedClipId(clipId);
+    pump();
   }
 
   function seekWorld(time: number) {
@@ -444,11 +480,27 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
   }
 
+  /** Closes the hint for good (the × button). */
   function dismissHint() {
     if (hintRef.current) return;
     hintRef.current = true;
+    clearTimeout(hintTimer.current);
     setHintDismissed(true);
     writeSetting(ctx, HINT_DISMISSED_KEY, true);
+  }
+
+  /** The hint stays until the user has both looked and moved, then fades. */
+  function noteHint(kind: 'looked' | 'moved') {
+    if (hintRef.current) return;
+    if (kind === 'looked') lookedRef.current = true;
+    else movedRef.current = true;
+    if (!lookedRef.current || !movedRef.current || hintTimer.current !== undefined) return;
+    setHintFading(true);
+    writeSetting(ctx, HINT_DISMISSED_KEY, true);
+    hintTimer.current = setTimeout(() => {
+      hintRef.current = true;
+      if (mounted.current) setHintDismissed(true);
+    }, HINT_FADE_MS);
   }
 
   /** Confines Cameras-mode travel to one camera and rests at its start (or the given time). */
@@ -687,13 +739,25 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function onViewerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     shiftRef.current = event.shiftKey;
-    if (event.target !== event.currentTarget || effectiveMode() !== 'explore' || !roam.current) return;
+    if (event.target !== event.currentTarget) return;
+    // In Cameras mode the viewer owns the travel keys, so the film never sees them.
+    if (effectiveMode() === 'cameras') {
+      travelKey(event);
+      return;
+    }
+    if (!roam.current) return;
+    if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      setKeysOpen((open) => !open);
+      return;
+    }
     const action = exploreKey(event);
     if (!action) return;
     event.preventDefault();
-    dismissHint();
-    if (action.type === 'move') heldKeys.current.add(`${action.axis}${action.sign > 0 ? '+' : '-'}`);
-    else if (action.type === 'reset') resetView();
+    if (action.type === 'move') {
+      noteHint('moved');
+      heldKeys.current.add(`${action.axis}${action.sign > 0 ? '+' : '-'}`);
+    } else if (action.type === 'reset') resetView();
     else toggleWorldPause();
   }
 
@@ -710,13 +774,13 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }
 
   function onViewerPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if ((event.target as HTMLElement).closest?.('button')) return;
+    if ((event.target as HTMLElement).closest?.('button, [data-viewer-control]')) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.pointerType === 'touch') setTouchSeen(true);
     event.currentTarget.focus();
     if (effectiveMode() !== 'explore' || !roam.current) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    dismissHint();
   }
 
   function onViewerPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -729,6 +793,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (pointers.current.size === 1) {
       // One pointer looks: dragging right turns the view right, dragging down looks down.
       view.look(-(x - previous.x) * LOOK_PER_PIXEL, -(y - previous.y) * LOOK_PER_PIXEL);
+      dragPixels.current += Math.hypot(x - previous.x, y - previous.y);
+      if (dragPixels.current >= LOOKED_PIXELS) noteHint('looked');
     } else if (pointers.current.size === 2) {
       const other = [...pointers.current.entries()].find(([id]) => id !== event.pointerId)?.[1];
       if (other) {
@@ -737,6 +803,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         const before = { x: (previous.x + other.x) / 2, y: (previous.y + other.y) / 2, d: Math.hypot(previous.x - other.x, previous.y - other.y) };
         const after = { x: (x + other.x) / 2, y: (y + other.y) / 2, d: Math.hypot(x - other.x, y - other.y) };
         view.translate(-(after.x - before.x) * unit, (after.y - before.y) * unit, (after.d - before.d) * unit);
+        noteHint('moved');
       }
     }
     pointers.current.set(event.pointerId, { x, y });
@@ -750,12 +817,19 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   function onTravelKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     // Controls keep their own keys (Space on a button clicks it; typing in a select stays put).
     const target = event.target as HTMLElement;
-    if (target.closest?.('input, select, textarea, button')) return;
+    if (target.closest?.('input, select, textarea, button, [role=slider]')) return;
+    travelKey(event);
+  }
+
+  /** Travel keys: Space play/pause, ←/→ ±1 s (Shift ±5 s), I/O set the range. They never reach the film. */
+  function travelKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     const clock = travelClock.current;
     if (!clock || !selected) return;
     const action = keyAction(event, { time: clock.time, duration: selected.duration });
     if (!action) return;
     event.preventDefault();
+    event.stopPropagation();
     if (action.type === 'toggle') toggleTravel();
     else if (action.type === 'seek') seekTravel(Math.min(Math.max(action.time, clock.windowStart), clock.windowEnd));
     else if (action.type === 'setStart') setStartHere();
@@ -859,8 +933,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         { id, track, at, from: stretch.from, to: stretch.to, rate: stretch.speed },
       ]);
       if (!mounted.current) return;
-      // The timeline API offers no way for an extension to select a clip, so the playhead moves to the new clip instead.
+      // Select the new clip so the explorer follows it; a host without `select` just moves the playhead to it.
       video?.seek(at);
+      (video as { select?: (clipIds: readonly string[]) => void } | undefined)?.select?.([id]);
       setSnap(readSnapshot(ctx));
       ctx.chrome.toast(`Added to ${track} at ${clockText(at)}`, 'info');
     } catch (cause) {
@@ -895,12 +970,20 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
   }
 
+  /** A click on a mode or Explore control hands focus back to the viewer, so the movement keys keep working. */
+  function refocusViewer(event: MouseEvent<HTMLElement>) {
+    const button = (event.target as HTMLElement).closest?.('button');
+    if (!button || !button.closest('[data-refocus]') || button.disabled) return;
+    viewerRef.current?.focus({ preventScroll: true });
+  }
+
   const overlayText = sceneError ?? loadError?.message ?? (selected ? 'Opening world…' : 'Choose a world to explore.');
   const overlayIsError = Boolean(sceneError || (loadError && loadError.key === selected?.key));
   const showOverlay = !ready;
   const selectedIndex = allRows.findIndex((candidate) => candidate.key === selected?.key);
   const exploring = mode === 'explore' && ready && Boolean(explore);
   const showHint = exploring && !hintDismissed;
+  const touch = touchSeen || (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches);
   const canExpand = Boolean(popout) && !popout!.open;
 
   const importControl = (
@@ -930,7 +1013,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   );
 
   const modeToggle = (
-    <div role="group" aria-label="Mode" className="inline-flex shrink-0 rounded-md border border-border/70 p-0.5">
+    <div role="group" aria-label="Mode" data-refocus className="inline-flex shrink-0 rounded-md border border-border/70 p-0.5">
       {(['explore', 'cameras'] as const).map((value) => {
         const active = mode === value;
         const unavailable = value === 'explore' && explore === null;
@@ -956,7 +1039,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   ) : null;
 
   const eventButtons = (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Events">
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Events" data-refocus>
       {events.map((event, i) => (
         <button
           key={`${i}:${event.start}:${event.name}`}
@@ -1066,6 +1149,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       className="flex h-full min-h-0 text-sm"
       aria-label="World Explorer"
       data-layout={wide ? 'side' : 'docked'}
+      onClick={refocusViewer}
     >
       {wide ? sideColumn : null}
       <div className={`flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3 ${wide ? '' : 'overflow-y-auto'}`}>
@@ -1141,13 +1225,42 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                 {speedScaleLabel(speedScale)}
               </span>
             ) : null}
+            {exploring ? (
+              <button
+                type="button"
+                data-viewer-control
+                aria-label="Keys"
+                aria-expanded={keysOpen}
+                title="Show the key map (?)"
+                className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={PILL_STYLE}
+                onClick={() => setKeysOpen((open) => !open)}
+              >
+                ?
+              </button>
+            ) : null}
+            {exploring && keysOpen ? (
+              <dl
+                aria-label="Key map"
+                data-viewer-control
+                className="absolute left-2 top-11 m-0 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 rounded-md px-3 py-2 text-[11px]"
+                style={OVERLAY_STYLE}
+              >
+                {KEY_MAP.map((entry) => (
+                  <div key={entry.keys} className="contents">
+                    <dt className="whitespace-pre font-medium text-white">{entry.keys}</dt>
+                    <dd className="m-0">{entry.does}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
             {showHint ? (
               <div
                 role="note"
-                className="absolute bottom-2 right-2 flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full py-0.5 pl-3 pr-1 text-[11px]"
-                style={PILL_STYLE}
+                className="absolute bottom-2 right-2 flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full py-0.5 pl-3 pr-1 text-[11px] transition-opacity duration-700"
+                style={{ ...PILL_STYLE, opacity: hintFading ? 0 : 1 }}
               >
-                <span className="truncate">{HINT_TEXT}</span>
+                <span className="truncate">{touch ? TOUCH_HINT_TEXT : HINT_TEXT}</span>
                 <button
                   type="button"
                   aria-label="Dismiss hint"
@@ -1174,7 +1287,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         </div>
 
         {mode === 'explore' ? (
-          <div className="flex shrink-0 flex-col gap-3">
+          <div className="flex shrink-0 flex-col gap-2" data-refocus style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleWorldPause}>
                 {worldPaused ? 'Play' : 'Pause'}
@@ -1196,41 +1309,31 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               markers={eventMarkers}
               onSeek={seekWorld}
             />
-            {events.length ? eventButtons : null}
+            {!wide && events.length ? eventButtons : null}
           </div>
         ) : (
           <div
             role="group"
             aria-label="Camera travel"
             tabIndex={0}
-            className="flex shrink-0 flex-col gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex shrink-0 flex-col gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}
             onKeyDown={onTravelKeyDown}
           >
             {!wide && selected && cameras.length > 1 ? (
-              <select
-                aria-label="Camera"
-                className={select}
-                value={String(cameraIndex)}
-                onChange={(event) => selectCamera(Number(event.target.value))}
-              >
+              <Select label="Camera" value={String(cameraIndex)} onChange={(event) => selectCamera(Number(event.target.value))}>
                 {cameras.map((move, i) => (
-                  <option key={`${i}:${move.start}:${move.name}`} value={i}>{move.name} · {clockText(move.start)} – {clockText(move.end)}</option>
+                  <option key={`${i}:${move.start}:${move.name}`} value={i} className="bg-background text-foreground">{move.name} · {clockText(move.start)} – {clockText(move.end)}</option>
                 ))}
-              </select>
+              </Select>
             ) : null}
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleTravel}>
                 {playing ? 'Pause' : 'Play'}
               </button>
-              <select
-                aria-label="Speed"
-                className={select}
-                value={String(stretch.speed)}
-                disabled={!selected}
-                onChange={(event) => changeSpeed(Number(event.target.value))}
-              >
-                {speedOptions.map((speed) => <option key={speed} value={speed}>{speedLabel(speed)}</option>)}
-              </select>
+              <Select label="Speed" value={String(stretch.speed)} disabled={!selected} onChange={(event) => changeSpeed(Number(event.target.value))}>
+                {speedOptions.map((speed) => <option key={speed} value={speed} className="bg-background text-foreground">{speedLabel(speed)}</option>)}
+              </Select>
               <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <input type="checkbox" checked={loop} disabled={!selected} onChange={(event) => toggleLoop(event.target.checked)} />
                 Loop
@@ -1248,66 +1351,58 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               valueText={clockText(shownTime, 1)}
               disabled={!selected}
               markers={cameraMarkers}
+              uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
+              range={selected ? { from: stretch.from, to: stretch.to } : undefined}
               onSeek={seekTravel}
-            >
-              {(pct) => (
-                <>
-                  {(selected?.uses ?? []).map((use) => (
-                    <div
-                      key={use.clipId}
-                      title={`On ${use.track} at ${clockText(use.at)}`}
-                      className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
-                      style={{ left: pct(use.from), width: `calc(${pct(use.to)} - ${pct(use.from)})`, background: 'hsl(var(--muted-foreground) / 0.45)' }}
-                    />
-                  ))}
-                  <div
-                    className="absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full"
-                    style={{ left: pct(stretch.from), width: `calc(${pct(stretch.to)} - ${pct(stretch.from)})`, background: 'hsl(var(--primary) / 0.45)' }}
-                  />
-                </>
-              )}
-            </TimeBar>
+              onRange={(next) => setStretch((current) => clampStretch({ ...current, ...next }, duration))}
+            />
 
-            {cameraEvents.length ? cameraEventButtons : null}
+            {!wide && cameraEvents.length ? cameraEventButtons : null}
 
             {selected ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" className={`${button} border border-border`} title="Set the stretch start to the travel position (I)" onClick={setStartHere}>Set start (I)</button>
-                <button type="button" className={`${button} border border-border`} title="Set the stretch end to the travel position (O)" onClick={setEndHere}>Set end (O)</button>
-                <p className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-                  Stretch {clockText(stretch.from, 1)} – {clockText(stretch.to, 1)} · {stretchDuration(stretch).toFixed(1)} s at {speedLabel(stretch.speed)}
+              <div className="flex items-center gap-2">
+                <button type="button" className={`${button} border border-border`} title="Start the clip here (I)" onClick={setStartHere}>In (I)</button>
+                <button type="button" className={`${button} border border-border`} title="End the clip here (O)" onClick={setEndHere}>Out (O)</button>
+                <p className="min-w-0 flex-1 truncate text-[11px] tabular-nums text-muted-foreground">
+                  {clockText(stretch.from, 1)}–{clockText(stretch.to, 1)} · {Number(stretchDuration(stretch).toFixed(1))} s{stretch.speed === 1 ? '' : ` at ${speedLabel(stretch.speed)}`}
                 </p>
-              </div>
-            ) : null}
-
-            <div className="flex flex-col gap-2 border-t border-border/70 pt-3">
-              {followedUse ? (
-                <p className="text-[11px] text-muted-foreground">Editing clip on {followedUse.track} at {clockText(followedUse.at)}</p>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className={`${button} bg-primary/10 text-primary`}
-                  disabled={Boolean(addReason)}
-                  title={addReason ?? 'Add the selected stretch to the video at the playhead'}
-                  onClick={() => { void addToVideo(); }}
-                >
-                  Add to video
-                </button>
                 {followedUse ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`${button} shrink-0 hover:text-foreground text-muted-foreground`}
+                      disabled={Boolean(addReason)}
+                      title={addReason ?? 'Add this range to the video as a new clip at the playhead'}
+                      onClick={() => { void addToVideo(); }}
+                    >
+                      Add as new
+                    </button>
+                    <button
+                      type="button"
+                      className={`${button} shrink-0 bg-primary/10 text-primary`}
+                      disabled={!followedDiffers || busy}
+                      title={followedDiffers ? 'Write this range back to the clip' : 'The clip already matches'}
+                      onClick={() => { void updateClip(); }}
+                    >
+                      Update clip
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
-                    className={`${button} border border-border`}
-                    disabled={!followedDiffers || busy}
-                    title={followedDiffers ? 'Write this stretch back to the clip' : 'The stretch matches the clip'}
-                    onClick={() => { void updateClip(); }}
+                    className={`${button} shrink-0 bg-primary/10 text-primary`}
+                    disabled={Boolean(addReason)}
+                    title={addReason ?? 'Add this range to the video at the playhead'}
+                    onClick={() => { void addToVideo(); }}
                   >
-                    Update clip
+                    Add to video
                   </button>
-                ) : null}
-                {addReason ? <p className="text-[11px] text-muted-foreground">{addReason}</p> : null}
+                )}
               </div>
-            </div>
+            ) : null}
+            <p className="min-h-4 text-[11px] text-muted-foreground">
+              {followedUse ? `Editing clip on ${followedUse.track} at ${clockText(followedUse.at)}` : addReason}
+            </p>
           </div>
         )}
       </div>

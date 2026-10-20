@@ -12,16 +12,21 @@ import {
   exploreKey,
   fitToBox,
   freeVisualTrack,
+  KEY_MAP,
+  MIN_STRETCH,
   keyAction,
   lastWorldKey,
   libraryKey,
+  moveRangeHandle,
   newClipId,
   readLibrary,
   removeFromLibrary,
   saveInfo,
   setStretchEnd,
   setStretchStart,
+  sliderKeyTime,
   speedScaleLabel,
+  stretchMatches,
   stretchDuration,
   wheelSpeedScale,
   worldKey,
@@ -635,17 +640,27 @@ describe('exploreKey', () => {
 });
 
 describe('wheelSpeedScale', () => {
-  it('scrolling up speeds up by 25% a notch', () => {
-    expect(wheelSpeedScale(1, -1)).toBe(1.25);
+  it('scrolling up steps through the ladder: 1, 1.5, 2, 3, 5, 10', () => {
+    let scale = 1;
+    const seen = [1];
+    for (let i = 0; i < 6; i++) { scale = wheelSpeedScale(scale, -1); seen.push(scale); }
+    expect(seen).toEqual([1, 1.5, 2, 3, 5, 10, 10]);
   });
 
-  it('scrolling down slows down by 20% a notch', () => {
-    expect(wheelSpeedScale(1, 1)).toBe(0.8);
+  it('scrolling down steps back: 1, 0.75, 0.5, 0.25', () => {
+    expect(wheelSpeedScale(1, 1)).toBe(0.75);
+    expect(wheelSpeedScale(0.75, 1)).toBe(0.5);
+    expect(wheelSpeedScale(0.5, 1)).toBe(0.25);
   });
 
-  it('clamps to [0.1, 10]', () => {
+  it('clamps to [0.25, 10]', () => {
     expect(wheelSpeedScale(10, -1)).toBe(10);
-    expect(wheelSpeedScale(0.1, 1)).toBe(0.1);
+    expect(wheelSpeedScale(0.25, 1)).toBe(0.25);
+  });
+
+  it('a scale between rungs lands on the next rung in the scrolled direction', () => {
+    expect(wheelSpeedScale(1.2, -1)).toBe(1.5);
+    expect(wheelSpeedScale(1.2, 1)).toBe(1);
   });
 
   it('leaves the scale unchanged for zero or invalid deltas', () => {
@@ -716,5 +731,119 @@ describe('lastWorldKey', () => {
     expect(lastWorldKey('p2')).not.toBe(lastWorldKey('p1'));
     expect(lastWorldKey(null)).toBe('lastWorld:none');
     expect(lastWorldKey(undefined)).toBe('lastWorld:none');
+  });
+});
+
+describe('moveRangeHandle', () => {
+  const bounds = { start: 0, end: 4 };
+
+  it('moves one handle to the requested time', () => {
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'from', 0.5, bounds)).toEqual({ from: 0.5, to: 3 });
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'to', 3.5, bounds)).toEqual({ from: 1, to: 3.5 });
+  });
+
+  it('clamps each handle inside the bounds', () => {
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'from', -2, bounds).from).toBe(0);
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'to', 9, bounds).to).toBe(4);
+  });
+
+  it('keeps the start handle from passing the end handle', () => {
+    const moved = moveRangeHandle({ from: 1, to: 3 }, 'from', 3.5, bounds);
+    expect(moved.from).toBeCloseTo(3 - MIN_STRETCH);
+    expect(moved.to).toBe(3);
+  });
+
+  it('keeps the end handle from passing the start handle', () => {
+    const moved = moveRangeHandle({ from: 1, to: 3 }, 'to', 0.2, bounds);
+    expect(moved.to).toBeCloseTo(1 + MIN_STRETCH);
+    expect(moved.from).toBe(1);
+  });
+
+  it('always leaves MIN_STRETCH between the handles when squeezed', () => {
+    const squeezedStart = moveRangeHandle({ from: 2, to: 2.05 }, 'from', 2.04, bounds);
+    expect(squeezedStart.to - squeezedStart.from).toBeGreaterThanOrEqual(MIN_STRETCH - 1e-9);
+    const squeezedEnd = moveRangeHandle({ from: 2, to: 2.05 }, 'to', 2.06, bounds);
+    expect(squeezedEnd.to - squeezedEnd.from).toBeGreaterThanOrEqual(MIN_STRETCH - 1e-9);
+  });
+
+  it('leaves the handle where it was for a non-finite time', () => {
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'from', NaN, bounds)).toEqual({ from: 1, to: 3 });
+    expect(moveRangeHandle({ from: 1, to: 3 }, 'to', Infinity, bounds)).toEqual({ from: 1, to: 3 });
+  });
+});
+
+describe('sliderKeyTime', () => {
+  const ctx = { time: 1, start: 0, end: 4, step: 0.5 };
+  const press = (key: string, shiftKey = false) => sliderKeyTime({ key, shiftKey }, ctx);
+
+  it('steps by one step on ArrowRight and ArrowLeft', () => {
+    expect(press('ArrowRight')).toBe(1.5);
+    expect(press('ArrowLeft')).toBe(0.5);
+  });
+
+  it('steps five times as far with Shift', () => {
+    expect(press('ArrowRight', true)).toBe(3.5);
+    expect(press('ArrowLeft', true)).toBe(0);
+  });
+
+  it('clamps to the bounds', () => {
+    expect(sliderKeyTime({ key: 'ArrowRight', shiftKey: true }, { ...ctx, time: 3 })).toBe(4);
+    expect(sliderKeyTime({ key: 'ArrowLeft', shiftKey: false }, { ...ctx, time: 0 })).toBe(0);
+  });
+
+  it('jumps to the start on Home and the end on End', () => {
+    expect(press('Home')).toBe(0);
+    expect(press('End')).toBe(4);
+  });
+
+  it('ignores other keys', () => {
+    expect(press('a')).toBeUndefined();
+    expect(press('Enter')).toBeUndefined();
+    expect(press('Tab')).toBeUndefined();
+  });
+});
+
+describe('stretchMatches', () => {
+  const at = (from: number, to: number, speed = 1) => ({ from, to, speed });
+
+  it('matches within half an output frame at the given fps', () => {
+    expect(stretchMatches(at(1, 3), at(1.016, 3), 30)).toBe(true);
+    expect(stretchMatches(at(1, 3), at(1.02, 3), 30)).toBe(false);
+    expect(stretchMatches(at(1, 3), at(1, 3.016), 30)).toBe(true);
+    expect(stretchMatches(at(1, 3), at(1, 3.02), 30)).toBe(false);
+  });
+
+  it('scales the tolerance with speed above 1', () => {
+    expect(stretchMatches(at(1, 3, 2), at(1.02, 3, 2), 30)).toBe(true);
+    expect(stretchMatches(at(1, 3, 1), at(1.02, 3, 1), 30)).toBe(false);
+  });
+
+  it('rejects a speed difference beyond 1e-3 relative', () => {
+    expect(stretchMatches(at(1, 3, 1), at(1, 3, 1.01), 30)).toBe(false);
+    expect(stretchMatches(at(1, 3, 1), at(1, 3, 1.0005), 30)).toBe(true);
+  });
+
+  it('falls back to 30 fps when fps is invalid', () => {
+    for (const fps of [NaN, 0, -5]) {
+      expect(stretchMatches(at(1, 3), at(1.016, 3), fps)).toBe(true);
+      expect(stretchMatches(at(1, 3), at(1.02, 3), fps)).toBe(false);
+    }
+  });
+});
+
+describe('KEY_MAP', () => {
+  const keys = KEY_MAP.map((row) => row.keys).join(' | ');
+
+  it('mentions every key of the free viewer', () => {
+    expect(keys).toMatch(/\bW\b/);
+    expect(keys).toMatch(/\bA\b/);
+    expect(keys).toMatch(/\bS\b/);
+    expect(keys).toMatch(/\bD\b/);
+    expect(keys).toMatch(/\bE\b/);
+    expect(keys).toMatch(/\bQ\b/);
+    expect(keys).toMatch(/\bShift\b/);
+    expect(keys).toMatch(/\bScroll\b/);
+    expect(keys).toMatch(/\bR\b/);
+    expect(keys).toMatch(/\bSpace\b/);
   });
 });

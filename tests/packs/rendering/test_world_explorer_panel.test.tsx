@@ -191,6 +191,7 @@ function makeHarness(options: HarnessOptions = {}) {
       },
     },
     seek,
+    select: vi.fn(),
   };
 
   return {
@@ -316,7 +317,7 @@ describe('World Explorer panel', () => {
     expect(view.queryByRole('group', { name: 'Worlds' })).toBeNull();
 
     fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
-    expect(view.getByText(new RegExp(`Stretch ${tenths(0)} – ${tenths(SAMPLE_END)} · ${SAMPLE_END}\\.0 s at 1×`))).toBeTruthy();
+    expect(view.getByText(new RegExp(`${tenths(0)}–${tenths(SAMPLE_END)} · ${SAMPLE_END} s`))).toBeTruthy();
     expect(view.getByTitle('On V1 at 0:02')).toBeTruthy();
   });
 
@@ -360,11 +361,11 @@ describe('World Explorer panel', () => {
     expect(view.getByText(`${tenths(1)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
 
     fireEvent.keyDown(travel, { key: 'i' });
-    expect(view.getByText(new RegExp(`Stretch ${tenths(1)} – ${tenths(SAMPLE_END)} · ${SAMPLE_END - 1}\\.0 s at 1×`))).toBeTruthy();
+    expect(view.getByText(new RegExp(`${tenths(1)}–${tenths(SAMPLE_END)} · ${SAMPLE_END - 1} s`))).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'o' });
-    expect(view.getByText(/Stretch 0:01\.0 – 0:03\.0 · 2\.0 s at 1×/)).toBeTruthy();
+    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
 
     // Space toggles play and pause.
     fireEvent.keyDown(travel, { key: ' ' });
@@ -503,7 +504,7 @@ describe('World Explorer panel', () => {
     const view = mount(harness);
     harness.selectClip(['c1']);
 
-    await waitFor(() => expect(view.getByText(/Stretch 0:01\.0 – 0:04\.0 · 3\.0 s at 1×/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText(/0:01\.0–0:04\.0 · 3 s/)).toBeTruthy());
     expect(view.getByRole('button', { name: 'Cameras' })).toHaveAttribute('aria-pressed', 'true');
     expect(view.getByText(/Editing clip on V1 at 0:02/)).toBeTruthy();
     const update = view.getByRole('button', { name: 'Update clip' });
@@ -515,7 +516,7 @@ describe('World Explorer panel', () => {
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'o' });
-    expect(view.getByText(/Stretch 0:01\.0 – 0:03\.0 · 2\.0 s at 1×/)).toBeTruthy();
+    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Update clip' })).toBeEnabled();
 
     fireEvent.click(view.getByRole('button', { name: 'Update clip' }));
@@ -644,5 +645,59 @@ describe('World Explorer panel', () => {
     expect(view.getByText(/A world is a live 3D scene/)).toBeTruthy();
     expect(view.queryByRole('button', { name: 'Choose world' })).toBeNull();
     expect(storage.objects.has(lantern.objectId)).toBe(true);
+  });
+
+  it('disables Update clip once the clip matches the stretch, and never shows the word Stretch', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    harness.selectClip(['c1']);
+    await waitFor(() => expect(view.getByText(/Editing clip on V1 at 0:02/)).toBeTruthy());
+    await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
+
+    const travel = view.getByRole('group', { name: 'Camera travel' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'o' });
+    expect(view.getByRole('button', { name: 'Update clip' })).toBeEnabled();
+    fireEvent.click(view.getByRole('button', { name: 'Update clip' }));
+    await waitFor(() => expect(harness.toast).toHaveBeenCalledWith('Clip updated', 'info'));
+
+    // The harness timeline does not write back, so the snapshot takes the clip as the timeline would store it: 1 s to 3 s.
+    harness.setClips([{ ...liveClip(), sourceOffset: 1, sourceEnd: 3 }]);
+    expect(view.getByRole('button', { name: 'Update clip' })).toBeDisabled();
+    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
+    expect(view.container.textContent).not.toMatch(/stretch/i);
+  });
+
+  it('selects the new clip after Add to video, with the host video select', async () => {
+    const harness = makeHarness();
+    const view = mount(harness);
+    await addSampleWorld(view);
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Add to video' })).toBeEnabled());
+    harness.setPlayhead(4);
+
+    fireEvent.click(view.getByRole('button', { name: 'Add to video' }));
+
+    await waitFor(() => expect(harness.toast).toHaveBeenCalledWith('Added to V1 at 0:04', 'info'));
+    const patch = harness.timeline.apply.mock.calls[0][0] as { operations: Array<{ op: string; target: string }> };
+    const newClipId = patch.operations.find((operation) => operation.op === 'clip.add')!.target;
+    expect(harness.video.select).toHaveBeenCalledTimes(1);
+    expect(harness.video.select).toHaveBeenCalledWith([newClipId]);
+  });
+
+  it('adds and seeks without throwing when the host video has no select', async () => {
+    const harness = makeHarness();
+    delete (harness.video as { select?: unknown }).select;
+    const view = mount(harness);
+    await addSampleWorld(view);
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Add to video' })).toBeEnabled());
+    harness.setPlayhead(4);
+
+    fireEvent.click(view.getByRole('button', { name: 'Add to video' }));
+
+    await waitFor(() => expect(harness.toast).toHaveBeenCalledWith('Added to V1 at 0:04', 'info'));
+    expect(harness.seek).toHaveBeenCalledWith(4);
   });
 });

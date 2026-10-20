@@ -129,7 +129,7 @@ export function saveInfo(
 
 export const stretchDuration = (s: Stretch) => (s.to - s.from) / s.speed;
 
-const MIN_STRETCH = 0.1;
+export const MIN_STRETCH = 0.1;
 
 /** Keeps from/to inside [0, duration] with at least MIN_STRETCH between them; bad speed becomes 1. */
 export function clampStretch(s: Stretch, duration: number): Stretch {
@@ -146,6 +146,36 @@ export function setStretchStart(s: Stretch, t: number, duration: number): Stretc
 
 export function setStretchEnd(s: Stretch, t: number, duration: number): Stretch {
   return clampStretch({ ...s, to: Math.max(t, s.from + MIN_STRETCH) }, duration);
+}
+
+/** The stretch equals a clip's range to within half an output frame (a clip's length is stored in whole frames, so its source range drifts by up to that, scaled by speed). */
+export function stretchMatches(a: Stretch, b: Stretch, fps: number): boolean {
+  const frame = Number.isFinite(fps) && fps > 0 ? fps : 30;
+  const tolerance = (0.5 / frame) * Math.max(a.speed, b.speed, 1);
+  return Math.abs(a.from - b.from) <= tolerance
+    && Math.abs(a.to - b.to) <= tolerance
+    && Math.abs(a.speed - b.speed) <= 1e-3 * Math.max(a.speed, b.speed);
+}
+
+export type BarRange = { readonly from: number; readonly to: number };
+
+/** Moves one handle of an in/out range to time `t`: it stays inside [start, end] and MIN_STRETCH away from the other handle. */
+export function moveRangeHandle(range: BarRange, which: 'from' | 'to', t: number, bounds: { start: number; end: number }): BarRange {
+  const time = Number.isFinite(t) ? t : which === 'from' ? range.from : range.to;
+  if (which === 'from') return { from: Math.min(Math.max(time, bounds.start), Math.max(bounds.start, range.to - MIN_STRETCH)), to: range.to };
+  return { from: range.from, to: Math.max(Math.min(time, bounds.end), Math.min(bounds.end, range.from + MIN_STRETCH)) };
+}
+
+/** The time a slider key moves to, or undefined for other keys. ←/→ step (Shift ×5), Home/End the bounds. */
+export function sliderKeyTime(e: { key: string; shiftKey: boolean }, ctx: { time: number; start: number; end: number; step: number }): number | undefined {
+  const clamp = (t: number) => Math.min(Math.max(t, ctx.start), ctx.end);
+  switch (e.key) {
+    case 'ArrowLeft': case 'ArrowDown': return clamp(ctx.time - ctx.step * (e.shiftKey ? 5 : 1));
+    case 'ArrowRight': case 'ArrowUp': return clamp(ctx.time + ctx.step * (e.shiftKey ? 5 : 1));
+    case 'Home': return ctx.start;
+    case 'End': return ctx.end;
+    default: return undefined;
+  }
 }
 
 export type KeyAction =
@@ -362,15 +392,28 @@ export function exploreKey(e: { key: string; ctrlKey?: boolean; metaKey?: boolea
   }
 }
 
-export const SPEED_SCALE_MIN = 0.1;
-export const SPEED_SCALE_MAX = 10;
+/** The wheel steps through these free-view speeds. */
+export const SPEED_LADDER = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10] as const;
+/** The free viewer's key map, as shown by "?". */
+export const KEY_MAP: readonly { readonly keys: string; readonly does: string }[] = [
+  { keys: 'W A S D / arrows', does: 'move' },
+  { keys: 'E  Q', does: 'up / down' },
+  { keys: 'Shift', does: 'faster' },
+  { keys: 'Scroll', does: 'speed' },
+  { keys: 'R', does: 'reset view' },
+  { keys: 'Space', does: 'pause' },
+  { keys: '?', does: 'this list' },
+];
+
+export const SPEED_SCALE_MIN = SPEED_LADDER[0];
+export const SPEED_SCALE_MAX = SPEED_LADDER[SPEED_LADDER.length - 1];
 export const SHIFT_BOOST = 3;
 
-/** One wheel notch is a 25% change; deltaY > 0 (scroll down) slows down. */
+/** One wheel notch is one rung of the ladder; deltaY > 0 (scroll down) slows down. A scale between rungs first lands on the next rung in that direction. */
 export function wheelSpeedScale(scale: number, deltaY: number): number {
   if (!Number.isFinite(deltaY) || deltaY === 0) return scale;
-  const next = scale * (deltaY < 0 ? 1.25 : 0.8);
-  return Math.min(SPEED_SCALE_MAX, Math.max(SPEED_SCALE_MIN, Math.round(next * 100) / 100));
+  if (deltaY < 0) return SPEED_LADDER.find((rung) => rung > scale + 1e-9) ?? SPEED_SCALE_MAX;
+  return [...SPEED_LADDER].reverse().find((rung) => rung < scale - 1e-9) ?? SPEED_SCALE_MIN;
 }
 
 /** "1×", "1.25×", "0.5×". */
