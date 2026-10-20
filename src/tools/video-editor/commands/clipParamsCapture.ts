@@ -44,11 +44,12 @@ function canonicalizeParamClaims(ctx: MoveRecording, ref: string): void {
 }
 
 function assertArgs(args: unknown): asserts args is ClipParamsArgs {
+  const clear = object(args) ? args.clear : undefined;
   if (!object(args) || !equal(Object.keys(args).sort(), ['clear', 'values']) || !object(args.values) ||
-    !Array.isArray(args.clear) || args.clear.some((key) => typeof key !== 'string') ||
-    new Set(args.clear).size !== args.clear.length ||
-    Object.keys(args.values).some((key) => args.clear.includes(key)) ||
-    (Object.keys(args.values).length === 0 && args.clear.length === 0)) {
+    !Array.isArray(clear) || clear.some((key) => typeof key !== 'string') ||
+    new Set(clear).size !== clear.length ||
+    Object.keys(args.values).some((key) => clear.includes(key)) ||
+    (Object.keys(args.values).length === 0 && clear.length === 0)) {
     throw new ClipMoveError('clip parameters require non-empty values or explicit clears');
   }
   assertFiniteJson(args.values);
@@ -105,6 +106,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand): ClipParamsResult 
   for (const key of Object.keys(values).sort()) ctx.write(supplied.select, ['params', key], values[key]);
   for (const key of [...supplied.args.clear].sort()) ctx.clear(supplied.select, ['params', key]);
   canonicalizeParamClaims(ctx, supplied.select);
+  ctx.compile();
 
   for (const key of CLAIMS) {
     if (has(supplied, key) && !equal(supplied[key], ctx.command[key])) {

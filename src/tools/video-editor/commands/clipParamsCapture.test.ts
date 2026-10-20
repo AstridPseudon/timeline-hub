@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { AuthoredState, copy, freezeJson } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
@@ -8,8 +8,11 @@ import objectFixture from './fixtures/recipe_m2_scalar_params_object.json';
 import absentFixture from './fixtures/recipe_m2_scalar_params_absent.json';
 import nullFixture from './fixtures/recipe_m2_scalar_params_null.json';
 import disjointFixture from './fixtures/recipe_m2_scalar_disjoint.json';
+import nativeFixture from './fixtures/recipe_m2_clip_params_native.json';
 
 type ScalarGolden = {
+  name: string;
+  records: CommandRecord[];
   bundle: AuthoredBundle;
   after_bundle: AuthoredBundle;
   command: EditCommand;
@@ -17,58 +20,63 @@ type ScalarGolden = {
   select: string;
 };
 
-const goldens = [objectFixture, absentFixture, nullFixture, disjointFixture] as unknown as ScalarGolden[];
-const objectGolden = objectFixture as unknown as ScalarGolden;
+// Full records exported by unmodified Agent execute(), not reconstructed here.
+const originals = [
+  ['recipe_m2_scalar_params_object.json', objectFixture],
+  ['recipe_m2_scalar_params_absent.json', absentFixture],
+  ['recipe_m2_scalar_params_null.json', nullFixture],
+  ['recipe_m2_scalar_disjoint.json', disjointFixture],
+] as const;
+const goldens = [
+  ...originals.map(([name, fixture]) => ({ ...fixture, name, records: nativeFixture.originals[name].records })),
+  ...nativeFixture.cases,
+] as unknown as ScalarGolden[];
+const objectGolden = goldens[0];
 const ref = objectGolden.select;
-
-const state = (bundle: AuthoredBundle, path: string[]): AgentState =>
-  new AuthoredState(bundle).get(ref, path);
-
-function expectedRecord(golden: ScalarGolden): CommandRecord {
-  const writes: CommandRecord['writes'] = [];
-  const beforeParams = state(golden.bundle, ['params']);
-  if (beforeParams.state === 'absent' || beforeParams.value === null) {
-    writes.push({ ref, path: ['params'], before: beforeParams, after: { state: 'present', value: {} } });
-  }
-  for (const key of Object.keys(golden.args.values).sort()) {
-    writes.push({ ref, path: ['params', key], before: state(golden.bundle, ['params', key]),
-      after: { state: 'present', value: golden.args.values[key] } });
-  }
-  for (const key of [...golden.args.clear].sort()) {
-    writes.push({ ref, path: ['params', key], before: state(golden.bundle, ['params', key]), after: { state: 'absent' } });
-  }
-  const owner = ref.slice(0, ref.lastIndexOf('/'));
-  const source = golden.bundle.source_mapping.shots[String(new AuthoredState(golden.bundle).occurrence(owner).shot_id)];
-  return {
-    ordinal: 0,
-    command: golden.command,
-    writes,
-    reads: golden.command.reads!,
-    selections: [],
-    bindings: [
-      { key: 'scalar.owner', ref: owner, policy: 'fixed', dependencies: [] },
-      { key: 'scalar.target', ref, policy: 'fixed', dependencies: ['scalar.images'] },
-    ],
-    created: [],
-    dependencies: [{ key: 'scalar.images', kind: 'entity', pin: {
-      parent: golden.bundle.base_parent,
-      source,
-    }, policy: 'exact' }],
-    derived_writes: [],
-  };
-}
 
 const roundtrip = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
 describe('portable clip.set-params capture', () => {
-  it.each(goldens)('matches the exact native command, after bundle and record: %s', (golden) => {
+  it.each(goldens)('matches the exported native command, after bundle and full record: $name', (golden) => {
     const input = freezeJson(copy(golden.bundle));
     const basis = captureClipParams(input, golden.select, golden.args);
-    const result = finishClipParams(basis, golden.args);
+    const result = finishClipParams(freezeJson(roundtrip(basis)), golden.args);
     expect(result.command).toEqual(golden.command);
     expect(result.bundle).toEqual(golden.after_bundle);
-    expect(result.record).toEqual(expectedRecord(golden));
+    expect([result.record]).toEqual(golden.records);
+    expect(basis.bundle).toEqual(golden.bundle);
     expect(input).toEqual(golden.bundle);
+  });
+
+  it.each(goldens.filter((golden) => golden.select.startsWith('parent/')))(
+    'compiles equal parent mirrors once and preserves opaque siblings: $name', (golden) => {
+      expect(golden.bundle.parent.clips).toEqual(golden.bundle.parent.config.clips);
+      const result = finishClipParams(captureClipParams(golden.bundle, golden.select, golden.args), golden.args);
+      expect(result.bundle.parent.clips).toEqual(result.bundle.parent.config.clips);
+      expect(result.record.derived_writes).toEqual(golden.records[0].derived_writes);
+      expect(result.record.derived_writes).toHaveLength(1);
+      expect(result.bundle.parent.clips[1]).toEqual(golden.bundle.parent.clips[1]);
+      expect(result.bundle.parent.opaque).toEqual(golden.bundle.parent.opaque);
+      expect(result.bundle.parent.config.opaque).toEqual(golden.bundle.parent.config.opaque);
+      expect(result.bundle.shots).toEqual(golden.bundle.shots);
+    },
+  );
+
+  it('records only retained native compiler inputs alongside the scalar dependency', () => {
+    const golden = goldens.find((item) => item.name === 'parent_retained_inputs')!;
+    const result = finishClipParams(captureClipParams(golden.bundle, golden.select, golden.args), golden.args);
+    expect(result.record.dependencies).toEqual(golden.records[0].dependencies);
+    expect(result.record.dependencies.map((dependency) => dependency.kind)).toEqual(['entity', 'transcript', 'source']);
+  });
+
+  it('replays the original disjoint leaf claims with the full native record', () => {
+    const source = goldens[3];
+    const basis = roundtrip(captureClipParams(source.bundle, source.select, source.args));
+    basis.bundle = copy(disjointFixture.head_bundle) as unknown as AuthoredBundle;
+    const result = finishClipParams(freezeJson(basis), source.args);
+    expect(result.command).toEqual(source.command);
+    expect(result.bundle).toEqual(disjointFixture.rebased_bundle);
+    expect([result.record]).toEqual(nativeFixture.originals['recipe_m2_scalar_disjoint.json'].rebased_records);
   });
 
   it('keeps the original scope and claims through cloning, freezing and JSON round trips', () => {
@@ -99,7 +107,7 @@ describe('portable clip.set-params capture', () => {
   });
 
   it('protects relevant leaf changes while accepting a disjoint leaf change', () => {
-    const source = disjointFixture as unknown as ScalarGolden;
+    const source = goldens[3];
     const xArgs: ClipParamsArgs = { values: { x: 2 }, clear: [] };
     const basis = captureClipParams(source.bundle, source.select, xArgs);
     const relevant = roundtrip(basis);
@@ -120,6 +128,26 @@ describe('portable clip.set-params capture', () => {
     expect(params.opaque).toEqual({ keep: [false, {}, ''] });
     expect(result.command.expect).toEqual({ [`${source.select}::params.x`]: { state: 'present', value: 1 } });
   });
+
+  it.each(['delete', 'owner', 'source', 'value', 'type', 'asset'])(
+    'refuses changed original identity/value guards atomically: %s', (change) => {
+      const source = goldens[3];
+      const basis = roundtrip(captureClipParams(source.bundle, source.select, source.args));
+      const state = new AuthoredState(basis.bundle);
+      const clip = state.entity(source.select)!;
+      const owner = source.select.slice(0, source.select.lastIndexOf('/'));
+      if (change === 'delete') state.config(owner).clips = [];
+      else if (change === 'owner') state.occurrence(owner).shot_id = basis.bundle.placements[1].shot_id;
+      else if (change === 'source') {
+        basis.bundle.source_mapping.shots[String(state.occurrence(owner).shot_id)].shot_id = 'other-source';
+      } else if (change === 'value') (clip.params as Record<string, JSON>).x = 3;
+      else if (change === 'type') clip.clipType = 'audio';
+      else clip.asset = 'new-asset';
+      const snapshot = copy(basis);
+      expect(() => finishClipParams(freezeJson(basis), source.args)).toThrow();
+      expect(basis).toEqual(snapshot);
+    },
+  );
 
   it.each([
     'parent/clip:c', 'clip:c', 'shot:s/clip:c', 'occurrence:o/clip:c::params.x',
