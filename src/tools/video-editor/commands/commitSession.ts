@@ -88,7 +88,8 @@ export async function createTimelineCommandSession(options: Options) {
   let persistenceFailed = false;
   let persistenceError: string | undefined;
   let paramReadGeneration = 0;
-  let paramsCapture: { basis: JSON; selected: Record<string, JSON>; inputs?: [VerifiedDocument, Record<string, VerifiedDocumentObject>][]; realmId?: string } | undefined;
+  let paramsCapture: { basis: JSON; selected: Record<string, JSON>; schemaSource?: DocumentPin;
+    inputs?: [VerifiedDocument, Record<string, VerifiedDocumentObject>][]; realmId?: string } | undefined;
   const latestOwn = options.initial.history?.next_cursor == null ? options.initial.history?.items.slice().reverse().find((entry) => entry.publisher === options.scope.actorId
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
@@ -467,6 +468,9 @@ export async function createTimelineCommandSession(options: Options) {
       if (!captured || !equal(captured.basis, basis) || (basis as { localGeneration?: number }).localGeneration !== localGeneration) {
         throw new Error('Selected PARAM capture is no longer current; draft preserved');
       }
+      if (captured.schemaSource && !equal(captured.schemaSource, pin)) {
+        throw new Error('Selected PARAM schema source changed; draft preserved');
+      }
       if (!options.paramReadClient) throw new Error('Selected PARAM schema carrier is unavailable; Agent retained-read support is required');
       const result = await readRetainedParamInputs(options.paramReadClient,
         { project_id: options.scope.projectId, realm_id: options.scope.realmId }, pin, captured.selected);
@@ -474,6 +478,7 @@ export async function createTimelineCommandSession(options: Options) {
         || (basis as { localGeneration?: number }).localGeneration !== localGeneration) {
         throw new Error('Selected PARAM authority basis changed during loading; draft preserved');
       }
+      captured.schemaSource = copy(pin);
       captured.inputs = [[result.verified, result.objects]];
       captured.realmId = options.scope.realmId;
       return Object.freeze({ basis: copy(basis), schema_source: copy(pin), schema_inputs: copy(captured.inputs), realm_id: options.scope.realmId });
@@ -486,8 +491,11 @@ export async function createTimelineCommandSession(options: Options) {
       assertReady();
       const captured = paramsCapture;
       if (!captured || !equal(captured.basis, basis) || (basis as { localGeneration?: number }).localGeneration !== localGeneration
-        || !captured.inputs || !captured.realmId) {
+        || !captured.schemaSource || !captured.inputs || !captured.realmId) {
         throw new Error('Selected PARAM schema inputs are unavailable; draft preserved');
+      }
+      if (!equal(args.schema_source, captured.schemaSource)) {
+        throw new Error('Selected PARAM schema source changed; draft preserved');
       }
       const command = selectedParamsCommand(String(basis.select), args);
       prepared.set(JSON.stringify(command), { payload: {
