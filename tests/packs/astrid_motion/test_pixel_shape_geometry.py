@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import unittest
@@ -11,15 +12,38 @@ ELEMENT = ROOT / "astrid" / "packs" / "astrid_motion" / "rendering" / "elements"
 CELLS = ELEMENT / "shape-cells.ts"
 
 
-def _cells(shape: str, w: int, h: int, stroke: int, radius: int = 0) -> list[list[int]]:
-    script = (
-        f"const m = await import({json.dumps(CELLS.as_uri())});"
-        f"console.log(JSON.stringify(m.shapeCells({json.dumps(shape)}, {w}, {h}, {stroke}, {radius})));"
-    )
+def _find_esbuild() -> Path | None:
+    # The provisioned Remotion project first, then the repo's own; Node 20 cannot import .ts.
+    for project in (os.environ.get("ASTRID_REMOTION_PROJECT_DIR"), ROOT / "remotion"):
+        if project and (Path(project) / "node_modules" / "esbuild" / "lib" / "main.js").is_file():
+            return Path(project) / "node_modules" / "esbuild" / "lib" / "main.js"
+    return None
+
+
+ESBUILD = _find_esbuild()
+
+
+def _shape_module(expression: str):
+    if ESBUILD is None:  # Node 22+ strips the types itself
+        load = f"const m = await import({json.dumps(CELLS.as_uri())});"
+    else:
+        load = (
+            "import {createRequire} from 'node:module';"
+            "import {readFileSync} from 'node:fs';"
+            f"const esbuild = createRequire(import.meta.url)({json.dumps(str(ESBUILD))});"
+            f"const source = readFileSync({json.dumps(str(CELLS))}, 'utf8');"
+            "const js = esbuild.transformSync(source, {loader: 'ts', format: 'esm'}).code;"
+            "const m = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));"
+        )
+    script = load + f"console.log(JSON.stringify({expression}));"
     out = subprocess.run(
         ["node", "--input-type=module", "-e", script], check=True, capture_output=True, text=True
     ).stdout
     return json.loads(out)
+
+
+def _cells(shape: str, w: int, h: int, stroke: int, radius: int = 0) -> list[list[int]]:
+    return _shape_module(f"m.shapeCells({json.dumps(shape)}, {w}, {h}, {stroke}, {radius})")
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
@@ -50,14 +74,7 @@ class AmPixelShapeGeometryTest(unittest.TestCase):
 
 
 def _rect(w: int, h: int, stroke: int, radius: int) -> dict[str, list[list[int]]]:
-    script = (
-        f"const m = await import({json.dumps(CELLS.as_uri())});"
-        f"console.log(JSON.stringify(m.rectCells({w}, {h}, {stroke}, {radius})));"
-    )
-    out = subprocess.run(
-        ["node", "--input-type=module", "-e", script], check=True, capture_output=True, text=True
-    ).stdout
-    return json.loads(out)
+    return _shape_module(f"m.rectCells({w}, {h}, {stroke}, {radius})")
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
@@ -102,14 +119,7 @@ class AmPixelShapeRectTest(unittest.TestCase):
 
 
 def _blinking(frame: int, blink_at) -> bool:
-    script = (
-        f"const m = await import({json.dumps(CELLS.as_uri())});"
-        f"console.log(JSON.stringify(m.isBlinking({frame}, {json.dumps(blink_at)})));"
-    )
-    out = subprocess.run(
-        ["node", "--input-type=module", "-e", script], check=True, capture_output=True, text=True
-    ).stdout
-    return json.loads(out)
+    return _shape_module(f"m.isBlinking({frame}, {json.dumps(blink_at)})")
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to run the blink rule")
