@@ -22,6 +22,7 @@ import {
 } from '@/shared/state/selectionStore.ts';
 import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
@@ -41,6 +42,7 @@ import {
   createTimelineStore,
   seedTimelineStoreBeforeRender,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import {
   createTimelineCommandRunner,
   MEDIA_COMMAND_DESCRIPTORS,
@@ -923,8 +925,28 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
   });
 
+  const runtimeProvider = runtime.provider;
+  const runtimeProjectId = runtime.project.projectId;
+  const parentMediaRuntime = useMemo(() => {
+    const provider = runtimeProvider as typeof runtimeProvider & {
+      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+    };
+    const getProjectVerifiedMedia = provider.getProjectVerifiedMedia;
+    return typeof getProjectVerifiedMedia === 'function' && typeof runtimeProjectId === 'string'
+      ? { projectId: runtimeProjectId, getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider) }
+      : undefined;
+  }, [runtimeProjectId, runtimeProvider]);
+  const parentMediaCommands = useMemo(
+    () => createTimelineCommands(store, {
+      timelineEditability: runtime.timelineEditability,
+      parentMediaRuntime,
+    }),
+    [parentMediaRuntime, runtime.timelineEditability, store],
+  );
+
   const assetManagement = services.useAssetManagement({
     store,
+    commands: parentMediaCommands,
     dataRef,
     selectedTrackId,
     selectedProjectId,

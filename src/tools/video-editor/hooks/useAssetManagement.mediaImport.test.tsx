@@ -9,6 +9,7 @@ import {
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useAssetManagement } from './useAssetManagement';
 import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 const extractVideoMetadataMock = vi.fn();
 
@@ -33,7 +34,7 @@ function buildRuntimeValue(provider: Record<string, unknown>): VideoEditorRuntim
   };
 }
 
-function buildArgs() {
+function buildArgs(overrides: Record<string, unknown> = {}) {
   return {
     dataRef: { current: null },
     selectedTrackId: null,
@@ -45,11 +46,12 @@ function buildArgs() {
     uploadAsset: vi.fn(),
     invalidateAssetRegistry: vi.fn(),
     resolveAssetUrl: vi.fn(async (file: string) => file),
+    ...overrides,
   };
 }
 
-function renderAssetManagement(provider: Record<string, unknown>) {
-  return renderHook(() => useAssetManagement(buildArgs()), {
+function renderAssetManagement(provider: Record<string, unknown>, args = buildArgs()) {
+  return renderHook(() => useAssetManagement(args), {
     wrapper: ({ children }) => (
       <VideoEditorRuntimeProvider value={buildRuntimeValue(provider)}>
         {children}
@@ -58,7 +60,146 @@ function renderAssetManagement(provider: Record<string, unknown>) {
   });
 }
 
+function buildVideoTimeline(): TimelineData {
+  const skeleton = {
+    id: 'uploading-1',
+    start: 2,
+    end: 7,
+    effectId: 'effect-uploading-1',
+  };
+  const skeletonMeta = {
+    asset: 'uploading:clip.mp4',
+    track: 'V1',
+    clipType: 'media' as const,
+    from: 0,
+    to: 5,
+  };
+  const config = {
+    output: { width: 1280, height: 720, fps: 30 },
+    tracks: [{ id: 'V1', kind: 'visual' as const }],
+    clips: [],
+    registry: { assets: {} },
+  };
+  return {
+    config,
+    configVersion: 1,
+    registry: { assets: {} },
+    resolvedConfig: { ...config, registry: {}, clips: [] },
+    rows: [{ id: 'V1', actions: [skeleton] }],
+    meta: { [skeleton.id]: skeletonMeta },
+    effects: {},
+    assetMap: {},
+    output: config.output,
+    tracks: config.tracks,
+    clipOrder: { V1: [skeleton.id] },
+    signature: 'signature',
+    stableSignature: 'stable-signature',
+  };
+}
+
 describe('useAssetManagement Runtime media imports', () => {
+  it('routes a prepared Runtime video drop through native addClip without a fallback edit', async () => {
+    const addClip = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { clipId: 'clip-0', trackId: 'V1' },
+    });
+    const applyEdit = vi.fn();
+    const mediaSelection = {
+      asset: 'sha256:asset',
+      generation_id: 'generation-1',
+      variant_id: 'variant-1',
+      object_id: 'sha256:object',
+      catalog_digest: 'sha256:catalog',
+    };
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, buildArgs({
+      dataRef: { current: buildVideoTimeline() },
+      applyEdit,
+      commands: { addClip },
+    }));
+
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'clip.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4', duration: 2.5 },
+        mediaSelection,
+      },
+    });
+
+    await act(async () => {
+      await expect(result.current.handleAssetDrop(
+        'sha256:asset',
+        'V1',
+        2,
+        false,
+        false,
+        prepared ?? undefined,
+        'uploading-1',
+      )).resolves.toBe(true);
+    });
+
+    expect(addClip).toHaveBeenCalledWith({
+      preparedAsset: expect.objectContaining({ mediaSelection }),
+      trackId: 'V1',
+      time: 2,
+    });
+    expect(addClip.mock.calls[0]?.[0]).not.toHaveProperty('afterClipId');
+    expect(addClip.mock.calls[0]?.[0]).not.toHaveProperty('removeClipId');
+    expect(addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toBe(mediaSelection);
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('keeps the upload skeleton when native addClip refuses a prepared Runtime video', async () => {
+    const addClip = vi.fn().mockResolvedValue({
+      ok: false,
+      error: { code: 'mutation_failed', message: 'Runtime selection was refused' },
+    });
+    const applyEdit = vi.fn();
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, buildArgs({
+      dataRef: { current: buildVideoTimeline() },
+      applyEdit,
+      commands: { addClip },
+    }));
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'clip.mp4' },
+      mediaSelection: {
+        asset: 'sha256:asset',
+        generation_id: 'generation-1',
+        variant_id: 'variant-1',
+        object_id: 'sha256:object',
+        catalog_digest: 'sha256:catalog',
+      },
+    });
+
+    await act(async () => {
+      await expect(result.current.handleAssetDrop(
+        'sha256:asset', 'V1', 2, false, false, prepared ?? undefined, 'uploading-1',
+      )).resolves.toBe(false);
+    });
+
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
   it('uses one Runtime import identity for image and video drops', async () => {
     extractVideoMetadataMock.mockResolvedValue({ duration_seconds: 2.5 });
     const prepareMediaImport = vi.fn()

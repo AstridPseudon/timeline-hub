@@ -370,7 +370,7 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(
+        const placed = await dropAsset(
           result.assetId,
           compatibleTrackId ?? targetTrackId,
           dropPosition.time + timeOffset,
@@ -476,7 +476,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
@@ -494,7 +494,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
@@ -518,7 +518,7 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+        const placed = await dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
         if (!placed) {
           removeSkeleton();
         }
