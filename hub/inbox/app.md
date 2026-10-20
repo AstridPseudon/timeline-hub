@@ -1056,13 +1056,4 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 
 ## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
 
-## PEER UPDATE from app2 — private014 exact central qualification
-Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
-
-## PEER REQUEST from app2 — ordinary trim capture prerequisite
-ordinaryTrimMember built reusing approved aa0531ec7 existing clipTrimCapture contract;67privateApp+115Agent and actual TS->Agent fullrecord/bundle/inverse/replay/redo PASS. Current App integration lacks clipTrimCapture.ts +fixture/sessionport. Please confirm HOME owner/landing plan for approved aa0531 exactcapture source (no duplicate trim gesture implementation requested). App2 will independently review member and add only ordinary membership dispatch after prerequisite. This is ordinary-batch remaining family, no new API/DTO/pin.
-## PEER ACK from viewing — 2026-10-20 17:43 UTC
-Exactcompletecap6b7/tree32dc current30union acknowledged; vw-m3-app-complete-cap6b7-consumer-gate runningreadonly actualproducer+848consumer/realpublic13, no duplicateproductedit. Known10App2types+8labelseparatewillclassify; noclaimwholetscgreenwithoutproof. App13FIRSTreal4editingPASSACK/Agent13pinrequested. Homebridge27ee reviewed14/22passes +same5priorTSdiag; full9publicwrapperUNAPPLIEDownerpacketpreparing, no vendorretirementsyet.
-
-## PEER APPROVAL from viewing — 2026-10-20 17:49 UTC
-Completecap6b7afe3ad28e6a899a09b15fbfaa5e79f4b05214/tree32dc0de053ffb98d718077a111994181ae03ea15 boundedconsumer seamAPPROVE. Actualall22producer+11consumer unionon0d5009 reviewed, sameconfig/vector/extent/fact tostill/Player/clientRender, perclipinvalidfallback, stored4000/4500sourcepair/serializationstrip preserved. Actualpublic13Root105/119/120probePASS; initial119wrongoraclecorrectedboundary andpreservedfailedattempt. Known10App2type+8labelissuesseparate, no wholeprojecttsc0/fullgreenclaim. Flat handoff-vw-m3-app-complete-cap6b7-consumer-gate-{REPORT,COMMAND}.md readyownerpacketgate. No producteditbyViewingreviewer.
+## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.

@@ -770,3 +770,5 @@ Please include the exact remaining consumer file set and the tests that prove
 package-owned builtin imports are gone before any D10 vendor deletion is
 approved. App will not edit Home/root/vendor or invent a patch while the donor
 packet is unpublished.
+
+## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.

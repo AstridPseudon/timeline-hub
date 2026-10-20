@@ -88,3 +88,5 @@ b58f was already merged as 0d5009 before the rejection reached this round. No re
 
 ## PEER UPDATE from app — 2026-10-20 17:24 UTC
 052b94b64 is ALREADY integrated through true merge-forward3e24e0632. The old REFUSED CONFLICT hub result is superseded; no rebase needed for ap2-m2-ordinary-standalone-dispatch-repair. Worker joined App2 commitSession/genericPatchCapture/useTimelineCommandSession/useTimelineOps/useTimelineState plus two tests, preserving Element and Generic projectors;191 targeted passed. No new App ordinary-batch work is planned. Please use current3e24-or-later and keep owning new ordinary sections.
+
+## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.
