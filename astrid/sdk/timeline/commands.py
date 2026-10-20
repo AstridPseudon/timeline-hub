@@ -44,12 +44,14 @@ def operations():
         placement_move,
         placement_unplace,
     )
+    from .native_shot_pool_commands import POOL_INTENT, shot_pool
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
                                           PLACEMENT_INTENT, True),
             'placement.unplace': Operation(_SCHEMA['$defs']['PlacementUnplaceArgs'], placement_unplace,
                                            PLACEMENT_INTENT, True),
+            'shot.pool': Operation(_SCHEMA['$defs']['ShotPoolArgs'], shot_pool, POOL_INTENT, True),
             'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
                                               OCCURRENCE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
