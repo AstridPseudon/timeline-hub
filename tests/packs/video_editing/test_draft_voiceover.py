@@ -283,6 +283,75 @@ def test_synthesizer_verifies_managed_provenance_and_fresh_request_context(monke
         synth('Hello',vo.DEFAULT_SETTINGS)
 
 
+def test_synthesizer_admits_exact_speech_publication_and_retains_runtime_context(monkeypatch):
+    import json
+    import astrid.sdk as sdk
+
+    audio = b'exact-wave-bytes'
+    audio_id = 'sha256:' + hashlib.sha256(audio).hexdigest()
+    manifest = {'text': 'Hello', 'text_sha256': vo.digest('Hello')[7:],
+                'settings': vo.DEFAULT_SETTINGS, 'audio_sha256': audio_id[7:],
+                'duration_seconds': 2}
+    manifest_bytes = json.dumps(manifest).encode()
+    manifest_id = 'sha256:' + hashlib.sha256(manifest_bytes).hexdigest()
+    reads = {audio_id: audio, manifest_id: manifest_bytes}
+    calls = []
+    publication = {'effect_type': 'generation.publish_v1', 'target_id': 'p'}
+
+    def invoke(*args, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(
+            ok=True,
+            run_id='run',
+            kernel_task_id='task',
+            kernel_attempt_id='attempt',
+            outputs={'managed_outputs': [
+                {'output_port': 'speech_manifest', 'object_id': manifest_id},
+                {'output_port': 'speech', 'object_id': audio_id,
+                 'association_id': 'association'},
+            ]},
+            raw_result={
+                'task': {'task_id': 'task', 'attempt_id': 'attempt', 'state': 'completed'},
+                'result': {'generation_publish_v1': publication},
+            },
+        )
+
+    monkeypatch.setattr(sdk, 'invoke', invoke)
+    client = SimpleNamespace(media=SimpleNamespace(read_bytes=lambda identity: reads[identity]))
+    synth = vo.runtime_synthesizer(client, 'p')
+    result = synth('Hello', vo.DEFAULT_SETTINGS)
+
+    request = calls[0]
+    assert request['inputs']['text'] == 'Hello'
+    assert {key: request['inputs'][key] for key in vo.DEFAULT_SETTINGS} == vo.DEFAULT_SETTINGS
+    assert request['inputs']['generation_intent'] == {
+        'version': 1,
+        'modality': 'audio',
+        'partial_success_policy': 'reject',
+        'groups': [{'group_key': 'main', 'selectors': [{
+            'selector': 'speech', 'ordinal': 0, 'variant_key': 'original', 'required': True,
+        }]}],
+        'metadata': {
+            'content_type': 'audio', 'voice': vo.DEFAULT_SETTINGS['voice'],
+            'text_sha256': vo.digest('Hello'),
+        },
+    }
+    assert request['idempotency_context']
+    assert result['runtime_context'] == {
+        'task': {'task_id': 'task', 'attempt_id': 'attempt', 'state': 'completed'},
+        'task_id': 'task', 'attempt_id': 'attempt', 'association_id': 'association',
+        'managed_output': {'output_port': 'speech', 'object_id': audio_id,
+                           'association_id': 'association'},
+        'generation_publish_v1': publication,
+    }
+
+    explicit = {'version': 1, 'modality': 'audio', 'partial_success_policy': 'reject',
+                'groups': [{'group_key': 'main', 'selectors': [
+                    {'selector': 'speech', 'ordinal': 0, 'variant_key': 'original'}]}]}
+    vo.runtime_synthesizer(client, 'p', generation_intent=explicit)('Hello', vo.DEFAULT_SETTINGS)
+    assert calls[1]['inputs']['generation_intent'] is explicit
+
+
 def test_invalid_timing_policy_fails_even_noop():
     c,s=fixture();client,_=coordinator_client(c,s)
     with pytest.raises(vo.VoiceoverSyncError,match='timing_policy'):

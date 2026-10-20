@@ -379,22 +379,74 @@ def _artifact_identity(row):
     raise VoiceoverSyncError("Managed artifact has no digest")
 
 
-def runtime_synthesizer(client, project):
+def _speech_generation_intent(text: str, settings: Mapping[str, str]) -> dict[str, Any]:
+    """Declare the existing single-output speech publication shape.
+
+    The executor still receives the exact text/settings as ordinary inputs.
+    This envelope only supplies Runtime's existing generation publication
+    admission metadata; it does not claim a catalog selection or duration.
+    """
+    return {
+        "version": 1,
+        "modality": "audio",
+        "partial_success_policy": "reject",
+        "groups": [{
+            "group_key": "main",
+            "selectors": [{
+                "selector": "speech",
+                "ordinal": 0,
+                "variant_key": "original",
+                "required": True,
+            }],
+        }],
+        "metadata": {
+            "content_type": "audio",
+            "voice": settings["voice"],
+            "text_sha256": digest(text),
+        },
+    }
+
+
+def _speech_runtime_context(result: Any, audio_row: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep terminal Runtime identity available to a future exact media read."""
+    raw_result = getattr(result, "raw_result", {})
+    raw_result = raw_result if isinstance(raw_result, Mapping) else {}
+    settled = raw_result.get("result")
+    settled = settled if isinstance(settled, Mapping) else {}
+    task = raw_result.get("task")
+    task = dict(task) if isinstance(task, Mapping) else None
+    publication = settled.get("generation_publish_v1")
+    publication = dict(publication) if isinstance(publication, Mapping) else None
+    return {
+        "task": task,
+        "task_id": getattr(result, "kernel_task_id", None),
+        "attempt_id": getattr(result, "kernel_attempt_id", None),
+        "association_id": audio_row.get("association_id"),
+        "managed_output": dict(audio_row),
+        "generation_publish_v1": publication,
+    }
+
+
+def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any] | None = None):
     """Invoke speech through SDK; verify provenance bytes from managed outputs."""
     # A deliberate regeneration must not replay a failed or missing old output.
     # Share one identity within this batch; a later explicit sync gets a new one.
     request_context = {"draft_voiceover_sync": uuid.uuid4().hex}
     def synthesize(text, settings):
         import astrid.sdk as sdk
+        intent = (generation_intent if generation_intent is not None
+                  else _speech_generation_intent(text, settings))
         result = sdk.invoke("generation.generate_speech", kind="executor", project=project,
-            inputs={"text": text, **settings}, client=client, wait=True,
+            inputs={"text": text, **settings, "generation_intent": intent}, client=client, wait=True,
             idempotency_context=request_context)
         if not result.ok:
             raise VoiceoverSyncError(str(result.error))
         artifacts = result.outputs.get("managed_outputs") or result.outputs.get("artifacts") or []
         manifest_row = next((r for r in artifacts if r.get("name") in {"speech_manifest", "manifest", "manifest.json"}
+                             or r.get("output_port") in {"speech_manifest", "manifest"}
                              or str(r.get("path", "")).endswith("manifest.json")), None)
         audio_row = next((r for r in artifacts if r.get("name") in {"speech", "generated_audio"}
+                          or r.get("output_port") in {"speech", "generated_audio"}
                           or str(r.get("path", "")).endswith("speech.wav")), None)
         if manifest_row is None or audio_row is None:
             raise VoiceoverSyncError("Completed speech run has no managed WAV/provenance outputs")
@@ -407,7 +459,8 @@ def runtime_synthesizer(client, project):
             raise VoiceoverSyncError("Managed speech provenance failed hash verification")
         return {"text": manifest["text"], "settings": manifest["settings"],
                 "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
-                "run_id": result.run_id, "task_id": result.kernel_task_id}
+                "run_id": result.run_id, "task_id": result.kernel_task_id,
+                "runtime_context": _speech_runtime_context(result, audio_row)}
     return synthesize
 
 

@@ -4093,6 +4093,12 @@ def invoke(
 
     intent_modality = _generation_capability_modality(capability)
     request_inputs = dict(inputs or {})
+    # Speech is an existing generation capability whose normal legacy callers
+    # do not declare publication.  Accept the existing v1 intent only when a
+    # caller explicitly supplies it; do not broaden ordinary speech admission
+    # into automatic generation publication.
+    if capability.id == "generation.generate_speech" and "generation_intent" in request_inputs:
+        intent_modality = "audio"
     if capability.id in {"rendering.render", "rendering.timeline_visualize"}:
         from astrid.core.rendering.verified_source import reject_source_keys
 
