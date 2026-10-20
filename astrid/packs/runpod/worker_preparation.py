@@ -84,12 +84,7 @@ def write_target_record(path: Path, value: dict[str, Any]) -> None:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary_path, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        platform.durable_replace(temporary_path, path)
     finally:
         temporary_path.unlink(missing_ok=True)
 

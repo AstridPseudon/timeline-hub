@@ -13,7 +13,6 @@ import hashlib
 import json
 import os
 import shlex
-import stat
 import subprocess
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -475,17 +474,12 @@ def _atomic_private_write(path: Path, value: Mapping[str, Any]) -> None:
     fd, raw_temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temporary = Path(raw_temporary)
     try:
-        os.fchmod(fd, stat.S_IRUSR | stat.S_IWUSR)
         with os.fdopen(fd, "wb") as stream:
+            platform.owner_only(stream.fileno())
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        platform.durable_replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 

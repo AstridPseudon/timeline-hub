@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import errno
 import json
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from runtime_protocol import platform
 
 from astrid.core._shared.jsonio import (
     ProjectJsonError,
@@ -30,13 +32,17 @@ from astrid.core._shared.jsonio import (
 from astrid.core.contracts.errors import AstridError
 from astrid.core.foundation.atomic_io import (
     AtomicWriteError,
-    _fsync_dir,
     _write_atomic,
     _write_atomic_binary,
     read_json,
     write_bytes_atomic,
     write_json_atomic,
     write_text_atomic,
+)
+
+_REPLACE_OPERATION = (
+    "runtime_protocol.platform._move_file_write_through"
+    if sys.platform == "win32" else "os.replace"
 )
 
 # ---------------------------------------------------------------------------
@@ -205,9 +211,8 @@ class TestAtomicWriteFailureCleanup:
     def test_json_write_failure_cleans_up_temp_file(self, tmp_path: Path) -> None:
         target = tmp_path / "no_write.json"
 
-        # Simulate a failure by making the parent read-only so the temp file
-        # can be created but os.replace fails (permission error).
-        with patch("os.replace", side_effect=OSError(errno.EACCES, "Permission denied")):
+        # Keep the real staging write and fail only the platform replacement.
+        with patch(_REPLACE_OPERATION, side_effect=OSError(errno.EACCES, "Permission denied")):
             with pytest.raises(AtomicWriteError, match="Permission denied"):
                 write_json_atomic(target, {"k": "v"})
 
@@ -219,14 +224,14 @@ class TestAtomicWriteFailureCleanup:
 
     def test_write_text_atomic_raises_atomic_write_error_on_os_error(self, tmp_path: Path) -> None:
         target = tmp_path / "fail.txt"
-        with patch("os.replace", side_effect=OSError(errno.EIO, "I/O error")):
+        with patch(_REPLACE_OPERATION, side_effect=OSError(errno.EIO, "I/O error")):
             with pytest.raises(AtomicWriteError, match="I/O error"):
                 write_text_atomic(target, "data")
         assert not target.exists()
 
     def test_write_bytes_atomic_raises_atomic_write_error_on_os_error(self, tmp_path: Path) -> None:
         target = tmp_path / "fail.bin"
-        with patch("os.replace", side_effect=OSError(errno.EIO, "I/O error")):
+        with patch(_REPLACE_OPERATION, side_effect=OSError(errno.EIO, "I/O error")):
             with pytest.raises(AtomicWriteError, match="I/O error"):
                 write_bytes_atomic(target, b"data")
         assert not target.exists()
@@ -282,7 +287,7 @@ class TestJsonioDelegation:
 
     def test_project_write_failure_wraps_in_project_json_error(self, tmp_path: Path) -> None:
         target = tmp_path / "fail.json"
-        with patch("os.replace", side_effect=OSError(errno.EIO, "I/O error")):
+        with patch(_REPLACE_OPERATION, side_effect=OSError(errno.EIO, "I/O error")):
             with pytest.raises(ProjectJsonError, match="failed to write"):
                 project_write_json_atomic(target, {"k": "v"})
         assert not target.exists()
@@ -297,18 +302,26 @@ class TestJsonioDelegation:
 
 
 # ---------------------------------------------------------------------------
-# _fsync_dir edge cases
+# Directory durability after publication
 # ---------------------------------------------------------------------------
 
-class TestFsyncDir:
-    def test_fsync_dir_does_not_raise_on_non_fatal_errors(self, tmp_path: Path) -> None:
-        """_fsync_dir should not raise on EINVAL, ENOTSUP, or EBADF."""
-        # These errnos should be swallowed
-        for err in (errno.EINVAL, errno.ENOTSUP, errno.EBADF):
-            _fsync_dir(tmp_path)  # should not raise
+class TestDirectoryDurability:
+    def test_publication_flushes_its_directory(self, tmp_path: Path) -> None:
+        """Successful publication retains the real platform directory flush."""
+        target = tmp_path / "publication" / "published.txt"
+        with patch.object(platform, "fsync_directory", wraps=platform.fsync_directory) as flush:
+            write_text_atomic(target, "complete")
+        assert target.read_text() == "complete"
+        flush.assert_called_once_with(target.parent)
+        assert list(target.parent.iterdir()) == [target]
 
-    def test_fsync_dir_raises_on_other_errors(self, tmp_path: Path) -> None:
-        """_fsync_dir raises on unexpected OSError errnos."""
-        with patch("os.open", side_effect=OSError(errno.EACCES, "access denied")):
-            with pytest.raises(OSError, match="access denied"):
-                _fsync_dir(tmp_path)
+    def test_publication_propagates_unexpected_directory_errors(self, tmp_path: Path) -> None:
+        """A failed durability operation still reports failure after publication."""
+        target = tmp_path / "publication" / "published.txt"
+        with patch.object(platform, "fsync_directory", side_effect=OSError(errno.EACCES, "access denied")):
+            with pytest.raises(AtomicWriteError, match="access denied") as raised:
+                write_text_atomic(target, "complete")
+        assert isinstance(raised.value.__cause__, OSError)
+        assert raised.value.__cause__.errno == errno.EACCES
+        assert target.read_text() == "complete"
+        assert list(target.parent.iterdir()) == [target]

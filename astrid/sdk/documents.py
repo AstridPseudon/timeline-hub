@@ -15,6 +15,8 @@ import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
+from runtime_protocol import platform
+
 from .contracts import DomainResult, ErrorObject
 from .media_transcript import transcript_document_id
 from .pagination import page_pair
@@ -51,12 +53,7 @@ def _write_metadata(path: Path, value: Mapping) -> None:
             json.dump(value, handle, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(raw, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        platform.durable_replace(raw, path)
     finally:
         if os.path.exists(raw):
             os.unlink(raw)
