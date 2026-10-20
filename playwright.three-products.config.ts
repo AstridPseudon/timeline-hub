@@ -7,7 +7,7 @@ import direct from './playwright.direct.config.ts';
 // Run with: npm run test:e2e:three-products
 export default defineConfig({
   ...direct,
-  testMatch: 'three-products.spec.ts',
+  testMatch: 'three-products*.spec.ts',
   outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results/three-products',
   // Hang guard only (R-10): durations are reported, never judged. A case waits on Astrid calls as well as the page.
   timeout: 300_000,
