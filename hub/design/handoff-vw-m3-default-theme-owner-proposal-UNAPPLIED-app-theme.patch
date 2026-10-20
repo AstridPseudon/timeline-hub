@@ -1,0 +1,81 @@
+--- a/src/tools/video-editor/compositions/installed-themes.ts
++++ b/src/tools/video-editor/compositions/installed-themes.ts
+@@ -8,6 +8,44 @@
+ } from '@/tools/video-editor/types/index.ts';
+ 
+ type ThemeRegistry = Record<string, Theme>;
++
++// Compatibility adapter for Astrid builtin_theme(), the no-runtime-theme export default.
++// The public package default remains unchanged for other hosts.
++const ASTRID_DEFAULT_THEME: Theme = {
++  'id': 'banodoco-default',
++  'visual': {
++    'color': {
++      'fg': '#FAFAFA',
++      'bg': '#050814',
++      'accent': '#67E8F9'
++    },
++    'type': {
++      'families': {
++        'heading': 'Arial',
++        'body': 'Arial',
++        'mono': 'monospace'
++      },
++      'size': {
++        'base': 32,
++        'small': 22,
++        'large': 84
++      },
++      'weight': {
++        'normal': 400,
++        'bold': 600
++      },
++      'lineHeight': 1.2
++    },
++    'motion': {
++      'fadeMs': 450
++    },
++    'canvas': {
++      'width': 1920,
++      'height': 1080,
++      'fps': 30
++    }
++  }
++};
+ 
+ const THEME_2RP: Theme = {
+   id: '2rp',
+@@ -47,12 +85,7 @@
+ 
+ export const INSTALLED_TIMELINE_THEMES: ThemeRegistry = {
+   '2rp': THEME_2RP,
+-  // `banodoco-default` is the vendor fallback theme (DEFAULT_THEME). It is
+-  // always resolvable — resolveTimelineRenderTheme uses it as the base for
+-  // uninstalled slugs and theme_overrides-only configs — so it must be
+-  // registered here too, or the ThemeChip would report the editor's own
+-  // default theme as "not installed".
+-  'banodoco-default': DEFAULT_THEME,
++  'banodoco-default': ASTRID_DEFAULT_THEME,
+ };
+ 
+ export const AVAILABLE_TIMELINE_THEME_IDS = Object.keys(
+@@ -93,7 +126,7 @@
+   const installedTheme = typeof config.theme === 'string'
+     ? INSTALLED_TIMELINE_THEMES[config.theme]
+     : undefined;
+-  const baseTheme = cloneTheme(installedTheme ?? DEFAULT_THEME);
++  const baseTheme = cloneTheme(installedTheme ?? ASTRID_DEFAULT_THEME);
+   const overrides = config.theme_overrides;
+   if (!isRecord(overrides) || Object.keys(overrides).length === 0) {
+     return baseTheme;
+--- a/src/tools/video-editor/compositions/TimelineRenderer.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.tsx
+@@ -1724,7 +1724,7 @@
+       enabled={needsAudioAnalysis}
+     >
+       <LocalFontFaces />
+-      <AbsoluteFill style={{ backgroundColor: 'black', overflow: 'hidden' }}>
++      <AbsoluteFill style={{ backgroundColor: theme.visual.color.bg, overflow: 'hidden' }}>
+         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
+           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
+             {visualContent}

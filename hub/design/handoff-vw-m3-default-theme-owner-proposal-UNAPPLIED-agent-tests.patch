@@ -1,0 +1,52 @@
+--- /dev/null
++++ b/tests/packs/rendering/test_default_theme_resolution.py
+@@ -0,0 +1,49 @@
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++from astrid.core.theme import builtin_theme
++from astrid.packs.rendering.shared.rendering_backend import _resolved_theme_for_render
++
++
++def _timeline(tmp_path: Path, **updates: object) -> Path:
++    path = tmp_path / "timeline.json"
++    path.write_text(json.dumps({"theme": "2rp", "tracks": [], "clips": [], **updates}))
++    return path
++
++
++def test_export_default_is_independent_of_historical_theme_slug(tmp_path: Path) -> None:
++    assert _resolved_theme_for_render(_timeline(tmp_path), None) == builtin_theme()
++
++
++def test_explicit_runtime_theme_preserves_full_host_style(tmp_path: Path) -> None:
++    custom = builtin_theme()
++    custom["id"] = "host-cinema"
++    custom["visual"]["color"] = {"fg": "#aaaaaa", "bg": "#123456", "accent": "#abcdef"}
++    custom["visual"]["type"]["families"] = {
++        "heading": "Georgia", "body": "Verdana", "mono": "Courier New"
++    }
++    custom["visual"]["type"]["size"] = {"base": 48, "small": 20, "large": 100}
++    custom["visual"]["motion"]["fadeMs"] = 300
++    theme_path = tmp_path / "theme.json"
++    theme_path.write_text(json.dumps(custom))
++    assert _resolved_theme_for_render(_timeline(tmp_path), theme_path) == custom
++
++
++def test_authored_color_override_preserves_default_and_host_remainder(tmp_path: Path) -> None:
++    original = builtin_theme()
++    timeline_path = _timeline(
++        tmp_path, theme_overrides={"visual": {"color": {"accent": "#abcdef"}}}
++    )
++    expected = builtin_theme()
++    expected["visual"]["color"]["accent"] = "#abcdef"
++    assert _resolved_theme_for_render(timeline_path, None) == expected
++    assert builtin_theme() == original
++    host = builtin_theme()
++    host["id"] = "host-cinema"
++    host["visual"]["color"]["bg"] = "#123456"
++    path = tmp_path / "theme.json"
++    path.write_text(json.dumps(host))
++    host["visual"]["color"]["accent"] = "#abcdef"
++    assert _resolved_theme_for_render(timeline_path, path) == host

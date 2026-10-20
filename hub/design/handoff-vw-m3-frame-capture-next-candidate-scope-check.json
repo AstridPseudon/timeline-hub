@@ -1,0 +1,33 @@
+{
+  "base": "78599b3809f18e9e87542d71b03b92a340e1e579",
+  "product_paths_unchanged": {
+    "src/tools/video-editor/components/TimelineRenderControls.test.tsx": "ea1e695e521fe7796dee43a45925e996d50e2744bc738ddd28415db8c62c5caa",
+    "src/tools/video-editor/components/TimelineRenderControls.tsx": "d763e1b6b38e4cb05873d2bbe698794f0ccfdff4b16c75496e1a593f5784a544",
+    "src/tools/video-editor/hooks/timelineStore.ts": "2b76bfe78771a79e1c0944bb0164e8389dee2398fdb66eb7e0ca314b461a34f1",
+    "src/tools/video-editor/hooks/useRenderState.test.tsx": "eae87269f692b7502a23f1d1037339eb95fc8deea5ae950faab2aedcd3eee4d2",
+    "src/tools/video-editor/hooks/useRenderState.ts": "80dfe2b912f8aca0c99687e15d2af5dccf222607e7a180927afd2d72d569522b",
+    "src/tools/video-editor/hooks/useTimelineState.ts": "38a68fab02b63aa386001980036cb989630b436e0951b0f2302ee08d1825f114",
+    "src/tools/video-editor/hooks/useTimelineState.types.ts": "86b8f178a4ed4763279a654430091c08e19726b848a07edf04d236c2182130cb"
+  },
+  "unchanged": {
+    "playwright.viewing-parity.config.ts": "8a7ccaac4d4898c65e7ae2509c770ff98f009f41b8ef2837a31043c868f693d3",
+    "playwright.viewing-parity.native-codec.config.ts": "f46f78f21f9649644a932b939f11829cf1a9fa4411ba3daea4b7160c61c17bbe",
+    "tests/e2e/timeline/viewing-parity/media.ts": "a06acd2ce893d7b0c4eae0c38992f75af453ec8c6b77963bd041d39cebbd909e",
+    "tests/e2e/timeline/viewing-parity/download.ts": "7cb7bcd2129e364158e91559a6f820a2dc4852e4c35c4c1fef2c3b15925b0445",
+    "tests/e2e/timeline/viewing-parity/authority.ts": "4ae0c0ac884b8fb0c0dfec779e0eb5f3732dbe50ad60145dd24eed6606cc82bc",
+    "tests/e2e/timeline/viewing-parity/admission.ts": "3603ee0efca8d71f641210806785bc62038c0ca30d01b853b3dac55c61dcd315",
+    "tests/e2e/timeline/viewing-parity/bootstrap.ts": "9921c25dd8444646cb58c5d5a96e2e677d5e42af9ea70c3951858e1f285d33a4",
+    "tests/e2e/timeline/viewing-parity/browser-profile.ts": "fdf2488ac2668d449e0ba67d69f4cbc2e505de3be5b6771cad0664f954746c39",
+    "tests/e2e/timeline/viewing-parity/download.test.ts": "293e7ea21580de62f2860e2aa5a7ec1d559e1665f238810a50032b16b0d73dfe",
+    "tests/e2e/timeline/viewing-parity/diagnostics.test.ts": "bf266a882e737eaf294fe7c84d6cfd19316710e8538bc8090292779551123c40",
+    "tests/e2e/timeline/viewing-parity/compare.test.ts": "dedfd02cc0adaca609cfdb4595f8f788ae488ba0fafb056dfb6298481643c68b",
+    "tests/e2e/timeline/viewing-parity/authority.test.ts": "2f1a5fa6ad9af35182992a2286a946c7e55c90acc9225375156e74a30cdcd789",
+    "tests/e2e/timeline/viewing-parity/admission.test.ts": "417320cc6639aa4083cbf046983c6d4cd41db81146bccbb5e513319a8f0ebe8e",
+    "tests/e2e/timeline/viewing-parity/harness.test.ts": "b9e9c2ad2ea18f1859a9557690136855ed0fa45609eafe14f85859a7b1692ef5",
+    "tests/e2e/timeline/viewing-parity/bootstrap.test.ts": "17d973c87113b803a30d484996e2d1d54af3308629aca1c2e57c278686ebc9c4",
+    "tests/e2e/timeline/viewing-parity/browser-profile.test.ts": "faa8995d428619dea401db7b2afb7f6d4d402b9f076eebca8d8b2f550e2a2195"
+  },
+  "original_four_case_bodies_exact_after_enumerated_reverse": true,
+  "fixture_exact_except_authored_output_canvas_argument": true,
+  "no_proposal_helper_copies_adopted": true
+}
