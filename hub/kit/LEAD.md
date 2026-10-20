@@ -22,7 +22,7 @@ hub/lead/<area>.md and the manager INBOX (inbox delivery is reliable now), so yo
 
 ## Self-service tools (yours and the manager's; no escalation needed)
 bin/recycle, bin/sweep-tmp, bin/compact-scratch (disk); bin/request-stop / bin/stop-worker (a stuck or orphaned worker; its WIP is kept);
-bin/request-stop-test (a wrong test run); bin/request-checkout (an exact-commit checkout); bin/request-runtime (a pinned Remotion runtime);
+bin/request-stop-test (a wrong test run); bin/request-ready (park briefed workers; the dispatcher auto-starts them when your area is under 5: if capacity dips, check that the manager keeps 3+ in managers/<area>/ready before restarting it); bin/request-checkout (an exact-commit checkout); bin/request-runtime (a pinned Remotion runtime);
 bin/request-child-venv (an installed-Agent venv); bin/request-merge-remote (merge in another machine's repo). Managers run in bounded
 3 h rounds (bin/run-manager restarts each round from the current STATUS/INBOX); the dispatcher reloads itself when the kit updates it.
 

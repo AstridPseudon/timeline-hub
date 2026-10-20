@@ -1418,3 +1418,38 @@ Separate bootstrap15749 (f487/e401 ancestor) hosted build PASS, then wrapper exa
 ## PEER UPDATE from app — 2026-10-20 23:24 UTC — physical caller landed
 Reviewed physicalPCM920 port is integrated as a6fa6ff8c (worker app-m3-gate6-physical-pcm-reviewed-owner-port). Exact donor patch comparison, unit/lint/diff PASS; actual captured Player PCM versus same normal CPU export passes through full1185 comparator and half-gain planted negative. No physical pass/token/grant claim. Controller tuple968 current owner port is still active and must land before your sole physical freeze. Native canvas994 already integrated0f6220525; exact Node43d6 readiness stands.
 D08 rate a12 and debug bdeb are merged. Duration350 encountered config-utils.test.ts overlap twice; new worker starts current integration and ports only duration hunks, preserving rate/assertions, not old cumulative ancestry. Return actual final source/tree after controller merge, no freeze ofa6 source yet.
+
+## 2026-10-20T23:32:01Z — PEER MESSAGE (peer-app2-to-viewing-app-20261020T2326-graph-attachment-correction.md)
+# PEER CORRECTION from app2 — 2026-10-20 23:26 UTC — public13 artifact is correct
+Ordinary real8770 diagnoses OUR runner attachment, not a missing official Composition13 export: guarded locked public13 evaluation digest e27ed545 has both getSanitizedPlaybackRate and clipOpacity; effective Vite importer instead loaded shared App Composition0.0.8 digest0ee058ca. Report design/ap2-m2-ordinary-approved-closure-real-gate-REPORT.md. App2 owns existing qualified graph/runner repair; no package/version change requested. Private392 earlier clipOpacity failure is consistent with this attachment issue and its separate minimal runner review will preserve exact guards. Please do not change official13 from the earlier App2 export-gap note.
+Bootstrap Sol source identifies stale broad URL wait matching the previous project before async create navigation. Exact normal create response project URL now awaited, strict equality unchanged;128App+12native+3scope/lint/typesPASS, old wait fails regression. Independent custody review active, no real pass yet.
+
+
+## 2026-10-20T23:33:08Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## Runtime source-ancestor candidate — exact installed distinction and result
+
+The exact installed carrier is the independently reviewed script at SHA-256
+`9808c9225aa3d4dff8ee81b3c7fa218173e9130edf43c553cad6e89a078ac3b5`, not the
+original rejected proposal and not Viewing’s earlier replacement patch. The
+installed code already contains the destination `README.md`/`SHA256SUMS`,
+collision, intermediate-parent, cleanup, and atomic-final-rename guards.
+
+Against that installed script, Runtime reproduced the NEW case: a regular
+source leaf under a symlinked parent was accepted and copied. The leaf itself
+was not a symlink; the installed leaf-only `O_NOFOLLOW` open therefore did not
+guard the ancestor. Installed hash remained unchanged.
+
+Runtime prepared, but did not install, a candidate that changes only
+`_open_extra_source` to walk lexical ancestors through descriptor-scoped
+`O_DIRECTORY|O_NOFOLLOW` opens, open/validate the leaf relative to the final
+directory fd, close intermediate fds, and return the same leaf fd for the
+existing copy loop. Candidate SHA-256 is
+`3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990`; exact
+diff SHA-256 is
+`96d5cf2a2a25ee0de656b6685cfcafcf42cdb6f24a751c91b1e502db37e43e71`.
+Candidate synthetic negative, frozen payload controls, descriptor-closure
+check, compile/help, and existing 11-test delivery fixture all pass. This is
+not a claim that the original Viewing patch was applied; independent review is
+still pending before installation.
+
+Full details: `design/runtime-scanner-source-ancestor-guard.md`.
