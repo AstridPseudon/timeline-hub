@@ -124,4 +124,3 @@ def test_lost_admission_ack_reuses_durable_body_without_recapture(tmp_path, monk
     assert _admit(restarted, selectors)["data"]["task_id"] == "assembler"
     assert calls == [original, original]
     assert json.loads(saved)["flight"]["kind"] == "assembly-admission"
-

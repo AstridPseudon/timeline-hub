@@ -243,9 +243,9 @@ def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
         assert r > 200 and g < 30 and b < 30
     assert Path(result['paths']['png'][0]).exists()
     markdown = Path(result['paths']['markdown']).read_text()
-    assert '# Rendered filmstrip · committed revision R1' in markdown
-    assert 'Revision: `committed revision R1`' in markdown
-    assert any('committed revision R1' in text for text in drawn_text)
+    assert '# Rendered filmstrip · UNCERTIFIED preview (claimed revision R1)' in markdown
+    assert 'Revision: `UNCERTIFIED preview (claimed revision R1)`' in markdown
+    assert any('UNCERTIFIED preview (claimed revision R1)' in text for text in drawn_text)
     assert '</script><script>alert' not in markdown
     assert not list((tmp_path / 'pack').glob('*.svg'))
 

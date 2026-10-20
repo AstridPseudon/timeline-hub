@@ -131,7 +131,11 @@ def paths(tmp_path, snapshot):
     return timeline, assets
 
 
-def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None):
+_DEFAULT_CACHE = object()
+
+
+def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None,
+            cache=_DEFAULT_CACHE):
     timeline, assets = paths(tmp_path, snapshot)
     calls = []
     materialized_root = tmp_path / "materialized"
@@ -182,7 +186,9 @@ def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None
     result = composed_frame.RemotionFrameProvider(
         snapshot, timeline_path=timeline, assets_path=assets, project_dir=tmp_path,
         theme_path=theme_path, materialized_root=materialized_root,
-        materialized_objects={"object-image": str(image)}, cache=composed_frame.FrameCaptureCache(tmp_path / "cache"),
+        materialized_objects={"object-image": str(image)},
+        cache=(composed_frame.FrameCaptureCache(tmp_path / "cache")
+               if cache is _DEFAULT_CACHE else cache),
     )
     return result, calls
 
@@ -236,6 +242,10 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
     p, calls = provider(tmp_path, monkeypatch, snapshot)
     p.capture(cards(0), tmp_path / "first")
     prior = p.scene_capture
+    # This proof covers the unchanged PNG-only fallback, separately from the
+    # optional source-bound public rows written by current fresh captures.
+    key = composed_frame.frame_cache_key(p.snapshot, 0, None)
+    p.cache.write(key, (tmp_path / "first/frames/0.png").read_bytes())
     info = p.capture(cards(0, 24), tmp_path / "mixed")
     assert info["evidence_source"] == "mixed" and info["cached_frames"] == info["fresh_frames"] == 1
     assert [call[0] for call in calls] == [(0,), (24,)]
@@ -359,7 +369,7 @@ def test_persistent_renderer_forwards_final_props_callback(tmp_path, monkeypatch
     renderer.close()
 
 
-def test_candidate_retains_real_compiled_candidate_and_base_label(source_query, tmp_path, monkeypatch):
+def test_candidate_retains_real_compiled_candidate_and_uncertified_base_hint(source_query, tmp_path, monkeypatch):
     from astrid.core.timeline.authoring_bundle import (
         _digest,
         open_authoring_bundle,
@@ -387,7 +397,12 @@ def test_candidate_retains_real_compiled_candidate_and_base_label(source_query, 
     marker = snapshot["metadata"]["working_copy"]
     assert marker["candidate_digest"] == preview["candidate_digest"]
     assert marker["publication_digest"] == preview["publication_digest"]
-    assert snapshot_label(snapshot)["label"] == "unsaved candidate based on committed revision parent:old"
+    label = snapshot_label(snapshot)
+    assert label["status"] == "uncertified"
+    assert label["actual_revision_id"] is None
+    assert label["base_revision_id"] == "parent:old"
+    assert marker["candidate_parent_revision_id"] in label["label"]
+    assert label["label"].endswith("(base parent:old)")
     p, _ = provider(tmp_path, monkeypatch, snapshot)
     p.capture(cards(0), tmp_path / "output")
     assert p.scene_for_frame(0) is not None
@@ -395,7 +410,7 @@ def test_candidate_retains_real_compiled_candidate_and_base_label(source_query, 
     p.close()
 
 
-def test_historical_capture_and_managed_labels_name_their_consumed_revision(monkeypatch):
+def test_metadata_only_historical_snapshots_remain_uncertified_with_revision_hint(monkeypatch):
     from astrid.packs.rendering.actions.timeline_visualize.provenance import (
         snapshot_label,
     )
@@ -405,8 +420,8 @@ def test_historical_capture_and_managed_labels_name_their_consumed_revision(monk
                                      "selection": "explicit_historical_render"}}
     client.head = "newest-head"
     assert snapshot_label(native_snapshot) == snapshot_label(managed_snapshot) == {
-        "status": "committed", "label": "committed revision parent:old",
-        "actual_revision_id": "parent:old", "base_revision_id": None,
+        "status": "uncertified", "label": "UNCERTIFIED preview (claimed revision parent:old)",
+        "actual_revision_id": None, "base_revision_id": None,
     }
 
 
@@ -465,7 +480,12 @@ def test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack
     with zipfile.ZipFile(result["outputs"]["filmstrip_bundle"]) as archive:
         index = json.loads(archive.read("frame-index.json"))
         assert index["cards"][0]["addresses"] == ["c08.title"]
-        assert index["provenance"]["revision"]["actual_revision_id"] == "parent:old"
+        assert index["provenance"]["revision"] == {
+            "status": "uncertified",
+            "label": "UNCERTIFIED preview (claimed revision parent:old)",
+            "actual_revision_id": None,
+            "base_revision_id": None,
+        }
         retained = json.loads(archive.read("render-snapshot.json"))
         assert retained["metadata"]["scene_clips"] == snapshot["metadata"]["scene_clips"]
 

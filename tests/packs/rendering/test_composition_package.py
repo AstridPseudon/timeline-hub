@@ -101,7 +101,7 @@ for (const [name, change] of Object.entries({
     (error) => error instanceof AudioEnvelopeError && error.code === 'ENVELOPE_UNRENDERED', name);
   assert.equal(JSON.stringify(forged), before, name);
 }
-'''
+''';
     subprocess.run([os.environ.get("ASTRID_NODE_EXECUTABLE", "node"), "--input-type=module", "-e", script],
                    cwd=project, check=True, capture_output=True, text=True, timeout=30)
 

@@ -1,4 +1,4 @@
-"""Ordinary CLI trim through the pinned Runtime's real HTTP handlers and disk.
+"""Ordinary CLI literal edits through the pinned Runtime's real HTTP handlers and disk.
 
 Uses the existing in-memory HTTP transport: no sockets or daemon substitute.
 """
@@ -13,6 +13,7 @@ from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
+from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import TimelineSession
@@ -130,3 +131,34 @@ def test_cli_trim_exact_retry_restart_dependent_suffix_and_peer(film, tmp_path, 
         undone_bundle = bundle_from_document(undone['data']['canonical_document'])
         assert State(undone_bundle).entity(REF) == actual_a
         assert State(undone_bundle).entity('parent/track:picture')['label'] == 'Peer'
+
+
+def test_cli_move_exact_retry_restart_and_undo_over_real_http(film, capsys):
+    world = film
+    session = TimelineSession.open(world.project, 'trim-film', client=world.client())
+    original = session._bundle(session.outbox.read())
+    expected = capture_move(original, REF, 3)
+    args = ('edit', 'trim-film', '--clip', 'lit', '--on', '3', '--idempotency-key', 'cli-move-A')
+
+    world.lost.add('cli-move-A')
+    code, failure = run(world, capsys, *args)
+    assert code == 1 and not failure['ok']
+    first = copy.deepcopy(world.calls[-1])
+    flight = json.loads(session.outbox.path.read_bytes())['flight']
+    assert (flight['body'].encode(), flight['key']) == first[:2]
+    assert json.loads(first[0])['commands'] == [expected]
+    accepted = first[3]
+    history_after_accept = copy.deepcopy(world.history())
+
+    world.restart()
+    code, retry = run(world, capsys, *args)
+    assert code == 0 and retry['receipt'] == accepted['receipt']
+    assert world.calls[-1][:2] == first[:2]
+    assert world.calls[-1][3] == accepted
+    assert world.history() == history_after_accept
+
+    code, undone = run(world, capsys, 'undo', 'trim-film',
+                       '--publication', accepted['receipt']['receipt_id'])
+    assert code == 0
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(REF) == State(original).entity(REF)

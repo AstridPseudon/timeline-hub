@@ -165,4 +165,3 @@ def read_assembly_proposal(session, task_id, attempt_id):
         return proposal
     except (KeyError, TypeError, ValueError, UnicodeError) as exc:
         raise TimelineEditError('settled assembly proposal is unavailable or changed') from exc
-

@@ -360,20 +360,17 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             media.pop(identity, None)
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
-    if (digest == source["parent_revision"]["content_digest"]
-            and _json(manifest) == _json(source["dependency_manifest"])):
-        revision = source["parent_revision"]["revision_id"]
-    else:
+    # A historical publication boundary wins over the opened source image.
+    priors = [historical["source_mapping"]["_runtime_document"]
+              for historical in source_bundles] + [source]
+    revision = next((prior["parent_revision"]["revision_id"] for prior in priors
+                     if digest == prior["parent_revision"]["content_digest"]
+                     and _json(manifest) == _json(prior["dependency_manifest"])), None)
+    if revision is None:
         revision = "authoring-parent-revision-" + _digest({
             "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
             "parent": parent, "manifest": manifest,
         }).removeprefix("sha256:")
-    for historical in source_bundles:
-        prior = historical['source_mapping']['_runtime_document']
-        if (digest == prior['parent_revision']['content_digest']
-                and _json(manifest) == _json(prior['dependency_manifest'])):
-            revision = prior['parent_revision']['revision_id']
-            break
     document = {
         "schema_version": 1, "project_id": bundle["project_id"],
         "timeline_id": bundle["timeline_id"],

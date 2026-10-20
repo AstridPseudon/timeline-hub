@@ -31,10 +31,10 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx": "sha256:60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/element.yaml": "sha256:ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": "sha256:b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": "sha256:e7cc7df9eb71cb22dada8d48d3ce506520e8d08470b265e14768cb1ea3441644",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": "sha256:d2145b11e3b5369236221bbe1f88bdc2e17e52e53dcc828babf1b0ce564ac2c3",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": "sha256:7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": "sha256:05dbda5dfbaf5345532582ad43924cfe4c701d76ec1336319cacdb8948713ec3",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts": "sha256:6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": "sha256:bb1374c5e7d4a15dae83fe5ba0618eb3b9a887a3c72d7e3d446be350a1a71c7a",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": "sha256:a30320780d6a348e78d3645b310f73a2460a9e9849a72d146df7722d9083434f",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx": "sha256:08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/element.yaml": "sha256:9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx": "sha256:9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
@@ -107,7 +107,7 @@
     "astrid/packs/rendering/editor/live-scenes/extension.tsx": "sha256:4a77f276c6f1ac2725441bb93ade19bf51032c38cc8f95a76642eeeacb7c9f83",
     "astrid/packs/rendering/editor/live-scenes/identity.ts": "sha256:ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
     "astrid/packs/rendering/editor/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
-    "astrid/packs/rendering/elements/catalog.ts": "sha256:e981170d497f9483aa4682bee9defba367b6fdb155071420a19e8e827f59dcba",
+    "astrid/packs/rendering/elements/catalog.ts": "sha256:1018a6289d9e6b65280155ee662511da2bd9f03a65aab8cd9b1096ee0ebd6a81",
     "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "sha256:5d0712d03bab1ccb4f3401b6ecef80c8c9c90c409d4067695d2542a84eac4cca",
     "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": "sha256:2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
     "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3",
@@ -166,5 +166,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:2f525459601d8a3adfd29825b40a7522e536c6e809795691fa39c3e9d8b474e6"
+  "version": "sha256:7d8210633274e68ee38cdf339d0bbf6c62eabc1dd52cbd6b5c04ad739f05f851"
 }

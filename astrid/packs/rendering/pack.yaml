@@ -594,14 +594,8 @@ actions:
       path: actions/timeline_visualize/ids.py
     - kind: implementation
       path: actions/timeline_visualize/inspection_contract.py
-    - kind: asset
-      path: actions/timeline_visualize/inspector_assets/inspector.css
-    - kind: asset
-      path: actions/timeline_visualize/inspector_assets/inspector.js
     - kind: implementation
       path: actions/timeline_visualize/inspector_navigation.py
-    - kind: implementation
-      path: actions/timeline_visualize/inspector_viewer.py
     - kind: implementation
       path: actions/timeline_visualize/layers/__init__.py
     - kind: implementation

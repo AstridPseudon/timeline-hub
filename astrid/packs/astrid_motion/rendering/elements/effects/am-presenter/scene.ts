@@ -2,7 +2,7 @@ import type {ComponentCapabilityContext, PreparedComponentCapability} from '@ban
 import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
 import {clipFrames, narrowParams} from '../../_shared/am';
 import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
-import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
+import {motionAt, mouthStateRect, pixelGeometry, presenterAt} from './motion';
 
 export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
   const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
@@ -14,7 +14,7 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
   // The public scene supplies the same speed-remapped frame as the component.
   frame: frame => {
     const {view} = presenterAt(clip.params, frame, fps);
-    const {left, top, width: w, height: h} = pixelGeometry(mouthInspectionRect(clip.params), view);
+    const geometry = pixelGeometry(mouthStateRect(clip.params), view);
     return {
       presence: 'unknown',
       opaqueSupport: 'none',
@@ -22,10 +22,10 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
       bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
       diagnostics: {
         motion: motionAt(clip.params, frame, fps),
-        // Padded inspection ROI, including closed pose; no plate or alpha claim.
+        // Padded mouth ROI, including closed pose; no plate or alpha claim.
         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
-          : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
+          : {status: 'known', rect: {x: geometry.left, y: geometry.top, width: geometry.width, height: geometry.height}},
       },
     };
   },
