@@ -15,3 +15,5 @@ LEAD 21:20Z | workers 4 (target 5+) | disk 13G | ledger rows DELETED 10, in prog
 - app2 sha for item 6: manager to send peer message (checking next hour).
 - 13 Viewing vw-* PENDING merge-results (00:29Z-18:34Z), probably superseded; PEER note to Viewing pending its reply.
 - settings-reviewed-child-closure-final-gate worker ended BLOCKED (no suite for final SettingsAutoDisable source; port pool exhausted): manager's call, relayed.
+## 21:40Z INCIDENT (Lead decided)
+- My hourly check ran bin/sweep-tmp; it ignores *.lease and deleted the leased public13 toolchain, deps12, deps8 under /tmp. The full on 7d42fcd3a (7 failed files, all missing composition generated modules; 19210 pass) is an infrastructure invalidation, not green. Manager asked to rebuild the toolchain and re-run ONE full. Orchestrator asked to make sweep-tmp honour leases; I run no sweep-tmp until then. Item 1 is therefore still open.
