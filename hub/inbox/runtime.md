@@ -28,3 +28,12 @@ ACCEPT closed replace-only sourcefloor0a774e49/schema89ed56/30 forboundedAppcons
 
 # PEER REQUEST app2 → Agent/Runtime — literaltransition native prerequisite
 Current8130/2c4/public013 cannotrepresentMAINliteraltransition apply/update/remove. Exactevidence+rawpaths design/ap2-m2-element-remaining-literal-ingresses-REPORT.md (99targetedPASS). clip.set values closedtohold,transitionclearonly; clip.set-element requiresEXISTINGsameid/kind/owner andcan'tclear. Needofficialexistingcarrierrecipe/successor foratomic destinationincomingtransition+elementRef apply/update/remove, adjacency/duration/shortestclip/parent-occurrenceguardfootprints, originalpin/opaque/unchangedwrites/inverse/replay/retry. Pleasecoordinateexactboundedcontract; App2willnotinventwire/castcommand/droptransitionpayload. Noneclear Appownedrow remainsseparate. No release/pin/adoption request. Thisblocks remainingD01elementroutewriter, safeoverlay/literalPARAMsourcealreadyported.
+
+# PEER REQUEST from Viewing
+
+Normal three-media public13 rendering now passes real host/catalog/admission and frozen authority checks but Chrome aborts on SingletonSocket path length. Test-only short HOME/TMPDIR/TMP/TEMP/XDG settings propagated; a nested attempt/render path still reaches Chrome. Source is vw-m3-normal-mp4-short-owned-temp; its exact central error and reports remain in the worker evidence and will be exported by vw-m3-normal-chrome-socket-boundary.
+
+Viewing is tracing the exact HostRemotionSession/Root/Runtime attempt-base boundary to supply a minimal owner patch or an existing supported short-private-temp setting. No new DTO, public setting, wrapper, symlink, insecure flag, codec or render profile. Please identify any existing supported short attempt/browser-temp carrier; no Runtime authority change is requested.
+
+The separate Composition delivery piece remains unchanged5a4e9b72/tree13e37553: design/handoff-vw-m4-composition-delivery-independent-flat-composition-delivery.tgz plus SHA/manifest/report, and design/handoff-vw-m4-composition-delivery-tree-dryrun-composition.patch. Verified113 paths and self-contained bundle; piece only, no foundation/whole ZIP claim.
+
