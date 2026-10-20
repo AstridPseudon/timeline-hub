@@ -1060,16 +1060,22 @@ class RenderService:
     ) -> tuple[RenderRequest, dict[str, str]]:
         """Adapt a planned window for full-timeline-only renderers.
 
-        Unlayered window-aware renderers receive the canonical ``window``
-        field unchanged. LayerRef track isolation and alpha stamps remain
-        host-owned, so layered segments are always materialized. A renderer that explicitly declares
+        Window-aware renderers retain the canonical ``window`` and clip clocks.
+        LayerRef track isolation and alpha stamps remain host-owned. A renderer
+        that explicitly declares
         ``supports_windows: false`` receives an invocation-private sliced
         timeline and a null window, preserving the behavior of Astrid's
         existing full-timeline backends without teaching the service any
         concrete backend identities.
         """
 
-        if segment.layer is None and candidate.manifest.capabilities.get("supports_windows") is not False:
+        extent_key = "astrid_composition_duration_frames"
+        if extent_key in request.metadata:
+            request = replace(request, metadata={
+                key: value for key, value in request.metadata.items() if key != extent_key
+            })
+        supports_windows = candidate.manifest.capabilities.get("supports_windows") is not False
+        if segment.layer is None and supports_windows:
             return request, {}
         timeline_path = Path(request.timeline_path)
         try:
@@ -1088,11 +1094,38 @@ class RenderService:
                 recovery_command="write the timeline as a JSON object and retry",
                 details={"timeline_path": str(timeline_path)},
             )
-        materialized = self._window_timeline(
-            timeline_data,
-            segment.window,
-            tracks=segment.layer.tracks if segment.layer is not None else None,
-        )
+        if supports_windows and segment.layer is not None:
+            from astrid.core.timeline.banodoco_composer import Timeline
+            from astrid.core.timeline.duration import timeline_render_duration_frames
+
+            # Measure the original render view before isolating tracks. Source
+            # references do not contribute; an empty layer still spans this clock.
+            render_view = Timeline.from_json_data(timeline_data).for_render().to_json_data()
+            total = timeline_render_duration_frames(
+                render_view, segment.window.fps_rational[0] / segment.window.fps_rational[1]
+            )
+            if segment.window.end_frame > total:
+                raise ValueError("planned window extends beyond the full composition")
+            request = replace(request, metadata={**request.metadata, extent_key: str(total)})
+            # Isolate the layer without restarting fades, media or animation.
+            # Keep all its original clips, including overlap/transition peers.
+            allowed_tracks = set(segment.layer.tracks)
+            materialized = dict(timeline_data)
+            materialized["tracks"] = [
+                track for track in timeline_data.get("tracks", [])
+                if track.get("id") in allowed_tracks
+            ]
+            materialized["clips"] = [
+                clip for clip in timeline_data.get("clips", [])
+                if clip.get("track") in allowed_tracks
+            ]
+            materialized["metadata"] = dict(timeline_data.get("metadata") or {})
+        else:
+            materialized = self._window_timeline(
+                timeline_data,
+                segment.window,
+                tracks=segment.layer.tracks if segment.layer is not None else None,
+            )
         if segment.layer is not None:
             # Stamp the layer hint into the materialized timeline's metadata so
             # the owning renderer knows it is rendering one z-layer: z > 0 must
@@ -1108,7 +1141,10 @@ class RenderService:
         )
         write_json_atomic(materialized_path, materialized)
         return (
-            replace(request, timeline_path=str(materialized_path), window=None),
+            replace(
+                request, timeline_path=str(materialized_path),
+                window=request.window if supports_windows else None,
+            ),
             {"materialized_timeline": sha256_file(materialized_path)},
         )
 
