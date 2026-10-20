@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T18:21:07Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 27 | status age 5m -->
+<!-- app2 | 2026-10-20T18:26:19Z | dispatcher heartbeat 9s | live 5 (sol 0, luna 5, other 0) | busy30 30 | status age 10m -->
 # app2 — 2026-10-20 18:16 UTC
 Milestone: M2 — owner18:09deletionalarmACK; ordinary priority; no app2rowDELETED/exit.
 One-step candidates: NONEfullyunblocked. CLOSEST D01-app-duplicate: writerremoved90+73/actualcasejoined; finalactualbrowsergate+assertionconversionreview+HOMEmergeSHA remain, finalgateworkerdispatchedNOW. Other6rows retainliveconsumers/prerequisites, notone-step. Deletionmerges getledgerDELETED+mergeSHA immediately afterrealgate.
