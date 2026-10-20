@@ -8,6 +8,8 @@ from __future__ import annotations
 import copy
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier, Lock
 from types import SimpleNamespace
 
 import pytest
@@ -226,6 +228,64 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     assert original["writes"] and original["reads"] and original["bindings"]
     assert original["selections"] and original["dependencies"]
     editing.assert_baseline()
+
+
+def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_path, monkeypatch):
+    world = _start_door(film, tmp_path)
+    try:
+        editing = Editing(world.daemon.service, film, agent)
+        editing.assert_baseline()
+        base, document = editing.head(), editing.document()
+        requests = [
+            (editing.body([editing.move("music-bed", 1, document=document)], base), "door-concurrent-bed"),
+            (editing.body([editing.move("music-other", 2, document=document)], base), "door-concurrent-other"),
+        ]
+
+        provider_type = type(world.daemon.service._timeline_commit_provider)
+        provider_commit = provider_type.commit
+        preparation_barrier = Barrier(2)
+        provider_keys, provider_lock = [], Lock()
+
+        def overlap_provider(provider, context, port):
+            with provider_lock:
+                provider_keys.append(context["idempotency_key"])
+            preparation_barrier.wait(timeout=10)
+            return provider_commit(provider, context, port)
+
+        monkeypatch.setattr(provider_type, "commit", overlap_provider)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(_post_door, world, editing.path, body, key)
+                       for body, key in requests]
+            results = [future.result(timeout=30) for future in futures]
+
+        assert sorted(provider_keys) == sorted(key for _, key in requests)
+        assert sorted(result["data"]["status"] for result in results) == ["accepted", "rebased"]
+        assert len({result["receipt"]["receipt_id"] for result in results}) == 2
+        for result in results:
+            editing.assert_readback(result)
+
+        final = editing.document()
+        assert positions(final) == {"music-bed": 1, "music-other": 2}
+        history = editing.history()
+        assert len(history) == 4
+        concurrent_history = history[-2:]
+        assert {entry["publication_id"] for entry in concurrent_history} == {
+            result["receipt"]["receipt_id"] for result in results
+        }
+        assert len({entry["revision_id"] for entry in concurrent_history}) == 2
+        ledger = world.daemon.service.store.conn.execute(
+            "SELECT idempotency_key, txn_id FROM command_idempotency "
+            "WHERE command_kind='timeline.commit' AND idempotency_key IN (?, ?) "
+            "ORDER BY idempotency_key",
+            tuple(key for _, key in requests),
+        ).fetchall()
+        assert [(row["idempotency_key"], row["txn_id"]) for row in ledger] == sorted(
+            (key, next(result["receipt"]["receipt_id"] for result in results
+                       if result["receipt"]["idempotency_key"] == key))
+            for _, key in requests
+        )
+    finally:
+        world.stop()
 
 
 def test_real_inverse_preserves_newer_disjoint_work_and_original_recorders(editing):
