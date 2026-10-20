@@ -1,0 +1,498 @@
+diff --git a/scripts/astrid-landing/refresh-vendor.mjs b/scripts/astrid-landing/refresh-vendor.mjs
+--- a/scripts/astrid-landing/refresh-vendor.mjs
++++ b/scripts/astrid-landing/refresh-vendor.mjs
+@@ -38,6 +38,12 @@ const destination = path.resolve(args.destination ?? path.join(appRoot, 'vendor/astrid-browser'));
+ const declaredPath = path.resolve(args.files ?? path.join(appRoot, 'config/astrid-vendor-files.json'));
+ const declared = JSON.parse(fs.readFileSync(declaredPath, 'utf8'));
+ if (declared.schema !== 'astrid-vendor-files/v1') throw new Error(`Unsupported declared file set schema: ${declared.schema}`);
++const excluded = new Set(declared.exclude ?? []);
++for (const p of excluded) {
++  if (typeof p !== 'string' || path.posix.normalize(p) !== p || p.startsWith('/') || p.includes('..')) {
++    throw new Error(`Unsafe excluded Astrid source path: ${p}`);
++  }
++}
+ 
+ const git = (...a) => execFileSync('git', ['-C', repo, ...a], { maxBuffer: 1 << 30 });
+ const commit = git('rev-parse', '--verify', `${args.commit}^{commit}`).toString().trim();
+@@ -55,11 +61,14 @@ const add = (p, bytes) => out.set(p, bytes);
+ 
+ add('LICENSE', blob(declared.license));
+ for (const dir of declared.directories) {
+-  const matches = allPaths.filter((p) => p.startsWith(`${dir.path}/`) && dir.extensions.includes(path.extname(p)));
++  const matches = allPaths.filter((p) => p.startsWith(`${dir.path}/`) && dir.extensions.includes(path.extname(p)) && !excluded.has(p));
+   if (!matches.length) throw new Error(`No ${dir.extensions.join('/')} files under ${dir.path} in ${commit}`);
+   for (const p of matches) add(p, blob(p));
+ }
+-for (const p of declared.files) add(p, blob(p));
++for (const p of declared.files) {
++  if (excluded.has(p)) throw new Error(`Astrid source path is declared in both files and exclude: ${p}`);
++  add(p, blob(p));
++}
+ 
+ // Whole-Tool catalog: the catalog plus every pack file it binds by digest.
+ const toolCatalogBytes = blob(declared.tool_catalog);
+@@ -119,6 +128,7 @@ const provenance = {
+   astrid_tree: tree,
+   refresh_command: `node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit ${commit}`,
+   declared_files: path.relative(appRoot, declaredPath),
++  excluded_files: [...excluded].sort(),
+   verify_command: 'node scripts/build/verify-astrid-vendor-sources.mjs',
+   files,
+ };
+diff --git a/config/astrid-vendor-files.json b/config/astrid-vendor-files.json
+--- a/config/astrid-vendor-files.json
++++ b/config/astrid-vendor-files.json
+@@ -82,6 +82,17 @@
+     "remotion/public/fonts/OFL-1.1.txt",
+     "remotion/public/fonts/FONT_PROVENANCE.md"
+   ],
++  "exclude": [
++    "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx",
++    "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx",
++    "astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx",
++    "astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx"
++  ],
+   "tool_catalog": "astrid/tools/catalog.json",
+   "public_catalog": {
+     "output": "astrid/packs/rendering/elements/public-catalog.ts",
+diff --git a/src/pages/Home/astrid-public-host.tsx b/src/pages/Home/astrid-public-host.tsx
+index c95f0d371..a3c88e6c0 100644
+--- a/src/pages/Home/astrid-public-host.tsx
++++ b/src/pages/Home/astrid-public-host.tsx
+@@ -1,15 +1,6 @@
+ import type { ComponentType } from 'react';
+ import { ASTRID_RENDERING_ELEMENTS } from '@astrid-public/packs/rendering/elements/public-catalog.ts';
+-import FadeAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/fade/component.tsx';
+-import FadeUpAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/fade-up/component.tsx';
+-import ScaleInAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/scale-in/component.tsx';
+-import SlideLeftAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/slide-left/component.tsx';
+-import SlideUpAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/slide-up/component.tsx';
+-import TypeOnAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/type-on/component.tsx';
+ import AudioReactiveColour from '@astrid-public/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx';
+-import TextCard from '@astrid-public/packs/rendering/rendering/elements/effects/text-card/component.tsx';
+-import CrossFadeTransition from '@astrid-public/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx';
+-import FadeTransition from '@astrid-public/packs/rendering/rendering/elements/transitions/fade/component.tsx';
+ import EndSpanningLayer from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx';
+ import FrameOverlay from '@astrid-public/packs/local/rendering/elements/effects/frame-overlay/component.tsx';
+ import card0 from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png?url';
+@@ -20,6 +11,7 @@ import card4 from '@astrid-public/packs/local/rendering/elements/effects/end-spa
+ import card5 from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png?url';
+ import frame from '@astrid-public/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png?url';
+ import { createAstridPreviewAssetWrapper } from '@/tools/video-editor/sequences/components/createAstridPreviewAssetWrapper.tsx';
++import { PUBLIC_COMPOSITION_ELEMENT_COMPONENTS } from '@/tools/video-editor/runtime/publicCompositionElementRegistry.ts';
+ import type {
+   AstridDynamicSequenceEntry,
+   AstridElementComponentProps,
+@@ -34,17 +26,13 @@ const EndSpanningLayerPreview = createAstridPreviewAssetWrapper(
+ const FrameOverlayPreview = createAstridPreviewAssetWrapper(FrameOverlay, {frame});
+ 
+ const asComponent = (value: unknown) => value as ComponentType<AstridElementComponentProps>;
++const compositionComponentEntries = Object.entries(PUBLIC_COMPOSITION_ELEMENT_COMPONENTS) as Array<[
++  string,
++  ComponentType<AstridElementComponentProps>,
++]>;
+ const componentEntries: Array<[string, ComponentType<AstridElementComponentProps>]> = [
+-  ['animation:fade', asComponent(FadeAnimation)],
+-  ['animation:fade-up', asComponent(FadeUpAnimation)],
+-  ['animation:scale-in', asComponent(ScaleInAnimation)],
+-  ['animation:slide-left', asComponent(SlideLeftAnimation)],
+-  ['animation:slide-up', asComponent(SlideUpAnimation)],
+-  ['animation:type-on', asComponent(TypeOnAnimation)],
++  ...compositionComponentEntries,
+   ['effect:audio-reactive-colour', asComponent(AudioReactiveColour)],
+-  ['effect:text-card', asComponent(TextCard)],
+-  ['transition:cross-fade', asComponent(CrossFadeTransition)],
+-  ['transition:fade', asComponent(FadeTransition)],
+   ['effect:end-spanning-layer', asComponent(EndSpanningLayerPreview)],
+   ['effect:frame-overlay', asComponent(FrameOverlayPreview)],
+ ];
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
+deleted file mode 100644
+index 68a0ade02..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function Fade(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
+deleted file mode 100644
+index 693a009db..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function FadeUp(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
+deleted file mode 100644
+index 863e9de77..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function ScaleIn(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
+deleted file mode 100644
+index 62f76f83a..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function SlideLeft(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
+deleted file mode 100644
+index 30b5594b8..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function SlideUp(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
+deleted file mode 100644
+index 16a74eaee..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function TypeOn(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
+deleted file mode 100644
+index c55157efe..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
++++ /dev/null
+@@ -1,217 +0,0 @@
+-import type {ReactElement} from 'react';
+-import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
+-import {narrowParams} from '../../../../shared/element_contracts';
+-import type {ElementComponentProps} from '../../../../shared/element_contracts';
+-
+-// Minimal default text card. Themes are expected to override this with richer
+-// typography, but the builtin renders visible markup so a stripped theme still
+-// produces a readable caption instead of an empty frame. The shape mirrors the
+-// element.yaml manifest: `content` (required) and `align` (left/center/right).
+-type TextCardParams = {
+-  content?: string;
+-  align?: 'left' | 'center' | 'right';
+-  bold?: boolean;
+-  color?: string;
+-  fontFamily?: string;
+-  fontSize?: number;
+-};
+-
+-const numberOrUndefined = (value: unknown): number | undefined => {
+-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+-};
+-
+-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+-
+-const clipDurationFrames = (
+-  clip: {hold?: unknown; from?: unknown; to?: unknown; speed?: unknown},
+-  fps: number,
+-): number => {
+-  if (typeof clip.hold === 'number' && Number.isFinite(clip.hold)) {
+-    return Math.max(1, Math.round(clip.hold * fps));
+-  }
+-  const from = numberOrUndefined(clip.from) ?? 0;
+-  const to = numberOrUndefined(clip.to) ?? from;
+-  const speed = numberOrUndefined(clip.speed) ?? 1;
+-  return Math.max(1, Math.round(((to - from) / speed) * fps));
+-};
+-
+-export default function TextCard(
+-  props: ElementComponentProps,
+-): ReactElement | null {
+-  const frame = useCurrentFrame();
+-  const params = narrowParams<TextCardParams>(props.params);
+-  const content = typeof params.content === 'string' ? params.content : '';
+-  if (!content) {
+-    return null;
+-  }
+-  const align: 'left' | 'center' | 'right' = params.align ?? 'center';
+-  const clip = props.clip as {
+-    x?: unknown;
+-    y?: unknown;
+-    width?: unknown;
+-    height?: unknown;
+-    hold?: unknown;
+-    from?: unknown;
+-    to?: unknown;
+-    speed?: unknown;
+-  };
+-  const x = numberOrUndefined(clip.x);
+-  const y = numberOrUndefined(clip.y);
+-  const width = numberOrUndefined(clip.width);
+-  const height = numberOrUndefined(clip.height);
+-  const hasBounds =
+-    x !== undefined || y !== undefined || width !== undefined || height !== undefined;
+-  const fontSize = numberOrUndefined(params.fontSize) ?? (hasBounds ? 32 : 64);
+-  const themeColor = props.theme?.visual?.color ?? {};
+-  const themeType = props.theme?.visual?.type ?? {};
+-  const themeMotion = props.theme?.visual?.motion ?? {};
+-  const fg = typeof themeColor.fg === 'string' ? themeColor.fg : '#ffffff';
+-  const bg = typeof themeColor.bg === 'string' ? themeColor.bg : '#232329';
+-  const accent =
+-    typeof themeColor.accent === 'string' ? themeColor.accent : '#B79CE4';
+-  const color = typeof params.color === 'string' ? params.color : fg;
+-  const fontFamily =
+-    typeof params.fontFamily === 'string'
+-      ? params.fontFamily
+-      : typeof themeType.families?.body === 'string'
+-        ? themeType.families.body
+-        : 'Chillax, Inter, Arial, sans-serif';
+-  const durationFrames = clipDurationFrames(clip, props.fps);
+-  const fadeFrames = Math.max(
+-    8,
+-    Math.round(((numberOrUndefined(themeMotion.fadeMs) ?? 450) / 1000) * props.fps),
+-  );
+-  const intro = clamp01(frame / fadeFrames);
+-  const outro = clamp01((durationFrames - frame - 1) / fadeFrames);
+-  const motion = Math.min(intro, outro);
+-  const eased = 1 - Math.pow(1 - motion, 3);
+-  const translateX = interpolate(eased, [0, 1], [-42, 0]);
+-  const translateY = interpolate(eased, [0, 1], [16, 0]);
+-  const scaleX = interpolate(eased, [0, 1], [0.08, 1]);
+-
+-  if (hasBounds) {
+-    const lines = content.split('\n').map((line) => line.trim()).filter(Boolean);
+-    const name = lines[0] ?? content;
+-    const title = lines[1] ?? '';
+-    const handle = lines[2] ?? '';
+-    return (
+-      <div
+-        style={{
+-          position: 'absolute',
+-          left: x ?? 0,
+-          top: y ?? 0,
+-          width: width ?? 'auto',
+-          height: height ?? 'auto',
+-          display: 'block',
+-          overflow: 'visible',
+-          color,
+-          fontFamily,
+-          opacity: eased,
+-          textAlign: align,
+-          transform: `translate(${translateX}px, ${translateY}px)`,
+-        }}
+-      >
+-        <div
+-          style={{
+-            display: 'inline-flex',
+-            alignItems: 'stretch',
+-            maxWidth: '100%',
+-            background: `linear-gradient(90deg, ${bg}F2 0%, ${bg}D8 70%, ${bg}00 100%)`,
+-            borderLeft: `6px solid ${accent}`,
+-            borderTop: `1px solid ${accent}66`,
+-            padding: '16px 26px 15px 20px',
+-            boxShadow: '0 18px 44px rgba(0, 0, 0, 0.42)',
+-            transformOrigin: 'left center',
+-          }}
+-        >
+-          <div style={{minWidth: 0}}>
+-            <div
+-              style={{
+-                color,
+-                fontFamily,
+-                fontSize,
+-                fontWeight: params.bold ? 700 : 600,
+-                lineHeight: 1.02,
+-                letterSpacing: 0,
+-                whiteSpace: 'nowrap',
+-              }}
+-            >
+-              {name}
+-            </div>
+-            {title ? (
+-              <div
+-                style={{
+-                  marginTop: 8,
+-                  color,
+-                  fontFamily,
+-                  fontSize: Math.max(14, fontSize * 0.43),
+-                  fontWeight: 500,
+-                  letterSpacing: '0.18em',
+-                  lineHeight: 1.15,
+-                  opacity: 0.9,
+-                  textTransform: 'uppercase',
+-                  whiteSpace: 'nowrap',
+-                }}
+-              >
+-                {title}
+-              </div>
+-            ) : null}
+-            {handle ? (
+-              <div
+-                style={{
+-                  marginTop: 7,
+-                  color: accent,
+-                  fontFamily,
+-                  fontSize: Math.max(13, fontSize * 0.4),
+-                  fontWeight: 600,
+-                  letterSpacing: '0.12em',
+-                  lineHeight: 1.05,
+-                  textTransform: 'uppercase',
+-                  whiteSpace: 'nowrap',
+-                }}
+-              >
+-                {handle}
+-              </div>
+-            ) : null}
+-          </div>
+-        </div>
+-        <div
+-          style={{
+-            marginTop: 8,
+-            width: 184,
+-            height: 3,
+-            backgroundColor: accent,
+-            transform: `scaleX(${scaleX})`,
+-            transformOrigin: 'left center',
+-            opacity: eased * 0.92,
+-          }}
+-        />
+-      </div>
+-    );
+-  }
+-
+-  return (
+-    <AbsoluteFill
+-      style={{
+-        left: x ?? 120,
+-        top: y ?? 120,
+-        width: width ?? 640,
+-        height: height ?? 180,
+-        position: 'absolute',
+-        justifyContent: 'center',
+-        color,
+-        fontFamily,
+-        fontSize,
+-        fontWeight: params.bold ? 700 : 400,
+-        fontStyle: 'normal',
+-        textAlign: align,
+-        whiteSpace: 'pre-wrap',
+-        lineHeight: 1.1,
+-        textShadow: '0 2px 4px rgba(0, 0, 0, 0.95), 0 2px 18px rgba(0, 0, 0, 0.8)',
+-        opacity: props.clip.opacity ?? 1,
+-      }}
+-    >
+-      {content}
+-    </AbsoluteFill>
+-  );
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
+deleted file mode 100644
+index 1153bc7dd..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
++++ /dev/null
+@@ -1,6 +0,0 @@
+-import type {TransitionResult} from '../../../../shared/element_contracts';
+-
+-// Builtin null-pair: themes override this with real transition presentation/timing.
+-export default function CrossFade(): TransitionResult {
+-  return {presentation: null, timing: null};
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
+deleted file mode 100644
+index 4ef384073..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
++++ /dev/null
+@@ -1,6 +0,0 @@
+-import type {TransitionResult} from '../../../../shared/element_contracts';
+-
+-// Builtin null-pair: themes override this with real transition presentation/timing.
+-export default function FadeTransition(): TransitionResult {
+-  return {presentation: null, timing: null};
+-}
+diff --git a/vendor/astrid-browser/provenance.json b/vendor/astrid-browser/provenance.json
+index fb465fdd8..1eb320dc2 100644
+--- a/vendor/astrid-browser/provenance.json
++++ b/vendor/astrid-browser/provenance.json
+@@ -3,6 +3,17 @@
+   "astrid_tree": "07ce61f24ec38a1a60c4a981b6bd666f4971bd67",
+   "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 680d1aa4f1f9576d65a603472f1dd7fc0ae9ccd1",
+   "declared_files": "config/astrid-vendor-files.json",
++  "excluded_files": [
++    "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx",
++    "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx",
++    "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx",
++    "astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx",
++    "astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx"
++  ],
+   "verify_command": "node scripts/build/verify-astrid-vendor-sources.mjs",
+   "files": {
+     "LICENSE": "d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+@@ -111,25 +122,16 @@
+     "astrid/packs/rendering/editor/live-scenes/runtime.ts": "3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
+     "astrid/packs/rendering/elements/catalog.ts": "b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b",
+     "astrid/packs/rendering/elements/public-catalog.ts": "7ec1e6b7f2e445b02f1714929933a8044feb16cdc2f4a268ea79f91f2a57a281",
+-    "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "087e837820d4285d9aefdef10f0d9b6faaecb731f11e375cfa0208f68c4228d1",
+     "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": "2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+-    "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "c7947bd7437038a726dab1850561ff67bca4139755b95907540d9c338108aa2e",
+     "astrid/packs/rendering/rendering/elements/animations/fade/element.yaml": "65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+-    "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx": "91f37ef5420ac58ae8f681e82558497b2cbdfcf230cfd0600392beb22b676f8d",
+     "astrid/packs/rendering/rendering/elements/animations/scale-in/element.yaml": "f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+-    "astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx": "a524bb8df5fe7fda427661036652398bc10765e45beedb0b05af86a58ef87b26",
+     "astrid/packs/rendering/rendering/elements/animations/slide-left/element.yaml": "a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+-    "astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx": "237d05cccff131e065a63972aea8d6e08f23258c0bb98739c6deb409251a0cf7",
+     "astrid/packs/rendering/rendering/elements/animations/slide-up/element.yaml": "bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+-    "astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx": "43c2a76521ddbaacee46363392a90768570b930dae1beb27788460119763b0c4",
+     "astrid/packs/rendering/rendering/elements/animations/type-on/element.yaml": "44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+     "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx": "c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+     "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/element.yaml": "1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+-    "astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx": "e12cb0d8dbd1aa141f26c671264c4363ba1f91ff759509068aee906e10200c4c",
+     "astrid/packs/rendering/rendering/elements/effects/text-card/element.yaml": "e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+-    "astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx": "1e269ed301ba2f1fe9e70cea506d4260c9936d5f62b2ce0571fa9cda0432ccdf",
+     "astrid/packs/rendering/rendering/elements/transitions/cross-fade/element.yaml": "d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+-    "astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx": "f2805778ab387c1c044ddef563a3c1cfed4a2d8ea4659d0bacf4ada8fa5549ee",
+     "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+     "astrid/packs/rendering/shared/element_contracts.ts": "433f0b6b81fcfc7826c4f434bb158c1a2a3dea4f71f99a6689226c9e0395f3b6",
+     "astrid/packs/rendering/shared/managed-media-policy.ts": "712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
