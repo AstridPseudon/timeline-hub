@@ -212,12 +212,15 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda state: "ours")
     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
+    # The explicit bootstrap read is joined by one Remotion registry-context
+    # read when the supported renderer is provisioned in the environment.
+    inventory_reads_per_launch = 2 if os.environ.get("ASTRID_REMOTION_PROJECT_DIR") else 1
 
     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result["host_status"] == "ready"
     assert result["host_source_inventory_identity"] == "inventory-1"
-    # The probe may re-verify the inventory, so count is not pinned; every read must see the launched identity.
-    assert inventory_calls and set(inventory_calls) == {"inventory-1"}
+    assert len(inventory_calls) == inventory_reads_per_launch
+    assert inventory_calls == ["inventory-1"] * inventory_reads_per_launch
     assert "--source-inventory-identity" in launches[0]
     assert launches[0][launches[0].index("--source-inventory-identity") + 1] == "inventory-1"
     assert launches[0][launches[0].index("--runtime-discovery-file") + 1] == str(
@@ -240,8 +243,11 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     assert result2["host_status"] == "ready"
     assert len(launches) == 2
     assert "launch_argv" not in state
-    assert inventory_calls[-1] == "inventory-2"
-    assert set(inventory_calls) == {"inventory-1", "inventory-2"}
+    assert len(inventory_calls) == inventory_reads_per_launch * 2
+    assert inventory_calls == (
+        ["inventory-1"] * inventory_reads_per_launch
+        + ["inventory-2"] * inventory_reads_per_launch
+    )
     assert terminated, "changed source inventory must not reuse the old ready host"
 
     # Disabling the last managed source must not reuse a host that still
@@ -252,7 +258,12 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     result3 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result3["host_status"] == "ready"
     assert len(launches) == 3
-    assert inventory_calls[-1] == ""
+    assert len(inventory_calls) == inventory_reads_per_launch * 3
+    assert inventory_calls == (
+        ["inventory-1"] * inventory_reads_per_launch
+        + ["inventory-2"] * inventory_reads_per_launch
+        + [""] * inventory_reads_per_launch
+    )
 
 
 def test_bootstrap_stops_on_correlated_terminal_registration_failure(
