@@ -66,6 +66,24 @@ def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monke
     args = _args(tmp_path)
     source = _Source()
     calls = []
+    label_sources = []
+
+    def unexpected_render(*args, **kwargs):
+        pytest.fail("scene-only execution must not invoke filmstrip rendering")
+
+    monkeypatch.setattr(filmstrip_execution, "_render_input_projection_png", unexpected_render)
+    monkeypatch.setattr(filmstrip_execution, "_render_paired_rows", unexpected_render)
+    monkeypatch.setattr(filmstrip_execution, "_render_time_anchored_output", unexpected_render)
+    monkeypatch.setattr(
+        filmstrip_execution,
+        "snapshot_label",
+        lambda snapshot, *, source=None: label_sources.append(source) or {
+            "status": "uncertified",
+            "label": "uncertified",
+            "actual_revision_id": None,
+            "base_revision_id": None,
+        },
+    )
 
     monkeypatch.setattr(
         "astrid.core.rendering.verified_source.inherited_source",
@@ -87,6 +105,7 @@ def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monke
     assert [answer["frame"] for answer in payload["answers"]] == [0, 1, 2, 3]
     assert payload["scene_clips"] == {"compiled:clip": {"address": "c01.layer"}}
     assert payload["snapshot_label"]["status"] == "uncertified"
+    assert label_sources == [source]
     assert not list(scene_path.parent.glob("*.png"))
     assert not (args.out / ".scene-only-unused.mp4").exists()
 

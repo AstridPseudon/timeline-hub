@@ -1714,7 +1714,7 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
     frames = range(duration_frames)
     metadata = snapshot.get("metadata")
     scene_clips = metadata.get("scene_clips") if isinstance(metadata, Mapping) else None
-    label = snapshot_label(snapshot)
+    label = _scene_only_label_unavailable()
     try:
         source = inherited_source(timeline_path, assets_path)
         if source is None:
@@ -1734,6 +1734,7 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
             config_ids = {clip.get("id") for clip in config_clips if isinstance(clip, Mapping)}
             if config_ids != set(scene_clips):
                 raise SceneQueryUnavailable("compiled scene IDs differ from retained address map")
+        label = snapshot_label(snapshot, source=source)
         out_root = args.out.expanduser().resolve()
         out_root.mkdir(parents=True, exist_ok=True)
         project_dir = Path(
