@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { toast } from '@/shared/components/ui/toast.tsx';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector.tsx';
@@ -10,6 +10,26 @@ beforeAll(() => {
 afterEach(cleanup);
 
 describe('AgentChatSessionSelector', () => {
+  it('always shows the trigger chevron, including in narrow panes', () => {
+    render(<AgentChatSessionSelector sessions={[{ id: 'one' }]} activeSessionId="one" onSelectSession={vi.fn()} />);
+    const chevron = screen.getByRole('combobox').querySelector('svg')!;
+    expect(chevron).toBeInTheDocument();
+    expect(chevron.getAttribute('class')).not.toMatch(/hidden|agent-header:block/);
+  });
+
+  it('uses only a filled Main star and exposes full truncated chat names', async () => {
+    const label = 'A long planning chat name that needs all available space';
+    render(<AgentChatSessionSelector sessions={[{ id: 'one', title: label }, { id: 'two' }]} activeSessionId="one" mainSessionId="one" onSelectSession={vi.fn()} onRenameSession={vi.fn()} />);
+    fireEvent.click(screen.getByRole('combobox'));
+    const row = await screen.findByRole('option', { name: new RegExp(`^${label}`) });
+    expect(within(row).getByTitle(label)).toHaveTextContent(label);
+    const main = within(row).getByTitle('Main chat');
+    expect(main.querySelector('svg')).toHaveClass('fill-current');
+    expect(within(main).getByText('Main')).toHaveClass('sr-only');
+    expect(within(row).getByRole('button', { name: `Rename ${label}` })).toBeInTheDocument();
+    expect(within(screen.getByRole('option', { name: 'Chat 2' })).getByTitle('Chat 2')).toBeInTheDocument();
+  });
+
   it('shows each chat\'s agent and last model under its title, and the agent alone when the model is unknown', async () => {
     const describeSession = (id: string) => id === 'codex:one'
       ? { agent: 'codex' as const, model: '6 Sol' }

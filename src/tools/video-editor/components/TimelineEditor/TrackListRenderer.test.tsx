@@ -385,61 +385,18 @@ describe('TrackListRenderer', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it.each(['phone', 'tablet'] as const)('opens the track sheet when a track name is tapped on %s, and delete removes the track', (deviceClass) => {
+  it.each(['phone', 'tablet'] as const)('selects the track on %s without rendering a sheet or inline controls', (deviceClass) => {
     const onSelect = vi.fn();
-    const onChange = vi.fn();
-    const onRemove = vi.fn();
-    const onAddTrack = vi.fn();
-    render(
-      <AIInputModeProvider>
-        <TrackLabelContent
-          track={tracks[0]}
-          isSelected={false}
-          hasClips={false}
-          deviceClass={deviceClass}
-          onSelect={onSelect}
-          onChange={onChange}
-          onRemove={onRemove}
-          onAddTrack={onAddTrack}
-        />
-      </AIInputModeProvider>,
-    );
-    expect(screen.queryByTestId('timeline-track-sheet')).not.toBeInTheDocument();
-
+    render(<AIInputModeProvider><TrackLabelContent
+      track={tracks[0]} isSelected={false} hasClips deviceClass={deviceClass}
+      onSelect={onSelect} onChange={vi.fn()} onRemove={vi.fn()}
+    /></AIInputModeProvider>);
     fireEvent.click(screen.getByText(tracks[0].label));
-    const sheet = screen.getByTestId('timeline-track-sheet');
     expect(onSelect).toHaveBeenCalledWith('V1');
-
-    fireEvent.change(within(sheet).getByLabelText('Track name'), { target: { value: 'Titles' } });
-    expect(onChange).toHaveBeenCalledWith('V1', { label: 'Titles' });
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Add audio track' }));
-    expect(onAddTrack).toHaveBeenCalledWith('audio');
-
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Delete track' }));
-    expect(onRemove).toHaveBeenCalledWith('V1');
-  });
-
-  it('asks the desktop confirm of a touch delete when the track has clips', () => {
-    const onRemove = vi.fn();
-    render(
-      <AIInputModeProvider>
-        <TrackLabelContent
-          track={tracks[0]}
-          isSelected={false}
-          hasClips
-          deviceClass="phone"
-          onSelect={vi.fn()}
-          onChange={vi.fn()}
-          onRemove={onRemove}
-        />
-      </AIInputModeProvider>,
-    );
-    fireEvent.click(screen.getByText(tracks[0].label));
-    const sheet = screen.getByTestId('timeline-track-sheet');
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Delete track' }));
-    expect(onRemove).not.toHaveBeenCalled();
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Tap again to confirm deletion' }));
-    expect(onRemove).toHaveBeenCalledWith('V1');
+    expect(screen.getByText(tracks[0].label).closest('[data-track-label]')).not.toBeNull();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-track-sheet')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('keeps the desktop hover overlay with its three inline actions', () => {
@@ -735,14 +692,13 @@ describe('track source/output settings', () => {
 
 describe('captured track names', () => {
   function trackNameInput() {
-    if (!screen.queryByRole('textbox', { name: 'Track name' })) {
-      fireEvent.click(document.querySelector('[data-track-id="V1"]')!);
-      expect(screen.getByTestId('timeline-track-sheet')).toBeInTheDocument();
-    }
     return screen.getByRole('textbox', { name: 'Track name' });
   }
 
-  for (const deviceClass of ['desktop', 'phone', 'tablet'] as const) {
+  // Touch rows select a track for TrackInspector; desktop owns the inline
+  // command-backed label editor tested here. Touch editing is covered by the
+  // PropertiesPanel TrackInspector tests.
+  for (const deviceClass of ['desktop'] as const) {
     it(`releases a clean ${deviceClass} draft after a remote label change`, () => {
       const finish = vi.fn();
       const begin = vi.fn(() => finish);

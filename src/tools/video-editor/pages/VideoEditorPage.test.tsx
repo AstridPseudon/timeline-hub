@@ -505,6 +505,12 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
   };
 });
 
+/** New timeline is the last row of the timeline picker's list; it reads "Creating timeline…" until a creation settles. */
+async function createTimelineFromPicker(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
+  await user.click(await screen.findByRole("button", { name: "New timeline" }));
+}
+
 function deferred<T = void>() {
   let resolvePromise!: (value: T) => void;
   const promise = new Promise<T>((done) => { resolvePromise = done; });
@@ -1455,7 +1461,7 @@ describe("VideoEditorPage", () => {
     state.discovery.timelines = [];
     state.ensureProjectHasTimeline.mockRejectedValue(new Error("unavailable"));
     renderPage("/tools/video-editor?project=project-canonical-id");
-    await waitFor(() => expect(screen.getByRole("button", { name: "New timeline" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create first timeline" })).toBeEnabled());
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(state.ensureProjectHasTimeline).toHaveBeenCalledTimes(1);
     expect(
@@ -1471,9 +1477,9 @@ describe("VideoEditorPage", () => {
     await screen.findByTestId("video-editor-provider");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "New timeline" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "New timeline" })).toBeEnabled());
-    await user.click(screen.getByRole("button", { name: "New timeline" }));
+    await createTimelineFromPicker(user);
+    await waitFor(() => expect(state.createCanonicalTimeline).toHaveBeenCalledOnce());
+    await createTimelineFromPicker(user);
     await waitFor(() => expect(state.createCanonicalTimeline).toHaveBeenCalledTimes(2));
 
     const firstRequest = state.createCanonicalTimeline.mock.calls[0];
@@ -1493,7 +1499,7 @@ describe("VideoEditorPage", () => {
     renderPage("/tools/video-editor?project=project-r&timeline=timeline-r");
     const provider = await screen.findByTestId("video-editor-provider");
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "New timeline" }));
+    await createTimelineFromPicker(user);
     await waitFor(() => expect(state.createCanonicalTimeline).toHaveBeenCalledOnce());
 
     act(() => state.saveStatusCallback?.("saving"));

@@ -21,6 +21,7 @@ import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/Pr
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 import {
+  HOST_EXTENSIONS_PANEL_KEY,
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
   type VideoEditorRightPanelTab,
@@ -49,7 +50,7 @@ import {
   type TimelineInspectorTarget,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { bootDiagnostics, MemoryPressureDetector } from '@/tools/video-editor/lib/perf-diagnostics.ts';
-import { CLIP_ACTION_CLASS, CLIP_SELECTED_ATTR, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
+import { CLIP_ACTION_CLASS, CLIP_SELECTED_ATTR, TRACK_LABEL_ATTR, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
@@ -59,7 +60,6 @@ import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
-import { TimelineMobileInspectorDialog } from './TimelineMobileInspectorDialog.tsx';
 import { TimelineRenderControls } from './TimelineRenderControls.tsx';
 import { VideoEditorPanelDisplayControl } from './PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
 import {
@@ -85,7 +85,7 @@ function PlaybackTimecode() {
   return <>{formatTime(currentTime)}</>;
 }
 
-function PlaybackSlider({ max }: { max: number }) {
+function PlaybackSlider({ max, onUserSeek }: { max: number; onUserSeek?: () => void }) {
   const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
   const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
 
@@ -95,7 +95,11 @@ function PlaybackSlider({ max }: { max: number }) {
       min={0}
       max={max}
       step={0.05}
-      onValueChange={(value) => previewRef.current?.seek(value)}
+      // The slider reports only the person's drags and keys, never playback moving `value`.
+      onValueChange={(value) => {
+        onUserSeek?.();
+        previewRef.current?.seek(value);
+      }}
     />
   );
 }
@@ -269,7 +273,6 @@ function TimelineEditorShellCoreComponent({
     gridTemplateRows,
   } = useTimelineShellDividerDrag(hasActivityRegion);
   const [condensedRightPanel, setCondensedRightPanel] = useState<VideoEditorRightPanelTab>('video');
-  const [isMobilePropertiesOpen, setIsMobilePropertiesOpen] = useState(false);
   const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isExtensionManagerOpen, setIsExtensionManagerOpen] = useState(false);
@@ -427,18 +430,15 @@ function TimelineEditorShellCoreComponent({
     return () => observer.disconnect();
   }, [forceCondensed, aspectRatio, isTimelineMaximized]);
 
-  const mobileSinglePane = touchChrome && !forceCondensed;
+  const mobileSinglePane = touchChrome;
   // Give the timeline the available height and move Video into the sidebar
   // when the generations pane is pinned or there isn't room to stack both.
   const condensed = forceCondensed || tooSmall || (isGenerationsPaneOpen && isGenerationsPaneLocked) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
-  const hasClipSelection = selectedClipIdsList.length > 0;
-  const clipSheetTitle = selectedClipIdsList.length > 1
-    ? `Selected clips (${selectedClipIdsList.length})`
-    : 'Selected clip';
-  // Touch controls match the header: 36px with a 44px touch target.
+  // Touch controls match the header: 36px with a 44px touch target. On the desktop
+  // picture they match the timeline picker beside them: 32px, 12px type.
   const previewActionButtonClass = touchChrome
     ? cn('h-9 min-w-9 px-3 text-xs', COARSE_TOUCH_TARGET)
-    : 'h-7 px-3 text-[11px]';
+    : 'h-8 px-3 text-xs';
   const interactionStatusLabel = [
     `Timeline mode ${editorData.interactionMode}.`,
     editorData.gestureOwner === 'preview'
@@ -473,8 +473,32 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.inspectorTarget, editorData.selectedTrackId, editorData.selectedDataItems, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
-    if (condensed) setCondensedRightPanel('video');
-  }, [condensed, isGenerationsPaneOpen, isGenerationsPaneLocked]);
+    if (condensed && !touchChrome) setCondensedRightPanel('video');
+  }, [condensed, touchChrome, isGenerationsPaneOpen, isGenerationsPaneLocked]);
+
+  // Touch: Inspector shows what was picked. Once nothing is (the clip was closed or
+  // deleted), the picture comes back rather than an empty Inspector.
+  const inspectorKind = inspectorTarget?.kind ?? 'timeline';
+  const previousInspectorKindRef = useRef(inspectorKind);
+  useEffect(() => {
+    const previous = previousInspectorKindRef.current;
+    previousInspectorKindRef.current = inspectorKind;
+    if (touchChrome && inspectorKind === 'timeline' && previous !== 'timeline') {
+      setCondensedRightPanel((current) => (current === 'inspector' ? 'video' : current));
+    }
+  }, [inspectorKind, touchChrome]);
+
+  // Touch: moving the playhead by hand brings the picture back, so the frame is in
+  // view. The hand's ways are the scrubber and the timeline ruler (a ruler gesture
+  // owns the pointer); playback and agent edits move the playhead without either.
+  // Jump to beginning sits on the picture, so Video is already showing there.
+  const showVideoForUserSeek = useCallback(() => {
+    if (touchChrome) setCondensedRightPanel('video');
+  }, [touchChrome]);
+  const rulerGesture = editorData.gestureOwner === 'ruler';
+  useEffect(() => {
+    if (rulerGesture) showVideoForUserSeek();
+  }, [rulerGesture, showVideoForUserSeek]);
 
   const previewSurface = useVideoEditorPreviewSurface({ compact: condensed, touchChrome });
   // The shell owns the portal outside the changing layout branches. Panels
@@ -504,6 +528,7 @@ function TimelineEditorShellCoreComponent({
     : editorData.preferences.selectedRightPanelId;
   const availableRightPanelIds = new Set(availableRightPanels.map(getPanelKey));
   const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
+    || savedPanelId === HOST_EXTENSIONS_PANEL_KEY
     || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
   const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
   // The host slot is the shared placement for the whole right-panel surface.
@@ -580,31 +605,21 @@ function TimelineEditorShellCoreComponent({
     dispatchAppEvent('openAgentComposer');
   }, [runtime.agentChat, runtime.agentSelectionOwner]);
   const agentWorking = useAgentChatActions()?.isAgentWorking ?? false;
-  // Touch: tapping a clip opens its sheet, whether or not it is already selected.
-  // Not from a control drawn inside the clip. While Move/Trim is armed a tap on
-  // the selected clip (no drag) is the way back: it releases the gesture and
-  // reopens the sheet; other taps are the start of direct manipulation.
-  const openClipSheetFromTap = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+  // Touch picks open the shared Inspector, including a repeat tap on the same
+  // clip/track. Controls inside a clip keep their own action. While Move/Trim
+  // is armed, tapping the selected clip releases the gesture.
+  const openInspectorFromTap = useCallback((event: ReactMouseEvent<HTMLElement>) => {
     if (!(event.target instanceof Element)) return;
     const clip = event.target.closest(`.${CLIP_ACTION_CLASS}`);
+    const track = event.target.closest(`[${TRACK_LABEL_ATTR}]`);
     const control = event.target.closest('button, a, input, textarea, select, [role="menuitem"], [data-no-clip-drag]');
-    if (!clip || (control && clip.contains(control))) return;
-    if (armedGesture) {
+    if ((!clip && !track) || (control && (clip ?? track)?.contains(control))) return;
+    if (clip && armedGesture) {
       if (clip.getAttribute(CLIP_SELECTED_ATTR) !== 'true') return;
       releaseArmedGesture();
     }
-    setIsMobilePropertiesOpen(true);
+    setCondensedRightPanel('inspector');
   }, [armedGesture, releaseArmedGesture]);
-  // Move/Trim from the sheet hand the clip to the timeline for a direct drag.
-  useEffect(() => {
-    if (armedGesture) setIsMobilePropertiesOpen(false);
-  }, [armedGesture]);
-  // Closing or deleting the clip closes its sheet.
-  const hadClipSelectionRef = useRef(hasClipSelection);
-  useEffect(() => {
-    if (hadClipSelectionRef.current && !hasClipSelection) setIsMobilePropertiesOpen(false);
-    hadClipSelectionRef.current = hasClipSelection;
-  }, [hasClipSelection]);
 
   const renderControls = (
     <>
@@ -623,12 +638,11 @@ function TimelineEditorShellCoreComponent({
     </>
   );
 
-  // The touch shell names its timeline in the document row, not on the picture.
-  // Captions go (the selector shows the name, New timeline keeps its icon); both
-  // controls are the pickers' own 36px chips with 44px touch rings.
+  // The touch shell names its timeline in the document row, not on the picture:
+  // the picker's own 36px chip with a 44px touch ring. New timeline is in its list.
   const touchTimelineControls = previewControls ? (
     <div
-      className="flex min-w-0 items-center gap-2 [&_[data-picker-label]]:sr-only [&_button]:justify-center"
+      className="flex min-w-0 items-center gap-2"
       data-testid="video-editor-editor-navigation-controls"
     >
       {previewControls}
@@ -698,18 +712,14 @@ function TimelineEditorShellCoreComponent({
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
         {previewControls && (
           <div
-            className={cn(
-              'flex min-w-0 max-w-full flex-wrap items-center gap-2',
-              // The sidebar is too narrow for the picker's captions; the
-              // selector names its timeline and New timeline keeps its icon.
-              sidebarVideo && '[&_[data-picker-label]]:sr-only',
-            )}
+            className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
             data-testid="video-editor-editor-navigation-controls"
           >
             {previewControls}
           </div>
         )}
-        <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
+        {/* The picker's own surface, quieter: a readout, not a control. */}
+        <span className="shrink-0 rounded-md border border-border/70 bg-card/90 px-1.5 py-0.5 font-mono text-[11px] tabular-nums tracking-[0.08em] text-muted-foreground backdrop-blur-md">
           <PlaybackTimecode />
         </span>
       </div>
@@ -897,14 +907,29 @@ function TimelineEditorShellCoreComponent({
             {hasActivityRegion && <div className="min-w-0 [grid-area:activity]">{activityRegion}</div>}
 
             <div className="flex min-h-0 min-w-0 flex-col gap-2 [grid-area:preview]">
-              {/* Stacked: the film's own shape, as wide as the column allows
-                  while at most 42dvh tall, centred. Short landscape: fills the
-                  column beside the timeline. */}
+              {/* The shared Video | Inspector | Extensions surface occupies the picture area.
+                  Its retained Video slot keeps the portalled player mounted. Stacked: the tab
+                  row sits above a box in the film's own shape (see the dock's `touch`), as wide
+                  as the column allows while at most 42dvh tall, centred; never narrower than
+                  20rem, so a tall film still leaves room for the tabs and the Inspector.
+                  Short landscape: fills the column beside the timeline. */}
               <div
-                className="relative mx-auto aspect-[var(--film-aspect)] min-h-[140px] w-[min(100%,calc(42dvh*var(--film-aspect)))] [@media(orientation:landscape)_and_(max-height:500px)]:aspect-auto [@media(orientation:landscape)_and_(max-height:500px)]:min-h-0 [@media(orientation:landscape)_and_(max-height:500px)]:w-full [@media(orientation:landscape)_and_(max-height:500px)]:flex-1"
+                className="relative mx-auto w-[min(100%,max(20rem,calc(42dvh*var(--film-aspect))))] [@media(orientation:landscape)_and_(max-height:500px)]:min-h-0 [@media(orientation:landscape)_and_(max-height:500px)]:w-full [@media(orientation:landscape)_and_(max-height:500px)]:flex-1"
                 style={{ '--film-aspect': String(aspectRatio) } as CSSProperties}
               >
-                <PreviewPanel surface={previewPanelSurface} />
+                <VideoEditorRightPanelDock
+                  leftPanelPresent={false}
+                  touch
+                  video={{
+                    activeTab: condensedRightPanel,
+                    onTabChange: setCondensedRightPanel,
+                    content: <div className="relative min-h-0 flex-1" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')}>
+                      <PreviewPanel surface={previewPanelSurface} panelClassName="rounded-none border-0 bg-transparent" surfaceClassName="bg-[var(--video-editor-stage-bg)]" />
+                    </div>,
+                  }}
+                  onOpenExtensionManager={openExtensionManager}
+                  extensionManagerOpen={isExtensionManagerOpen}
+                />
               </div>
               {/* Undo, redo, the readout and the scrubber, under the picture they change. */}
               <div className="-ml-3 flex min-h-11 min-w-0 items-center gap-1" data-testid="touch-playback-row">
@@ -913,12 +938,12 @@ function TimelineEditorShellCoreComponent({
                   <PlaybackTimecode />
                 </span>
                 <div className="min-w-0 flex-1 px-3">
-                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
+                  <PlaybackSlider max={Math.max(1, totalSeconds)} onUserSeek={showVideoForUserSeek} />
                 </div>
               </div>
             </div>
 
-            <div className="relative min-h-0 min-w-0 overflow-hidden [grid-area:timeline]" onClick={openClipSheetFromTap}>
+            <div className="relative min-h-0 min-w-0 overflow-hidden [grid-area:timeline]" onClick={openInspectorFromTap}>
               {timelineRegion}
             </div>
 
@@ -1073,20 +1098,12 @@ function TimelineEditorShellCoreComponent({
 
           </main>
         )}
-        {/* Extension strips (status bar, code/writing/stage panels) are desk surfaces, like the
-            dock: the touch editor leaves that work to the agent rather than draw them off screen. */}
+        {/* Extension strips remain desktop surfaces; touch panels live in Extensions. */}
         {!mobileSinglePane && statusBarSlot}
 
         {!mobileSinglePane && reservedSlots}
       </div>
       {previewPortal}
-      {mobileSinglePane && (
-        <TimelineMobileInspectorDialog
-          open={isMobilePropertiesOpen}
-          onOpenChange={setIsMobilePropertiesOpen}
-          title={clipSheetTitle}
-        />
-      )}
       {/* Extension-contributed dialog slot */}
       {dialogsSlot}
       <Dialog open={isExtensionManagerOpen} onOpenChange={setIsExtensionManagerOpen}>

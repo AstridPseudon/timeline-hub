@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import userEvent from '@testing-library/user-event';
 import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext.tsx';
 import { captureTrackLabel, finishTrackLabel } from '@/tools/video-editor/commands/trackLabelCapture.ts';
 import type { AuthoredBundle } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
@@ -44,10 +43,6 @@ async function setup(deviceClass: TimelineDeviceClass) {
   }
   const view = render(<Track />);
   function input() {
-    if (deviceClass !== 'desktop' && !screen.queryByRole('textbox', { name: 'Track name' })) {
-      fireEvent.click(screen.getByText(dataRef.current.resolvedConfig.tracks[0].label));
-      expect(screen.getByTestId('timeline-track-sheet')).toBeInTheDocument();
-    }
     return screen.getByRole('textbox', { name: 'Track name' });
   }
   function remote() {
@@ -58,7 +53,8 @@ async function setup(deviceClass: TimelineDeviceClass) {
   return { ...view, Track, input, remote, bundle, dataRef, capture, finish, submit, applyEdit };
 }
 
-describe.each(['desktop', 'phone', 'tablet'] as const)('%s production track rename', (deviceClass) => {
+// Touch rows select a track for TrackInspector; desktop owns this command-backed editor.
+describe.each(['desktop'] as const)('%s production track rename', (deviceClass) => {
   it.each(['音楽 🎬', '', 'Original'])('submits %j with the original native guard after a remote change', async (label) => {
     const env = await setup(deviceClass);
     const input = env.input();
@@ -150,54 +146,8 @@ describe.each(['desktop', 'phone', 'tablet'] as const)('%s production track rena
   });
 });
 
-describe.each(['phone', 'tablet'] as const)('%s track sheet close', (deviceClass) => {
-  it.each([false, true])('finishes the focused draft and preserves it on refusal: %s', async (refused) => {
-    const env = await setup(deviceClass);
-    if (refused) env.submit.mockImplementation(() => { throw new Error('Keep the original guard.'); });
-    const input = env.input();
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: 'Before close' } });
-    await userEvent.click(input);
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-    await waitFor(() => expect(screen.queryByTestId('timeline-track-sheet')).not.toBeInTheDocument());
-    expect(env.submit).toHaveBeenCalledTimes(1);
-    if (refused) {
-      expect(screen.getByRole('alert')).toHaveTextContent('Keep the original guard.');
-      env.remote();
-      const reopened = env.input();
-      expect(reopened).toHaveValue('Before close');
-      fireEvent.focus(reopened);
-      fireEvent.keyDown(reopened, { key: 'Enter' });
-      expect(env.submit).toHaveBeenCalledTimes(2);
-      expect(env.submit.mock.calls[1][0]).toEqual(env.submit.mock.calls[0][0]);
-      expect(env.capture).toHaveBeenCalledTimes(1);
-    }
-    expect(env.applyEdit).not.toHaveBeenCalled();
-  });
-});
-
-// Clean sheet closure must release focus capture even when no blur is dispatched.
-it.each(['phone', 'tablet'] as const)('releases clean %s sheet capture on close before a remote update', async (deviceClass) => {
-  const env = await setup(deviceClass);
-  const input = env.input();
-  fireEvent.focus(input);
-  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-  await waitFor(() => expect(screen.queryByTestId('timeline-track-sheet')).not.toBeInTheDocument());
-  expect(env.submit).not.toHaveBeenCalled();
-  env.remote();
-  const reopened = env.input();
-  expect(reopened).toHaveValue('Remote');
-  fireEvent.focus(reopened);
-  fireEvent.change(reopened, { target: { value: 'After close' } });
-  fireEvent.blur(reopened);
-  expect(env.capture).toHaveBeenCalledTimes(2);
-  expect(env.submit.mock.calls[0][0].command.expect).toEqual({
-    'parent/track:V1::label': { state: 'present', value: 'Remote' },
-  });
-});
-
 // Independent review reproduction: a rejected draft must survive row teardown.
-it.each(['desktop', 'phone', 'tablet'] as const)('retains the refused %s draft when the same row is remounted', async (deviceClass) => {
+it.each(['desktop'] as const)('retains the refused %s draft when the same row is remounted', async (deviceClass) => {
   const env = await setup(deviceClass);
   env.submit.mockImplementation(() => { throw new Error('Original label guard no longer holds.'); });
   const input = env.input();
@@ -213,7 +163,7 @@ it.each(['desktop', 'phone', 'tablet'] as const)('retains the refused %s draft w
 });
 
 // Remount is presentation recovery, never a new capture or a submission trigger.
-describe.each(['desktop', 'phone', 'tablet'] as const)('%s refused teardown retry', (deviceClass) => {
+describe.each(['desktop'] as const)('%s refused teardown retry', (deviceClass) => {
   it.each(['finish', 'submit'] as const)('retains the original capture after %s refusal and remote change', async (phase) => {
     const env = await setup(deviceClass);
     env[phase].mockImplementation(() => { throw new Error('Original label guard no longer holds.'); });
@@ -252,7 +202,7 @@ describe.each(['desktop', 'phone', 'tablet'] as const)('%s refused teardown retr
   });
 });
 
-it.each(['desktop', 'phone', 'tablet'] as const)('retains %s capture refusal and typed input through row teardown', async (deviceClass) => {
+it.each(['desktop'] as const)('retains %s capture refusal and typed input through row teardown', async (deviceClass) => {
   const env = await setup(deviceClass);
   env.capture.mockImplementation(() => { throw new Error('Ambiguous track identity.'); });
   const input = env.input();
@@ -298,7 +248,7 @@ it('keeps a refused draft with its command owner when the same row shows another
   expect(env.applyEdit).not.toHaveBeenCalled();
 });
 
-it.each(['desktop', 'phone', 'tablet'] as const)('releases a clean %s capture on row teardown before the next edit', async (deviceClass) => {
+it.each(['desktop'] as const)('releases a clean %s capture on row teardown before the next edit', async (deviceClass) => {
   const env = await setup(deviceClass);
   fireEvent.focus(env.input());
   env.remote();
@@ -319,7 +269,7 @@ it.each(['desktop', 'phone', 'tablet'] as const)('releases a clean %s capture on
 });
 
 // A retained authored capture uses the remounted owner's current local policy.
-describe.each(['desktop', 'phone', 'tablet'] as const)('%s live-policy retry', (deviceClass) => {
+describe.each(['desktop'] as const)('%s live-policy retry', (deviceClass) => {
   it('uses the unlocked remount policy after the original hook refused a new lock', async () => {
     const env = await setup(deviceClass);
     const input = env.input();

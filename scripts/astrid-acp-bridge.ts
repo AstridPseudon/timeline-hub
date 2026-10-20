@@ -74,7 +74,7 @@ type Connection = {
   closed: boolean;
   notificationBytes: number;
   readonly localMediaOnly: boolean;
-  lastUsedAt: number;
+  lastSeenAt: number;
   inFlight: number;
 };
 
@@ -103,14 +103,11 @@ type BridgeOptions = {
   readonly now?: () => number;
 };
 
-// The browser has no keep-alive timer: it pulls /events only around user
-// actions (prompts, session loads), so a live but idle tab is silent. A
-// connection nothing has touched for this long is treated as abandoned (tab
-// closed, reloaded or crashed) and its agent process is reclaimed. 15 minutes
-// outlasts a throttled background tab's gaps between actions; a live tab that
-// is reaped anyway just reconnects on its next action.
-const CONNECTION_IDLE_MS = 15 * 60_000;
-const REAP_SWEEP_MS = 60_000;
+// Browser event polls renew the tab's lease, including in background tabs.
+// Allow a minute of background timer throttling plus a missed poll. A running
+// RPC is server activity, not proof that its browser is still alive.
+const CONNECTION_IDLE_MS = 90_000;
+const REAP_SWEEP_MS = 15_000;
 const MAX_REAPED_IDS = 256;
 
 function asRecord(value: unknown): JsonRecord | null {
@@ -579,17 +576,17 @@ export class AstridAcpBridge {
     }
   }
 
-  /** Marks a connection busy until the returned release is called (the clock restarts then too). */
+  /** Renew the browser lease on arrival; retain its host until the request finishes. */
   private use(connection: Connection): () => void {
     connection.inFlight++;
-    connection.lastUsedAt = this.now();
-    return () => { connection.inFlight--; connection.lastUsedAt = this.now(); };
+    connection.lastSeenAt = this.now();
+    return () => { connection.inFlight--; };
   }
 
-  /** Disposes connections whose client went away; never one with a request in flight. */
+  /** Release abandoned writers even during a turn; retain any host still in use. */
   async reapIdle(): Promise<void> {
     const cutoff = this.now() - CONNECTION_IDLE_MS;
-    const abandoned = [...this.connections].filter(([, c]) => !c.closed && c.inFlight === 0 && c.lastUsedAt <= cutoff);
+    const abandoned = [...this.connections].filter(([, c]) => !c.closed && c.lastSeenAt <= cutoff);
     await Promise.all(abandoned.map(([id, connection]) => this.releaseConnection(id, connection)));
     await this.disposeUnusedHosts();
   }
@@ -725,7 +722,7 @@ export class AstridAcpBridge {
       } } : {}),
     };
     const host = agent === 'astrid' ? this.hostFactory(launcherOptions) : await this.localAgentHostFactory(agent, launcherOptions);
-    connection = { id: connectionId, agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, closed: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
+    connection = { id: connectionId, agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, closed: false, notificationBytes: 0, localMediaOnly, lastSeenAt: this.now(), inFlight: 0 };
     this.connections.set(connectionId, connection);
     try {
       const initialize = await host.initialize({

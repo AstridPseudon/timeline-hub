@@ -198,10 +198,15 @@ export function ClipPanelBody({
   }, [clip?.clipType, clipTypeRegistryContext]);
 
   if (!clip) {
-    return (
+    // Touch: the Inspector tab is already the frame, so a quiet line rather than a box in it.
+    return deviceClass === 'desktop' ? (
       <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         Select a clip to edit timing, position, audio, text, or effects.
       </div>
+    ) : (
+      <p className="flex h-full min-h-24 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+        Tap a clip, or a track's name, to edit it.
+      </p>
     );
   }
 
@@ -219,7 +224,8 @@ export function ClipPanelBody({
 
   return (
     <div className="space-y-3" data-clip-inspector-read-only={readOnly ? 'true' : undefined}>
-      <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card/70 p-3">
+      {/* Touch: the header is a plain row inside the Inspector tab, not a card within it. */}
+      <div className={cn('flex justify-between gap-3', deviceClass === 'desktop' ? 'items-start rounded-xl border border-border bg-card/70 p-3' : 'items-center')}>
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-foreground">
             {isEffectLayer
@@ -228,7 +234,7 @@ export function ClipPanelBody({
                 ? (clipDescriptor?.label ?? clip.clipType ?? clip.id)
                 : supportsInlineTextEdit
                   ? (clip.text?.content || clipDescriptor?.label || clip.id)
-                  : (clip.asset || clipDescriptor?.label || clip.id)}
+                  : (clip.label || clip.asset || clipDescriptor?.label || clip.id)}
           </div>
           <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             {clip.clipType ?? 'media'} · {track?.label ?? clip.track}

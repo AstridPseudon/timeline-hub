@@ -75,7 +75,7 @@ export const getBulkVisibleTabs = (
 
 /**
  * The tab a newly selected clip opens on: a text clip's words; otherwise Effects at a desk and
- * Timing on touch, where the clip sheet is for the basic jobs (when it starts, how long it runs).
+ * Timing on touch, where Inspector starts with when it starts and how long it runs.
  */
 export const getSelectionDefaultClipTab = (
   clip: ResolvedTimelineClip | null,

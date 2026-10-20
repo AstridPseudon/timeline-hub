@@ -257,10 +257,28 @@ export async function resolveGenerationAsset(
   );
   const resolution = parseResolution(params, currentEntry);
   const file = trimToUndefined(currentEntry?.file) ?? resolvedUrl;
+  const extraParams = asRecord(params.extra);
+  const sourceName = (...keys: string[]) => {
+    for (const key of keys) {
+      const name = trimToUndefined(params[key]) ?? trimToUndefined(extraParams?.[key]);
+      if (name) return name;
+    }
+    return undefined;
+  };
+  const originalName = sourceName('original_name', 'original_filename', 'filename')
+    ?? trimToUndefined(currentEntry?.original_name)
+    ?? trimToUndefined(currentEntry?.original_filename)
+    ?? trimToUndefined(currentEntry?.filename);
+  const name = sourceName('name', 'title', 'prompt')
+    ?? trimToUndefined(currentEntry?.name)
+    ?? trimToUndefined(currentEntry?.title)
+    ?? trimToUndefined(currentEntry?.prompt);
 
   const entry: AssetRegistryEntry = {
     ...(currentEntry ? { ...currentEntry } : {}),
     file,
+    ...(originalName ? { original_name: originalName } : {}),
+    ...(name ? { name } : {}),
     url: resolvedUrl,
     type: mimeType,
     origin: 'refreshable-from-generation',

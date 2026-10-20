@@ -552,6 +552,37 @@ describe('timeline data extension project data round trip', () => {
     expect(roundTripped.tracks[0].app).toEqual({ scaleAppliesToPositionedClips: true });
     expect(roundTripped.clips[0]).toMatchObject({ id: 'shot-1', label: 'Shot 1', hold: 2, app: { managedBy: extensionId } });
   });
+
+  it('shares readable asset names and kind ordinals between timeline metadata and the Inspector model', async () => {
+    const config: TimelineConfig = {
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [
+        { id: 'V1', kind: 'visual', label: 'Video' },
+        { id: 'A1', kind: 'audio', label: 'Audio' },
+      ],
+      clips: [
+        { id: 'clip-1', at: 0, track: 'V1', clipType: 'media', asset: 'asset-1', label: 'asset-1' },
+        { id: 'clip-2', at: 2, track: 'V1', clipType: 'media', asset: 'asset-2', label: '6afeb951-f663-4710-9876-123456789abc' },
+        { id: 'clip-3', at: 4, track: 'A1', clipType: 'audio', asset: 'asset-3' },
+      ],
+    };
+    const assets: AssetRegistry = { assets: {
+      'asset-1': { type: 'video/mp4', file: '/media/opaque-video-1', media_id: 'media-1', original_filename: 'camera/first take.mp4' },
+      'asset-2': { type: 'video/mp4', file: '/media/6afeb951-f663-4710-9876-123456789abc.mp4', media_id: 'media-2' },
+      'asset-3': { type: 'audio/mpeg', file: '/media/opaque-audio-1', media_id: 'media-3', prompt: 'A quiet room tone' },
+    } };
+
+    const data = await buildTimelineData(config, assets);
+
+    expect(data.meta['clip-1']?.label).toBe('first take.mp4');
+    expect(data.meta['clip-2']?.label).toBe('Video 2');
+    expect(data.meta['clip-3']?.label).toBe('A quiet room tone');
+    expect(data.resolvedConfig.clips.map(({ label }) => label)).toEqual([
+      'first take.mp4',
+      'Video 2',
+      'A quiet room tone',
+    ]);
+  });
 });
 
 // ---------------------------------------------------------------------------
