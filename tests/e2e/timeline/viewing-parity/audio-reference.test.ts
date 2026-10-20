@@ -56,12 +56,15 @@ test('decodes the actual AAC stream from one artifact into an attempt-owned WAV'
     await makeAudioMp4(artifactPath);
     const sourceBefore = await readFile(artifactPath);
 
+    const probed = await probeExportArtifact({ artifactPath });
     const reference = await decodeExportAudio({ artifactPath, outputWavPath });
     const outputStat = await stat(outputWavPath);
     const outputPcm = await decodeRaw(outputWavPath);
     const sourceAudio = reference.source.audioStream;
     const outputAudio = reference.output.streams.find(stream => stream.codec_type === 'audio');
 
+    assert.equal(probed.audioStreamIndex, reference.source.audioStreamIndex);
+    assert.deepEqual(probed.audioStream, sourceAudio);
     assert.equal(sourceAudio.codec_name, 'aac');
     assert.equal(reference.source.audioStreamIndex, sourceAudio.index);
     assert.ok(reference.source.streams.some(stream => stream.index === sourceAudio.index));
@@ -86,6 +89,7 @@ test('decodes the actual AAC stream from one artifact into an attempt-owned WAV'
     assert.deepEqual(reference.conversion.timingEdits, []);
     assert.equal(reference.sourceSha256Before, sha256(sourceBefore));
     assert.equal(reference.sourceSha256After, reference.sourceSha256Before);
+    assert.equal(reference.sourceBytes, sourceBefore.byteLength);
     assert.deepEqual(await readFile(artifactPath), sourceBefore);
     console.log('EXPORT_AUDIO_REFERENCE', JSON.stringify({
       source: reference.source.audioStream,

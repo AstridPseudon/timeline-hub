@@ -161,11 +161,13 @@ async function readProbe(path: string, ffprobePath: string): Promise<MediaProbe>
 }
 
 function audioProbe(path: string, probe: MediaProbe): ExportAudioProbe {
-  const audioStream = probe.streams.find(stream => stream.codec_type === 'audio');
-  if (!audioStream || typeof audioStream.index !== 'number') {
+  const audioStream = probe.streams.find(stream => stream.codec_type === 'audio'
+    && typeof stream.index === 'number');
+  const audioStreamIndex = audioStream?.index;
+  if (!audioStream || typeof audioStreamIndex !== 'number') {
     throw new AudioReferenceError('invalid-artifact', `artifact has no addressable audio stream: ${path}`);
   }
-  return { ...probe, audioStream, audioStreamIndex: audioStream.index };
+  return { ...probe, audioStream, audioStreamIndex };
 }
 
 async function assertRegularFile(path: string, label: string): Promise<number> {
