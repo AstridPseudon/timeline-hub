@@ -1,0 +1,15 @@
+#!/bin/bash
+# merge-forward WORKER [BASE] — run by a worker (or manager) to bring BASE (default tl/integration) into tl/WORKER inside
+# that worker's OWN worktree: `git merge --no-commit --no-ff BASE`, leaving any conflicts for the worker to resolve.
+# The harness commits the merge when the worker exits. Refuses anything but a /home/user/work/wt/<WORKER> worktree on tl/<WORKER>.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; B=${2:-tl/integration}
+[ -n "$N" ] && [ -f $O/workers/$N/meta ] || { echo "usage: merge-forward WORKER [BASE] (no such worker)"; exit 2; }
+WT=$(sed -n 's/^worktree=//p' $O/workers/$N/meta)
+[ "$WT" = "/home/user/work/wt/$N" ] && [ -d "$WT" ] || { echo "REFUSED: worktree $WT is not /home/user/work/wt/$N"; exit 2; }
+[ "$(git -C $WT rev-parse --abbrev-ref HEAD)" = "tl/$N" ] || { echo "REFUSED: $WT is not on tl/$N"; exit 2; }
+git -C $WT rev-parse -q --verify "$B^{commit}" >/dev/null || { echo "REFUSED: unknown base $B"; exit 2; }
+git -C $WT merge --no-commit --no-ff "$B"; RC=$?
+echo "--- status after merge-forward of $B into tl/$N (rc=$RC) ---"; git -C $WT status --short | head -80
+[ $RC = 0 ] || echo "Resolve every conflict (remove all markers, keep both sides' intent, run targeted tests). The harness commits the merge when you exit; never leave conflict markers."
+exit $RC
