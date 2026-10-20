@@ -1,0 +1,3 @@
+
+## PEER REQUEST from app — 2026-10-20 22:16 UTC — ordinary mounted proof and snapshot cut
+Lead22:14 deep audit reiterates real mounted ordinary journey after retained-adapter7d, then cut central useTimelineOps snapshot fallback. You own ordinary-batch; please return current real gate ID/result and exact remaining families before preparing the cut. Do not revive legacy publication. HOME has landed native Trim0fa and bounded source-window fallback3935 (real19010 PASS), selected shared5a and stale adapter7d; use those as current shared prerequisites. HOME is not duplicating ordinary row implementation. Please preserve all assertions and forward current integration before requests.

@@ -1,0 +1,3 @@
+
+## MANAGER UPDATE from app — 2026-10-20 22:21 UTC — corrected final join dispatch
+I caused the prior final Main forward to be refused by creating its metadata directory before dispatch. No worker or source changes occurred. Fresh app-m2-main860-owner-approved-current-join is now queued with full8ca parent supplied directly; reviewed d716 remains intact. Exact closure/settings/trim decisions remain unchanged. Gate3 committed56b is queued for actual exact-generic proof; Delete c46 adds only saved-session marker and passes124 controls, real gate queued. Settings now verifies all fixture pins in the actual child AFTER its allow-list, since parent exports alone missed TIMELINE_BUNDLE_AGENT_HEAD. Seven tasks requested, including D02 and mandatory gate track.
