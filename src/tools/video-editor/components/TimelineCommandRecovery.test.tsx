@@ -112,6 +112,111 @@ describe('TimelineCommandRecovery', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent(/clash|conflict/i);
   });
 
+  it('calls only the definitive conflict actions and disables both while one is busy', async () => {
+    let finish!: () => void;
+    const keepLabelChanges = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    const useLatest = vi.fn(async () => {});
+    const commandSession = {
+      ...session({
+        status: 'conflict', recoverableOwners: [], ownerId: 'owner-a',
+        canReapplyLabel: true, canDiscardRejected: true,
+      }),
+      keepLabelChanges,
+      useLatest,
+    };
+    render(<TimelineCommandRecovery commandSession={commandSession} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my changes' }));
+    expect(keepLabelChanges).toHaveBeenCalledOnce();
+    expect(useLatest).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Keeping my changes…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use latest version' })).toBeDisabled();
+
+    await act(async () => { finish(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Use latest version' }));
+    await waitFor(() => expect(useLatest).toHaveBeenCalledOnce());
+  });
+
+  it('retains a real conflict and explains unavailable resolution without pretending it was resolved', () => {
+    render(<TimelineCommandRecovery commandSession={session({
+      status: 'conflict', recoverableOwners: [], ownerId: 'owner-a',
+      canReapplyLabel: false, canDiscardRejected: false,
+    })} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Your changes are retained and need resolution before they can be saved.');
+    expect(screen.getByRole('alert')).toHaveTextContent('No automatic resolution is available for this conflict yet.');
+    expect(screen.queryByRole('button', { name: 'Keep my changes' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Use latest version' })).toBeNull();
+  });
+
+  it('reports a resolution failure while keeping the retained conflict visible', async () => {
+    const keepLabelChanges = vi.fn(async () => { throw new Error('label resolution failed'); });
+    const commandSession = {
+      ...session({ status: 'conflict', recoverableOwners: [], ownerId: 'owner-a', canReapplyLabel: true }),
+      keepLabelChanges,
+    };
+    render(<TimelineCommandRecovery commandSession={commandSession} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my changes' }));
+    await waitFor(() => expect(screen.getByText('The recovery action could not finish. Your unsaved changes are still here.')).toBeInTheDocument());
+    expect(screen.getByRole('alert')).toHaveTextContent('Your changes are retained and need resolution before they can be saved.');
+    expect(screen.getByRole('button', { name: 'Keep my changes' })).toBeInTheDocument();
+  });
+
+  it('waits for the session state after a late acknowledgement instead of relabeling locally', async () => {
+    let finish!: () => void;
+    const keepLabelChanges = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    const commandSession = {
+      ...session({ status: 'conflict', recoverableOwners: [], ownerId: 'owner-a', canReapplyLabel: true }),
+      keepLabelChanges,
+    };
+    const { rerender } = render(<TimelineCommandRecovery commandSession={commandSession} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my changes' }));
+    rerender(<TimelineCommandRecovery commandSession={commandSession} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Your changes are retained');
+    expect(screen.getByRole('button', { name: 'Keeping my changes…' })).toBeDisabled();
+
+    await act(async () => { finish(); });
+    rerender(<TimelineCommandRecovery commandSession={{
+      ...session({ status: 'saved', recoverableOwners: [], ownerId: 'owner-a' }),
+      keepLabelChanges,
+    }} />);
+    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
+  });
+
+  it('does not offer discard or keep actions for an uncertain retry, even if fields arrive late', () => {
+    const { rerender } = render(<TimelineCommandRecovery commandSession={session({
+      status: 'retry', recoverableOwners: [], ownerId: 'owner-a',
+      canReapplyLabel: true, canDiscardRejected: true,
+    })} />);
+
+    expect(screen.getByRole('button', { name: 'Retry save' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Keep my changes' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Use latest version' })).toBeNull();
+
+    rerender(<TimelineCommandRecovery commandSession={session({
+      status: 'saved', recoverableOwners: [], ownerId: 'owner-a',
+      canReapplyLabel: true, canDiscardRejected: true,
+    })} />);
+    expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();
+  });
+
+  it('shows only sanitized conflict locations and never exposes private details', () => {
+    render(<TimelineCommandRecovery commandSession={session({
+      status: 'conflict', recoverableOwners: [], ownerId: 'owner-a',
+      conflicts: [
+        { ref: 'parent/clip:x', path: ['at'] },
+        { ref: 'private header value', path: ['secret'] },
+        { ref: 'parent/track:V1', path: [] },
+      ],
+    })} />);
+
+    expect(screen.getByRole('list', { name: 'Changed timeline properties' })).toHaveTextContent('Changed target: parent/clip:x · Property: at');
+    expect(screen.getByRole('list')).toHaveTextContent('Changed target: parent/track:V1 · Target itself changed');
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/private header value|secret/);
+  });
+
   it('stays hidden without the command surface or after the session is saved', () => {
     const { rerender } = render(<TimelineCommandRecovery />);
     expect(screen.queryByTestId('timeline-command-recovery')).toBeNull();

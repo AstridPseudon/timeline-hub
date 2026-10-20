@@ -11,9 +11,6 @@ const mockPath = (mocksDir: string, fileName: string): string =>
 export function buildEdgeAliasMap(mocksDir: string): Record<string, string> {
   const projectRoot = path.resolve(mocksDir, '../../../../');
   return {
-    '@workspace-effects': path.resolve(projectRoot, 'vendor/banodoco-effects'),
-    '@workspace-animations': path.resolve(projectRoot, 'vendor/banodoco-animations'),
-    '@workspace-transitions': path.resolve(projectRoot, 'vendor/banodoco-transitions'),
     '@banodoco/timeline-schema': path.resolve(projectRoot, 'vendor/timeline-schema/typescript/dist/src/index.js'),
     [`${ESM}/ajv@6.12.6`]: path.resolve(projectRoot, 'node_modules/ajv'),
     [`${DENO_STD}@0.224.0/http/server.ts`]: mockPath(mocksDir, 'denoHttpServer.ts'),

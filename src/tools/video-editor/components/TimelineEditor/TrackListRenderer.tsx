@@ -124,6 +124,7 @@ interface SortableRowProps {
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
 }
 
@@ -162,6 +163,7 @@ interface TrackListRendererProps {
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
+  onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
   onTrackDragEnd: (event: DragEndEvent) => void;
   trackSensors: ReturnType<typeof useSensors>;
@@ -186,6 +188,7 @@ function SortableRow({
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
+  onTrackLabelEditStart,
   onRemoveTrack,
 }: SortableRowProps) {
   useRenderBudget('SortableRow', 4);
@@ -239,6 +242,7 @@ function SortableRow({
           deviceClass={deviceClass}
           onSelect={onSelectTrack}
           onChange={onTrackChange}
+          onLabelEditStart={onTrackLabelEditStart}
           onRemove={onRemoveTrack}
           readOnly={readOnly}
           rowDragging={sortable.isDragging}
@@ -373,6 +377,7 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.shouldStackOverlappingActions === right.shouldStackOverlappingActions
     && left.onSelectTrack === right.onSelectTrack
     && left.readOnly === right.readOnly
+    && left.onTrackLabelEditStart === right.onTrackLabelEditStart
     && left.onTrackChange === right.onTrackChange
     && left.onRemoveTrack === right.onRemoveTrack
   );
@@ -401,6 +406,7 @@ export function TrackListRenderer({
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
+  onTrackLabelEditStart,
   onRemoveTrack,
   onTrackDragEnd,
   trackSensors,
@@ -439,6 +445,7 @@ export function TrackListRenderer({
         shouldStackOverlappingActions={shouldStackOverlappingActions}
         onSelectTrack={onSelectTrack}
         onTrackChange={onTrackChange}
+        onTrackLabelEditStart={onTrackLabelEditStart}
         onRemoveTrack={onRemoveTrack}
       />
     );

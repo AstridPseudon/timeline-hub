@@ -57,6 +57,7 @@ export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
   append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
   cancel(intentId: string): Promise<void>;
+  resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
@@ -87,6 +88,11 @@ function detached<T>(value: T): T {
   };
   check(value);
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function newIntent(payload: OutboxJson, basis: OutboxBasis): OutboxIntent {
+  return detached({ id: crypto.randomUUID(), payload, basis,
+    ...('head' in basis ? { readyBase: basis.head } : {}) });
 }
 
 function scopeKey(scope: OutboxScope, ownerId: string): string {
@@ -199,7 +205,7 @@ export function createCommitOutbox(options: {
       const outbox: ClaimedOutbox = {
         read: () => access('readonly', detached),
         async append(payload, basis) {
-          const intent = detached({ id: crypto.randomUUID(), payload, basis });
+          const intent = newIntent(payload, basis);
           return access('readwrite', (record) => {
             const predecessor = record.intents[record.intents.length - 1];
             let readyBase = 'head' in intent.basis ? intent.basis.head : undefined;
@@ -224,6 +230,24 @@ export function createCommitOutbox(options: {
               throw new Error('Cannot cancel a predecessor of retained work');
             }
             record.intents = record.intents.filter((intent) => intent.id !== intentId);
+          });
+        },
+        resolveRejected(intentIds, replacement, isCurrent = () => true) {
+          const ids = detached(intentIds);
+          const intent = replacement ? newIntent(replacement.payload, { head: replacement.head }) : undefined;
+          return access('readwrite', (record) => {
+            if (!isCurrent()) throw new Error('Timeline command session is closed');
+            if (dispatching || record.pending?.outcome?.kind !== 'rejected'
+              || record.pending.intentId !== record.intents[0]?.id) {
+              throw new Error('Only a definitively rejected prefix can be resolved');
+            }
+            if (!ids.length || JSON.stringify(ids) !== JSON.stringify(record.intents.map((item) => item.id))) {
+              throw new Error('Retained work changed before explicit resolution');
+            }
+            if (intent && ids.length !== 1) throw new Error('Cannot replace a predecessor of retained work');
+            record.intents = intent ? [intent] : [];
+            delete record.pending;
+            return detached(record);
           });
         },
         async dispatch(build, transmit) {
