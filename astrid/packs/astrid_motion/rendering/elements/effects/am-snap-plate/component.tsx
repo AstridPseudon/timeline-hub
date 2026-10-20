@@ -1,4 +1,4 @@
-import type {ReactElement} from 'react';
+import type {CSSProperties, ReactElement} from 'react';
 import {AbsoluteFill, Img, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   BlockWipe,
@@ -18,6 +18,7 @@ import {
 } from '../../_shared/am';
 import {type Point, type Span} from '../am-presenter/presenter-core';
 import {plateView} from './motion';
+import {absentSupport, fieldSupport, unknownSupport, withSceneCapability} from './scene';
 import {MosaicImage, mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
 
 // am-snap-plate: a pixel snapshot shown through an integer-zoom viewport.
@@ -87,14 +88,21 @@ const FILL_TOKENS: Record<string, string> = {
   charcoal: COLOR.charcoal,
 };
 
-export default function AmSnapPlate(props: ElementComponentProps): ReactElement | null {
-  const frame = useCurrentFrame();
-  const {width, height, fps: compositionFps} = useVideoConfig();
-  const params = narrowParams<Params>(props.params);
-  const url = elementSource(props.assetEntry, params.src);
+const plateField = (params: Params, assetEntry: ElementComponentProps['assetEntry']) => {
+  const url = elementSource(assetEntry, params.src);
   const fill = typeof params.fill === 'string' && params.fill.trim() !== ''
     ? (FILL_TOKENS[params.fill.trim()] ?? params.fill.trim())
     : null;
+  const background = params.background ?? fill ?? COLOR.paper;
+  const style: CSSProperties = {overflow: 'hidden', backgroundColor: background};
+  return {url, fill, background, style};
+};
+
+function AmSnapPlate(props: ElementComponentProps): ReactElement | null {
+  const frame = useCurrentFrame();
+  const {width, height, fps: compositionFps} = useVideoConfig();
+  const params = narrowParams<Params>(props.params);
+  const {url, fill, background, style} = plateField(params, props.assetEntry);
   if (!url && !fill) {
     return null;
   }
@@ -111,8 +119,6 @@ export default function AmSnapPlate(props: ElementComponentProps): ReactElement 
   const pattern = oneOf<WipePattern>(params.pattern, PATTERNS, 'diagonal');
   const seed = timing.seed;
   const wipeColor = params.wipeColor ?? COLOR.charcoal;
-  const background = params.background ?? fill ?? COLOR.paper;
-
   let wipe: ReactElement | null = null;
   const exitStart = total - exitFrames;
   if (enter === 'blockWipe' && frame < enterFrames) {
@@ -140,7 +146,7 @@ export default function AmSnapPlate(props: ElementComponentProps): ReactElement 
   const rect = {x: view.originX, y: view.originY, w: LOGICAL_W * view.scale, h: LOGICAL_H * view.scale};
 
   return (
-    <AbsoluteFill style={{overflow: 'hidden', backgroundColor: background}}>
+    <AbsoluteFill style={style}>
       {!url ? null : block > 0 ? (
         <MosaicImage url={url} rect={rect} block={block} width={width} height={height} background={background} />
       ) : (
@@ -167,3 +173,15 @@ export default function AmSnapPlate(props: ElementComponentProps): ReactElement 
     </AbsoluteFill>
   );
 }
+
+export default withSceneCapability(AmSnapPlate, (context) => {
+  const {clip, width, height, assetEntry} = context;
+  const field = plateField(narrowParams<Params>(clip.params), assetEntry);
+  return {identity: JSON.stringify([clip.params, clip.asset, assetEntry, width, height]), frame: () => {
+    if (!field.fill && clip.asset && !Object.prototype.hasOwnProperty.call(context, 'assetEntry')) {
+      return unknownSupport('am-snap-plate needs the selected asset URL or explicit absence');
+    }
+    if (!field.url && !field.fill) return absentSupport();
+    return fieldSupport(field.style.backgroundColor, width, height);
+  }};
+});

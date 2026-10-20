@@ -16,12 +16,15 @@ import tempfile
 import threading
 import uuid
 from collections.abc import Callable, Mapping, Sequence
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0.509|fonts=local-bundle-v1"
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
+MAX_RESERVED_SCENE_FRAMES = 60
+MAX_SAFE_FRAME = 2**53 - 1
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
 
 
@@ -405,6 +408,7 @@ class _SharedRemotionOwner:
                 frame_resolution=tuple(resolution) if resolution is not None else None,
                 frame_session=self.session,
                 frame_session_identity=renderer_environment_identity(),
+                **({"on_scene_props": context["on_scene_props"]} if context.get("on_scene_props") else {}),
             )
 
     def release(self, *, force: bool = False) -> None:
@@ -474,6 +478,22 @@ def snapshot_wants_bounds(snapshot: Mapping[str, Any]) -> bool:
     return isinstance(app, Mapping) and app.get("astrid_bounds") is True
 
 
+def _validate_capture_files(
+    snapshot: Mapping[str, Any], timeline_path: Path, assets_path: Path,
+) -> None:
+    """Check the prepared files against the closure, without certifying its source."""
+    for key, path in (("config", timeline_path), ("registry", assets_path)):
+        expected = snapshot.get(key)
+        if not isinstance(expected, Mapping):
+            raise ValueError(f"Composed frame capture snapshot has no {key}.")
+        try:
+            actual = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"Composed frame capture cannot read its prepared {key}.") from exc
+        if actual != expected:
+            raise ValueError(f"Composed frame capture prepared {key} differs from its snapshot.")
+
+
 class RemotionFrameProvider:
     """Provide PNG frames from an admitted, immutable capture snapshot."""
 
@@ -487,6 +507,7 @@ class RemotionFrameProvider:
         materialized_root: Path | None = None,
         materialized_objects: Mapping[str, str] | None = None,
         cache: FrameCaptureCache | None = None,
+        scene_labels: bool = False,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]] | None = None,
     ) -> None:
         self.snapshot = snapshot
@@ -496,7 +517,19 @@ class RemotionFrameProvider:
         self.materialized_root = Path(materialized_root) if materialized_root else None
         self.materialized_objects = materialized_objects
         self.cache = cache or FrameCaptureCache()
+        self.label_batches: dict[int, list] = {}
+        self.label_canvas: dict | None = None
+        self.scene_frames: dict[str, dict] = {}
+        self.scene_occlusions: dict[str, dict] = {}
+        self.scene_clip_identities: dict[str, dict] = {}
+        self.scene_unavailable: str | None = None
+        self._reserved_scene_frames: tuple[int, ...] = ()
+        self._active_reserved_scene_frames: tuple[int, ...] = ()
+        self._capture_snapshot = None
         if renderer is None:
+            if "config" in snapshot:
+                self._capture_snapshot = deepcopy(dict(snapshot))
+                _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
             renderer = _acquire_shared_remotion_handle(
                 context={
                     "timeline_path": self.timeline_path,
@@ -504,13 +537,85 @@ class RemotionFrameProvider:
                     "project_dir": self.project_dir,
                     "materialized_root": self.materialized_root,
                     "materialized_objects": self.materialized_objects,
+                    **({"on_scene_props": self._scene_labels} if scene_labels else {}),
                 }
             )
 
         self.worker = FrameCaptureWorker(renderer)
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
+    def reserve_scene_frames(self, frames: Sequence[int]) -> None:
+        """Reserve extra frames for the next live scene-facts observation.
+
+        Reservations affect only the metadata query made from the actual Root
+        props callback.  They never become pixel requests or filmstrip cards.
+        """
+        try:
+            candidate_frames = list(frames)
+        except TypeError as exc:
+            raise ValueError("reserved scene frames must be an iterable of safe integers") from exc
+
+        reserved: list[int] = []
+        seen: set[int] = set()
+        for frame in candidate_frames:
+            if type(frame) is not int or frame < 0 or frame > MAX_SAFE_FRAME:
+                raise ValueError("reserved scene frames must be non-negative safe integers")
+            if frame not in seen:
+                seen.add(frame)
+                reserved.append(frame)
+        if len(reserved) > MAX_RESERVED_SCENE_FRAMES:
+            raise ValueError(f"at most {MAX_RESERVED_SCENE_FRAMES} scene frames may be reserved")
+        self._reserved_scene_frames = tuple(reserved)
+
+    def _scene_labels(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        """Observe actual prepared capture props while their staging is alive."""
+        from fractions import Fraction
+
+        from astrid.core.timeline import scene_answers
+
+        from .overlays.labels import canvas_of, labels_from_frames
+
+        try:
+            canvas = ((props["timeline"].get("theme_overrides") or {}).get("visual") or {}).get("canvas")
+            canvas = canvas if canvas is not None else props["theme"]["visual"]["canvas"]
+            if not isinstance(canvas, Mapping) or any(key not in canvas for key in ("fps", "width", "height")):
+                raise ValueError("captured Root props do not retain the full canvas/frame basis")
+            fps = canvas["fps"]
+            if fps != float(Fraction(*self.snapshot["fps_rational"])):
+                raise ValueError("captured Root frame rate differs from the frozen snapshot")
+            requested = list(dict.fromkeys((*frames, *self._active_reserved_scene_frames)))
+            answers = scene_answers.host_frames_at(props, canvas, requested)
+            self.label_canvas = canvas_of(props["timeline"], props["theme"])
+            self.label_batches.update(labels_from_frames(props["timeline"], answers))
+            self.scene_frames.update({str(answer["frame"]): answer for answer in answers})
+            # The projection already records the source occurrence. Keep that
+            # mapping intact rather than recovering raw IDs from compiled IDs.
+            clips = {clip["id"]: clip for clip in props["timeline"]["clips"]}
+            for clip_id in {layer["clipId"] for answer in answers for layer in answer["layers"]}:
+                clip = clips[clip_id]
+                provenance = (clip.get("app") or {}).get("astrid_shot_composition") or {}
+                self.scene_clip_identities[clip_id] = {
+                    "clip_id": provenance.get("source_clip_id") or clip_id,
+                    "occurrence_id": provenance.get("occurrence_id") or clip.get("occurrence_id")
+                    or clip.get("shot_occurrence_id") or "",
+                }
+            targets = [{"frame": answer["frame"], "clip_id": layer["clipId"], "min_fraction": fraction}
+                       for fraction in (0.9, 0.98) for answer in answers for layer in answer["layers"]
+                       if layer["role"] != "none"]
+            if targets:
+                occlude = getattr(scene_answers, "occlusions_from_frames", None)
+                if occlude is None:
+                    raise scene_answers.SceneQueryUnavailable("public scene occlusion query unavailable")
+                occlusions = occlude(answers, targets)
+                for target, occlusion in zip(targets, occlusions, strict=True):
+                    self.scene_occlusions.setdefault(str(target["min_fraction"]), {}).setdefault(
+                        str(target["frame"]), {})[target["clip_id"]] = occlusion
+        except Exception as exc:  # noqa: BLE001 - advisory scene queries cannot change capture success
+            self.scene_unavailable = str(exc)
+
     def close(self, *, force: bool = False) -> None:
+        self._reserved_scene_frames = ()
+        self._active_reserved_scene_frames = ()
         self.worker.close(force=force)
 
     def capture(
@@ -519,6 +624,20 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        reserved_scene_frames = self._reserved_scene_frames
+        self._reserved_scene_frames = ()
+        self.label_batches.clear()
+        self.label_canvas = None
+        self.scene_frames = {}
+        self.scene_occlusions = {}
+        self.scene_clip_identities = {}
+        self.scene_unavailable = None
+        if self._capture_snapshot is not None:
+            try:
+                _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
+            except ValueError as exc:
+                self.scene_unavailable = str(exc)
+                raise
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
@@ -541,6 +660,7 @@ class RemotionFrameProvider:
         temporary = None
         try:
             if misses:
+                self._active_reserved_scene_frames = reserved_scene_frames
                 temporary = Path(tempfile.mkdtemp(prefix="astrid-frame-capture-", dir=out_root.parent))
                 produced = self.worker.capture(
                     [frame for frame, _key, _destination in misses], temporary, resolution
@@ -568,6 +688,11 @@ class RemotionFrameProvider:
         finally:
             if temporary is not None:
                 shutil.rmtree(temporary, ignore_errors=True)
+            self._active_reserved_scene_frames = ()
+        if any(str(card["frame"]) not in self.scene_frames for card in cards):
+            self.scene_unavailable = self.scene_unavailable or (
+                "exact scene facts unavailable for cached pixels" if cached else
+                "capture did not supply exact Root scene facts")
         return {
             "evidence_source": "cache" if fresh == 0 else "fresh_capture" if cached == 0 else "mixed",
             "renderer": RENDERER_IDENTITY,
@@ -582,6 +707,7 @@ class RemotionFrameProvider:
             "resolution": list(resolution) if resolution is not None else None,
             "cache_root": str(self.cache.root),
             "notes": notes,
+            **({"scene_unavailable": self.scene_unavailable} if self.scene_unavailable else {}),
             "worker": {
                 "batches": self.worker.capture_batches,
                 "serialized": True,

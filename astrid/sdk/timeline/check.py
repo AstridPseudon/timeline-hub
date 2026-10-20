@@ -4,9 +4,9 @@ from __future__ import annotations
 import copy
 import dataclasses
 import json
-import math
 import re
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any, Iterable, Mapping
 
 from astrid.core.timeline import moments as mo
@@ -44,13 +44,13 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """``scene_roles.element_coverage`` read once per process per element (the registry load is the cost)."""
+    from astrid.core.timeline import scene_roles
 
     ids = list(element_ids)
     missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
     if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
+        _ELEMENT_COVERAGE.update(scene_roles.element_coverage(missing))
     return {i: _ELEMENT_COVERAGE[i] for i in ids}
 
 
@@ -78,33 +78,14 @@ class _CheckMixin:
                            + (f"; {note}" if "outside" in note else "") + f" (size {fits:g} fits; or move x/width)")
         return out
 
-    def _on_screen(self) -> list:
-        """Every frame of the film, covered or not: ``onscreen.coverage`` over the checkout's visual clips in
-        timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
-        from astrid.core.timeline import onscreen
+    def _on_screen(self, answers=None, *, unavailable="exact compiled Root props and resolved runtime theme unavailable") -> list:
+        """Scene findings are advisory; raw checkout clips are not render props."""
+        if answers is None:
+            return [SimpleNamespace(start_frame=0, end_frame=int(round(self.duration * self.fps)),
+                                    cls="UNAVAILABLE", content=None, clips=(), findings=(unavailable,))]
+        from astrid.core.timeline.scene_answers import spans_from_frames
 
-        tracks: list[dict[str, Any]] = []
-        seen: set[Any] = set()
-        for sid in self._shot_ids():
-            for track in self._internal(sid).get("tracks") or []:
-                if track.get("id") not in seen:
-                    seen.add(track.get("id"))
-                    tracks.append(dict(track))
-        clips = []
-        for clip in self.clips():
-            if clip.is_audio:
-                continue
-            data = dict(clip.data)
-            data.update({"clipType": clip.element, "track": clip.track, "at": clip.start, "hold": clip.duration,
-                         "app": {"cut": clip.cut_id, "layer": clip.layer_name}})
-            clips.append(data)
-        visual = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
-                  .get("visual") or {}).get("canvas") or {}
-        canvas = {"width": visual.get("width", 1920), "height": visual.get("height", 1080)}
-        elements = element_coverage_cached({c["clipType"] for c in clips})
-        end_frame = int(round(self.duration * self.fps))
-        return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
-                                 start_frame=0, end_frame=end_frame)
+        return spans_from_frames(answers)
 
     def _showing(self, a: float, b: float) -> list[str]:
         """The addresses of the visual clips that overlap [a, b) in time (what the old picture gap listed)."""
@@ -128,7 +109,7 @@ class _CheckMixin:
     def picture_gaps(self, spans: list | None = None) -> list[str]:
         """GAP spans (TRUTH.md §2.4): frames where no picture covers the canvas and no declared fade or dip is
         under them. The on-screen model decides (element metadata, opacity, bounds), not a list of types.
-        Black under whatever is left. Blocking: a re-flow must never tear the film. ``spans``: the film's
+        Advisory: scene findings never block a save. ``spans``: the film's
         on-screen spans when the caller has them (check() computes them once)."""
         out = []
         table = self._cut_table()
@@ -154,9 +135,12 @@ class _CheckMixin:
         return {cid: w for cid, w in windows.items() if w[1] - w[0] > 0}
 
     def empty_cuts(self, spans: list | None = None) -> tuple[list[str], list[str]]:
-        """(blocking, info) for EMPTY spans: only a background on screen (TRUTH.md §2.4). An EMPTY span covering
-        at least 90% of a cut's picture span blocks, unless that cut is a deliberate hold (then info). A shorter
-        one of at least 1.0 s is info."""
+        """(sustained, incidental) advisory EMPTY findings: only a background on screen.
+
+        At least 90% of a cut's picture span is sustained unless deliberately held.
+        Shorter spans of at least 1.0 s and deliberate holds are incidental; neither
+        group blocks check() or saving.
+        """
         held = {cid for cid, note in self.cut_notes_all().items() if note.get("hold") == "deliberate"}
         windows = self._picture_windows()
         fps = self.fps
@@ -205,57 +189,27 @@ class _CheckMixin:
                            "the render would cut it off; extend its shot's picture or shorten the clip")
         return out
 
-    def _sprite_problems(self) -> tuple[list[str], list[str]]:
+    def _sprite_problems(self, scene_frames=None, frame_basis=None) -> tuple[list[str], list[str]]:
         """(blocking, notes) for pixel sprites: canvas bounds, simultaneous scale, and source integrity."""
-        from astrid.core.timeline import onscreen
-
-        canvas = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
-                  .get("visual") or {}).get("canvas") or {}
-        width, height = float(canvas.get("width", 1920)), float(canvas.get("height", 1080))
+        width = float((frame_basis or {}).get("width", 0))
+        height = float((frame_basis or {}).get("height", 0))
         blocking: list[str] = []
         notes: list[str] = []
         sprites = [clip for clip in self.clips() if not clip.is_audio and clip.element == "am-sprite"]
+        # Only public known output bounds support this advisory diagnosis. No
+        # private sprite geometry or guessed dimensions when internals are unknown.
         for clip in sprites:
-            params = dict(clip.params)
-            entry = self._sprite_asset_entry(clip)
-            resolution = str(entry.get("resolution") or "")
-            match = re.fullmatch(r"(\d+)x(\d+)", resolution)
-            if match:
-                params["width"], params["height"] = map(int, match.groups())
-                params["scale"] = params.get("scale", 6)
-            else:
-                # Without native dimensions, scale cannot meaningfully enlarge the model's canvas fallback.
-                params.pop("scale", None)
-            # x/y and their stepped keyframes share the element's declared logical units.
-            x, y = params.get("x", 0), params.get("y", 0)
-            step_frames = int(params.get("stepFrames", 2) or 2)
-            poses = [(0, x, y)]
-            keyframes = params.get("keyframes") if isinstance(params.get("keyframes"), list) else []
-            for key in sorted((item for item in keyframes if isinstance(item, Mapping)
-                               and isinstance(item.get("frame"), (int, float))), key=lambda item: item["frame"]):
-                x, y = key.get("x", x), key.get("y", y)
-                effective_frame = math.floor(float(key["frame"]) / step_frames) * step_frames
-                poses.append((effective_frame, x, y))
-            # A sprite that runs in from off screen is on canvas for part of its clip: that is
-            # deliberate. Only a sprite that is never on canvas (every pose outside) is an error.
-            measured, visible = 0, False
-            for frame, px_x, px_y in poses:
-                layout = dict(params)
-                if px_x is not None:
-                    layout["x"] = to_canvas(clip.element, "x", px_x)
-                if px_y is not None:
-                    layout["y"] = to_canvas(clip.element, "y", px_y)
-                bounds, _source = onscreen.layout_bounds({"params": layout}, width, height)
-                if bounds is None:
-                    continue
-                measured += 1
-                x0, y0, x1, y1 = bounds
-                if not (x1 <= 0 or y1 <= 0 or x0 >= width or y0 >= height):
-                    visible = True
-                    break
-            if measured and not visible:
-                blocking.append(f"OFFCANVAS {clip.address}: sprite is never inside the {width:g}×{height:g} canvas "
-                                f"({clip.start:.2f}–{clip.end:.2f} s); move it into frame")
+            layers = [layer for answer in scene_frames or [] for layer in answer["layers"]
+                      if layer["clipId"] == clip.id]
+            if not layers or any(layer["bounds"]["status"] != "known" for layer in layers):
+                continue
+            def outside(layer):
+                rect = layer["bounds"]["rect"]
+                return (rect["x"] + rect["width"] <= 0 or rect["y"] + rect["height"] <= 0
+                        or rect["x"] >= width or rect["y"] >= height)
+            if all(outside(layer) for layer in layers):
+                notes.append(f"OFFCANVAS {clip.address}: sprite is never inside the {width:g}×{height:g} canvas "
+                             f"({clip.start:.2f}–{clip.end:.2f} s); move it into frame")
 
         # scale is the authored pixel-art size. Compare only time-overlapping sprites; equal values
         # share one art-pixel size even when they come from different sources.
@@ -518,7 +472,8 @@ class _CheckMixin:
                         out.append(f"{clip.address}.{path.removeprefix('params.')} is {value!r} where a frame number belongs")
         return out
 
-    def check(self) -> "CheckReport":
+    def check(self, *, render_props: Mapping[str, Any] | None = None,
+              frame_basis: Mapping[str, Any] | None = None) -> "CheckReport":
         from astrid.sdk.timeline.checkout import Checkout
         """Validate, say what moved (timeline seconds, against the checked-out head) and lint the changed cuts."""
         from astrid.sdk.authoring_bundle import validate_authoring_candidate
@@ -553,17 +508,45 @@ class _CheckMixin:
         blocking += [f"outside {line}" for line in self._outside]
         blocking += [f"type    {line}" for line in self._type_mismatches()]
         blocking += [f"beats   {line}" for line in self._stale_beats()]
-        spans = self._on_screen()  # one pass over the film for the three readers below
-        blocking += [f"picture {line}" for line in self.picture_gaps(spans)]
-        empty_blocking, empty_info = self.empty_cuts(spans)
-        blocking += empty_blocking
+        scene_frames = None
+        unavailable = "exact compiled Root props and resolved runtime theme unavailable"
+        if render_props is not None and frame_basis is not None:
+            from astrid.core.timeline.scene_answers import SceneQueryUnavailable, host_frames_at
+
+            try:
+                if frame_basis.get("fps") != self.fps:
+                    raise SceneQueryUnavailable("render/check frame rates differ")
+                from astrid.core.timeline.duration import timeline_render_duration_frames
+
+                scene_frames = host_frames_at(render_props, frame_basis, range(
+                    timeline_render_duration_frames(render_props["timeline"], self.fps)))
+            except (SceneQueryUnavailable, KeyError, TypeError, ValueError) as exc:
+                unavailable = str(exc)
+        spans = self._on_screen(scene_frames, unavailable=unavailable)
+        if scene_frames is not None:
+            source_metadata = render_props["timeline"].get("metadata") or {}
+            source_revision = source_metadata.get("parent_revision_id") or "unavailable"
+            problems.append(f"scene   supplied render props, revision {source_revision}; advisory, separate from candidate validity")
+        # References come from these exact render props, never the candidate's
+        # current cut table or a newly fetched head.
+        from astrid.core.timeline.scene_roles import _address
+
+        source_clips = {c["id"]: c for c in render_props["timeline"]["clips"]} if scene_frames is not None else {}
+        for span in spans:
+            if span.cls == "COVERED" and span.content == "CONTENT":
+                continue
+            kind = "EMPTY" if span.content == "EMPTY" else "CONTENT UNKNOWN" if span.content == "UNKNOWN" else span.cls
+            references = [_address(source_clips[cid]) for cid in span.clips if cid in source_clips]
+            problems.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
+                            + (f" ({', '.join(references)})" if references else "")
+                            + (f": {', '.join(span.findings)}" if span.findings else ""))
         blocking += [f"length  {line}" for line in self._length_problems()]
-        sprite_blocking, sprite_notes = self._sprite_problems()
+        sprite_blocking, sprite_notes = self._sprite_problems(scene_frames, frame_basis)
         blocking += sprite_blocking
         if blocking:
             valid = False
         problems += [f"why     {line}" for line in self._stale_whys()]
-        problems += empty_info + self.dips(spans) + sprite_notes
+        problems += sprite_notes
         problems += [f"text    {line}" for line in self._text_overflow()]
         from astrid.sdk.timeline.look import look_unrendered
 

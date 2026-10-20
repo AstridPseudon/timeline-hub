@@ -151,7 +151,7 @@ def test_equal_values_on_both_sides_leave_no_legacy_copy():
 
 
 def test_onscreen_address_reads_a_migrated_clip():
-    from astrid.core.timeline.onscreen import _address
+    from astrid.core.timeline.scene_roles import _address
 
     clip = {"id": "a:sparks-id", "app": {"cut": "c41", "layer": "sparks"}}
     assert _address(clip) == "c41.sparks"

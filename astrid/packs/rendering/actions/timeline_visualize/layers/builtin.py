@@ -504,7 +504,9 @@ def render_strip(ctx: LayerContext) -> LayerResult:
         if labels_config:
             from ..overlays.labels import overlay_labels_frame
 
-            thumb = overlay_labels_frame(thumb, labels_config, frame, ctx.fps)
+            thumb = overlay_labels_frame(thumb, labels_config, frame, ctx.fps,
+                                         layers=ctx.shared.get("label_batches", {}).get(frame),
+                                         canvas=ctx.shared.get("label_canvas"))
         image.paste(thumb, (x, y))
         t = frame / ctx.fps
         inside = float(ctx.cut["start"]) <= t < float(ctx.cut["end"])

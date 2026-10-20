@@ -410,7 +410,7 @@ def _candidate_shot_row(shot: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _open_candidate_input_closure(
-    client: Any, *, project_id: str, preview: Mapping[str, Any],
+    client: Any, *, project_id: str, timeline_id: str, preview: Mapping[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Like ``_open_current_input_closure``, but for an unpublished working copy (a frozen candidate)."""
     from astrid.sdk.authoring_render_preview import candidate_projection
@@ -421,8 +421,11 @@ def _open_candidate_input_closure(
         _fail(f"The working copy cannot be projected for inspection: {exc}")
     projected = built["projected"]
     publication = built["publication"]
+    if publication["project_id"] != project_id or publication["timeline_id"] != timeline_id:
+        _fail("The working copy targets a different project or timeline.")
     authority = {
         "parent_revision_id": publication["parent_revision_id"],
+        "parent_content_digest": publication["content_digest"],
         "children": [
             {"timeline_id": row["timeline_id"], "revision_id": row["revision_id"],
              "config_version": 1, "config_hash": row["content_digest"]}
@@ -716,7 +719,9 @@ def prepare_filmstrip(
         )
         if isinstance(inputs.get('authoring_preview'), Mapping):
             config, registry, closure = _open_candidate_input_closure(
-                client, project_id=project_id, preview=inputs['authoring_preview'])
+                client, project_id=project_id,
+                timeline_id=str(_identifier(timeline_row, 'timeline_id', 'id')),
+                preview=inputs['authoring_preview'])
         else:
             requested_revision = inputs.get('revision_id')
             if requested_revision not in (None, '') and (
@@ -807,7 +812,9 @@ def prepare_filmstrip(
             _fail('Composed frame capture requires an immutable parent revision.')
         if isinstance(inputs.get('authoring_preview'), Mapping):
             config, registry, closure = _open_candidate_input_closure(
-                client, project_id=project_id, preview=inputs['authoring_preview'])
+                client, project_id=project_id,
+                timeline_id=str(_identifier(capture_row, 'timeline_id', 'id')),
+                preview=inputs['authoring_preview'])
             requested_revision = None
         else:
             try:
