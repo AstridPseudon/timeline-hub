@@ -118,6 +118,7 @@ type BridgeOptions = {
 const CONNECTION_IDLE_MS = 15 * 60_000;
 const REAP_SWEEP_MS = 60_000;
 const MAX_REAPED_IDS = 256;
+const DISCOVERY_REQUEST_TIMEOUT_MS = 5_000;
 
 function asRecord(value: unknown): JsonRecord | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -582,9 +583,9 @@ export class AstridAcpBridge {
     this.closing = true;
     clearInterval(this.sweeper);
     this.sharedSessions.close();
-    await Promise.all([...this.connections.values(), ...this.temporaryConnections].map(async ({ host, terminals }) => {
-      await host.dispose();
-      closeTerminals(terminals);
+    await Promise.all([...this.connections.values(), ...this.temporaryConnections].map(async connection => {
+      await connection.host.dispose(this.temporaryConnections.has(connection) ? 'SIGKILL' : 'SIGTERM');
+      closeTerminals(connection.terminals);
     }));
     this.connections.clear();
     this.temporaryConnections.clear();
@@ -686,6 +687,7 @@ export class AstridAcpBridge {
       sessionDir: this.config.sessionDir,
       systemPromptFile: this.config.systemPromptFile,
       command: this.config.command,
+      ...(temporary ? { requestTimeoutMs: DISCOVERY_REQUEST_TIMEOUT_MS } : {}),
       callbacks,
       ...(localMediaOnly ? { env: {
         PI_CONFIG_FILES: [process.env.PI_CONFIG_FILES, fileURLToPath(new URL('./astrid-acp-local-only.yml', import.meta.url))].filter(Boolean).join(delimiter),
@@ -695,7 +697,7 @@ export class AstridAcpBridge {
     };
     const host = agent === 'astrid' ? this.hostFactory(launcherOptions) : await this.localAgentHostFactory(agent, launcherOptions);
     if (this.closing) {
-      await host.dispose();
+      await host.dispose(temporary ? 'SIGKILL' : 'SIGTERM');
       throw new ChatError(503, 'chat_stopping', 'The chat service is stopping.');
     }
     connection = { id: connectionId, agent, host, notifications, terminals, sessions: new Set(), configOptions: new Map(), models: new Map(), ...(defaultModelId ? { defaultModelId } : {}), disconnected: false, closed: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
@@ -713,7 +715,7 @@ export class AstridAcpBridge {
       this.connections.delete(connectionId);
       this.temporaryConnections.delete(connection);
       closeTerminals(terminals);
-      await host.dispose();
+      await host.dispose(temporary ? 'SIGKILL' : 'SIGTERM');
       throw error;
     }
   }
@@ -738,7 +740,7 @@ export class AstridAcpBridge {
         this.temporaryConnections.delete(connection);
         connection.closed = true;
         closeTerminals(connection.terminals);
-        await connection.host.dispose();
+        await connection.host.dispose('SIGKILL');
       }
     })()
       // Discovery must still show recovery rows if an adapter cannot start.

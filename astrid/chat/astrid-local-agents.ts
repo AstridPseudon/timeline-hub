@@ -15,6 +15,11 @@ type AuthStatus = 'signed-in' | 'signed-out' | 'unknown';
 type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
 const execFileAsync = promisify(execFile);
 const LOGIN_PATH_MARKER = '__ASTRID_LOGIN_PATH__';
+const AUTH_PROBE_OPTIONS = { encoding: 'utf8', timeout: 5_000, killSignal: 'SIGKILL' } as const;
+
+function probeKilled(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && Reflect.get(error, 'killed') === true;
+}
 
 function pathDelimiter(platform: NodeJS.Platform): string {
   return platform === 'win32' ? ';' : delimiter;
@@ -164,12 +169,13 @@ async function status(command: string | null, args: string[], env: NodeJS.Proces
   try {
     const script = platform === 'win32' && command.toLowerCase().endsWith('.js');
     const { stdout, stderr } = script
-      ? await execFileAsync(process.execPath, [command, ...args], { env, cwd, encoding: 'utf8' })
-      : await execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
+      ? await execFileAsync(process.execPath, [command, ...args], { env, cwd, ...AUTH_PROBE_OPTIONS })
+      : await execFileAsync(command, args, { env, cwd, ...AUTH_PROBE_OPTIONS });
     const output = `${stdout}\n${stderr}`;
     if (signedOut.test(output)) return 'signed-out';
     if (signedIn.test(output)) return 'signed-in';
   } catch (error) {
+    if (probeKilled(error)) return 'unknown';
     // Some CLI versions return non-zero when signed out. Recognize only their
     // explicit signed-out wording; never trust failure text as signed-in.
     const output = typeof error === 'object' && error !== null
@@ -184,8 +190,8 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?
   if (!command) return 'unknown';
   const script = platform === 'win32' && command.toLowerCase().endsWith('.js');
   const run = (args: string[]) => script
-    ? execFileAsync(process.execPath, [command, ...args], { env, cwd, encoding: 'utf8' })
-    : execFileAsync(command, args, { env, cwd, encoding: 'utf8' });
+    ? execFileAsync(process.execPath, [command, ...args], { env, cwd, ...AUTH_PROBE_OPTIONS })
+    : execFileAsync(command, args, { env, cwd, ...AUTH_PROBE_OPTIONS });
   try {
     const { stdout } = await run(['auth', 'status']);
     try {
@@ -196,6 +202,9 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?
       return 'unknown';
     } catch { /* Older Claude versions may emit text; use their explicit text status. */ }
   } catch (error) {
+    // A deadline is unknown even if the child printed partial status; do not
+    // start a second probe after the JSON probe exhausted its budget.
+    if (probeKilled(error)) return 'unknown';
     const stdout = typeof error === 'object' && error !== null ? Reflect.get(error, 'stdout') : undefined;
     if (typeof stdout === 'string') {
       try {
@@ -213,6 +222,7 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?
     if (/Not logged in|Run `?claude auth login/i.test(output)) return 'signed-out';
     if (/Logged in|Authenticated/i.test(output)) return 'signed-in';
   } catch (error) {
+    if (probeKilled(error)) return 'unknown';
     const output = typeof error === 'object' && error !== null
       ? [Reflect.get(error, 'stdout'), Reflect.get(error, 'stderr')].filter(value => typeof value === 'string').join('\n')
       : '';

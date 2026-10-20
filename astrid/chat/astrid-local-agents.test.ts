@@ -1,6 +1,6 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { LOCAL_AGENT_TABLE } from './localAgents.ts';
@@ -268,3 +268,44 @@ test('reads successful Codex status from stderr and does not trust failed diagno
     assert.equal(agents[2]?.state, 'ready');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+for (const probe of ['claude-json', 'claude-text', 'codex'] as const) {
+  test(`${probe} discovery times out, kills its child, and preserves other agent choices`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-hanging-auth-'));
+    const calls = join(directory, 'hanging.jsonl');
+    try {
+      const shell = loginShell(directory);
+      const name = probe === 'codex' ? 'codex' : 'claude';
+      fake(directory, name === 'codex' ? 'claude' : 'codex', name === 'codex'
+        ? { json: '{"loggedIn":false}', text: '' }
+        : 'Not logged in. Run codex login to authenticate.');
+      executable(directory, name, `#!${process.execPath}
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {
+  process.stdout.write('{invalid json');
+} else {
+  fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify({ pid: process.pid, args }) + '\\n');
+  process.on('SIGTERM', () => {});
+  process.stdout.write(${JSON.stringify(probe === 'claude-json' ? '{"loggedIn":false}' : 'Not logged in. Run codex login to authenticate.')});
+  setInterval(() => {}, 1000);
+}
+`);
+      const started = Date.now();
+      const agents = await discoverLocalAgents({ env: testEnv(shell, directory), cwd: directory });
+      assert.ok(Date.now() - started < 9_000, 'one hanging probe must finish before the browser deadline');
+      assert.equal(agents[0]?.state, 'ready');
+      assert.equal(agents.find(agent => agent.id === (name === 'codex' ? 'codex' : 'claude-code'))?.state, 'ready', 'timed-out status remains unknown');
+      assert.equal(agents.find(agent => agent.id === (name === 'codex' ? 'claude-code' : 'codex'))?.state, 'sign-in');
+      const children = readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; args: string[] });
+      assert.equal(children.length, 1, 'a timed-out Claude JSON probe must not start a text probe');
+      assert.deepEqual(children[0]!.args, probe === 'codex' ? ['login', 'status'] : probe === 'claude-text' ? ['auth', 'status', '--text'] : ['auth', 'status']);
+      for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+    } finally {
+      if (existsSync(calls)) for (const line of readFileSync(calls, 'utf8').trim().split('\n')) {
+        try { process.kill((JSON.parse(line) as { pid: number }).pid, 'SIGKILL'); } catch { /* Already reaped. */ }
+      }
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }, 12_000);
+}

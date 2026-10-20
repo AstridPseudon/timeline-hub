@@ -1,9 +1,14 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { chmodSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';
+import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
+import { discoverLocalAgents } from './astrid-local-agents.ts';
+import { AcpProcessHost } from './acpProcessHost.ts';
+import { bridgeTestClient } from './bridge-test-client.ts';
+import { localAgentCatalogSchema } from './localAgents.ts';
 
 const catalog = {
   schemaVersion: 1,
@@ -119,3 +124,113 @@ test('agent model adapter rejects unsupported schemas and malformed JSON, and re
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('agent catalog discovery kills a hanging CLI and rejects its partial output', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-hanging-'));
+  const pidFile = join(directory, 'child.pid');
+  try {
+    const command = join(directory, 'astrid');
+    writeFileSync(command, `#!${process.execPath}
+require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+process.on('SIGTERM', () => {});
+process.stdout.write(${JSON.stringify(JSON.stringify(catalog))});
+process.stderr.write('credential-secret-private diagnostic');
+setInterval(() => {}, 1000);
+`, { mode: 0o755 });
+    const started = Date.now();
+    await assert.rejects(getAstridAgentModelCatalog({ command, cwd: directory }), error => {
+      assert.equal((error as Error).message, 'Astrid model operation failed. Run `astrid agent models` in a terminal for details.');
+      return true;
+    });
+    assert.ok(Date.now() - started < 9_000, 'a hanging catalog must finish before the browser deadline');
+    const pid = Number(readFileSync(pidFile, 'utf8'));
+    assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+  } finally {
+    if (existsSync(pidFile)) {
+      try { process.kill(Number(readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already reaped. */ }
+    }
+    rmSync(directory, { recursive: true, force: true });
+  }
+}, 12_000);
+
+for (const phase of ['profile', 'initialize', 'session/new', 'session/close']) {
+  test(`agents endpoint survives a hanging catalog and ${phase} bootstrap, and reaps discovery children`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-agents-deadline-'));
+    const calls = join(directory, 'children.jsonl');
+    const profile = join(directory, 'profile.md');
+    let close: (() => Promise<void>) | undefined;
+    try {
+      writeFileSync(profile, 'Fixture profile.');
+      const shell = join(directory, 'login-shell');
+      writeFileSync(shell, `#!/bin/sh\nprintf '\\n__ASTRID_LOGIN_PATH__%s\\n' "$PATH"\n`, { mode: 0o755 });
+      for (const name of ['astrid', 'codex']) {
+        writeFileSync(join(directory, name), `#!${process.execPath}
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+const agent = ${JSON.stringify(name)};
+if (args[0] === '--agent-profile-file') {
+  if (${JSON.stringify(phase)} === 'profile') {
+    fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify({ pid: process.pid, agent, args }) + '\\n');
+    process.on('SIGTERM', () => {});
+    setInterval(() => {}, 1000);
+  } else {
+    process.stdout.write(${JSON.stringify(profile)});
+  }
+} else if (args[0] === 'login') {
+  process.stdout.write('Logged in using ChatGPT');
+} else {
+  fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify({ pid: process.pid, agent, args }) + '\\n');
+  process.on('SIGTERM', () => {});
+  if (args[0] === 'agent') {
+    setInterval(() => {}, 1000);
+  } else {
+    require('node:readline').createInterface({ input: process.stdin }).on('line', line => {
+      const request = JSON.parse(line);
+      if (agent === 'astrid' && request.method === ${JSON.stringify(phase)}) return;
+      const result = request.method === 'session/new'
+        ? { sessionId: agent + '-discovery', models: { currentModelId: 'fixture', availableModels: [{ modelId: 'fixture', name: 'Fixture' }] } }
+        : request.method === 'initialize' ? { protocolVersion: 1 } : {};
+      process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\\n');
+    });
+    setInterval(() => {}, 1000);
+  }
+}
+`, { mode: 0o755 });
+      }
+      const env = { ...process.env, PATH: directory, SHELL: shell };
+      const { bridge } = createAstridAcpHttpServer({
+        config: { token: 'deadline-test', port: 0, cwd: directory, command: join(directory, 'astrid') },
+        discoverAgents: options => discoverLocalAgents({ ...options, env }),
+        // Exercise real ACP subprocesses without fetching the optional adapter.
+        localAgentHostFactory: async (_agent, options) => new AcpProcessHost({
+          command: join(directory, 'codex'), args: ['--mode=acp'], cwd: directory,
+          requestTimeoutMs: options.requestTimeoutMs, callbacks: options.callbacks,
+        }),
+        chatRegistry: {} as never,
+      });
+      close = () => bridge.close();
+      const started = Date.now();
+      const response = await bridgeTestClient(bridge, 'deadline-test')('/agents');
+      assert.equal(response.status, 200);
+      assert.ok(Date.now() - started < 16_000, 'discovery and bootstrap must stay below the browser deadline');
+      const agents = localAgentCatalogSchema.parse(await response.json()).agents;
+      assert.equal(agents.find(agent => agent.id === 'astrid')?.state, 'ready', 'unknown catalog preserves the existing classification');
+      assert.deepEqual(agents.find(agent => agent.id === 'codex')?.models, [{ modelId: 'fixture', name: 'Fixture' }]);
+      const children = readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; agent: string; args: string[] });
+      assert.equal(children.filter(child => child.agent === 'astrid').length, 2, 'both the hanging catalog and bootstrap discovery ran');
+      assert.equal(children.filter(child => child.agent === 'codex').length, 1);
+      // SIGKILL is synchronous; allow the child exit events to reap the PIDs.
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if (children.every(child => { try { process.kill(child.pid, 0); return false; } catch { return true; } })) break;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+    } finally {
+      await close?.();
+      if (existsSync(calls)) for (const line of readFileSync(calls, 'utf8').trim().split('\n')) {
+        try { process.kill((JSON.parse(line) as { pid: number }).pid, 'SIGKILL'); } catch { /* Already reaped. */ }
+      }
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+}

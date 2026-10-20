@@ -31,6 +31,8 @@ async function runAstrid(options: AstridModelOptions, args: string[]): Promise<s
       cwd: options.cwd,
       env: { ...process.env, ...(options.profile ? { OMP_PROFILE: options.profile } : {}) },
       encoding: 'utf8',
+      timeout: 5_000,
+      killSignal: 'SIGKILL',
       maxBuffer: 8 * 1024 * 1024,
     });
     return result.stdout;

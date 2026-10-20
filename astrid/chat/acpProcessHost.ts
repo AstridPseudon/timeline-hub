@@ -338,7 +338,7 @@ export class AcpProcessHost {
     });
   }
 
-  async dispose(): Promise<void> {
+  async dispose(signal: NodeJS.Signals = 'SIGTERM'): Promise<void> {
     if (this.disposed) return;
     this.disposed = true;
     const error = new AcpProcessHostError('ACP host disposed.', { code: 'acp_transport' });
@@ -351,7 +351,7 @@ export class AcpProcessHost {
     } catch {
       // Process teardown remains best-effort after pending requests are closed.
     }
-    if (this.ownsProcess) process.kill?.('SIGTERM');
+    if (this.ownsProcess) process.kill?.(signal);
   }
 
   private requireProcess(): ChildProcessLike {

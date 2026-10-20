@@ -44,6 +44,7 @@ type HostChildProcess = {
       readonly env: Record<string, string | undefined>;
       readonly stdio: readonly ['ignore', 'pipe', 'pipe'];
       readonly timeout: number;
+      readonly killSignal: 'SIGKILL';
     },
   ) => {
     readonly status: number | null;
@@ -71,6 +72,7 @@ export function resolveAstridAcpSystemPromptFile(
     env: { ...(runtime?.env ?? {}), ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 5_000,
+    killSignal: 'SIGKILL',
   });
   const path = typeof result.stdout === 'string'
     ? result.stdout.trim()
