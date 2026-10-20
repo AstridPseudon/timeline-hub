@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import copy
+import json
 
-from .errors import ConflictError, ValidationError
+from .errors import ConflictError, RuntimeErrorBase, ValidationError
 from .snapshot_refs import working_copy_binding
 from .timeline_commit import CommitRejected
 from .timeline_commit_port import detached, digest
@@ -90,3 +91,40 @@ def validate_capture(service, snapshot, ref, inputs):
         raise ConflictError(exc.failure["message"], details=exc.failure["details"]) from exc
     except (KeyError, TypeError, ValueError) as exc:
         raise ValidationError("capture source or authoring_preview is invalid") from exc
+
+
+def claim_capture_view(service, spec):
+    """Present a stored capture as canonical only while it still verifies.
+
+    Specs admitted before capture content was checked stay readable and are
+    never rewritten; a claim of one that cannot be verified exactly now is
+    labelled CAS-only (uncertified legacy preview) instead.
+    """
+    inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else {}
+    context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
+    ref = context.get("capture_snapshot_ref")
+    if not isinstance(ref, dict) or ref.get("source_kind") not in {"revision", "working_copy"}:
+        return spec
+    try:
+        snapshot = json.loads(service.object(ref["digest"])[1])
+        validate_capture(service, snapshot, ref, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {})
+        return spec
+    except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
+        pass
+    uncertified = {"digest": ref["digest"], "project_id": ref.get("project_id"),
+                   "timeline_id": ref.get("timeline_id"), "source_kind": "cas"}
+
+    def relabel(value):
+        if isinstance(value, dict):
+            return {key: uncertified if key == "capture_snapshot_ref" and item == ref else relabel(item)
+                    for key, item in value.items()}
+        if isinstance(value, str):
+            try:
+                decoded = json.loads(value)
+            except ValueError:
+                return value
+            if isinstance(decoded, dict) and "capture_snapshot_ref" in decoded:
+                return canonical_json(relabel(decoded))
+        return value
+
+    return relabel(spec)

@@ -99,7 +99,6 @@ def main():
         claim = service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
                                     "runtime_epoch": service.health()["runtime_epoch"]})
         assert claim["task_id"] == task_id
-        assert claim["spec"] == accepted["task"]["spec"]
         client = CaptureRuntime(service, recorded["request"]["project"])
         values = client.materialize({"spec": claim["spec"]}, directory / "attempt")
         assert json.loads(Path(values["timeline"]).read_text()) == recorded["snapshot"]["config"]
@@ -110,9 +109,7 @@ def main():
             assert binding["authority"] == recorded["snapshot"]["metadata"]["capture_authority"]
             assert binding["ref"] == claim["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
         assert _cas_files(service) == before
-        if field == "genuine":
-            assert source is not None, "valid recorded projection must reach actual host binding"
-        elif field == "native":
+        if field == "native":
             assert source is None, "native CAS preview must remain uncertified"
         print(_json({"canonical_source": type(source).__name__ if source is not None else None,
                      "retry_refusal": retry_refusal}))

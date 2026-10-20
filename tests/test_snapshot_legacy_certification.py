@@ -23,18 +23,8 @@ AGENT_CAPTURE = "321cef4b8c89a4a938cb9ede41ba6a5444cf1b62"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class LegacyCertificationFailure(AssertionError):
-    """Only a fully exercised forged canonical binding is an expected failure."""
-
-
-class LegacyRetryFailure(AssertionError):
-    """Only the documented semantic refusal of an exact retry is expected."""
-
-
-LEGACY_GAP = pytest.mark.xfail(
-    strict=True, raises=LegacyCertificationFailure,
-    reason="02:42(b): legacy canonical capture claim is not content-verified",
-)
+class LegacyGenuineUncertified(AssertionError):
+    """A recorded valid projection was not certified on upgrade."""
 
 
 def _archive(repo, revision, target, *paths):
@@ -81,23 +71,19 @@ def upgraded_capture(archived_capture, tmp_path_factory, request):
 
 def test_already_admitted_capture_after_upgrade(upgraded_capture, request):
     field, binding = upgraded_capture
-    # 02:42(b): restore when claim verifies recorded canonical content or
-    # returns an explicitly uncertified legacy execution view.
-    if field in {"config", "registry", "expansion"}:
-        request.node.add_marker(LEGACY_GAP)
-    if field in {"config", "registry", "expansion"} and binding["canonical_source"]:
-        raise LegacyCertificationFailure(
-            f"legacy {field} minted {binding['canonical_source']} from current claim without canonical verification"
-        )
-
-
-def test_exact_legacy_capture_retry_after_upgrade(upgraded_capture, request):
-    field, binding = upgraded_capture
-    if field != "native":
-        # Exact accepted identity must be recoverable without re-admission.
+    if field == "genuine":
+        # Re-certifying a valid legacy capture needs Runtime to re-project it at claim, which needs the
+        # Agent capture projector (project_capture); until then every legacy capture is an uncertified preview.
         request.node.add_marker(pytest.mark.xfail(
-            strict=True, raises=LegacyRetryFailure,
-            reason="legacy canonical exact retry re-runs admission before receipt replay",
+            strict=True, raises=LegacyGenuineUncertified,
+            reason="valid legacy capture is not re-certified without the capture projector",
         ))
-    if binding["retry_refusal"]:
-        raise LegacyRetryFailure(binding["retry_refusal"])
+        if binding["canonical_source"] is None:
+            raise LegacyGenuineUncertified(field)
+    else:
+        assert binding["canonical_source"] is None
+
+
+def test_exact_legacy_capture_retry_after_upgrade(upgraded_capture):
+    _, binding = upgraded_capture
+    assert binding["retry_refusal"] is None

@@ -579,6 +579,18 @@ class RealmStore:
             ids.append(digest)
         return ids
 
+    def _admitted_spec_replay(self, project_id, idempotency_key, spec):
+        """Whether this idempotency key already admitted exactly this spec."""
+        if not idempotency_key:
+            return False
+        old = self.conn.execute(
+            "SELECT * FROM runs WHERE project_id IS ? AND idempotency_key=?", (project_id, idempotency_key),
+        ).fetchone()
+        if old is None or old["spec_digest"] is None:
+            return False
+        return (canonical_json(canonical_task_spec_for_compare(self._spec(old)))
+                == canonical_json(canonical_task_spec_for_compare(spec)))
+
     def _load_spec(self, digest):
         if digest is None:
             return {}
@@ -2277,15 +2289,21 @@ class RealmStore:
                 return ref
 
             spec, _ = rewrite_spec_snapshots(spec, preflight)
+            captures = []
             snapshot_ids = self._validate_spec_snapshot_refs(
-                spec, project_id, prepared=prepared, capture_validator=capture_validator,
+                spec, project_id, prepared=prepared,
+                capture_validator=lambda snapshot, ref: captures.append((snapshot, ref)),
             )
-            for snapshot, ref in publications:
-                self._publish_spec_snapshot(snapshot, ref, project_id)
             if snapshot_ids:
                 # Only specs that reference snapshots change shape; any other spec keeps its exact
                 # bytes, so its admission identity (and legacy replay) is unchanged.
                 spec["input_object_ids"] = list(dict.fromkeys([*spec.get("input_object_ids", []), *snapshot_ids]))
+            # An exact retry returns its original admission; only a new one is checked for capture authority.
+            if capture_validator is not None and not self._admitted_spec_replay(project_id, idempotency_key, spec):
+                for snapshot, ref in captures:
+                    capture_validator(snapshot, ref)
+            for snapshot, ref in publications:
+                self._publish_spec_snapshot(snapshot, ref, project_id)
             predecessors = self._continuation_predecessors(spec)
             if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
                 # The typed GEN publication plan is admitted against the task
