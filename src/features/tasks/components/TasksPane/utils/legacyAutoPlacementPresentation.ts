@@ -8,9 +8,8 @@ interface LegacyAutoPlacementTaskInput {
   params: Record<string, unknown>;
   /**
    * The legacy complete_task result_data projection, when a caller has it.
-   * The current public bridge task summary does not expose this field yet;
-   * keeping it optional lets presentation stay faithful to that real shape
-   * without inventing a transport field.
+   * Current task-list mappers do not carry this marker to TaskItem. Until a
+   * supported read supplies it, the not-placed label must remain inactive.
    */
   resultData?: unknown;
   hasAsset: boolean;
@@ -26,12 +25,6 @@ export interface LegacyAutoPlacementPresentation {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasLegacyPlacementRequest(params: Record<string, unknown>): boolean {
-  // These are the two fields written by the old completion callers. Their
-  // contents are intentionally not interpreted as current ownership.
-  return params.placement_intent != null || params.timeline_placement != null;
 }
 
 function hasRetiredCompletionMarker(resultData: unknown): boolean {
@@ -60,7 +53,9 @@ export function getLegacyAutoPlacementPresentation(
     return null;
   }
 
-  if (!hasLegacyPlacementRequest(task.params) && !hasRetiredCompletionMarker(task.resultData)) {
+  // Request parameters survive successful historical placement and can also be
+  // retained by modern requests. Intent alone says nothing about the outcome.
+  if (!hasRetiredCompletionMarker(task.resultData)) {
     return null;
   }
 

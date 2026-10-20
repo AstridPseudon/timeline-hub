@@ -29,13 +29,13 @@ describe('getLegacyAutoPlacementPresentation', () => {
     });
   });
 
-  it('shows a reachable old placement request without interpreting its target', () => {
+  it('does not infer a placement outcome from a reachable old request', () => {
     expect(getLegacyAutoPlacementPresentation({
       id: 'task-intent',
       status: 'Complete',
       params: { placement_intent: { timeline_id: 'old-timeline', anchor_clip_id: 'old-clip' } },
       hasAsset: true,
-    })?.label).toBe('Not placed: place manually');
+    })).toBeNull();
   });
 
   it('keeps the presentation scoped to the task and output item', () => {
@@ -53,7 +53,7 @@ describe('getLegacyAutoPlacementPresentation', () => {
       hasAsset: true,
     });
 
-    expect(first?.taskId).toBe('task-a');
+    expect(first).toBeNull();
     expect(second?.taskId).toBe('task-b');
     expect(first).not.toBe(second);
   });
@@ -86,6 +86,34 @@ describe('getLegacyAutoPlacementPresentation', () => {
       status: 'Complete',
       params: { placement_intent: { timeline_id: 'old-timeline' } },
       hasAsset: false,
+    })).toBeNull();
+  });
+
+  // Original successful completion fixtures from origin/main's handler.test.ts:
+  // both save a clip and leave params intact without persisting follow-up issues.
+  it.each([
+    { timeline_placement: {
+      timeline_id: 'timeline-1', source_clip_id: 'clip-source-1', target_track: 'V1',
+      insertion_time: 12.5, intent: 'after_source',
+    } },
+    { placement_intent: {
+      timeline_id: 'timeline-1', anchor_clip_id: 'clip-source-1',
+      anchor_generation_id: 'gen-source-1', anchor_variant_id: 'variant-source-1',
+      relation: 'after', preferred_track_id: 'V1', fallback_at: 22.25, fallback_track_id: 'V1',
+    } },
+  ])('does not call successfully placed history unplaced for %j', (params) => {
+    expect(getLegacyAutoPlacementPresentation({
+      id: 'task-1', status: 'Complete', params, resultData: {}, hasAsset: true,
+    })).toBeNull();
+  });
+
+  it('does not classify a request by retained generation parameters', () => {
+    expect(getLegacyAutoPlacementPresentation({
+      id: 'task-bound', status: 'Complete', hasAsset: true,
+      params: {
+        placement_intent: { timeline_id: 'old-timeline', anchor_clip_id: 'old-clip' },
+        generation_intent: { output_selection: { variant_key: 'v1' } },
+      },
     })).toBeNull();
   });
 });
