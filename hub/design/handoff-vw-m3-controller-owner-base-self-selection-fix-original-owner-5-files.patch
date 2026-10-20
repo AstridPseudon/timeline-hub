@@ -1,0 +1,268 @@
+diff --git a/scripts/testing/current013-integration.mjs b/scripts/testing/current013-integration.mjs
+index bf219903e..d2c449ed2 100644
+--- a/scripts/testing/current013-integration.mjs
++++ b/scripts/testing/current013-integration.mjs
+@@ -15,7 +15,8 @@ import { pathToFileURL } from 'node:url';
+ import path from 'node:path';
+ 
+ export const CURRENT013_RUNTIME = Object.freeze({
+-  commit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
++  serverCommit: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
++  producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
+   version: '0.2.13',
+   producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
+   schemaDigest: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
+@@ -23,9 +24,15 @@ export const CURRENT013_RUNTIME = Object.freeze({
+   artifactCount: 75,
+ });
+ 
++export const CURRENT013_AGENT = Object.freeze({
++  commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
++  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
++  lock: 'sha256:c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
++});
++
+ export const CURRENT013_COMPOSITION = Object.freeze({
+-  archive: 'banodoco-timeline-composition-0.0.12.tgz',
+-  sha256: 'sha256:0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3',
++  archive: 'banodoco-timeline-composition-0.0.13.tgz',
++  sha256: 'sha256:9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
+   fileCount: 77,
+ });
+ 
+@@ -89,8 +96,11 @@ export function readCurrent013Inputs(env = process.env, appRoot = process.cwd())
+   const appTree = requiredSha(env, 'TIMELINE_CURRENT013_APP_TREE');
+   const agentSha = requiredSha(env, 'TIMELINE_CURRENT013_AGENT_SHA');
+   const runtimeSha = requiredSha(env, 'TIMELINE_CURRENT013_RUNTIME_SHA');
+-  if (runtimeSha !== CURRENT013_RUNTIME.commit) {
+-    fail(`TIMELINE_CURRENT013_RUNTIME_SHA must be the published Runtime ${CURRENT013_RUNTIME.commit}`);
++  if (agentSha !== CURRENT013_AGENT.commit) {
++    fail(`TIMELINE_CURRENT013_AGENT_SHA must be the frozen Agent ${CURRENT013_AGENT.commit}`);
++  }
++  if (runtimeSha !== CURRENT013_RUNTIME.serverCommit) {
++    fail(`TIMELINE_CURRENT013_RUNTIME_SHA must be the frozen Runtime server ${CURRENT013_RUNTIME.serverCommit}`);
+   }
+   if (!path.isAbsolute(appRoot)) fail(`App root must be absolute: ${appRoot}`);
+   const app = realpathSync(appRoot);
+@@ -120,7 +130,7 @@ function checkLock(root, label) {
+   const file = path.join(root, 'runtime.lock.json');
+   const lock = jsonFile(file);
+   if (lock.producer !== 'astrid-runtime') fail(`${label} Runtime lock producer is ${lock.producer}, expected astrid-runtime`);
+-  if (lock.source_commit !== CURRENT013_RUNTIME.commit) fail(`${label} Runtime source pin is ${lock.source_commit}, expected ${CURRENT013_RUNTIME.commit}`);
++  if (lock.source_commit !== CURRENT013_RUNTIME.producerCommit) fail(`${label} Runtime artifact producer pin is ${lock.source_commit}, expected ${CURRENT013_RUNTIME.producerCommit}`);
+   if (lock.producer_version !== CURRENT013_RUNTIME.producerVersion) fail(`${label} Runtime artifact pin is ${lock.producer_version}, expected ${CURRENT013_RUNTIME.producerVersion}`);
+   return { file: sha256File(file), sourceCommit: lock.source_commit, producerVersion: lock.producer_version };
+ }
+@@ -185,7 +195,7 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
+   const producerTree = git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}');
+   checkHead(input.agent, input.agentSha, 'Agent');
+   checkHead(input.runtime, input.runtimeSha, 'Runtime');
+-  checkHead(input.runtimeProducer, input.runtimeSha, 'Runtime producer');
++  checkHead(input.runtimeProducer, CURRENT013_RUNTIME.producerCommit, 'Runtime artifact producer');
+   checkClean(input.app, 'App');
+   checkClean(input.agent, 'Agent');
+   checkClean(input.runtime, 'Runtime');
+@@ -205,7 +215,7 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
+     app: { root: input.app, tree: input.appTree, lock: appLock, metadata: appMetadata, composition: appComposition },
+     agent: { root: input.agent, commit: input.agentSha, tree: agentTree, lock: agentLock, metadata: agentMetadata, composition: agentComposition },
+     runtime: { root: input.runtime, commit: input.runtimeSha, tree: runtimeTree },
+-    runtimeProducer: { root: input.runtimeProducer, commit: input.runtimeSha, tree: producerTree, manifest: runtimeManifest },
++    runtimeProducer: { root: input.runtimeProducer, commit: CURRENT013_RUNTIME.producerCommit, tree: producerTree, manifest: runtimeManifest },
+   });
+ }
+ 
+diff --git a/scripts/testing/current013-integration.test.mjs b/scripts/testing/current013-integration.test.mjs
+index dd5cbd43a..5bf8e1495 100644
+--- a/scripts/testing/current013-integration.test.mjs
++++ b/scripts/testing/current013-integration.test.mjs
+@@ -9,7 +9,7 @@ import path from 'node:path';
+ import { promisify } from 'node:util';
+ import { after, mock, test } from 'node:test';
+ import {
+-  checkCurrent013Sources, CURRENT013_COMPOSITION, CURRENT013_RUNTIME,
++  checkCurrent013Sources, CURRENT013_AGENT, CURRENT013_COMPOSITION, CURRENT013_RUNTIME,
+   readCurrent013Inputs, runCurrent013Integration,
+ } from './current013-integration.mjs';
+ 
+@@ -21,8 +21,8 @@ for (const root of Object.values(roots)) mkdirSync(root);
+ function env() {
+   return {
+     TIMELINE_CURRENT013_APP_TREE: 'a'.repeat(40),
+-    TIMELINE_CURRENT013_AGENT_SHA: 'b'.repeat(40),
+-    TIMELINE_CURRENT013_RUNTIME_SHA: CURRENT013_RUNTIME.commit,
++    TIMELINE_CURRENT013_AGENT_SHA: CURRENT013_AGENT.commit,
++    TIMELINE_CURRENT013_RUNTIME_SHA: CURRENT013_RUNTIME.serverCommit,
+     ASTRID_CHECKOUT: roots.agent,
+     ASTRID_RUNTIME_CHECKOUT: roots.runtime,
+     TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT: roots.producer,
+@@ -39,7 +39,7 @@ function write(root, file, contents) {
+ 
+ for (const root of [roots.app, roots.agent]) {
+   write(root, 'runtime.lock.json', JSON.stringify({
+-    producer: 'astrid-runtime', source_commit: CURRENT013_RUNTIME.commit,
++    producer: 'astrid-runtime', source_commit: CURRENT013_RUNTIME.producerCommit,
+     producer_version: CURRENT013_RUNTIME.producerVersion,
+   }));
+   const metadata = root === roots.app
+@@ -72,10 +72,11 @@ function controlled(fn, { dirty = '', childStatus = 0, mutate = () => {} } = {})
+     const op = args.slice(2).join(' ');
+     calls.push({ root, op });
+     if (op === 'rev-parse --show-toplevel') return roots.app;
+-    if (op === 'rev-parse HEAD^{tree}') return env().TIMELINE_CURRENT013_APP_TREE;
++    if (op === 'rev-parse HEAD^{tree}') return root === roots.agent ? CURRENT013_AGENT.tree : env().TIMELINE_CURRENT013_APP_TREE;
+     // A central snapshot's App commit deliberately differs from the App tree.
+     if (op === 'rev-parse HEAD') return root === roots.app ? 'd'.repeat(40)
+-      : root === roots.agent ? env().TIMELINE_CURRENT013_AGENT_SHA : CURRENT013_RUNTIME.commit;
++      : root === roots.agent ? CURRENT013_AGENT.commit
++        : root === roots.runtime ? CURRENT013_RUNTIME.serverCommit : CURRENT013_RUNTIME.producerCommit;
+     if (op === 'status --porcelain --untracked-files=normal') return root === roots.app ? appStatus : '';
+     throw new Error(`unexpected git ${op}`);
+   });
+@@ -108,13 +109,13 @@ test('requires the exact App tree and does not infer a moving source path', () =
+ test('accepts an App snapshot identity by tree and pins Runtime to the published SHA', () => {
+   const input = readCurrent013Inputs(env());
+   assert.equal(input.appTree, 'a'.repeat(40));
+-  assert.equal(input.runtimeSha, CURRENT013_RUNTIME.commit);
++  assert.equal(input.runtimeSha, CURRENT013_RUNTIME.serverCommit);
+ });
+ 
+ test('refuses a different Runtime publication before any child launch', () => {
+   const values = env();
+   values.TIMELINE_CURRENT013_RUNTIME_SHA = 'c'.repeat(40);
+-  assert.throws(() => readCurrent013Inputs(values), /must be the published Runtime/);
++  assert.throws(() => readCurrent013Inputs(values), /must be the frozen Runtime server/);
+ });
+ 
+ test('requires all eight inputs and full identities', () => {
+@@ -175,7 +176,7 @@ test('same-tree snapshot and ignored output pass both boundaries; original comma
+     assert.equal(child.options.env.ASTRID_PYTHON, env().ASTRID_PYTHON);
+     assert.equal(child.options.env.ASTRID_RUNTIME_PYTHON, env().ASTRID_RUNTIME_PYTHON);
+     assert.equal(child.options.env.TIMELINE_BUNDLE_AGENT_HEAD, env().TIMELINE_CURRENT013_AGENT_SHA);
+-    assert.equal(child.options.env.TIMELINE_BUNDLE_RUNTIME_HEAD, CURRENT013_RUNTIME.commit);
++    assert.equal(child.options.env.TIMELINE_BUNDLE_RUNTIME_HEAD, CURRENT013_RUNTIME.serverCommit);
+     assert.equal(calls.filter(({ root, op }) => root === roots.app && op?.startsWith('status ')).length, 2);
+     assert.equal(calls.some(({ root, op }) => root === roots.app && op === 'rev-parse HEAD'), false);
+   }, { mutate: () => write(roots.app, 'dist/ignored-output', 'normal build output') });
+diff --git a/tests/e2e/timeline/viewing-parity/harness.ts b/tests/e2e/timeline/viewing-parity/harness.ts
+index d3efc3764..240e00225 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.ts
+@@ -15,14 +15,14 @@ import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from
+ export const INSTALLED_BROWSER = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
+ export const PLAYER_BROWSER = playerBrowserProfile().executablePath;
+ const EXPORT_BROWSER_HASH = '63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4';
+-const COMPOSITION_HASH = 'sha256:0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3';
++const COMPOSITION_HASH = 'sha256:9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738';
+ const COMPOSITION_FILE_COUNT = 77;
+ const EXPECTED_PACKAGE_VERSIONS = {
+   react: '18.3.1',
+   'react-dom': '18.3.1',
+   remotion: '4.0.509',
+   '@remotion/player': '4.0.509',
+-  '@banodoco/timeline-composition': '0.0.12',
++  '@banodoco/timeline-composition': '0.0.13',
+ } as const;
+ 
+ type FileManifest = Readonly<Record<string, string>>;
+@@ -84,7 +84,7 @@ function archiveMembers(archive: string): string[] {
+ async function compositionManifest(archive: string): Promise<FileManifest> {
+   const archiveBytes = await readFile(archive);
+   if (mediaHash(archiveBytes) !== COMPOSITION_HASH) {
+-    throw new Error(`Composition artifact is not the approved 0.0.12 source: ${archive}`);
++    throw new Error(`Composition artifact is not the approved 0.0.13 source: ${archive}`);
+   }
+   const members = archiveMembers(archive);
+   if (members.length !== COMPOSITION_FILE_COUNT || new Set(members).size !== members.length) {
+@@ -171,10 +171,10 @@ export async function sourceVersions(profile?: unknown) {
+       gitFile: gitInfo.isFile() ? mediaHash(await readFile(gitPath)) : null };
+   }
+   await verifyFileGraph(roots.app, tuple.client.files, 'official Runtime client');
+-  const artifacts = [resolve(roots.app, 'vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz'),
+-    resolve(roots.agent, 'remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz')];
++  const artifacts = [resolve(roots.app, 'vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz'),
++    resolve(roots.agent, 'remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz')];
+   const hashes = await Promise.all(artifacts.map(async path => mediaHash(await readFile(path))));
+-  if (hashes.some(hash => hash !== COMPOSITION_HASH)) throw new Error(`both consumers require exact public 0.0.12 artifact ${COMPOSITION_HASH}: ${hashes}`);
++  if (hashes.some(hash => hash !== COMPOSITION_HASH)) throw new Error(`both consumers require exact public 0.0.13 artifact ${COMPOSITION_HASH}: ${hashes}`);
+   const remotionProject = await realpath(requiredEnv('ASTRID_REMOTION_PROJECT_DIR'));
+   deepStrictEqual(remotionProject, await realpath(tuple.remotionProject), 'selected Agent Remotion project changed');
+   const packages: Record<string, string> = {};
+diff --git a/tests/e2e/timeline/viewing-parity/source-tuple.test.ts b/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+index b0f38952c..97b40436f 100644
+--- a/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
++++ b/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+@@ -8,12 +8,13 @@ import { playerBrowserProfile } from './browser-profile';
+ function tuple(): FrameSourceTuple {
+   const source = { root: '/synthetic', commit: 'a'.repeat(40), tree: 'b'.repeat(40) };
+   const digest = `sha256:${'c'.repeat(64)}`;
+-  return { schema: 'timeline.viewing.next-four-case/v1', frozen: true,
++  return { schema: 'timeline.viewing.next-five-case/v1', frozen: true,
+     sources: { app: { ...source }, agent: { ...source }, runtime: { ...source }, composition: { ...source } },
+     appSource: { files: 1, sha256: digest }, remotionProject: '/synthetic/remotion',
+     peers: { app: Object.fromEntries(PEER_FILES.map(path => [path, digest])),
+       agent: Object.fromEntries(PEER_FILES.map(path => [path, digest])) },
+-    client: { official: true, runtimeCommit: source.commit, files: { 'src/integrations/runtime/generated.ts': digest } } };
++    client: { official: true, producerCommit: 'd'.repeat(40), producerTree: 'e'.repeat(40),
++      producerVersion: digest, artifactCount: 75, files: { 'src/integrations/runtime/generated.ts': digest } } };
+ }
+ 
+ test('accepts a complete source contract without discovering installed pins', () => {
+@@ -31,7 +32,10 @@ test('refuses owner-pending sources, peers, official client, and content freeze'
+     (p: FrameSourceTuple) => { p.peers.app['node_modules/other'] = p.peers.app[PEER_FILES[0]]; },
+     (p: FrameSourceTuple) => { p.peers.app[PEER_FILES[0]] = 'learned-from-install'; },
+     (p: FrameSourceTuple) => { p.client.official = false as true; },
+-    (p: FrameSourceTuple) => { p.client.runtimeCommit = 'd'.repeat(40); },
++    (p: FrameSourceTuple) => { p.client.producerCommit = 'not-a-sha'; },
++    (p: FrameSourceTuple) => { p.client.producerTree = 'not-a-sha'; },
++    (p: FrameSourceTuple) => { p.client.producerVersion = 'not-a-digest'; },
++    (p: FrameSourceTuple) => { p.client.artifactCount = 0; },
+     (p: FrameSourceTuple) => { p.client.files = {}; },
+     (p: FrameSourceTuple) => { p.client.files['../outside'] = p.peers.app[PEER_FILES[0]]; },
+   ]) {
+diff --git a/tests/e2e/timeline/viewing-parity/source-tuple.ts b/tests/e2e/timeline/viewing-parity/source-tuple.ts
+index 963bfaf83..88307b209 100644
+--- a/tests/e2e/timeline/viewing-parity/source-tuple.ts
++++ b/tests/e2e/timeline/viewing-parity/source-tuple.ts
+@@ -12,19 +12,26 @@ export const PEER_FILES = [
+ 
+ export interface SourcePin { root: string; commit: string; tree: string }
+ export interface FrameSourceTuple {
+-  schema: 'timeline.viewing.next-four-case/v1';
++  schema: 'timeline.viewing.next-five-case/v1';
+   frozen: true;
+   sources: Record<'app' | 'agent' | 'runtime' | 'composition', SourcePin>;
+   appSource: { files: number; sha256: string };
+   remotionProject: string;
+   peers: Record<'app' | 'agent', Record<string, string>>;
+-  client: { official: true; runtimeCommit: string; files: Record<string, string> };
++  client: {
++    official: true;
++    producerCommit: string;
++    producerTree: string;
++    producerVersion: string;
++    artifactCount: number;
++    files: Record<string, string>;
++  };
+ }
+ 
+ /** Release owners supply pins; never derive expected hashes from a selected install. */
+ export function assertFrameSourceTuple(value: unknown): asserts value is FrameSourceTuple {
+   const tuple = value as FrameSourceTuple | undefined;
+-  assert.equal(tuple?.schema, 'timeline.viewing.next-four-case/v1', 'final source tuple is owner-pending');
++  assert.equal(tuple?.schema, 'timeline.viewing.next-five-case/v1', 'final source tuple is owner-pending');
+   assert.equal(tuple.frozen, true, 'manager source freeze is pending');
+   for (const name of ['app', 'agent', 'runtime', 'composition'] as const) {
+     const source = tuple.sources?.[name];
+@@ -41,7 +48,11 @@ export function assertFrameSourceTuple(value: unknown): asserts value is FrameSo
+     for (const hash of Object.values(files ?? {})) assert.match(hash, /^sha256:[a-f0-9]{64}$/);
+   }
+   assert.equal(tuple.client?.official, true, 'official generated client is pending');
+-  assert.equal(tuple.client.runtimeCommit, tuple.sources.runtime.commit, 'Runtime/client pins must match');
++  assert.match(tuple.client.producerCommit, /^[a-f0-9]{40}$/, 'official artifact producer source pending');
++  assert.match(tuple.client.producerTree, /^[a-f0-9]{40}$/, 'official artifact producer tree pending');
++  assert.match(tuple.client.producerVersion, /^sha256:[a-f0-9]{64}$/, 'official artifact version pending');
++  assert.ok(Number.isSafeInteger(tuple.client.artifactCount) && tuple.client.artifactCount > 0,
++    'official artifact count pending');
+   assert.ok(Object.hasOwn(tuple.client.files ?? {}, 'src/integrations/runtime/generated.ts'), 'official generated client byte pin pending');
+   for (const [path, hash] of Object.entries(tuple.client.files)) {
+     assert.ok(path && !path.startsWith('/') && !path.split('/').includes('..'), 'unsafe client pin path');

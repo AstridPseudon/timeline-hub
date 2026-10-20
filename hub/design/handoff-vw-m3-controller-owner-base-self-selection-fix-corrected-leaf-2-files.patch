@@ -1,0 +1,90 @@
+diff --git a/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs b/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+index 9f7d05158..9bdbd6de7 100644
+--- a/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
++++ b/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+@@ -70,6 +70,7 @@ export const MIN_FREE_BYTES = 10 * 1024 ** 3;
+ export const SHORT_TEMP_PREFIX = 'timeline-tab-audio-';
+ export const APP_SOURCE_ENV = 'TIMELINE_VIEWING_APP_SOURCE';
+ export const APP_TREE_ENV = 'TIMELINE_VIEWING_APP_TREE';
++const APP_OWNER_INTEGRATION_REF = 'refs/heads/tl/integration';
+ 
+ const FULL_SHA = /^[a-f0-9]{40}$/;
+ 
+@@ -125,7 +126,15 @@ const OWN_LEAF = new Set([
+ ]);
+ 
+ function git(root, args) {
+-  return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
++  try {
++    return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
++  } catch (error) {
++    // The sandbox can report EPERM after git has successfully returned its
++    // output. Preserve that output; genuine non-zero git failures still fail
++    // closed below.
++    if (error.status === 0 && typeof error.stdout === 'string') return error.stdout.trim();
++    throw error;
++  }
+ }
+ function sha256(bytes) {
+   return createHash('sha256').update(bytes).digest('hex');
+@@ -238,8 +247,23 @@ export function assertRuntimeArtifact(facts = RUNTIME13_ARTIFACT) {
+   return facts;
+ }
+ 
+-export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection().source) {
+-  const changed = git(appRoot, ['diff', '--name-only', `${base}...HEAD`]).split('\n').filter(Boolean);
++export function assertAppOwnerBase(appRoot, app = readAppSourceSelection()) {
++  const source = typeof app === 'string' ? app : app.source;
++  const selectedTree = git(appRoot, ['rev-parse', `${source}^{tree}`]);
++  if (typeof app !== 'string' && selectedTree !== app.tree) {
++    throw new Error(`selected App source/tree does not name the selected commit: ${source}/${app.tree}`);
++  }
++  const integration = git(appRoot, ['rev-parse', `${APP_OWNER_INTEGRATION_REF}^{commit}`]);
++  if (git(appRoot, ['merge-base', source, integration]) !== source) {
++    throw new Error(`selected App source ${source} is not an actual App integration ancestor`);
++  }
++  return { source, tree: selectedTree };
++}
++
++export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection()) {
++  const source = typeof base === 'string' ? base : base.source;
++  assertAppOwnerBase(appRoot, base);
++  const changed = git(appRoot, ['diff', '--name-only', `${source}...HEAD`]).split('\n').filter(Boolean);
+   const forbidden = changed.filter(file => !OWN_LEAF.has(file));
+   if (forbidden.length) throw new Error(`App product/root/pin/DTO/source changes are not owned by this leaf: ${forbidden.join(', ')}`);
+   return changed;
+diff --git a/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs b/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+index 3957f8eb0..17e370ad1 100644
+--- a/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
++++ b/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+@@ -4,7 +4,7 @@ import {
+   APP13, AGENT13, RUNTIME13, RUNTIME13_ARTIFACT, AGENT13_RUNTIME, COMPOSITION13, CHROME155, CONTROL, NODE20,
+   VIEWING_QUALIFICATIONS,
+   MISSING_OWNER_PORTS, OWNER_PORTS,
+-  assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
++  assertAppOwnerBase, assertAppOwnLeaf, assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+   assertRuntimeArtifact, readAppSourceSelection,
+ } from './tab-audio.controller.mjs';
+ 
+@@ -53,6 +53,21 @@ test('controller refuses empty, whitespace-only, and partial current App selecti
+   ]) assert.throws(() => readAppSourceSelection(env), /must be supplied together/);
+ });
+ 
++test('leaf refuses a candidate that self-selects as its owner base', () => {
++  assert.throws(() => assertAppOwnLeaf(process.cwd(), '05de08cecabeaea2d0d955475e6190acc685111a'),
++    /not an actual App integration ancestor/);
++});
++
++test('leaf accepts the actual current App owner base lineage and tree', () => {
++  assert.deepEqual(assertAppOwnerBase(process.cwd(), {
++    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
++    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
++  }), {
++    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
++    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
++  });
++});
++
+ test('immutable d0 Runtime graph retains its lock, whole graph, and six peers', () => {
+   const result = assertFrozenRuntimeGraph();
+   assert.equal(result.lock, AGENT13_RUNTIME.lock);

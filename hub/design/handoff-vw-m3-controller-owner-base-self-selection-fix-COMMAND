@@ -1,0 +1,23 @@
+# Apply in this order from the App worktree.
+OWNER_PATCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-controller-owner-base-self-selection-fix/original-owner-5-files.patch
+LEAF_PATCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-controller-owner-base-self-selection-fix/corrected-leaf-2-files.patch
+NODE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
+
+# Phase 1: App owner applies and integrates the five-file packet first.
+git apply --check "$OWNER_PATCH"
+git apply "$OWNER_PATCH"
+
+# Record the actual resulting owner-integrated App source/tree, then apply the
+# two-file leaf only on that base. Do not use candidate 05de08cec as authority.
+git status --short --branch
+
+git apply --check "$LEAF_PATCH"
+git apply "$LEAF_PATCH"
+
+"$NODE" --check tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+"$NODE" --test --test-concurrency=1 tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+"$NODE" --test --test-concurrency=1 scripts/testing/current013-integration.test.mjs
+"$NODE" --import tsx --test --test-concurrency=1 tests/e2e/timeline/viewing-parity/source-tuple.test.ts tests/e2e/timeline/viewing-parity/harness.test.ts
+"$NODE" tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --discover "$PWD"
+node_modules/.bin/eslint --no-cache --max-warnings 0 tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+git diff --check

@@ -1,0 +1,7 @@
+## D10 closure — App/Agent — 2026-10-20
+
+Broad D10 is **DELETED**. Agent source deletion is merged at `f711cbd29be0b0cb1a51328ea5093b954db3c158` from source `c1d49291a7d4b1fabdb574acc919ded351cb106a`, tree `b96f0246024d165abaf21e5b456ba6106472267f`. App consumer deletion is `e245a4791f9270177408a7745d8397ad7b6f81a1`; the current normal provenance refresh is donor `68b5356db21a345be294fa50c830a3b451da77cc`, merged as `ad1b0961a315b1ba4357768f0fe72d427ecdea49`.
+
+The original 13-default source-adoption scope has no remaining duplicate implementation or live consumer: the nine Agent/App public wrapper implementations are absent, the four old App 2rp theme-copy directories and old App Composition source mirror are absent, and the public13 registry/host seam supplies the builtins. Current normal provenance records 149 vendor files with exactly nine exclusions, 65 closure files, and 11 Home imports; the verifier, public-boundary, and 20 affected host/registry controls passed. Agent’s corrected owner lane passed 24 tests with registry/generator, custom-owner, unknown-refusal, and catalog-freshness coverage.
+
+Preserved: public Composition 0.0.13 authority and immutable admissions, descriptor/catalog/schema/default ownership, valid local custom `text-card` owners, custom components/assets, and existing Home host semantics. Old-name matches are test stubs/comments only. This closure makes no frame/PCM parity or D09/private-statistics retirement claim.
