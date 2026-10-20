@@ -9,23 +9,24 @@ Every `timelines` below is short for **`python -m astrid timelines`** (venv acti
 
 ## The loop
 ```bash
-timelines checkout TL --project P                      # your working copy; it prints the next steps
 timelines show TL c41.mink --project P                 # ONE thing's whole record: every param (typed, canvas px,
                                                        #   formula, default, allowed keys), its moments in seconds
 timelines show TL --project P --as sheet --range c30..c31 > cut.sheet   # several cuts as an editable sheet
-timelines apply TL --project P cut.sheet               # change a line of the sheet, then apply it
-timelines edit TL --project P --clip c30.cover --until Astrid --verify    # edit, then published vs yours, one page
+timelines edit move TL --project P --clip parent/clip:ID --on 33.9       # native guarded command
+timelines edit TL --project P --clip c30.cover --until Astrid --verify    # legacy detached draft edit
 timelines check TL --project P --at '"Astrid" in n21'                      # look at any moment (fast; no queue)
 timelines check TL --project P --at 33.9 --zoom c08.loras   # + both sides cropped around a layer, full resolution
-timelines status TL --project P   ·   timelines undo TL --project P   ·   timelines publish TL --project P -m "…"
+timelines status TL --project P   ·   timelines undo TL --project P
 ```
 `show`, `lint`, `diff`, `find` and `words` read the working copy; `--published` reads the live one.
 `timelines find TL "the conclusion"` (also `--text "Astrid."`, `--asset ROCKET`, `--line w23c`, `--cut c30`) → addresses and times.
 `timelines lines TL` (`--line w23c`: one in full) · `timelines words TL Astrid --beats` · `show --as sheet --detail`
 prints long values (`inset=`, `lines=`) as editable JSON instead of `…`. The sheet's element column drops `am-`
 (`footage` = `am-footage`; both are accepted).
-**Make one timeline equal another** (a finished duplicate → the film): `timelines checkout FILM --project P --from
-round2[@rev]`, then publish. Narration, cuts, clips and intent, assets and beats, chapters and slots all come along.
+**Make one timeline equal another** (a finished duplicate → the film) remains a
+legacy detached-draft capability. `timelines checkout FILM --project P --from
+round2[@rev]` creates that draft, but its broad publish is held; do not use it
+as the native command path.
 
 ## Addresses (the same everywhere: show, edit --clip, check --at, Python)
 `c41.mink` (cut.layer; a layer carried into a later cut also answers to it: c30.cover = c29.cover) ·
@@ -76,34 +77,48 @@ Units are the element's own declaration (element.yaml `metadata.units`): positio
 `am-callout`: `x`,`y` are the card's TOP-LEFT (not its centre) and `width` its width, all canvas px; `anchor` (x,y) is
 where the connector ends. The connector leaves the card's left or right edge, whichever faces the anchor.
 
-## The same edit as a verb or in Python
+The native command is the supported write path for covered operations. The
+cut-sheet and broad Checkout edit surface below are retained for legacy drafts
+only; their three-way merge and whole-candidate publication are held.
+
+## The same edit as a legacy verb or in Python
 ```bash
 timelines edit TL --project P --clip c30.cover --until Astrid   # --on, --for, --set k=v, --swap-asset, --clear-asset, --remove
 ```
 ```python
+from astrid.sdk.timeline.sync import TimelineSession
+session = TimelineSession.open("P", "TL", client=client)
+result = session.move("parent/clip:c30-cover", 33.9, idempotency_key="move-42")
+```
+
+The detached `Checkout` surface below is held for capabilities that have not
+migrated. It is not a general writer:
+
+```python
 from astrid.sdk.timeline_checkout import Checkout
-tl = Checkout.draft("P", "TL")                 # the current working copy (Checkout.draft("P", "TL", "name") for another)
+tl = Checkout.draft("P", "TL")                 # held legacy working copy
 tl.clip("c30.cover").until("Astrid"); tl.clip("c41.tool-16").set(x=1200)   # canvas px
 print("\n".join(tl.changes() + tl.check().brief())); tl.save()
 ```
 
 ## Python: the method table
 ```
-tl = Checkout.draft(P, TL)   tl.save()  tl.undo()  tl.changes()  tl.check().brief()  tl.publish("msg")
-tl.clip("c30.cover")  tl.cut("c33")  tl.voice("n21")  tl.find("the conclusion")  tl.time('end of c30')  tl.words()
-tl.add("am-type", at='"Building" in v27', layer="title", hold=1.2, params={"text": "…"})   tl.add_cut('"word"')
-tl.adopt("round2")   tl.set_cut_note("c33", why="…", hold="deliberate")   tl.cut("c33").split('"word"')
-tl.clips(element="am-type")   # every matching clip, timeline order (also asset=, text=, cut=, shot=, track=, audio=); a list
-clip.on(MOMENT)  clip.until(MOMENT) / clip.until("for 0.6s")  clip.hold_for(0.6) = clip.for_("0.6s")  clip.nudge(0.1)
-clip.set(text="Now.", x=1200, **{"states[3].at": '"adapt" in w05c'})  clip.get("x")  clip.swap_asset(KEY|FILE|HANDLE)
-clip.set_beats("run:<id>/beats")  clip.remove()  clip.keep()   clip.start .end .duration .address .text .params
-voice.replace(take, words=…)  voice.set_gap_after(1.2)  tl.apply_script("vo.json")  tl.remove_line("w05")
-print("\n".join(tl.verify()["lines"]))   # published vs yours at what changed (or at=['"Astrid" in n21', "c30"])
+session = TimelineSession.open(P, TL, client=client)
+session.move("parent/clip:c30-cover", 33.9, idempotency_key="move-42")
+session.trim("parent/clip:c30-cover", out_s=3.0, idempotency_key="trim-42")
+session.commit(command, idempotency_key="command-42")
+session.commit_many(commands, idempotency_key="batch-42")
+session.undo([publication_id], idempotency_key="undo-42")
+
+# Read/check methods remain projection operations:
+tl = Checkout.draft(P, TL)   tl.find("the conclusion")  tl.time('end of c30')  tl.words()
+tl.check().brief()  tl.changes()
 ```
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
-`Checkout.draft(P, TL)` makes the working copy from the published head if there is none; `tl.save()` prints one
-line. `--verify`/`check --at` write only their page and frames, in the fast lane's cache in the temp dir. In check,
+`Checkout.draft(P, TL)` opens the held detached working copy if one exists;
+its mutation/save methods are not the native write path. `--verify`/`check --at`
+write only their page and frames, in the fast lane's cache in the temp dir. In check,
 "intent" (was "app") is a clip's moments, cut and words; "shot" is the film's one authoring shot; a layer that
 carries over later cuts counts as a change in each of them. A moment
 lands on the frame it falls in (148.13 s → frame 4443 = 148.10 s at 30 fps), so a clip on it starts there.
@@ -128,8 +143,11 @@ moves an orphaned cut's picture to a new moment, `--clip X --on …` one layer, 
 is one clip and does NOT follow a ripple: after a removal it can end before the film (the re-flow report then says
 `music: the bed ends at …`). Fix it with `for` in the `sound` section (a known gap, below).
 
-Publish never overwrites a change published after your checkout (it merges other clips and names clashes).
-Two writers on one working copy are safe the same way: a save merges the other's edits, or refuses on a clash.
+The native session never overwrites a change published after its original
+capture: Runtime rebases disjoint commands and refuses real clashes. Its outbox
+keeps the original request and identity across retries. The legacy draft
+publisher's merge/force behavior is held; do not use two writers on one draft
+as a substitute for native commands.
 `edit`/`apply` exit 0 once saved; what still blocks publishing is check's (printed) state: `timelines check TL`
 shows only lint that is new since checkout (`--all` for everything).
 
