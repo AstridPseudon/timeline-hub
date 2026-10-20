@@ -58,6 +58,7 @@ export function useTimelineSave(
   const recoveryPendingRef = useRef(false);
   // Includes the asynchronous initial draft check and Retry awaiting an ACK.
   const recoveryActiveRef = useRef(true);
+  const [initialRecoveryChecked, setInitialRecoveryChecked] = useState(false);
   const eventBusRef = useRef(new TimelineEventBus());
   // Recovery Retry performs async read/build work before entering persistence.
   // Canonical reloads must invalidate that work at their shared boundary.
@@ -97,6 +98,8 @@ export function useTimelineSave(
     onCanonicalReloadStart: invalidateRecoveryAction,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    // Capture bootstrap only after the first display adoption and its draft check.
+    initialReadReady: commit.data !== null && initialRecoveryChecked,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
       && !recoveryActiveRef.current,
     snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });
@@ -239,6 +242,7 @@ export function useTimelineSave(
       }).finally(() => {
         if (!cancelled && recoveryActionGenerationRef.current === actionGenerationAtCheck) {
           recoveryActiveRef.current = recoveryPendingRef.current;
+          setInitialRecoveryChecked(true);
           if (!recoveryActiveRef.current) resumeDeferredRecoverySaveRef.current();
         }
       });
@@ -428,7 +432,8 @@ export function useTimelineSave(
     savedSeqRef,
     selectedClipIdRef: commit.selectedClipIdRef,
     selectedTrackIdRef: commit.selectedTrackIdRef,
-    isLoading: queries.timelineQuery.isLoading && !commit.data,
+    isLoading: (queries.timelineQuery.isLoading && !commit.data)
+      || (commands.enabled && !!commit.data && !commands.port && commands.state.status !== 'error'),
     watchdogTripped: persistence.watchdogTripped,
     watchdogReason: persistence.watchdogReason,
     retryWatchdog: persistence.retryWatchdog,
