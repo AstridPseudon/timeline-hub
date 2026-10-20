@@ -8,6 +8,9 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.core.execution.generic_host import GenericPackHost, HostError
+from astrid.core.rendering.contracts import RenderRequest
+from astrid.core.rendering.errors import RendererException
+from astrid.core.rendering.service import RenderService
 from astrid.core.rendering.verified_source import (
     SOURCE_ENV,
     PreparedTimelineInputs,
@@ -68,6 +71,44 @@ def materialize(tmp_path, monkeypatch, **kwargs):
     values = host._materialize_inputs(spec, tmp_path / "attempt")
     monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
     return host, spec, snapshot, ref, values
+
+
+def request(values, **kwargs):
+    return RenderRequest(
+        schema_version=1,
+        timeline_path=values["timeline"],
+        assets_registry_path=values["assets_registry"],
+        output_name="result.mp4",
+        **kwargs,
+    )
+
+
+def test_render_request_keeps_verified_source_private_through_backend_projection(
+    tmp_path, monkeypatch,
+):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+    source = values.timeline_source
+    parsed = request(values)
+
+    assert parsed.verified_source == source
+    assert parsed.for_backend("rendering.remotion").verified_source == source
+    assert "verified_source" not in parsed.to_dict()
+
+
+def test_render_request_rejects_reserved_backend_source_config(tmp_path, monkeypatch):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+
+    with pytest.raises(ValueError, match="host-owned"):
+        request(values, backend_config={"rendering.remotion": {"verified_source": {}}})
+
+
+def test_render_service_refuses_lost_verified_source_authority(tmp_path, monkeypatch):
+    _, _, _, _, values = materialize(tmp_path, monkeypatch)
+    parsed = request(values)
+    monkeypatch.delenv(SOURCE_ENV)
+
+    with pytest.raises(RendererException, match="authority is unavailable"):
+        RenderService().render(parsed, out_path=tmp_path / "result.mp4")
 
 
 @pytest.mark.parametrize("key", ["verified_source", "timeline_source", SOURCE_ENV])
