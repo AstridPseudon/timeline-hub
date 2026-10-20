@@ -1,0 +1,9 @@
+#!/bin/bash
+# stop-test ID [reason] — run by the dispatcher. Cancels a running central test: marks tests/ID/CANCELLED and terminates the
+# test's processes (everything in the runner's process group except the runner itself), so the runner still cleans up its
+# snapshot and records status=cancelled (never cached, never a result).
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; ID=$1; shift; D=$O/tests/$ID
+[ -f $D/running ] || { echo "test $ID is not running"; exit 0; }; R=$(cat $D/running); kill -0 $R 2>/dev/null || { echo "runner $R gone"; exit 0; }
+echo "$(date -u +%FT%TZ) cancelled by request: $*" > $D/CANCELLED
+P=$(ps -o pid= -g $R | tr -d ' ' | grep -vx "$R"); [ -n "$P" ] && kill -TERM $P 2>/dev/null; sleep 5; P=$(ps -o pid= -g $R | tr -d ' ' | grep -vx "$R"); [ -n "$P" ] && kill -KILL $P 2>/dev/null
+echo "cancelled test $ID (runner $R finishes cleanup; status will read cancelled)"

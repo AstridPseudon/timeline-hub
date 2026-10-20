@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:13:53Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 21 | status age 0m -->
+<!-- main | 2026-10-20T18:16:51Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 22 | status age 3m -->
 # runtime — 2026-10-20T18:05:55Z
 Milestone: M1 recorded. M2 migration and M3 remain open.
 Integrated: Runtime tl/integration 2ef92e46, including genuine PCM journey setup acf80e5f (all original journey body assertions kept). Recent units: parent-only strict failure marker acd7911; WAV first-settlement duration with null/rate preservation 4ec5d59; publication-only script input classification 285a3b4; compatibility generator fix ff0f, merged as cc3796a0. Published producer 2c4ac180 and client 0.2.13 remain unchanged.

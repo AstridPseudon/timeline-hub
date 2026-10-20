@@ -9,6 +9,7 @@ case $T in integration:*) R=${T#integration:}; [ -d /home/user/work/$R ] || { ec
   *) [ -f $O/workers/$T/meta ] || { echo "no worker $T"; exit 2; }; R=$(sed -n 's/^repo=//p' $O/workers/$T/meta);; esac
 awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf || { echo "suite '$S' not in suites.conf for $R:"; awk -v r=$R '$1==r {print "  " $2}' $O/tests/suites.conf; exit 2; }
 [ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
+case $S in *-nodes) [ -z "$F" ] && { echo "REFUSED: *-nodes suites need --files (they otherwise run the whole default suite)"; exit 2; };; esac
 ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
 printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
 echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID

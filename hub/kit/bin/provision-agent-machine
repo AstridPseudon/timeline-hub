@@ -116,9 +116,11 @@ verify_venv() { # NAME FREEZE [ASTRID_SHA]
   n=$(echo "$want" | wc -l)
   "$py" -c 'import pytest, xdist, jsonschema, referencing, yaml, banodoco_timeline_schema, runpod_lifecycle' || return 1
   if [ -n "$sha" ]; then
-    [ "$(cat "$W/$name/.astrid-source-commit" 2>/dev/null)" = "$sha" ] || { echo "astrid source commit marker != $sha"; return 1; }
+    local mk note="" ; mk=$(cat "$W/$name/.astrid-source-commit" 2>/dev/null)
+    [ -z "$mk" ] && note=" (no .astrid-source-commit marker: venv predates this script, commit not checked)"
+    [ -z "$mk" ] || [ "$mk" = "$sha" ] || { echo "astrid source commit marker $mk != $sha"; return 1; }
     "$py" -c 'import importlib.metadata as m, astrid, astrid_runtime_client; assert m.version("astrid")=="0.1.0"' || return 1
-    echo "python $v; $n pins match; astrid@${sha:0:8} + astrid_runtime_client import ok"
+    echo "python $v; $n pins match; astrid@${sha:0:8} + astrid_runtime_client import ok$note"
   else
     echo "python $v; $n pins match; import ok"
   fi
