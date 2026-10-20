@@ -20,6 +20,7 @@ from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute, operations
 from astrid.sdk.timeline.rebase import replay
 from tests.core import test_project_packs
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
 
 FIXTURES = Path(__file__).parent / 'fixtures'
@@ -414,7 +415,7 @@ def test_params_cannot_replace_nonobject_container_or_nonstring_json_key():
 
 @pytest.mark.parametrize('name', ['track', 'params_object', 'params_null', 'params_absent', 'disjoint'])
 def test_portable_scalar_capture_goldens(name):
-    fixture = json.loads((FIXTURES / f'recipe_m2_scalar_{name}.json').read_text())
+    fixture = load_fixture(FIXTURES / f'recipe_m2_scalar_{name}.json')
     plan = execute(fixture['bundle'], [fixture['command']])
     assert plan.commands == [fixture['command']]
     assert execute(fixture['bundle'], [fixture['request']]).commands == plan.commands
@@ -436,8 +437,9 @@ class Block:
             raise AssertionError(fullname)
 sys.meta_path.insert(0, Block())
 from astrid.sdk.timeline.commands import execute
+from tests.editing_conformance.fixture_loader import load_fixture
 for path in sys.argv[1:]:
-    f = json.load(open(path))
+    f = load_fixture(path)
     assert execute(f['bundle'], [f['request']]).commands == [f['command']]
 '''
     result = subprocess.run([sys.executable, '-c', script,

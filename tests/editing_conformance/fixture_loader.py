@@ -29,11 +29,21 @@ _RECORD_PATHS: dict[str, tuple[tuple[str | int, ...], ...]] = {
     ),
 }
 
+_SCALAR_SOURCE = 'recipe_m2_scalar_params_absent.json'
+_SCALAR_VARIANTS = {
+    'recipe_m2_scalar_params_absent.json': 'absent',
+    'recipe_m2_scalar_params_null.json': 'null',
+    'recipe_m2_scalar_params_object.json': 'object',
+    'recipe_m2_scalar_disjoint.json': 'object',
+}
+
 
 def load_fixture(path: str | Path) -> Any:
     """Load a compact fixture and restore only its known factored values."""
     path = Path(path)
     fixture = json.loads(path.read_text(encoding='utf-8'))
+    if path.name in _SCALAR_VARIANTS:
+        _restore_scalar_fixture(path.parent, fixture, path.name)
     if path.name == 'recipe_m2_placement_create_unplace.json':
         for operation in fixture.values():
             for record, command in zip(operation['records'], operation['commands'], strict=True):
@@ -58,6 +68,45 @@ def load_fixture(path: str | Path) -> Any:
             fixture['unplace']['input'] = copy.deepcopy(fixture['create']['output'])
 
     return fixture
+
+
+def _restore_scalar_fixture(directory: Path, fixture: dict[str, Any], name: str) -> None:
+    """Expand scalar inputs and expected after-patches from one hand-authored source.
+
+    The command and guard records remain independent capture goldens.  Only the
+    repeated timeline input and unchanged after-document are factored; applying
+    the small, hand-authored expected patch here keeps the full raw document
+    equality assertion in the consumer tests without using production code to
+    manufacture an oracle.
+    """
+    if name != _SCALAR_SOURCE:
+        source = json.loads((directory / _SCALAR_SOURCE).read_text(encoding='utf-8'))
+        fixture['bundle'] = copy.deepcopy(source['bundle'])
+        clip = fixture['bundle']['shots'][
+            'shot-placement-365d0383838d687737f499dfcdc96e880baaf8d4747ecf5f657993be89d8522b'
+        ]['internal_timeline']['clips'][0]
+        variant = _SCALAR_VARIANTS[name]
+        if variant == 'null':
+            clip['params'] = None
+        elif variant == 'object':
+            clip['params'] = {
+                'old': None,
+                'opaque': {'keep': [False, {}, '']},
+                'x': 1,
+                'y': None,
+            }
+    patch = fixture.pop('expected_patch', None)
+    if patch is not None:
+        expected = copy.deepcopy(fixture['bundle'])
+        for item in patch:
+            target = expected
+            for part in item['path'][:-1]:
+                target = target[part]
+            if item.get('delete'):
+                del target[item['path'][-1]]
+            else:
+                target[item['path'][-1]] = copy.deepcopy(item['value'])
+        fixture['after_bundle'] = expected
 
 
 def _restore_record_fields(
