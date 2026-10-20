@@ -15,7 +15,7 @@ import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 
 type EndpointProps = {
   src: string; trimBefore?: number; trimAfter?: number; playbackRate?: number;
-  volume?: number | ((frame: number) => number); muted?: boolean; style?: CSSProperties;
+  volume?: number; muted?: boolean; style?: CSSProperties;
 };
 
 // Only external media primitives are replaced. Sequence, Freeze, frame hooks,
@@ -38,14 +38,12 @@ vi.mock('@astrid/packs/rendering/shared/managed-media', () => ({
 
 const Endpoint = ({ kind, ...props }: EndpointProps & { kind: string }) => {
   const frame = useCurrentFrame();
-  // Remotion 4.0.509 audio/use-audio-frame.js and @remotion/media's
-  // frameForVolumeProp both pass elapsed timeline frames for non-looping media.
-  // Trim's internal negative Sequence is cancelled by useMediaStartsAt; speed
-  // does not scale this argument. Use the installed hook/evaluator, not an oracle.
+  // Keep the native elapsed clock observable even though the PCM owner now
+  // supplies a constant downstream scalar.
   const volumeFrame = Internals.useFrameForVolumeProp('repeat');
-  const gain = Internals.evaluateVolume({ frame: volumeFrame, volume: props.volume, mediaVolume: 1 });
+  const gain = props.volume ?? 0;
   return <i data-kind={kind} data-src={props.src} data-frame={frame}
-    data-volume-frame={volumeFrame} data-gain={gain} data-callback={typeof props.volume === 'function'}
+    data-volume-frame={volumeFrame} data-gain={gain} data-callback="false"
     data-trim-before={props.trimBefore} data-trim-after={props.trimAfter}
     data-rate={props.playbackRate} data-muted={props.muted} style={props.style} />;
 };
@@ -117,9 +115,9 @@ const boundaries = [
 ];
 
 describe('public compiled media adapter conformance (no decoded AV claim)', () => {
-  it.each([24, 30, 24000 / 1001])('keeps real volume callback arguments in timeline time at fps %s', fps => {
+  it.each([24, 30, 24000 / 1001])('keeps native media clock separate from the PCM owner scalar at fps %s', fps => {
     // Exercise Remotion's actual internal trim Sequence as well as the untrimmed
-    // endpoint context. Neither source trim nor rate belongs in volume(frame).
+    // endpoint context. The native clock remains independent of PCM preparation.
     const Probe = () => {
       const argument = Internals.useFrameForVolumeProp('repeat');
       return <b data-argument={argument} data-local={useCurrentFrame()} />;
@@ -185,7 +183,7 @@ describe('public compiled media adapter conformance (no decoded AV claim)', () =
             tracks: [visual, { ...audio, muted }], clips: [media('picture', 'V1', 30, fps), clip],
           };
           for (const [entrypoint, content] of entrypoints(config)) {
-            for (const [frame, local, multiplier] of explicitEnvelope
+            for (const [frame, local] of explicitEnvelope
               ? [[30, 0, 0], [36, 6, 1], [42, 12, 2], [54, 24, 2 / 3], [59, 29, 1 / 9]]
               : [[30, 0, 0], [36, 6, 0.5], [42, 12, 1], [54, 24, 0.5], [59, 29, 1 / 12]]) {
               const endpoint = renderFrame(content, frame, fps).querySelector('[data-kind="audio"]');
@@ -195,12 +193,10 @@ describe('public compiled media adapter conformance (no decoded AV claim)', () =
               expect(endpoint).toHaveAttribute('data-trim-after', '330');
               expect(endpoint).toHaveAttribute('data-rate', '2');
               const base = muted ? 0 : gain * 0.8;
-              // Public source already carries its envelope; App invokes its actual
-              // per-frame callback. A source URL assertion is no PCM parity proof.
-              expect(endpoint).toHaveAttribute('data-src', entrypoint === 'public'
-                ? 'https://example.test/prepared-envelope.wav' : authored.assetEntry!.src);
-              expect(endpoint).toHaveAttribute('data-callback', String(entrypoint === 'App'));
-              expect(Number(endpoint!.getAttribute('data-gain'))).toBeCloseTo(entrypoint === 'public' ? base : base * multiplier, 12);
+              // Both consumers admit the same prepared PCM and keep the scalar gain downstream.
+              expect(endpoint).toHaveAttribute('data-src', 'https://example.test/prepared-envelope.wav');
+              expect(endpoint).toHaveAttribute('data-callback', 'false');
+              expect(Number(endpoint!.getAttribute('data-gain'))).toBeCloseTo(base, 12);
               expect(endpoint).toHaveAttribute('data-volume-frame', String(local));
             }
             expect(renderFrame(content, 60, fps).querySelector('[data-kind="audio"]')).toBeNull();
