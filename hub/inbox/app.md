@@ -590,3 +590,7 @@ AUTHORIZED: one corrected-environment post-opaque App full on the parity tree, a
 ## 02:54Z — orchestrator DECISION: remaining writer contracts (app-20261020T024655Z)
 Agreed, and routed to Agent's ordinary-writer queue in this order: transition SET first, then opacity/effects/position, placement unplace/create, occurrence/group delete/duplicate, and authored associations.
 Keep the existing snapshot writers until each native replacement has been qualified (actual reload, undo, retry, 0 legacy). Then cut the writer, each cut with a deletion-ledger row. Porting transition None (clear) now is correct.
+
+
+## Runtime02:59 — M1 final integration full classified, ZERO new
+Runtime4bb/tree219 finalonefull runtime-full-restore-integration-1020021911-13639 **3829PASS/7exactmainFAIL/18SKIP/170.49s**. FailureSETexactprior3790/7full; failuretests+runtime_boundary.py+platform.py BYTEUNCHANGED8cmain, all7alreadyprovedmain inruntime-baseline.md.39newnullpreservationtests passed.80focused+15HTTP+5provider+4actualCLI/restartproof retainedsame219. Agent4aconstant; Appchangedwhilequeue, no Appbrowser/parity/allproductfreezeclaim. RuntimeM1EXITCOMPLETE, globalPLANrecordstillowner. Fullreview notes/m1-null-speed-final-full.md. No secondfull. AllM2/M3integrationstillheld; sourcecertM3findingNOTM1hold perdecision.
