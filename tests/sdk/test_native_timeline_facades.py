@@ -60,6 +60,33 @@ class _SelectedNativeTransport(_NativeTransport):
         }
 
 
+class _CatalogTransport(_SelectedNativeTransport):
+    def __init__(self) -> None:
+        super().__init__()
+        self.recover_calls = []
+
+    def list_timelines(self, project, *, cursor=None, limit=50):
+        assert project == "project-1"
+        return [[{
+            "timeline_id": "tl-1",
+            "slug": "main",
+            "version": 7,
+            "archived": True,
+            "head_revision_id": "head-7",
+            "document_digest": "sha256:document",
+        }], None]
+
+    def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
+        self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
+        return {
+            "timeline_id": timeline_id,
+            "archived": False,
+            "version": 8,
+            "head_revision_id": "head-7",
+            "document_digest": "sha256:document",
+        }
+
+
 def test_remote_show_uses_runtime_current_project_and_project_default() -> None:
     transport = _SelectedNativeTransport()
     result = RemoteTimelines(transport).show(None, None)
@@ -94,16 +121,50 @@ def test_remote_default_timeline_must_belong_to_selected_project() -> None:
     }
 
 
-def test_legacy_timeline_recover_refuses_without_reading_or_forwarding() -> None:
-    class NoLegacyRoute(_SelectedNativeTransport):
-        def list_timelines(self, *args, **kwargs):
-            raise AssertionError("legacy recover must not resolve or mutate a timeline")
+def test_catalog_recover_without_version_unarchives_current_entry_preserving_film() -> None:
+    transport = _CatalogTransport()
+    result = RemoteTimelines(transport).recover(
+        "project-1", "main", idempotency_key="catalog-recover"
+    )
 
+    assert result.ok
+    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-recover")]
+    assert result.data == {
+        "timeline_id": "tl-1",
+        "archived": False,
+        "version": 8,
+        "head_revision_id": "head-7",
+        "document_digest": "sha256:document",
+    }
+
+    replay = RemoteTimelines(transport).recover(
+        "project-1", "main", version=7, idempotency_key="catalog-recover"
+    )
+    assert replay.ok
+    assert replay.data == result.data
+    assert transport.recover_calls[-1] == ("tl-1", 7, 7, "catalog-recover")
+
+
+def test_catalog_recover_current_version_unarchives_current_entry() -> None:
+    transport = _CatalogTransport()
+    result = RemoteTimelines(transport).recover(
+        "project-1", "main", version=7, idempotency_key="catalog-current"
+    )
+
+    assert result.ok
+    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-current")]
+    assert result.data["archived"] is False
+    assert result.data["head_revision_id"] == "head-7"
+    assert result.data["document_digest"] == "sha256:document"
+
+
+def test_legacy_timeline_recover_refuses_non_current_without_forwarding() -> None:
+    class NoLegacyRoute(_CatalogTransport):
         def recover_timeline(self, *args, **kwargs):
             raise AssertionError("legacy recover writer must not be forwarded")
 
     result = RemoteTimelines(NoLegacyRoute()).recover(
-        "project-1", "main", version=7, idempotency_key="legacy-recover"
+        "project-1", "main", version=6, idempotency_key="legacy-recover"
     )
     assert not result.ok
     assert result.idempotency_key == "legacy-recover"

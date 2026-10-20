@@ -411,6 +411,7 @@ class _RemoteFamily:
             elif operation == "promote_project_shot_candidate": value = self._client.promote_project_shot_candidate(*args, **kwargs)
             elif operation == "recover_project_reference": value = self._client.recover_project_reference(*args, **kwargs)
             elif operation == "recover_project_shot": value = self._client.recover_project_shot(*args, **kwargs)
+            elif operation == "recover_timeline": value = self._client.recover_timeline(*args, **kwargs)
             elif operation == "register_capability": value = self._client.register_capability(*args, **kwargs)
             elif operation == "register_executor": value = self._client.register_executor(*args, **kwargs)
             elif operation == "remove_shot_item": value = self._client.remove_shot_item(*args, **kwargs)
@@ -1608,18 +1609,46 @@ class RemoteTimelines(_RemoteFamily):
         return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
     def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
-        return DomainResult.failure(
-            ErrorObject(
-                "retired_route",
-                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
-                {
-                    "status": 410,
-                    "operation": "recover_timeline",
-                    "replacement": "timeline.restore",
-                    "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
-                    "version_is_not_revision": True,
-                },
-            ),
+        resolved = self._resolve_timeline(project, ref)
+        if not resolved.ok or not isinstance(resolved.data, Mapping):
+            return DomainResult.failure(resolved.error, idempotency_key=key)
+        timeline_id = resolved.data.get("timeline_id")
+        if not isinstance(timeline_id, str) or not timeline_id:
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "timeline listing has no canonical identity", {}),
+                idempotency_key=key,
+            )
+        try:
+            value = resolved.data.get("version", resolved.data.get("config_version", 1))
+            current_version = int(value)
+            expected = int(expected_version) if expected_version is not None else current_version
+            target = current_version if version is None else int(version)
+        except (TypeError, ValueError):
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
+                idempotency_key=key,
+            )
+        if target != current_version:
+            return DomainResult.failure(
+                ErrorObject(
+                    "retired_route",
+                    "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+                    {
+                        "status": 410,
+                        "operation": "recover_timeline",
+                        "replacement": "timeline.restore",
+                        "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+                        "version_is_not_revision": True,
+                    },
+                ),
+                idempotency_key=key,
+            )
+        return self._typed(
+            "recover_timeline",
+            timeline_id,
+            key=key,
+            expected_version=expected,
+            version=current_version,
             idempotency_key=key,
         )
 

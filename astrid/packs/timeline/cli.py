@@ -33,9 +33,10 @@ parallel product store):
 - ``replace-parent-media`` — replace one selected clip in the canonical
   parent-composition closure through ``client.timelines.replace_parent_media``;
 - ``archive`` — reversible event-backed ``client.timelines.archive``;
-- ``recover`` — visible refusal for retired legacy version recovery through
-  ``client.timelines.recover``; exact historical revisions use
-  ``TimelineSession.restore`` and the native ``timeline.restore`` command;
+- ``recover`` — catalog unarchive through ``client.timelines.recover`` when no
+  version or the current catalog version is requested; non-current historical
+  versions visibly refuse and use ``TimelineSession.restore`` with an exact
+  revision and digest;
 - ``history`` — ordered lifecycle events (read);
 - ``diff`` — exact canonical revision comparisons or explicit legacy version diffs (read).
 - ``visualize`` — the single public native timeline visualization operation

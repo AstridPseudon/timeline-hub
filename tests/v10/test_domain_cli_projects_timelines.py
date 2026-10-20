@@ -236,18 +236,17 @@ class _RecordingTimelines:
                 {"project": project, "ref": ref, "idempotency_key": idempotency_key},
             )
         )
-        return DomainResult.failure(
-            ErrorObject(
-                "retired_route",
-                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
-                {
-                    "status": 410,
-                    "operation": "recover_timeline",
-                    "replacement": "timeline.restore",
-                    "version_is_not_revision": True,
-                },
-            ),
-            idempotency_key=idempotency_key or "generated-key",
+        key = idempotency_key or "generated-key"
+        return DomainResult.success(
+            {
+                "slug": ref,
+                "timeline_id": "T-1",
+                "archived": False,
+                "head_revision_id": "head-1",
+                "document_digest": "sha256:document",
+            },
+            receipt=_receipt("timeline.recover", key),
+            idempotency_key=key,
         )
 
     def history(self, project, ref):
@@ -1758,7 +1757,7 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
         ["recover", "--project", "demo", "main", "--json"],
         client=client,
     )
-    assert rc != 0
+    assert rc == 0
     assert client.calls == [
         (
             "timelines.recover",
@@ -1766,9 +1765,10 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
         )
     ]
     envelope = json.loads(capsys.readouterr().out)
-    assert envelope["ok"] is False
-    assert envelope["error"]["code"] == "retired_route"
-    assert "timeline.restore" in envelope["error"]["message"]
+    assert envelope["ok"] is True
+    assert envelope["data"]["archived"] is False
+    assert envelope["data"]["head_revision_id"] == "head-1"
+    assert envelope["data"]["document_digest"] == "sha256:document"
 
 
 def test_timelines_history_is_one_sdk_call(capsys) -> None:

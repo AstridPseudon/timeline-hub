@@ -240,7 +240,7 @@ class WorkspaceClient:
                 "commit_timeline", "list_timeline_commits", "replace_timeline_clip",
                 "get_project_verified_document", "get_project_verified_document_object",
                 "diff_timeline", "archive_timeline",
-                "list_project_shots", "create_project_shot",
+                "recover_timeline", "list_project_shots", "create_project_shot",
                 "inspect_timeline", "create_timeline_view",
                 "get_project_shot", "update_project_shot", "archive_project_shot",
                 "recover_project_shot", "add_shot_item", "remove_shot_item",
@@ -611,6 +611,22 @@ class WorkspaceClient:
     def archive_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str) -> Any:
         return self._call_generated(
             "archive_timeline", timeline_id, expected_version=expected_version, idempotency_key=idempotency_key
+        )
+
+    def recover_timeline(
+        self,
+        timeline_id: str,
+        *,
+        expected_version: int,
+        version: int,
+        idempotency_key: str,
+    ) -> Any:
+        return self._call_generated(
+            "recover_timeline",
+            timeline_id,
+            expected_version=expected_version,
+            version=version,
+            idempotency_key=idempotency_key,
         )
 
     def list_project_shots(
