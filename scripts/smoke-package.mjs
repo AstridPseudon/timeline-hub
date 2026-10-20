@@ -5,8 +5,10 @@ import {execFileSync} from 'node:child_process';
 import {mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
-const tarball = resolve(process.argv[2] ?? 'banodoco-timeline-composition-0.0.10.tgz');
+const packageJson = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'));
+const tarball = resolve(process.argv[2] ?? `banodoco-timeline-composition-${packageJson.version}.tgz`);
 const files = execFileSync('tar', ['-tzf', tarball], {encoding: 'utf8'}).trim().split('\n');
 assert.ok(files.every(file => /^package\/(?:dist\/.*\.(?:js|d\.ts)|package\.json|README\.md|LICENSE)$/.test(file)),
   'Tarball contains source, scripts, tests or other unexpected files');
