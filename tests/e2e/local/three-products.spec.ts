@@ -416,15 +416,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 });
 
 // ---------------------------------------------------------------------------------------------
-// Legacy concurrent edit
-
-/**
- * Migration blocker: Bundle 1 lacks child hold extension, child asset clear and parent transition clear capture.
- * Preserve this entire original ordering and its positive Keep/Use latest assertions until those operations ship.
- * Track/transition writers originally used whole-document CAS saves. Replaying A must not let C overwrite B's changed shot
- * pins, extension and explicit clear. Either the provider notices B before accepting A's receipt or C receives stale_head;
- * both must retain A+C and offer an explicit resolution. Command rebase is exercised separately by the M1 move cases.
- */
+// Native Agent command batch in the legacy concurrent-edit ordering.
 test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, the App edits again; the App names the conflict and keeps its draft', async ({ page, harness, astrid, seed3 }) => {
   const agent = agentOf(astrid, seed3);
   const sniff = new TokenSniff(secretsOf(harness, astrid));
@@ -475,11 +467,25 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
   expect(headA, 'the App\'s save is stored under its idempotency key').toBe(keyA);
 
   // B: the agent builds on A and publishes (it extends one clip and clears another one's asset).
-  await agent.checkout();
   const stateA = await revisionState(harness, seed3, headA);
-  await agent.edit('--clip', seed3.agentClipId, '--extend', '1');
-  await agent.edit('--clip', seed3.agentClearClipId, '--clear-asset');
-  const published = await agent.publish('agent: extend and clear', 'f2-case2');
+  const headAPin = (await history(harness, seed3)).head;
+  const agentEdit = await agent.commitNativeCommands(harness.seed.projectId, seed3.timelineId, headAPin, [
+    {
+      schema_version: 1,
+      op: 'clip.set',
+      version: '1',
+      select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`,
+      args: { values: { hold: stateA.shotClips[seed3.agentClipId].hold + 1 }, clear: [] },
+    },
+    {
+      schema_version: 1,
+      op: 'clip.set',
+      version: '1',
+      select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}`,
+      args: { values: {}, clear: ['asset'] },
+    },
+  ], 'f2-case2');
+  const published = { old_head: headAPin.revision_id, new_head: agentEdit.data.accepted_revision_id };
   expect(published.old_head, 'the agent built on the App\'s save').toBe(headA);
   const headB = published.new_head;
   expect(await currentHead(harness)).toBe(headB);

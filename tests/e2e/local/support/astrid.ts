@@ -10,11 +10,11 @@
  */
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import path from 'node:path';
 import { ASTRID_ACTOR, REPO_ROOT, RUNTIME_CHECKOUT, spawnGroup, stopGroup, type DirectHarness } from './harness.ts';
-import type { CommitAcceptedMutation, HeadPin } from '../../../../src/integrations/runtime/timeline-commit-types.ts';
+import type { CommitAcceptedMutation, EditCommand, HeadPin } from '../../../../src/integrations/runtime/timeline-commit-types.ts';
 
 /** The Astrid tree to test. The editable install in a venv may point elsewhere, so `PYTHONPATH` puts this one first and the identity probe asserts it. */
 export const ASTRID_CHECKOUT = path.resolve(process.env.ASTRID_CHECKOUT
@@ -257,6 +257,26 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-p
     const result = JSON.parse(run.stdout.trim().split('\n').pop()!);
     if (!result.ok || !result.receipt) throw new Error(`Agent command was not accepted: ${JSON.stringify(result)}`);
     return { data: result.data, receipt: result.receipt } as CommitAcceptedMutation;
+  }
+
+  /** Commit already-shaped native commands through the installed Agent CLI adapter. */
+  async commitNativeCommands(projectId: string, timelineId: string, base: HeadPin,
+    commands: [EditCommand, ...EditCommand[]], key: string): Promise<CommitAcceptedMutation> {
+    mkdirSync(this.data, { recursive: true, mode: 0o700 });
+    const file = path.join(this.data, `timeline-commands-${randomBytes(12).toString('hex')}.json`);
+    writeFileSync(file, JSON.stringify(commands), { encoding: 'utf8', mode: 0o600 });
+    const envelope = await this.json<CommitAcceptedMutation['data']>([
+      'timelines', 'edit', 'commands-file', timelineId, file,
+      '--project', projectId,
+      '--base-revision-id', base.revision_id,
+      '--base-publication-id', base.publication_id,
+      '--idempotency-key', key,
+      '--json',
+    ]);
+    if (!envelope.ok || !envelope.data || !envelope.receipt) {
+      throw new Error(`Agent native command was not accepted: ${JSON.stringify(envelope)}`);
+    }
+    return { data: envelope.data, receipt: envelope.receipt as CommitAcceptedMutation['receipt'] };
   }
 
   /** `python -m astrid <args>` where the last stdout line is the `--json` envelope; the caller passes `--json`. */
