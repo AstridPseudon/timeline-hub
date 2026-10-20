@@ -41,7 +41,7 @@ Real managed image/video settlement and normally loaded Agent provider passed an
 - Original strict cases before marker removal: **4 passed**, 1.07 s.
 - Broad targeted portable/source/schema lane: **636 passed**, 262.41 s. Includes original parent, new parent, occurrence automatic reads/defaults/fallback, shared collision/pool behavior, pristine initialization and complete schema/floor checks. This run preceded only the final invalid-saved-lane hardening; the final affected parent lane below covers that change.
 - Final affected parent lane: **188 passed**, 39.52 s (85 original + 103 new).
-- Final private Runtime/S3 lane: **15 passed**, 33.92 s. A final non-vacuous CAS-map assertion was subsequently added to the stale tests; its focused result is recorded in the worker report.
+- Final private Runtime/S3 lane: **15 passed**, 33.92 s. A final non-vacuous CAS-map assertion was subsequently added to the stale tests; its focused result is **6 passed, 8 deselected in 4.44s**, exit 0.
 - Touched-file Ruff and `git diff --check`: pass.
 
 No full/full* suite requested/run. All tests are bounded targeted tests; real Runtime calls are in-process with no live sockets. No public/HTTP/client transport, App submission/outbox/cutover, pixels/audio, registered automatic producer-attempt admission chain, owner film, macOS, or production automatic adoption is qualified. The existing short-video default refusal and existing whole-row target-track conservatism are unchanged; no success requirement is rewritten to refusal. Track kind/deletion/lane movement are covered as changed-head conformance fixtures; the real current command contract exposes track label edits, not those authoring operations.
