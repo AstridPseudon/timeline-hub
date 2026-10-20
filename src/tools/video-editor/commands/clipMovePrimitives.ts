@@ -1,4 +1,5 @@
 import type { AgentDependency, AgentState, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import { remapItems } from './authoringBundle.ts';
 
 type ObjectValue = { [key: string]: JSON };
 
@@ -64,7 +65,7 @@ const SHA256_K = [
 ];
 const rotate = (value: number, bits: number): number => (value >>> bits) | (value << (32 - bits));
 
-function sha256(text: string): string {
+export function sha256(text: string): string {
   const bytes = new TextEncoder().encode(text);
   const padded = new Uint8Array(Math.ceil((bytes.length + 9) / 64) * 64);
   padded.set(bytes);
@@ -169,7 +170,9 @@ export class AuthoredState {
       const row = this.occurrence(ref.slice(0, -'/shot'.length));
       const mapping = this.bundle.source_mapping as ObjectValue;
       const sources = mapping.shots as ObjectValue;
-      const source = (sources[String(row.shot_id)] as ObjectValue).shot_id;
+      const sourceRow = sources[String(row.shot_id)] as ObjectValue | undefined;
+      if (!sourceRow && this.bundle.shots[String(row.shot_id)]?._created === true) return { shot_id: row.shot_id };
+      const source = sourceRow?.shot_id;
       if (typeof source !== 'string') throw new ClipMoveError('missing occurrence source identity');
       const identity = this.isolatedOwner(ref.slice(0, -'/shot'.length), source);
       if (row.shot_id !== source && row.shot_id !== identity) {
@@ -177,14 +180,40 @@ export class AuthoredState {
       }
       return { shot_id: source };
     }
-    if (ref.startsWith('occurrence:') && !ref.includes('/')) return this.occurrence(ref);
+    if (/^occurrence:(?!.*::)[^/]+$/.test(ref)) {
+      return one(this.bundle.placements, 'occurrence_id', ref.slice('occurrence:'.length), optional);
+    }
+    if (/^shot:(?!.*::)[^/]+$/.test(ref)) {
+      const shot = has(this.bundle.shots, ref.slice(5)) ? this.bundle.shots[ref.slice(5)] : undefined;
+      if (shot) return { payload: copy(shot.payload), internal_timeline: copy(shot.internal_timeline) };
+      if (optional) return undefined;
+      throw new ClipMoveError('missing shot root', 'identity_conflict');
+    }
     throw new ClipMoveError(`unsupported entity reference ${ref}`);
   }
 
   get(ref: string, path: string[]): AgentState {
+    if (/^occurrence:(?!.*::)[^/]+\/collection:(clip|track)$/.test(ref)) {
+      if (path.length) throw new ClipMoveError('collection shape requires the whole guard');
+      const [owner, kind] = ref.split('/collection:');
+      if (!this.entity(owner, true)) return { state: 'absent' };
+      const config = this.config(owner);
+      const key = `${kind}s`;
+      const value = config[key];
+      return { state: 'present', value: { members: has(config, key)
+        ? { state: 'present', value: Array.isArray(value) ? [] : object(value) ? {} : value }
+        : { state: 'absent' } } };
+    }
     const entity = this.entity(ref, true);
     if (entity === undefined) return { state: 'absent' };
     let value: JSON = entity;
+    if (ref.endsWith('/shot') && path[0] === 'payload') {
+      const shot = String(this.occurrence(ref.slice(0, -5)).shot_id);
+      const sources = (this.bundle.source_mapping as ObjectValue).shots as ObjectValue;
+      const mapping = (sources[shot] as ObjectValue)?.item_id_map as ObjectValue ?? {};
+      value = { payload: remapItems(this.bundle.shots[shot].payload as ObjectValue,
+        new Map(Object.entries(mapping).map(([source, destination]) => [String(destination), source]))) };
+    }
     for (const key of path) {
       if (object(value) && has(value, key)) value = value[key];
       else if (Array.isArray(value) && /^\d+$/.test(key) && Number(key) < value.length) value = value[Number(key)];
