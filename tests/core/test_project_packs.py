@@ -2,6 +2,7 @@ import json
 import re
 import sys
 import copy
+import hashlib
 from contextlib import contextmanager
 from types import SimpleNamespace
 from astrid.sdk.contracts import DomainResult,ErrorObject
@@ -37,6 +38,20 @@ class FakeDocuments:
     def list(self,*args,**kwargs):raise AssertionError('Must not scan all project documents')
 
 
+class FakeMedia:
+    def __init__(self):self.objects={};self.imports=[];self.reject=False;self.metadata={}
+    def import_bytes(self, *, project, data, filename, media_type, idempotency_key):
+        validate_idempotency_key(idempotency_key)
+        self.imports.append((project,data,idempotency_key))
+        if self.reject:return DomainResult.failure(ErrorObject('conflict','ingest failed',{}))
+        digest='sha256:'+hashlib.sha256(data).hexdigest()
+        self.objects[(project,digest)]=data
+        return DomainResult.success({'object_id':digest,'digest':digest,'size':len(data),
+                                     'media_type':media_type,**self.metadata})
+    def read_bytes(self,object_id):
+        return next(data for (_,digest),data in self.objects.items() if digest==object_id)
+
+
 @pytest.fixture(autouse=True)
 def configured(tmp_path,monkeypatch):
     monkeypatch.setenv(packs.ROOT_ENV,str(tmp_path/'user-data'))
@@ -45,7 +60,8 @@ def configured(tmp_path,monkeypatch):
     verifier.write_text("import json,sys,hashlib\nfrom pathlib import Path\np=Path(sys.argv[1]);x=json.loads(p.read_text());print(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in x['elements']]}))")
     monkeypatch.setenv(packs.BUILD_ENV,json.dumps([sys.executable,str(verifier)]))
     documents=FakeDocuments()
-    client=SimpleNamespace(documents=documents)
+    documents.media=FakeMedia()
+    client=SimpleNamespace(documents=documents,media=documents.media)
     @contextmanager
     def connected():yield client
     monkeypatch.setattr(packs,'_open_client',connected)

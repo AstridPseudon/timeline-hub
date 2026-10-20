@@ -5,6 +5,8 @@ Reads are observational; only explicit init/admit creates files.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import copy
 import hashlib
 import json
@@ -85,9 +87,126 @@ def _project_pack_content(row):
     if not re.fullmatch(r'[a-z][a-z0-9_]*',str(content.get('pack_id',''))):raise ValueError('Invalid project pack owner')
     if set(content)!={'schema','pack_id','source_binding_key','relative_manifest','admissions'} or not isinstance(content['admissions'],list):raise ValueError('Invalid project pack payload fields')
     for admission in content['admissions']:
-        if not isinstance(admission,dict) or set(admission)!={'id','kind','revision','snapshot_digest'} or admission['kind'] not in {'effect','animation','transition'} or not re.fullmatch(r'sha256:[0-9a-f]{64}',str(admission['revision'])) or not re.fullmatch(r'[0-9a-f]{64}',str(admission['snapshot_digest'])):raise ValueError('Invalid selected pack admission')
+        if not isinstance(admission,dict) or set(admission)-{'snapshot_object'}!={'id','kind','revision','snapshot_digest'} or admission['kind'] not in {'effect','animation','transition'} or not re.fullmatch(r'sha256:[0-9a-f]{64}',str(admission['revision'])) or not re.fullmatch(r'[0-9a-f]{64}',str(admission['snapshot_digest'])):raise ValueError('Invalid selected pack admission')
+        if 'snapshot_object' in admission:
+            _snapshot_descriptor(admission['snapshot_object'])
 
     return content
+
+
+def _snapshot_descriptor(value):
+    if (
+        not isinstance(value, Mapping)
+        or set(value) != {'object_id', 'digest', 'size', 'media_type'}
+        or not isinstance(value.get('digest'), str)
+        or not re.fullmatch(r'sha256:[0-9a-f]{64}', value['digest'])
+        or value.get('object_id') != value['digest']
+        or type(value.get('size')) is not int
+        or value['size'] <= 0
+        or value.get('media_type') != 'application/json'
+    ):
+        raise ValueError('Invalid pack snapshot object descriptor')
+    return dict(value)
+
+
+def _closure_digest(files):
+    # Admission predates UTF-8 Document digests; retain its ASCII escaping.
+    return hashlib.sha256(json.dumps(files, sort_keys=True, separators=(',', ':'),
+                                     ensure_ascii=True, allow_nan=False).encode('utf-8')).hexdigest()
+
+
+def _strict_json(data):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError('Duplicate pack snapshot JSON key')
+            result[key] = value
+        return result
+
+    def invalid(value):
+        raise ValueError('Non-finite pack snapshot JSON value')
+
+    return json.loads(data.decode('utf-8'), object_pairs_hook=pairs, parse_constant=invalid)
+
+
+def _decode_base64(value):
+    if not isinstance(value, str):
+        raise ValueError('Invalid pack snapshot base64')
+    try:
+        raw = base64.b64decode(value, validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError('Invalid pack snapshot base64') from exc
+    if base64.b64encode(raw).decode('ascii') != value:
+        raise ValueError('Noncanonical pack snapshot base64')
+    return raw
+
+
+def _snapshot_resources(data):
+    value = _strict_json(data)
+    if (not isinstance(value, dict) or set(value) != {'files', 'build_receipt_base64'}
+            or not isinstance(value['files'], list) or not 0 < len(value['files']) <= 256):
+        raise ValueError('Invalid bounded pack snapshot envelope')
+    if json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+                  allow_nan=False).encode('utf-8') != data:
+        raise ValueError('Noncanonical pack snapshot JSON')
+    files = {}
+    total = 0
+    for item in value['files']:
+        if not isinstance(item, dict) or set(item) != {'path', 'sha256', 'bytes_base64'}:
+            raise ValueError('Invalid pack snapshot resource')
+        name = item['path']
+        if (not isinstance(name, str) or '\\' in name or '\x00' in name
+                or any(part in ('', '.', '..') for part in name.split('/'))
+                or name in files):
+            raise ValueError('Invalid or duplicate pack snapshot resource path')
+        raw = _decode_base64(item['bytes_base64'])
+        total += len(raw)
+        if total > 64 * 1024 * 1024:
+            raise ValueError('Invalid bounded pack snapshot resources')
+        if item['sha256'] != hashlib.sha256(raw).hexdigest():
+            raise ValueError('Pack snapshot resource hash mismatch')
+        files[name] = raw
+    if list(files) != sorted(files):
+        raise ValueError('Pack snapshot resources must be path-sorted')
+    receipt = _decode_base64(value['build_receipt_base64'])
+    _strict_json(receipt)
+    return files, receipt
+
+
+def _portable_snapshot(files, receipt):
+    value = {'files': [{'path': name, 'sha256': hashlib.sha256(raw).hexdigest(),
+                        'bytes_base64': base64.b64encode(raw).decode('ascii')}
+                       for name, raw in sorted(files.items())],
+             'build_receipt_base64': base64.b64encode(receipt).decode('ascii')}
+    data = json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+                      allow_nan=False).encode('utf-8')
+    _snapshot_resources(data)
+    return data
+
+
+def _snapshot_object_resources(descriptor, data):
+    _snapshot_descriptor(descriptor)
+    if (not isinstance(data, bytes) or len(data) != descriptor['size']
+            or 'sha256:' + hashlib.sha256(data).hexdigest() != descriptor['digest']):
+        raise ValueError('Pack snapshot object bytes do not match descriptor')
+    return _snapshot_resources(data)
+
+
+def _ingest_snapshot(client, project, data):
+    digest = 'sha256:' + hashlib.sha256(data).hexdigest()
+    expected = {'object_id': digest, 'digest': digest, 'size': len(data),
+                'media_type': 'application/json'}
+    result = client.media.import_bytes(project=project, data=data, filename='pack-snapshot.json',
+                                       media_type='application/json',
+                                       idempotency_key='project-pack-snapshot-' + _json_digest(
+                                           [project, digest]).removeprefix('sha256:'))
+    if not result.ok or not isinstance(result.data, Mapping):
+        raise ValueError('Project pack snapshot ingest failed; selection not advanced')
+    actual = {key: result.data.get(key) for key in expected}
+    if _snapshot_descriptor(actual) != expected:
+        raise ValueError('Project pack snapshot ingest metadata mismatch')
+    return actual
 
 
 def _content(realm: str, project: str, collection: str='default') -> dict[str,Any]:
@@ -132,11 +251,15 @@ def _index(realm,project,document_id,version,content,records):
 
 
 def _atomic_json(path: Path, value: Any) -> None:
+    _atomic_bytes(path, (json.dumps(value,indent=2,sort_keys=True)+'\n').encode('utf-8'))
+
+
+def _atomic_bytes(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True,exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=".selection-",dir=path.parent)
     try:
-        with os.fdopen(fd,"w") as stream:
-            json.dump(value,stream,indent=2,sort_keys=True);stream.write("\n");stream.flush();os.fsync(stream.fileno())
+        with os.fdopen(fd,"wb") as stream:
+            stream.write(data);stream.flush();os.fsync(stream.fileno())
         os.replace(temporary,path)
     finally:
         if os.path.exists(temporary):os.unlink(temporary)
@@ -287,7 +410,7 @@ def admit_project_pack(realm: str, project: str, *, client=None, collection='def
         for helper in definition.root.rglob("*"):
             if helper.is_file() and helper.suffix in _SOURCE_EXTENSIONS and helper.relative_to(root).as_posix() not in resources:raise ValueError(f"Element helper is undeclared: {helper}")
     files=[{"path":p,"sha256":r.sha256} for p,r in sorted(resources.items())]
-    closure_hash=hashlib.sha256(json.dumps(files,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+    closure_hash=_closure_digest(files)
     snapshot_root=artifact_root()/realm/project/entry.definition.id/"snapshots"/closure_hash
     snapshot_root.parent.mkdir(parents=True,exist_ok=True)
     staging=Path(tempfile.mkdtemp(prefix="capture-",dir=snapshot_root.parent))
@@ -319,15 +442,54 @@ def admit_project_pack(realm: str, project: str, *, client=None, collection='def
         admissions=[dict(a) for a in content['admissions']]
         for record in records:
             descriptor=record['descriptor'];admission={k:descriptor[k] for k in ('id','kind','revision')};admission['snapshot_digest']=closure_hash
-            if admission not in admissions:admissions.append(admission)
+            matching=[a for a in admissions if all(a[k]==admission[k] for k in ('id','kind','revision'))]
+            if len(matching)>1:
+                raise ValueError('Ambiguous selected pack admission')
+            if matching:
+                if matching[0]['snapshot_digest']!=closure_hash:
+                    raise ValueError('Selected pack admission closure changed; cannot replace immutable snapshot')
+            else:
+                admissions.append(admission)
         next_content={**content,'admissions':admissions};path=Path(location['manifestPath']);path.parent.mkdir(parents=True,exist_ok=True)
         # Only changed pack inputs are compiled. Existing immutable revisions
         # are retained in the derived index and Runtime ref inventory unchanged.
-        build_candidate=_index(realm,project,document_id,row['version']+1,next_content,records)
-        build_receipt=_verify_build(build_candidate,path)
-        _atomic_json(snapshot_root/'.build-receipt.json',build_receipt)
-        committed=_publish_document(client,project,document_id,row,next_content) if next_content!=content else row
         selected_keys={(e['descriptor']['id'],e['descriptor']['kind'],e['descriptor']['revision']) for e in records}
+        build_content={**next_content,'admissions':[
+            {k:v for k,v in a.items() if k!='snapshot_object'}
+            if (a['id'],a['kind'],a['revision']) in selected_keys else a for a in admissions]}
+        build_candidate=_index(realm,project,document_id,row['version']+1,build_content,records)
+        build_receipt=_verify_build(build_candidate,path)
+        existing=[a['snapshot_object'] for a in admissions
+                  if (a['id'],a['kind'],a['revision']) in selected_keys and 'snapshot_object' in a]
+        receipt_path=snapshot_root/'.build-receipt.json'
+        if receipt_path.is_symlink():
+            raise ValueError('Pack build receipt is a symlink')
+        if not receipt_path.exists():
+            if existing:
+                _,original_receipt=_snapshot_object_resources(
+                    existing[0],client.media.read_bytes(existing[0]['object_id']))
+                _atomic_bytes(receipt_path,original_receipt)
+            else:
+                _atomic_json(receipt_path,build_receipt)
+        receipt=receipt_path.read_bytes()
+        snapshot_files={item['path']:(snapshot_root/item['path']).read_bytes() for item in files}
+        for record in records:
+            reference={k:record['descriptor'][k] for k in ('packId','id','kind','revision')}
+            admission=next(a for a in admissions if all(a[k]==reference[k] for k in ('id','kind','revision')))
+            _admitted_snapshot_descriptor(project,reference,build_content,admission,snapshot_files,receipt)
+        portable=_portable_snapshot(snapshot_files,receipt)
+        expected={'object_id':'sha256:'+hashlib.sha256(portable).hexdigest(),
+                  'digest':'sha256:'+hashlib.sha256(portable).hexdigest(),
+                  'size':len(portable),'media_type':'application/json'}
+        if any(value!=expected for value in existing):
+            raise ValueError('Published pack snapshot differs from captured resources/build receipt')
+        if any('snapshot_object' not in a for a in admissions
+               if (a['id'],a['kind'],a['revision']) in selected_keys):
+            snapshot_object=_ingest_snapshot(client,project,portable)
+            for admission in admissions:
+                if (admission['id'],admission['kind'],admission['revision']) in selected_keys:
+                    admission['snapshot_object']=snapshot_object
+        committed=_publish_document(client,project,document_id,row,next_content) if next_content!=content else row
         retained=[e for e in previous['elements'] if (e['descriptor']['id'],e['descriptor']['kind'],e['descriptor']['revision']) not in selected_keys]
         selected=_index(realm,project,document_id,committed['version'],next_content,[*retained,*records])
         _atomic_json(path,selected)
@@ -340,7 +502,7 @@ def _record_from_admission(realm,project,content,admission):
     root=artifact_root()/realm/project/content['pack_id']/'snapshots'/admission['snapshot_digest']
     entry,resources=_resources(root,expected_pack_id=content['pack_id'])
     files=[{'path':p,'sha256':r.sha256} for p,r in sorted(resources.items())]
-    if _json_digest(files).removeprefix('sha256:')!=admission['snapshot_digest']:raise ValueError('Selected snapshot resource closure is corrupt')
+    if _closure_digest(files)!=admission['snapshot_digest']:raise ValueError('Selected snapshot resource closure is corrupt')
     matches=[(d,p) for d,p in _definitions(root,entry) if d.id==admission['id'] and _element_descriptor(d)['kind']==admission['kind']]
     if len(matches)!=1:raise ValueError('Selected pack element is unavailable')
     definition,path=matches[0];descriptor=_element_descriptor(definition)
@@ -412,6 +574,12 @@ def admitted_element_descriptor(realm, project, reference, verified, files, buil
     ]
     if len(admitted) != 1:
         raise ValueError("Element owner/revision is not admitted for this project")
+    return _admitted_snapshot_descriptor(project, reference, content, admitted[0], files, build_receipt)
+
+
+def _admitted_snapshot_descriptor(project, reference, content, admission, files, build_receipt):
+    owner = content['pack_id']
+    required = {'id', 'kind', 'packId', 'revision'}
     if (
         not isinstance(files, Mapping)
         or not files
@@ -435,9 +603,9 @@ def admitted_element_descriptor(realm, project, reference, verified, files, buil
         {"path": name, "sha256": hashlib.sha256(value).hexdigest()}
         for name, value in sorted(files.items())
     ]
-    if _json_digest(closure).removeprefix("sha256:") != admitted[0]["snapshot_digest"]:
+    if _closure_digest(closure) != admission["snapshot_digest"]:
         raise ValueError("Admitted element snapshot is missing or corrupt")
-    build = json.loads(build_receipt)
+    build = _strict_json(build_receipt)
     identity = {
         "projectId": project,
         **{k: reference[k] for k in ("packId", "id", "kind", "revision")},
@@ -445,6 +613,9 @@ def admitted_element_descriptor(realm, project, reference, verified, files, buil
     if (
         not isinstance(build, dict)
         or build.get("schema") != "astrid.element-build/v1"
+        or not isinstance(build.get('selectionDigest'), str)
+        or not re.fullmatch(r'sha256:[0-9a-f]{64}', build['selectionDigest'])
+        or not isinstance(build.get('elements'), list)
         or identity not in build.get("elements", [])
     ):
         raise ValueError("Selected source lacks a successful build receipt")
@@ -490,9 +661,35 @@ def admitted_element_descriptor(realm, project, reference, verified, files, buil
         raise ValueError("Admitted source does not match canonical revision")
     descriptor = exact[0]
     descriptor["componentPath"] = (
-        f"external/{owner}/{admitted[0]['snapshot_digest']}/{descriptor['componentPath']}"
+        f"external/{owner}/{admission['snapshot_digest']}/{descriptor['componentPath']}"
     )
     return copy.deepcopy(descriptor)
+
+
+def admitted_element_snapshot_descriptor(realm, project, reference, verified, snapshot):
+    """Resolve only portable bytes returned by the scoped document_object port.
+
+    Runtime owns capture/association authority; no caller-supplied object or
+    local cache establishes that authority. This function is a pure validator.
+    """
+    if not isinstance(reference, dict) or not isinstance(verified, Mapping):
+        raise ValueError('Missing selected project pack declaration')
+    content = _project_pack_content(verified.get('document', {}))
+    admitted = [a for a in content['admissions']
+                if all(a.get(k) == reference.get(k) for k in ('id', 'kind', 'revision'))]
+    if len(admitted) != 1:
+        raise ValueError('Element owner/revision is not admitted for this project')
+    expected = admitted[0].get('snapshot_object')
+    if expected is None:
+        raise ValueError('pack snapshot unavailable; re-admit pack')
+    if not isinstance(snapshot, Mapping) or set(snapshot) != {*expected, 'bytes_base64'}:
+        raise ValueError('Invalid verified pack snapshot object')
+    descriptor = _snapshot_descriptor({key: snapshot[key] for key in expected})
+    if descriptor != expected:
+        raise ValueError('Pack snapshot object does not match selected admission')
+    data = _decode_base64(snapshot['bytes_base64'])
+    files, receipt = _snapshot_object_resources(descriptor, data)
+    return admitted_element_descriptor(realm, project, reference, verified, files, receipt)
 
 
 def resolve_admitted_element(realm: str, project: str, reference: dict[str,str], *, client=None) -> dict[str,Any]:
@@ -512,7 +709,7 @@ def resolve_admitted_element(realm: str, project: str, reference: dict[str,str],
     if root!=expected_root:raise ValueError('Artifact snapshot is outside its selected Runtime binding')
     entry,resources=_resources(root,expected_pack_id=reference['packId'])
     files=[{'path':p,'sha256':r.sha256} for p,r in sorted(resources.items())]
-    digest=_json_digest(files).removeprefix('sha256:')
+    digest=_closure_digest(files)
     if digest!=admitted[0]['snapshot_digest'] or files!=snapshot['files']:raise ValueError('Admitted element snapshot is missing or corrupt')
     verified={'pin':{'document_id':document_id,'version':row['version'],
                      'content_digest':_json_digest(row['content'])},
