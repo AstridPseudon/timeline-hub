@@ -57,23 +57,68 @@ def test_actual_app_fixture_portable_capture_undo_redo_clear_and_original_claims
         execute(original, [damaged])
 
 
-@pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
-@pytest.mark.parametrize('start,duration,first', [(0, .5, True), (1, .5, False),
-    (15, .5, False), (3, .5, False), (3, 20, False)])
-def test_ratified_first_gap_overlap_and_oversized_windows(fps, start, duration, first):
+NTSC = {'numerator': 30000, 'denominator': 1001}
+# name: (fps, target start, predecessor start, transition seconds, has predecessor);
+# the predecessor spans [start, start + 3s), so start 3 is exactly adjacent (half-open).
+WINDOWS = {
+    'first-before-successor': (30, 0, 20, .5, False),
+    'first-tie-keeps-collection-order': (30, 0, 0, .5, False),
+    'gap': (30, 15, 0, .5, True),
+    'adjacent-half-open': (30, 3, 0, .5, True),
+    'overlap': (30, 1, 0, .5, True),
+    'oversized-authored-window': (30, 3, 0, 20, True),
+    'rational-fps-first': (NTSC, 0, 20, .5, False),
+    'rational-fps-adjacent': (NTSC, 3, 0, .5, True),
+    'rational-fps-oversized': (NTSC, 3, 0, 20, True),
+    'rational-fps-half-frame': (NTSC, 3, 0, 1001 / 60000, True),
+}
+
+
+def windows_case(name):
+    fps, start, predecessor, duration, _ = WINDOWS[name]
     original = app_bundle()
     original['parent']['config']['output']['fps'] = fps
     clip(original, PARENT)['at'] = start
-    if first:
+    clip(original, 'parent/clip:f2-app-clip')['at'] = predecessor
+    if name == 'first-tie-keeps-collection-order':
         original['parent']['clips'].reverse()  # Stable ties use authored collection order.
     original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
-    plan = execute(original, [capture_clip_set(original, PARENT,
-        values={'transition': {'type': 'crossfade', 'duration': duration}})])
+    command = capture_clip_set(original, PARENT, values={'transition': {'type': 'crossfade', 'duration': duration}})
+    return original, execute(original, [command])
+
+
+@pytest.mark.parametrize('name', WINDOWS)
+def test_ratified_first_gap_overlap_and_oversized_windows(name):
+    original, plan = windows_case(name)
     selection = plan.commands[0]['selections'][0]
-    assert selection['members'] == ([] if first else ['parent/clip:f2-app-clip'])
-    assert clip(plan.bundle, PARENT)['transition']['duration'] == duration
+    assert selection['members'] == (['parent/clip:f2-app-clip'] if WINDOWS[name][4] else [])
+    assert clip(plan.bundle, PARENT)['transition']['duration'] == WINDOWS[name][3]
     exact(inverse(plan.bundle, plan.records).bundle, original)
     compile_authoring_candidate(plan.bundle)
+
+
+def test_window_goldens_pin_commands_and_records():
+    golden = json.loads((FIXTURES / 'recipe_m2_app_transition_windows.json').read_text())
+    exact(golden, window_goldens())
+
+
+def window_goldens():
+    return {name: {'commands': plan.commands, 'records': plan.records}
+            for name in WINDOWS for plan in [windows_case(name)[1]]}
+
+
+@pytest.mark.parametrize('fps,seconds,accepted', [
+    (30, .5 / 30, True), (30, .49 / 30, False),
+    (NTSC, 1001 / 60000, True), (NTSC, 1001 / 60000 * .98, False)])
+def test_transition_quantizes_to_a_positive_whole_frame_window(fps, seconds, accepted):
+    original = app_bundle()
+    original['parent']['config']['output']['fps'] = fps
+    values = {'transition': {'type': 'crossfade', 'duration': seconds}}
+    if accepted:
+        capture_clip_set(original, PARENT, values=values)
+    else:
+        with pytest.raises(CommandError, match='whole frames'):
+            capture_clip_set(original, PARENT, values=values)
 
 
 @pytest.mark.parametrize('ref', [PARENT, CHILD])
