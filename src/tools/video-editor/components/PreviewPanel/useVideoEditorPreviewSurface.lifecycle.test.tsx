@@ -157,40 +157,47 @@ describe('mounted command projection delivery', () => {
     const base = projectCanonicalComposition(canonical('R')).config;
     const h = mount(dataFor(base));
     const edit = candidate(base, 1);
-    h.update(local(edit), 'dirty');
+    const localEdit = local(edit);
+    h.update(localEdit, 'dirty');
     advance();
-    expect(player.config).toBe(edit);
+    expect(player.config).toBe(localEdit.resolvedConfig);
     expect(player.config!.clips[0]).toMatchObject({ at: 1, x: 0.25 });
     label('Unsaved local · based on R');
-    h.update(local(edit), 'saving');
+    const savingEdit = local(edit);
+    h.update(savingEdit, 'saving');
     advance();
     label('Unsaved local · based on R');
+    const deliveredEdit = player.config;
 
     const closure = projectCanonicalComposition(canonical('A', 500)).config;
     const pinnedMedia = closure.clips.find((clip) => clip.asset)!.assetEntry;
-    h.update(accepted(closure), 'saved');
-    expect(player.config).toBe(edit);
+    const acceptedClosure = accepted(closure);
+    h.update(acceptedClosure, 'saved');
+    expect(player.config).toBe(deliveredEdit);
     label('Unsaved local · based on R');
     advance();
-    expect(player.config).toBe(closure);
+    expect(player.config).toBe(acceptedClosure.resolvedConfig);
     expect(player.config!.clips.find((clip) => clip.asset)!.assetEntry).toBe(pinnedMedia);
-    expect(player.config!.registry).toBe(closure.registry);
+    expect(player.config!.registry).toBe(acceptedClosure.resolvedConfig.registry);
     label('Committed A');
   });
 
   it('keeps retained B local at its original base through prefix A acknowledgement and observed C', () => {
     const base = projectCanonicalComposition(canonical('R')).config;
     const b = candidate(base, 1.5);
-    const h = mount(local(b, 2));
+    const initial = local(b, 2);
+    const h = mount(initial);
     label('Unsaved local · based on R');
-    h.update({ ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'A', headPublicationId: 'pub-A' } }, 'saved');
+    const afterA = { ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'A', headPublicationId: 'pub-A' } };
+    h.update(afterA, 'saved');
     advance();
-    expect(player.config).toBe(b);
+    expect(player.config).toBe(afterA.resolvedConfig);
     label('Unsaved local · based on R');
     h.observe(canonical('C', 700));
-    h.update({ ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'C', headPublicationId: 'pub-C' } }, 'saved');
+    const afterC = { ...local(b, 2), head: { ...dataFor(base).head!, headRevisionId: 'C', headPublicationId: 'pub-C' } };
+    h.update(afterC, 'saved');
     advance();
-    expect(player.config).toBe(b);
+    expect(player.config).toBe(afterC.resolvedConfig);
     label('Unsaved local · based on R');
   });
 
@@ -223,21 +230,28 @@ describe('mounted command projection delivery', () => {
     expect(next.signature).toBe(initial.signature);
     h.update(next, 'saved');
     advance(149);
-    expect(player.config).toBe(config);
+    expect(player.config).toBe(initial.resolvedConfig);
     label('Unsaved local · based on R');
     advance(1);
-    expect(player.config).toBe(nextConfig);
+    expect(player.config).toBe(next.resolvedConfig);
     label('Committed A');
   });
 
   it('refuses metadata-only certification of delivered frames and clears only target notices', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
-    const h = mount(local(config));
-    h.update(accepted(config), 'saved');
+    const initial = local(config);
+    const h = mount(initial);
+    const acceptedR = Object.assign({}, initial, {
+      editProjection: { kind: 'accepted' as const, head: { revisionId: 'A', publicationId: 'pub-A' } },
+    });
+    h.update(acceptedR, 'saved');
     advance();
-    expect(player.config).toBe(config);
+    expect(player.config).toBe(initial.resolvedConfig);
     label('Unsaved local · based on R');
-    h.update(accepted(config, 'C'), 'saved');
+    const acceptedC = Object.assign({}, initial, {
+      editProjection: { kind: 'accepted' as const, head: { revisionId: 'C', publicationId: 'pub-C' } },
+    });
+    h.update(acceptedC, 'saved');
     advance();
     label('Unsaved local · based on R');
     h.update(accepted(shotShell(config), 'C'), 'saved');
@@ -278,9 +292,11 @@ describe('mounted command projection delivery', () => {
 
   it('keeps a complete paired config labelled while an independent canonical target read is unavailable', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
-    const h = mount(accepted(config));
+    const initial = accepted(config);
+    const h = mount(initial);
+    const deliveredInitial = player.config;
     h.observe(canonical('C'), Object.assign(new Error('Cannot read D'), { targetRevisionId: 'D' }));
-    expect(player.config).toBe(config);
+    expect(player.config).toBe(deliveredInitial);
     label('Committed A');
     expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of D unavailable');
     h.observe(canonical('C'));
@@ -290,41 +306,49 @@ describe('mounted command projection delivery', () => {
 
   it('cancels older paused command inputs and delivers the newest generation with its own label', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
-    const h = mount(local(config));
+    const initial = local(config);
+    const h = mount(initial);
     const a = candidate(config, 1);
     const b = candidate(config, 1.5);
-    h.update(accepted(a));
+    const acceptedA = accepted(a);
+    const localB = local(b, 2);
+    h.update(acceptedA);
     advance(100);
-    h.update(local(b, 2));
+    h.update(localB);
     advance();
-    expect(player.config).toBe(b);
+    expect(player.config).toBe(localB.resolvedConfig);
     expect(player.delivered).not.toContain(a);
     label('Unsaved local · based on R');
   });
 
   it('coalesces playing command inputs on one frame without delivering the superseded acceptance', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
-    const h = mount(local(config));
+    const initial = local(config);
+    const h = mount(initial);
     act(() => { player.listeners.get('play')!.forEach((listener) => listener()); });
     flushFrame();
     const a = candidate(config, 1);
     const b = candidate(config, 1.5);
-    h.update(accepted(a));
-    h.update(local(b, 2));
-    expect(player.config).toBe(config);
+    const acceptedA = accepted(a);
+    const localB = local(b, 2);
+    h.update(acceptedA);
+    h.update(localB);
+    expect(player.config).toBe(initial.resolvedConfig);
     flushFrame();
-    expect(player.config).toBe(b);
+    expect(player.config).toBe(localB.resolvedConfig);
     expect(player.delivered).not.toContain(a);
     label('Unsaved local · based on R');
   });
 
   it('remounts across project and timeline scopes while a command generation is queued', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
-    const h = mount(local(config));
+    const initial = local(config);
+    const h = mount(initial);
     const pending = candidate(config, 1);
-    h.update(accepted(pending));
+    const acceptedPending = accepted(pending);
+    h.update(acceptedPending);
     h.runtime({ timelineId: 'other-timeline' });
-    expect(player.config).toBe(pending);
+    expect(player.config).toBe(acceptedPending.resolvedConfig);
     advance();
     label('Committed A');
     expect(vi.getTimerCount()).toBe(0);
