@@ -345,7 +345,7 @@ def _clip(raw, registries, occurrence, start, end, track_scope, tracks):
         raise ConflictError("pinned internal clip has no identity")
     relative = _fraction(raw.get("at_ms", raw.get("at", 0)), "clip start", milliseconds="at_ms" in raw, nonnegative=False)
     absolute = start + relative
-    speed = _fraction(raw.get("speed", 1), "clip speed")
+    speed = _fraction(1 if raw.get("speed") is None else raw["speed"], "clip speed")
     if speed <= 0:
         raise ConflictError("pinned internal clip speed is invalid")
     if "duration_ms" in raw:
@@ -412,7 +412,7 @@ def _parent_clip(raw, registries, track_scope, tracks):
     if not isinstance(cid, str) or not cid:
         raise ConflictError("parent composition clip has no identity")
     start = _fraction(raw.get("at_ms", raw.get("at", 0)), "parent clip start", milliseconds="at_ms" in raw)
-    speed = _fraction(raw.get("speed", 1), "parent clip speed")
+    speed = _fraction(1 if raw.get("speed") is None else raw["speed"], "parent clip speed")
     if speed <= 0:
         raise ConflictError("parent clip speed is invalid")
     if "duration_ms" in raw:
