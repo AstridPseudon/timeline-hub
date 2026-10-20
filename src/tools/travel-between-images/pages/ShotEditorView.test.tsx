@@ -135,6 +135,9 @@ describe('current App shot editing base', () => {
       turboMode: true,
       advancedMode: true,
       motionMode: 'advanced',
+      prompt: 'fixture prompt remains raw',
+      negativePrompt: null,
+      x_settings_opaque: { owner: 'settings-auto-disable', nested: [null, false, 0] },
     };
     await setup(input as typeof fixture, port);
 

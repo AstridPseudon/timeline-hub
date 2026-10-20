@@ -64,6 +64,7 @@ interface ShotEditorBootstrapResult {
   steerableMotionSettings: ReturnType<typeof useSteerableMotionSettings>;
   loraSettings: ReturnType<typeof useLoraSettings>;
   settingsLoadingFromContext: boolean;
+  canonicalPersistence: boolean;
   selectedShot: ReturnType<typeof useShotEditorSetup>['selectedShot'];
   shots: ReturnType<typeof useShotEditorSetup>['shots'];
   selectedProjectId: ReturnType<typeof useShotEditorSetup>['selectedProjectId'];
@@ -112,7 +113,10 @@ function useShotEditorBootstrap({
   const generationModeSettings = useGenerationModeSettings();
   const steerableMotionSettings = useSteerableMotionSettings();
   const loraSettings = useLoraSettings();
-  const { isLoading: settingsLoadingFromContext } = useVideoTravelSettingsStatus();
+  const {
+    isLoading: settingsLoadingFromContext,
+    canonicalPersistence,
+  } = useVideoTravelSettingsStatus();
 
   const shotSetup = useShotEditorSetup({
     selectedShotId,
@@ -153,6 +157,7 @@ function useShotEditorBootstrap({
     steerableMotionSettings,
     loraSettings,
     settingsLoadingFromContext,
+    canonicalPersistence,
     selectedShot: shotSetup.selectedShot,
     shots: shotSetup.shots,
     selectedProjectId: shotSetup.selectedProjectId,
@@ -296,6 +301,7 @@ export function useShotEditorController({
     steerableMotionSettings,
     loraSettings,
     settingsLoadingFromContext,
+    canonicalPersistence,
     selectedShot,
     shots,
     selectedProjectId,
@@ -465,6 +471,7 @@ export function useShotEditorController({
       randomSeed,
       isShotUISettingsLoading,
       settingsLoadingFromContext,
+      canonicalPersistence,
       updateShotUISettings,
       setShowStepsNotification: actions.setShowStepsNotification,
     },

@@ -85,6 +85,7 @@ interface GenerationControllerRuntime {
   accelerated: boolean;
   isShotUISettingsLoading: boolean;
   settingsLoadingFromContext: boolean;
+  canonicalPersistence: boolean;
   updateShotUISettings: (scope: 'project' | 'shot', values: Record<string, unknown>) => void;
   setSteerableMotionSettings: (settings: { model_name?: string; seed?: number; negative_prompt?: string; debug?: boolean }) => void;
   setSteps: (steps: number) => void;
@@ -212,6 +213,7 @@ export function useGenerationController({
     steerableMotionSettings: motion.steerableMotionSettings,
     isShotUISettingsLoading: runtime.isShotUISettingsLoading,
     settingsLoadingFromContext: runtime.settingsLoadingFromContext,
+    canonicalPersistence: runtime.canonicalPersistence,
     updateShotUISettings: runtime.updateShotUISettings,
     setSteerableMotionSettings: runtime.setSteerableMotionSettings,
     setSteps: runtime.setSteps,
