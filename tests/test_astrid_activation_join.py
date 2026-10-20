@@ -91,9 +91,13 @@ def _no_leaked_join_processes(tmp_path):
 
 @pytest.fixture
 def astrid_root(tmp_path):
-    source = astrid_checkout() / "astrid"
+    checkout = astrid_checkout()
     root = tmp_path / "astrid-checkout"
-    shutil.copytree(source, root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    root.mkdir()
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+    shutil.copy2(checkout / "pyproject.toml", root / "pyproject.toml")
+    shutil.copytree(checkout / "astrid", root / "astrid", ignore=ignore)
+    shutil.copytree(checkout / "astrid_runtime_client", root / "astrid_runtime_client", ignore=ignore)
     return root
 
 
