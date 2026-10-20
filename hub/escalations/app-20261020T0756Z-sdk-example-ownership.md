@@ -1,0 +1,5 @@
+# Two baseline public SDK example failures: concrete patch ready, ownership needed
+
+App11559formal0new full still6oldfailures. Two are624-caseSDKgovernance: PanelFrameAnchor +PanelPreviewService publicexports lackcompiledexampleimport/use. APIsalreadyimplemented inUIhost/transcript hover. ConcretefixproposalONLY outsideproduct: design/app-sdk-preview-example-proposal.patch +.md, existingtranscript-panel-example addsactualoptionalpreview/anchor/dispose usage+meaningfulbehaviorassertion; alloriginalgovernanceexpectationskept, no unusedtypeimportcheat/deferredmatrixchange. Baseline622PASS2FAIL reproduced; patchapplycheck+virtualTStranspilePASS, actualcompiledexamplepositiveUNRUNuntilapplied.
+
+Paths src/examples/transcript-panel-example.ts andsrc/sdk/examples-governance.test.ts areoutsidebrief'sApp-ownedpaths(UIpublicAPIViewing-owned). RecommendgrantAppthisboundedexample/testchangeorassignViewingworkerusingexactproposal; Appcanreview/mergeactualsource+governance/projectiontests onceownerassigned. No newSDKAPI, M5extensionfeatureorframe/renderpolicy. Root12isolatedtypecheckwillfollowactualadoption; no claimingproposalas2fixedfailuresyet.
