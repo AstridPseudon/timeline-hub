@@ -133,6 +133,11 @@ def claim_capture_view(service, spec):
         contexts.append(outer_context)
     inputs = inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}
     labels = {}
+
+    def claim_identity(key, ref):
+        """Identify one authority claim, including its binding and scope."""
+        return key, canonical_json(ref)
+
     for context in contexts:
         for key in SNAPSHOT_KEYS:
             ref = context.get(key + "_ref")
@@ -144,10 +149,11 @@ def claim_capture_view(service, spec):
             except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
                 certified = False
             if not certified:
-                # Match by carrier and object digest so a duplicate authority
-                # value (including the argv/filmstrip JSON) cannot retain the
-                # rejected revision claims while each carrier keeps its own bytes.
-                labels[(key + "_ref", ref.get("digest"))] = {
+                # Match the complete authority claim so exact duplicates
+                # (including argv/filmstrip JSON) lose rejected claims while
+                # independently verified claims for the same bytes survive.
+                ref_key = key + "_ref"
+                labels[claim_identity(ref_key, ref)] = {
                     "digest": ref["digest"], "project_id": ref.get("project_id"),
                     "timeline_id": ref.get("timeline_id"), "source_kind": "cas",
                 }
@@ -159,7 +165,7 @@ def claim_capture_view(service, spec):
         if isinstance(value, dict):
             result = {}
             for key, item in value.items():
-                replacement = labels.get((key, item.get("digest"))) if (
+                replacement = labels.get(claim_identity(key, item)) if (
                     key.endswith("_snapshot_ref") and isinstance(item, dict)
                 ) else None
                 result[key] = replacement if replacement is not None else relabel(item)
