@@ -77,7 +77,6 @@ export interface UseTimelineHistoryResult {
   redo: () => void;
   jumpToCheckpoint: (checkpointId: string) => void;
   createManualCheckpoint: (label?: string) => Promise<void>;
-  createCheckpoint: (label?: string) => Promise<void>;
 }
 
 function cloneConfig(config: TimelineConfig): TimelineConfig {
@@ -637,6 +636,5 @@ export function useTimelineHistory({
     redo,
     jumpToCheckpoint,
     createManualCheckpoint,
-    createCheckpoint: createManualCheckpoint,
   };
 }
