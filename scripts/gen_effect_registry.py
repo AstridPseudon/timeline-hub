@@ -8,6 +8,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,6 +32,19 @@ OUTPUTS = {
 
 ElementKind = Literal["effects", "animations", "transitions"]
 REGISTRY_STATE_VERSION = 1
+
+_PUBLIC_REGISTRY_NODE_SCRIPT = r'''
+import {DEFAULT_THEME} from '@banodoco/timeline-composition';
+import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
+
+const registries = resolveElementRegistries(DEFAULT_THEME);
+console.log(JSON.stringify({
+  effects: Object.keys(registries.effects ?? {}),
+  animations: Object.keys(registries.animations ?? {}),
+  transitions: Object.keys(registries.transitions ?? {}),
+}));
+'''
+_PUBLIC_REGISTRY_CACHE: dict[tuple[str, str], dict[str, frozenset[str]]] = {}
 
 
 @dataclass(frozen=True)
@@ -88,17 +103,108 @@ def discover_plugins(
         elements = registry.list(kind=kind)
     else:
         elements = tuple(
-            definitions[0]
-            for (item_kind, _), definitions in registry._entries.items()
-            if item_kind == kind
-            for definitions in [
-                [element for element in definitions if element.source != "pack:local"]
-            ]
-            if definitions
+            element for element in registry.list(kind=kind)
+            if element.source != "pack:local"
         )
+    # The public Composition package owns the bundled wrapper implementations.
+    # Their descriptors remain in the normal element registry so authored
+    # defaults, metadata and validation stay discoverable, but a source-less
+    # descriptor must not produce a host import for a file that was retired.
+    elements = tuple(
+        element
+        for element in elements
+        if _component_is_host_importable(element)
+    )
     for element in elements:
         plugins[element.id] = _plugin_from_element(element)
     return plugins
+
+
+def _component_is_host_importable(element: ElementDefinition) -> bool:
+    if element.component.is_file():
+        return True
+    if element.source != "pack:rendering":
+        raise ValueError(
+            f"element {element.kind}/{element.id} from {element.source!r} has no "
+            "component.tsx; refusing to hide a broken custom component"
+        )
+    if element.id in _public_registry_ids()[element.kind]:
+        return False
+    raise ValueError(
+        f"broken rendering component {element.kind}/{element.id} from "
+        f"{element.source!r}: no component.tsx and the installed public "
+        "Composition registry does not supply it"
+    )
+
+
+def _public_registry_ids() -> dict[str, frozenset[str]]:
+    """Return IDs exposed by the installed Composition registry.
+
+    The generated host map must not duplicate the public package's component
+    implementations. Membership comes from Composition's existing public
+    registry resolver rather than a copied list of bundled IDs.
+    """
+    project = Path(
+        os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion"
+    ).resolve()
+    package = (project / "node_modules" / "@banodoco" / "timeline-composition").resolve()
+    manifest = package / "package.json"
+    if not manifest.is_file():
+        raise ValueError(
+            "cannot verify missing rendering components: installed public "
+            f"Composition package is missing at {manifest}"
+        )
+    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+    if not node:
+        raise ValueError(
+            "cannot verify missing rendering components: no Node executable "
+            "is available for Composition's public registry API"
+        )
+    node_path = str(Path(node).resolve())
+    cache_key = (str(project), node_path)
+    cached = _PUBLIC_REGISTRY_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    try:
+        result = subprocess.run(
+            [node_path, "--input-type=module", "-e", _PUBLIC_REGISTRY_NODE_SCRIPT],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError(
+            "cannot verify missing rendering components through the installed "
+            f"public Composition registry API: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip().splitlines()
+        reason = detail[-1] if detail else f"Node exited {result.returncode}"
+        raise ValueError(
+            "cannot verify missing rendering components through the installed "
+            f"public Composition registry API: {reason}"
+        )
+    try:
+        raw = json.loads(result.stdout)
+        membership = {
+            kind: frozenset(str(item) for item in raw[kind])
+            for kind in ("effects", "animations", "transitions")
+            if isinstance(raw, dict) and isinstance(raw.get(kind), list)
+        }
+    except (TypeError, ValueError, KeyError) as exc:
+        raise ValueError(
+            "installed public Composition registry API returned invalid "
+            f"membership: {result.stdout!r}"
+        ) from exc
+    if set(membership) != {"effects", "animations", "transitions"}:
+        raise ValueError(
+            "installed public Composition registry API returned incomplete "
+            f"membership: {result.stdout!r}"
+        )
+    _PUBLIC_REGISTRY_CACHE[cache_key] = membership
+    return membership
 
 
 def discover_effects(
@@ -340,20 +446,64 @@ def _generate_effect_registry(
     *,
     include_local: bool = True,
 ) -> str:
+    registry = _element_registry()
     effects = discover_effects(include_local=include_local)
+    all_elements = registry.list(kind="effects", include_shadowed=True)
+
+    # A source-less public winner is still the canonical registry entry.  If a
+    # valid shadow exists, retain that winner in the host map so the existing
+    # owner selector can route the qualified local reference without changing
+    # canonical registry precedence.
+    for element in all_elements:
+        if element.id in effects or (not include_local and element.source == "pack:local"):
+            continue
+        winner = registry.get("effects", element.id)
+        if element is winner:
+            continue
+        if (
+            winner.source == "pack:rendering"
+            and not winner.component.is_file()
+            and element.id in _public_registry_ids()["effects"]
+        ):
+            _component_is_host_importable(element)
+            effects[element.id] = _plugin_from_element(winner)
+
     effect_ids = sorted(effects)
+    public_effects = {
+        effect_id: effect
+        for effect_id, effect in effects.items()
+        if effect.scope == "pack:rendering"
+        and not effect.root.joinpath("component.tsx").is_file()
+    }
     imports = [
         f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
         for effect_id in effect_ids
+        if effect_id not in public_effects
     ]
+    winner_symbols = {
+        effect_id: (
+            f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
+            if effect_id in public_effects
+            else _component_name(effect_id)
+        )
+        for effect_id in effect_ids
+    }
     # Keep public IDs and the unqualified winner. Components receive the
     # existing editor ref through their clip props, so no composition schema
     # or second dispatch identity is needed for retained owner candidates.
     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
-    for element in _element_registry().list(kind="effects", include_shadowed=True):
+    for effect_id, effect in public_effects.items():
+        pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
+        owners[effect_id][pack_id] = winner_symbols[effect_id]
+    for element in all_elements:
         if not include_local and element.source == "pack:local":
             continue
         if element.id not in effects:
+            continue
+        if not _component_is_host_importable(element):
+            # A source-less public descriptor is supplied by the installed
+            # Composition registry.  It is not a host import and must not be
+            # treated as an owner candidate for a custom winner.
             continue
         pack_id = ElementRegistry._pack_id(element)
         plugin = _plugin_from_element(element)
@@ -365,7 +515,7 @@ def _generate_effect_registry(
         owners[element.id].setdefault(pack_id, symbol)
     registry_entries = [
         f"  {_ts_string(effect_id)}: selectOwnedEffect({_ts_string(effect_id)}, "
-        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
+        f"{winner_symbols[effect_id]}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
         for effect_id in effect_ids
     ]
     fingerprint_entries = [
@@ -384,6 +534,16 @@ def _generate_effect_registry(
         "import {createElement} from 'react';",
         "",
         "import type {SceneCapableComponent, ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';",
+        *(
+            [
+                "import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';",
+                "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
+                "",
+                "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
+            ]
+            if public_effects
+            else []
+        ),
         "",
         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
         "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",

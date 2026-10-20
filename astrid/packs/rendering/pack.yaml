@@ -1259,39 +1259,21 @@ rendering:
   animations/fade:
     type: element
     path: rendering/elements/animations/fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/fade/component.tsx
   animations/fade-up:
     type: element
     path: rendering/elements/animations/fade-up/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/fade-up/component.tsx
   animations/scale-in:
     type: element
     path: rendering/elements/animations/scale-in/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/scale-in/component.tsx
   animations/slide-left:
     type: element
     path: rendering/elements/animations/slide-left/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/slide-left/component.tsx
   animations/slide-up:
     type: element
     path: rendering/elements/animations/slide-up/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/slide-up/component.tsx
   animations/type-on:
     type: element
     path: rendering/elements/animations/type-on/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/animations/type-on/component.tsx
   effects/audio-reactive-colour:
     type: element
     path: rendering/elements/effects/audio-reactive-colour/element.yaml
@@ -1301,21 +1283,12 @@ rendering:
   effects/text-card:
     type: element
     path: rendering/elements/effects/text-card/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/effects/text-card/component.tsx
   transitions/cross-fade:
     type: element
     path: rendering/elements/transitions/cross-fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/transitions/cross-fade/component.tsx
   transitions/fade:
     type: element
     path: rendering/elements/transitions/fade/element.yaml
-    resources:
-    - kind: implementation
-      path: rendering/elements/transitions/fade/component.tsx
 ui:
   transcript:
     type: editor

@@ -1,11 +1,12 @@
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 GENERATOR = ROOT / "scripts" / "gen_effect_registry.py"
@@ -24,9 +25,152 @@ class RemotionElementGenerationTest(unittest.TestCase):
             generated = gen_effect_registry.generate_element_registry(kind)
             self.assertIn("@banodoco/timeline-composition/theme-api", generated)
             self.assertNotIn("./effects.types", generated)
-            self.assertRegex(generated, r"@(pack-(local|rendering)|managed)-elements-")
             self.assertNotIn("@workspace-", generated)
             self.assertNotIn("primitive-root", generated)
+        self.assertIn("@pack-rendering-elements-effects/audio-reactive-colour/component", gen_effect_registry.generate_element_registry("effects"))
+
+    def test_canonical_registry_winner_is_not_replaced_by_local_shadow(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            public_root = root / "rendering" / "fade"
+            public_root.mkdir(parents=True)
+            public_component = public_root / "component.tsx"
+            public_component.write_text("export default function PublicFade() { return null; }\n", encoding="utf-8")
+            override_root = root / "local" / "fade"
+            override_root.mkdir(parents=True)
+            override_component = override_root / "component.tsx"
+            override_component.write_text("export default function FadeOverride() { return null; }\n", encoding="utf-8")
+
+            public_descriptor = ElementDefinition(
+                id="fade", kind="animations", root=public_root, source="pack:rendering",
+                editable=False, priority=30, component=public_component,
+                schema={}, defaults={"durationFrames": 12},
+                metadata={"pack_id": "rendering", "kind": "wrapper"},
+                runtime={"adapter": "remotion"},
+            )
+            override = ElementDefinition(
+                id="fade", kind="animations", root=override_root, source="pack:local",
+                editable=True, priority=30, component=override_component, schema={},
+                defaults={"durationFrames": 24}, metadata={"pack_id": "local"},
+                runtime={"adapter": "remotion"},
+            )
+            old_registry = gen_effect_registry._element_registry
+            gen_effect_registry._element_registry = lambda: ElementRegistry(
+                (public_descriptor, override)
+            )
+            try:
+                generated = gen_effect_registry.generate_element_registry("animations")
+            finally:
+                gen_effect_registry._element_registry = old_registry
+
+        self.assertIn("'fade'", generated)
+        self.assertIn("@pack-rendering-elements-animations/fade/component", generated)
+        self.assertNotIn("@pack-local-elements-animations/fade/component", generated)
+
+    def test_public_source_less_winner_preserves_local_owner(self) -> None:
+        from astrid.core.element.registry import load_default_registry
+
+        registry = load_default_registry(project_root=ROOT)
+        winner = registry.get("effects", "text-card")
+        self.assertEqual(winner.source, "pack:rendering")
+        self.assertFalse(winner.component.is_file())
+        self.assertEqual(winner.metadata["pack_id"], "rendering")
+
+        public_ids = gen_effect_registry._public_registry_ids()
+        self.assertIn("text-card", public_ids["effects"])
+        generated = gen_effect_registry.generate_element_registry("effects")
+        self.assertIn("'text-card': selectOwnedEffect(", generated)
+        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+        self.assertIn("'local': OwnerElement", generated)
+        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+        self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
+
+    def test_public_membership_uses_composition_registry_api(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            package = project / "node_modules" / "@banodoco" / "timeline-composition"
+            package.mkdir(parents=True)
+            (package / "package.json").write_text("{}\n", encoding="utf-8")
+            response = json.dumps({
+                "effects": ["package-effect"],
+                "animations": ["package-animation"],
+                "transitions": ["package-transition"],
+            })
+            old_cache = gen_effect_registry._PUBLIC_REGISTRY_CACHE
+            gen_effect_registry._PUBLIC_REGISTRY_CACHE = {}
+            try:
+                with mock.patch.dict(
+                    gen_effect_registry.os.environ,
+                    {
+                        "ASTRID_REMOTION_PROJECT_DIR": str(project),
+                        "ASTRID_NODE_EXECUTABLE": "/node20",
+                    },
+                    clear=False,
+                ), mock.patch.object(
+                    gen_effect_registry.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(
+                        ["/node20"], 0, stdout=response, stderr=""
+                    ),
+                ) as run:
+                    membership = gen_effect_registry._public_registry_ids()
+            finally:
+                gen_effect_registry._PUBLIC_REGISTRY_CACHE = old_cache
+
+        self.assertEqual(membership["effects"], {"package-effect"})
+        command = run.call_args.args[0]
+        self.assertIn("resolveElementRegistries", command[-1])
+        self.assertNotIn("text-card", command[-1])
+
+    def test_missing_non_public_component_is_diagnostic(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "custom" / "missing"
+            root.mkdir(parents=True)
+            missing = ElementDefinition(
+                id="missing", kind="effects", root=root, source="pack:custom",
+                editable=True, priority=0, component=root / "component.tsx",
+                schema={}, defaults={}, metadata={"pack_id": "custom"},
+                runtime={"adapter": "remotion"},
+            )
+            old_registry = gen_effect_registry._element_registry
+            gen_effect_registry._element_registry = lambda: ElementRegistry((missing,))
+            try:
+                with self.assertRaisesRegex(ValueError, "broken custom component"):
+                    gen_effect_registry.generate_element_registry("effects")
+            finally:
+                gen_effect_registry._element_registry = old_registry
+
+    def test_unknown_rendering_component_is_not_silently_omitted(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "rendering" / "unknown"
+            root.mkdir(parents=True)
+            missing = ElementDefinition(
+                id="unknown", kind="effects", root=root, source="pack:rendering",
+                editable=False, priority=30, component=root / "component.tsx",
+                schema={}, defaults={}, metadata={"pack_id": "rendering"},
+                runtime={"adapter": "remotion"},
+            )
+            old_registry = gen_effect_registry._element_registry
+            old_public_ids = gen_effect_registry._public_registry_ids
+            gen_effect_registry._element_registry = lambda: ElementRegistry((missing,))
+            gen_effect_registry._public_registry_ids = lambda: {
+                "effects": frozenset(), "animations": frozenset(), "transitions": frozenset(),
+            }
+            try:
+                with self.assertRaisesRegex(ValueError, "broken rendering component"):
+                    gen_effect_registry.generate_element_registry("effects")
+            finally:
+                gen_effect_registry._element_registry = old_registry
+                gen_effect_registry._public_registry_ids = old_public_ids
 
     def test_remotion_alias_files_do_not_reference_workspace_element_aliases(self) -> None:
         checked = [
