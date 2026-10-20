@@ -64,6 +64,7 @@ def test_corrupt_orphan_refuses_before_any_write(realm, raw):
     for _ in range(2):
         with pytest.raises(ConflictError) as error:
             runtime.create_timeline(project, "main", idempotency_key="create")
+        assert "timeline:main" in str(error.value)
         assert error.value.details == {"status": "refused", "reason": "headless_content_not_empty"}
         assert _state(runtime) == before
         assert runtime.store.conn.total_changes == changes
