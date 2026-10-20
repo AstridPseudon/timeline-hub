@@ -12,26 +12,44 @@ export interface SelectedElementParamFieldsProps {
   clip: ResolvedTimelineClip;
   descriptor: AstridElementParamDescriptor;
   retainedDocumentPin: DocumentPin;
-  timelineOps?: Pick<TimelineOps, 'setClipParams'>;
+  timelineOps?: Pick<TimelineOps, 'setClipParams' | 'getSubmittedClipParams'>;
   commandState?: CommandSessionState;
+}
+
+function inputDrafts(args: ClipSetParamsArgs): Record<string, string> {
+  return Object.fromEntries([
+    ...Object.entries(args.values).map(([name, value]) => [name, JSON.stringify(value)]),
+    ...args.clear.map((name) => [name, '']),
+  ]);
 }
 
 /** Raw JSON drafts: schema properties describe controls, never authorize values. */
 export function SelectedElementParamFields({ clip, descriptor, retainedDocumentPin, timelineOps, commandState }: SelectedElementParamFieldsProps) {
   const id = useId();
-  const originalPin = useRef(structuredClone(retainedDocumentPin));
+  const input = timelineOps?.getSubmittedClipParams?.(clip.id);
+  const pending = input && !input.accepted ? input : undefined;
+  const originalPin = useRef(structuredClone(pending?.args.schema_source ?? retainedDocumentPin));
   const request = useRef<AbortController>();
+  const edits = useRef(new Map<string, number>());
   useEffect(() => () => { request.current?.abort(); }, []);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [submitted, setSubmitted] = useState<Record<string, string> | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>(() => pending ? inputDrafts(pending.args) : {});
+  const [submitted, setSubmitted] = useState<{ id: string; drafts: Record<string, string>; edits: Map<string, number> } | null>(() =>
+    pending ? { id: pending.id, drafts: inputDrafts(pending.args), edits: new Map() } : null);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   useEffect(() => {
-    if (!submitted || commandState?.status !== 'saved') return;
+    if (!submitted || !input?.accepted || input.id !== submitted.id) return;
     setDrafts((current) => Object.fromEntries(Object.entries(current).filter(([name, value]) =>
-      !Object.hasOwn(submitted, name) || submitted[name] !== value)));
+      !Object.hasOwn(submitted.drafts, name) || submitted.drafts[name] !== value || submitted.edits.get(name) !== edits.current.get(name))));
     setSubmitted(null);
-  }, [commandState?.status, submitted]);
+  }, [input, submitted]);
+  useEffect(() => {
+    if (!pending || pending.id === submitted?.id) return;
+    const restored = inputDrafts(pending.args);
+    originalPin.current = structuredClone(pending.args.schema_source!);
+    setDrafts((current) => ({ ...restored, ...current }));
+    setSubmitted({ id: pending.id, drafts: restored, edits: new Map() });
+  }, [pending, submitted?.id]);
   const properties = (descriptor.schema as { properties: Record<string, { title?: string; description?: string }> }).properties;
   const apply = async () => {
     setError(null);
@@ -43,11 +61,13 @@ export function SelectedElementParamFields({ clip, descriptor, retainedDocumentP
         if (draft.trim() === '') args.clear.push(name);
         else Object.defineProperty(args.values, name, { value: JSON.parse(draft), enumerable: true });
       }
+      const submittedEdits = new Map(edits.current);
       setReading(true);
       const controller = new AbortController();
       request.current = controller;
       await timelineOps.setClipParams(clip.id, args, controller.signal);
-      setSubmitted(drafts);
+      const queued = timelineOps.getSubmittedClipParams?.(clip.id);
+      if (queued) setSubmitted({ id: queued.id, drafts, edits: submittedEdits });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
     } finally {
@@ -59,11 +79,11 @@ export function SelectedElementParamFields({ clip, descriptor, retainedDocumentP
     <p className="text-xs text-muted-foreground">Enter JSON values; leave blank to clear. Schema details are hints. Accepted values remain in the timeline until provider acceptance.</p>
     {Object.entries(properties).map(([name, hints]) => {
       const label = hints?.title ?? name;
-      const accepted = JSON.stringify(clip.params?.[name]) ?? '';
+      const accepted = clip.params && Object.hasOwn(clip.params, name) ? JSON.stringify(clip.params[name]) ?? '' : '';
       return <div key={name} className="space-y-1">
         <label htmlFor={`${id}-${name}`}>{label}</label>
         <Input id={`${id}-${name}`} value={Object.hasOwn(drafts, name) ? drafts[name] : accepted}
-          onChange={(event) => { setDrafts((current) => ({ ...current, [name]: event.target.value })); setError(null); }} />
+          onChange={(event) => { edits.current.set(name, (edits.current.get(name) ?? 0) + 1); setDrafts((current) => ({ ...current, [name]: event.target.value })); setError(null); }} />
         <output aria-label={`${label} accepted value`}>{accepted || 'absent'}</output>
         {hints?.description && <p className="text-xs text-muted-foreground">{hints.description}</p>}
       </div>;

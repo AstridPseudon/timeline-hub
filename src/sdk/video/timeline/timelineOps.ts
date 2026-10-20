@@ -25,7 +25,17 @@ import type { ClipSetParamsArgs } from '@/integrations/runtime/timeline-commit-t
  * existing commitData/history path for undo/persistence, and does not expose
  * internal mutation APIs, provider handles, or raw timeline stores.
  */
+export interface SubmittedClipParamsInput {
+  readonly id: string;
+  readonly args: ClipSetParamsArgs;
+  readonly basis?: Readonly<Record<string, unknown>>;
+  readonly accepted: boolean;
+}
+
 export interface TimelineOps {
+  /** Read the existing session's submitted input without capturing or queuing an edit. */
+  getSubmittedClipParams?(clipId: string): SubmittedClipParamsInput | undefined;
+
   /**
    * Stage one selected-pack clip command at its original basis and retained
    * schema pin. Resolution means queued, not accepted; the command session

@@ -162,6 +162,11 @@ export function useTimelineOps({
     }
   }, [editability]);
 
+  const getSubmittedClipParams = useCallback<NonNullable<TimelineOps['getSubmittedClipParams']>>((clipId) => {
+    const current = dataRef.current;
+    return current ? clipParamsPort?.submittedInput?.({ clipId, current }) : undefined;
+  }, [clipParamsPort, dataRef]);
+
   const setClipParams = useCallback<NonNullable<TimelineOps['setClipParams']>>(async (clipId, args, signal) => {
     signal?.throwIfAborted();
     assertTimelineEditable('setClipParams');
@@ -482,11 +487,12 @@ export function useTimelineOps({
       preview,
       apply,
       setClipParams,
+      getSubmittedClipParams,
       flush,
       checkpoint,
       rollback,
       setAllTracksMuted,
     }),
-    [validate, preview, apply, setClipParams, flush, checkpoint, rollback, setAllTracksMuted],
+    [validate, preview, apply, setClipParams, getSubmittedClipParams, flush, checkpoint, rollback, setAllTracksMuted],
   );
 }

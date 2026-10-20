@@ -1,4 +1,4 @@
-import type { CommitRequest, DocumentPin, EditCommand, JSON, VerifiedDocument, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { ClipSetParamsArgs, CommitRequest, DocumentPin, EditCommand, JSON, VerifiedDocument, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
 import { readRetainedParamInputs } from '@/integrations/runtime/retainedParamInputs.ts';
 import { selectedParamsCommand } from './clipParamsCapture.ts';
 import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
@@ -397,6 +397,28 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   const clipParamsPort: ClipParamsCapturePort = {
+    submittedInput({ clipId, current }) {
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) return;
+      const parent = !clipId.includes('/') && !clipId.includes('::')
+        && new AuthoredState(bundle).entity(`parent/clip:${clipId}`, true);
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = parent ? `parent/clip:${clipId}` : identity?.clipRef;
+      if (!select) return;
+      // Reuse the outbox's original command/basis and acceptance identity, never recapture.
+      const entries = [
+        ...(record?.intents ?? []).map((entry) => ({ id: entry.id, payload: entry.payload as unknown as Payload })),
+        ...pendingAppends.map((entry) => ({ id: entry.localId, payload: entry.payload })),
+      ];
+      const entry = entries.reverse().find(({ payload }) => payload.selectedParams && payload.commands[0]?.select === select);
+      const localId = (id: string) => [...intentIds].find(([, durable]) => durable === id)?.[0] ?? id;
+      if (entry) return freezeJson({ id: localId(entry.id), args: copy(entry.payload.commands[0].args) as ClipSetParamsArgs,
+        basis: copy(entry.payload.selectedParams!.basis), accepted: false });
+      const accepted = record?.accepted;
+      const result = accepted?.value as unknown as TimelineCommitResult | undefined;
+      const command = result?.response.data.commands.find((command) => command.op === 'clip.set-params' && command.select === select);
+      if (accepted && command) return freezeJson({ id: localId(accepted.intentId), args: copy(command.args) as ClipSetParamsArgs, accepted: true });
+    },
     capture({ clipId, current }) {
       paramsReadGeneration++;
       paramsCapture = undefined;

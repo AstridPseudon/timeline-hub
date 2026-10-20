@@ -1,4 +1,5 @@
 import type { DocumentPin, EditCommand, VerifiedDocument, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { SubmittedClipParamsInput } from '@/sdk/video/timeline/timelineOps.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 import { assertFiniteJson, equal, freezeJson } from './clipMovePrimitives.ts';
@@ -6,6 +7,7 @@ import type { ClipParamsArgs } from './clipParamsCapture.ts';
 import type { JsonObject } from './types.ts';
 
 export interface ClipParamsCapturePort {
+  submittedInput?(input: { clipId: string; current: TimelineData }): SubmittedClipParamsInput | undefined;
   capture(input: { clipId: string; current: TimelineData }): JsonObject;
   prefetch(basis: JsonObject, pin: DocumentPin): Promise<{
     basis: JsonObject;
