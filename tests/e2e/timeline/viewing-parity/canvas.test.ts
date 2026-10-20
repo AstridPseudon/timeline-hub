@@ -99,6 +99,13 @@ test('both entries register the four baseline bodies plus tab capture before the
   const cases = await readFile(new URL('cases.ts', base), 'utf8');
   assert.equal([...cases.matchAll(/\btest\('/g)].length, 5);
   assert.deepEqual([...PARITY_FRAMES], [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164]);
+  const audio = cases.slice(cases.indexOf("test('captures the actual Player page"));
+  const positive = audio.indexOf('const audioComparison = compareNativeAudio(capturedAudio, exportedAudio)');
+  const audioNegative = audio.indexOf('expect(() => compareNativeAudio(plantedHalfGain, exportedAudio))');
+  assert.ok(positive >= 0, 'case4 must reach the full PCM comparator with real capture/export artifacts');
+  assert.ok(audioNegative > positive, 'case4 planted audio negative must follow the full positive comparison');
+  assert.ok(audio.includes("decodeNativeAudio(capture.path, 'actual Player audio capture')"));
+  assert.ok(audio.includes("decodeNativeAudio(render.exportPath, 'same normal MP4 export')"));
   const negative = cases.slice(cases.indexOf("test('picture-only"));
   assert.ok(cases.indexOf("test('captures the actual Player page") < cases.indexOf("test('picture-only"));
   assert.ok(negative.indexOf('await compareAllFrames(page, exportPath, testInfo)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
