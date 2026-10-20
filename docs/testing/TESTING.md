@@ -585,8 +585,9 @@ These are known. Report what you see, but don't stop testing for them.
 
 **Windows**
 
-- Native Windows has never run end to end. Unit tests run in Windows CI. The install line, the sign-in task,
-  Chrome on Windows and GPUs are first exercised by you.
+- Native Windows has never run end to end. Windows CI remains advisory until its full lane has run green on a
+  real Windows runner. Linux tests exercise mocked Windows branches; they do not qualify the install line, the
+  sign-in task, Chrome on Windows or GPUs.
 - GPU packs (Wan2GP, ComfyUI) say "not qualified yet" until a tester confirms them on a real NVIDIA computer. GPU
   setup needs an engine checkout and is beyond this short installer run. To pass settings to the login service, use
   the service environment file described in [Where things live](#where-things-live); shell profile changes do not
@@ -597,11 +598,22 @@ These are known. Report what you see, but don't stop testing for them.
 - Windows may retain the bootstrap directory while an Astrid terminal is open. If uninstall prints
   `After this line returns, run: Remove-Item …`, wait for the installer to exit, close Astrid terminals, run each
   printed cleanup command, and check that those paths are gone.
-- Windows on ARM can't install: the pinned downloads have no Bun or FFmpeg build for it. The log says
-  `There is no qualified bun build for windows-arm64.`
+- Windows on ARM cannot install: the pinned downloads have no Bun or FFmpeg build for it. The install line
+  refuses before downloading the bootstrap environment.
 - A PC whose execution policy is set by the organization stops with a message asking the administrator to allow the installer.
 - OneDrive: Astrid's own folders are in `AppData\Local`, which OneDrive doesn't sync. Media you add from a
   OneDrive-redirected Desktop or Documents, especially online-only files, is untested.
+- Browser capture and the managed ComfyUI engine profile are not available on Windows yet. They refuse before
+  launching or preparing an engine. ComfyUI's separate existing-server route is unaffected; native managed-engine
+  custody and Chromium protocol-handle transport are deferred.
+- Try the literal install line and the scriptblock form with arguments in both Windows PowerShell 5.1 and PowerShell 7.
+  Check execution policy, Ctrl+C, error output and exit status. Bootstrap behavior tests here use PowerShell on Linux;
+  a real Windows executable fixture and required native bootstrap jobs are still deferred.
+- Test sign-in, reboot, crash/restart and stop with Task Scheduler. Confirm there is no console window and no surviving
+  child process. Exercise update, rollback, repair and uninstall while logs, SQLite files or binaries are held open.
+- Test profiles with spaces and non-ASCII names, long paths and junctions; qualify OMP foreground shell commands after
+  provider sign-in. Port 17340 exclusions under Hyper-V/WSL, firewall and browser local-network prompts need native checks.
+- Real NVIDIA provisioning, inference, cancellation, repeated warm runs and GPU-memory release require a native tester.
 
 **Every OS**
 
