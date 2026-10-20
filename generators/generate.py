@@ -92,6 +92,30 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
+def validate_command_schema() -> None:
+    """Require the candidate to contain the latest ordinary published schema.
+
+    Keep older snapshots immutable; advance this floor only after an authorized
+    publication passes against the previous floor. Unsupported structural or
+    regex rewrites require review, not sample-based compatibility guesses.
+    """
+    from generators.command_schema_compatibility import compatibility_errors
+
+    fixtures = ROOT / "tests/fixtures/published-command-schemas"
+    filename = "runtime-0.2.3.json"
+    source = json.loads(_regular(fixtures / "sources.json", "published schema sources"))[filename]
+    previous = _regular(fixtures / filename, "published command schema")
+    if hashlib.sha256(previous).hexdigest() != source["sha256"]:
+        raise SystemExit("published command schema floor digest mismatch")
+    candidate = _regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema")
+    errors = compatibility_errors(json.loads(previous), json.loads(candidate))
+    if errors:
+        raise SystemExit(
+            f"command schema compatibility failed against {filename}:\n  "
+            + "\n  ".join(errors)
+        )
+
+
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
     """Render the checked-in Python client from its tracked template.
 
@@ -115,6 +139,9 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    native_exports = 'export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, VerifiedDocument, VerifiedDocumentObject } from "./timeline-commit-types.js";'
+    if native_exports not in source:
+        source = native_exports + "\n" + source
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
@@ -191,6 +218,7 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
         "expected_publication_id: expectedPublicationId",
         "Promise<HistoryPage>",
         "selection: MediaSelectionQuery",
+        "async getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia>",
     )
     missing_fragments = [value for value in required_fragments if value not in source]
     if missing_fragments:
@@ -232,10 +260,18 @@ def main() -> int:
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
+    sys.path.insert(0, str(ROOT))
+    validate_command_schema()
     sys.path.insert(0, str(ROOT / "generators"))
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
+    generated["packages/python/astrid_runtime_client/__init__.py"] = _regular(
+        ROOT / "generators/python_client_init_template.py", "Python package exports template"
+    ).decode("utf-8").replace(
+        "Authoritative Python package exports; rendered by generators/generate.py.",
+        "Generated, product-neutral client for the workspace.v1 protocol.",
+    )
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
     from timeline_commit_resources import render as render_commit_resources

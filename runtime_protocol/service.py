@@ -2739,6 +2739,14 @@ class RuntimeService:
             check()
             return MediaReads(self).selection(project_id, **selectors)
 
+    def get_project_verified_media(self, project_id, selection, *, authorize):
+        from .timeline_commit_port import MediaReads, detached
+        selection = detached(selection)
+        check = self._timeline_authorize(project_id, None, authorize, mutation=False)
+        with self.store._mutex:
+            check()
+            return MediaReads(self).selected(project_id, selection)
+
     def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
                                                     idempotency_key=None, publisher=None,
                                                     invocation_path=None, authorize=None):
@@ -4476,6 +4484,9 @@ class RuntimeService:
     def _validate_project_document(self, project_id, document_id, kind, content):
         self._validate_preference_document(project_id, document_id, kind, content)
         self._validate_transcript_document(project_id, document_id, kind, content)
+        from .timeline_commit_inputs import PROJECT_PACK_KIND, validate_pack_snapshot_objects
+        if kind == PROJECT_PACK_KIND:
+            validate_pack_snapshot_objects(self.store.conn, project_id, content)
 
     def _document_resource(self, row):
         content = json.loads(row["content_json"])

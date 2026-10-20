@@ -297,6 +297,18 @@ paths:
         - { name: object_id, in: query, schema: { type: string, minLength: 1 } }
         - { name: version, in: query, schema: { type: integer, minimum: 1 } }
       responses: { '200': { description: Exact immutable selection, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectMediaSelection' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/projects/{project_id}/media-selection/verified:
+    get:
+      operationId: getProjectVerifiedMedia
+      description: Requires projects:read. Rechecks the exact five-field selection and returns its verified catalog metadata. Unknown, duplicate, incomplete or changed pins are refused; no selection is refreshed.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: asset, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: generation_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: variant_id, in: query, required: true, schema: { type: string, minLength: 1 } }
+        - { name: object_id, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+        - { name: catalog_digest, in: query, required: true, schema: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+      responses: { '200': { description: Exact verified media, content: { application/json: { schema: { $ref: '#/components/schemas/VerifiedMedia' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions:
     get:
       operationId: listProjectParentCompositionRevisions
@@ -1418,6 +1430,8 @@ components:
       allOf:
         - { $ref: '#/components/schemas/CommittedMutation' }
         - { properties: { data: { $ref: '#/components/schemas/CommitAccepted' } } }
+    VerifiedMedia:
+      $ref: './schemas/timeline-commit.json#/$defs/VerifiedMedia'
     ProjectMediaSelection:
       $ref: './schemas/media-selection.json'
     CommittedMutation:
