@@ -1,0 +1,5 @@
+Reviewed paths (no edits by reviewer):
+/home/user/work/wt/vw-m3-am-plate-final-review/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+/home/user/work/wt/vw-m3-am-plate-final-review/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+/home/user/work/wt/vw-m3-am-plate-final-review/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+/home/user/work/wt/vw-m3-am-plate-final-review/tests/packs/rendering/test_am_snap_plate_scene_capability.py

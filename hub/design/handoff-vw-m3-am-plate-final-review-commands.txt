@@ -1,0 +1,134 @@
+Working directory: /home/user/work/wt/vw-m3-am-plate-final-review
+Reviewed HEAD: c35b317c1104dda20f5ecfa59c00f7f9a9edbeae; git status --porcelain empty before/after.
+No install/network/browser/render/socket/full/central request/git mutation.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-plate-final-review ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/pytest-review tests/packs/rendering/test_am_snap_plate_scene_capability.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_scene_source_carry.py tests/core/timeline/test_onscreen.py tests/core/timeline/test_onscreen_more.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_commit_provider.py::test_move_reload_and_inverse_import_no_renderer
+RESULT: exit 0, 108 passed in 36.41s.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-plate-final-review /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/pytest-fill tests/packs/test_am_snap_plate_fill.py
+RESULT: exit 1, 1 failed, 2 passed in 0.15s. Fails at line 25: FILL_TOKENS not found in component.tsx. Line 28 has the same obsolete location assumption.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/typecheck.py
+RESULT: exit 0, Targeted strict TypeScript exit: 0. Exact script below.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-plate-final-review ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/verify_ssr_parent.py
+RESULT: exit 0, 1 passed in 4.52s. Independent parent-vs-exact SSR: all 10 variants x 9 frames identical; theme identical. Exact script below.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_am_snap_plate_scene_capability.py
+RESULT: exit 0, All checks passed!
+git diff c35b317c^ c35b317c --check
+RESULT: exit 0.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-plate-final-review /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+RESULT: exit 1, astrid/packs/rendering/elements/catalog.ts is stale. Read-only descriptor comparison found only the AM plate revision differs (see report).
+
+Parent-source neighbor control, run as Python stdin (exit 0; 3 tests OK):
+from pathlib import Path
+import subprocess
+import unittest
+from unittest.mock import patch
+from tests.packs.test_am_snap_plate_fill import AmSnapPlateFillTest
+path = 'astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx'
+old = subprocess.check_output(['git', 'show', 'c35b317c^:' + path], text=True)
+read = Path.read_text
+def parent_component(p, *args, **kwargs):
+    return old if str(p).endswith(path) else read(p, *args, **kwargs)
+with patch.object(Path, 'read_text', parent_component):
+    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(AmSnapPlateFillTest))
+raise SystemExit(not result.wasSuccessful())
+
+Exact owned script /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/typecheck.py:
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tarfile
+
+root = Path('/home/user/work/wt/vw-m3-am-plate-final-review')
+worker = Path(__file__).parent
+stage = worker / 'typecheck'
+stage.mkdir()
+plate = Path('astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate')
+files = list((root / plate).glob('*.ts*')) + [root / name for name in (
+    'astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx',
+    'astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx',
+    'astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts',
+    'astrid/packs/rendering/shared/element_contracts.ts')]
+for source in files:
+    target = stage / source.relative_to(root)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    assert target.read_bytes() == source.read_bytes()
+modules = stage / 'node_modules'
+modules.mkdir()
+peers = Path('/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules')
+for name in ('react', 'react-dom', 'remotion', '@types/react', '@types/react-dom', '@types/node', 'csstype'):
+    target = modules / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    assert not target.parent.is_symlink()
+    target.symlink_to((peers / name).resolve(), target_is_directory=True)
+package = modules / '@banodoco/timeline-composition'
+package.parent.mkdir()
+artifact = root / 'remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz'
+assert hashlib.sha256(artifact.read_bytes()).hexdigest() == '0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3'
+with tarfile.open(artifact) as archive:
+    archive.extractall(stage, filter='data')
+(stage / 'package').rename(package)
+config = {'compilerOptions': {'target': 'ES2020', 'module': 'ESNext', 'moduleResolution': 'Bundler',
+    'jsx': 'react-jsx', 'strict': True, 'esModuleInterop': True, 'skipLibCheck': True, 'noEmit': True,
+    'lib': ['DOM', 'ES2020'], 'types': ['react', 'node']}, 'include': [str(plate / '*.ts*')]}
+(stage / 'tsconfig.json').write_text(json.dumps(config))
+result = subprocess.run(['/tmp/vw-m3-agent-gate-node20.19.4/bin/node', str(peers / 'typescript/bin/tsc'),
+                         '--project', str(stage / 'tsconfig.json')], check=False)
+print('Targeted strict TypeScript exit:', result.returncode)
+shutil.rmtree(stage)
+raise SystemExit(result.returncode)
+
+Exact owned script /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-plate-final-review/verify_ssr_parent.py:
+from pathlib import Path
+import shutil
+import subprocess
+import pytest
+
+ROOT = Path('/home/user/work/wt/vw-m3-am-plate-final-review')
+WORKER = Path(__file__).parent
+PLATE = Path('astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate')
+STAGE = WORKER / 'parent-ssr'
+component = STAGE / PLATE / 'component.tsx'
+component.parent.mkdir(parents=True)
+component.write_bytes(subprocess.check_output(['git', 'show', 'c35b317c^:' + str(PLATE / 'component.tsx')], cwd=ROOT))
+(component.parent / 'motion.ts').symlink_to(ROOT / PLATE / 'motion.ts')
+(component.parent.parent / 'am-presenter').symlink_to(ROOT / PLATE.parent / 'am-presenter', target_is_directory=True)
+(component.parent.parent.parent / '_shared').symlink_to(ROOT / PLATE.parent.parent / '_shared', target_is_directory=True)
+
+class CompareParent:
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_runtest_call(self, item):
+        original = item.funcargs['plate_ssr']
+        host = item.funcargs['host']
+        script = host / 'plate-ssr.mjs'
+        current_script = script.read_text()
+
+        def compare(*args):
+            current = original(*args)
+            script.write_text(current_script.replace('../' + str(PLATE / 'component'), str(component)))
+            try:
+                parent = original(*args)
+            finally:
+                script.write_text(current_script)
+            assert parent['result'] == current['result']
+            assert parent['defaultTheme'] == current['defaultTheme']
+            assert parent['registered'] is False and current['registered'] is True
+            print('Independent parent-vs-exact SSR: all 10 variants x 9 frames identical; theme identical')
+            return current
+        item.funcargs['plate_ssr'] = compare
+
+try:
+    result = pytest.main(['-q', '-s', '-p', 'no:cacheprovider', '-o', 'addopts=', '--tb=short',
+        '--basetemp=' + str(WORKER / 'pytest-parent-ssr'),
+        'tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme'],
+        plugins=[CompareParent()])
+finally:
+    shutil.rmtree(STAGE)
+raise SystemExit(result)

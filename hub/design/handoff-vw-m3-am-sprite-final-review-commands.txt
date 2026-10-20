@@ -1,0 +1,19 @@
+# Run from /home/user/work/wt/vw-m3-am-sprite-final-review
+# 33 passed in 29.57s; targeted.log
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-sprite-final-review ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-sprite-final-review/pytest-targeted tests/packs/rendering/test_sprite_scene_capability.py tests/packs/rendering/test_scene_host.py tests/sdk/test_timeline_checkout.py::test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address
+
+# PASS exit 0; review-probe.log. Uses only private stage; compares actual parent component via git show.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-sprite-final-review ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-sprite-final-review/review_probe.py
+
+# PASS: All checks passed!
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_sprite_scene_capability.py
+
+# PASS exit 0
+git diff bdd02bd3^ bdd02bd3 --check
+
+# EXPECTED OWNER FOLLOW-UP: exit 1, stale element catalog; element-catalog-check.log
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-am-sprite-final-review /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+
+# PASS exact reviewed HEAD; clean worktree
+git rev-parse HEAD
+git status --short

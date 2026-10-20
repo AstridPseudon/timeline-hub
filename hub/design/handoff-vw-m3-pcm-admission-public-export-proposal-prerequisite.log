@@ -1,0 +1,6 @@
+matching: public fresh preparation succeeds identically; prepared metadata not admitted or rejected
+wrongEnvelope: public fresh preparation succeeds identically; prepared metadata not admitted or rejected
+rawOrigin: public fresh preparation succeeds identically; prepared metadata not admitted or rejected
+wrongRate: public fresh preparation succeeds identically; prepared metadata not admitted or rejected
+blob: public fresh preparation succeeds identically; prepared metadata not admitted or rejected
+Immutable public12: no source-admission export; private paths refused. Fresh preparation alone cannot satisfy matching-prepared playback + four explicit refusals.

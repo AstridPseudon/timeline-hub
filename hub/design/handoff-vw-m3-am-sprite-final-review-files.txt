@@ -1,0 +1,6 @@
+Reviewed delta only; no source edits by this reviewer.
+Base: cf7448ed6c1298b172d004914cfe2bb8c99048e7
+Commit: bdd02bd3f753e24092b982772bd481afc84f49da
+
+astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+tests/packs/rendering/test_sprite_scene_capability.py
