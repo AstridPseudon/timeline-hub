@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import type { TimelineClip } from '@banodoco/timeline-schema';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
@@ -272,9 +273,9 @@ export function compositionPublication(seed: { projectId: string; timelineId: st
     parent_composition: {
       slug: 'main',
       name,
-      config: { output: { resolution: '1280x720', fps, file: 'out.mp4' }, clips: [], tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }] },
+      config: { output: { resolution: '1280x720', fps, file: 'out.mp4' }, clips: [] as TimelineClip[], tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }] },
       registry: { assets: {} },
-      clips: [],
+      clips: [] as TimelineClip[],
       occurrences: [],
     },
     shot_revisions: [],
