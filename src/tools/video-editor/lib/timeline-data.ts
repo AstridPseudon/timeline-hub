@@ -276,10 +276,11 @@ export const rowsToConfig = (
   clipOrder: ClipOrderMap,
   tracks: TrackDefinition[],
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
-  extras?: Pick<TimelineConfig, 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,
+  extras?: Pick<TimelineConfig, 'clips' | 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,
 ): TimelineConfig => {
   const actionMap = new Map<string, TimelineAction>();
   const trackActionIds: Record<string, string[]> = Object.fromEntries(tracks.map((track) => [track.id, []]));
+  const authoredClips = new Map((extras?.clips ?? []).map((clip) => [clip.id, clip] as const));
 
   for (const row of rows) {
     for (const action of row.actions) {
@@ -316,12 +317,12 @@ export const rowsToConfig = (
       const roundedStart = roundTimelineTime(snapToFrameGrid(action.start, fps));
       const roundedEnd = roundTimelineTime(snapToFrameGrid(action.end, fps));
 
+      const authoredClip = authoredClips.get(clipId);
       const nextClip: Partial<TimelineClip> = {
         id: clipId,
         at: roundedStart,
         track: track.id,
         clipType: clipMeta.clipType,
-        label: clipMeta.label,
         asset: clipMeta.asset,
         from: clipMeta.from,
         to: clipMeta.to,
@@ -352,6 +353,16 @@ export const rowsToConfig = (
         app: clipMeta.app,
         keyframes: clipMeta.keyframes,
       };
+
+      // `meta.label` is the display projection and may be derived from asset
+      // provenance. Keep the authored label from the raw config when this clip
+      // already exists, including an absent or opaque value. Newly materialized
+      // clips have no raw carrier yet, so their supplied metadata is authored.
+      if (authoredClip && Object.prototype.hasOwnProperty.call(authoredClip, 'label')) {
+        nextClip.label = authoredClip.label;
+      } else if (!authoredClip && clipMeta.label !== undefined) {
+        nextClip.label = clipMeta.label;
+      }
 
       if (typeof clipMeta.hold === 'number') {
         nextClip.hold = roundTimelineTime(roundedEnd - roundedStart);
