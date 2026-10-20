@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T13:18:26Z | dispatcher heartbeat 2s -->
+<!-- app | 2026-10-20T13:23:51Z | dispatcher heartbeat 11s -->
 # app — 2026-10-20 13:16 UTC
 Milestone: M1 RECORDED; M2 active, no M2/M3 exit. FIRST current-tuple qualification, then bounded writer retirements. Automatic placement remains TOP writer.
 Integrated: App tl/integration41fff23a29f13bd9aede6343592ffba8adebe1a3/tree3340e128af4dd8fe79a8fe1016b23666c6ea8eb5 CLEAN, root8/client021. True MAIN17 ancestry verified (751 parents35820+17e46),455targeted/3originalexpected+139independent. Prior serverproxy35820 exacttestedee34:19central+136neighbors+7pure; requester/browserhost inactive. CORS/safety/history/D03/Viewing701parity harness retained.
