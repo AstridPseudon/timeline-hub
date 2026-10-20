@@ -279,6 +279,14 @@ class State:
         value = self.entity(ref, optional=True)
         if value is None:
             return copy.deepcopy(ABSENT)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
+            # Authored content in published identities, never the materialized alias.
+            from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+            owner = ref.removesuffix('/shot')
+            shot = self.occurrence(owner)['shot_id']
+            mapping = self.bundle['source_mapping']['shots'].get(shot, {}).get('item_id_map', {})
+            value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
+                                                           {v: k for k, v in mapping.items()})}
         for key in path:
             if isinstance(value, dict) and key in value:
                 value = value[key]
