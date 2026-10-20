@@ -1,5 +1,42 @@
 # App M3 source candidate and gated root adoption
 
+## Current candidate — release source composition
+
+Worker/branch: `app-m3-release-source-compose` / `tl/app-m3-release-source-compose`.
+Base: `d347cfff47` (`tl/app-m2-conflict-label-compose`). This candidate supersedes the earlier source-prep starting point below; that handoff is preserved verbatim.
+**Source-only, held until the M1 record. No M2/M3 merge or install qualification is claimed.**
+
+- Applied only `214981bbc..7d15151f2` (20 paths), `2bfde69ea..7cee9939c` (4 authoringBundle paths), and `d347cfff47..bccebd3f7` (one cold-label spec addition). Exactly 25 source/test paths changed.
+- Eighteen source-prep paths match `7d15151f2` exactly, including two audioFade deletions. The session hook and its mounted test required bounded reconciliation: one accepted-closure projector now serves initialization and later acceptance, while the base's `loadLatest`, read-generation/session fences, Keep/Use latest/recovery callbacks and cleanup remain byte-identical. The mounted test only adds the exact reviewed initial-projection case; every base assertion remains.
+- All four opaque paths match `7cee9939c` exactly. Native item/source links alone are remapped; foreign metadata remains opaque. No authored fields, DTOs, schemas, generated files, new abstractions or unrelated writer/parameter/deletion changes.
+- All 67 other existing e2e files are byte-identical to base, preserving both original M1 gesture bodies and the concurrent journey. The entire base label spec is an unchanged prefix, and its four cases now match `bccebd3f7` exactly, including opaque/root/recovery/metadata/publication checks.
+- Viewing uses the reviewed public `clipOpacity` import and preserves `expect(entry.source).toBe('bundled:2rp@0.1.0')`. No synthetic DrawPlan mutation or private opacity math was added.
+
+Final dependencies for **one separately authorized root/vendor install qualifier after M1**:
+
+| Dependency / scope | Required action or fixed value |
+|---|---|
+| App source | This composed worker tree, based on `d347cfff47`; qualify the whole candidate together. |
+| Composition artifact | Use only `ORCH/artifacts/banodoco-timeline-composition-0.0.10.tgz`, 58,008 bytes, SHA-256 `cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7`; copy identical bytes to App `vendor/artifacts/`. |
+| Public API | Actual 0.0.10 exports, including `compileCanonicalTransitions`, `clipOpacity`, public registries and bundled 2rp defaults. No 0.0.8/0.0.9 substitution, alias to source or compiler shim. |
+| Shared peers | React/React DOM 18.3.1; Remotion, `@remotion/media`, `@remotion/layout-utils` 4.0.509. Installed peers match. Preserve Player/web-renderer/Three versions; ensure layout-utils production availability as described below. |
+| Runtime | Keep the base's 0.2.2 contract/generated metadata, frozen Bundle 1 source pins and leases unchanged; no Runtime root/generated refresh in this batch. |
+| Root/lock/config/vendor | Perform the existing seven-step handoff and all 13 default-directory deletions below in that single qualifier. Coordinate Agent's adoption of the same frozen artifact. Preserve unrelated vendors and host components. |
+| Required proof | Actual 0.0.10 package-resolution/shared-peer tests, all affected source/preview suites and neighbors, serialized typecheck/build; central browser cold-label plus all original label/M1/concurrent/recovery journeys. Frame/audio parity and planted mismatches remain separately required. |
+
+Validation on this composed tree:
+
+- Five isolated command suites: **285 passed / 5 files**, 11.59s.
+  `./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/commands/commitOutbox.test.ts src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/clipMoveCapture.test.ts src/tools/video-editor/commands/trackLabelCapture.test.ts src/tools/video-editor/commands/authoringBundle.test.ts`
+- Two isolated session-hook suites, which do not import the new public-0.0.10 viewing path: **38 passed / 2 files**, 6.77s.
+  `./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx`
+- Scoped ESLint on all 21 changed TS/TSX paths: **PASS**, no warnings. `npm run check:known-failures`: **PASS**, exactly 3 authorized markers / 0 forbidden. `git diff --check`: **PASS**. Exact lint arguments and verification results are in this worker's commit message.
+- Read-only endpoint/path/base comparisons and artifact size/digest/public-declaration/peer checks: **PASS**. Root, lock, config, vendor, generated and pin files remain byte-identical to base. Shared `node_modules` still resolves Composition **0.0.8**.
+
+**UNRUN:** all tests executing the new public-0.0.10 or preview path, actual Runtime/browser cold-label qualification, package-resolution suite, project typecheck/build, full suite and pixels/audio parity. No install, network, browser, new skip/expected-failure, fallback/mock/shim for missing 0.0.10 exports, or Git mutation was performed. The passing isolated fixtures do not qualify real cold-label behavior, public 0.0.10 execution or pixels. Keep M2/M3 merges held until M1; then dispatch the single root/vendor qualifier against this candidate.
+
+## Preserved source-prep handoff
+
 Source-prep worker: `app-m3-source-batch-compose`, branch `tl/app-m3-source-batch-compose`.
 Qualified starting point: `214981bbc` (`tl/app-m2-label-browser-qualify`, Bundle 1).
 This is a **source-only candidate, not merge-ready**. PLAN has not recorded M1. No package installation, root/config/lock change, vendor deletion, network, full suite, browser, build or project typecheck was performed. Shared `node_modules` remains the symlink to `/home/user/work/app/node_modules`, with Composition **0.0.8**.
