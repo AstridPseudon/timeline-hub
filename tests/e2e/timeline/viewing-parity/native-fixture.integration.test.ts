@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync, statfsSync } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, join, relative } from 'node:path';
+import { delimiter, dirname, join, relative } from 'node:path';
 import { test } from 'node:test';
 import { AstridLocalClient } from '../../../../src/integrations/astrid/client';
 import type { Task } from '../../../../src/integrations/runtime/generated';
@@ -100,6 +100,10 @@ const QUALIFIED_HOST_ENV = {
 const BROWSER_LOCK = '/tmp/timeline-viewing-browser.lock';
 const MIN_FREE_BYTES = 10 * 1024 * 1024 * 1024;
 const ARTIFACT_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-normal-three-media-public13-mp4';
+const QUALIFIED_BUNDLE = {
+  files: 54,
+  sha256: '19fec54316c3b956619ec49195bb8a8aef15d895759f4cc05acc004d8e5a3470',
+} as const;
 
 function assertFreeDiskFloor(path: string): void {
   const stats = statfsSync(path);
@@ -422,7 +426,11 @@ test('native retained frame fixture restores and admits one normal render task',
     assert.equal(realpathSync(join(completeStage, 'src/index.ts')), join(completeStage, 'src/index.ts'));
     assert.equal(realpathSync(join(completeStage, '../astrid')), join(completeStage, '../astrid'));
     assert.equal(await stat(join(completeStage, '../astrid/packs/astrid_motion/rendering/elements')).then(() => true).catch(() => false), true);
-    assert.equal(await stat(join(completeStage, 'bundle/index.html')).then(() => true).catch(() => false), true);
+    const bundleCarrier = join(dirname(dirname(completeStage)), 'bundle');
+    assert.equal(realpathSync(bundleCarrier), bundleCarrier);
+    assert.equal(realpathSync(join(bundleCarrier, 'index.html')), join(bundleCarrier, 'index.html'));
+    assert.deepEqual(await sourceManifest(bundleCarrier), QUALIFIED_BUNDLE,
+      'normal fixture stage must carry the exact verified d0a bundle');
     const stagedMotion = await sourceManifest(join(completeStage, '../astrid/packs/astrid_motion/rendering/elements'));
     const frozenMotion = await sourceManifest(join(archived.agent.root, 'astrid/packs/astrid_motion/rendering/elements'));
     assert.deepEqual(stagedMotion, frozenMotion, 'normal fixture stage must carry the complete d0a motion closure');
