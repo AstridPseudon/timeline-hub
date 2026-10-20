@@ -179,7 +179,7 @@ export function useTimelineCommandSession(options: {
           },
           submit(input) {
             if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a shot name');
-            shotSetPort.submit(input);
+            return shotSetPort.submit(input);
           },
         };
         sessionRef.current = session;

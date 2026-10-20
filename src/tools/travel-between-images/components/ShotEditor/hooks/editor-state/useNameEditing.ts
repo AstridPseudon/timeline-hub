@@ -15,7 +15,7 @@ interface UseNameEditingProps {
     editingName: string;
   };
   actions: ShotEditorActions;
-  onUpdateShotName?: (name: string) => void;
+  onUpdateShotName?: (name: string) => void | Promise<void>;
   onBeforeNameEdit?: () => void;
 }
 
@@ -34,6 +34,7 @@ export function useNameEditing({
   onBeforeNameEdit,
 }: UseNameEditingProps): UseNameEditingReturn {
   const syncedShotIdRef = useRef<string | null>(selectedShot?.id ?? null);
+  const pendingSaveRef = useRef<Promise<void> | null>(null);
 
   // Sync editor name from shot data.
   // Hard reset only when switching to a different shot; otherwise do not
@@ -44,6 +45,7 @@ export function useNameEditing({
 
     if (syncedShotIdRef.current !== nextShotId) {
       syncedShotIdRef.current = nextShotId;
+      pendingSaveRef.current = null;
       actions.setEditingNameValue(nextShotName);
       actions.setEditingName(false);
       return;
@@ -63,13 +65,45 @@ export function useNameEditing({
   }, [onBeforeNameEdit, onUpdateShotName, selectedShot?.name, actions]);
 
   const handleNameSave = useCallback(() => {
-    if (onUpdateShotName && state.editingName.trim() && state.editingName.trim() !== selectedShot?.name) {
-      onUpdateShotName(state.editingName.trim());
+    const draft = state.editingName;
+    const name = draft.trim();
+    if (!onUpdateShotName || !name || name === selectedShot?.name) {
+      actions.setEditingName(false);
+      return;
     }
-    actions.setEditingName(false);
-  }, [onUpdateShotName, state.editingName, selectedShot?.name, actions]);
+    if (pendingSaveRef.current) return pendingSaveRef.current;
+    const shotId = selectedShot?.id;
+    try {
+      const result = onUpdateShotName(name);
+      if (!result || typeof result.then !== 'function') {
+        actions.setEditingName(false);
+        return;
+      }
+      const pending = Promise.resolve(result).then(
+        () => {
+          if (pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
+          pendingSaveRef.current = null;
+          actions.setEditingName(false);
+        },
+        () => {
+          if (pendingSaveRef.current !== pending || syncedShotIdRef.current !== shotId) return;
+          pendingSaveRef.current = null;
+          // The submitted value is trimmed, but the form must restore exactly
+          // what the user typed when the accepted completion refuses.
+          actions.setEditingNameValue(draft);
+          actions.setEditingName(true);
+        },
+      );
+      pendingSaveRef.current = pending;
+      return pending;
+    } catch {
+      actions.setEditingNameValue(draft);
+      actions.setEditingName(true);
+    }
+  }, [onUpdateShotName, state.editingName, selectedShot?.id, selectedShot?.name, actions]);
 
   const handleNameCancel = useCallback((e?: React.MouseEvent) => {
+    if (pendingSaveRef.current) return;
     // Prevent event propagation to avoid clicking elements that appear after layout change
     if (e) {
       e.preventDefault();

@@ -68,7 +68,32 @@ export async function createTimelineCommandSession(options: Options) {
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
   const prepared = new Map<string, { payload: Payload; generation: number; basis: OutboxBasis }>();
+  const intentLocalIds = new Map<string, string>();
+  const completions = new Map<string, { resolve: () => void; reject: (error: unknown) => void }>();
   let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
+  function settleLocal(localId: string, error?: unknown) {
+    if (!localId) return;
+    const completion = completions.get(localId);
+    if (!completion) return;
+    completions.delete(localId);
+    if (error === undefined) completion.resolve();
+    else completion.reject(error);
+  }
+  function settleIntent(intentId: string, error?: unknown) {
+    const localId = intentLocalIds.get(intentId);
+    if (!localId) return;
+    intentLocalIds.delete(intentId);
+    settleLocal(localId, error);
+  }
+  function settleRefused(recordToInspect: OutboxRecord) {
+    for (const intent of recordToInspect.intents) {
+      if (intent.conflict === undefined) continue;
+      const conflict = intent.conflict as { message?: string; kind?: string };
+      const error = new Error(conflict.message ?? 'Timeline command was refused');
+      if (conflict.kind) Object.assign(error, { kind: conflict.kind });
+      settleIntent(intent.id, error);
+    }
+  }
   function rejected() {
     return !!box && !resolving && !persistenceFailed && !pendingAppends.length
       && record?.pending?.outcome?.kind === 'rejected' && record.pending.intentId === record.intents[0]?.id;
@@ -100,6 +125,7 @@ export async function createTimelineCommandSession(options: Options) {
       ? record.pending.outcome.error : record?.intents[0]?.conflict;
     if (failure === undefined) return false;
     const error = failure as { kind?: string; message?: string } | null;
+    if (record) settleRefused(record);
     publish(error?.kind === 'conflict' ? 'conflict' : 'error', error?.message ?? 'Timeline command was refused');
     return true;
   }
@@ -166,6 +192,7 @@ export async function createTimelineCommandSession(options: Options) {
         });
         if (stopped) return;
         if (record.accepted && record.accepted.intentId !== priorAccepted) {
+          settleIntent(record.accepted.intentId);
           const result = record.accepted.value as unknown as TimelineCommitResult;
           acceptedBasis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
           const previous = result.response.data;
@@ -212,6 +239,7 @@ export async function createTimelineCommandSession(options: Options) {
           ? { after: intentIds.get(entry.predecessor) ?? entry.predecessor } : { head: entry.head };
         const id = await box.append(json(entry.payload), basis);
         intentIds.set(entry.localId, id);
+        intentLocalIds.set(id, entry.localId);
         appendedGeneration = entry.generation;
         pendingAppends.shift();
         record = await box.read();
@@ -219,10 +247,11 @@ export async function createTimelineCommandSession(options: Options) {
     } catch (error) {
       persistenceFailed = true;
       persistenceError = `Unsaved move: ${message(error)}`;
+      for (const entry of pendingAppends) settleLocal(entry.localId, error);
       publish('error', persistenceError);
     }
   }
-  function enqueue(payload: Payload, preview: TimelinePatch | null, capturedBasis?: OutboxBasis) {
+  function enqueue(payload: Payload, preview: TimelinePatch | null, capturedBasis?: OutboxBasis, awaitAcceptance = false) {
     assertReady();
     const predecessor = capturedBasis && 'after' in capturedBasis ? capturedBasis.after : capturedBasis ? undefined : lastIntent;
     const generation = ++localGeneration;
@@ -233,11 +262,15 @@ export async function createTimelineCommandSession(options: Options) {
     try { if (preview) options.preview(preview); }
     catch (error) { bundle = previousBundle; localGeneration--; publish('error', message(error)); throw error; }
     const localId = crypto.randomUUID();
+    const completion = awaitAcceptance ? new Promise<void>((resolve, reject) => {
+      completions.set(localId, { resolve, reject });
+    }) : undefined;
     lastIntent = localId;
     pendingAppends.push({ localId, predecessor, head: capturedBasis && 'head' in capturedBasis ? capturedBasis.head : known.head, generation,
       payload: { ...payload, displayBasis: acceptedBasis } });
     chain = chain.then(persistAppends);
     void chain.then(() => pump(false));
+    return completion;
   }
   const intentIds = new Map<string, string>();
   const port: ClipMoveCapturePort = {
@@ -337,7 +370,10 @@ export async function createTimelineCommandSession(options: Options) {
       if (captured.localGeneration !== localGeneration) throw new Error('Timeline changed during the shot name edit');
       const result = finishShotSet(basis, args);
       prepared.set(JSON.stringify(result.command), { payload: {
-        commands: [result.command], before: bundle,
+        // Keep one captured basis. A live observation may have replaced bundle
+        // while the form was open; merging it with this result would drop the
+        // captured guards' original state into a different graph.
+        commands: [result.command], before: (basis as unknown as { bundle: AuthoredBundle }).bundle,
         after: result.bundle, preview: null,
       }, generation: localGeneration,
       basis: (basis as unknown as { localBasis: OutboxBasis }).localBasis });
@@ -347,11 +383,11 @@ export async function createTimelineCommandSession(options: Options) {
       assertReady();
       const key = JSON.stringify(command);
       const entry = prepared.get(key);
-      if (command.op !== 'shot.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+      if (command.op !== 'shot.set' || !entry || entry.generation !== localGeneration || !equal(entry.payload.before, bundle)) {
         throw new Error('shot.set was not captured by this session');
       }
       prepared.delete(key);
-      enqueue(entry.payload, null, entry.basis);
+      return enqueue(entry.payload, null, entry.basis, true);
     },
   };
   async function resolveRejected(keepLabel: boolean) {

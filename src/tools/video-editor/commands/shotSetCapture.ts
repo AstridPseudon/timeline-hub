@@ -180,13 +180,14 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
 }
 
 export function captureShotSet(bundle: AuthoredBundle, select: string, args: ExistingShotSetArgs = { values: { name: '' }, clear: [] }): ShotSetBasis {
-  const snapshot = copy(bundle);
+  const original = copy(bundle);
+  const snapshot = copy(original);
   assertSelect(select);
   assertArgs(args);
   const { command } = apply(snapshot, {
     schema_version: 1, op: 'shot.set', version: '1', select, args: copy(args), intent: { ownership: 'occurrence' },
   });
-  return freezeJson({ bundle: snapshot, command });
+  return freezeJson({ bundle: original, command });
 }
 
 export function finishShotSet(basis: unknown, args: ExistingShotSetArgs) {

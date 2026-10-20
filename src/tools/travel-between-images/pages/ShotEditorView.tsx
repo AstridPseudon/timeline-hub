@@ -277,6 +277,9 @@ export function ShotEditorView({
 
   const nameClickRef = useRef<(() => void) | null>(null);
   const capturedNameEditRef = useRef<CapturedShotSetEdit | null>(null);
+  const nameScopeRef = useRef(shotToEdit.id);
+  nameScopeRef.current = shotToEdit.id;
+  const mountedRef = useRef(true);
   const [pendingCanonicalName, setPendingCanonicalName] = useState<string | null>(null);
   const displayedShot = pendingCanonicalName !== null && shotToEdit.name !== pendingCanonicalName
     ? { ...shotToEdit, name: pendingCanonicalName }
@@ -284,6 +287,11 @@ export function ShotEditorView({
   useEffect(() => {
     if (pendingCanonicalName !== null && shotToEdit.name === pendingCanonicalName) setPendingCanonicalName(null);
   }, [pendingCanonicalName, shotToEdit.name]);
+  useEffect(() => {
+    capturedNameEditRef.current = null;
+    setPendingCanonicalName(null);
+  }, [shotToEdit.id]);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const handleBeforeNameEdit = useCallback(() => {
     if (!shotSetPort || !canonicalComposition || !canonicalOccurrence) return;
@@ -358,10 +366,32 @@ export function ShotEditorView({
     if (capturedNameEditRef.current) {
       if (!shotSetPort) throw new Error('Mounted shot.set name authority is unavailable; draft kept.');
       const captured = capturedNameEditRef.current;
-      submitShotNameEdit(captured, newName);
-      capturedNameEditRef.current = null;
-      setPendingCanonicalName(newName);
-      return;
+      const scopeId = shotToEdit.id;
+      try {
+        const completion = submitShotNameEdit(captured, newName);
+        return Promise.resolve(completion).then(
+          () => {
+            if (!mountedRef.current || nameScopeRef.current !== scopeId) return;
+            capturedNameEditRef.current = null;
+            setPendingCanonicalName(newName);
+          },
+          (error: unknown) => {
+            if (mountedRef.current && nameScopeRef.current === scopeId) {
+              normalizeAndPresentError(error, {
+                context: 'canonical-shot:update-name',
+                toastTitle: 'Shot name draft kept',
+              });
+            }
+            throw error;
+          },
+        );
+      } catch (error) {
+        normalizeAndPresentError(error, {
+          context: 'canonical-shot:update-name',
+          toastTitle: 'Shot name draft kept',
+        });
+        throw error;
+      }
     }
     if (canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence) {
       const editingBase = canonicalComposition;

@@ -9,7 +9,7 @@ export type ShotSetCaptureCurrent = Pick<PreparedShotComposition, 'projectId' | 
 export interface ShotSetCapturePort {
   capture(input: { occurrenceId: string; current: ShotSetCaptureCurrent }): JSON;
   finish(basis: JSON, args: ExistingShotSetArgs): { command: EditCommand; bundle: AuthoredBundle };
-  submit(input: { command: EditCommand }): void;
+  submit(input: { command: EditCommand }): void | Promise<void>;
 }
 
 export interface CapturedShotSetEdit {
@@ -28,7 +28,7 @@ export function captureShotNameEdit(
   return Object.freeze({ occurrenceId, basis, port });
 }
 
-export function submitShotNameEdit(captured: CapturedShotSetEdit, name: string): void {
+export function submitShotNameEdit(captured: CapturedShotSetEdit, name: string): void | Promise<void> {
   if (typeof name !== 'string') throw new Error('shot.set name requires a string.');
   const result = captured.port.finish(captured.basis, { values: { name }, clear: [] });
   if (result.command.schema_version !== 1 || result.command.op !== 'shot.set'
@@ -36,7 +36,7 @@ export function submitShotNameEdit(captured: CapturedShotSetEdit, name: string):
     || JSON.stringify(result.command.args) !== JSON.stringify({ values: { name }, clear: [] })) {
     throw new Error('Unsupported shot.set name capture result.');
   }
-  captured.port.submit({ command: freezeJson(structuredClone(result.command)) });
+  return captured.port.submit({ command: freezeJson(structuredClone(result.command)) });
 }
 
 export type { ExistingShotSetArgs, ShotSetBasis };
