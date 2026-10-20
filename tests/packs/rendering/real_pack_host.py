@@ -21,18 +21,28 @@ from astrid.sdk.upgrade import _pack_host_lock
 from astrid.sdk.workspace_client import _safe_local_path
 
 
+class _StartupCancelled(BaseException):
+    """Unwind production startup before replaying the caller's signal handler."""
+
+
 @contextmanager
 def _termination_guard(*, launching: bool = False, before_delivery=None):
-    """Defer launch signals without passing a blocked mask to the child.
+    """Interrupt launch; defer original handlers through owned cleanup.
 
-    Retirement keeps signals blocked through waitpid. Restore/replay only
-    inside the caller's ownership guard, preserving any cleanup failure.
+    Children inherit an unblocked mask. Once cancelled, block repeated signals
+    through production cleanup, recovery/adoption and waitpid.
     """
     signals = (signal.SIGINT, signal.SIGTERM, signal.SIGALRM)
     previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, signals)
     handlers = {}
     pending = set()
     failure = None
+
+    def cancel(signum, _frame):
+        if handlers[signum] != signal.SIG_IGN:
+            pending.add(signum)
+            signal.pthread_sigmask(signal.SIG_BLOCK, signals)
+            raise _StartupCancelled()
 
     def deliver(signum, _frame):
         if handlers[signum] != signal.SIG_IGN:
@@ -43,9 +53,11 @@ def _termination_guard(*, launching: bool = False, before_delivery=None):
     try:
         if launching:
             for sig in signals:
-                handlers[sig] = signal.signal(sig, lambda signum, _frame: pending.add(signum))
+                handlers[sig] = signal.signal(sig, cancel)
             signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
         yield
+    except _StartupCancelled:
+        pass  # Production's BaseException cleanup has run; replay after recovery.
     except BaseException as exc:
         failure = exc
         raise
@@ -120,14 +132,37 @@ class RealPackHost:
         self.close()
 
 
+def _adopt_host(support: Path, value: dict, result: dict | None) -> RealPackHost | None:
+    """Recover a return/cancellation gap only for a source-bound live own child."""
+    with _pack_host_lock(support):
+        state = host_bootstrap._read_object(support / "generic-host.json") or {}
+        if not state and result is None:
+            return None  # Production already cleaned up, or did not launch.
+        pid = result["host_pid"] if result is not None else state.get("pid")
+        birth = host_bootstrap._host_birth_identity(pid)
+        if (state.get("pid") != pid or not birth
+                or state.get("process_birth_id") != birth
+                or state.get("source_checkout") != value["source_checkout"]
+                or state.get("runtime_instance_id") != value["runtime_instance_id"]
+                or state.get("support_root") != str(support)):
+            raise RuntimeError("host registration differs from launched host identity")
+        try:
+            child, _ = os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError as exc:
+            raise RuntimeError("returned host is not this helper's child") from exc
+        if child or not host_bootstrap._parked_host_identity_matches(state):
+            raise RuntimeError("returned host child exited or source command differs")
+        return RealPackHost(support, state, result or {})
+
+
 @contextmanager
 def start_real_pack_host(*, realm_dir: Path, support_dir: Path, discovery_file: Path,
                          source_checkout: Path, runtime_instance_id: str):
     """Own a fresh production host, yielding only after real catalog readiness.
 
-    DirectHarness uses runtime_protocol.cli rather than the neutral launcher's
-    catalog layout. Feed its actual discovery into the same ensure_pack_host
-    call as ensure_runtime, without acquiring or restarting a Runtime.
+    The CLI's 180s alarm requests cancellation even during progressing startup.
+    Original handlers run after cleanup; this is not a 180s total-exit cap.
+    Ownership/lock/cleanup uncertainty is surfaced, never authority to kill.
     """
     value = _handoff(realm_dir, support_dir, discovery_file, source_checkout, runtime_instance_id)
     support = Path(value["worker_credential_file"]).parent.parent
@@ -141,28 +176,24 @@ def start_real_pack_host(*, realm_dir: Path, support_dir: Path, discovery_file: 
     if realm_id != value["active_realm"]:
         raise RuntimeError("worker credential belongs to another realm")
     handle = None
+    result = None
+
+    def cleanup():
+        nonlocal handle
+        with _termination_guard():
+            if handle is None:
+                handle = _adopt_host(support, value, result)
+            if handle is not None:
+                handle.close()
+
     try:
-        with _termination_guard(
-                launching=True, before_delivery=lambda: handle.close() if handle else None):
+        with _termination_guard(launching=True, before_delivery=cleanup):
             result = host_bootstrap.ensure_pack_host(
                 value, reconfigure_action="inspect the DirectHarness Runtime and selected render environment",
                 startup_idle_seconds=30,
             )
-            with _pack_host_lock(support):
-                pid = result["host_pid"]
-                state = host_bootstrap._read_object(support / "generic-host.json")
-                birth = host_bootstrap._host_birth_identity(pid)
-                if (state.get("pid") != pid or not birth
-                        or state.get("process_birth_id") != birth):
-                    raise RuntimeError("host registration differs from launched host identity")
-                try:
-                    # WNOHANG returns zero only for our still-live child.
-                    child, _ = os.waitpid(pid, os.WNOHANG)
-                except ChildProcessError as exc:
-                    raise RuntimeError("returned host is not this helper's child") from exc
-                if child:
-                    raise RuntimeError("returned host child already exited")
-                handle = RealPackHost(support, state, result)
+            with _termination_guard():
+                handle = _adopt_host(support, value, result)
             if (result["host_status"] != "ready"
                     or "rendering.render" not in result["host_ready_capabilities"]):
                 raise RuntimeError("rendering.render is not ready in the production host")
@@ -175,8 +206,7 @@ def start_real_pack_host(*, realm_dir: Path, support_dir: Path, discovery_file: 
                     raise RuntimeError("rendering.render is not ready in the Runtime capability catalog")
         yield handle
     finally:
-        if handle is not None:
-            handle.close()
+        cleanup()
 
 
 def main() -> int:
