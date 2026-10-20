@@ -1,3 +1,4 @@
+import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
 import type { ReactPortal } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -37,6 +38,8 @@ export function useVideoEditorPreviewSurface({
   const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
   const previewConfig = compositionResolution.config;
   const previewSource = compositionResolution.source;
+  const compiledTransitions = useMemo(() => previewSource === 'canonical' && previewConfig
+    ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
   const previewRevision = useMemo<PreviewRevision>(() => {
     const fact = timelineData?.editProjection;
     const paired = fact && previewConfig === timelineData.resolvedConfig;
@@ -164,6 +167,7 @@ export function useVideoEditorPreviewSurface({
         key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}:${attachmentGeneration}`}
         ref={previewRef}
         config={previewConfig}
+        compiledTransitions={compiledTransitions}
         previewRevision={previewRevision}
         compact={compact}
         touchChrome={touchChrome}
@@ -183,6 +187,7 @@ export function useVideoEditorPreviewSurface({
     playerContainerRef,
     previewRef,
     previewConfig,
+    compiledTransitions,
     previewRevision,
     previewSource,
     attachmentGeneration,

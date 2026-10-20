@@ -633,9 +633,9 @@ const LazyGuard: FC<{ durationInFrames: number; children: ReactNode }> = ({ dura
 const EvaluatedVisualContent: FC<{ plan: DrawPlan; children: ReactNode }> = ({ plan, children }) => {
   const frame = useCurrentFrame();
   const evaluated = queryDrawFrame(plan, frame);
-  // Extended plans are admitted only for silent images. Native video stays on
-  // its playing clock, including its unchanged premount and audio behavior.
-  const extended = plan.ownOffset !== 0 || plan.drawDuration !== plan.ownDuration;
+  // Canonical incoming plans advance content directly from the Sequence origin.
+  // Older outgoing plans freeze only silent images on their own clock.
+  const extended = !plan.incomingPolicy && (plan.ownOffset !== 0 || plan.drawDuration > plan.ownDuration);
   return (
     <AbsoluteFill style={{ opacity: evaluated.opacity }}>
       {extended ? <Freeze frame={evaluated.ownFrame}>{children}</Freeze> : children}
@@ -674,6 +674,7 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
     />
   );
   if (plan) {
+    if (plan.drawDuration <= 0) return null;
     return (
       <Sequence key={clip.id} from={plan.drawStart} durationInFrames={plan.drawDuration} premountFor={fps}>
         <LazyGuard durationInFrames={plan.drawDuration}>

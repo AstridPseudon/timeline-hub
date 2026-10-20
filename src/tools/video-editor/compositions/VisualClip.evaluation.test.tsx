@@ -2,9 +2,11 @@
 import type { PropsWithChildren, CSSProperties } from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { declareAppTransition, prepareTrack, queryDrawFrame, queryTrackFrame } from '@banodoco/timeline-composition/evaluation';
+import { TimelineComposition, prepareCompositionScene, toRuntimeTheme } from '@banodoco/timeline-composition';
+import { resolveTimelineRenderTheme } from './installed-themes.ts';
+import { declareAppTransition, prepareTrack, queryDrawFrame, querySceneFrame, queryTrackFrame } from '@banodoco/timeline-composition/evaluation';
 import { VisualClipSequence } from './VisualClip.tsx';
-import { preparePlayerTrack } from './playerEvaluation.ts';
+import { compilePlayerTransitions, playerEvaluationClip, preparePlayerTrack } from './playerEvaluation.ts';
 import type { ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
 
 let currentFrame = 0;
@@ -16,6 +18,7 @@ vi.mock('remotion', async () => {
   const useFrame = () => React.useContext(Frame) ?? currentFrame;
   return {
     useCurrentFrame: useFrame,
+    Img: ({ src }: { src: string }) => <div data-testid="public-picture" data-src={src} data-frame={useFrame()} />,
     useVideoConfig: () => ({ fps: 30, width: 1920, height: 1080 }),
     useRemotionEnvironment: () => ({ isRendering: false, isClientSideRendering: false }),
     interpolate: (frame: number, [from, to]: number[]) => Math.min(1, Math.max(0, (frame - from) / (to - from))),
@@ -215,5 +218,107 @@ describe('VisualClip shared draw plans', () => {
       app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 4000 } } }}
       predecessor={previous} track={track} fps={30} drawPlan={null} />);
     expect(screen.queryByTestId('video')).not.toBeInTheDocument();
+  });
+});
+
+
+describe('canonical 0.0.9 compiled preview and public draw', () => {
+  it.each([
+    ['adjacent', 1, 0.4, false, undefined, 18, 60, 24, 6, 0.5],
+    ['first', 2, 0.4, true, undefined, 60, 90, 66, 6, 0.5],
+    ['gap', 2, 0.4, false, undefined, 48, 90, 54, 6, 0.5],
+    ['overlap', 0.5, 0.4, false, undefined, 3, 45, 9, 6, 0.5],
+    ['oversized', 1, 2, false, undefined, 0, 90, 30, 30, 0.5],
+    ['occurrence cap', 1, 2, false, 2000, 0, 60, 30, 30, 0.5],
+  ] as const)('%s uses the same opacity, content clock and half-open end',
+    (_name, at, duration, first, cap, start, end, frame, local, opacity) => {
+      const incoming = image('b', at, { transition: { type: 'fade', duration },
+        ...(cap ? { app: { canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: cap } } } : {}) });
+      const clips = [...(first ? [] : [image('a', 0)]), incoming, image('c', at + 1)];
+      const config = { tracks: [track], clips, registry: {}, output: { fps: 30, resolution: '1920x1080', file: 'preview.mp4' } };
+      const compiled = compilePlayerTransitions(config)!;
+      expect(compiled).toBeDefined();
+      const player = preparePlayerTrack(track, clips, 30, 1920, 1080, undefined, compiled);
+      const plan = player.plans.get('b')!;
+      expect(plan).toMatchObject({ drawStart: start, drawDuration: end - start });
+      const theme = toRuntimeTheme(resolveTimelineRenderTheme({}));
+      const assets = { assets: Object.fromEntries(clips.map(clip => [clip.asset!, {
+        ...clip.assetEntry!, file: clip.assetEntry!.src,
+      }])) };
+      const tracks = [{ track, clips: clips.map(playerEvaluationClip) }];
+      const publicScene = prepareCompositionScene(tracks, assets, 30, theme, 1920, 1080,
+        undefined, undefined, undefined, undefined, undefined, undefined, compiled);
+      const publicPlan = publicScene.tracks[0].prepared.plans[clips.findIndex(clip => clip.id === 'b')];
+      expect(plan).toEqual(publicPlan);
+      const layer = querySceneFrame(publicScene, frame).layers.find(layer => layer.clipId === 'b')!;
+      expect(layer).toMatchObject({ contentFrame: local, transitionOpacity: opacity });
+      expect(querySceneFrame(player.scene, frame)).toEqual(querySceneFrame(publicScene, frame));
+      expect(queryDrawFrame(plan, frame - start)).toMatchObject({ contentFrame: local, opacity });
+      const draw = () => <>
+        <VisualClipSequence clip={incoming} track={track} fps={30} drawPlan={plan} />
+        <TimelineComposition timeline={{ ...config, theme: 'default', clips: tracks[0].clips }} assets={assets} compiledTransitions={compiled} />
+      </>;
+      currentFrame = frame;
+      const view = render(draw());
+      const picture = screen.getByTestId('picture');
+      const publicPicture = view.container.querySelector(`[data-src="${incoming.assetEntry!.src}"]`)!;
+      expect(picture).toHaveAttribute('data-frame', String(local));
+      expect(publicPicture).toHaveAttribute('data-frame', String(local));
+      const opacityOf = (node: Element) => {
+        for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+          if (parent.style.opacity) return Number(parent.style.opacity);
+        }
+        return 1;
+      };
+      expect(opacityOf(picture)).toBe(opacity);
+      expect(opacityOf(publicPicture)).toBe(opacity);
+      for (const sample of [start, end - 1]) {
+        currentFrame = sample;
+        view.rerender(draw());
+        expect(screen.getByTestId('picture')).toHaveAttribute('data-frame', String(sample - start));
+      }
+      currentFrame = end;
+      view.rerender(draw());
+      expect(screen.queryByTestId('picture')).not.toBeInTheDocument();
+      expect(view.container.querySelector(`[data-src="${incoming.assetEntry!.src}"]`)).toBeNull();
+    });
+
+  it('retains unsupported custom tracks while compiling a separate linear track', () => {
+    const custom = { ...track, id: 'custom' };
+    const clips = [image('a', 0), image('b', 1, { transition: { type: 'crossfade', duration: 0.4 } }),
+      image('custom-clip', 0, { track: custom.id, transition: { type: 'wipe', duration: 0.4 } })];
+    const compiled = compilePlayerTransitions({ tracks: [track, custom], clips, registry: {},
+      output: { fps: 30, resolution: '1920x1080', file: 'custom.mp4' } })!;
+    expect(compiled.tracks.map(input => input.trackId)).toEqual(['V1']);
+    expect(preparePlayerTrack(custom, [clips[2]], 30, 1920, 1080, undefined, compiled).plans.size).toBe(0);
+  });
+
+  it.each(['crossfade', 'cross-fade'])('compiles the canonical %s alias without changing its incoming clock', type => {
+    const clips = [image('a', 0), image('b', 1, { transition: { type, duration: 0.4 } })];
+    const compiled = compilePlayerTransitions({ tracks: [track], clips, registry: {},
+      output: { fps: 30, resolution: '1920x1080', file: 'alias.mp4' } })!;
+    expect(compiled.tracks[0].incomingTransitions).toEqual([null, { T: 12 }]);
+    const plan = preparePlayerTrack(track, clips, 30, 1920, 1080, undefined, compiled).plans.get('b')!;
+    expect(queryDrawFrame(plan, 6)).toMatchObject({ opacity: 0.5, contentFrame: 6 });
+  });
+
+  it('retains host filtering when a track includes a disabled clip', () => {
+    const clips = [image('a', 0), image('b', 1, { disabled: true, transition: { type: 'fade', duration: 0.4 } })];
+    const compiled = compilePlayerTransitions({ tracks: [track], clips, registry: {},
+      output: { fps: 30, resolution: '1920x1080', file: 'disabled.mp4' } })!;
+    expect(compiled.tracks).toEqual([]);
+  });
+
+  it('keeps canonical video gain and playing content clock independent of transition opacity', () => {
+    const incoming = image('b', 1, { clipType: 'media', hold: undefined, from: 2, to: 4, speed: 2, volume: 0.7,
+      assetEntry: { type: 'video/mp4', src: 'https://example.test/b.mp4' }, transition: { type: 'cross-fade', duration: 0.4 } });
+    const clips = [image('a', 0), incoming];
+    const compiled = compilePlayerTransitions({ tracks: [track], clips, registry: {},
+      output: { fps: 30, resolution: '1920x1080', file: 'video.mp4' } })!;
+    const plan = preparePlayerTrack(track, clips, 30, 1920, 1080, undefined, compiled).plans.get('b')!;
+    currentFrame = 24;
+    render(<VisualClipSequence clip={incoming} track={track} fps={30} drawPlan={plan} />);
+    expect(videoProps).toHaveBeenLastCalledWith(expect.objectContaining({ frame: 6, volume: 0.7, playbackRate: 2 }));
+    expect(screen.queryByTestId('freeze')).not.toBeInTheDocument();
   });
 });

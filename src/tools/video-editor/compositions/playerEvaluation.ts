@@ -1,11 +1,17 @@
+import { compileCanonicalTransitions, prepareCompositionScene, toRuntimeTheme } from '@banodoco/timeline-composition';
 import {
   declareAppTransition,
   prepareScene,
   type DrawPlan,
+  type CompiledCanonicalTransitions,
   type TransitionSpec,
 } from '@banodoco/timeline-composition/evaluation';
 import { getClipTimelineDuration, getSanitizedPlaybackRate } from '../lib/config-utils.ts';
-import type { ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
+import { resolveTimelineRenderTheme } from './installed-themes.ts';
+import { projectOutputTimelineConfig } from '../data/timelineOutputProjection.ts';
+import { materializeResolvedSequenceConfig } from '../sequences/materialize.ts';
+import { getVisualTracks } from '../lib/editor-utils.ts';
+import type { ResolvedTimelineConfig, ResolvedTimelineClip, TrackDefinition } from '../types/index.ts';
 
 type EvaluationClip = Parameters<typeof prepareScene>[0][number]['clips'][number];
 
@@ -29,7 +35,29 @@ const isSilentImage = (clip: ResolvedTimelineClip): boolean => (
   && (!clip.effects || Object.keys(clip.effects).length === 0)
 );
 
-/** App transitions belong to the incoming clip; Composition owns the outgoing boundary. */
+/** Called only after the preview owner has selected an actual canonical projection. */
+export const compilePlayerTransitions = (config: ResolvedTimelineConfig): CompiledCanonicalTransitions | undefined => {
+  const output = materializeResolvedSequenceConfig(projectOutputTimelineConfig(config).config);
+  const tracks = getVisualTracks(output).map(track => ({
+    track,
+    clips: output.clips.filter(clip => clip.track === track.id),
+  })).filter(({ clips }) => clips.every(clip => isNativeMedia(clip)
+    && clip.enabled !== false && clip.active !== false && clip.disabled !== true
+    && clip.hidden !== true && clip.deleted !== true
+    && (!clip.transition || (!clip.elementRef
+      && ['fade', 'crossfade', 'cross-fade'].includes(clip.transition.type)
+      && Object.entries(clip.transition.params ?? {}).every(([key, value]) => key === 'easing' && value === 'linear')))));
+  try {
+    return compileCanonicalTransitions(tracks.map(({ track, clips }) => ({
+      track, clips: clips.map(playerEvaluationClip),
+    })), output.output.fps, toRuntimeTheme(resolveTimelineRenderTheme(output)));
+  } catch {
+    // Invalid or unsupported declarations keep the existing diagnostic/host path.
+    return undefined;
+  }
+};
+
+/** Use the canonical vector when present; native callers retain the reviewed adapter. */
 export const preparePlayerTrack = (
   track: TrackDefinition,
   clips: readonly ResolvedTimelineClip[],
@@ -37,9 +65,19 @@ export const preparePlayerTrack = (
   width: number,
   height: number,
   usesNativeMedia: (clip: ResolvedTimelineClip) => boolean = () => true,
+  compiledTransitions?: CompiledCanonicalTransitions,
 ) => {
   const sorted = [...clips].sort((left, right) => left.at - right.at);
   const evaluatedMedia = (clip: ResolvedTimelineClip) => isNativeMedia(clip) && usesNativeMedia(clip);
+  if (compiledTransitions?.tracks.some(input => input.trackId === track.id) && sorted.every(evaluatedMedia)) {
+    const assets = { assets: Object.fromEntries(sorted.flatMap(clip => clip.asset && clip.assetEntry
+      ? [[clip.asset, { ...clip.assetEntry, file: clip.assetEntry.src }]] : [])) };
+    const scene = prepareCompositionScene([{ track, clips: sorted.map(playerEvaluationClip) }], assets,
+      fps, toRuntimeTheme(resolveTimelineRenderTheme({})), width, height,
+      undefined, undefined, undefined, undefined, undefined, undefined, compiledTransitions);
+    return { clips: sorted, scene, plans: new Map(sorted.map((clip, index) =>
+      [clip.id, scene.tracks[0].prepared.plans[index]] as const)) };
+  }
   const transitions: (TransitionSpec | null)[] = sorted.slice(1).map(() => null);
   const hostTiming = new Set<number>();
   sorted.forEach((incoming, index) => {
