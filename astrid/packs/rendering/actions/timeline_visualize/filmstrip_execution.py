@@ -1714,6 +1714,7 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
     frames = range(duration_frames)
     answers: list[dict[str, object]] = []
     scene_clips_output: dict[str, object] = {}
+    receipt_provenance: dict[str, str] | None = None
     label = _scene_only_label_unavailable()
     out_root = args.out.expanduser().resolve()
     try:
@@ -1747,6 +1748,18 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
                        or type(value.get("address")) is not str or not value["address"]
                        for value in scene_clips.values())):
             raise SceneQueryUnavailable("verified source has no exact compiled scene address map")
+        capture_identity = (
+            bound_metadata.get("capture_identity")
+            if isinstance(bound_metadata, Mapping)
+            else None
+        )
+        if (not isinstance(capture_identity, str) or not capture_identity
+                or bound_snapshot.get("video_digest") != capture_identity):
+            raise SceneQueryUnavailable("verified source has no exact capture identity")
+        source_timeline_id = bound_snapshot.get("timeline_id")
+        if source_timeline_id is not None and (
+                not isinstance(source_timeline_id, str) or not source_timeline_id):
+            raise SceneQueryUnavailable("verified source has an invalid timeline identity")
         out_root.mkdir(parents=True, exist_ok=True)
         project_dir = Path(
             os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or (REPO_ROOT / "remotion")
@@ -1785,6 +1798,9 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
         # unchanged host-owned binding; never copy them from outer metadata.
         label = snapshot_label(bound_snapshot, source=source)
         scene_clips_output = dict(scene_clips)
+        receipt_provenance = {"video_digest": capture_identity}
+        if source_timeline_id is not None:
+            receipt_provenance["timeline_id"] = source_timeline_id
     except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):
         answers = []
         scene_clips_output = {}
@@ -1831,8 +1847,14 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
     bundle = out_root / "filmstrip-bundle.zip"
     _write_zip_atomic(bundle, pack_root)
 
-    def receipt_entry(name: str, path: Path, *, primary: bool = False) -> dict[str, Any]:
-        return {
+    def receipt_entry(
+        name: str,
+        path: Path,
+        *,
+        primary: bool = False,
+        provenance: Mapping[str, str] | None = None,
+    ) -> dict[str, Any]:
+        entry = {
             "name": name,
             "path": path.relative_to(out_root).as_posix(),
             "content_hash": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -1841,6 +1863,9 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
             "is_primary": primary,
             "durability": "durable" if primary else "temporary",
         }
+        if provenance is not None:
+            entry["provenance"] = dict(provenance)
+        return entry
 
     host_manifest_path = out_root / "manifest.json"
     write_manifest(
@@ -1855,7 +1880,10 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
             },
             outputs=[
                 receipt_entry("filmstrip_manifest", nested_manifest_path),
-                receipt_entry("filmstrip_bundle", bundle, primary=True),
+                receipt_entry(
+                    "filmstrip_bundle", bundle, primary=True,
+                    provenance=receipt_provenance,
+                ),
             ],
             entrypoints={
                 "manifest": "filmstrip-view/manifest.json",
