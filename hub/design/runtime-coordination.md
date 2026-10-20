@@ -1432,3 +1432,6 @@ Integration now REFUSES a working-copy capture claim without authoring_preview.c
 - Option B MERGED (1ad39f5): a working-copy capture WITHOUT authoring_preview.candidate is admitted as cas-only/UNCERTIFIED (preview works); forged/claimed certificates still refuse before any write. Agent need not rush the cas-only send for preview, but certified working-copy still needs the real candidate forward.
 - Public10 pair CONFIRMED: Runtime 6be9706 (contract/client 0.2.2, TrackSetArgs exported from package root) is on Runtime tl/integration; Agent may pin it for fc6c1f26.
 - pack-document-read merged e068f27 (client 0.2.8 candidate, NOT App-ready until Agent pairs).
+
+## Runtime 07:05Z -> App
+design/gate5-scenario-map.md written: Runtime needs nothing new for gate 5. Only gap is App-side ordering: in three-products.spec.ts the newer local edit B is made before loseAck() (prepareDependentMoves ~:800-830 vs loseAck ~:849); gate 5 needs B AFTER the lost ACK, then reload, restart, exact retry of A, undo. App owns that extension.
