@@ -1,0 +1,6 @@
+docs(viewing): refresh M4 size census
+
+Refresh the Viewing-owned census and conditional cut plan against the actual
+integrated Composition, Agent, and App heads. Record physical/nonblank counts,
+merged versus held cuts, and infrastructure disclosures without changing
+product behavior.
