@@ -695,9 +695,8 @@ describe('captured track names', () => {
     return screen.getByRole('textbox', { name: 'Track name' });
   }
 
-  // Touch rows select a track for TrackInspector; desktop owns the inline
-  // command-backed label editor tested here. Touch editing is covered by the
-  // PropertiesPanel TrackInspector tests.
+  // Touch rows select the Inspector target; command-backed touch editing and
+  // draft preservation are covered by the real PropertiesPanel/TrackInspector test.
   for (const deviceClass of ['desktop'] as const) {
     it(`releases a clean ${deviceClass} draft after a remote label change`, () => {
       const finish = vi.fn();
