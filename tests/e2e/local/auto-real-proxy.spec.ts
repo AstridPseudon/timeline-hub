@@ -3,7 +3,7 @@
  * then drives the actual editor UI against the actual Runtime. The image executor is a temporary GenericPackHost pack in
  * DirectHarness.tmp, not an App command or a fake Runtime endpoint.
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type Request } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { mkdirSync, unlinkSync } from 'node:fs';
@@ -14,9 +14,10 @@ import { RUNTIME_CHECKOUT, spawnGroup, stopGroup, type DirectHarness } from './s
 import type { ThreeProductsSeed } from './support/harness.ts';
 
 const OPERATION_PREFIX = '/runtime-config/v1/operation';
+const NORMAL_RUNTIME_PREFIX = '/api/runtime/v1';
 const TASK_PATH = `${OPERATION_PREFIX}/runtime/v1/tasks`;
 const COMMIT_PATH = new RegExp(`${OPERATION_PREFIX}/runtime/v1/projects/[^/]+/timelines/[^/]+/commit$`);
-const LEGACY_POST = /^\/api\/runtime\/.*$/;
+const LEGACY_POST = /^\/api\/runtime\/(?!v1(?:\/|$)).*$/;
 const PLACEMENT_LANE = 'V2';
 const CEILING = { timeout: 60_000 };
 const test = appTest.extend<{ workspace: Workspace }>({
@@ -33,6 +34,39 @@ const test = appTest.extend<{ workspace: Workspace }>({
 type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWorkspace };
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
 type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
+
+function normalRuntimeCommitPath(projectId: string, timelineId: string): string {
+  return `/api/runtime/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/commit`;
+}
+
+function isExpectedInverseRequest(request: Request, projectId: string, timelineId: string, publicationId: string): boolean {
+  if (request.method() !== 'POST') return false;
+  let url: URL;
+  let body: Record<string, unknown>;
+  try {
+    url = new URL(request.url());
+    body = request.postDataJSON() as Record<string, unknown>;
+  } catch { return false; }
+  if (url.pathname !== normalRuntimeCommitPath(projectId, timelineId) || url.search || url.hash
+    || !body || Array.isArray(body) || typeof body !== 'object'
+    || typeof body.base_revision_id !== 'string' || !body.base_revision_id
+    || typeof body.base_publication_id !== 'string' || !body.base_publication_id) return false;
+  return JSON.stringify(body) === JSON.stringify({
+    api_version: 1,
+    project_id: projectId,
+    timeline_id: timelineId,
+    base_revision_id: body.base_revision_id,
+    base_publication_id: body.base_publication_id,
+    commands: [{
+      schema_version: 1,
+      op: 'timeline.inverse',
+      version: '1',
+      select: null,
+      args: { publications: [publicationId] },
+    }],
+    source: { via: 'app' },
+  });
+}
 
 function sanitizedError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -273,7 +307,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   page.on('request', (request) => {
     const url = new URL(request.url());
     if (request.method() === 'POST') requests.push(`${request.method()} ${url.pathname}`);
-    if (url.pathname.startsWith(OPERATION_PREFIX)) operation.push(`${request.method()} ${url.pathname}`);
+    if (url.pathname.startsWith(OPERATION_PREFIX) || url.pathname.startsWith(NORMAL_RUNTIME_PREFIX)) operation.push(`${request.method()} ${url.pathname}`);
     if (request.method() === 'POST' && LEGACY_POST.test(url.pathname)) legacy.push(url.pathname);
   });
 
@@ -408,6 +442,9 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await clickRecovery(page, recovered.ownerId);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((item) => !item.pending && !item.intents.length && !item.placementContinuations?.some((placement) => !placement.placement?.accepted)), CEILING).toBe(true);
   expect(retry).toMatchObject({ method: lost!.method, body: lost!.body, key: lost!.key, receipt: lost!.receipt });
+  const completed = (await commandOutboxes(page, seed.timelineId)).find((item) => item.ownerId === recovered.ownerId);
+  const inversePublicationId = completed?.placementContinuations?.find((placement) => placement.id === recovered.placementContinuations?.[0]?.id)?.placement?.accepted?.head.publicationId;
+  if (!inversePublicationId) throw new Error('automatic placement did not retain its accepted publication for guarded undo');
   await canonicalImage(harness, seed, objectId!);
 
   await page.unroute(COMMIT_PATH);
@@ -416,7 +453,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await openSeededTimeline(page, harness);
   await canonicalImage(harness, seed, objectId!);
   const beforeUndo = operation.length;
-  const undoRequest = page.waitForRequest((request) => request.method() === 'POST' && COMMIT_PATH.test(new URL(request.url()).pathname), CEILING);
+  const undoRequest = page.waitForRequest((request) => isExpectedInverseRequest(request, harness.seed.projectId, seed.timelineId, inversePublicationId), CEILING);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const undoBody = JSON.parse((await undoRequest).postData() ?? '{}') as { base_revision_id?: string; base_publication_id?: string; commands?: Array<{ op?: string }> };
   expect(undoBody).toMatchObject({ base_revision_id: expect.any(String), base_publication_id: expect.any(String), commands: [{ op: 'timeline.inverse' }] });
