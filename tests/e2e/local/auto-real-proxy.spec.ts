@@ -17,7 +17,9 @@ const OPERATION_PREFIX = '/runtime-config/v1/operation';
 const NORMAL_RUNTIME_PREFIX = '/api/runtime/v1';
 const TASK_PATH = `${OPERATION_PREFIX}/runtime/v1/tasks`;
 const COMMIT_PATH = new RegExp(`${OPERATION_PREFIX}/runtime/v1/projects/[^/]+/timelines/[^/]+/commit$`);
-const LEGACY_POST = /^\/api\/runtime\/(?!v1(?:\/|$)).*$/;
+const NATIVE_RUNTIME_COMMIT = /^\/api\/runtime\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+const TASK_API_POST = /^\/api\/runtime\/v1\/(?:tasks(?:\/[^/]+\/(?:cancel|retry))?|managed-outputs\/[^/]+\/export)$/;
+const LEGACY_POST = /^\/api\/runtime\/.*$/;
 const PLACEMENT_LANE = 'V2';
 const CEILING = { timeout: 60_000 };
 const test = appTest.extend<{ workspace: Workspace }>({
@@ -34,6 +36,14 @@ const test = appTest.extend<{ workspace: Workspace }>({
 type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWorkspace };
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
 type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
+type RuntimePostKind = 'native-commit' | 'task-api' | 'legacy-writer' | 'other';
+
+function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
+  if (method !== 'POST') return 'other';
+  if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
+  if (TASK_API_POST.test(pathname)) return 'task-api';
+  return LEGACY_POST.test(pathname) ? 'legacy-writer' : 'other';
+}
 
 function normalRuntimeCommitPath(projectId: string, timelineId: string): string {
   return `/api/runtime/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/commit`;
@@ -308,7 +318,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     const url = new URL(request.url());
     if (request.method() === 'POST') requests.push(`${request.method()} ${url.pathname}`);
     if (url.pathname.startsWith(OPERATION_PREFIX) || url.pathname.startsWith(NORMAL_RUNTIME_PREFIX)) operation.push(`${request.method()} ${url.pathname}`);
-    if (request.method() === 'POST' && LEGACY_POST.test(url.pathname)) legacy.push(url.pathname);
+    if (classifyRuntimePost(request.method(), url.pathname) === 'legacy-writer') legacy.push(url.pathname);
   });
 
   await page.goto(`${vite.origin}${APP_ENTRY_ROUTE}`);
