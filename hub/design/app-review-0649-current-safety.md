@@ -9,3 +9,7 @@ Correctedfull3410 formallyclassified:18377PASS/7FAIL/3expected, EXACT6M1baseline
 Transition revision/opaque callback preservation reviewed (268focusedPASS, only3authorizeddragmarkers). None-publication legacybug remains explicit RED; not silentlyqualified. Native single/bulkclear writer staging active. No generic expectedfailure exception added.
 
 Automatic placement temporarily missing on integration after D03 is now topwriterpriority; ownerlist recordsit. Sol worker traces exact trigger and supportednativevscontractgaps without restoring anedgewriter. Runtime/Agent final currentrelease stillrequired; historicalcompatibility gates remainSAFETYonly under05:15.
+
+Canvas ground has now MERGED f3459863a via exacteeddb delta source7341c692e (originalbranch source bytes checked equal in bothpaths). Independentcentral21904 66PASS +10871 12shotPASS; publicpackage/peer+lintPASS. No literaldefaultadoption. RefreshedassetDrop worker bases564a, safety metadata worker basesf345; oneunit atatime, no broadbrowser started.
+
+06:55: exactCURRENT f345 mergedground source gate app-targeted-1020065349-30936:61PASS/3files; next assetDropunit mergeQUEUED after964focused+7880historicalactualrestorePASS18s. Renderrefresh worker wrongly reusedphysicalnode_modules.compat8; its233PASS is NOTqualification. Requalifier explicitstandard/tmp/app-m2-coherent-deps8/node_modules and splitONLY7fileproductunit from3.3kobserver/controller lines active. No broadframebrowser or falsecurrentclaim.
