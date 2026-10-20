@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T01:35:18Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T01:40:30Z | dispatcher heartbeat 8s -->
 # agent — 2026-10-20T01:08Z
 Milestone: Agent M1 exit SATISFIED; global M1 awaits App full classification/orchestrator PLAN record. M0 COMPLETE. M2 branch implementation authorized; ALL M2 integration merges HELD.
 Integrated: Agent f6fbe741 (metadata descendant of qualified fc324), Runtime9f9b25c, App2bfde69ea, Composition7aa384a. No M2 product integrated. Integration clean.
@@ -23,3 +23,5 @@ Latest01:19: scalar7b54 +476focused/1actualREADY; params3565462c3oldxfailsFIXED/
 01:24 ledgerACK: only design/deletion-ledger.agent.md editable; generatedcombinedviewREADONLY. AG01/02/03 disappearedinperareasplit, restoredownrows withcurrentevidence, nootherareaedits. Pack+PARAMworktreesb2/356LEASED toRuntimeactualjourneys; neitherrecycled/mutated. Exactmaterializationmapjoin managerACK01:22/Runtime01:18 DONE, agt-m2-materialization-map-impl productworkeractive.
 
 Latest01:27: manager98PASS27.25s canonicalword/retainedinput/kernel onsharedvenv-agent; obsoletecollisionxfailcorrecteda3ad4f96, no productregistry/defaultcompileractivation. Paramscope45c3f328 fixes3-objectinstead1overfetch; exactselectedblob+trustedinversecontext,21actual+418focused4oldxfail; managerreviewandindependentactualrununderway, includebeforePARAMrelease. Multi-elementadmission83PASSaudit provesnewb2saferefusal/main duplicateidentityoldbug; preciseunchangedAoldsnapshot+newBnewblob preservationpolicysenttoorchestrator, no productfixyet. NativeMIMEsplit/staticmoveintent c17 reviewedbutdependsoldeditsnormalizer, purehelperrelocationcleanupactivebeforemerge.
+
+01:34 PRIORITYnewfinding: nativeoccurrencemove detachedcandidate changesUNKNOWNnamespaced foreign_item_id/item_ids byrecursive suffixguess inmainauthoring_bundle. Escalatedagent-20261020T0134Z, actualnormal9f/f6 proofworkeragt-m1-opaque-item-remap-probe TOPpriority; noaccepteddata-lossclaimyet. ProductreleaseHELDwhilequalifying; schemafreeze472622 unaffected/generationmaycontinue. M1areaexitunderreviewforthisnewlosslesscounterexample. No historyrepair/ownerfilmclaim.

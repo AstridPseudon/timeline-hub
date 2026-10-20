@@ -51,3 +51,27 @@ Golden keys: `bundle`, `commands`, `records`, `after_bundle`. The commands are o
 Tests: `/home/user/work/wt/agt-m2-clip-scalar-fields/tests/editing_conformance/test_recipe_clip_scalar_fields.py`, `/home/user/work/wt/agt-m2-clip-scalar-fields/tests/sdk/test_timeline_clip_scalar_provider.py`, `/home/user/work/wt/agt-m2-clip-scalar-fields/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py`.
 
 Direct actual Runtime proof against unmodified `/home/user/work/runtime` at `9f9b25c000485e919f30f1411831fe2d5a3c1316` passes with its official installed validation, without overrides. It uses RuntimeService on a throwaway realm, API-ingested synthetic media, fixture-only initial publication, then native commit/reopen/exact retry/inverse/redo/ABA. It opens no sockets. No full suite, browser/App journey, CLI ingress or full composer candidate is qualified by this worker.
+
+## Successor source: source-hold after native fixed move (2026-10-20)
+
+Worker `agt-m2-hold-after-move`, base `7b54ca92`, branch `tl/agt-m2-hold-after-move`. This section supersedes the blanket non-null `for` refusal described above **for this successor source only**. Bundle 2's current schema freeze, packaged artifacts, DTO/ABI and pins remain immutable. M2 integration remains HELD; the orchestrator owns review/composition and any successor artifact qualification.
+
+Absolute successor handler: `/home/user/work/wt/agt-m2-hold-after-move/astrid/sdk/timeline/_clip_scalar_commands.py` (SHA-256 `fd54c4ca783188a64903b9bc36d380717a28c66a01f2708c97c0a3feff50bff3`). No command shape or version change.
+
+Supported cases:
+
+- Plain parent and occurrence-owned `clip.move` followed by explicit `clip.set` hold SET or CLEAR, in one batch or separate accepted publications. Capture the hold command on the local result of the move, preserve its original claims across acknowledgement/materialization, then submit it unchanged.
+- Each existing non-null `for` at raw clip, `app`, or `app.astrid` must be a positive finite number agreeing with the **previous** effective source duration divided by existing speed, using the existing duration helper and its numeric comparison tolerance. Every such leaf becomes an explicit recorded write to the new effective timeline duration. Multiple agreeing declarations update together; one disagreement refuses the whole edit. Absent/null declarations stay absent/null. No containers or `for` leaves are created.
+- Numeric hold wins over a surviving from/to source window in main. SET stores exact source seconds; CLEAR requires the surviving positive from/to window. Existing `capture._duration`, `clip_end_frame`, `clip_start_frame` and rational fps helpers determine extent. No new duration arithmetic or timing precedence was added.
+- Static boolean `fixed_start`, quantized authored start, existing speed/source windows, row order, opaque metadata and disjoint siblings are preserved. Unchanged duration writes participate in ordinary publication/ABA guards. Generic inverse/redo handles the move and hold's repeated writes; undo of the move with a later dependent hold refuses.
+- Main authoring compilation, reopening its emitted closure, and `project_runtime_parent_composition` readback prove effective extent at speed two with 30 and 30000/1001 fps. Direct actual Runtime acceptance/reopen/exact retry/inverse/redo/ABA passes in scalar-only, compound and separate-publication cases against normal official `/home/user/work/runtime` source `9f9b25c000485e919f30f1411831fe2d5a3c1316`, without schema overrides or sockets.
+
+Refused cases: different/static-independent `for`, string/object/boolean/nonfinite/nonpositive `for`, non-boolean dynamic `fixed_start`, non-null follow/anchor intentions (`on`, `until`, other existing relation guards), clip time maps/nesting/from_ms/to_ms, incompatible duration/duration_ms declarations, nontranslation occurrence maps, differing child fps, occurrence half-open/frame-boundary overflow, changed captured basis, intervening writes (including unchanged and ABA), and surviving later dependencies. Asset/transition SET and all other previous bounded refusals remain unchanged. Dynamic anchors have not been widened.
+
+Absolute successor tests:
+
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/test_recipe_clip_scalar_fields.py`
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/sdk/test_timeline_clip_scalar_provider.py`
+- `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py`
+
+The no-`for` App golden remains byte-for-byte unchanged at `/home/user/work/wt/agt-m2-hold-after-move/tests/editing_conformance/fixtures/recipe_m2_app_clip_scalar_fields.json` (SHA-256 `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06`). Successor source schema `/home/user/work/wt/agt-m2-hold-after-move/astrid/core/timeline/schema/edit-command.schema.json` remains SHA-256 `cdab9bf609b901fab591a45e262719e05945435b8e1b260d109f2538a509be24`. These identical bytes do not qualify a replacement official artifact. Exact commands/results and remaining limits are in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-hold-after-move/notes/report.md`.

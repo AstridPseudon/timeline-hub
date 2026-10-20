@@ -395,3 +395,19 @@ weakened, skipped or marked xfail. No full suite, install, socket/browser lane,
 actual Runtime producer acceptance/lifecycle race, historical admission or builder
 qualification. Product implementation, all M2 merges and D13 cutover remain held
 pending PLAN M1.
+
+## Bundle3 Agent implementation handoff (agt-m2-producer-guard, in progress)
+
+Source worktree: `/home/user/work/wt/agt-m2-producer-guard`, base `d4743e29`;
+only the four proposal/golden test files are overlaid from `bdebad36`.
+Agent is wiring exactly `producer_attempt(pin) -> {pin}` (closed result), ABI 1.
+Provider checks returned pin and request project/timeline/ORIGINAL base pair;
+Runtime must capture privately and validate whole suffix/rationale against its
+verified CAS artifact, then enforce capture/authority-record bijection at accept.
+Pure execution can declare a dependency without granting acceptance authority.
+No caller proposal digest recomputation. No renderer changes or generated pins.
+Planned export: `astrid.sdk.timeline.producer.build_producer_batch(proposal)`;
+returns original target fields plus `commands` (PIN-only guard + untouched suffix)
+and `rationale`, without request identity/source. Requester owns fresh identities.
+`TimelineSession.queue_proposal` will persist this batch in its existing outbox,
+retain the original admission pair and reason, and refuse mixing pending edits.
