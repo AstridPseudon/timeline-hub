@@ -16,6 +16,7 @@ import {
   useTimelineEditorData,
   useTimelineEditorOps,
   useTimelinePlaybackContext,
+  useTimelineChromeContextSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
 import type { EditorVariantPicker, VariantObservations } from '@/tools/video-editor/runtime/editorHostObservations.ts';
@@ -209,6 +210,8 @@ function PropertiesPanelComponent({
     inspectorTarget,
   } = useTimelineEditorData();
   const { currentTime } = useTimelinePlaybackContext();
+  const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
+  const [elementOverlayDeleteError, setElementOverlayDeleteError] = useState<string | null>(null);
   const {
     clearSelection,
     handleUpdateClips,
@@ -231,6 +234,30 @@ function PropertiesPanelComponent({
     setSelectedTrackId,
     applyEdit,
   } = useTimelineEditorOps();
+  useEffect(() => { setElementOverlayDeleteError(null); }, [selectedClip?.id]);
+  const deleteLiteralOverlay = () => {
+    const clip = selectedClip;
+    const ref = clip?.elementRef;
+    if (!clip || !ref || ref.kind !== 'effect' || ref.packId || clip.clipType !== ref.id) return false;
+    if (!data || !elementOverlay) {
+      throw new Error('Literal overlay deletion is unavailable until the native timeline session is ready.');
+    }
+    const canonical = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
+      ? (clip.app as { canonical?: unknown }).canonical : undefined;
+    let select: string | null = null;
+    if (canonical === undefined) {
+      select = !clip.id.includes('/') && !clip.id.includes('::') ? `parent/clip:${clip.id}` : null;
+    } else if (canonical && typeof canonical === 'object' && !Array.isArray(canonical)) {
+      const clipRef = (canonical as { clipRef?: unknown }).clipRef;
+      select = typeof clipRef === 'string' && /^parent\/clip:[^/]+$/.test(clipRef) && !clipRef.includes('::') ? clipRef : null;
+    }
+    if (!select) throw new Error('Literal overlay deletion is unavailable for occurrence-owned clips.');
+    const captured = elementOverlay.capture({ current: data, operation: { kind: 'delete', select } });
+    const prepared = elementOverlay.finish(captured);
+    elementOverlay.submit(prepared);
+    clearSelection();
+    return true;
+  };
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
     staleAssetKeys,
@@ -530,6 +557,12 @@ function PropertiesPanelComponent({
             setActiveTab={setActiveClipTab}
           />
         ) : (
+          <>
+          {elementOverlayDeleteError && (
+            <div role="status" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {elementOverlayDeleteError}
+            </div>
+          )}
           <ClipInspector
             readOnly={readOnly}
             effectResources={effectResources}
@@ -546,7 +579,14 @@ function PropertiesPanelComponent({
             }}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
-            onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
+            onDelete={!readOnly && selectedClip ? () => {
+              setElementOverlayDeleteError(null);
+              try {
+                if (!deleteLiteralOverlay()) handleDeleteClip(selectedClip.id);
+              } catch (error) {
+                setElementOverlayDeleteError(error instanceof Error ? error.message : String(error));
+              }
+            } : undefined}
             onToggleMute={readOnly ? () => {} : handleToggleMute}
             onDetachAudio={!readOnly && selectedClip ? () => handleDetachAudioClip(selectedClip.id) : undefined}
             onSplitAtPlayhead={() => {
@@ -576,6 +616,7 @@ function PropertiesPanelComponent({
             timelineFps={resolvedConfig?.output.fps}
             currentTime={currentTime}
           />
+          </>
         )}
       </div>
       {!readOnly && !selectedDataItems.length && selectedClipIds.size === 1 && (
