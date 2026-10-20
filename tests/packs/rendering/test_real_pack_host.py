@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -14,6 +15,7 @@ from unittest.mock import patch
 import pytest
 
 from astrid.core._shared.boot_manifest import load_boot_manifest_hash
+from astrid.core.execution import process_group
 from astrid.core.execution.generic_host import (
     RuntimeProtocolClient,
     source_checkout_closure_digest,
@@ -266,8 +268,11 @@ def _exercise_progress_startup(root, signum):
     marker = support / "generic-host.json"
     clock = [0]
     retired = []
-    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"],
-                             start_new_session=True)
+    child = process_group.popen_owned_group(
+        [sys.executable, "-c", "import time; time.sleep(60)"],
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    terminate = host_bootstrap.terminate_group
 
     def sleep(_seconds):
         clock[0] += 1
@@ -276,16 +281,19 @@ def _exercise_progress_startup(root, signum):
         # A deterministic escape, not a wall-clock race or a claimed deadline.
         assert clock[0] < 400, "startup kept progressing after cancellation"
 
-    def retire(state):
-        assert state["pid"] == child.pid
+    def retire(owned):
+        assert owned is child
         retired.append(clock[0])
-        child.terminate()
-        child.wait(timeout=5)
-        marker.unlink()
+        terminate(owned)
 
     def interrupted(_sig, _frame):
         assert retired == [10] and not marker.exists()
+        assert not (support / "generic-host.ready.json").exists()
         assert child.poll() is not None
+        with pytest.raises(ChildProcessError):
+            os.waitpid(child.pid, os.WNOHANG)
+        with pytest.raises(ProcessLookupError):
+            os.killpg(child.pid, 0)
         raise SystemExit(23)
 
     client = SimpleNamespace(
@@ -308,7 +316,7 @@ def _exercise_progress_startup(root, signum):
                 (host_bootstrap, "_prepare_render_validation", lambda *_a: None),
                 (host_bootstrap, "popen_owned_group", lambda *_a, **_k: child),
                 (host_bootstrap, "_host_progress_token", lambda *_a: clock[0]),
-                (host_bootstrap, "_retire_host_locked", retire),
+                (host_bootstrap, "terminate_group", retire),
                 (host_bootstrap, "time", SimpleNamespace(**{
                     **vars(time), "monotonic": lambda: clock[0], "sleep": sleep})),
             ):
@@ -325,9 +333,10 @@ def _exercise_progress_startup(root, signum):
             assert caught.value.code == 23
             assert retired == [10]
     finally:
-        if child.poll() is None:
-            child.kill()
-        child.wait(timeout=5)
+        try:
+            process_group.terminate_group(child)
+        finally:
+            shutil.rmtree(child._astrid_custody.root, ignore_errors=True)
 
 
 @pytest.mark.parametrize("sig", [signal.SIGALRM, signal.SIGTERM])
