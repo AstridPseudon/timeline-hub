@@ -583,8 +583,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self._identity("projects:read")
             return self._send(200, self.runtime.inspect_timeline(path[2], path[4], self._timeline_options()))
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "views" and method == "POST":
-            self._identity("projects:read")
-            return self._send(200, self.runtime.create_timeline_view(path[2], path[4], self._timeline_options()))
+            self._identity("projects:write")
+            return self._send(200, self.runtime.create_timeline_view(path[2], path[4], self._timeline_options(), idempotency_key=self._idempotency_key()))
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "replace-parent-media" and method == "POST":
             self._identity("projects:write")
             return self._send(200, self.runtime.replace_parent_composition_media(path[2], path[4], self._project_mutation_body(), idempotency_key=self._idempotency_key()))

@@ -103,3 +103,22 @@ def test_recoverable_snapshot_client_projection_is_canonical() -> None:
     assert "Promise<MutationResult<ManagedOutput>>" in typescript
     assert '/recoverable-snapshots' in typescript and '/recoverable-snapshots' in python
     assert 'output: DerivedInputDescriptor' in typescript
+
+
+def test_view_write_scope_and_composition_eligibility_contract():
+    import yaml
+
+    contract = yaml.safe_load((ROOT / "contract/openapi/workspace-v1.yaml").read_text())
+    timeline = "/v1/projects/{project_id}/timelines/{timeline_id}"
+    view = contract["paths"][timeline + "/views"]["post"]
+    assert {"$ref": "#/components/parameters/IdempotencyKey"} in view["parameters"]
+    assert "projects:write" in view["description"]
+    assert "409" in view["responses"]
+    inspect = contract["paths"][timeline + "/inspect"]["post"]
+    assert {"$ref": "#/components/parameters/IdempotencyKey"} not in inspect["parameters"]
+    publication = contract["paths"][timeline + "/composition-revisions"]["post"]
+    for reason in ("timeline_commit_required", "stale_head", "headless_content_not_empty"):
+        assert reason in publication["description"]
+    assert "untracked" in publication["description"]
+    assert "expected_head null" in publication["description"]
+    assert "project documents" in publication["description"]

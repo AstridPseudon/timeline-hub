@@ -453,6 +453,102 @@
       ],
       "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
     },
+    "ShotSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "properties": {
+                "videoControlMode": {"type": ["string", "null"]},
+                "prompt": {"type": ["string", "null"]},
+                "negativePrompt": {"type": ["string", "null"]},
+                "dimensionSource": {"type": ["string", "null"]},
+                "generationMode": {"type": ["string", "null"]},
+                "selectedModel": {"type": ["string", "null"]},
+                "motionMode": {"type": ["string", "null"]},
+                "selectedPhasePresetId": {"type": ["string", "null"]},
+                "textBeforePrompts": {"type": ["string", "null"]},
+                "textAfterPrompts": {"type": ["string", "null"]},
+                "generationTypeMode": {"type": ["string", "null"]},
+                "batchVideoFrames": {"type": ["number", "null"]},
+                "batchVideoSteps": {"type": ["number", "null"]},
+                "customWidth": {"type": ["number", "null"]},
+                "customHeight": {"type": ["number", "null"]},
+                "guidanceScale": {"type": ["number", "null"]},
+                "amountOfMotion": {"type": ["number", "null"]},
+                "enhancePrompt": {"type": ["boolean", "null"]},
+                "turboMode": {"type": ["boolean", "null"]},
+                "advancedMode": {"type": ["boolean", "null"]},
+                "smoothContinuations": {"type": ["boolean", "null"]},
+                "ltxHdResolution": {"type": ["boolean", "null"]}
+              },
+              "minProperties": 1,
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "name",
+              "settings.videoControlMode",
+              "settings.prompt",
+              "settings.negativePrompt",
+              "settings.dimensionSource",
+              "settings.generationMode",
+              "settings.selectedModel",
+              "settings.motionMode",
+              "settings.selectedPhasePresetId",
+              "settings.textBeforePrompts",
+              "settings.textAfterPrompts",
+              "settings.generationTypeMode",
+              "settings.batchVideoFrames",
+              "settings.batchVideoSteps",
+              "settings.customWidth",
+              "settings.customHeight",
+              "settings.guidanceScale",
+              "settings.amountOfMotion",
+              "settings.enhancePrompt",
+              "settings.turboMode",
+              "settings.advancedMode",
+              "settings.smoothContinuations",
+              "settings.ltxHdResolution"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
+    },
     "ClipSetParamsArgs": {
       "type": "object",
       "properties": {
@@ -495,6 +591,46 @@
         }
       ],
       "description": "Patch raw clip.params by literal top-level JSON keys in stored units, never dotted paths or expressions. Null is a value; clear removes presence. Set/clear overlap is refused by the handler. Preserve unmentioned keys."
+    },
+    "ElementRef": {
+      "type": "object",
+      "properties": {
+        "packId": {
+          "$ref": "#/$defs/ID"
+        },
+        "id": {
+          "$ref": "#/$defs/ID"
+        },
+        "kind": {
+          "$ref": "#/$defs/ID"
+        },
+        "revision": {
+          "$ref": "#/$defs/ID"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "revision"
+      ],
+      "additionalProperties": false,
+      "description": "The clip elementRef field, exactly as stored: draft refs carry no packId, admitted pack refs do."
+    },
+    "ClipSetElementArgs": {
+      "type": "object",
+      "properties": {
+        "elementRef": {
+          "$ref": "#/$defs/ElementRef"
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
+        }
+      },
+      "required": [
+        "elementRef"
+      ],
+      "additionalProperties": false,
+      "description": "Replace an existing clip elementRef with another revision of the same element id, kind and selected pack owner. Admitted revisions require the exact retained schema_source declaration pin. The retired element_ref alias is removed. There is no clear: a clip keeps its element."
     },
     "ClipAddArgs": {
       "type": "object",
@@ -702,6 +838,41 @@
           "if": {
             "properties": {
               "op": {
+                "const": "shot.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+              },
+              "args": {
+                "$ref": "#/$defs/ShotSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "clip.set-params"
               }
             },
@@ -720,6 +891,36 @@
               },
               "args": {
                 "$ref": "#/$defs/ClipSetParamsArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.set-element"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSetElementArgs"
               },
               "intent": {
                 "type": "object",
@@ -983,6 +1184,111 @@
           "if": {
             "properties": {
               "op": {
+                "const": "placement.create"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/PlacementCreateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "placement.unplace"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/PlacementUnplaceArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "shot.pool"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ShotPoolArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "track.create"
               }
             },
@@ -1087,6 +1393,105 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.duplicate"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceDuplicateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.delete"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceDeleteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "producer.guard"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "null"
+              },
+              "args": {
+                "$ref": "#/$defs/ProducerGuardArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1166,6 +1571,38 @@
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
+        }
+      },
+      "additionalProperties": false
+    },
+    "OccurrenceDeleteArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "OccurrenceDuplicateArgs": {
+      "type": "object",
+      "required": [
+        "occurrence_id",
+        "shot_id"
+      ],
+      "properties": {
+        "occurrence_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
+        },
+        "shot_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$"
         }
       },
       "additionalProperties": false
@@ -1185,6 +1622,70 @@
         }
       },
       "additionalProperties": false
+    },
+    "PlacementCreateArgs": {
+      "type": "object",
+      "required": [
+        "id",
+        "on",
+        "hold",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$",
+          "description": "Caller-reserved raw child clip ID; an occupied ID refuses."
+        },
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute timeline seconds; quantized once with pinned rational fps, then made occurrence-local."
+        },
+        "hold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Literal occurrence-local image duration in seconds."
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        },
+        "consumed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)[^/]+$"
+          },
+          "description": "Raw IDs of existing occurrence clips whose rows an automatic builder read to choose the start or lane; each row is recorded as a guard."
+        }
+      }
+    },
+    "PlacementUnplaceArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "ShotPoolArgs": {
+      "type": "object",
+      "required": [
+        "action",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "add",
+            "remove"
+          ],
+          "description": "add appends the media alias to the shot pool and binds it; remove drops the alias and keeps the binding."
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      }
     },
     "TrackCreateArgs": {
       "type": "object",
@@ -1325,6 +1826,157 @@
       ],
       "additionalProperties": false,
       "description": "Exact original admitted project-pack Document pin for selected parameter validation."
+    },
+    "ProducerAdmittedTarget": {
+      "type": "object",
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "timeline_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "base_revision_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "base_publication_id": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerIdentity": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "attempt_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "executor_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runtime_epoch": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "task_id",
+        "attempt_id",
+        "executor_id",
+        "fence",
+        "runtime_epoch"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerAttemptPin": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "attempt_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "executor_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runtime_epoch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "admitted_target": {
+          "$ref": "#/$defs/ProducerAdmittedTarget"
+        },
+        "proposal_digest": {
+          "$ref": "#/$defs/Digest",
+          "minLength": 71,
+          "maxLength": 71
+        }
+      },
+      "required": [
+        "task_id",
+        "attempt_id",
+        "executor_id",
+        "fence",
+        "runtime_epoch",
+        "admitted_target",
+        "proposal_digest"
+      ],
+      "additionalProperties": false
+    },
+    "ProducerGuardArgs": {
+      "type": "object",
+      "properties": {
+        "pin": {
+          "$ref": "#/$defs/ProducerAttemptPin"
+        }
+      },
+      "required": [
+        "pin"
+      ],
+      "additionalProperties": false
+    },
+    "SettledProducerProposal": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "producer": {
+          "$ref": "#/$defs/ProducerIdentity"
+        },
+        "admitted_target": {
+          "$ref": "#/$defs/ProducerAdmittedTarget"
+        },
+        "commands": {
+          "$ref": "#/$defs/CommandBatch"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "proposal_digest": {
+          "$ref": "#/$defs/Digest",
+          "minLength": 71,
+          "maxLength": 71
+        }
+      },
+      "required": [
+        "schema_version",
+        "producer",
+        "admitted_target",
+        "commands",
+        "rationale",
+        "proposal_digest"
+      ],
+      "additionalProperties": false
     }
   }
 }

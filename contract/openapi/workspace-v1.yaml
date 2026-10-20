@@ -260,9 +260,10 @@ paths:
   /v1/projects/{project_id}/timelines/{timeline_id}/views:
     post:
       operationId: createTimelineView
-      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' } ]
+      description: Persist deterministic declared-input Markdown/PNG artifacts as project-owned objects. Requires projects:write and an explicit Idempotency-Key. Identical retries replay the original view within the existing mutation replay window; different input under the same key conflicts. Artifact custody and content deduplication are independent of the caller key. Use inspectTimeline for read-only inspection with projects:read.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: false, content: { application/json: { schema: { $ref: './schemas/timeline-inspection.json' } } } }
-      responses: { '200': { description: Deterministic metadata-only Markdown/PNG view, content: { application/json: { schema: { $ref: './schemas/timeline-view.json' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+      responses: { '200': { description: Deterministic metadata-only Markdown/PNG view, content: { application/json: { schema: { $ref: './schemas/timeline-view.json' } } } }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/commit:
     post:
       operationId: commitTimeline
@@ -342,7 +343,15 @@ paths:
       responses: { '200': { description: Canonical parent-composition history page, content: { application/json: { schema: { $ref: '#/components/schemas/ParentCompositionRevisionPage' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
     post:
       operationId: publishParentComposition
-      description: Atomically publish one complete one-level parent composition and its immutable child/internal revisions.
+      description: >-
+        Atomically publish one complete one-level parent composition and its immutable child/internal revisions.
+        Compatibility publication requires projects:write and an explicit Idempotency-Key. It is eligible only for
+        an untracked timeline whose expected_head matches its current head, or a genuinely empty headless timeline
+        with expected_head null (including a fresh timeline identity). Tracked timelines must use commitTimeline.
+        A 409 details.reason of timeline_commit_required means the current head is tracked by command history;
+        stale_head means expected_head differs from the untracked current head; headless_content_not_empty means
+        the headless timeline contains authored content or scoped rows, including legacy project documents.
+        These refusals occur before publication writes. Identical successful retries retain the original receipt.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ParentCompositionPublication' } } } }
       responses: { '200': { description: Durable parent publication receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
