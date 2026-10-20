@@ -1,4 +1,4 @@
-import { expect, test as base, type Page } from '@playwright/test';
+import { expect, test as base, type Page, type CDPSession } from '@playwright/test';
 import type { PlayerRef } from '@remotion/player';
 import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
@@ -7,6 +7,53 @@ import { join } from 'node:path';
 import { CAPTURE_TIMELINE, TONES, createManagedTones, publishCaptureFixture, type Backend } from './player-audio-fixture';
 import { audibleEdges, decodeMonitor, privateMonitor, requireAudibleDuration } from './player-audio-monitor';
 import { editorUrl, resetFakeRuntimeBaseline } from './support';
+
+// Opt-in diagnostic: preserve every PCM sample on the existing source-to-gain edge.
+const nativeCursorWorklet = `
+// Identity transformer only: returning false adds no active-source or tail-time hold.
+class NativeCursor extends AudioWorkletProcessor {
+  constructor({processorOptions: {reference}}) {
+    super();
+    this.reference = reference;
+    this.cursor = null;
+    this.maxError = 0;
+  }
+  process(inputs, outputs) {
+    const input = inputs[0];
+    const output = outputs[0];
+    if (!input.length) {
+      for (const channel of output) channel.fill(0);
+      this.port.postMessage({contextFrame: currentFrame, frames: output[0].length, inputChannels: 0, outputChannels: output.length, outputIdentity: output.every(channel => channel.every(value => value === 0)), sourceStart: null, sourceEnd: this.cursor, maxError: this.maxError});
+      return false;
+    }
+    if (input.length !== output.length) throw new Error('Channel count changed');
+    for (let c = 0; c < input.length; c++) output[c].set(input[c]);
+    const size = input[0].length;
+    const firstInput = this.cursor === null;
+    if (this.cursor === null) {
+      const first = input[0].findIndex(value => value !== 0);
+      // The known PCM source starts with sample0=0 and sample1!=0. There is
+      // no phase fitting, search, dropped sample or source-time adjustment.
+      if (first !== -1) this.cursor = 1 - first;
+    }
+    const start = this.cursor;
+    if (start !== null) {
+      for (let i = 0; i < size; i++) for (let c = 0; c < input.length; c++) {
+        const expected = this.reference[c][start + i] ?? 0;
+        this.maxError = Math.max(this.maxError, Math.abs(input[c][i] - expected));
+      }
+      this.cursor += size;
+    }
+    this.port.postMessage({contextFrame: currentFrame, frames: size, inputChannels: input.length, outputChannels: output.length,
+      outputIdentity: input.every((channel, c) => channel.every((value, i) => Object.is(value, output[c][i]))), sourceStart: start, sourceEnd: this.cursor, maxError: this.maxError,
+      firstInput: firstInput && start !== null ? input.map(channel => Array.from(channel)) : undefined});
+    return false;
+  }
+}
+registerProcessor('native-cursor', NativeCursor);
+`;
+
+type NativeCursorRecord = { contextFrame: number; frames: number; inputChannels: number; outputChannels: number; outputIdentity: boolean; sourceStart: number | null; sourceEnd: number | null; maxError: number; firstInput?: number[][] };
 
 type Monitor = Awaited<ReturnType<typeof privateMonitor>>;
 const test = base.extend<object, { monitor: Monitor }>({
@@ -31,11 +78,14 @@ declare global {
     __captureFrames: {
       frame: number;
       time: number;
-      media: { currentTime: number; paused: boolean; seeking: boolean; readyState: number }[];
+      media: { currentTime: number; paused: boolean; seeking: boolean; readyState: number; muted: boolean; volume: number; playbackRate: number }[];
       contexts: { currentTime: number; state: AudioContextState; output: AudioTimestamp }[];
     }[];
     __captureEvents: Record<string, unknown>[];
     __captureContexts: BaseAudioContext[];
+    __captureSources: { node: MediaElementAudioSourceNode; element: HTMLMediaElement; context: AudioContext; connections: Set<AudioNode> }[];
+    __captureCursorSetup?: Record<string, unknown>;
+    __captureCursor?: { records: NativeCursorRecord[]; sampleRate: number; sourceLength: number; errors: string[] };
   }
 }
 
@@ -51,6 +101,96 @@ async function evaluateWithoutGesture<T, A = undefined>(page: Page, fn: (arg: A)
     if (exceptionDetails) throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
     return result.value as T;
   } finally { await session.detach(); }
+}
+
+async function nativeTelemetry(page: Page, browserSession: CDPSession, outputPath: (name: string) => string) {
+  const session = await page.context().newCDPSession(page);
+  const media: { type: string; payload: unknown }[] = [];
+  session.on('Media.playerEventsAdded', payload => media.push({ type: 'playerEventsAdded', payload }));
+  session.on('Media.playerPropertiesChanged', payload => media.push({ type: 'playerPropertiesChanged', payload }));
+  session.on('Media.playerMessagesLogged', payload => media.push({ type: 'playerMessagesLogged', payload }));
+  session.on('Media.playerErrorsRaised', payload => media.push({ type: 'playerErrorsRaised', payload }));
+  await session.send('Media.enable');
+  const { categories } = await browserSession.send('Tracing.getCategories');
+  const selected = categories.filter(category => /audio|media/.test(category));
+  if (!selected.length) throw new Error('No installed native audio trace categories');
+  const completed = new Promise<{ stream?: string }>(resolve => browserSession.once('Tracing.tracingComplete', resolve));
+  await browserSession.send('Tracing.start', { categories: selected.join(','), transferMode: 'ReturnAsStream' });
+  return async () => {
+    try {
+      await writeFile(outputPath('native-media-events.json'), JSON.stringify({ categories, selected, media }, null, 2));
+      await browserSession.send('Tracing.end');
+      const { stream } = await completed;
+      if (!stream) throw new Error('Native audio trace has no stream');
+      const chunks: Buffer[] = [];
+      try {
+        for (;;) {
+          const chunk = await browserSession.send('IO.read', { handle: stream, size: 1024 * 1024 });
+          chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf8'));
+          if (chunk.eof) break;
+        }
+      } finally { await browserSession.send('IO.close', { handle: stream }); }
+      await writeFile(outputPath('native-audio-trace.json'), Buffer.concat(chunks));
+    } finally { await session.detach(); }
+  };
+}
+
+async function installNativeCursor(page: Page, wavePath: string) {
+  const encoded = (await readFile(wavePath)).toString('base64');
+  return evaluateWithoutGesture(page, async ({ encoded, moduleSource }) => {
+    const setup: Record<string, unknown> = { phase: 'source-parse', userActivation: navigator.userActivation.hasBeenActive };
+    window.__captureCursorSetup = setup;
+    const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
+    const wav = new DataView(bytes.buffer);
+    const text = (offset: number) => String.fromCharCode(...bytes.slice(offset, offset + 4));
+    if (text(0) !== 'RIFF' || text(8) !== 'WAVE') throw new Error('Expected the original PCM WAV');
+    let channels = 0, sampleRate = 0, start = 0, length = 0;
+    for (let offset = 12; offset + 8 <= bytes.length;) {
+      const size = wav.getUint32(offset + 4, true);
+      if (text(offset) === 'fmt ') {
+        if (wav.getUint16(offset + 8, true) !== 1 || wav.getUint16(offset + 22, true) !== 16) throw new Error('Expected PCM16');
+        channels = wav.getUint16(offset + 10, true);
+        sampleRate = wav.getUint32(offset + 12, true);
+      }
+      if (text(offset) === 'data') { start = offset + 8; length = size; }
+      offset += 8 + size + size % 2;
+    }
+    if (channels !== 2 || sampleRate !== 48000 || length !== 144000 * 4) throw new Error('Unexpected original source format');
+    const reference = Array.from({ length: channels }, (_, channel) => Float32Array.from(
+      { length: length / channels / 2 }, (_, frame) => wav.getInt16(start + (frame * channels + channel) * 2, true) / 32768));
+    const sources = window.__captureSources.filter(source => source.element.isConnected && source.connections.size > 0);
+    if (sources.length !== 1) throw new Error('Expected one active amplified native source');
+    const { node, element, context, connections } = sources[0];
+    if (connections.size !== 1 || !element.paused || element.currentTime !== 0 || context.state !== 'suspended') throw new Error('Control must precede measured native playback');
+    if (context.sampleRate !== sampleRate) throw new Error('Native source/context rate mismatch');
+    const destination = [...connections][0];
+    const contextTime = context.currentTime;
+    Object.assign(setup, { phase: 'module-load', sampleRate, channels, sourceLength: reference[0].length,
+      contextState: context.state, contextTime, mediaTime: element.currentTime, nativeMuted: element.muted, nativeVolume: element.volume });
+    const capture = { records: [] as NativeCursorRecord[], sampleRate, sourceLength: reference[0].length, errors: [] as string[] };
+    window.__captureCursor = capture;
+    try {
+      const url = URL.createObjectURL(new Blob([moduleSource], { type: 'text/javascript' }));
+      try { await context.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+      setup.phase = 'node-create';
+      const observer = new AudioWorkletNode(context, 'native-cursor', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [channels],
+        channelCount: channels, channelCountMode: 'explicit', channelInterpretation: 'discrete', processorOptions: { reference },
+      });
+      observer.port.onmessage = event => capture.records.push(event.data as NativeCursorRecord);
+      observer.onprocessorerror = () => capture.errors.push('Native cursor processor error');
+      node.disconnect(destination);
+      node.connect(observer);
+      observer.connect(destination);
+      if (context.state !== 'suspended' || context.currentTime !== contextTime || element.currentTime !== 0 || !element.paused) throw new Error('Observer activated playback');
+      Object.assign(setup, { phase: 'installed', contextTimeAfter: context.currentTime, contextStateAfter: context.state });
+      return setup;
+    } catch (error) {
+      setup.error = String(error);
+      capture.errors.push(String(error));
+      throw error;
+    }
+  }, { encoded, moduleSource: nativeCursorWorklet });
 }
 
 // Locator actions also inspect the DOM with activation enabled. Dispatch the
@@ -169,6 +309,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
     const results: Record<string, unknown> = { beforeGraph: await observedGraph(), environment: {
       repeatIndex: testInfo.repeatEachIndex, browser: browser.version(), node: process.version,
       launchOptions: testInfo.project.use.launchOptions,
+      nativeFlags: process.env.PLAYER_AUDIO_NATIVE_FLAGS === '1', cursorControl: process.env.PLAYER_AUDIO_CURSOR_CONTROL === '1', nativeTrace: process.env.PLAYER_AUDIO_NATIVE_TRACE === '1',
       packageLockSha256: createHash('sha256').update(await readFile('package-lock.json')).digest('hex'),
       player: JSON.parse(await readFile('node_modules/@remotion/player/package.json', 'utf8')).version,
       react: JSON.parse(await readFile('node_modules/react/package.json', 'utf8')).version,
@@ -201,15 +342,18 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           }
         });
         let consumer: Awaited<ReturnType<Monitor['drain']>> | undefined;
+        let stopTelemetry: (() => Promise<void>) | undefined;
         try {
-          await page.addInitScript(({ fallback }) => {
+          if (process.env.PLAYER_AUDIO_NATIVE_TRACE === '1') stopTelemetry = await nativeTelemetry(page, cdp, name => testInfo.outputPath(name));
+          await page.addInitScript(({ fallback, cursorControl, nativeFlags }) => {
             window.__captureBackends = { elements: [], buffers: 0, audibleBuffers: 0 };
             window.__captureEvents = [{ type: 'init', epochMs: performance.timeOrigin + performance.now(), userActivation: navigator.userActivation.hasBeenActive }];
             window.__captureContexts = [];
-            for (const type of ['click', 'playing', 'waiting', 'stalled', 'canplay', 'seeking', 'seeked', 'pause', 'ended', 'visibilitychange']) {
+            window.__captureSources = [];
+            for (const type of ['click', 'playing', 'waiting', 'stalled', 'canplay', 'seeking', 'seeked', 'pause', 'ended', 'volumechange', 'visibilitychange']) {
               document.addEventListener(type, event => {
                 const media = event.target instanceof HTMLMediaElement ? event.target : null;
-                window.__captureEvents.push({ type, epochMs: performance.timeOrigin + performance.now(), src: media?.currentSrc, currentTime: media?.currentTime, readyState: media?.readyState, visibility: document.visibilityState, playerFrame: window.__capturePlayer?.getCurrentFrame() });
+                window.__captureEvents.push({ type, epochMs: performance.timeOrigin + performance.now(), src: media?.currentSrc, currentTime: media?.currentTime, readyState: media?.readyState, muted: media?.muted, volume: media?.volume, playbackRate: media?.playbackRate, visibility: document.visibilityState, playerFrame: window.__capturePlayer?.getCurrentFrame() });
               }, true);
             }
             const observeContext = (context: AudioContext) => {
@@ -227,11 +371,26 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
                 });
               });
             };
+            if (nativeFlags) {
+              const descriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');
+              if (!descriptor?.get || !descriptor.set) throw new Error('No native muted accessor');
+              const set = descriptor.set, get = descriptor.get;
+              Object.defineProperty(HTMLMediaElement.prototype, 'muted', { ...descriptor, set(value: boolean) {
+                const before = get.call(this);
+                set.call(this, value);
+                window.__captureEvents.push({
+                  type: 'native-muted-set', epochMs: performance.timeOrigin + performance.now(),
+                  before, value, after: get.call(this), src: this.currentSrc || this.src,
+                  currentTime: this.currentTime, volume: this.volume, playbackRate: this.playbackRate,
+                  playerFrame: window.__capturePlayer?.getCurrentFrame(),
+                });
+              } });
+            }
             const nativePlay = HTMLMediaElement.prototype.play;
             HTMLMediaElement.prototype.play = function () {
               window.__captureEvents.push({
                 type: 'media-play-call', epochMs: performance.timeOrigin + performance.now(),
-                src: this.currentSrc || this.src, currentTime: this.currentTime,
+                src: this.currentSrc || this.src, currentTime: this.currentTime, muted: this.muted, volume: this.volume, playbackRate: this.playbackRate,
                 playerFrame: window.__capturePlayer?.getCurrentFrame(),
                 contexts: window.__captureContexts.map(context => ({
                   state: context.state, currentTime: context.currentTime,
@@ -256,7 +415,24 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             AudioContext.prototype.createMediaElementSource = function (element) {
               window.__captureBackends.elements.push(element.src);
               observeContext(this);
-              return mediaSource.call(this, element);
+              const node = mediaSource.call(this, element);
+              if (cursorControl) {
+                const connections = new Set<AudioNode>();
+                const connect = node.connect.bind(node), disconnect = node.disconnect.bind(node);
+                node.connect = ((destination: AudioNode | AudioParam, ...ports: number[]) => {
+                  const result = Reflect.apply(connect, node, [destination, ...ports]);
+                  if (destination instanceof AudioNode) connections.add(destination);
+                  return result;
+                }) as typeof node.connect;
+                node.disconnect = ((...args: unknown[]) => {
+                  Reflect.apply(disconnect, node, args);
+                  if (!args.length) connections.clear();
+                  else if (args[0] instanceof AudioNode) connections.delete(args[0]);
+                  else throw new Error('Unobserved source port disconnection');
+                }) as typeof node.disconnect;
+                window.__captureSources.push({ node, element, context: this, connections });
+              }
+              return node;
             };
             const bufferSource = AudioContext.prototype.createBufferSource;
             AudioContext.prototype.createBufferSource = function () {
@@ -286,7 +462,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
               return source;
             };
             if (fallback) Object.defineProperty(window, 'VideoDecoder', { value: undefined });
-          }, { fallback: options.fallback ?? false });
+          }, { fallback: options.fallback ?? false, cursorControl: process.env.PLAYER_AUDIO_CURSOR_CONTROL === '1', nativeFlags: process.env.PLAYER_AUDIO_NATIVE_FLAGS === '1' });
           await page.goto(editorUrl({ timeline: CAPTURE_TIMELINE }), { waitUntil: 'domcontentloaded' });
           await expect.poll(() => evaluateWithoutGesture(page, () => {
             const button = document.querySelector('.astrid-preview-transport button[aria-label="Play"]');
@@ -320,7 +496,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             muted: window.__capturePlayer.isMuted(), userActivation: navigator.userActivation.hasBeenActive,
             media: [...document.querySelectorAll('audio,video')].map(element => {
               const media = element as HTMLMediaElement;
-              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, paused: media.paused };
+              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, paused: media.paused, muted: media.muted, volume: media.volume, playbackRate: media.playbackRate };
             }),
             contexts: window.__captureContexts.map(context => ({ state: context.state, currentTime: context.currentTime, output: (context as AudioContext).getOutputTimestamp() })),
           }));
@@ -390,7 +566,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
                 frame: event.detail.frame, time: performance.now(),
                 media: Array.from(document.querySelectorAll('audio[src], video')).map(element => {
                   const media = element as HTMLMediaElement;
-                  return { currentTime: media.currentTime, paused: media.paused, seeking: media.seeking, readyState: media.readyState };
+                  return { currentTime: media.currentTime, paused: media.paused, seeking: media.seeking, readyState: media.readyState, muted: media.muted, volume: media.volume, playbackRate: media.playbackRate };
                 }),
                 contexts: window.__captureContexts.map(context => ({
                   currentTime: context.currentTime, state: context.state,
@@ -409,12 +585,19 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
+          if (process.env.PLAYER_AUDIO_CURSOR_CONTROL === '1') {
+            if (!options.fade || backends.length !== 1 || backends[0] !== 'amplified') throw new Error('Native cursor control requires the original positive amplified fade');
+            try { results.nativeCursorSetup = await installNativeCursor(page, join(directory, 'amplified.wav')); } catch (error) {
+              results.nativeCursorSetupError = String(error);
+              throw error;
+            }
+          }
           const readiness = await evaluateWithoutGesture(page, () => ({
             epochMs: performance.timeOrigin + performance.now(), timeOrigin: performance.timeOrigin, visibility: document.visibilityState,
             muted: window.__capturePlayer.isMuted(), userActivation: navigator.userActivation.hasBeenActive,
             media: Array.from(document.querySelectorAll('audio[src], video')).map(element => {
               const media = element as HTMLMediaElement;
-              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, seeking: media.seeking, paused: media.paused, error: media.error?.message, buffered: Array.from({ length: media.buffered.length }, (_, index) => [media.buffered.start(index), media.buffered.end(index)]) };
+              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, seeking: media.seeking, paused: media.paused, muted: media.muted, volume: media.volume, playbackRate: media.playbackRate, error: media.error?.message, buffered: Array.from({ length: media.buffered.length }, (_, index) => [media.buffered.start(index), media.buffered.end(index)]) };
             }),
             contexts: window.__captureContexts.map(context => ({ state: context.state, currentTime: context.currentTime, sampleRate: context.sampleRate, baseLatency: (context as AudioContext).baseLatency, outputLatency: (context as AudioContext).outputLatency })),
           }));
@@ -468,6 +651,17 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             expect(sourceLeads.length, 'source/frame clock observations').toBeGreaterThan(30);
             expect.soft(Math.abs(sourceLeadMedian), 'native source and authored gain frame must agree within one frame').toBeLessThan(1 / 30);
           }
+          if (process.env.PLAYER_AUDIO_CURSOR_CONTROL === '1') {
+            const cursor = await evaluateWithoutGesture(page, () => window.__captureCursor);
+            results.nativeCursor = cursor;
+            expect(cursor, 'native input cursor observations').toBeDefined();
+            expect.soft(cursor!.errors).toEqual([]);
+            expect.soft(cursor!.records.every(record => record.outputChannels === 2 && record.outputIdentity), 'all native output channels/samples pass unchanged').toBe(true);
+            expect.soft(cursor!.records.length).toBeGreaterThan(1000);
+            expect.soft(cursor!.records.filter(record => record.sourceStart !== null).length, 'actual native PCM quanta').toBeGreaterThan(1000);
+            expect.soft(cursor!.records.some(record => record.sourceEnd !== null && record.sourceEnd >= cursor!.sourceLength), 'full original source cursor').toBe(true);
+            expect.soft(Math.max(...cursor!.records.map(record => record.maxError)), 'all native input samples match the original managed PCM').toBeLessThan(1 / 32768);
+          }
           console.log('PLAYER_CLOCK', name, JSON.stringify(clock));
           expect(clock.finalFrame).toBeGreaterThanOrEqual(118);
           expect.soft(Math.abs(clock.drift), 'Player wall clock drift during capture').toBeLessThan(0.12);
@@ -490,8 +684,17 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           console.log('PLAYER_CAPTURE', name, JSON.stringify(metrics));
           return { capture, metrics };
         } finally {
+          if (process.env.PLAYER_AUDIO_CURSOR_CONTROL === '1') {
+            try {
+              const diagnostic = await evaluateWithoutGesture(page, () => ({ cursor: window.__captureCursor, setup: window.__captureCursorSetup }));
+              results.nativeCursor = diagnostic.cursor ?? results.nativeCursor ?? null;
+              results.nativeCursorSetup = diagnostic.setup ?? results.nativeCursorSetup ?? null;
+            } catch (error) { results.nativeCursorReadError = String(error); }
+          }
           results[name] = { ...results[name] as object, lifecycleEvents: await evaluateWithoutGesture(page, () => window.__captureEvents).catch(() => null) };
-          try { if (consumer) results[`${name}-consumer`] = await consumer.close(); } finally { await page.close(); }
+          try { if (consumer) results[`${name}-consumer`] = await consumer.close(); } finally {
+            try { await stopTelemetry?.(); } finally { await page.close(); }
+          }
         }
       };
 

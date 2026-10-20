@@ -143,7 +143,7 @@ test('Remotion 4.0.509 CJS and ESM native-fulfillment fence (original red, patch
 
 // Run both distributed hook implementations, with two callers sharing the
 // Player's actual imperative ref (transport and playback/media-session hooks).
-function playerHarness(source, form, {buffered = true, context = true, state = 'suspended', failure, hooks, mount = hook => [hook(), hook()]} = {}) {
+function playerHarness(source, form, {buffered = true, context = true, state = 'suspended', failure, hooks, clock = performance, onPlaying = () => {}, mount = hook => [hook(), hook()]} = {}) {
   const events = [], waits = [], cleanups = [], listeners = new Set(), nativeTimes = [];
   const fail = operation => {
     if (failure !== operation) return;
@@ -151,7 +151,7 @@ function playerHarness(source, form, {buffered = true, context = true, state = '
     throw new Error(`${operation} failed`);
   };
   const timeline = {frameRef: {current: {test: 0}}, imperativePlaying: {current: false},
-    audioAndVideoTags: {current: [{play() {nativeTimes.push(performance.now()); events.push('native');}}]}};
+    audioAndVideoTags: {current: [{play() {nativeTimes.push(clock.now()); events.push('native');}}]}};
   const audio = {
     audioContext: {currentTime: 0.15, state,
       createBufferSource() {assert.fail('startup must not inject an audio source');}},
@@ -172,7 +172,7 @@ function playerHarness(source, form, {buffered = true, context = true, state = '
     listeners.add(fn); return {remove: () => listeners.delete(fn)};
   }};
   const emitter = {dispatchPlay() {events.push('play');}, dispatchPause() {events.push('pause');}, dispatchSeek(frame) {events.push(['seek', frame]);}};
-  const setters = {setPlaying(value) {events.push(['playing', value]);}, setFrame(fn) {timeline.frameRef.current = fn(timeline.frameRef.current);}};
+  const setters = {setPlaying(value) {events.push(['playing', value]); onPlaying(value);}, setFrame(fn) {timeline.frameRef.current = fn(timeline.frameRef.current);}};
   const core = {
     Timeline: {useTimelineSetFrame: () => setters.setFrame, clampFrameToCompositionRange: (frame, duration) => Math.min(duration - 1, Math.max(0, frame))},
     TimelinePosition: {clampFrameToCompositionRange: (frame, duration) => Math.min(duration - 1, Math.max(0, frame))},
@@ -200,11 +200,11 @@ function playerHarness(source, form, {buffered = true, context = true, state = '
   };
   const hook = new Function('react_1', 'remotion_1', 'emitter_context_js_1', 'timeline_imperative_context_js_1',
     'useContext3', 'Internals5', 'useRemotionEnvironment', 'PlayerEventEmitterContext',
-    'useRef2', 'useCallback', 'useMemo2', 'getTimelineImperativeContext', 'useEffect', 'setGlobalTimeAnchor', 'set_global_time_anchor_js_1',
+    'useRef2', 'useCallback', 'useMemo2', 'getTimelineImperativeContext', 'useEffect', 'setGlobalTimeAnchor', 'set_global_time_anchor_js_1', 'performance',
     `${body};return usePlayerMethods;`)(react, {Internals: core, useRemotionEnvironment: () => ({isPlayer: true})},
       {PlayerEventEmitterContext: emitter}, {getTimelineImperativeContext: () => timeline},
       react.useContext, core, () => ({isPlayer: true}), emitter, react.useRef,
-      react.useCallback, react.useMemo, () => timeline, react.useEffect, anchor, {setGlobalTimeAnchor: anchor});
+      react.useCallback, react.useMemo, () => timeline, react.useEffect, anchor, {setGlobalTimeAnchor: anchor}, clock);
   const [methods, other] = mount(hook);
   return {methods, other, events, waits, timeline, listeners, nativeTimes,
     unmount() {cleanups.forEach(fn => fn?.());},
@@ -421,4 +421,163 @@ test('real React 18 StrictMode rerenders preserve pending readiness; another hoo
     globalThis.document = previous.document;
     globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
   }
+});
+
+
+// Run the distributed playback effect through React, delaying the playing
+// commit's layout phase after native play. The control restores the pristine
+// loop's late origin; capture clocks and comparison stay unchanged.
+test('real React delayed playing commit retains the native-start origin in CJS and ESM', async t => {
+  const React = await import('react');
+  const {createRoot} = await import('react-dom/client');
+  const {JSDOM} = await import('jsdom');
+  const {createRequire} = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const {calculateNextFrame} = require(path.join(root, 'node_modules/@remotion/player/dist/cjs/calculate-next-frame.js'));
+  for (const form of ['CJS', 'ESM']) for (const lateOrigin of [false, true]) {
+    await t.test(`${form}: ${lateOrigin ? 'late-effect origin control loses elapsed frames (red)' : 'shared origin survives a 100ms commit delay'}`, async () => {
+      const dom = new JSDOM('<div id="root"></div>');
+      const previous = {window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT};
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+      const renderer = createRoot(document.getElementById('root'));
+      let now = 1000, notifyPlaying;
+      const clock = {now: () => now};
+      const rafs = new Map();
+      let nextRaf = 0, effectAt;
+      const source = fs.readFileSync(path.join(root, 'node_modules/@remotion/player', form === 'CJS' ? 'dist/cjs/use-player-methods.js' : 'dist/esm/index.mjs'), 'utf8');
+      const playback = form === 'CJS' ? fs.readFileSync(path.join(root, 'node_modules/@remotion/player/dist/cjs/use-playback.js'), 'utf8') : source;
+      const marker = form === 'CJS' ? '(0, react_2.useEffect)(() => {\n        var _a;' : 'useEffect5(() => {';
+      const start = playback.indexOf(marker);
+      const end = playback.indexOf('}, [', start);
+      assert.ok(start > 0 && end > start);
+      const body = playback.slice(start + marker.length, end);
+      const runEffect = environment => new Function(...Object.keys(environment),
+        lateOrigin ? body.replace('takePlaybackStartTime()', 'performance.now()') : body)(...Object.values(environment));
+      let h;
+      try {
+        h = playerHarness(source, form, {
+          clock, onPlaying: value => notifyPlaying(value),
+          hooks: {...React, useContext: value => value},
+          mount(hook) {
+            const methods = [];
+            function Caller() {
+              const [playing, setPlaying] = React.useState(false);
+              notifyPlaying = setPlaying;
+              const current = hook();
+              methods[0] = current;
+              React.useLayoutEffect(() => {if (playing) now += 100;}, [playing]);
+              React.useEffect(() => {
+                if (!playing) return;
+                effectAt = now;
+                return runEffect({
+                  config: {id: 'test', fps: 30, durationInFrames: 120}, playing,
+                  sharedAudioContext: {resume() {}, getIsResumingAudioContext: () => null},
+                  muted: false, performance: clock, loop: false, playbackRate: 1,
+                  inFrame: 0, outFrame: 119, moveToBeginningWhenEnded: false,
+                  context: {buffering: {current: false}}, isBackgroundedRef: {current: false},
+                  getCurrentFrame: current.getCurrentFrame, isPlaying: current.isPlaying,
+                  takePlaybackStartTime: current.takePlaybackStartTime,
+                  setFrame(fn) {h.timeline.frameRef.current = fn(h.timeline.frameRef.current);},
+                  pause: current.pause, emitter: {dispatchEnded() {}},
+                  requestAnimationFrame(fn) {const id = ++nextRaf; rafs.set(id, fn); return id;},
+                  cancelAnimationFrame(id) {rafs.delete(id);},
+                  calculateNextFrame, calculate_next_frame_js_1: {calculateNextFrame},
+                });
+              }, [playing]);
+              return null;
+            }
+            React.act(() => renderer.render(React.createElement(React.StrictMode, null, React.createElement(Caller))));
+            return [methods[0], methods[0]];
+          },
+        });
+        React.act(() => h.methods.play({}));
+        await React.act(async () => {h.waits[0].resolve('resumed'); await flush();});
+        assert.equal(h.nativeTimes[0], 1000, 'native play precedes the delayed React commit');
+        assert.equal(effectAt, 1100);
+        now += 16;
+        const callback = rafs.values().next().value;
+        assert.equal(typeof callback, 'function');
+        React.act(() => callback());
+        const elapsedFrames = Math.floor((now - h.nativeTimes[0]) * 30 / 1000);
+        if (lateOrigin) {
+          assert.equal(h.methods.getCurrentFrame(), 0, 'the pristine loop loses the commit delay');
+          assert.equal(elapsedFrames, 3);
+        }
+        else assert.equal(h.methods.getCurrentFrame(), elapsedFrames, 'effect delay must not move the frame origin after native play');
+      } finally {
+        React.act(() => renderer.unmount());
+        dom.window.close();
+        globalThis.window = previous.window;
+        globalThis.document = previous.document;
+        globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
+      }
+    });
+  }
+});
+
+
+test('native cursor diagnostic copies every PCM sample and detects source damage', async () => {
+  const vm = await import('node:vm');
+  const probe = fs.readFileSync(path.join(root, 'tests/e2e/timeline/player-audio-capture.probe.ts'), 'utf8');
+  const marker = 'const nativeCursorWorklet = `';
+  const start = probe.indexOf(marker);
+  const end = probe.indexOf('`;', start);
+  assert.ok(start > 0 && end > start);
+  const messages = [];
+  let Processor;
+  const realm = {currentFrame: 0, AudioWorkletProcessor: class {port = {postMessage: message => messages.push(message)};},
+    registerProcessor(name, value) {assert.equal(name, 'native-cursor'); Processor = value;}};
+  vm.createContext(realm);
+  vm.runInContext(probe.slice(start + marker.length, end), realm);
+  const reference = [0, 1].map(channel => Float32Array.from({length: 480}, (_, i) => Math.sin(2 * Math.PI * 660 * i / 48000) * (channel ? .75 : 1) / 8));
+  for (const damage of [false, true]) {
+    const processor = new Processor({processorOptions: {reference}});
+    for (let start = -256; start < 768; start += 128) {
+      const inputs = reference.map(channel => Float32Array.from({length: 128}, (_, i) => channel[start + i] ?? 0));
+      if (damage && start === 128) inputs[0][17] = 1;
+      const outputs = inputs.map(() => new Float32Array(128));
+      realm.currentFrame = start + 256;
+      assert.equal(processor.process([inputs], [outputs]), false, 'identity observer must not hold an active source');
+      assert.deepEqual(outputs, inputs, 'all float samples in both channels must pass unchanged');
+    }
+    assert.equal(processor.maxError === 0, !damage, 'known-source cursor must detect a damaged native sample');
+    const empty = reference.map(() => new Float32Array(128).fill(1));
+    assert.equal(processor.process([[]], [empty]), false, 'unconnected observer must not keep the graph active');
+    assert.ok(empty.every(channel => channel.every(value => value === 0)), 'an unconnected edge provides only silence');
+  }
+  assert.equal(messages.length, 18, 'every processed quantum remains observable');
+  assert.ok(messages.every(record => record.outputIdentity && record.outputChannels === 2));
+  const firstInputs = messages.filter(record => record.firstInput);
+  assert.equal(firstInputs.length, 2);
+  for (const record of firstInputs) assert.deepEqual(Array.from(record.firstInput[0]), Array.from(reference[0].slice(0, 128)));
+});
+
+
+test('native muted observer forwards exactly the original writes', async () => {
+  const {JSDOM} = await import('jsdom');
+  const dom = new JSDOM('<audio src="/source.wav"></audio>');
+  const proto = dom.window.HTMLMediaElement.prototype;
+  const descriptor = Object.getOwnPropertyDescriptor(proto, 'muted');
+  const writes = [];
+  Object.defineProperty(proto, 'muted', {...descriptor, set(value) {writes.push(value); descriptor.set.call(this, value);}});
+  dom.window.__captureEvents = [];
+  const probe = fs.readFileSync(path.join(root, 'tests/e2e/timeline/player-audio-capture.probe.ts'), 'utf8');
+  const start = probe.indexOf("              const descriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');");
+  const end = probe.indexOf('            }\n            const nativePlay', start);
+  assert.ok(start > 0 && end > start);
+  const body = probe.slice(start, end);
+  assert.equal(body.split('set(value: boolean)').length, 2);
+  try {
+    new Function('HTMLMediaElement', 'window', 'performance', body.replace('set(value: boolean)', 'set(value)'))(dom.window.HTMLMediaElement, dom.window, performance);
+    const element = dom.window.document.querySelector('audio');
+    element.volume = .7;
+    for (const value of [true, false, true]) element.muted = value;
+    assert.deepEqual(writes, [true, false, true], 'no added mute reset, omitted write or coerced value');
+    assert.deepEqual(dom.window.__captureEvents.map(event => [event.before, event.value, event.after]), [[false, true, true], [true, false, false], [false, true, true]]);
+    assert.equal(element.volume, .7);
+    assert.equal(element.currentTime, 0);
+    assert.equal(element.playbackRate, 1);
+  } finally {dom.window.close();}
 });
