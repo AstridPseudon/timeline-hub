@@ -9,7 +9,6 @@
  * host (astrid/sdk/client.py `open_from_launcher`), which is also why this runs on Linux. The product token never enters it.
  */
 import { execFileSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import path from 'node:path';
@@ -37,7 +36,8 @@ export interface AstridHostResult {
   executor_id: string;
   task_id?: string | null;
   state?: string;
-  outputs?: Array<{ name: string; object_id: string; media_type: string; size: number }>;
+  /** `ordinal` is the output's place among all of the task's outputs, which is what a `task:T/name#n` handle counts (not its place among outputs of that name). */
+  outputs?: Array<{ name: string; ordinal: number | null; object_id: string; media_type: string; size: number }>;
 }
 
 /** One Astrid call, as recorded for the run summary. */
@@ -110,8 +110,8 @@ export class AstridCli {
   private readonly data: string;
   private readonly credentialFile: string;
   private readonly token: string;
-  /** The marker PNG's colour: fixed per run, and the same on every `host` call (a different colour is a different capability digest, so a task admitted against one is never claimed by the other). */
-  readonly markerColor = randomBytes(3).toString('hex');
+  /** The marker's colour (the PNG and the 2 s clip): the executor's default orange. Fixed, because the render case asks the film's picture to be within 8 levels per channel of it, and a 4:2:0 limited-range H.264 film holds a light orange that closely but a dark saturated colour less so. It is the same on every `host` call (a different colour is a different capability digest, so a task admitted against one is never claimed by the other). */
+  readonly markerColor = 'e8452c';
 
   private constructor(private readonly harness: DirectHarness, token: string) {
     // A real path: Astrid's credential reader refuses a symlink anywhere in it (the tmp root may be one).
@@ -197,17 +197,19 @@ export class AstridCli {
   }
 
   /**
-   * `cross_client host`: registers the `f2.marker` executor and, with `runOnce`, claims and runs at most one task. The worker
+   * `cross_client host`: registers the `f2.marker` executor and, with `runOnce`, claims and runs at most one task. With `render`
+   * the same worker also hosts the installed rendering pack, so `rendering.render` is registered by it and claimed by it. The worker
    * credential is the Runtime's own, named by discovery, and the executor takes the worker's actor id: the Runtime binds a worker
    * credential to the executor it operates (runtime_protocol/service.py `_assert_executor_identity`).
    */
-  async host(options: { runOnce?: boolean; register?: boolean }): Promise<AstridHostResult> {
+  async host(options: { runOnce?: boolean; register?: boolean; render?: boolean }): Promise<AstridHostResult> {
     const discovery = this.harness.discovery();
     const args = ['-m', 'astrid.core.dev.cross_client', 'host',
       '--pack-root', path.join(this.data, 'f2-packs'),
       '--worker-credential', discovery.worker_credential_file,
       '--executor-id', discovery.worker_actor,
       '--color', this.markerColor,
+      ...(options.render ? ['--render'] : []),
       ...(options.register ? ['--register'] : []),
       ...(options.runOnce ? ['--run-once'] : [])];
     const run = await this.python(args);

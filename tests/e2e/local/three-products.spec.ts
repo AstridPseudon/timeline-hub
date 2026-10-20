@@ -3,41 +3,53 @@
  *
  *   npm run test:e2e:three-products    # hosted App build -> Runtime door -> real Runtime, plus the real Astrid CLI
  *
- * The App (hosted build, Chromium) and the agent (the Astrid CLI as a subprocess) are two clients of one Runtime. Nothing in a
+ * The App (hosted build, Chrome) and the agent (the Astrid CLI as a subprocess) are two clients of one Runtime. Nothing in a
  * case is a stand-in: the page talks to the real door, Astrid to the same Runtime over its own credential, and the Runtime
  * is the real daemon on a throwaway realm. Needs an Astrid checkout (ASTRID_CHECKOUT, default ../astrid-agent) with its Python
  * (ASTRID_PYTHON, default <checkout>/.venv/bin/python); a missing prerequisite fails the run with its name, it never skips.
+ * The browser is installed Google Chrome (channel 'chrome', as the timeline-chrome-export project does): case 2b plays an H.264
+ * film, which the bundled Chromium cannot decode, and a missing Chrome fails at launch. Case 2b also needs ffmpeg (real VP8 and
+ * Opus media) and no Remotion: the host's ffmpeg renderer makes the render.
  *
  * Cases
  *   1  agent -> open App   an Astrid task and the agent's publication show up in the open App with no reload
  *   2  concurrent edit     the App's acknowledgement is lost while the agent publishes and the App edits again
+ *   2b render R            a render admitted on revision R is R's although the agent publishes R+1 before it runs, it plays,
+ *                          and it is the film the App's preview showed (F2 steps 3 and 4: one test, two steps)
  *   3  Runtime restart     the draft survives, saves after the relaunch, and the agent follows the new endpoint
  * Every case first proves the three products share one realm, one Runtime instance and one contract, and ends with the
  * page-wide check that no credential ever reached the page.
  *
- * Not covered here (recorded, each released by a named test; plan "Owned debt"):
- *   step 3  render R adversarially (publish R+1 before it runs)   needs rendering without a provisioned Remotion and Linux custody
- *   step 4  playback parity of that render                         same
+ * Not covered here (recorded; plan "Owned debt"):
  *   step 6  Codex image -> sprite                                  full tier only, needs the network
  *
  * Speed: durations, Astrid call times and the load average are written to three-products-summary.json (beside the Playwright
  * output) and never judged (R-10). Waits are hang ceilings, not budgets. The ordering of events is made by awaited CLI calls and
  * route holds, never by sleeping.
  */
-import { expect, type Locator, type Page, type Request } from '@playwright/test';
+import { chromium, expect, type Browser, type Locator, type Page, type Request } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
-import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { getTimelineLabelWidth } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
+import { PREVIEW_SURFACE, calibrateRuler, seekRulerToFrame, type RulerSeek } from '../support/previewRuler.ts';
+import { harnessUnavailableReason, type DirectHarness, type RenderSeed, type ThreeProductsSeed } from './support/harness.ts';
 import { currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, UI } from './support/app.ts';
 import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
+import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
 const SAVES = /\/timelines\/[^/]+\/composition-revisions$/;
 const CONFLICT_TITLE = 'This timeline changed somewhere else';
 
-const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli }>({
+const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli; browser: Browser }>({
+  // Installed Google Chrome, not the bundled Chromium: the render is H.264 and AAC, which only Chrome decodes. `channel` is
+  // used alone (never with an executablePath, which would win over it), so a missing Chrome fails here, at launch, by name.
+  browser: [async ({ harness }, use) => {
+    const browser = await chromium.launch({ channel: 'chrome', args: harness.chromiumArgs });
+    try { await use(browser); } finally { await browser.close(); }
+  }, { scope: 'worker' }],
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
   astrid: [async ({ harness, seed3 }, use) => {
     const astrid = await AstridCli.create(harness);
@@ -174,8 +186,8 @@ async function expectOpaqueDataKept(harness: DirectHarness, seed: ThreeProductsS
   return revisions.length;
 }
 
-/** The agent's verbs, as the CLI ships them. */
-function agentOf(astrid: AstridCli, seed: ThreeProductsSeed) {
+/** The agent's verbs, as the CLI ships them, on one timeline (the seeded one, or the render journey's). */
+function agentOf(astrid: AstridCli, seed: { timelineId: string; projectSlug: string }) {
   const common = [seed.timelineId, '--project', seed.projectSlug];
   return {
     checkout: () => astrid.astrid(['timelines', 'checkout', ...common, '--fresh', '--json']),
@@ -522,6 +534,283 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
   const layers = shown.rows.flatMap((row) => row.layers);
   expect(layers.find((layer) => layer.clip_id === seed3.agentClearClipId)?.asset, 'the agent sees the clear').toBeNull();
   journey.facts.headB = headB;
+  await sniff.expectClean(page);
+});
+
+// ---------------------------------------------------------------------------------------------
+// 2b. render R, publish R+1 before it runs (F2 steps 3 and 4)
+
+/** The three moments compared: frames near 1 s, 3 s (the middle of the agent's slot) and 5 s of the 6 s film. */
+const SAMPLE_SECONDS = [1, 3, 5] as const;
+
+/** A task row, whichever envelope the door answers it in. */
+const dataOf = (body: any) => body?.data ?? body;
+
+/** What the preview showed at a moment: where the playhead observed itself, and the picture. */
+interface PreviewShot { seconds: number; seek: RulerSeek; png: Buffer; surface: { width: number; height: number }; composition: Rect }
+
+/**
+ * The editor's preview at the playhead. The preview's own evidence is what is waited on: each decoded video clip exposes the
+ * player frame that was current when its decoder last drew (`data-preview-presented-frame`, ReadinessVideo), so the capture
+ * starts when a clip has presented the frame the ruler click asked for. There is no quiet period and no frame counting.
+ */
+async function capturePreview(page: Page, seconds: number, seek: RulerSeek, outputDir: string, name: string): Promise<PreviewShot> {
+  const surface = page.locator(PREVIEW_SURFACE);
+  await expect(surface.locator(`[data-preview-presented-frame="${seek.observedFrame}"]`), `a clip of the preview presented frame ${seek.observedFrame} for ${name}`).toBeAttached(CEILING);
+  // The composition box is Remotion's player element: the surface also holds the bars around it.
+  const geometry = await surface.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const player = element.querySelector('.__remotion-player');
+    if (!player) throw new Error('the preview surface has no .__remotion-player');
+    const inner = player.getBoundingClientRect();
+    return { surface: { width: box.width, height: box.height }, composition: { x: inner.left - box.left, y: inner.top - box.top, width: inner.width, height: inner.height } };
+  });
+  // The preview's overlay (timeline picker, time, Render) and the transport buttons lie over the picture; the picture is what is compared.
+  const png = await surface.screenshot({
+    animations: 'disabled',
+    style: '[data-video-editor-shell-region="preview"] > [data-shell-interaction="true"], .astrid-preview-transport { visibility: hidden !important; }',
+    path: path.join(outputDir, `${name}.png`),
+  });
+  return { seconds, seek, png, ...geometry };
+}
+
+/** The finished film's player: seek to a moment, wait for its frame, and take the element's picture (without the native control bar, which lies over it). */
+async function captureFilm(player: Locator, atSeconds: number, outputDir: string, name: string) {
+  await expect.poll(() => player.evaluate((video: HTMLVideoElement) => video.readyState), { message: 'the player has loaded its metadata', ...CEILING }).toBeGreaterThanOrEqual(1);
+  const presented = await player.evaluate((video: HTMLVideoElement, at: number) => new Promise<{ mediaTime: number }>((resolve, reject) => {
+    if (Math.abs(video.currentTime - at) < 1e-6) { reject(new Error('the player is already at the moment to sample: no seek, so no new frame')); return; }
+    video.pause();
+    video.controls = false;
+    let seeked = false;
+    let frame: { mediaTime: number } | null = null;
+    const finish = () => { if (seeked && frame) resolve(frame); };
+    // The callback is registered before the seek: a paused video presents nothing until the seek's frame.
+    video.requestVideoFrameCallback((_now, metadata) => { frame = { mediaTime: metadata.mediaTime }; finish(); });
+    video.addEventListener('seeked', () => { seeked = true; finish(); }, { once: true });
+    video.currentTime = at;
+  }), atSeconds);
+  const geometry = await player.evaluate((video: HTMLVideoElement) => {
+    const box = video.getBoundingClientRect();
+    return { box: { width: box.width, height: box.height }, natural: { width: video.videoWidth, height: video.videoHeight } };
+  });
+  const png = await player.screenshot({ animations: 'disabled', path: path.join(outputDir, `${name}.png`) });
+  return { png, mediaTime: presented.mediaTime, ...geometry, picture: letterbox(geometry.natural, geometry.box) };
+}
+
+const rounded = (difference: GridDifference) => ({ meanPerChannel: difference.meanPerChannel.map((value) => Number(value.toFixed(2))), worstCell: Number(difference.worstCell.toFixed(2)) });
+
+test('render R, publish R+1 before it runs: the render is R\'s, it plays, and it is the film the App showed', async ({ page, harness, astrid }, testInfo) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  const reads = watchPageReads(page, harness);
+  const outputDir = path.join(testInfo.outputDir, 'render-journey');
+  mkdirSync(outputDir, { recursive: true });
+  await page.setViewportSize({ width: 1600, height: 1000 });
+
+  // This browser plays what the render is: H.264 High 4.0 and AAC-LC in MP4. Without that the case could not tell a bad film from a browser that cannot play it.
+  const codecs = await page.evaluate(() => ({
+    h264: document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"'),
+    aac: document.createElement('audio').canPlayType('audio/mp4; codecs="mp4a.40.2"'),
+  }));
+  expect(codecs.h264, 'this browser must play H.264 High 4.0 (avc1.640028); the journey runs in installed Chrome').toBe('probably');
+  expect(codecs.aac, 'this browser must play AAC-LC (mp4a.40.2); the journey runs in installed Chrome').toBe('probably');
+
+  const render = await harness.seedRenderTimeline();
+  const agent = agentOf(astrid, render);
+  const timeline = { fps: render.fps, startLeft: getTimelineLabelWidth('desktop'), lastClipSelector: render.occurrenceBlockSelector };
+  const filmResponses: Array<{ url: string; status: number; contentRange: string | null }> = [];
+  page.on('response', (response) => {
+    if (response.url().includes('/v1/objects/')) filmResponses.push({ url: response.url(), status: response.status(), contentRange: response.headers()['content-range'] ?? null });
+  });
+  const renderBlockers = page.locator('[data-video-editor-render-blocker]');
+  const player = page.getByRole('dialog', { name: 'Rendered film' }).getByTestId('timeline-render-player');
+
+  let revisionR = '';
+  let revisionR1 = '';
+  let taskId = '';
+  const previewShots: PreviewShot[] = [];
+  let negative: PreviewShot | undefined;
+
+  await test.step('3 render R, publish R+1 before the render runs: the render is R\'s', async () => {
+    // a. One worker hosts the marker and the renderer. Remotion is not provisioned here, and rendering.render is still ready.
+    await astrid.host({ register: true, render: true });
+    const catalog = await harness.runtimeJson('GET', '/v1/capabilities?limit=200');
+    expect(catalog.status, JSON.stringify(catalog.body)).toBe(200);
+    const row = (catalog.body as any).items.find((item: any) => item.capability_id === 'rendering.render');
+    expect(row, 'the Runtime lists rendering.render').toBeTruthy();
+    expect({ status: row.status, unavailable_reason: row.unavailable_reason }, 'rendering.render is ready on a host without Remotion').toEqual({ status: 'ready', unavailable_reason: null });
+
+    // The App is open on the render timeline before the agent publishes, so that it can adopt R by itself.
+    await openApp(page, harness);
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+    journey.facts.sameRealm = await expectSameRealm(page, harness, astrid);
+    await page.getByRole('combobox', { name: 'Select timeline' }).click();
+    await page.getByRole('option', { name: render.timelineName }).click();
+    await expect(page.getByRole('combobox', { name: 'Select timeline' })).toContainText(render.timelineName);
+    await expect(page.locator(render.occurrenceBlockSelector)).toBeVisible(CEILING);
+    await plantNoReloadFlag(page);
+
+    // b. The marker is a task's output: a 2 s clip of the fixed marker colour (the one case 1 makes in this realm too), so what the film shows at 3 s is its own, not the grey placeholder's.
+    const created = await astrid.json<{ task_id: string }>(['tasks', 'create', '--project', render.projectSlug, '--capability', 'f2.marker', '--spec', '{}', '--json']);
+    expect(created.ok, JSON.stringify(created)).toBe(true);
+    const markerTask = created.data!.task_id;
+    const ran = await astrid.host({ runOnce: true, render: true });
+    expect(ran).toMatchObject({ task_id: markerTask, state: 'succeeded' });
+    const clip = ran.outputs?.find((candidate) => candidate.name === 'marker_clip');
+    expect(clip, 'the task produced its marker clip').toBeTruthy();
+    expect(clip!.ordinal, 'and the Runtime numbered it').toEqual(expect.any(Number));
+
+    // c. The agent fills the slot with it and publishes R. The open App adopts R by itself.
+    await agent.checkout();
+    await agent.edit('--clip', render.slotClipId, '--swap-asset', `${render.markerAssetKey}=task:${markerTask}/marker_clip#${clip!.ordinal}`);
+    const publishedR = await agent.publish('agent: marker clip in the slot', 'f2-render-r');
+    expect(publishedR.old_head, 'R builds on the seed').toBe(render.headRevisionId);
+    revisionR = publishedR.new_head;
+    await expect.poll(() => reads.urls.some((url) => url.includes(`/composition-revisions/${revisionR}`)), { message: 'the App read R', ...CEILING }).toBe(true);
+    expect(await noReloadFlag(page), 'the App adopted R without a reload').toBe(true);
+
+    // d. What the App's preview shows near 1 s, 3 s and 5 s: the playhead's own observed time, and the picture.
+    const calibration = await calibrateRuler(page, timeline);
+    for (const seconds of SAMPLE_SECONDS) {
+      const seek = await seekRulerToFrame(page, calibration, seconds * render.fps, render.fps, `${seconds} s`);
+      expect(seek.observedFrame, `the playhead reached the frame at ${seconds} s`).toBe(seconds * render.fps);
+      if (seconds === 3) await expect(page.locator(`${PREVIEW_SURFACE} [data-preview-decoded-frame="true"][data-preview-media-src*="${encodeURIComponent(clip!.object_id)}"]`)).toBeAttached(CEILING);
+      previewShots.push(await capturePreview(page, seconds, seek, outputDir, `preview-${seconds}s-R`));
+    }
+    await expect(renderBlockers, 'no blocker is shown: the Runtime\'s seam check only advises render admission, whatever the cuts at 2 s and 4 s').toHaveCount(0);
+
+    // e. Render. No host is running, so the task is admitted and waits; the order is made by the setup, not by timing.
+    const admitted = page.waitForResponse((response) => response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/v1/tasks') && response.request().postDataJSON()?.capability_id === 'rendering.render', CEILING);
+    await page.getByRole('button', { name: 'Render', exact: true }).click();
+    const admission = await admitted;
+    expect(admission.status(), await admission.text()).toBeLessThan(300);
+    const admittedBody = dataOf(await admission.json());
+    taskId = admittedBody.task_id ?? admittedBody.task?.id;
+    expect(taskId, 'the App\'s render request named a task').toBeTruthy();
+    expect(admission.request().postDataJSON().spec.params, 'the App leaves the renderer to the host').not.toHaveProperty('selector');
+    await expect(renderBlockers).toHaveCount(0);
+
+    // f. Before the render can run, the agent puts the placeholder back and publishes R+1 on R. The App adopts R+1; its preview is the negative control.
+    const eventsBefore = await harness.runtimeJson('GET', '/v1/events?limit=200');
+    expect(eventsBefore.status, JSON.stringify(eventsBefore.body)).toBe(200);
+    await agent.checkout();
+    await agent.edit('--clip', render.slotClipId, '--swap-asset', `f2-render-grey=${render.placeholder.digest}`);
+    const publishedR1 = await agent.publish('agent: placeholder back in the slot', 'f2-render-r1');
+    expect(publishedR1.old_head, 'R+1 builds on R').toBe(revisionR);
+    revisionR1 = publishedR1.new_head;
+    expect(revisionR1).not.toBe(revisionR);
+    await expect.poll(() => reads.urls.some((url) => url.includes(`/composition-revisions/${revisionR1}`)), { message: 'the App read R+1', ...CEILING }).toBe(true);
+    // Same zoom, same film length: the calibration made for R still maps the ruler to time.
+    const seekAfter = await seekRulerToFrame(page, calibration, 3 * render.fps, render.fps, '3 s on R+1');
+    await expect(page.locator(`${PREVIEW_SURFACE} [data-preview-decoded-frame="true"][data-preview-media-src*="${encodeURIComponent(render.placeholder.objectId)}"]`)).toBeAttached(CEILING);
+    await expect(page.locator(`${PREVIEW_SURFACE} [data-preview-media-src*="${encodeURIComponent(clip!.object_id)}"]`), 'the marker clip is gone from the preview').toHaveCount(0);
+    negative = await capturePreview(page, 3, seekAfter, outputDir, 'preview-3s-R1');
+    Object.assign(journey.facts, { taskId, revisionR, revisionR1 });
+
+    // g. Now the host runs. It claims the task the App admitted.
+    const rendered = await astrid.host({ runOnce: true, render: true });
+    expect(rendered, 'the host rendered the task the App admitted').toMatchObject({ task_id: taskId, state: 'succeeded' });
+
+    // h. The Runtime's record: the render is R's, the host chose its renderer, and R, the admission and R+1 happened in that order.
+    const task = await harness.runtimeJson('GET', `/v1/tasks/${taskId}`);
+    expect(task.status, JSON.stringify(task.body)).toBe(200);
+    const record = dataOf(task.body);
+    const authority = record.spec.spec.inputs.timeline_authority;
+    expect(authority.parent_revision_id, 'the render is pinned to R').toBe(revisionR);
+    expect(authority.parent_revision_id, 'and not to R+1').not.toBe(revisionR1);
+    expect(record.result.renderer_selection, 'the host chose ffmpeg because Remotion is not available').toMatchObject({ selector: 'rendering.ffmpeg', chosen_by: 'host', remotion_ok: false });
+    journey.facts.rendererSelection = record.result.renderer_selection;
+    const history = (await allRevisions(harness, render)).map((revision) => revision.revision_id);
+    expect(history.indexOf(revisionR1), 'R+1 is newer than R in the Runtime\'s history').toBeLessThan(history.indexOf(revisionR));
+    expect(history.indexOf(revisionR), 'R is newer than the seed').toBeLessThan(history.indexOf(render.headRevisionId));
+    const feed = await harness.runtimeJson('GET', `/v1/events?aggregate_id=${encodeURIComponent(taskId)}&limit=200`);
+    expect(feed.status, JSON.stringify(feed.body)).toBe(200);
+    const admissionSequence = Math.min(...((feed.body as any).items as Array<{ sequence: number }>).map((event) => event.sequence));
+    const latestBeforeR1 = Math.max(...((eventsBefore.body as any).items as Array<{ sequence: number }>).map((event) => event.sequence));
+    expect(admissionSequence, 'the task was admitted before the agent published R+1 (the event feed\'s latest sequence at that moment)').toBeLessThanOrEqual(latestBeforeR1);
+    journey.facts.admissionSequence = admissionSequence;
+
+    // i. The marker is in the film: the centre of the picture at 3 s is the task's colour, and not the placeholder's grey.
+    await expect(page.getByRole('dialog', { name: 'Rendered film' })).toBeVisible(CEILING);
+    const shot3 = previewShots.find((shot) => shot.seconds === 3)!;
+    const frame = await captureFilm(player, shot3.seek.observedTime + 0.5 / render.fps, outputDir, 'film-3s-marker');
+    const centre = centreCell(await pictureGrid(page, frame.png, frame.picture, frame.box));
+    const marker = [...Buffer.from(astrid.markerColor, 'hex')];
+    expect(Math.max(...centre.map((value, channel) => Math.abs(value - marker[channel]))), `the film's centre at 3 s is the marker colour ${astrid.markerColor}: ${centre.map(Math.round)}`).toBeLessThanOrEqual(8);
+    const grey = [render.placeholderGrey.r, render.placeholderGrey.g, render.placeholderGrey.b];
+    expect(Math.hypot(...centre.map((value, channel) => value - grey[channel])), 'and it is far from the placeholder grey').toBeGreaterThanOrEqual(60);
+    journey.facts.centreCellOfFilmAt3s = centre.map((value) => Number(value.toFixed(1)));
+  });
+
+  await test.step('4 the render plays, and it is the film the App showed', async () => {
+    // a. The App opened the finished film; its source is the door's content URL of the task's output.
+    const task = dataOf((await harness.runtimeJson('GET', `/v1/tasks/${taskId}`)).body);
+    const output = (task.result.outputs as Array<{ digest: string; object_id?: string; media_type: string; size: number }>).find((candidate) => String(candidate.media_type).startsWith('video'));
+    expect(output, 'the task produced a film').toBeTruthy();
+    await expect(page.getByRole('dialog', { name: 'Rendered film' })).toBeVisible(CEILING);
+    // The door answers the same Runtime routes under two prefixes; the App's render result uses its own (`/api/astrid`).
+    const doorOrigin = new URL(harness.doorBase).origin;
+    const objectRoute = `/v1/objects/${encodeURIComponent(output!.object_id ?? output!.digest)}`;
+    const expectedSrc = (await player.getAttribute('src'))!;
+    expect(['astrid', 'runtime'].map((prefix) => `${doorOrigin}/api/${prefix}${objectRoute}`), 'the player\'s source is the door\'s content URL of the task\'s output').toContain(expectedSrc);
+    await expect.poll(() => player.evaluate((video: HTMLVideoElement) => video.readyState), { message: 'the player loaded the film', ...CEILING }).toBeGreaterThanOrEqual(1);
+
+    // b. The door serves ranges: the player's own requests were 206 with a Content-Range, and so is a probe of 1 KiB at an offset.
+    const playerRanges = filmResponses.filter((response) => response.url === expectedSrc && response.status === 206 && response.contentRange);
+    expect(playerRanges.length, 'the player\'s own requests were answered 206 with a Content-Range').toBeGreaterThan(0);
+    const probe = await page.evaluate(async (src) => {
+      const response = await fetch(src, { headers: { Range: 'bytes=1024-2047' } });
+      return { status: response.status, contentRange: response.headers.get('content-range'), bytes: (await response.arrayBuffer()).byteLength };
+    }, expectedSrc);
+    expect(probe.status).toBe(206);
+    expect(probe.contentRange).toBe(`bytes 1024-2047/${output!.size}`);
+    expect(probe.bytes).toBe(1024);
+
+    // c, d. The film at each moment the preview showed, compared through the same pipeline as the preview's picture.
+    const rows: Array<{ seconds: number; previewTime: number; filmTime: number; difference: GridDifference }> = [];
+    let film3: PictureGrid | undefined;
+    let aspect = { film: 0, preview: 0 };
+    for (const shot of previewShots) {
+      const frame = await captureFilm(player, shot.seek.observedTime + 0.5 / render.fps, outputDir, `film-${shot.seconds}s`);
+      expect(Math.abs(frame.mediaTime - shot.seek.observedTime), `the player presented the frame at ${shot.seconds} s`).toBeLessThan(1 / render.fps);
+      const filmGrid = await pictureGrid(page, frame.png, frame.picture, frame.box);
+      const difference = gridDifference(filmGrid, await pictureGrid(page, shot.png, shot.composition, shot.surface));
+      rows.push({ seconds: shot.seconds, previewTime: shot.seek.observedTime, filmTime: frame.mediaTime, difference });
+      Object.assign(journey.facts, { frameDifferences: { match: rows.map((row) => ({ seconds: row.seconds, previewTime: row.previewTime, filmTime: row.filmTime, ...rounded(row.difference) })) } });
+      expect(matches(difference), `the film at ${shot.seconds} s is the preview's picture: ${JSON.stringify(rounded(difference))} against ${JSON.stringify(MATCH)}`).toBe(true);
+      if (shot.seconds === 3) film3 = filmGrid;
+      aspect = { film: frame.natural.width / frame.natural.height, preview: shot.composition.width / shot.composition.height };
+    }
+    expect(aspect.film, 'the render has the preview\'s aspect ratio').toBeCloseTo(aspect.preview, 1);
+
+    // The negative control: the film is not the preview of R+1, so the comparison can tell R from R+1.
+    const teeth = gridDifference(film3!, await pictureGrid(page, negative!.png, negative!.composition, negative!.surface));
+    Object.assign(journey.facts, { frameDifferences: { match: rows.map((row) => ({ seconds: row.seconds, previewTime: row.previewTime, filmTime: row.filmTime, ...rounded(row.difference) })), negativeControl: rounded(teeth) } });
+    expect(matches(teeth), `the film at 3 s is not the preview of R+1: ${JSON.stringify(rounded(teeth))} must exceed ${JSON.stringify(MATCH)}`).toBe(false);
+
+    // e. Sound, decoded from the same URL: the tone is in the film.
+    const loudness = await page.evaluate(async (src) => {
+      const response = await fetch(src);
+      const audio = await new OfflineAudioContext(1, 1, 48_000).decodeAudioData(await response.arrayBuffer());
+      let sum = 0;
+      let count = 0;
+      for (let channel = 0; channel < audio.numberOfChannels; channel += 1) {
+        const samples = audio.getChannelData(channel);
+        for (let index = Math.floor(0.5 * audio.sampleRate); index < Math.min(samples.length, Math.floor(5.5 * audio.sampleRate)); index += 1) { sum += samples[index] * samples[index]; count += 1; }
+      }
+      return 20 * Math.log10(Math.sqrt(sum / Math.max(1, count)));
+    }, expectedSrc);
+    expect(loudness, 'the film is audible between 0.5 s and 5.5 s (dBFS)').toBeGreaterThan(-40);
+
+    // f. Its length is the timeline's: a content check, not a timing check.
+    const duration = await player.evaluate((video: HTMLVideoElement) => video.duration);
+    expect(Math.abs(duration - render.durationSeconds), 'the film is as long as the timeline, within a frame').toBeLessThanOrEqual(1 / render.fps);
+
+    // g. Reported, never judged.
+    Object.assign(journey.facts, { loudnessDbfs: Number(loudness.toFixed(1)), filmSeconds: duration });
+  });
+
   await sniff.expectClean(page);
 });
 
