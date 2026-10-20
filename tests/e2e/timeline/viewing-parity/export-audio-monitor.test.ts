@@ -30,9 +30,17 @@ async function withFixture(sampleRate: number, channels: number, check: (artifac
 test('shared probe gain comparator retains its 0.5 dB threshold', () => {
   assert.equal(gainDifferenceDb(1, 1), 0);
   assert.ok(Math.abs(gainDifferenceDb(0.5, 1) + 6.0206) < 0.0001);
-  for (const db of [-0.49, 0.49]) requireUnchangedGain(10 ** (db / 20), 1);
-  for (const db of [-0.51, 0.51]) {
+  for (const db of [-0.499, 0.499]) requireUnchangedGain(10 ** (db / 20), 1);
+  for (const db of [-0.501, 0.501]) {
     assert.throws(() => requireUnchangedGain(10 ** (db / 20), 1), /captured output gain mismatch/);
+  }
+});
+
+test('shared probe gain comparator rejects nonphysical RMS levels', () => {
+  for (const [actual, reference] of [
+    [NaN, 1], [1, NaN], [Infinity, 1], [1, Infinity], [0, 0], [-1, -1],
+  ]) {
+    assert.throws(() => requireUnchangedGain(actual, reference), /captured output gain mismatch:/);
   }
 });
 

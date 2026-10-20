@@ -4,5 +4,7 @@ export function gainDifferenceDb(actual: number, reference: number) {
 
 export function requireUnchangedGain(actual: number, reference: number) {
   const db = gainDifferenceDb(actual, reference);
-  if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
+  if (!Number.isFinite(actual) || actual <= 0 || !Number.isFinite(reference) || reference <= 0 || Math.abs(db) > 0.5) {
+    throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
+  }
 }
