@@ -35,6 +35,7 @@ from .visual_seam import (
     admit_closure,
     clip_seconds as _visual_clip_seconds,
     load_closure,
+    parent_clips,
     seconds as _visual_seconds,
 )
 from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
@@ -1810,13 +1811,7 @@ class RealmStore:
             closure_parent, closure_shots, closure_internal = load_closure(self.conn, project_id, row["id"], parent)
             seam_report, seam_metadata = admit_closure(closure_parent, closure_shots, closure_internal, timeline_id=row["id"], materialize=True)
             content = {**content, "config": copy.deepcopy(payload.get("config")), "registry": copy.deepcopy(payload.get("registry"))}
-            config_clips = content["config"].get("clips", []) if isinstance(content["config"], dict) else None
-            parent_clips = payload.get("clips", [])
-            if not isinstance(config_clips, list) or not isinstance(parent_clips, list):
-                raise ValidationError("canonical parent/config clips must be lists")
-            if config_clips and parent_clips and config_clips != parent_clips:
-                raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
-            content["config"]["clips"] = copy.deepcopy(parent_clips or config_clips)
+            content["config"]["clips"] = copy.deepcopy(parent_clips(payload))
             dependency_digests = [dict(item) for item in self.conn.execute(
                 "SELECT dependency_kind, dependency_id, content_digest FROM composition_revision_dependencies WHERE parent_revision_id=? ORDER BY ordinal, dependency_kind, dependency_id",
                 (parent["id"],),

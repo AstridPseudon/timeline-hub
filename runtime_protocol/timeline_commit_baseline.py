@@ -14,6 +14,7 @@ import sqlite3
 
 from .errors import ConflictError, RuntimeErrorBase
 from .idempotency import EXPIRED
+from .timeline_commit_validation import digest
 from .util import canonical_json
 
 
@@ -48,10 +49,6 @@ def _json(encoded):
     return result
 
 
-def _digest(value):
-    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
-
-
 def _row(connection, query, args):
     row = connection.execute(query, args).fetchone()
     _require(row is not None, "missing_scoped_row")
@@ -64,7 +61,7 @@ def _image(connection, table, revision_id, project_id, **identity):
     _require(row["project_id"] == project_id, "revision_project_mismatch")
     _require(all(row[key] == value for key, value in identity.items()), "revision_identity_mismatch")
     payload = _json(row["payload_json"])
-    _require(isinstance(payload, dict) and _digest(payload) == row["content_digest"], "revision_digest_mismatch")
+    _require(isinstance(payload, dict) and digest(payload) == row["content_digest"], "revision_digest_mismatch")
     return {"revision_id": row["id"], "content_digest": row["content_digest"], "payload": payload, **identity}
 
 
@@ -114,7 +111,7 @@ def _text_bindings(connection, project_id, shot, read_object):
             hashed = {"event_id": event["event_id"], "binding_id": binding["id"], "seq": seq,
                       "kind": event["kind"], "payload": payload, "previous_hash": previous}
             _require(event["project_id"] == project_id and event["seq"] == seq and
-                     event["previous_hash"] == previous and event["event_hash"] == _digest(hashed)[7:],
+                     event["previous_hash"] == previous and event["event_hash"] == digest(hashed)[7:],
                      "text_binding_chain_mismatch")
             previous = event["event_hash"]
             if seq == head:
@@ -246,7 +243,7 @@ def _publication(connection, project_id, timeline_id, event, stream_seq, command
     _require(document["parent_revision"]["content_digest"] == payload["content_digest"], "publication_digest_mismatch")
     if EXPIRED in result:
         _require(isinstance(result[EXPIRED], str) and _HEX.fullmatch(result[EXPIRED]) and
-                 result["dependency_manifest_sha256"] == _digest(payload["dependency_manifest"])[7:], "compacted_publication_proof_missing")
+                 result["dependency_manifest_sha256"] == digest(payload["dependency_manifest"])[7:], "compacted_publication_proof_missing")
     else:
         _require(result["payload"] == document["parent_revision"]["payload"] and
                  result["dependency_manifest"] == payload["dependency_manifest"] and
@@ -275,7 +272,7 @@ def _publication_events(connection, project_id, timeline_id):
         _require(isinstance(payload, dict), "timeline_event_payload_mismatch")
         hashed = {"timeline_id": timeline_id, "kind": event["kind"], "payload": payload,
                   "previous_hash": previous, "created_at": event["created_at"]}
-        _require(event["previous_hash"] == previous and event["event_hash"] == _digest(hashed)[7:], "timeline_event_chain_mismatch")
+        _require(event["previous_hash"] == previous and event["event_hash"] == digest(hashed)[7:], "timeline_event_chain_mismatch")
         previous = event["event_hash"]
         _require(payload.get("project_id") == project_id, "event_project_mismatch")
         if event["kind"] == "parent.composition.published":
@@ -358,7 +355,7 @@ def _verify(connection, project_id, timeline_id, read_object):
         )
         _require(not (relevant and (result_project is None or result_project == project_id)), "later_unaccounted_ledger_write")
     return {"head": {"revision_id": head["revision_id"], "publication_id": latest_entry["publication_id"]},
-            "canonical_document": current_document, "document_digest": _digest(current_document), "entries": entries,
+            "canonical_document": current_document, "document_digest": digest(current_document), "entries": entries,
             "witness": {"last_event_id": str(events[-1]["id"]), "event_hash": previous,
                         "stream_seq": len(events), "head_updated_at": head["updated_at"]}}
 
@@ -421,7 +418,7 @@ def empty_bootstrap_document(project_id, timeline_id, revision_id):
     _require(all(isinstance(value, str) and value for value in (project_id, timeline_id, revision_id)), "bootstrap_identity_missing")
     payload = {"config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": []}
     return {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
-            "parent_revision": {"revision_id": revision_id, "payload": payload, "content_digest": _digest(payload)},
+            "parent_revision": {"revision_id": revision_id, "payload": payload, "content_digest": digest(payload)},
             "shot_revisions": [], "internal_timeline_revisions": [],
             "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}}
 

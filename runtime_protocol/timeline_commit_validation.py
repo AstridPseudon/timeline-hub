@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import math
 from functools import cache
 from importlib.resources import files
 
 from .errors import ValidationError
+from .util import canonical_json
 
 
-def _finite_json(value) -> None:
+def finite_json(value) -> None:
     active = set()
     pending = [(value, False)]
     while pending:
@@ -34,6 +37,15 @@ def _finite_json(value) -> None:
         pending.extend(
             (child, False) for child in (item.values() if kind is dict else item)
         )
+
+
+def detached(value):
+    finite_json(value)
+    return copy.deepcopy(value)
+
+
+def digest(value):
+    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
 @cache
@@ -77,7 +89,7 @@ def validate_commit_value(value, definition: str) -> None:
     Schema dependencies are loaded only when validation is requested; importing
     this module or the provider ABI requires only the standard library.
     """
-    _finite_json(value)
+    finite_json(value)
     from jsonschema.exceptions import ValidationError as SchemaValidationError
     from referencing.exceptions import Unresolvable
 

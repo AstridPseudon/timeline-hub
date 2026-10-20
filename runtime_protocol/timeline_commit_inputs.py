@@ -12,7 +12,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import math
 import os
 import re
 import sqlite3
@@ -23,6 +22,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from .cas import file_identity
 from .errors import ConflictError, NotFoundError, ValidationError
+from .timeline_commit_validation import finite_json
 from .util import canonical_json, now
 
 
@@ -122,43 +122,13 @@ def initialize_document_input_schema(connection: sqlite3.Connection) -> None:
     connection.executescript(DOCUMENT_INPUT_SCHEMA_SQL)
 
 
-def document_input_schema_sql() -> str:
-    """Return the idempotent SQL used by the Runtime schema migration."""
-    return DOCUMENT_INPUT_SCHEMA_SQL
-
-
-def _finite_json(value: Any, *, field: str = "document content") -> None:
-    if value is None or isinstance(value, (str, bool, int)):
-        return
-    if isinstance(value, float):
-        if not math.isfinite(value):
-            raise ValidationError(f"{field} must contain finite JSON")
-        return
-    if isinstance(value, list):
-        for item in value:
-            _finite_json(item, field=field)
-        return
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str):
-                raise ValidationError(f"{field} object keys must be strings")
-            _finite_json(item, field=field)
-        return
-    raise ValidationError(f"{field} must contain JSON values")
-
-
 def content_digest(content: Any) -> str:
     """Return the port-format digest of canonical finite JSON content."""
-    _finite_json(content)
-    try:
-        encoded = canonical_json(content).encode("utf-8")
-    except (TypeError, ValueError, UnicodeEncodeError) as exc:
-        raise ValidationError("document content must be canonical UTF-8 JSON") from exc
-    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+    return _content_bytes(content)[0]
 
 
 def _content_bytes(content: Any) -> tuple[str, str, int]:
-    _finite_json(content)
+    finite_json(content)
     try:
         encoded = canonical_json(content).encode("utf-8")
     except (TypeError, ValueError, UnicodeEncodeError) as exc:
@@ -735,17 +705,3 @@ def persist_document_input_links(connection: sqlite3.Connection, *, project_id: 
                 "ordinal": item.ordinal,
             })
         return results
-
-
-def persist_document_input(connection: sqlite3.Connection, capture: CapturedDocument, *,
-                           project_id: str, timeline_id: str, publication_id: str,
-                           revision_id: str, dependency_kind: str, ordinal: int = 0) -> list[dict[str, Any]]:
-    """Persist one consumed input; convenience wrapper for acceptance."""
-    return persist_document_input_links(
-        connection,
-        project_id=project_id,
-        timeline_id=timeline_id,
-        publication_id=publication_id,
-        revision_id=revision_id,
-        links=[DocumentInputLink(capture, dependency_kind, ordinal)],
-    )

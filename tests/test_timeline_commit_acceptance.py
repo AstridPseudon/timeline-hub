@@ -89,7 +89,12 @@ def accept(commits, ctx, value):
 
 
 def accepted_recorder(realm):
-    from runtime_protocol.timeline_commit_inputs import capture_document_input, persist_document_input, validate_captured_document_inputs
+    from runtime_protocol.timeline_commit_inputs import (
+        DocumentInputLink,
+        capture_document_input,
+        persist_document_input_links,
+        validate_captured_document_inputs,
+    )
 
     service, commits, project, head, _ = realm
     content = {"schema": "fixture.config/v1", "value": 1}
@@ -100,8 +105,8 @@ def accepted_recorder(realm):
         def validate(self, candidate):
             validate_captured_document_inputs(service.store.conn, [capture])
         def persist(self, candidate, publication_id, revision_id):
-            persist_document_input(service.store.conn, capture, project_id=project, timeline_id="main", publication_id=publication_id,
-                                   revision_id=revision_id, dependency_kind="source")
+            persist_document_input_links(service.store.conn, project_id=project, timeline_id="main", publication_id=publication_id,
+                                         revision_id=revision_id, links=[DocumentInputLink(capture, "source", 0)])
     ctx = context(service, project, head)
     value = prepared(commits, ctx)
     value["canonical_document"]["dependency_manifest"]["documents"] = [pin]

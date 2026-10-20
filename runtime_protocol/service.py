@@ -460,6 +460,10 @@ def _durable_mutation(function):
     return wrapped
 
 
+def _refuse_direct_shot_write(self, *args, **kwargs):
+    raise RetiredRouteError("direct shot writes are retired; use timeline commands")
+
+
 class RuntimeService:
     """Neutral application service composed by the daemon or an isolated test."""
 
@@ -3101,9 +3105,18 @@ class RuntimeService:
         value["metadata"] = json.loads(value.pop("metadata_json"))
         return value
 
-    @_durable_mutation
-    def create_project_shot(self, project_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
+    # Retired direct shot writers. Each keeps its mutation gate, so the refusal
+    # is still reached only after admission and writes nothing.
+    create_project_shot = _durable_mutation(_refuse_direct_shot_write)
+    update_project_shot = _durable_mutation(_refuse_direct_shot_write)
+    add_shot_item = _durable_mutation(_refuse_direct_shot_write)
+    remove_shot_item = _durable_mutation(_refuse_direct_shot_write)
+    reorder_shot_items = _durable_mutation(_refuse_direct_shot_write)
+    promote_project_shot_candidate = _durable_mutation(_refuse_direct_shot_write)
+    set_project_shot_text_binding = _durable_mutation(_refuse_direct_shot_write)
+    rebind_project_shot_text_binding = _durable_mutation(_refuse_direct_shot_write)
+    create_shot = _durable_mutation(_refuse_direct_shot_write)
+    _update_shot_state = _verified_mutation(_refuse_direct_shot_write)
 
     @_durable_mutation
     def create_project_reference(self, project_id, body, *, idempotency_key=None):
@@ -3145,30 +3158,6 @@ class RuntimeService:
         row = self.store.conn.execute("SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])).fetchone()
         if not row: raise NotFoundError("shot not found")
         return self._project_shot_resource(row)
-
-    @_durable_mutation
-    def update_project_shot(self, project_id, shot_id, body, *, idempotency_key=None, archived=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    @_durable_mutation
-    def add_shot_item(self, project_id, shot_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    @_durable_mutation
-    def remove_shot_item(self, project_id, shot_id, item_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    @_durable_mutation
-    def reorder_shot_items(self, project_id, shot_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    @_durable_mutation
-    def promote_project_shot_candidate(self, project_id, shot_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    # Short neutral service alias used by adapters that do not expose the
-    # project-qualified generated method name.
-    promote_candidate = promote_project_shot_candidate
 
     # -- immutable shot text bindings -----------------------------------
 
@@ -3266,14 +3255,6 @@ class RuntimeService:
             "content_hash": "sha256:" + str(media["digest"]), "mime_type": str(media["media_type"]),
             "byte_size": int(media["size"]), "created_at": str(row["created_at"]), "updated_at": str(row["updated_at"]),
         }
-
-    @_durable_mutation
-    def set_project_shot_text_binding(self, project_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
-
-    @_durable_mutation
-    def rebind_project_shot_text_binding(self, project_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def get_project_shot_text_binding(self, project_id, binding_id):
         project = self.store.get_project(project_id)
@@ -3395,10 +3376,6 @@ class RuntimeService:
     @_durable_mutation
     def recover_timeline(self, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
-
-    @_durable_mutation
-    def create_shot(self, timeline_id, body, *, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def get_shot(self, shot_id):
         row = self.store.conn.execute("SELECT * FROM timeline_shots WHERE id=?", (shot_id,)).fetchone()
@@ -3961,10 +3938,6 @@ class RuntimeService:
         row = self.store.conn.execute("SELECT * FROM timeline_references WHERE id=?", (reference_id,)).fetchone()
         if not row: raise NotFoundError("reference not found")
         return self._reference_resource(row)
-
-    @_verified_mutation
-    def _update_shot_state(self, shot_id, body, *, archived=None, idempotency_key=None):
-        raise RetiredRouteError("direct shot writes are retired; use timeline commands")
 
     def update_shot(self, shot_id, body, *, idempotency_key=None): return self._update_shot_state(shot_id, body, idempotency_key=idempotency_key)
     def archive_shot(self, shot_id, body, *, idempotency_key=None): return self._update_shot_state(shot_id, body, archived=True, idempotency_key=idempotency_key)
