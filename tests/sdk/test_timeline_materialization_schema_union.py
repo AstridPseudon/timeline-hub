@@ -19,9 +19,31 @@ PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc971
 PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 
 
+def without_opacity(schema):
+    """Remove only the proposed opacity additions from a copied schema."""
+    candidate = copy.deepcopy(schema)
+    args = candidate['$defs']['ClipSetArgs']
+    values = args['properties']['values']['properties']
+    assert values.pop('opacity') == {
+        'type': 'number',
+        'minimum': 0,
+        'maximum': 1,
+        'description': 'Raw visual opacity fraction in the inclusive range 0..1.',
+    }
+    clear = args['properties']['clear']['items']['enum']
+    assert clear.pop() == 'opacity'
+    assert args['description'].startswith(
+        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction;')
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming '
+        'transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped '
+        'clip.swap-media or occurrence.swap-media; transition authoring is outside v1.')
+    return candidate
+
+
 def ordinary_schema():
-    """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = copy.deepcopy(_SCHEMA)
+    """Remove opacity and the reviewed carrier additions, checking each complete branch."""
+    candidate = without_opacity(_SCHEMA)
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -66,7 +88,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 
 
 def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes():
-    candidate = copy.deepcopy(_SCHEMA)
+    candidate = without_opacity(_SCHEMA)
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -78,8 +100,8 @@ def test_removing_only_project_data_addition_reconstructs_private_carrier_bytes(
     assert len(candidate['$defs']['EditCommand']['allOf']) == 29
 
 
-def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+def test_removing_only_opacity_addition_reconstructs_project_data_bytes():
+    raw = (json.dumps(without_opacity(_SCHEMA), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
