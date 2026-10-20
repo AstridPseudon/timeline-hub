@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import io
 import json
+import wave
 
 import pytest
 
@@ -65,13 +67,13 @@ def _effect(project_id: str, *, policy: str = "reject", groups: list[dict] | Non
     }
 
 
-def _fixture(tmp_path, *, effect_factory=_effect, slug="publish"):
+def _fixture(tmp_path, *, effect_factory=_effect, slug="publish", capability=CAPABILITY):
     root = tmp_path / slug
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
-    digest = _digest(CAPABILITY.encode())
+    digest = _digest(capability.encode())
     service.register_executor(
-        {"executor_id": f"{slug}-worker", "capabilities": [CAPABILITY]},
+        {"executor_id": f"{slug}-worker", "capabilities": [capability]},
         idempotency_key=f"{slug}-executor",
     )
     project = service.create_project(
@@ -80,7 +82,7 @@ def _fixture(tmp_path, *, effect_factory=_effect, slug="publish"):
     effect = effect_factory(project["id"])
     task = service.create_task(
         {
-            "capability_id": CAPABILITY,
+            "capability_id": capability,
             "capability_digest": digest,
             "project": project["id"],
             "settlement_effect": effect,
@@ -90,12 +92,41 @@ def _fixture(tmp_path, *, effect_factory=_effect, slug="publish"):
     attempt = service.claim_next(
         {
             "executor_id": f"{slug}-worker",
-            "capability_ids": [CAPABILITY],
+            "capability_ids": [capability],
             "runtime_epoch": service.health()["runtime_epoch"],
         },
         idempotency_key=f"{slug}-claim",
     )
     return service, project, task, attempt, effect
+
+
+def _speech_effect(project_id, *, metadata=None):
+    effect = _effect(
+        project_id,
+        groups=[{
+            "group_key": "main",
+            "selectors": [{
+                "selector": "speech", "ordinal": 0,
+                "variant_key": "original", "output_port": "audio",
+            }],
+        }],
+    )
+    effect["payload"].update({
+        "modality": "audio",
+        "generation_type": "speech",
+        "metadata": {} if metadata is None else metadata,
+    })
+    return effect
+
+
+def _wav_bytes(*, frames=8000, rate=8000):
+    stream = io.BytesIO()
+    with wave.open(stream, "wb") as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(rate)
+        output.writeframes(b"\0\0" * frames)
+    return stream.getvalue()
 
 
 def _settle(service, attempt, outputs, *, effect, key="settle", fence=None):
@@ -450,5 +481,141 @@ def test_generic_output_generation_id_remains_managed_only(tmp_path):
         assert association["generation_id"] is None
         assert service.store.conn.execute("SELECT COUNT(*) FROM generations").fetchone()[0] == 0
         assert project["id"] == association["project_id"]
+    finally:
+        service.close()
+
+
+def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_path):
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-wav",
+        capability="generation.generate_speech",
+    )
+    try:
+        wav = _wav_bytes()
+        settled = _settle(
+            service,
+            attempt,
+            [_output(
+                wav,
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+            )],
+            effect=effect,
+            key="speech-wav-settle",
+        )
+        task_id = task["task"]["id"]
+        association = service.managed_outputs(task_id)[0]
+        receipt = service.store.conn.execute(
+            "SELECT command_kind FROM command_idempotency "
+            "WHERE command_kind='attempt.settle' AND aggregate_id=?",
+            (attempt["attempt_id"],),
+        ).fetchone()
+        assert settled["data"]["state"] == "succeeded"
+        assert receipt["command_kind"] == "attempt.settle"
+        assert service.cas.path_for(association["object_id"][7:]).read_bytes() == wav
+        assert association["attempt_id"] == attempt["attempt_id"]
+        assert association["provenance"]["task_id"] == task_id
+
+        before = {
+            table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in ("parent_composition_heads", "parent_composition_revisions", "timeline_commit_history")
+        }
+        selection = service.get_project_media_selection(project["id"], {
+            "association_id": association["association_id"],
+            "object_id": association["object_id"],
+            "version": association["lifecycle"]["version"],
+        }, authorize=lambda: None)
+        assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
+        verified = service.get_project_verified_media(project["id"], selection, authorize=lambda: None)
+        assert verified["selection"] == selection
+        assert verified["media_type"] == "audio/wav"
+        assert verified["duration_seconds"] == 1.0
+        assert {
+            table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in before
+        } == before
+    finally:
+        service.close()
+
+
+def test_speech_settlement_invalid_wav_keeps_duration_unknown_and_selection_refused(tmp_path):
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-invalid-wav",
+        capability="generation.generate_speech",
+    )
+    try:
+        invalid = b"not a WAV"
+        _settle(
+            service,
+            attempt,
+            [_output(
+                invalid,
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+            )],
+            effect=effect,
+            key="speech-invalid-wav-settle",
+        )
+        association = service.managed_outputs(task["task"]["id"])[0]
+        variant = service.list_variants(association["generation_id"])["items"][0]
+        assert "duration_seconds" not in variant["metadata"]
+        with pytest.raises(ValidationError, match="invalid selected media metadata"):
+            service.get_project_media_selection(project["id"], {
+                "association_id": association["association_id"],
+                "object_id": association["object_id"],
+                "version": association["lifecycle"]["version"],
+            }, authorize=lambda: None)
+    finally:
+        service.close()
+
+
+def test_speech_settlement_preserves_explicit_duration_metadata(tmp_path):
+    explicit = 2.5
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=lambda project_id: _speech_effect(
+            project_id, metadata={"params": {"duration_seconds": explicit}}
+        ),
+        slug="speech-explicit-duration",
+        capability="generation.generate_speech",
+    )
+    try:
+        _settle(
+            service,
+            attempt,
+            [_output(
+                _wav_bytes(),
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+                duration_seconds=explicit,
+            )],
+            effect=effect,
+            key="speech-explicit-duration-settle",
+        )
+        association = service.managed_outputs(task["task"]["id"])[0]
+        selection = service.get_project_media_selection(project["id"], {
+            "association_id": association["association_id"],
+            "object_id": association["object_id"],
+            "version": association["lifecycle"]["version"],
+        }, authorize=lambda: None)
+        assert service.get_project_verified_media(
+            project["id"], selection, authorize=lambda: None
+        )["duration_seconds"] == explicit
     finally:
         service.close()

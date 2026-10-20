@@ -4804,6 +4804,11 @@ class RealmStore:
                     generation_metadata["thumbnail"] = self._thumbnail_metadata_descriptor(
                         group["thumbnail"], group["primary_output"]["digest"]
                     )
+                params = generation_metadata.get("params")
+                explicit_duration = (
+                    "duration_seconds" in generation_metadata
+                    or (isinstance(params, dict) and "duration_seconds" in params)
+                )
                 self.conn.execute(
                     "INSERT INTO generations(id, project_id, source_task_id, type, status, metadata_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, 'completed', ?, 1, ?, ?)",
                     (
@@ -4861,6 +4866,22 @@ class RealmStore:
                         "regeneration": output.get("regeneration"),
                         "coverage": output.get("coverage"),
                     }
+                    if "duration_seconds" in output:
+                        variant_metadata["duration_seconds"] = output["duration_seconds"]
+                    media_type = str(output.get("media_type", "")).lower().split(";", 1)[0].strip()
+                    if (
+                        task_row
+                        and task_row["capability"] == "generation.generate_speech"
+                        and output.get("output_port") == "audio"
+                        and media_type in {"audio/wav", "audio/x-wav"}
+                        and "duration_seconds" not in variant_metadata
+                        and not explicit_duration
+                    ):
+                        duration = ContentAddressedStore(self.cas_root).wav_duration(
+                            output_digest, int(output["size"])
+                        )
+                        if duration is not None:
+                            variant_metadata["duration_seconds"] = duration
                     thumbnail_descriptor = group.get("thumbnails", {}).get(output["digest"])
                     thumbnail = (
                         self._thumbnail_metadata_descriptor(thumbnail_descriptor, output["digest"])
