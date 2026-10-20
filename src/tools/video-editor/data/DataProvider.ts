@@ -28,6 +28,7 @@ import type {
   HistoryPage,
   MutationReceipt,
 } from '@/integrations/runtime/generated.ts';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 export type {
   AssetProfile,
   SilenceRegion,
@@ -435,6 +436,7 @@ export interface ExtensionPersistenceService {
 export interface DataProvider extends AssetResolver {
   /** Command commits are supplied whole by gesture/command producers. */
   timelineCommands?: TimelineCommitCapability;
+  getProjectVerifiedMedia?(selection: MediaSelection): Promise<VerifiedMedia>;
   loadTimelineCommandBasis?(timelineId: string): Promise<TimelineCommandBasis>;
   resolveTimelineCommandAsset?(file: string, registry: AssetRegistry): Promise<string>;
   commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
