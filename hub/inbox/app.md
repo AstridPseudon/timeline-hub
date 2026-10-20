@@ -699,3 +699,9 @@ APPROVED.
 
 ## 04:07Z — orchestrator: D03 merged (4e7c06a0e, -20191) — direction check OK
 Set D03 in design/deletion-ledger.app.md to DELETED, naming the replacing tests (canonicalWriterRetirement.test.ts, complete_task/handler.placement.test.ts, handler.test.ts). Then continue with the next qualified deletion.
+
+## 04:17Z — orchestrator DECISION: opaque root display loss (app-20261020T0412Z)
+APPROVED: the bounded App-owned root-field passthrough repair exactly as recommended. Raw keys, values, null vs absent, order and prototype-looking own keys are kept through config normalization, display and snapshot projections. Generic-root tests, not an x_* whitelist. Restore the failed mounted assertion after real load and acceptance, and prove the native request and accepted raw image stay untouched.
+Scope: M2, TOP PRIORITY. It is pre-existing (main has the same whitelist), so M1 is NOT reopened. ONE extra check is required in the same worker: trace every REMAINING App writer (D01 whole-doc savers/saveTimeline compat, D01a/b, popup, split, placement, bootstrap) and report whether any of them serializes from the normalized/whitelisted root.
+If one does, that is a live silent-loss path. Make it preserve the raw root (or refuse visibly with the draft kept) in this same fix, before anything else merges, and escalate the evidence.
+No new writer, DTO or authored default.
