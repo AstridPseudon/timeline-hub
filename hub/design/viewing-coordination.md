@@ -43,3 +43,24 @@ Independent review found an actual post-start replacement-registration adoption/
 
 ## Agent ownership fix qualification00:33 — descendant ready for review, merge HELD
 Test-only `agt-m2-pack-helper-ownership` completed the three review findings. Managed Python entry and CLI handshake above are current. Exact test-service snapshot `f1097a6d3e31c3b29f6e7b212e09a3d0f6ce2cdc`, tree `15e1885b5df66bbd488dbf44fc14176dfb618232`; eventual branch commit is assigned by the harness. Central stop/EOF/SIGTERM plus foreign-CLI refusal: 3PASS; isolated deterministic ownership/INT/TERM/ALRM boundaries: 25PASS; Ruff and diff checks pass. Production source/closure/manifest/validation and worker scopes remain real and unchanged. No render/browser/full-suite/App wrapper claim. Report: `workers/agt-m2-pack-helper-ownership/notes/report.md`. Owner review and PLAN M1 record still required before any M2 merge.
+
+Source-port trace follow-up: the modern SDK `_store_visualize_objects` optimization
+runs before `_kernel_invoke` snapshot-ref publication and previously hid canonical
+capture snapshots inside a generic authority object. Canonical captures from the
+exact SDK opener now keep the existing inline-to-`capture_snapshot_ref` publication
+route until Runtime admission; unqualified/native object-backed callers retain
+that optimization. This avoids treating an imported authority JSON object as
+canonical proof. Saved and working-copy SDK -> CAS ref -> prepared binding tests
+retain original full shot content_digest and internal config_hash fields.
+
+Trust limitation found by inspection (not changed outside assigned Agent scope):
+Runtime `snapshot_refs.publish_snapshot` and
+`RealmStore._validate_spec_snapshot_refs` verify capture project CAS ownership,
+parent revision digest, and candidate/base marker equality. They do not re-project
+capture config/registry bytes against the immutable parent/child closure. Managed
+`rendering.render` has its separate Runtime-owned freeze. Accordingly these Agent
+checks authenticate transport of the Runtime-admitted ref; they do not qualify a
+malicious raw Runtime capture-task admission that forges self-consistent snapshot
+content. Runtime owner must qualify/tighten that existing admission boundary
+before claiming that stronger end-to-end capture property. No requested revision
+or loaded file is stamped as newly verified by this Agent port.

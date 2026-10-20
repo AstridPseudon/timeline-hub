@@ -396,18 +396,74 @@ actual Runtime producer acceptance/lifecycle race, historical admission or build
 qualification. Product implementation, all M2 merges and D13 cutover remain held
 pending PLAN M1.
 
-## Bundle3 Agent implementation handoff (agt-m2-producer-guard, in progress)
+## Bundle3 Agent implementation handoff (agt-m2-producer-guard)
 
-Source worktree: `/home/user/work/wt/agt-m2-producer-guard`, base `d4743e29`;
-only the four proposal/golden test files are overlaid from `bdebad36`.
-Agent is wiring exactly `producer_attempt(pin) -> {pin}` (closed result), ABI 1.
-Provider checks returned pin and request project/timeline/ORIGINAL base pair;
-Runtime must capture privately and validate whole suffix/rationale against its
-verified CAS artifact, then enforce capture/authority-record bijection at accept.
-Pure execution can declare a dependency without granting acceptance authority.
-No caller proposal digest recomputation. No renderer changes or generated pins.
-Planned export: `astrid.sdk.timeline.producer.build_producer_batch(proposal)`;
-returns original target fields plus `commands` (PIN-only guard + untouched suffix)
-and `rationale`, without request identity/source. Requester owns fresh identities.
-`TimelineSession.queue_proposal` will persist this batch in its existing outbox,
-retain the original admission pair and reason, and refuse mixing pending edits.
+Implemented on `/home/user/work/wt/agt-m2-producer-guard` / branch
+`tl/agt-m2-producer-guard`, base `d4743e29`; harness supplies the final commit.
+Only the four proposal/golden test files are overlaid from `bdebad36`, with no
+older core. This section supersedes earlier design-only/product-hold statements
+for this worker's branch source under INBOX 01:40; integration still awaits M1.
+
+* Canonical NEW Bundle3 schema:
+  `/home/user/work/wt/agt-m2-producer-guard/astrid/core/timeline/schema/edit-command.schema.json`.
+  Raw file SHA-256 `1bffd6556396ca8c3d451d2889185f505254815422bca7be851cd00d441e0bd8`.
+  Definitions `ProducerIdentity`, `ProducerAdmittedTarget`, `ProducerAttemptPin`,
+  `ProducerGuardArgs`, `SettledProducerProposal`; registered `producer.guard`
+  v1, select:null, CLOSED args:{pin}, empty intention. Positive non-bool integer
+  fence/epoch, nonblank IDs, closed target and pin, exact digest length.
+  Frozen Bundle2 refs and Runtime/client generated pins were not modified.
+* Implementation:
+  `/home/user/work/wt/agt-m2-producer-guard/astrid/sdk/timeline/producer.py`:
+  `capture_producer(port, request)` calls exactly `producer_attempt(pin) -> {pin}`
+  with closed result, compares detached verified pin and original scoped target.
+  Missing/noncallable old ports refuse only this feature. Runtime remains
+  responsible for CAS artifact bytes/hash, suffix/rationale value equality and
+  private capture/authority-record bijection at preview/atomic acceptance.
+* Pure `producer_guard(ctx, command)` records existing dependency
+  `{key:"producer_attempt:"+task_id,kind:"authority",policy:"exact",pin}`;
+  it makes no authored writes. Provider passes `verified_producer` privately
+  through `commands.execute`, `Recording` and `rebase.replay`. Pure capture can
+  declare the dependency without authority; Runtime must refuse uncaptured
+  acceptance. First/unique guard and ordinary nonempty suffix are mandatory;
+  inverse/restore/nested guard suffixes refuse. Accepted inverse/redo execute
+  authored writes without consuming or revalidating the historical producer.
+* Public builder:
+  `from astrid.sdk.timeline import build_producer_batch`
+  (also `astrid.sdk.timeline.producer.build_producer_batch(proposal)`). Returns
+  `{project_id,timeline_id,base_revision_id,base_publication_id,commands,rationale}`;
+  commands are PIN-only guard plus unchanged proposal commands/claims/metadata.
+  It does not rehash caller-reserialized values or supply request identities.
+* Requester entry:
+  `/home/user/work/wt/agt-m2-producer-guard/astrid/sdk/timeline/sync.py`:
+  `TimelineSession.queue_proposal(proposal)` followed by ordinary `flush()`.
+  Existing outbox atomically stores original admitted base, exact batch and
+  rationale. Unrelated pending/flight must finish first; no sibling edits can
+  join the producer batch. Normal flush creates a fresh request key and persists
+  exact in-flight bytes, including rationale, for restart/unknown-outcome retry.
+  Server rebase may advance expected_head without replacing original admission.
+
+Golden source:
+`/home/user/work/wt/agt-m2-producer-guard/tests/editing_conformance/fixtures/settled_proposal_move.json`
+and adjacent `settled_proposal_move.artifact.json`,
+`settled_proposal_numeric.artifact.json`; unchanged authoritative proposal digests
+`sha256:a4939d8873bd3bdc4f8eb79fc973267b0b1e37bb468d89f9ea9ca3d635de0a1b`
+and `sha256:a2669f27bcf2cabb6705215a1d694e08efbfb051303ce5cc2c847463865d4052`.
+
+Final targeted Agent verification: **440 passed in 32.12s**, including unchanged
+Node numeric/custody goldens, installed native guard/schema/claims/metadata,
+provider capture refusals/rebase, inverse/redo and outbox restart tests. Touched
+Ruff and `git diff --check` passed. Exact commands and scope are in
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-producer-guard/notes/report.md`.
+
+Pairing blocker: `/home/user/work/runtime` is `9f9b25c`; neither RuntimeCommitPort
+nor RequestCommitPort implements producer_attempt (checked by importing both).
+No actual producer acceptance, one-shot/checkpoint/race, cancellation, completed
+epoch/restart or accepted replay proof is claimed. Runtime owns these tests; its
+prior prepared-provider tests are not Agent acceptance qualification. Pair this
+Agent schema/provider with Runtime's implementation and official generation,
+then run the real artifact numeric and lifecycle acceptance lanes.
+
+This guard does not convert the assembler. Keep the existing rendering writer
+until parent insertion/replacement, admitted task target builder, requester
+receipt-to-historical-render ACK retention and paired handoff qualify. No render
+files, endpoints, DTOs, ABI version, tables, coordinator or journal were changed.

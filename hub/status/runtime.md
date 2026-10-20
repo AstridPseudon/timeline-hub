@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T01:40:30Z | dispatcher heartbeat 8s -->
+<!-- main | 2026-10-20T01:45:42Z | dispatcher heartbeat 5s -->
 # runtime — 2026-10-20T01:19Z
 Milestone: Runtime M1 exit COMPLETE (accepted23:34); M0 COMPLETE. Global M1 still NOT RECORDED in PLAN. All M2 integration merges remain HELD.
 Integrated: Runtime tl/integration9f9b25c / tree5c3a7e71 / client0.2.1. Agent f6fbe741; App2bfde69ea. Occupied destinations refuse before writes; genuine two-project isolation integrated. Final full: `env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3` =>3790 passed,7 exact main failures,18 skipped (full-restore-integration-1019233020-32728). Zero new failures. Original CLI/browser/restore/mixed journeys retain their historical exact tuples; no full-green/macOS/owner-film/parity claim.
