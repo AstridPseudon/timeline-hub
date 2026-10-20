@@ -51,7 +51,9 @@ def parent_inputs(kind='image'):
     """The occurrence fixture plus a free parent lane 'overlay' holding one media clip."""
     document, old, new, verified = inputs(kind)
     payload = document['parent_revision']['payload']
-    payload['config']['tracks'].append({'id': 'overlay', 'kind': 'visual', 'role': 'output'})
+    payload['config']['tracks'].append({'id': 'overlay',
+                                       'kind': 'audio' if kind == 'audio' else 'visual',
+                                       'role': 'output'})
     for identity, at in (('ov-a', 0), ('ov-b', 5)):
         clip = {'id': identity, 'track': 'overlay', 'asset': 'picture', 'clipType': 'media', 'at': at, 'hold': 2}
         payload['config']['clips'].append(copy.deepcopy(clip))
@@ -64,8 +66,12 @@ def parent_inputs(kind='image'):
 
 def args(new, kind, **changes):
     # Completion scalars are a thin builder; only the complete row crosses the wire.
-    row = {'id': 'born', 'clipType': kind, 'asset': new['asset'], 'track': 'overlay',
+    row = {'id': 'born', 'clipType': 'media' if kind == 'audio' else kind,
+           'asset': new['asset'], 'track': 'overlay',
            'at': 3, 'hold': 4 if kind == 'video' else 1.25}
+    if kind in ('video', 'audio'):
+        row.update({'from': 2 if kind == 'video' else 0,
+                    'to': 6 if kind == 'video' else 1.25})
     if kind == 'video':
         row.update({'from': 2, 'to': 6, 'speed': 2})
     row.update(changes)
@@ -119,7 +125,7 @@ def clip_ids(bundle):
     return [row['id'] for row in State(bundle).collection('parent', 'clip')]
 
 
-@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
 def test_exact_capture_replay_scoped_birth_and_inverse(kind):
     document, bundle, command, verified = captured(kind)
     before = copy.deepcopy(bundle)
@@ -135,7 +141,8 @@ def test_exact_capture_replay_scoped_birth_and_inverse(kind):
     assert birth(command)['created'] == [ASSET, CHILD]
     assert plan.bundle['placements'] == before['placements'] and plan.bundle['shots'] == before['shots']
     row = State(plan.bundle).entity(CHILD)
-    assert (row['asset'], row['track'], row['clipType']) == ('reserved-new', 'overlay', kind)
+    assert (row['asset'], row['track'], row['clipType']) == (
+        'reserved-new', 'overlay', 'media' if kind == 'audio' else kind)
     assert row['at'] == pytest.approx(round(3 * 30000 / 1001) * 1001 / 30000)
     if kind == 'video':
         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
