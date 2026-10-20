@@ -18,15 +18,24 @@ PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a33220
 PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
 PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
+PRIVATE_GROUP_DURATION_SHA256 = '79c54f0ba6ddb1028a90f8e5545ece68a34fa156a3642b14fea550a8f02da0c2'
 
 
 def without_groups(schema):
-    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs'):
+    for name in ('MigrateGroupsArgs', 'OccurrenceMoveArgs', 'OccurrenceResizeArgs'):
         del schema['$defs'][name]
     schema['$defs']['EditCommand']['allOf'] = [
         clause for clause in schema['$defs']['EditCommand']['allOf']
         if clause['if']['properties']['op']['const'] not in
-        ('timeline.migrate-groups', 'occurrence.move')]
+        ('timeline.migrate-groups', 'occurrence.move', 'occurrence.resize')]
+    return schema
+
+
+def without_resize(schema):
+    del schema['$defs']['OccurrenceResizeArgs']
+    schema['$defs']['EditCommand']['allOf'] = [
+        clause for clause in schema['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'occurrence.resize']
     return schema
 
 
@@ -71,12 +80,12 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
     assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-    assert len(_SCHEMA['$defs']) == 58
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+    assert len(_SCHEMA['$defs']) == 59
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
     assert compatibility_errors(ordinary, _SCHEMA) == []
 
 
-def test_removing_only_group_additions_reconstructs_project_data_bytes():
+def test_removing_group_and_duration_additions_reconstructs_project_data_bytes():
     candidate = without_groups(copy.deepcopy(_SCHEMA))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
@@ -102,11 +111,19 @@ def test_project_data_proposal_has_a_new_closed_schema_hash():
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
-def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+def test_private_group_proposal_is_preserved_before_duration_addition():
+    candidate = without_resize(copy.deepcopy(_SCHEMA))
+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
-    assert len(_SCHEMA['$defs']) == 58
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+    assert len(candidate['$defs']) == 58
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 32
+
+
+def test_private_duration_proposal_is_one_closed_addition_on_group_floor():
+    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_DURATION_SHA256
+    assert len(_SCHEMA['$defs']) == 59
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
