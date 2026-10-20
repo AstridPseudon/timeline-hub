@@ -101,6 +101,15 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it('exposes the staged split port and fences capture behind earlier legacy saves', async () => {
+    const { hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipSplitPort!;
+    const current = hook.result.current.commit.data!;
+    setLegacyClean(false);
+    expect(() => port.capture({ clipId: 'x', on: 3, rightId: 'right', current })).toThrow('earlier timeline saves');
+    hook.unmount();
+  });
+
   it('exposes the scalar port and fences capture, finish and submit behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipScalarPort!;

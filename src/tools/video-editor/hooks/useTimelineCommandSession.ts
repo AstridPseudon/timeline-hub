@@ -1,4 +1,6 @@
 import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
+import { projectClipSplitPreview } from '../commands/clipSplitGesture.ts';
+import { projectTrackCreatePreview } from '../commands/trackCreateGesture.ts';
 import { projectParentClipAddPreview } from '../commands/parentClipAddGesture.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
@@ -94,7 +96,8 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const nativePreview = projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
+          const nativePreview = projectTrackCreatePreview(preview, data) ?? projectClipSplitPreview(preview, data)
+            ?? projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
           const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
@@ -132,7 +135,9 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const nativePreview = projectParentClipAddPreview(patch, commit.dataRef.current) ?? projectClipTrimPreview(patch, commit.dataRef.current);
+          const nativePreview = projectTrackCreatePreview(patch, commit.dataRef.current)
+            ?? projectClipSplitPreview(patch, commit.dataRef.current)
+            ?? projectParentClipAddPreview(patch, commit.dataRef.current) ?? projectClipTrimPreview(patch, commit.dataRef.current);
           const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
@@ -197,6 +202,15 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanTrim(); return trimPort.capture(input); },
           finish(basis, args) { requireCleanTrim(); return trimPort.finish(basis, args); },
           submit(input) { requireCleanTrim(); trimPort.submit(input); },
+        };
+        const splitPort = session.clipSplitPort;
+        const requireCleanSplit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before splitting');
+        };
+        session.clipSplitPort = {
+          capture(input) { requireCleanSplit(); return splitPort.capture(input); },
+          finish(basis) { requireCleanSplit(); return splitPort.finish(basis); },
+          submit(input) { requireCleanSplit(); splitPort.submit(input); },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -270,6 +284,8 @@ export function useTimelineCommandSession(options: {
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipTrimPort: sessionRef.current?.clipTrimPort,
+    clipSplitPort: sessionRef.current?.clipSplitPort,
+    trackCreatePort: sessionRef.current?.trackCreatePort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     clipParamsPort: sessionRef.current?.clipParamsPort,
     parentClipAddPort: sessionRef.current?.parentClipAddPort,

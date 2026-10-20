@@ -63,13 +63,13 @@ export async function environment(initialDocument = document()) {
   let serverHead = h0;
   let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
   let pause: ReturnType<typeof deferred> | null = null;
-  const calls: { path: string; method: string; body?: CommitRequest; key?: string }[] = [];
+  const calls: { path: string; method: string; body?: CommitRequest; bodyBytes?: number[]; key?: string }[] = [];
   const accepted = new Map<string, CommitAcceptedMutation>();
   const previousDocuments = new Map<string, CanonicalDocument>();
   const transport: Transport = async (method, path, headers, body) => {
     const request = body ? JSON.parse(new TextDecoder().decode(body)) as CommitRequest : undefined;
     const key = headers['Idempotency-Key'];
-    calls.push({ path, method, body: request, key });
+    calls.push({ path, method, body: request, bodyBytes: ArrayBuffer.isView(body) ? Array.from(body) : undefined, key });
     const ok = (value: unknown) => ({ status: 200, headers: {}, body: bytes(value) });
     if (path === '/v1/health') return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'instance-session' });
     if (path === '/v1/handshake') return ok({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, actor_id: 'actor-1', realm_id: 'realm-1', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: ['execution_binding.targeted.v1'] });
