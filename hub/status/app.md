@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T14:12:49Z | dispatcher heartbeat 13s -->
+<!-- app | 2026-10-20T14:18:17Z | dispatcher heartbeat 7s -->
 # app — 2026-10-20 13:56 UTC
 Milestone: M1 RECORDED; M2 active, M3 ongoing. FIRST current-tuple qualification, then bounded writer retirements; automatic placement TOP writer. No M2/M3 exit.
 Integrated: App tl/integration41fff23a29f13bd9aede6343592ffba8adebe1a3/tree3340e128af4dd8fe79a8fe1016b23666c6ea8eb5, root8/client021, MAIN17 true ancestry retained. Proxy server/current safety/history/D03/CORS/Viewing701 harness retained. Root candidate b1ef4b9b910ba72375c34cf319692f90d22edc25/tree8d8a10b057ed31fed69517e18a23b8ec3811447a = normal Runtime013/public12/MAIN17/desktop label/cold4; final independent APPROVE, 73 targeted and one actual locked project tsc PASS/0 diagnostics.
@@ -16,3 +16,5 @@ Resources:9.2GiB free13:52; no install/full/tsc request. Central browser lane co
 Decided locally14:04: verified raw counterpart may be passed through existing INTERNAL serializer/draft context, preserving one scalar/no new wire or store; cap follow-up may implement this before seeking any broader contract change. First scalar worker stopped truthfully with94controlsPASS/capturedregressionRED and no productdelta.
 
 Rows kept from app2 (owner13:54 received14:07): D01-app-transition-none-serialization (b22ab12 source+review/currentbrowserpending), D01-app-shot-graph-settings (live NAMEworker a4fb4 complete115PASS, review/gate next). Shared door/outbox/commit-session/useTimelineOps core edits remain App until per-seam agreement; PEER REQUEST sent app2. Yield element/ordinary/duplicate/parentmedia/bootstrap/resolvedserializer/selectedPARAM to app2; sourcehandoff preparing. ACK public13RECORDED13:54 /9412ae25, adoption+PCMconsumer active.
+
+Handed to app2 (14:17): element-routes, ordinary-batch, duplicate, parent-media, bootstrap, resolved-edit-serializer, selected-param. Seven <=20-line flat design/handoff-app-to-app2-<row>.md contain exact retained refs/SHAs/proofs/superseded sources/remainingcuts/targetedcommands. No new workers on these rows after14:11 directive.
