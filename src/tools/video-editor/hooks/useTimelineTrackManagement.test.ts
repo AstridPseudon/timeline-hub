@@ -591,3 +591,124 @@ it('does not add empty lane metadata to a legacy media-only row reorder', () => 
   expect(applyEdit.mock.calls[0][0].resolvedConfig.app).toBeUndefined();
   expect(applyEdit.mock.calls[0][0].resolvedConfig.tracks.map((entry: TrackDefinition) => entry.id)).toEqual(['A1', 'V1']);
 });
+
+describe('captured label commands', () => {
+  async function setupLabelPort() {
+    const data = await buildTimelineData(serializeForDisk(makeResolvedConfig([makeTrack('V1', 'visual')])), { assets: {} });
+    const dataRef = { current: data };
+    const applyEdit = vi.fn();
+    const capture = vi.fn(({ current }: { current: typeof data; trackId: string }) => ({
+      originalLabel: current.resolvedConfig.tracks[0].label,
+    }));
+    const finish = vi.fn((basis, args) => ({ command: {
+      schema_version: 1 as const, op: 'track.set', version: '1', select: 'parent/track:V1',
+      args, expect: { originalLabel: basis.originalLabel },
+    } }));
+    const submit = vi.fn();
+    const trackLabelPort = { capture, finish, submit };
+    const { result, rerender } = renderHook(() => useTimelineTrackManagement({
+      dataRef, resolvedConfig: dataRef.current.resolvedConfig, selectedClipId: null,
+      setSelectedTrackId: vi.fn(), applyEdit, trackLabelPort,
+    }));
+    return { dataRef, applyEdit, capture, finish, submit, result, rerender };
+  }
+
+  it.each(['音楽 🎬', ''])('submits %j through the command port without a snapshot edit', async (label) => {
+    const { applyEdit, capture, finish, submit, result } = await setupLabelPort();
+    const complete = result.current.handleTrackLabelEditStart('V1');
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(finish).not.toHaveBeenCalled();
+    complete(label);
+    expect(finish).toHaveBeenCalledWith({ originalLabel: 'V1' }, { values: { label }, clear: [] });
+    expect(submit).toHaveBeenCalledExactlyOnceWith({
+      command: { schema_version: 1, op: 'track.set', version: '1', select: 'parent/track:V1',
+        args: { values: { label }, clear: [] }, expect: { originalLabel: 'V1' } },
+      preview: { version: 1, operations: [{ op: 'track.update', target: 'V1', payload: { label } }] },
+    });
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('retains the original label guard across a poll or ACK while typing', async () => {
+    const { dataRef, capture, finish, submit, applyEdit, result, rerender } = await setupLabelPort();
+    const complete = result.current.handleTrackLabelEditStart('V1');
+    dataRef.current = await buildTimelineData(serializeForDisk(makeResolvedConfig([{ ...makeTrack('V1', 'visual'), label: 'Remote label' }])), { assets: {} });
+    rerender();
+    complete('Local label');
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(finish).toHaveBeenCalledWith({ originalLabel: 'V1' }, { values: { label: 'Local label' }, clear: [] });
+    expect(submit.mock.calls[0][0].command.expect).toEqual({ originalLabel: 'V1' });
+    expect(dataRef.current.resolvedConfig.tracks[0].label).toBe('Remote label');
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('propagates a command refusal without falling back to applyEdit', async () => {
+    const { result, submit, applyEdit, capture } = await setupLabelPort();
+    submit.mockImplementation(() => { throw new Error('Original label guard no longer holds.'); });
+    const complete = result.current.handleTrackLabelEditStart('V1');
+    expect(() => complete('Typed name')).toThrow('Original label guard no longer holds.');
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses missing ports and ambiguous identities before changing anything', async () => {
+    const data = await buildTimelineData(serializeForDisk(makeResolvedConfig([makeTrack('V1', 'visual')])), { assets: {} });
+    const applyEdit = vi.fn();
+    const { result } = renderHook(() => useTimelineTrackManagement({
+      dataRef: { current: data }, resolvedConfig: data.resolvedConfig, selectedClipId: null,
+      setSelectedTrackId: vi.fn(), applyEdit,
+    }));
+    expect(() => result.current.handleTrackLabelEditStart('V1')).toThrow('capture is unavailable');
+    const withPort = await setupLabelPort();
+    withPort.dataRef.current.resolvedConfig.tracks.push(makeTrack('V1', 'visual'));
+    expect(() => withPort.result.current.handleTrackLabelEditStart('V1')).toThrow('unambiguous track identity');
+    expect(withPort.capture).not.toHaveBeenCalled();
+    expect(withPort.submit).not.toHaveBeenCalled();
+    expect(withPort.applyEdit).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses label-only and mixed popover patches atomically instead of snapshot saving labels', async () => {
+    const { result, applyEdit, capture, submit } = await setupLabelPort();
+    expect(() => result.current.handleTrackPopoverChange('V1', { label: 'No capture' })).toThrow('captured label edit');
+    expect(() => result.current.handleTrackPopoverChange('V1', { label: 'Mixed', opacity: 0.5 })).toThrow('mixed track changes');
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(capture).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('rechecks the current track lock before finishing without refreshing the original capture', async () => {
+    const data = await buildTimelineData(serializeForDisk(makeResolvedConfig([makeTrack('V1', 'visual')])), { assets: {} });
+    const capture = vi.fn(() => ({ original: 'V1' }));
+    const finish = vi.fn();
+    const submit = vi.fn();
+    const applyEdit = vi.fn();
+    const { result, rerender } = renderHook(({ locked }) => useTimelineTrackManagement({
+      dataRef: { current: data }, resolvedConfig: data.resolvedConfig, selectedClipId: null,
+      setSelectedTrackId: vi.fn(), applyEdit,
+      editability: { ...createTimelineEditability({ lockedTrackIds: locked ? ['V1'] : [] }),
+        checkTimeline: () => ({ allowed: true }) },
+      trackLabelPort: { capture, finish, submit },
+    }), { initialProps: { locked: false } });
+    const complete = result.current.handleTrackLabelEditStart('V1');
+    rerender({ locked: true });
+    expect(() => complete('Keep locally')).toThrow('track_locked');
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(finish).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it.each([{ readOnly: true }, { lockedTrackIds: ['V1'] }])('honors the existing editability guard: %j', async (options) => {
+    const data = await buildTimelineData(serializeForDisk(makeResolvedConfig([makeTrack('V1', 'visual')])), { assets: {} });
+    const capture = vi.fn();
+    const applyEdit = vi.fn();
+    const { result } = renderHook(() => useTimelineTrackManagement({
+      dataRef: { current: data }, resolvedConfig: data.resolvedConfig, selectedClipId: null,
+      setSelectedTrackId: vi.fn(), applyEdit, editability: createTimelineEditability(options),
+      trackLabelPort: { capture, finish: vi.fn(), submit: vi.fn() },
+    }));
+    expect(() => result.current.handleTrackLabelEditStart('V1')).toThrow();
+    expect(capture).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+});

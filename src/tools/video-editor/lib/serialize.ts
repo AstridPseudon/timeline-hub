@@ -83,7 +83,7 @@ export const serializeResolvedTimelineEdit = (
   return {
     ...cloneTimelineExtras(authored),
     // Resolution replaces this opaque authored root with preview assets.
-    ...(authoredConfig && Object.hasOwn(authoredConfig, 'registry')
+    ...(authoredConfig && Object.prototype.hasOwnProperty.call(authoredConfig, 'registry')
       ? cloneAppExtension({ registry: Reflect.get(authoredConfig, 'registry') })
       : {}),
     ...serializeForDisk(resolved, pinnedShotGroups),

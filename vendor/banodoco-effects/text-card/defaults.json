@@ -1,9 +1,0 @@
-{
-  "align": "center",
-  "bold": false,
-  "italic": false,
-  "typewriter": true,
-  "typewriterDurationFraction": 0.55,
-  "entrance": ["fade-up", "type-on"],
-  "exit": ["fade"]
-}

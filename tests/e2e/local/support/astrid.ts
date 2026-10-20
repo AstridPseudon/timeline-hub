@@ -192,11 +192,13 @@ export class AstridCli {
 
   /** Read the original pinned basis in Python, then capture and commit with this client's own credential. */
   async commitCaptured(projectId: string, timelineId: string, base: HeadPin, operation:
-    { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }, key: string): Promise<CommitAcceptedMutation> {
+    { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }
+    | { kind: 'label'; trackId: string; label: string }, key: string): Promise<CommitAcceptedMutation> {
     const program = `
 import json, sys
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
+from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.commit import bundle_from_document
 project, timeline, base, operation, key = json.loads(sys.argv[1])
 with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-products-command') as client:
@@ -236,6 +238,8 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-p
     bundle = bundle_from_document(document)
     if operation['kind'] == 'track':
         command = capture_track_create(bundle, 'parent', {'id': operation['id'], 'kind': 'audio', 'label': operation['id']})
+    elif operation['kind'] == 'label':
+        command = capture_track_set(bundle, 'parent/track:' + operation['trackId'], values={'label': operation['label']})
     else:
         command = capture_move(bundle, 'parent/clip:' + operation['clipId'], operation['on'])
     body = dict(api_version=1, project_id=project, timeline_id=timeline,
