@@ -274,10 +274,7 @@ export function materializeTransitionDefaults(
     return Object.freeze({});
   }
 
-  const defaults: Record<string, unknown> = {};
-  for (const parameter of schema) {
-    defaults[parameter.name] = getFallbackValue(parameter);
-  }
+  const defaults = Object.fromEntries(schema.map((parameter) => [parameter.name, getFallbackValue(parameter)]));
   return Object.freeze(defaults);
 }
 
