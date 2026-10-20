@@ -15,7 +15,8 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 export const CURRENT013_RUNTIME = Object.freeze({
-  commit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
+  serverCommit: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
+  producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   version: '0.2.13',
   producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
   schemaDigest: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
@@ -23,9 +24,15 @@ export const CURRENT013_RUNTIME = Object.freeze({
   artifactCount: 75,
 });
 
+export const CURRENT013_AGENT = Object.freeze({
+  commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
+  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
+  lock: 'sha256:c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
+});
+
 export const CURRENT013_COMPOSITION = Object.freeze({
-  archive: 'banodoco-timeline-composition-0.0.12.tgz',
-  sha256: 'sha256:0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3',
+  archive: 'banodoco-timeline-composition-0.0.13.tgz',
+  sha256: 'sha256:9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
   fileCount: 77,
 });
 
@@ -89,8 +96,11 @@ export function readCurrent013Inputs(env = process.env, appRoot = process.cwd())
   const appTree = requiredSha(env, 'TIMELINE_CURRENT013_APP_TREE');
   const agentSha = requiredSha(env, 'TIMELINE_CURRENT013_AGENT_SHA');
   const runtimeSha = requiredSha(env, 'TIMELINE_CURRENT013_RUNTIME_SHA');
-  if (runtimeSha !== CURRENT013_RUNTIME.commit) {
-    fail(`TIMELINE_CURRENT013_RUNTIME_SHA must be the published Runtime ${CURRENT013_RUNTIME.commit}`);
+  if (agentSha !== CURRENT013_AGENT.commit) {
+    fail(`TIMELINE_CURRENT013_AGENT_SHA must be the frozen Agent ${CURRENT013_AGENT.commit}`);
+  }
+  if (runtimeSha !== CURRENT013_RUNTIME.serverCommit) {
+    fail(`TIMELINE_CURRENT013_RUNTIME_SHA must be the frozen Runtime server ${CURRENT013_RUNTIME.serverCommit}`);
   }
   if (!path.isAbsolute(appRoot)) fail(`App root must be absolute: ${appRoot}`);
   const app = realpathSync(appRoot);
@@ -120,7 +130,7 @@ function checkLock(root, label) {
   const file = path.join(root, 'runtime.lock.json');
   const lock = jsonFile(file);
   if (lock.producer !== 'astrid-runtime') fail(`${label} Runtime lock producer is ${lock.producer}, expected astrid-runtime`);
-  if (lock.source_commit !== CURRENT013_RUNTIME.commit) fail(`${label} Runtime source pin is ${lock.source_commit}, expected ${CURRENT013_RUNTIME.commit}`);
+  if (lock.source_commit !== CURRENT013_RUNTIME.producerCommit) fail(`${label} Runtime artifact producer pin is ${lock.source_commit}, expected ${CURRENT013_RUNTIME.producerCommit}`);
   if (lock.producer_version !== CURRENT013_RUNTIME.producerVersion) fail(`${label} Runtime artifact pin is ${lock.producer_version}, expected ${CURRENT013_RUNTIME.producerVersion}`);
   return { file: sha256File(file), sourceCommit: lock.source_commit, producerVersion: lock.producer_version };
 }
@@ -185,7 +195,7 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
   const producerTree = git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}');
   checkHead(input.agent, input.agentSha, 'Agent');
   checkHead(input.runtime, input.runtimeSha, 'Runtime');
-  checkHead(input.runtimeProducer, input.runtimeSha, 'Runtime producer');
+  checkHead(input.runtimeProducer, CURRENT013_RUNTIME.producerCommit, 'Runtime artifact producer');
   checkClean(input.app, 'App');
   checkClean(input.agent, 'Agent');
   checkClean(input.runtime, 'Runtime');
@@ -205,7 +215,7 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
     app: { root: input.app, tree: input.appTree, lock: appLock, metadata: appMetadata, composition: appComposition },
     agent: { root: input.agent, commit: input.agentSha, tree: agentTree, lock: agentLock, metadata: agentMetadata, composition: agentComposition },
     runtime: { root: input.runtime, commit: input.runtimeSha, tree: runtimeTree },
-    runtimeProducer: { root: input.runtimeProducer, commit: input.runtimeSha, tree: producerTree, manifest: runtimeManifest },
+    runtimeProducer: { root: input.runtimeProducer, commit: CURRENT013_RUNTIME.producerCommit, tree: producerTree, manifest: runtimeManifest },
   });
 }
 

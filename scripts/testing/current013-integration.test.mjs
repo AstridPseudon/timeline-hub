@@ -9,7 +9,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { after, mock, test } from 'node:test';
 import {
-  checkCurrent013Sources, CURRENT013_COMPOSITION, CURRENT013_RUNTIME,
+  checkCurrent013Sources, CURRENT013_AGENT, CURRENT013_COMPOSITION, CURRENT013_RUNTIME,
   readCurrent013Inputs, runCurrent013Integration,
 } from './current013-integration.mjs';
 
@@ -21,8 +21,8 @@ for (const root of Object.values(roots)) mkdirSync(root);
 function env() {
   return {
     TIMELINE_CURRENT013_APP_TREE: 'a'.repeat(40),
-    TIMELINE_CURRENT013_AGENT_SHA: 'b'.repeat(40),
-    TIMELINE_CURRENT013_RUNTIME_SHA: CURRENT013_RUNTIME.commit,
+    TIMELINE_CURRENT013_AGENT_SHA: CURRENT013_AGENT.commit,
+    TIMELINE_CURRENT013_RUNTIME_SHA: CURRENT013_RUNTIME.serverCommit,
     ASTRID_CHECKOUT: roots.agent,
     ASTRID_RUNTIME_CHECKOUT: roots.runtime,
     TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT: roots.producer,
@@ -39,7 +39,7 @@ function write(root, file, contents) {
 
 for (const root of [roots.app, roots.agent]) {
   write(root, 'runtime.lock.json', JSON.stringify({
-    producer: 'astrid-runtime', source_commit: CURRENT013_RUNTIME.commit,
+    producer: 'astrid-runtime', source_commit: CURRENT013_RUNTIME.producerCommit,
     producer_version: CURRENT013_RUNTIME.producerVersion,
   }));
   const metadata = root === roots.app
@@ -72,10 +72,11 @@ function controlled(fn, { dirty = '', childStatus = 0, mutate = () => {} } = {})
     const op = args.slice(2).join(' ');
     calls.push({ root, op });
     if (op === 'rev-parse --show-toplevel') return roots.app;
-    if (op === 'rev-parse HEAD^{tree}') return env().TIMELINE_CURRENT013_APP_TREE;
+    if (op === 'rev-parse HEAD^{tree}') return root === roots.agent ? CURRENT013_AGENT.tree : env().TIMELINE_CURRENT013_APP_TREE;
     // A central snapshot's App commit deliberately differs from the App tree.
     if (op === 'rev-parse HEAD') return root === roots.app ? 'd'.repeat(40)
-      : root === roots.agent ? env().TIMELINE_CURRENT013_AGENT_SHA : CURRENT013_RUNTIME.commit;
+      : root === roots.agent ? CURRENT013_AGENT.commit
+        : root === roots.runtime ? CURRENT013_RUNTIME.serverCommit : CURRENT013_RUNTIME.producerCommit;
     if (op === 'status --porcelain --untracked-files=normal') return root === roots.app ? appStatus : '';
     throw new Error(`unexpected git ${op}`);
   });
@@ -108,13 +109,13 @@ test('requires the exact App tree and does not infer a moving source path', () =
 test('accepts an App snapshot identity by tree and pins Runtime to the published SHA', () => {
   const input = readCurrent013Inputs(env());
   assert.equal(input.appTree, 'a'.repeat(40));
-  assert.equal(input.runtimeSha, CURRENT013_RUNTIME.commit);
+  assert.equal(input.runtimeSha, CURRENT013_RUNTIME.serverCommit);
 });
 
 test('refuses a different Runtime publication before any child launch', () => {
   const values = env();
   values.TIMELINE_CURRENT013_RUNTIME_SHA = 'c'.repeat(40);
-  assert.throws(() => readCurrent013Inputs(values), /must be the published Runtime/);
+  assert.throws(() => readCurrent013Inputs(values), /must be the frozen Runtime server/);
 });
 
 test('requires all eight inputs and full identities', () => {
@@ -175,7 +176,7 @@ test('same-tree snapshot and ignored output pass both boundaries; original comma
     assert.equal(child.options.env.ASTRID_PYTHON, env().ASTRID_PYTHON);
     assert.equal(child.options.env.ASTRID_RUNTIME_PYTHON, env().ASTRID_RUNTIME_PYTHON);
     assert.equal(child.options.env.TIMELINE_BUNDLE_AGENT_HEAD, env().TIMELINE_CURRENT013_AGENT_SHA);
-    assert.equal(child.options.env.TIMELINE_BUNDLE_RUNTIME_HEAD, CURRENT013_RUNTIME.commit);
+    assert.equal(child.options.env.TIMELINE_BUNDLE_RUNTIME_HEAD, CURRENT013_RUNTIME.serverCommit);
     assert.equal(calls.filter(({ root, op }) => root === roots.app && op?.startsWith('status ')).length, 2);
     assert.equal(calls.some(({ root, op }) => root === roots.app && op === 'rev-parse HEAD'), false);
   }, { mutate: () => write(roots.app, 'dist/ignored-output', 'normal build output') });
