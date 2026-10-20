@@ -38,7 +38,7 @@ operations, with membership/order/dependency guards. No diff-derived intent,
 generic replace, historical immutable rewrite or silent append conversion.
 
 **Agent host handoff:** replace the normal hook, not pack execution, with an
-explicitly approved/auto-approved proposal to `commitTimeline`:
+explicitly approved/auto-approved proposal returned to the requesting client, whose existing command session submits `commitTimeline`:
 `{api_version:1,project_id,timeline_id,base_revision_id,base_publication_id,commands,
 source:{via:"python"}}`. Capture the observed head pair before authoring;
 `expected_version`/`runtime-current` is insufficient. Persist original guards,
@@ -46,7 +46,7 @@ ordered children, IDs, realm/actor, exact request/key before send; reuse
 `sdk/timeline/{sync,outbox}.py`. Public session queue is currently move/inverse
 only; Agent owns batch/recovery. Worker scopes (`generic_host.py:4412`) lack
 **projects:write and tasks:write**, required by commit/task admission. Agent and
-Runtime must route through an authorized coordinator; never grant renderer edits.
+Runtime must return the proposal to the REQUESTING CLIENT, which commits with its own authority and original guards through its existing outbox. No existing authorized parent/coordinator was found; do not invent one or grant renderer edits.
 The old endpoint atomically rejects cancelled/stale attempts; ordinary commit
 has no attempt fence. A preflight lease read cannot preserve that guarantee:
 owners must resolve approval/lifecycle semantics before replacement.
@@ -60,9 +60,8 @@ params:{timeline_ref:<ID>,canonical_project_id:<ID>,canonical_parent_document_id
 ordinary output policy/storage estimate, empty caller media manifest and
 artifact-only settlement. Persist a separate exact admission body/key. Runtime
 `store.py:1692,1820` freezes the closure or refuses changed head; never remove
-the guard to render latest. Historical acceptance can use an owner-reviewed
-existing snapshot-ref lane or retain pending work with visible refusal.
-**Unverified Runtime retry finding:** `store.py:2226` freezes before replay lookup
+the guard to render latest. The approved additive admission contract must select the explicit immutable accepted revision plus receipt publication/digest; current-head expectation is not a historical selector. Runtime owns the exact negotiated shape and retained-closure resolution. Do not substitute latest or invent inline provenance.
+**Runtime permanent regression now proves the defect (d19fd01; repair candidate76f2f95 held):** `store.py:2226` freezes before replay lookup
 at `:2295,2341`; render A/lost ACK/new head C/restart/exact retry can fail before
 replay. Runtime must prove/reconcile this within the existing task API.
 
@@ -78,4 +77,4 @@ admits tasks with canonical guards; no nongenerated publication caller found.
 No product changes or behavior tests ran. Worker checked an incorrect relative orchestration path; the actual absolute QUIET marker existed. Manager observed source-only completion and granted capture only AFTER this worker exited. No capture overlap occurred. Viewing implements the thin proposal only after
 Agent supplies operations/host recovery and Runtime proves task replay.
 
-Manager review: branch documentation/report artifacts will NOT merge into product. This ORCH design is the maintained handoff. Source facts reviewed; Runtime retry behavior remains unexecuted, worker-scope limits may be intentional parent authority, and no broad scope grant is proposed.
+Manager review: branch documentation/report artifacts will NOT merge into product. This ORCH design is the maintained handoff. Source facts reviewed; Runtime retry behavior remains unexecuted, worker-scope limits remain intentional. PLAN decision2026-10-20 supersedes the old parent/coordinator recommendation: producers NEVER commit, requesting clients do. No broad scope grant is proposed.
