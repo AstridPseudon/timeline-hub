@@ -262,9 +262,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
                         schema_inputs=schema_inputs, realm_id=realm_id,
                         verified_producer=verified_producer)
+        ctx.prior_records = records
         _verify_claims(ctx, command)
         if resolve_inputs is not None:
-            ctx.prior_records = records
             ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:

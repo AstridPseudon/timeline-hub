@@ -174,16 +174,20 @@ class Recording:
 
     def create(self, owner, kind, row, *, restoring=False, after=None):
         rows(self.state, owner, kind, check_mirrors=not restoring)
-        if not restoring and any(s['owner'] == owner and s['key'] == 'collection.' + kind + 's.after'
-               for s in self.record['selections']):
-            raise CommandError('create-after requires a single scoped creation')
         ordered = None
         if after is not None:
             if restoring or kind not in ('clip', 'track') or any(
                     item['owner'] == owner and item['kind'] == kind for item in self.record['created']):
                 raise CommandError('create-after requires a single scoped creation')
-            self.select('collection.' + kind + 's.after', owner, [after])
-            ordered = order(self.state, owner, kind)
+            existing = [s for s in self.record['selections']
+                        if s['owner'] == owner and s['key'] == 'collection.' + kind + 's.after']
+            if existing:
+                if len(existing) != 1 or existing[0]['members'] != [after]:
+                    raise CommandError('create-after requires a single scoped creation')
+                ordered = list(existing[0]['order'])
+            else:
+                self.select('collection.' + kind + 's.after', owner, [after])
+                ordered = order(self.state, owner, kind)
         if owner != 'parent':
             self.read(owner, ['occurrence_id'])
             self.read(owner + '/shot', ['shot_id'])
