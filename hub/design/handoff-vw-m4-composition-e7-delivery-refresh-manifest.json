@@ -1,0 +1,40 @@
+{
+  "repository": "composition",
+  "source_ref": "tl/integration",
+  "source_commit": "e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332",
+  "source_tree": "408633d6b73dde63f683eaf9d13a132bb34a3bd7",
+  "main_ref": "origin/main",
+  "main_commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+  "main_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+  "merge_base": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+  "source_tracked_paths": 113,
+  "main_tracked_paths": 29,
+  "patch": {
+    "file": "composition-origin-main-to-e7ef7a072.patch",
+    "sha256": "12f8361a3f4d6f1c1edcf684600bc5e0fcf2276f5136a27c4b93d0095c71a440",
+    "bytes": 467845
+  },
+  "bundle": {
+    "file": "composition-origin-main-to-e7ef7a072.bundle",
+    "sha256": "46de26e1082485028a915d8693ec0484326e78c13a67c6d1ee03fb22702b8af3",
+    "bytes": 221307,
+    "head": "e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332",
+    "requires": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+  },
+  "verification": {
+    "patch_apply_check": "PASS",
+    "patched_archive_equals_source_tree": "PASS",
+    "source_archive_equals_source_tree": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "e7_delta": {
+    "path": "scripts/smoke-package.mjs",
+    "assertion_source": "scripts/builtin-inputs.json",
+    "change": "derive expected theme clip types from source-derived builtin inputs"
+  },
+  "immutable_public13": {
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+    "sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "members": 77
+  }
+}

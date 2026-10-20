@@ -1,0 +1,17 @@
+Base: e9d04f4bf0b9c06d184541655f20a4ca832d0370 (tree 8f67cc34e5e94ac4018ddb08691b17c45f333342)
+
+Pinned Node20 syntax and direct controller tests:
+PIN=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
+"$PIN" --check tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+"$PIN" --check tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+"$PIN" --test tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+
+Pinned Node20 offline five-case discovery:
+"$PIN" tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --discover "$PWD"
+
+Read-only frozen graph verification:
+"$PIN" --input-type=module --eval "import { assertFrozenRuntimeGraph } from './tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs'; console.log(assertFrozenRuntimeGraph())"
+
+Patch hygiene:
+git diff --check
+git status --short

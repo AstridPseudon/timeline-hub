@@ -1,0 +1,2 @@
+node --test config/vite/timelineCompositionPackage.test.mjs
+npm run build:hosted

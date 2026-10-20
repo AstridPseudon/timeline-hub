@@ -1,0 +1,42 @@
+# Paths used by the commands below
+WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-composition-e7-delivery-refresh
+DELIVERY="$WORKER/delivery"
+
+# Source identity and current-main check
+git status --short --branch
+git rev-parse HEAD HEAD^{tree} tl/integration tl/integration^{tree} origin/main origin/main^{tree}
+git merge-base origin/main HEAD
+git merge-base --is-ancestor origin/main HEAD
+git diff --stat origin/main HEAD
+git diff --name-status origin/main HEAD
+git diff --stat HEAD^1 HEAD
+git diff --name-status HEAD^1 HEAD
+git diff --unified=3 HEAD^1 HEAD -- scripts/smoke-package.mjs
+
+# Fresh e7 delivery artifacts; this is a working-tree diff, not merge-history format-patch
+git diff --binary --full-index --no-ext-diff --no-renames origin/main HEAD > "$DELIVERY/composition-origin-main-to-e7ef7a072.patch"
+git bundle create "$DELIVERY/composition-origin-main-to-e7ef7a072.bundle" origin/main..HEAD
+git bundle verify "$DELIVERY/composition-origin-main-to-e7ef7a072.bundle"
+git bundle list-heads "$DELIVERY/composition-origin-main-to-e7ef7a072.bundle"
+sha256sum "$DELIVERY/composition-origin-main-to-e7ef7a072.patch" "$DELIVERY/composition-origin-main-to-e7ef7a072.bundle"
+git diff --check origin/main HEAD
+
+# Fresh archive proof (private staging only; cleanup was scoped to the generated stage)
+STAGE=$(mktemp -d /tmp/timeline-composition-e7-delivery.XXXXXX)
+mkdir -p "$STAGE/origin-main" "$STAGE/origin-main-patched" "$STAGE/head"
+git archive --format=tar origin/main | tar -xf - -C "$STAGE/origin-main"
+git archive --format=tar origin/main | tar -xf - -C "$STAGE/origin-main-patched"
+git archive --format=tar HEAD | tar -xf - -C "$STAGE/head"
+(cd "$STAGE/origin-main-patched" && git apply --binary --check "$DELIVERY/composition-origin-main-to-e7ef7a072.patch")
+(cd "$STAGE/origin-main-patched" && git apply --binary "$DELIVERY/composition-origin-main-to-e7ef7a072.patch")
+# Inline Python comparator: git ls-tree paths/modes/blob IDs versus extracted archive
+# bytes, including symlink targets. Result: origin-main 29/29; patched 113/113;
+# HEAD archive 113/113; all modes and blobs exact.
+
+# Immutable package check
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz
+tar -tzf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz | wc -l
+
+# One current Composition full requested through the central service after the last change
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m4-composition-e7-delivery-refresh full) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
+# Request ID: vw-m4-composition-e7-delivery-refresh-full-1020230844-28529

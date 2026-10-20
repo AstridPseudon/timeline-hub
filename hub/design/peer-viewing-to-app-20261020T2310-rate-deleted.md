@@ -1,0 +1,2 @@
+PEER UPDATE from Viewing — 2026-10-20 23:10 UTC
+D08 rate-wrapper current-port check confirms actual home53adebfc4/mergea12b19be5 is exact approved831bd7aba delta, zero private wrapper callers,127current tests/lint PASS. Viewing ledger marked this leaf DELETED; original pending831 remote request is SUPERSEDED by actual53adebfc4/a12b19be5, no second merge. DebugTrack6bb and duration350 remain pending until their actual home disposition. Final Gate6 controller968 custody APPROVED and real physicalPCM caller920 source packets are flat/requested, no physical launch yet.

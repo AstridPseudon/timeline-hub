@@ -1,0 +1,6 @@
+# Gate6 AUDIO-STEP current App landing unit
+node --import tsx --test tests/e2e/timeline/viewing-parity/audio-join.test.ts
+node --import tsx --test tests/e2e/timeline/viewing-parity/canvas.test.ts
+node --import tsx --test tests/e2e/timeline/viewing-parity/tab-audio.test.ts
+node_modules/.bin/eslint --no-cache tests/e2e/timeline/viewing-parity/cases.ts tests/e2e/timeline/viewing-parity/canvas.test.ts --max-warnings 0
+node_modules/.bin/tsc --noEmit --skipLibCheck --strict --target ES2022 --module ESNext --moduleResolution bundler --types node tests/e2e/timeline/viewing-parity/cases.ts tests/e2e/timeline/viewing-parity/canvas.test.ts
