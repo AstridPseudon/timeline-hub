@@ -36,7 +36,9 @@ def test_child_readiness_contract_does_not_probe_cuda_or_gpu() -> None:
     assert "nvidia-smi" not in _CHILD_CHECK_PROGRAM.casefold()
 
 ROOT = Path(__file__).resolve().parents[3]
-VIBECOMFY = ROOT.parents[2].parent / "vibecomfy"
+VIBECOMFY = Path(
+    os.environ.get("ASTRID_VIBECOMFY_CHECKOUT", ROOT.parents[2].parent / "vibecomfy")
+)
 ACCOUNT_REF = "runpod-test-account"
 
 
