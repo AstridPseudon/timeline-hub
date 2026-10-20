@@ -1,13 +1,18 @@
 """Legacy publication cannot overwrite tracked history or choose its own target."""
 from __future__ import annotations
 
+import base64
+import copy
 import hashlib
 
 import pytest
 
+from precut_realm_fixture import load_precut_realm_fixture
 from runtime_protocol.errors import ConflictError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_baseline import verify_baseline
+from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.util import canonical_json
 from test_timeline_render_publication import _publication_body, _ready_authoring_attempt
 
@@ -64,6 +69,92 @@ def _publication_checkpoint(service, author, attempt, body, *, state, result=Non
             "WHERE authoring_task_id=?",
             (body["timeline_id"], body["expected_version"] + 1, canonical_json(result), author["task"]["id"]),
         )
+
+
+def _digest(value):
+    return "sha256:" + hashlib.sha256(value.encode()).hexdigest()
+
+
+def _ready_legacy_authoring_attempt(service, project_id, timeline_id):
+    child_cap = "test.child"
+    author_cap = "rendering.assemble_timeline"
+    render_cap = "rendering.render"
+    digests = {cap: _digest(cap) for cap in (child_cap, author_cap, render_cap)}
+    for capability_id, definition_digest in digests.items():
+        service.register_capability({"capability_id": capability_id, "definition_digest": definition_digest})
+    service.register_executor(
+        {"executor_id": "legacy-worker", "capabilities": list(digests), "max_concurrency": 4},
+        idempotency_key="register-legacy-worker",
+    )
+    child_ids = []
+    for index in range(2):
+        child = service.create_task({
+            "project": project_id, "capability_id": child_cap, "capability_digest": digests[child_cap],
+            "input_object_ids": [], "spec": {"index": index}, "idempotency_key": f"legacy-child-{index}",
+        })
+        child_ids.append(child["task"]["id"])
+    author = service.create_task({
+        "project": project_id, "capability_id": author_cap, "capability_digest": digests[author_cap],
+        "input_object_ids": [], "idempotency_key": "legacy-author",
+        "spec": {"runtime_dependencies": {
+            "publication": {"timeline_id": timeline_id, "expected_version": 1},
+            "edges": [
+                {"from_task_id": child_id, "to": "self", "requires_event": "task.succeeded", "fence": "runtime_task"}
+                for child_id in child_ids
+            ],
+            "aggregation": {"kind": "ordered_cas_inputs"},
+        }},
+    })
+    child_attempts = {}
+    for index, child_id in enumerate(child_ids):
+        claimed = service.claim_next(
+            {"executor_id": "legacy-worker", "capability_ids": [child_cap],
+             "runtime_epoch": service.health()["runtime_epoch"]},
+            idempotency_key=f"claim-legacy-child-{index}",
+        )
+        child_attempts[child_id] = claimed
+    for index, child_id in enumerate(reversed(child_ids)):
+        claimed = child_attempts[child_id]
+        raw = f"legacy-child-{index}".encode()
+        service.settle_attempt(
+            claimed["attempt_id"],
+            {"lease_id": claimed["lease_id"], "fence": claimed["fence"],
+             "runtime_epoch": claimed["runtime_epoch"], "outputs": [{
+                 "digest": "sha256:" + hashlib.sha256(raw).hexdigest(),
+                 "data_base64": base64.b64encode(raw).decode(),
+                 "media_type": "text/plain", "name": "primary", "role": "primary", "is_primary": True,
+             }]},
+            idempotency_key=f"settle-legacy-child-{index}",
+        )
+    attempt = service.claim_next(
+        {"executor_id": "legacy-worker", "capability_ids": [author_cap],
+         "runtime_epoch": service.health()["runtime_epoch"]},
+        idempotency_key="claim-legacy-author",
+    )
+    return attempt, digests[render_cap]
+
+
+def _legacy_publication_body(service, project_id, timeline_id, attempt, render_digest):
+    parent = service.get_project_parent_composition_revision(
+        project_id, timeline_id, service.get_project_timeline(project_id, timeline_id)["head_revision_id"],
+    )
+    return {
+        "lease_id": attempt["lease_id"], "fence": attempt["fence"], "runtime_epoch": attempt["runtime_epoch"],
+        "timeline_id": timeline_id, "expected_version": 1,
+        "config": copy.deepcopy(parent["payload"]["config"]),
+        "registry": copy.deepcopy(parent["payload"]["registry"]),
+        "render": {"capability_id": "rendering.render", "capability_digest": render_digest,
+                   "spec": {"capability_id": "rendering.render", "kind": "executor",
+                             "inputs": {"output_name": "final.mp4"}, "outputs": {}}},
+    }
+
+
+def _commit_body(project_id, timeline_id, head, command):
+    return {
+        "api_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+        "commands": [command], "source": {"via": "python"},
+    }
 
 
 def test_retired_writer_refuses_before_lookup_without_writes(service):
@@ -223,12 +314,112 @@ def test_tracking_is_scoped_to_the_publication_target(service):
     assert result["timeline_version"] == 2
 
 
-def test_legacy_head_without_canonical_publication_remains_publishable(service):
-    _, _, attempt, render_digest = _ready_authoring_attempt(service, legacy_parent=True)
-    head = service.store.conn.execute(
-        "SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id='main'",
-    ).fetchone()
-    assert head["revision_id"] == "legacy-parent" and head["publication_id"] is None
-    result = service.publish_timeline_render(attempt["attempt_id"], _publication_body(attempt, render_digest),
-                                            idempotency_key="publish")
-    assert result["timeline_version"] == 2
+def test_legacy_head_without_canonical_publication_refuses_without_writes(tmp_path):
+    captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
+    project_id, timeline_id = captured.pins["project_id"], captured.pins["timeline_id"]
+    service = RuntimeService(captured.copy_roots[1])
+    try:
+        assert service.get_project_timeline(project_id, timeline_id)["head_publication_id"] is None
+        before_document = verify_baseline(
+            service.store.conn, project_id, timeline_id, read_object=service.cas.read,
+        )["canonical_document"]
+        attempt, render_digest = _ready_legacy_authoring_attempt(service, project_id, timeline_id)
+        before = _state(service)
+        with pytest.raises(RetiredRouteError) as error:
+            service.publish_timeline_render(
+                attempt["attempt_id"], _legacy_publication_body(
+                    service, project_id, timeline_id, attempt, render_digest,
+                ), idempotency_key="retired-legacy-film",
+            )
+        assert error.value.status == 410
+        assert error.value.details["reason"] == "command_required"
+        assert _state(service) == before
+        assert verify_baseline(
+            service.store.conn, project_id, timeline_id, read_object=service.cas.read,
+        )["canonical_document"] == before_document
+    finally:
+        service.close()
+
+
+@pytest.mark.integration
+def test_canonical_equivalent_film_commit_remains_publishable(tmp_path, astrid_importable):
+    """The safe replacement for the retired legacy-head publication succeeds.
+
+    The legitimate behavior change is narrow: an untracked legacy render write
+    is refused, while the captured film is first admitted as canonical history,
+    then committed through the current provider before historical render
+    admission.
+    """
+    from astrid.core.dev.journey import build_app_render_admission
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    assert (astrid_importable / "astrid/sdk/timeline/commit.py").is_file()
+    captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
+    project_id, timeline_id = captured.pins["project_id"], captured.pins["timeline_id"]
+    service = RuntimeService(captured.copy_roots[1])
+    try:
+        baseline = verify_baseline(
+            service.store.conn, project_id, timeline_id, read_object=service.cas.read,
+        )["canonical_document"]
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        head = service.get_project_timeline(project_id, timeline_id)
+        canonical = service._timeline_commits()[0].revision_closure(
+            project_id, timeline_id, head["head_revision_id"],
+        )
+        assert canonical == baseline
+        assert canonical["parent_revision"]["payload"]["clips"][1]["extension"] == {
+            "opaque": [None, {"keep": True}],
+        }
+        assert canonical["dependency_manifest"]["media"]
+
+        command = {
+            "schema_version": 1, "op": "timeline.restore", "version": "1", "select": None,
+            "args": {"revision_id": head["head_revision_id"],
+                     "content_digest": canonical["parent_revision"]["content_digest"]},
+            "created": [],
+        }
+        accepted = service.commit_timeline(
+            project_id, timeline_id, _commit_body(project_id, timeline_id, {
+                "revision_id": head["head_revision_id"], "publication_id": head["head_publication_id"]}, command),
+            idempotency_key="canonical-equivalent-film", publisher="legacy-film-editor",
+            invocation_path=route_path(project_id, timeline_id), authorize=lambda: None,
+        )
+        assert accepted["data"]["canonical_document"] == canonical
+        assert accepted["data"]["provider_version"] == "astrid-v1"
+        assert accepted["data"]["canonical_document"]["dependency_manifest"]["media"] == \
+            canonical["dependency_manifest"]["media"]
+
+        render_digest = _digest("rendering.render")
+        service.register_capability({
+            "capability_id": "rendering.render", "definition_digest": render_digest,
+        })
+        service.register_executor(
+            {"executor_id": "historical-render-worker", "capabilities": ["rendering.render"]},
+            idempotency_key="register-historical-render-worker",
+        )
+        capability = next(
+            item for item in service.list_capabilities()["items"]
+            if item["capability_id"] == "rendering.render"
+        )
+        request = build_app_render_admission(
+            project=project_id, timeline_id=timeline_id, output_name="canonical-equivalent-review.mp4",
+            capability=capability, token="test-token",
+        )
+        request = copy.deepcopy(request["body"])
+        request["idempotency_key"] = "canonical-equivalent-historical-render"
+        parent = accepted["data"]["canonical_document"]["parent_revision"]
+        request["spec"]["params"]["canonical_revision"] = {
+            "project_id": project_id, "timeline_id": timeline_id,
+            "revision_id": accepted["data"]["accepted_revision_id"],
+            "publication_id": accepted["receipt"]["receipt_id"],
+            "content_digest": parent["content_digest"],
+        }
+        admitted = service.create_task(request)
+        authority = admitted["task"]["spec"]["spec"]["inputs"]["timeline_authority"]
+        assert authority["project_id"] == project_id
+        assert authority["timeline_id"] == timeline_id
+        assert authority["parent_revision_id"] == accepted["data"]["accepted_revision_id"]
+        assert authority["publication_id"] == accepted["receipt"]["receipt_id"]
+        assert authority["parent_content_digest"] == parent["content_digest"]
+    finally:
+        service.close()
