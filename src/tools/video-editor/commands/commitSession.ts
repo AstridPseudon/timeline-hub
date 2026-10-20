@@ -23,6 +23,7 @@ import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trac
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { captureTrackCreate, executeTrackCreate, finishTrackCreate, type TrackCreateArgs } from './trackCreateCapture.ts';
 import { trackCreatePreview, type TrackCreateCapturePort } from './trackCreateGesture.ts';
+import { captureGenericPatch, executeGenericPatch, type GenericPatchCapturePort } from './genericPatchCapture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -277,6 +278,51 @@ export async function createTimelineCommandSession(options: Options) {
       if (!entry || entry.generation !== localGeneration) throw new Error('Move was not captured by this session');
       prepared.delete(key);
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
+  const genericPatchPort: GenericPatchCapturePort = {
+    capture({ patch, current }) {
+      assertReady();
+      if (patch.version !== 0 && patch.version !== current.configVersion) {
+        throw new Error('Native patch has a stale local version');
+      }
+      const snapshot = freezeJson(copy(current));
+      const capture = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+        ? (trackLabelPort.capture({ trackId: operation.target, current: snapshot }).command as unknown as EditCommand).select!
+        : clipScalarPort.capture({ clipId: operation.target, current: snapshot }).select as string);
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      prepared.set(JSON.stringify(capture.commands), { payload: {
+        commands: capture.commands, before: bundle, after: capture.bundle, preview: capture.preview,
+      }, generation: localGeneration, basis: localBasis });
+      return freezeJson({ current: snapshot, capture, localGeneration, localBasis });
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the native patch');
+      const key = JSON.stringify(basis.capture.commands);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || !equal(basis.capture.preview, entry.payload.preview)) {
+        throw new Error('Native patch was not captured by this session');
+      }
+      // Replay the frozen sequential claims on current bytes, preserving disjoint remote work.
+      const result = executeGenericPatch(bundle, entry.payload.commands);
+      const commands = entry.payload.commands;
+      const preview = entry.payload.preview!;
+      prepared.set(key, { payload: {
+        commands, before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: entry.basis });
+      return { commands, preview };
+    },
+    submit({ commands, preview }) {
+      assertReady();
+      const key = JSON.stringify(commands);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Native patch was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Native patch requires its exact combined preview');
+      enqueue(entry.payload, entry.payload.preview, entry.basis);
+      prepared.delete(key);
     },
   };
   const trackLabelPort: TrackLabelCapturePort = {
@@ -756,6 +802,7 @@ export async function createTimelineCommandSession(options: Options) {
     parentClipAddPort,
     clipDeletePort,
     trackCreatePort,
+    genericPatchPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

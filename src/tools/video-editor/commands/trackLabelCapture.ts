@@ -72,3 +72,12 @@ export function finishTrackLabel(basis: unknown, args: TrackLabelArgs) {
   }
   return apply(basis.bundle as AuthoredBundle, { ...copy(basis.command as EditCommand), args: copy(args) });
 }
+
+/** Replay original native claims as one member of an ordered command batch. */
+export function executeTrackLabel(bundle: AuthoredBundle, command: EditCommand, ordinal = 0) {
+  assertFiniteJson(bundle);
+  assertFiniteJson(command);
+  const result = apply(bundle, command);
+  result.record.ordinal = ordinal;
+  return result;
+}

@@ -11,7 +11,7 @@ import { createCommitOutbox } from '../commitOutbox.ts';
 import { createTimelineCommandSession } from '../commitSession.ts';
 import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
-import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
+import { ClipMoveError, executeClipMove, type AuthoredBundle } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 import { executeClipTrim } from '../clipTrimCapture.ts';
 import { executeClipDelete } from '../clipDeleteCapture.ts';
@@ -110,16 +110,18 @@ export async function environment(initialDocument = document()) {
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
       if (['clip.move', 'track.set', 'clip.trim', 'clip.set-params', 'clip.set', 'clip.delete'].includes(request.commands[0].op)) {
-        let result;
+        let bundle: AuthoredBundle = await authoringBundleFromDocument(serverDocument);
         try {
-          const bundle = await authoringBundleFromDocument(serverDocument);
-          result = request.commands[0].op === 'clip.delete' ? executeClipDelete(bundle, request.commands[0])
-            : request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
-            : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
-            : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
-            : request.commands[0].op === 'track.set'
-              ? finishTrackLabel({ bundle, command: request.commands[0] }, request.commands[0].args as TrackLabelArgs)
-              : finishClipParams({ bundle, command: request.commands[0] }, request.commands[0].args as ClipParamsArgs);
+          for (const command of request.commands) {
+            const result = command.op === 'clip.delete' ? executeClipDelete(bundle, command)
+              : command.op === 'clip.move' ? executeClipMove(bundle, command)
+              : command.op === 'clip.trim' ? executeClipTrim(bundle, command)
+              : command.op === 'clip.set' ? executeClipSet(bundle, command)
+              : command.op === 'track.set'
+                ? finishTrackLabel({ bundle, command }, command.args as TrackLabelArgs)
+                : finishClipParams({ bundle, command }, command.args as ClipParamsArgs);
+            bundle = result.bundle;
+          }
         }
         catch (error) {
           if (!(error instanceof ClipMoveError) || !['capture_mismatch', 'identity_conflict'].includes(error.kind)) throw error;
@@ -127,7 +129,7 @@ export async function environment(initialDocument = document()) {
           return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
             details: { status: 'conflict', reason: error.kind } }) };
         }
-        const payload = { ...result.bundle.parent, occurrences: [] };
+        const payload = { ...bundle.parent, occurrences: [] };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
       } else if (request.commands[0].op === 'timeline.inverse') {
