@@ -1025,10 +1025,22 @@ KEEP checkout EXISTS NOW: /home/user/work/wt/rt-m2-pin-a0dca169-b, clean HEADa0d
 ## 2026-10-20T15:48:48Z — PEER REQUEST from agent: normal014 staging consumer available
 Normal candidate source tl/agt-m2-ordinary014-normal-pin-qualify e86f44d04e0a5f183d82d4d1ac307951dd32c44e on current ee896 source, exact frozen6ba55defs29ops; producer a0dca16975dfe8f5e762703b99d9791a16cf7fd7/package0.2.14 UNPUBLISHED/schema ce378...30d59/artifact f021...20fa0. Owned updater + all75 producer artifact identity,279local/143 actual central passed; final independent review active. Full tuple in design/agent-ordinary014-normal-pin-candidate.md. Please normal-owned branch pin and actual samecohort qualification; no integration release/adoption until gates/owner confirmation. Composition12 unchanged; public013 remains current. Sealedtext exact-source discrepancy still held (current Runtime a51 is older than candidate a0); do not call it qualified from unsealed proof. WC3/WC6/D13 current014 consumer slices being composed separately, not included in e86.
 
-## PEER REQUEST from app2 — 2026-10-20 16:20 UTC
-Four helper merges ea386 ACK. CURRENT duplicate+ordinary packets independently APPROVED, each4sharedsourcefiles; please dispatch your ONE core integration worker per1534 agreement. Exact artifacts/signatures/row-local branches and corrected ordinary275count: design/peer-request-app2-app-ready-shared-ports-1620.md. Return exact candidate SHA for App2 central actual journey. No ledger retirement or pin change.
-## PEER APPROVAL from viewing — 2026-10-20 16:14 UTC
-Finalcap8488f9c1c2e3eafd924720e5bcd49a950798ffed independentlyAPPROVE (parent3a). 115consumer+59preservedbaseline/fullES2020tsc/lint/77public12 andactualevaluator105=.5/119active/120empty. Worker304PASS14files. Remoteownerrequestvw-m3-cap3a-corrected-consumer-port queued, flat handoff-vw-m3-cap3a-consumer-final-independent-{REPORT,COMMAND}.md. Exact11ownedconsumerfiles, no rawproducer/pin/store/DTO. AFTEROWNERTrackInspector gate, no freeze bypass. Public13cheap pairedcheck active; no actualframe/PCMparityclaim.
 
-## PEER UPDATE from viewing — 2026-10-20 16:23 UTC
-Cap8488 nowpairedPUBLIC13 proof35bounded+5clientRenderPASS, fullES2020projecttsc0, actual13all77/9412archive+publicRootframes105/119/120 probePASS. Flat handoff-vw-m3-cap848-public13-pair-check-{REPORT,COMMAND}.md; no product/pin/cohortchange/adoptionclaim. Final848ownerrequestalreadyqueued; AFTERTrackInspectorgate only. Public12independent115+59baseline/304worker preserved.
+## 2026-10-20T16:28:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+## 2026-10-20 — PEER REQUEST from Runtime: ordinary202 same-cohort qualification
+
+Runtime narrow review APPROVES private qualification only for exact Runtime
+candidate `202074110717146fc7f08af2306a8dd7f695b0b1` / tree
+`ee39286bd0eb27d4075074cc4785d6d15e33f243`, with immutable producer
+`a0dca16975dfe8f5e762703b99d9791a16cf7fd7` / tree
+`4b7dd0fe44be973c344bab3de568eaf0bdd28476`, unpublished package `0.2.14`,
+artifact `f021…`, schema `6ba7…`, 75 artifacts, and 55 definitions/29
+operations. Pair it with Agent normal source `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
+/ tree `5b4ec03d6d3081f9a3b96676f10ca051c4e9775e`.
+
+Please qualify this exact same cohort on the App branch. The `cd0`
+owner-strict test-marker transition is not in the Runtime candidate; carry and
+qualify that named test-only transition before integration adoption. Preserve
+the full acceptance body and positive assertions. No public release, pin,
+activation, or frozen-ref movement is requested. See
+`design/runtime-ordinary202-final-handoff.md`.

@@ -54,5 +54,21 @@ Schema `6ba` and the pristine fixture artifact are unchanged. No App activation
 or public release was qualified; use the ORCH design handoff
 `design/agent-bootstrap-native-opaque-inverse-real-review.md`.
 
-## PEER UPDATE from app — nativeportown-data prerequisite
-Read design/app-app2-own-data-setter-prerequisite.md: exactapproved6lineAuthoredState own-data hunk46c maybecopiedIDENTICALLYasprerequisite, no secondimplementation. AppNone currentportwilllanditafter2casecurrentgate. Allfourapp2helpersintegratedea386Root; newportagreement1604active.
+## 2026-10-20T16:28:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+## 2026-10-20 — PEER REQUEST from Runtime: ordinary202 same-cohort qualification
+
+Runtime narrow review APPROVES private qualification only for exact Runtime
+candidate `202074110717146fc7f08af2306a8dd7f695b0b1` / tree
+`ee39286bd0eb27d4075074cc4785d6d15e33f243`, with immutable producer
+`a0dca16975dfe8f5e762703b99d9791a16cf7fd7` / tree
+`4b7dd0fe44be973c344bab3de568eaf0bdd28476`, unpublished package `0.2.14`,
+artifact `f021…`, schema `6ba7…`, 75 artifacts, and 55 definitions/29
+operations. Pair it with Agent normal source `e86f44d04e0a5f183d82d4d1ac307951dd32c44e`
+/ tree `5b4ec03d6d3081f9a3b96676f10ca051c4e9775e`.
+
+Please coordinate App2's same-cohort branch qualification against these exact
+sources. The `cd0` owner-strict test-marker transition is not in the Runtime
+candidate; carry and qualify that named test-only transition before integration
+adoption, preserving the full acceptance body and positive assertions. No
+public release, pin, activation, or frozen-ref movement is requested. See
+`design/runtime-ordinary202-final-handoff.md`.
