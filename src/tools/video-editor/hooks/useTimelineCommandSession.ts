@@ -32,6 +32,7 @@ export function useTimelineCommandSession(options: {
   const sessionRef = useRef<TimelineCommandSession | null>(null);
   const activeRef = useRef(false);
   const ownsHistoryRef = useRef(false);
+  const readGenerationRef = useRef(0);
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
@@ -41,6 +42,7 @@ export function useTimelineCommandSession(options: {
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
+    const invalidateReads = () => { readGenerationRef.current++; };
     const disposeSession = () => {
       void session?.dispose().catch((error) => console.error('[TimelineCommandSession] Unsaved moves on close', error));
     };
@@ -64,6 +66,16 @@ export function useTimelineCommandSession(options: {
       }
       session = await createTimelineCommandSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
+        loadLatest: async () => {
+          if (disposed) throw new Error('Timeline command session is closed');
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before resolving commands');
+          projectGeneration++;
+          invalidateReads();
+          const fresh = await provider.loadTimelineCommandBasis!(timelineId);
+          invalidateReads();
+          if (disposed) throw new Error('Timeline command session is closed');
+          return fresh;
+        },
         send: (request, key) => provider.commitTimeline!(request, key),
         changed,
         preview: (patch) => {
@@ -145,6 +157,7 @@ export function useTimelineCommandSession(options: {
       ownerId: null, recoverableOwners: [], canUndo: false }));
     return () => {
       disposed = true;
+      invalidateReads();
       ownsHistoryRef.current = false;
       projectGeneration++;
       sessionRef.current = null;
@@ -156,8 +169,11 @@ export function useTimelineCommandSession(options: {
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;
+    const session = sessionRef.current;
+    const generation = readGenerationRef.current;
     const priorHead = latest.current.headRevisionRef.current;
     void provider.loadTimelineCommandBasis!(timelineId).then((basis) => {
+      if (cancelled || sessionRef.current !== session || generation !== readGenerationRef.current) return;
       const currentHead = latest.current.headRevisionRef.current;
       if (currentHead !== priorHead && (currentHead?.headRevisionId !== basis.head.revisionId
         || currentHead.headPublicationId !== basis.head.publicationId)) return;
@@ -167,11 +183,13 @@ export function useTimelineCommandSession(options: {
           && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
           latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
         }
-        sessionRef.current?.observe(basis);
+        session.observe(basis);
       }
     }).catch((error) => {
       // A failed poll does not alter the retained command or its retry identity.
-      if (!cancelled) setState((current) => ({ ...current, error: error instanceof Error ? error.message : String(error) }));
+      if (!cancelled && sessionRef.current === session && generation === readGenerationRef.current) {
+        setState((current) => ({ ...current, error: error instanceof Error ? error.message : String(error) }));
+      }
     });
     return () => { cancelled = true; };
   }, [enabled, options.loaded, provider, timelineId, state.ownerId]);
@@ -190,8 +208,17 @@ export function useTimelineCommandSession(options: {
   const undo = useCallback(async () => { await requireSession().undo(); }, [requireSession]);
   const flush = useCallback(async () => { await requireSession().flush(); }, [requireSession]);
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
+  const resolve = useCallback(async (keep: boolean) => {
+    const session = requireSession();
+    readGenerationRef.current++;
+    try { await (keep ? session.keepLabelChanges() : session.useLatest()); }
+    finally { readGenerationRef.current++; }
+  }, [requireSession]);
+  const useLatest = useCallback(() => resolve(false), [resolve]);
+  const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
-    retry, undo, flush, recover };
+    retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
-export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;
+export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
+  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges'>>;

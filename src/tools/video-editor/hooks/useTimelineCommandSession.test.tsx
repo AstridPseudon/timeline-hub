@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
-import { document as commandDocument, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { document as commandDocument, environment, scope } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
@@ -82,14 +82,14 @@ async function scoped() {
   const eventBus = new TimelineEventBus();
   const recoveryConfig = createRecoveryConfig();
   let legacyClean = true;
-  const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
+  const hook = renderHook(({ provider, timelineId, loaded }: { provider: DataProvider; timelineId: string; loaded?: timelineData.TimelineData }) => {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
     const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => legacyClean,
-      resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
+      resolveAssetUrl: async (file) => file, loaded, snapshotWriteBlockedRef, headRevisionRef,
       configVersionRef, lastSavedSignatureRef, store, recoveryConfig, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
     return { commit, commands };
-  }, { initialProps: { provider: env.provider, timelineId: 'timeline-commit' } });
+  }, { initialProps: { provider: env.provider as DataProvider, timelineId: 'timeline-commit', loaded: undefined as timelineData.TimelineData | undefined } });
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
     saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
@@ -98,6 +98,93 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('projects Use latest as a normal accepted read pin only after durable explicit discard', async () => {
+    const { env, hook, snapshotWriteBlockedRef, headRevisionRef } = await scoped();
+    env.setFault('conflict');
+    act(() => { submitTrackLabelEdit(captureTrackLabelEdit(hook.result.current.commands.trackLabelPort,
+      hook.result.current.commit.data!, 'V1'), { values: { label: 'Mine' }, clear: [] }); });
+    await waitFor(() => expect(hook.result.current.commands.state.canDiscardRejected).toBe(true));
+    const [original] = await env.outboxes.list(scope);
+    const fresh = await env.external((raw) => {
+      (raw.parent_revision.payload.config as { tracks: Array<{ label: string }> }).tracks[0].label = 'Theirs';
+    });
+    const load = vi.spyOn(env.provider, 'loadTimelineCommandBasis');
+    await act(async () => { await hook.result.current.commands.useLatest(); });
+    expect(load).toHaveBeenCalledWith('timeline-commit');
+    expect(hook.result.current.commands.state.status).toBe('saved');
+    expect(snapshotWriteBlockedRef.current).toBe(false);
+    expect(hook.result.current.commands.activeRef.current).toBe(false);
+    expect(headRevisionRef.current).toMatchObject({ headRevisionId: fresh.head.revisionId,
+      headPublicationId: fresh.head.publicationId });
+    expect(hook.result.current.commit.data!.config.tracks[0].label).toBe('Theirs');
+    expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: fresh.head });
+    const [cleared] = await env.outboxes.list(scope);
+    expect(cleared.ownerId).toBe(original.ownerId);
+    expect(cleared.intents).toEqual([]);
+    expect(cleared.pending).toBeUndefined();
+    expect(env.commits()).toHaveLength(1);
+    hook.unmount();
+  });
+
+  it('fences a late poll across explicit Keep so old pixels cannot acquire the new accepted pin', async () => {
+    const { env, hook, headRevisionRef } = await scoped();
+    env.setFault('conflict');
+    act(() => { submitTrackLabelEdit(captureTrackLabelEdit(hook.result.current.commands.trackLabelPort,
+      hook.result.current.commit.data!, 'V1'), { values: { label: 'Mine' }, clear: [] }); });
+    await waitFor(() => expect(hook.result.current.commands.state.canReapplyLabel).toBe(true));
+    const stale = await env.external((raw) => {
+      (raw.parent_revision.payload.config as { tracks: Array<{ label: string }> }).tracks[0].label = 'Earlier remote';
+    });
+    let finishPoll!: (basis: typeof env.initial) => void;
+    const load = vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockImplementationOnce(() =>
+      new Promise((resolve) => { finishPoll = resolve; }));
+    hook.rerender({ provider: env.provider, timelineId: 'timeline-commit', loaded: { ...env.current() } });
+    await waitFor(() => expect(load).toHaveBeenCalledOnce());
+    await env.external((raw) => {
+      (raw.parent_revision.payload.config as { tracks: Array<{ label: string }> }).tracks[0].label = 'Fresh remote';
+    });
+    env.setFault(null);
+    await act(async () => { await hook.result.current.commands.keepLabelChanges(); });
+    const accepted = hook.result.current.commit.data!;
+    const acceptedHead = headRevisionRef.current;
+    expect(accepted.config.tracks[0].label).toBe('Mine');
+    expect(env.commits()[1].body!.commands[0].expect?.['parent/track:V1::label'])
+      .toEqual({ state: 'present', value: 'Fresh remote' });
+    await act(async () => { finishPoll(stale); });
+    expect(hook.result.current.commit.data).toBe(accepted);
+    expect(headRevisionRef.current).toBe(acceptedHead);
+    expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted',
+      head: { revisionId: acceptedHead!.headRevisionId, publicationId: acceptedHead!.headPublicationId } });
+    hook.unmount();
+  });
+
+  it('preserves the original rejected owner when a project switch races Keep', async () => {
+    const { env, hook, neutral, headRevisionRef, snapshotWriteBlockedRef } = await scoped();
+    env.setFault('conflict');
+    act(() => { submitTrackLabelEdit(captureTrackLabelEdit(hook.result.current.commands.trackLabelPort,
+      hook.result.current.commit.data!, 'V1'), { values: { label: 'Mine' }, clear: [] }); });
+    await waitFor(() => expect(hook.result.current.commands.state.canReapplyLabel).toBe(true));
+    const [original] = await env.outboxes.list(scope);
+    let finish!: (basis: typeof env.initial) => void;
+    const load = vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockImplementationOnce(() =>
+      new Promise((resolve) => { finish = resolve; }));
+    const keeping = hook.result.current.commands.keepLabelChanges();
+    const refused = expect(keeping).rejects.toThrow('closed');
+    await waitFor(() => expect(load).toHaveBeenCalledOnce());
+    hook.rerender({ provider: neutral, timelineId: 'other', loaded: undefined });
+    const next = compileTimelinePatch({ version: 1, operations: [{ op: 'track.update', target: 'V1',
+      payload: { label: 'New project pixels' } }] }, hook.result.current.commit.data!).nextData!;
+    const nextHead = { projectId: 'other-project', timelineId: 'other', headRevisionId: 'next-r', headPublicationId: 'next-p' };
+    act(() => { hook.result.current.commit.commitData(next); headRevisionRef.current = nextHead; });
+    await act(async () => { finish(env.initial); await refused; });
+    expect(hook.result.current.commit.dataRef.current).toBe(next);
+    expect(headRevisionRef.current).toBe(nextHead);
+    expect(snapshotWriteBlockedRef.current).toBe(false);
+    expect((await env.outboxes.list(scope))[0]).toEqual(original);
+    expect(env.commits()).toHaveLength(1);
+    hook.unmount();
+  });
+
   it('fences track-label capture, completion and submission behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.trackLabelPort!;

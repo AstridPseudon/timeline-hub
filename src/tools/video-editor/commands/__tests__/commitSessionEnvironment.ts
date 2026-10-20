@@ -133,6 +133,7 @@ export async function environment(initialDocument = document()) {
   const previews = vi.fn();
   const { outbox: outboxes, factory } = storage();
   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
+    loadLatest: () => provider.loadTimelineCommandBasis(timelineId),
     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
     project: async (basis) => {
       projected.push(basis);
