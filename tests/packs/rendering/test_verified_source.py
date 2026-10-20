@@ -10,6 +10,7 @@ import pytest
 from astrid.core.execution.generic_host import GenericPackHost, HostError
 from astrid.core.rendering.verified_source import (
     SOURCE_ENV,
+    PreparedTimelineInputs,
     VerifiedTimelineSource,
     inherited_source,
 )
@@ -104,6 +105,115 @@ def test_missing_authority_fails_closed(tmp_path):
     del spec["spec"]["inputs"]["timeline_authority"]
     with pytest.raises(HostError, match="requires admitted authority"):
         host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+@pytest.mark.parametrize("case,reason", [
+    ("reserved", "verified timeline source is host-owned"),
+    ("reference", "timeline snapshot reference differs from admitted context"),
+    ("capture", "capture snapshot differs from admitted context"),
+    ("authority", "verified source requires admitted authority and snapshot"),
+    ("timeline", "verified source prepared inputs cannot be caller replaced"),
+    ("assets_registry", "verified source prepared inputs cannot be caller replaced"),
+    ("snapshot", "verified source snapshot cannot be caller replaced"),
+    ("project_id", "verified source project_id differs from admitted authority"),
+    ("timeline_id", "verified source timeline_id differs from admitted authority"),
+    ("revision_id", "verified source revision_id differs from admitted authority"),
+    ("revision_digest", "verified source requires an admitted revision digest"),
+    ("content_digest", "verified source revision digest differs"),
+    ("snapshot_digest", "verified source snapshot digest differs from Runtime authority"),
+    ("working_copy", "verified source working copy differs"),
+])
+def test_host_preserves_literal_source_refusals(tmp_path, case, reason):
+    host, spec, snapshot, ref = admitted(tmp_path, capture=case in {"capture", "working_copy"},
+                                         working_copy=case == "working_copy")
+    inputs = spec["spec"]["inputs"]
+    if case == "reserved":
+        spec["spec"][SOURCE_ENV] = "caller"
+        # Reserved-key refusal precedes parameter validation and any fetch.
+        spec["spec"]["params"] = "invalid"
+        host.client.get_object = lambda key: pytest.fail("reserved source reached CAS")
+    elif case == "reference":
+        spec["spec"]["timeline_snapshot_ref"] = {**ref, "revision_id": "other"}
+    elif case == "capture":
+        inputs["timeline_snapshot"] = snapshot
+        inputs["filmstrip_authority"] = json.dumps({"capture_snapshot": {}})
+    elif case == "authority":
+        inputs.pop("timeline_authority")
+    elif case in {"timeline", "assets_registry"}:
+        inputs[case] = "caller.json"
+    elif case == "snapshot":
+        spec["spec"]["timeline_snapshot"] = snapshot
+    elif case in {"project_id", "timeline_id", "revision_id"}:
+        inputs["timeline_authority"][{"revision_id": "parent_revision_id"}.get(case, case)] = "other"
+    elif case == "revision_digest":
+        ref["revision_digest"] = "invalid"
+    elif case == "content_digest":
+        inputs["timeline_authority"]["parent_content_digest"] = "sha256:" + "0" * 64
+    elif case == "snapshot_digest":
+        inputs["timeline_authority"]["snapshot_digest"] = "sha256:" + "0" * 64
+    elif case == "working_copy":
+        ref["working_copy"] = {}
+        inputs["filmstrip_authority"] = json.dumps({"capture_snapshot_ref": ref})
+    original = deepcopy(spec)
+    with pytest.raises(HostError) as error:
+        host._materialize_inputs(spec, tmp_path / "attempt", task_param_ports=() if case == "reserved" else None)
+    assert str(error.value) == reason
+    assert spec == original
+    assert not (tmp_path / "attempt/inputs/verified-timeline-source.json").exists()
+
+
+@pytest.mark.parametrize("capture,working_copy", [(False, False), (True, False), (True, True)])
+def test_host_does_not_mutate_admitted_dictionaries(tmp_path, capture, working_copy):
+    host, spec, snapshot, ref = admitted(tmp_path, capture=capture, working_copy=working_copy, media=True)
+    original = deepcopy((spec, snapshot, ref))
+    host._materialize_inputs(spec, tmp_path / "attempt")
+    assert (spec, snapshot, ref) == original
+
+
+def test_non_timeline_inputs_remain_ordinary_task_data(tmp_path):
+    spec = {"spec": {"params": {"prompt": "hello", "options": {"nested": [1, True]}}}}
+    original = deepcopy(spec)
+    host = GenericPackHost(pack_roots=[tmp_path], client=SimpleNamespace())
+    values = host._materialize_inputs(spec, tmp_path / "attempt", task_param_ports=("prompt", "options"))
+    assert values == {"prompt": "hello", "options": {"nested": [1, True]}, "params": spec["spec"]["params"]}
+    assert values.timeline_source is None
+    assert spec == original
+    assert not any(path.is_file() for path in (tmp_path / "attempt").rglob("*"))
+
+
+def test_capture_keeps_existing_json_error_type(tmp_path):
+    host, spec, snapshot, _ = admitted(tmp_path, capture=True)
+    spec["spec"]["inputs"].update(timeline_snapshot=snapshot, filmstrip_authority="{")
+    with pytest.raises(json.JSONDecodeError):
+        host._materialize_inputs(spec, tmp_path / "attempt")
+
+
+@pytest.mark.parametrize("verified", [False, True])
+@pytest.mark.parametrize("ambient", [False, True])
+def test_source_handoff_changes_only_the_reserved_environment_key(tmp_path, verified, ambient):
+    host, spec, _, _ = admitted(tmp_path)
+    values = host._materialize_inputs(spec, tmp_path / "attempt")
+    inputs = values if verified else dict(values)
+    original = deepcopy(inputs)
+    env = {"PYTHONPATH": "pack-path", "PROVIDER_TOKEN": "provider-value"}
+    if ambient:
+        env[SOURCE_ENV] = "caller-forgery"
+    expected = {"PYTHONPATH": "pack-path", "PROVIDER_TOKEN": "provider-value"}
+    if verified:
+        expected[SOURCE_ENV] = values.timeline_source._anchor
+    PreparedTimelineInputs.handoff_source(inputs, env)
+    assert env == expected
+    assert inputs == original
+
+
+def test_source_handoff_clears_ambient_authority_before_refusing_changed_bytes(tmp_path):
+    host, spec, _, _ = admitted(tmp_path)
+    values = host._materialize_inputs(spec, tmp_path / "attempt")
+    Path(values["timeline"]).write_text("{}")
+    env = {SOURCE_ENV: "caller-forgery", "PYTHONPATH": "pack-path"}
+    with pytest.raises(ValueError, match="^verified source prepared timeline bytes differ$"):
+        PreparedTimelineInputs.handoff_source(values, env)
+    assert env == {"PYTHONPATH": "pack-path"}
 
 
 
