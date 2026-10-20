@@ -40,22 +40,7 @@ export const getClipTimelineDuration = (clip: TimelineClip): number => {
   return getConfigTimelineClipDuration(clip);
 };
 
-export const getSanitizedMediaTrimProps = (
-  clip: Pick<TimelineClip, 'from' | 'to'>,
-  fps: number,
-): { trimBefore: number; trimAfter?: number } => {
-  const trimBeforeSeconds = typeof clip.from === 'number' && Number.isFinite(clip.from)
-    ? Math.max(0, clip.from)
-    : 0;
-  const trimAfterSeconds = typeof clip.to === 'number' && Number.isFinite(clip.to) && clip.to > trimBeforeSeconds
-    ? clip.to
-    : undefined;
-
-  return {
-    trimBefore: secondsToFrames(trimBeforeSeconds, fps),
-    ...(trimAfterSeconds === undefined ? {} : { trimAfter: secondsToFrames(trimAfterSeconds, fps) }),
-  };
-};
+export { computeMediaTrim as getSanitizedMediaTrimProps } from '@banodoco/timeline-composition/evaluation';
 
 export const getSanitizedPlaybackRate = (speed: TimelineClip['speed']): number => {
   return getCanonicalClipPlaybackRate(speed);
