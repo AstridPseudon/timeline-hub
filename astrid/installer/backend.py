@@ -179,8 +179,13 @@ class Backend:
         self.run(
             [python, "-I", "-c", script, str(agent), str(data), str(python), bun,
              str(chat_cwd) if chat_cwd else "", str(services_path)],
-            extra_env={**env, **chat_options},
+            extra_env={**env, **chat_options, "ASTRID_INSTALL_PROGRAM_ROOT": str(self.root)},
         )
+        declaration = read_json(services_path)
+        for service in declaration.get("services", []):
+            if isinstance(service, dict) and service.get("name") == "chat":
+                service.setdefault("env", {})["ASTRID_INSTALL_PROGRAM_ROOT"] = str(self.root)
+        write_json(services_path, declaration)
         return services_path
 
     def workspace(self, version: Version | None, data: Path) -> dict:
@@ -465,6 +470,12 @@ class Backend:
                         return json.load(response)
                 health = get("/api/runtime/v1/health")
                 realm = get("/api/runtime/v1/realm")
+                services = health.get("services", [])
+                if isinstance(services, list) and any(
+                    isinstance(service, dict) and service.get("state") == "failed"
+                    for service in services
+                ):
+                    raise ValueError("A declared Astrid service is failed.")
                 if (health.get("status") != "ok" or realm.get("realm_id") != realm_id
                         or discovery.get("active_realm") != realm_id
                         or health.get("runtime_instance_id") != discovery.get("runtime_instance_id")

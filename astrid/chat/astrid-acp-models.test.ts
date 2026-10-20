@@ -213,7 +213,7 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'
   const unknown = fixture({ astridCatalogUnavailable: true });
   try {
     const unsignedCatalog = localAgentCatalogSchema.parse(await (await unsigned.call('/agents')).json());
-    expect(unsignedCatalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: 'Run `astrid`, then `/login`.' });
+    expect(unsignedCatalog.agents.find(agent => agent.id === 'astrid')).toMatchObject({ state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine });
     const keylessCatalog = localAgentCatalogSchema.parse(await (await keyless.call('/agents')).json());
     expect(keylessCatalog.agents.find(agent => agent.id === 'astrid')?.state).toBe('ready');
     const unknownCatalog = localAgentCatalogSchema.parse(await (await unknown.call('/agents')).json());
