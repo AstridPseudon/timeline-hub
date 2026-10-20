@@ -1,52 +1,44 @@
 # Runtime history after catalog visibility
 
-Worker: rt-m2-history-after-catalog-visibility. Runtime base: 601d533d91e3726c4f7ae74723e8eff4adbe2f90. Worktree: /home/user/work/wt/rt-m2-history-after-catalog-visibility. The harness assigns the final commit after this worker exits.
+Completed worker rt-m2-history-after-catalog-visibility. Runtime base601d533d91e3726c4f7ae74723e8eff4adbe2f90; final qualified source tree345a58f9b43d3162f83617189ed6f147b132eb7a. Worktree /home/user/work/wt/rt-m2-history-after-catalog-visibility. The harness assigns the commit after worker exit.
 
-## Exact reported regression and root cause
+## Exact regression and root cause
 
-Read Agent's report at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-real-catalog-gate/report.md and its exact probe from branch tl/agt-m2-recover-real-catalog-gate, tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore (source afcb326c8bfb216e404502c1ff4a08bde5c735ca).
+Read Agent's report at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-recover-real-catalog-gate/report.md and its exact probe tests/sdk/test_timeline_checkout_history_runtime.py::test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore from tl/agt-m2-recover-real-catalog-gate, source afcb326c8bfb216e404502c1ff4a08bde5c735ca.
 
-The reported real commit/archive/recover succeeds and preserves the canonical film head/closure. The next history request fails with 409 history_unavailable, “timeline has untracked writes.” Runtime's TimelineCommitStore.head checked all events after the head's accepted receipt and allowed only timeline.renamed. Authenticated timeline.archived/timeline.recovered therefore looked like untracked film writes. 601 fixes recover replay provenance, not this history check. Legacy baseline installation also independently rejected those later events/scoped receipts.
+Real commit/archive/recover succeeds and preserves canonical head/closure, but the next history call fails409 history_unavailable, “timeline has untracked writes.” TimelineCommitStore.head allowed only timeline.renamed after the head's accepted receipt. Authenticated archive/recover therefore looked like untracked film writes. 601 fixed recover replay provenance, not this check. Legacy baseline installation independently rejected the later events/scoped receipts.
 
-## Minimal product change
+## Minimal diff
 
-- Extract the existing, unchanged _timeline_resource projection into runtime_protocol/timeline_catalog.py so the writer and verifier use exactly the same state representation.
-- Reuse the existing full timeline hash-chain/project validation, then account for archive/recover events only through a unique matching receipt at the exact stream position. Verify timeline/aggregate identity, exact event IDs, project-sequence ordering, strict event shape/version, the normal request hash, receipt result/head/project association, contiguous catalog versions and final live visibility/version.
-- Compare every catalog receipt's full film projection with live state. Compare flat shot/reference state with the retained legacy timeline snapshot as well, so a raw write made before the genuine catalog receipts cannot be laundered by them. On recorded heads, reuse immutable closure validation, accepted-document equality and existing shot/text guards before granting the exception.
-- Allow only these authenticated receipt IDs through legacy baseline's existing scoped-ledger guard. Unknown events, historical recover events with target_version, missing/malformed/ambiguous receipts and projection changes still refuse. Existing display-only rename handling stays in place.
-- Preserve head's existing CommitRejected failure contract. No new film history edge, provider execution, evaluator, DTO, table, journal, ledger or backfill. Reads do not write.
+- Extract the existing _timeline_resource projection unchanged into runtime_protocol/timeline_catalog.py. Writer and verifier share exactly one state representation.
+- Reuse full timeline hash-chain/project validation. Account for archive/recover only through a unique matching receipt at the exact stream position: timeline/aggregate/event identity, ordered project sequence, strict event shape/version, normal request hash, full result/project/head association, contiguous catalog versions and final live visibility/version must agree.
+- Compare catalog results with live film projections, and flat shot/reference state with its retained legacy snapshot. Reuse immutable closure validation, accepted-document equality and existing shot/text guards so genuine catalog receipts cannot launder earlier untracked film writes.
+- Permit only those proven receipt IDs through baseline's existing scoped-ledger guard. Unknown events, historical recover target_version facts, missing/malformed/ambiguous receipts and projection changes still refuse. Existing display-only rename policy remains. Preserve head's CommitRejected contract.
 
-All current reads hold the existing store mutex, also held by catalog mutations. Acceptance rechecks the same head/proof inside its existing SQLite transaction. Ledger-first exact accepted retries are unchanged. This relies on Runtime's existing single admitted writer/realm lock; it adds no new external-writer synchronization.
+Product delta:104 net lines, including the unchanged projection extraction. Permanent tests:168 lines, exactly two nodes. No provider execution, scene evaluation, new film-history edge, DTO, table, journal, ledger or backfill. Reads do not write.
 
-## Old records and limits
+Reads and catalog mutations hold the existing store mutex; acceptance rechecks the same proof in its existing SQLite transaction. Existing single-admitted-writer/realm-lock assumptions apply. Ledger-first exact accepted retries are unchanged.
 
-Verification reads retained results without invoking time-bounded replay. Expired catalog responses can be checked using their existing exact result hash, with the event version/visibility substituted into the same projection. Proven legacy baseline publication IDs may still have been null when a catalog receipt was issued; this is allowed only on a verified legacy publication, retaining the same immutable revision and other state.
+## Old records and remaining limits
 
-An expired catalog result followed by a rename can lose the old display name needed to reconstruct its exact hash. Such a record remains fail-closed; no guessed name or state upgrade. Receiptless operations and requests outside the normal archive/recover body forms remain unproven. No new test matrix for these limits was added. The service probe checks ordinary expired hashes and restart; the permanent regression is the exact normal HTTP lifecycle plus one raw canonical-film negative.
+Verification reads retained results without time-bounded response replay. Existing expired result hashes are checked against the same exact projection with event version/visibility. A proven legacy publication may have had a null publication ID when its catalog receipt was issued; only that verified legacy case permits the null field, preserving the immutable revision and all other state.
 
-## Qualification scope and source
+An expired catalog result followed by a rename can lose the old display name needed to prove its exact hash. It stays fail-closed; no guessed name, state upgrade or reevaluation. Receiptless/unknown facts and requests outside the normal archive/recover body forms remain unproven. Ordinary expiry/restart is covered by the service probe; no extra permanent matrix was added.
 
-The permanent file is tests/test_timeline_catalog_history_integration.py (two nodes). It reuses Runtime's precut film fixture and normal startup-loaded Agent RuntimeCommitService. The same ordinary authenticated /v1 connection as Agent’s exact probe uses real HTTP; public SDK TimelineSession performs move and a fresh-session restore. Film rows/CAS and complete history are compared exactly across archive/recover and restart; exact catalog receipt retries write nothing. The negative changes an existing canonical clip position and its config mirror (with its actual matching content hash), without changing any accepted receipt/history, before genuine archive/recover and expects history_unavailable without writes. No accepted history is manufactured with SQL or a fake provider.
+## Final proof and sources
 
-Manager-approved immutable Agent source: /home/user/work/wt/agt-pin-afcb326c, afcb326c8bfb216e404502c1ff4a08bde5c735ca. Normal generated client contract 0.2.13; schema digest sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4. No metadata overrides or dependency changes. The default Agent a760ecca lacked Session.restore, caught before submission; the manager supplied the exact peer source and named lane. Composition rendering is not exercised by this task.
+Final central request rt-m2-history-after-catalog-visibility-catalog-history-agentafcb-integration-1020193826-760: **2 passed in6.83s**, exit0, source tree345a58f9b43d3162f83617189ed6f147b132eb7a.
 
-Central request (single, scoped):
+Uses immutable clean Agent afcb326c8bfb216e404502c1ff4a08bde5c735ca at /home/user/work/wt/agt-pin-afcb326c; normal generated client0.2.13/schema sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4. Tests assert actual startup RuntimeCommitService and matching client/server metadata; no overrides/dependency changes.
 
-```
-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test rt-m2-history-after-catalog-visibility catalog-history-agentafcb-integration --files tests/test_timeline_catalog_history_integration.py
-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test rt-m2-history-after-catalog-visibility-catalog-history-agentafcb-integration-1020191203-17928
-```
+The positive reuses Runtime's precut film fixture and Agent's original normal authenticated daemon.endpoint /v1 connection. Real SDK Session.move -> archive/recover -> exact unchanged film rows/CAS/history -> restart/exact catalog receipts -> fresh Session.restore. The negative follows an accepted closure's shot_id to a populated project_shots.name, proves the stored value changed before genuine catalog receipts, then requires409 history_unavailable/unaccounted_shot_projection and no accepted writes. No accepted history/receipts are fabricated with SQL or a fake provider.
 
-The named lane uses exact clean Agent HEAD and:
+Local main guard suites:128 passed/1 existing integration node deselected. Selected service cases:37 passed/14 HTTP cases deselected. The same-film real-service probe also passes ordinary catalog visibility, exact history, expired catalog hashes/restart and the populated shot-projection negative. Exact commands/results are in the worker report.
 
-```
-env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-afcb326c ASTRID_RUNTIME_CHECKOUT=$PWD PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-afcb326c PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_timeline_catalog_history_integration.py
-```
+## Qualification corrections and next owner
 
-Final central result and exact local results are recorded in the worker report. No full, all-M1, renderer or browser suite was requested. Agent owns the subsequent retry of only its original failing node, after Runtime manager review of the harness-assigned fixed SHA. This change does not declare private, integration-wide or foundation gates complete.
+Original queued17928 was cancelled before execution. Executed3733 failed both nodes on worker fixture mistakes: the added browser transport's /api/runtime/v1/timelines/film/archive is outside door policy (classify=None ->404), and the capture has no timeline_shots rows. Normal server.py already serves authenticated /v1/timelines/film/archive. No route/auth/schema/ID changes were made. Preflight found project_shots3/head3 and shot_items0; the final negative uses an existing referenced project_shots field. Manager explicitly authorized the final rerun of only those failed nodes. Product was unchanged throughout fixture repair.
 
-The originally queued request17928 contained an added facade-level retry call. Source review caught Agent's pre-HTTP refusal of that old catalog version. Runtime manager requested cancellation before execution and authorized one corrected snapshot on 2026-10-20T19:17:19Z, changing only that retry to the existing generated transport with identical body/key/result/no-write assertions. This qualifies Runtime's idempotency boundary; the independent Agent facade case stays OPEN and its original assertion is retained. Final corrected request/tree/result follow in the report.
+Agent's high-level recover facade independently refuses an old catalog version before HTTP, including exact retry. Runtime's retry check uses the existing generated transport with original body/key and unchanged result/no-write assertions. That does not qualify facade retry: the Agent-owned case stays OPEN and its original assertion is retained.
 
-Corrected central snapshot: tree95de37105f518efff57f8b58b2beec8a328ba320, request rt-m2-history-after-catalog-visibility-catalog-history-agentafcb-integration-1020192212-3733. Original17928 is cancelled before execution and is not a test result. No product changes after the corrected request; subsequent test-fixture corrections are recorded below.
-
-Executed request3733 returned2FAIL in4.40s before the intended history check: the initially added browser transport could not reach catalog archive (404), and the captured fixture had no flat timeline_shots rows. These are worker test-wiring mistakes, not product regression evidence. Both test fixtures are corrected to the exact original normal /v1 connection and an actually existing canonical clip field. The same-film service probe proves that this raw canonical mutation is refused after genuine catalog receipts, without writes. No product changes followed the final128-pass guard run. Further central execution is pending manager authorization of only those failed nodes.
+No full/all-M1/renderer/browser/private/integration-wide gates claimed. Runtime manager reviews the harness-assigned fixed SHA; Agent then owns only its original failing catalog/restore node retry. This is not a foundation-gate completion claim.
