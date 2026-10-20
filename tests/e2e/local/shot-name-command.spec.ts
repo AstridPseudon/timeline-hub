@@ -342,9 +342,28 @@ test('M2 real embedded SettingsAutoDisable: native scalar field change, raw sett
   const acceptedResponse = accepted.response as CommitAcceptedMutation;
   expect(acceptedResponse.data.status).toMatch(/^(accepted|rebased)$/);
   const acceptedPin = pinOf(acceptedResponse);
+  const acceptedShot = acceptedResponse.data.canonical_document.shot_revisions.find((candidate) => candidate.revision_id === acceptedPin.revision_id && candidate.shot_id === settingsSeed.shotId);
+  expect(acceptedShot, 'Agent8130 materializes the edited shot closure').toBeTruthy();
+  const acceptedInternal = acceptedResponse.data.canonical_document.internal_timeline_revisions.find((candidate) => candidate.revision_id === acceptedShot!.internal_timeline_revision_id);
+  expect(acceptedInternal, 'the accepted shot pin resolves to its accepted internal timeline').toBeTruthy();
+  expect(acceptedShot!.internal_timeline_revision_id).not.toBe(initial.shot.payload.internal_timeline_revision_id);
+  const acceptedShotManifest = acceptedResponse.data.canonical_document.dependency_manifest.shots.find((candidate) => candidate.shot_id === acceptedShot!.shot_id);
+  expect(acceptedShotManifest).toEqual({
+    shot_id: acceptedShot!.shot_id,
+    revision_id: acceptedShot!.revision_id,
+    internal_timeline_revision_id: acceptedShot!.internal_timeline_revision_id,
+    content_digest: acceptedShot!.content_digest,
+  });
+  const acceptedInternalManifest = acceptedResponse.data.canonical_document.dependency_manifest.internal_timelines.find((candidate) => candidate.revision_id === acceptedInternal!.revision_id);
+  expect(acceptedInternalManifest).toEqual({
+    timeline_id: acceptedInternal!.timeline_id,
+    revision_id: acceptedInternal!.revision_id,
+    content_digest: acceptedInternal!.content_digest,
+  });
   const acceptedRaw = await rawSettingsShot(harness, settingsSeed, acceptedPin.revision_id);
   expect(acceptedRaw.shot.payload).toEqual({
     ...initial.shot.payload,
+    internal_timeline_revision_id: acceptedShot!.internal_timeline_revision_id,
     settings: {
       ...initial.shot.payload.settings,
       advancedMode: false,
