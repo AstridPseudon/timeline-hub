@@ -7,12 +7,6 @@ import { useOnboardingSteps } from '@/shared/components/OnboardingModal/hooks/us
 import type { OnboardingModalProps } from '@/shared/components/OnboardingModal/types';
 import { AstridSetupStep, SetupFooterStatus } from '@/shared/components/OnboardingModal/components/steps/AstridSetupStep';
 
-/** With ?skip-setup in the address, the setup step offers a way past it (for testing the later steps
- *  without a running Runtime). */
-export function wantsSetupSkip(): boolean {
-  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('skip-setup');
-}
-
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
   mode = 'first-run',
@@ -87,17 +81,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {currentStep === 1 && (
               <div className="border-t pt-6">
                 <SetupFooterStatus />
-                {wantsSetupSkip() && (
-                  <div className="flex justify-center pt-3">
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                    >
-                      Skip setup
-                    </button>
-                  </div>
-                )}
               </div>
             )}
             <div className={`relative flex justify-center gap-x-2 pb-2 relative z-20 ${currentStep === 1 ? 'hidden' : 'pt-6 border-t'}`}>

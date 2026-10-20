@@ -82,9 +82,8 @@ vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
   normalizeAndPresentError: normalizeAndPresentErrorMock,
 }));
 
-async function loadRoutes(environment: 'web' | 'dev' | 'local') {
+async function loadRoutes() {
   vi.resetModules();
-  vi.stubEnv('VITE_APP_ENV', environment);
   return (await import('./routes')).AppRoutes;
 }
 
@@ -110,84 +109,56 @@ describe('AppRoutes', () => {
     vi.unstubAllEnvs();
   });
 
-  it.each(['web', 'dev', 'local'] as const)(
-    'hands ordinary %s /home routes to one fresh public document with query and hash',
-    async (environment) => {
-      const AppRoutes = await loadRoutes(environment);
-      const replaceDocument = vi.fn();
-      window.history.replaceState({}, '', '/home?source=guard#return');
-      renderRoute(AppRoutes, '/home?source=guard#return', replaceDocument);
+  it('hands /home to a fresh public document with query and hash', async () => {
+    const AppRoutes = await loadRoutes();
+    const replaceDocument = vi.fn();
+    window.history.replaceState({}, '', '/home?source=guard#return');
+    renderRoute(AppRoutes, '/home?source=guard#return', replaceDocument);
+    await vi.waitFor(() => expect(replaceDocument).toHaveBeenCalledTimes(1));
+    expect(replaceDocument).toHaveBeenCalledWith(window.location.origin + '/home?source=guard#return');
+    expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
+  });
 
-      await vi.waitFor(() => expect(replaceDocument).toHaveBeenCalledTimes(1));
-      expect(replaceDocument).toHaveBeenCalledWith(
-        window.location.origin + '/home?source=guard#return',
-      );
-      expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
-    },
-  );
+  it.each(['/', '/home'])('keeps a recognized %s callback in the legacy Home owner', async (path) => {
+    const AppRoutes = await loadRoutes();
+    const replaceDocument = vi.fn();
+    window.history.replaceState({}, '', `${path}#access_token=access&refresh_token=refresh`);
+    renderRoute(AppRoutes, path, replaceDocument);
+    expect(await screen.findByTestId('home-page')).toBeInTheDocument();
+    expect(replaceDocument).not.toHaveBeenCalled();
+  });
 
-  it('keeps the app-only root Home route available for callback-owned boots', async () => {
-    const AppRoutes = await loadRoutes('web');
-    window.history.replaceState({}, '', '/#access_token=access&refresh_token=refresh');
+  it.each([
+    ['/tools/video-editor', 'video-editor-page'],
+    ['/tools/image-generation', 'image-generation-page'],
+    ['/tools/join-clips', 'join-clips-page'],
+  ])('preserves normal tool access at %s', async (path, testId) => {
+    const AppRoutes = await loadRoutes();
+    renderRoute(AppRoutes, path);
+    expect(screen.getByTestId(testId)).toBeInTheDocument();
+  });
+
+  it('maps the app root to the default tool', async () => {
+    const AppRoutes = await loadRoutes();
     renderRoute(AppRoutes, '/');
-
-    expect(await screen.findByTestId('home-page')).toBeInTheDocument();
+    expect(screen.getByTestId('default-tool-redirect')).toBeInTheDocument();
   });
 
-  it.each(['web', 'dev', 'local'] as const)(
-    'keeps a recognized %s /home callback in the lazy legacy Home owner',
-    async (environment) => {
-      const AppRoutes = await loadRoutes(environment);
-      const replaceDocument = vi.fn();
-      window.history.replaceState({}, '', '/home#access_token=access&refresh_token=refresh');
-      renderRoute(AppRoutes, '/home#access_token=access&refresh_token=refresh', replaceDocument);
-
-      expect(await screen.findByTestId('home-page')).toBeInTheDocument();
-      expect(replaceDocument).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(['web', 'dev', 'local'] as const)('preserves protected routes in %s', async (environment) => {
-    const AppRoutes = await loadRoutes(environment);
-    renderRoute(AppRoutes, '/tools/video-editor');
-
-    expect(screen.getByTestId('video-editor-page')).toBeInTheDocument();
-  });
-
-  it('preserves WEB and non-WEB root mappings', async () => {
-    const WebRoutes = await loadRoutes('web');
-    const web = renderRoute(WebRoutes, '/');
-    expect(await screen.findByTestId('home-page')).toBeInTheDocument();
-    web.unmount();
-
-    const DevRoutes = await loadRoutes('dev');
-    const dev = renderRoute(DevRoutes, '/');
-    expect(await screen.findByTestId('default-tool-redirect')).toBeInTheDocument();
-    dev.unmount();
-
-    const LocalRoutes = await loadRoutes('local');
-    renderRoute(LocalRoutes, '/');
-    expect(await screen.findByTestId('default-tool-redirect')).toBeInTheDocument();
-  });
-
-  it('renders the dev extension harness route through a Suspense boundary', async () => {
-    const AppRoutes = await loadRoutes('web');
+  it('renders the DEV extension harness through a Suspense boundary', async () => {
+    const AppRoutes = await loadRoutes();
     renderRoute(AppRoutes, '/tools/video-editor/harness?scenario=populated&localTest=1');
-
     expect(await screen.findByTestId('extension-harness-page')).toBeInTheDocument();
   });
 
   it('renders public routes outside the layout tree', async () => {
-    const AppRoutes = await loadRoutes('web');
+    const AppRoutes = await loadRoutes();
     renderRoute(AppRoutes, '/payments/success');
-
     expect(screen.getByTestId('payment-success-page')).toBeInTheDocument();
   });
 
-  it('renders the catch-all route for unknown paths', async () => {
-    const AppRoutes = await loadRoutes('web');
+  it('renders unknown paths with the catch-all route', async () => {
+    const AppRoutes = await loadRoutes();
     renderRoute(AppRoutes, '/does-not-exist');
-
     expect(screen.getByTestId('not-found-page')).toBeInTheDocument();
   });
 });

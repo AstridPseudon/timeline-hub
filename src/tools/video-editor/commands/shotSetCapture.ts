@@ -203,4 +203,3 @@ export function executeShotSet(bundle: AuthoredBundle, command: EditCommand) {
 }
 
 export type ShotSetNameArgs = NameArgs;
-

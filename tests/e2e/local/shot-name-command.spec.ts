@@ -40,7 +40,6 @@ type CommitPost = {
 const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
 });
-
 test.beforeAll(() => {
   const reason = harnessUnavailableReason();
   if (reason) throw new Error(`the shot-name journey cannot run: ${reason}`);
@@ -287,4 +286,3 @@ test('M2 real embedded shot name: raw preservation, undo, lost ACK restart retry
   expect(traffic.legacy).toEqual([]);
   await page.unroute(COMMITS, conflictInterceptor);
 });
-

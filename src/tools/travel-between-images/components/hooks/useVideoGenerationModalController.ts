@@ -208,7 +208,6 @@ export function useVideoGenerationModalController({ isOpen, onClose, shot }: {
   const { data: availableLoras } = usePublicLoras();
   const { data: shotGenerations, isLoading: generationsLoading } = useShotImages(
     isOpen ? shot.id : null,
-    { disableRefetch: false },
   );
 
   const positionedImages = useMemo(() => {

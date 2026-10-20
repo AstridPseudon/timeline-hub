@@ -30,7 +30,6 @@ import {
 import { HostContributionErrorBoundary } from '@/tools/video-editor/runtime/ContributionErrorBoundary';
 import { createCommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
 import { transcriptLaneExtension } from '@/tools/video-editor/dev/transcript-lane/extension';
-import { runawayTimelineExtension } from '@/tools/video-editor/dev/runaway-timeline/extension';
 import { scenePhaseMarkersExtension } from '@/tools/video-editor/dev/scene-phase-markers/extension';
 import { creativeLabExtensions } from './index';
 import { createCreativeLabSnapshot } from './testing/createCreativeLabHarness';
@@ -39,7 +38,6 @@ const compatibilityCatalog = Object.freeze([
   ...creativeLabExtensions,
   scenePhaseMarkersExtension,
   transcriptLaneExtension,
-  runawayTimelineExtension,
 ]);
 
 function allPairs<T>(items: readonly T[]): readonly (readonly [T, T])[] {
@@ -108,10 +106,10 @@ function createPairContextFactory() {
 }
 
 describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
-  it('generates the complete 13-extension / 78-pair matrix', () => {
-    expect(compatibilityCatalog).toHaveLength(13);
-    expect(new Set(compatibilityCatalog.map((extension) => extension.manifest.id)).size).toBe(13);
-    expect(allPairs(compatibilityCatalog)).toHaveLength(78);
+  it('generates the complete 12-extension / 66-pair matrix', () => {
+    expect(compatibilityCatalog).toHaveLength(12);
+    expect(new Set(compatibilityCatalog.map((extension) => extension.manifest.id)).size).toBe(12);
+    expect(allPairs(compatibilityCatalog)).toHaveLength(66);
   });
 
   it.each(compatibilityCatalog)(
@@ -151,7 +149,7 @@ describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
     },
   );
 
-  it('activates all 13 together and survives reorder, disable, and re-enable without churn or leaks', () => {
+  it('activates all 12 together and survives reorder, disable, and re-enable without churn or leaks', () => {
     const harness = createPairContextFactory();
     const host = createExtensionLifecycleHost();
     const ids = compatibilityCatalog.map((extension) => extension.manifest.id as string);
@@ -160,7 +158,7 @@ describe('Creative Lab + bundled editor-extension compatibility matrix', () => {
     const disabledId = disabled.manifest.id as string;
 
     host.synchronize(compatibilityCatalog, harness.contextFactory);
-    expect(host.lifecycles.size).toBe(13);
+    expect(host.lifecycles.size).toBe(12);
     expect([...host.lifecycles.values()].every((lifecycle) => lifecycle.state === 'active')).toBe(true);
     expect(host.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([]);
     expect(Object.fromEntries(harness.contextCreations)).toEqual(

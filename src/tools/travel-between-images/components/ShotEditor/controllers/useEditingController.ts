@@ -120,7 +120,7 @@ export function useEditingController({
       setEditingNameValue: nameEditing.actions.setEditingNameValue,
     },
     onUpdateShotName: nameEditing.onUpdateShotName,
-      onBeforeNameEdit: nameEditing.onBeforeNameEdit,
+    onBeforeNameEdit: nameEditing.onBeforeNameEdit,
   });
 
   // Join segments setup

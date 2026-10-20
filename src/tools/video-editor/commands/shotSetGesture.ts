@@ -41,4 +41,3 @@ export function submitShotNameEdit(captured: CapturedShotSetEdit, name: string):
 
 export type { ExistingShotSetArgs, ShotSetBasis };
 export { captureShotSet, finishShotSet };
-

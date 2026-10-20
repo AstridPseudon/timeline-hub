@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
-import { isAstridEditorOnlyWorkspace } from '@/app/localWorkspaceShell';
 
 interface ToolPageHeaderContextType {
   header: ReactNode;
@@ -67,7 +66,7 @@ export const useHeaderState = () => {
  */
 export const useOptionalGlobalHeaderSlot = () => {
   const context = useContext(ToolPageHeaderContext);
-  if (!context || isAstridEditorOnlyWorkspace()) {
+  if (!context) {
     return {
       hasProvider: false,
       setGlobalHeaderContent: (_content: ReactNode) => undefined,

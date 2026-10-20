@@ -180,22 +180,11 @@ const MIME: Record<string, string> = {
   '.woff': 'font/woff', '.woff2': 'font/woff2', '.mp4': 'video/mp4', '.webm': 'video/webm', '.wasm': 'application/wasm', '.map': 'application/json', '.txt': 'text/plain',
 };
 
-/** What the hosted site's `/runtime-config/v1/extensions.json` answers (the deployment writes it; extensionReleaseControls.ts parses it, and any drift closes every extension). */
-export type ExtensionsConfigMode = 'on' | 'missing';
-export const EXTENSIONS_CONFIG_PATH = '/runtime-config/v1/extensions.json';
-export const EXTENSIONS_CONFIG = {
-  schemaVersion: 1,
-  revision: 'direct-journey',
-  extensions: { hostEnabled: true, transcriptCaptionFoundryEnabled: true, runawayTypedTimelineEnabled: false },
-} as const;
-
-function startHostedServer(tls: { key: Buffer; cert: Buffer }, port: number, extensionsConfig: () => ExtensionsConfigMode): Promise<HttpsServer> {
+function startHostedServer(tls: { key: Buffer; cert: Buffer }, port: number): Promise<HttpsServer> {
   const root = DIST_DIR;
   const server = createHttpsServer(tls, (req, res) => {
     const url = new URL(req.url ?? '/', 'https://placeholder.invalid');
     const send = (status: number, type: string, body: string) => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
-    // The deployed site serves the release config as a static file; a missing file is the closed posture (every extension off).
-    if (url.pathname === EXTENSIONS_CONFIG_PATH && extensionsConfig() === 'on') return send(200, 'application/json', JSON.stringify(EXTENSIONS_CONFIG));
     // The hosted origin has no Runtime proxy; same-origin API paths do not exist there.
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/runtime-config/')) return send(404, 'application/json', '{"error":"no_proxy_on_hosted_origin"}');
     if (url.pathname === '/__blank.html') return send(200, 'text/html; charset=utf-8', '<!doctype html><title>blank</title><body></body>');
@@ -375,7 +364,6 @@ export class DirectHarness {
   private runtime?: Managed;
   private https?: HttpsServer;
   private stopped = false;
-  private extensionsMode: ExtensionsConfigMode = 'on';
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
@@ -383,9 +371,6 @@ export class DirectHarness {
   private authoringPython?: string;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
-  get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
-  set extensionsConfig(mode: ExtensionsConfigMode) { this.extensionsMode = mode; }
-
   get realmDir() { return path.join(this.tmp, 'realm'); }
   get supportDir() { return path.join(this.tmp, 'support'); }
   get auditPath() { return path.join(this.tmp, 'door-audit.jsonl'); }
@@ -422,7 +407,7 @@ export class DirectHarness {
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
       this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
-      this.https = await startHostedServer(tls, this.originPort, () => this.extensionsMode);
+      this.https = await startHostedServer(tls, this.originPort);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
 
@@ -684,7 +669,7 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' = 'ordinary'): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -704,6 +689,16 @@ export class DirectHarness {
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
       { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
+    if (transitions === 'native-none') {
+      // Keep the original default crossfade as the single-clear control. The other
+      // selected clip carries an unknown revision and literal opaque JSON keys.
+      Object.assign(parentClips[0], JSON.parse(`{
+        "opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},
+        "transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision",
+          "params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},
+          "future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}
+      }`));
+    }
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
       { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },

@@ -9,7 +9,7 @@ describe('supabase env config', () => {
   it('loads required env vars and computes dev environment', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key');
-    vi.stubEnv('VITE_APP_ENV', 'dev');
+    vi.stubEnv('DEV', true);
 
     const mod = await import('./env');
 
@@ -57,7 +57,7 @@ describe('supabase env config', () => {
   it('reads debug flags lazily on each call instead of snapshotting at import time', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key');
-    vi.stubEnv('VITE_APP_ENV', 'production');
+    vi.stubEnv('DEV', false);
     vi.stubEnv('VITE_DEBUG_CORRUPTION_TRACE', 'false');
 
     const mod = await import('./env');

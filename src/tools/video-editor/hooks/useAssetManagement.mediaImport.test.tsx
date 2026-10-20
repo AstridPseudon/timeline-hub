@@ -120,6 +120,51 @@ describe('useAssetManagement Runtime media imports', () => {
     expect(prepareMediaImport).not.toHaveBeenCalled();
   });
 
+  it('carries a prepared Runtime selection outside the registry entry', () => {
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    });
+    const mediaSelection = {
+      asset: 'sha256:asset',
+      generation_id: 'generation-1',
+      variant_id: 'variant-1',
+      object_id: 'sha256:object',
+      catalog_digest: 'sha256:catalog',
+    };
+
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: {
+        content_type: 'video/mp4',
+        original_filename: 'object.mp4',
+      },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection,
+      },
+    });
+
+    expect(prepared?.mediaSelection).toBe(mediaSelection);
+    expect(prepared?.entry).toEqual({
+      file: 'https://runtime.test/object.mp4',
+      type: 'video/mp4',
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+    });
+    expect(JSON.stringify(prepared?.entry)).not.toContain('catalog_digest');
+  });
+
   it('fails closed for a direct Bridge provider instead of using the legacy generation writer', async () => {
     const { result } = renderAssetManagement({
       supportsDirectAssetUpload: true,

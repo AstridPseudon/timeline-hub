@@ -96,4 +96,3 @@ describe('native shot name session lifecycle', () => {
     await fixture.session.dispose();
   });
 });
-

@@ -7,7 +7,7 @@
 // server's own promises: auth, dispatch, the seed, content addressing, reset, atomic saves, ports and env.
 //
 // It also carries what the retired stub contract test asserted:
-// the Runaway block 1:1, the empty task/generation envelopes, object GET/HEAD, the ACP reads, the
+// the empty task/generation envelopes, object GET/HEAD, the ACP reads, the
 // mutate-then-reset behaviour of all three timelines, the editor connection binding (schema digest,
 // connector scopes and targeted-execution capability read from src/integrations/runtime), and the
 // canonical audio compositions bound to the committed WAV. Its legacy non-/v1 routes (`/projects/...`, `/save`,
@@ -497,62 +497,6 @@ describe('tasks, generations and the event feed', () => {
   });
 });
 
-describe('Runaway', () => {
-  test('serves the typed Runaway contract (ported 1:1 from the retired stub test)', async () => {
-    const response = await call('/v1/projects/cross-browser-release-gate/runaway-transitions?limit=1000');
-    assert.equal(response.status, 200);
-    // An App expectation (runawayTimelineData.ts requires it); no recording shows the real daemon sending it.
-    assert.equal(response.headers.get('X-Astrid-Bridge-Version'), 'v1');
-    const body = await response.json();
-    assert.equal(body.api_version, 'v1');
-    assert.equal(body.project, 'cross-browser-release-gate');
-    assert.equal(body.count, 566);
-    assert.equal(body.total_count, 566);
-    assert.equal(body.page.limit, 1000);
-    assert.equal(body.page.next_cursor, null);
-    assert.equal(body.transitions.length, 566);
-    assert.equal(body.timing_summary.data.frame_count, 8085);
-    assert.equal(body.timing_summary.data.transition_count, 566);
-    assert.equal(body.timing_summary.data.fps, 48);
-    assert.equal(body.transitions[0].metadata.manifest_id, 'T0001');
-    assert.equal(body.transitions.at(-1).metadata.manifest_id, 'T0566');
-
-    const frames = body.transitions.map((transition) => transition.metadata.frame);
-    const durations = body.transitions.map((transition) => transition.duration_ms);
-    assert.equal(frames[0], 0);
-    assert.equal(frames.at(-1), 8084);
-    assert.ok(frames.every((frame, index) => index === 0 || frame > frames[index - 1]));
-    assert.ok(durations.every((duration) => duration > 0));
-    for (const [index, transition] of body.transitions.entries()) {
-      const frame = frames[index];
-      const nextFrame = index + 1 < frames.length ? frames[index + 1] : 8085;
-      const expectedStartMs = Math.round((frame * 1000) / 48);
-      const expectedDurationMs = Math.max(1, Math.round((nextFrame * 1000) / 48) - expectedStartMs);
-      assert.equal(transition.start_ms, expectedStartMs);
-      assert.equal(transition.duration_ms, expectedDurationMs);
-    }
-    const totalEnvelopeMs = Math.round((8085 * 1000) / 48);
-    assert.equal(body.transitions.reduce((total, transition) => total + transition.duration_ms, 0), totalEnvelopeMs);
-    assert.equal(body.transitions.at(-1).start_ms + body.transitions.at(-1).duration_ms, totalEnvelopeMs);
-
-    const firstPage = await json('/v1/projects/cross-browser-release-gate/runaway-transitions?limit=3');
-    assert.equal(firstPage.count, 3);
-    assert.equal(firstPage.total_count, 566);
-    assert.equal(firstPage.page.limit, 1000);
-    assert.equal(firstPage.page.next_cursor, '3');
-    assert.deepEqual(firstPage.transitions.map((transition) => transition.ordinal), [0, 1, 2]);
-    const secondPage = await json('/v1/projects/cross-browser-release-gate/runaway-transitions?limit=3&cursor=3');
-    assert.equal(secondPage.count, 3);
-    assert.equal(secondPage.page.next_cursor, '6');
-    assert.deepEqual(secondPage.transitions.map((transition) => transition.ordinal), [3, 4, 5]);
-  });
-
-  test('the scale projects serve 5000 and 50000 rows', async () => {
-    assert.equal((await json('/v1/projects/runaway-scale-5000/runaway-transitions?limit=1')).total_count, 5000);
-    assert.equal((await json('/v1/projects/runaway-scale-50000/runaway-transitions?limit=1')).total_count, 50000);
-  });
-});
-
 describe('ACP chat reads', () => {
   test('the chat state answers for the slug and for the canonical id, echoing the caller selector', async () => {
     for (const selector of [SLUG, PROJECT_ID]) {
@@ -626,8 +570,6 @@ describe('launcher: ports, token file and env', () => {
       VITE_ASTRID_ACP_BRIDGE_PORT: String(fake.port),
       ASTRID_ACP_BRIDGE_TOKEN: fake.token,
       VITE_RUNTIME_ORIGIN: '',
-      VITE_DATA_AUTHORITY: '',
-      VITE_ASTRID_EDITOR_ONLY: '',
       FAKE_RUNTIME_PORT: String(fake.port),
       FAKE_RUNTIME_TOKEN_FILE: fake.tokenFile,
     };

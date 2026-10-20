@@ -747,6 +747,7 @@ export function VideoEditorRuntimeContent({
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
     shotSet: editor.shotSet,
     trackLabel: editor.trackLabel,
+    clipScalar: editor.clipScalar,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -870,9 +871,9 @@ export interface VideoEditorProviderProps {
   timelineEditability?: TimelineEditability;
   /** Optional synchronous data seed for hosts with an already-resolved projection. */
   initialTimelineData?: TimelineData;
-  /** True only when the deployment-owned parent rollout switch is effective. */
+  /** Whether this editor hosts extensions for lifecycle telemetry. */
   extensionHostEnabled?: boolean;
-  /** Deployment-owned revision attached to privacy-safe operational events. */
+  /** Host revision attached to privacy-safe operational events. */
   extensionReleaseRevision?: string;
   /** Optional app analytics adapter; defaults to a sanitized browser event. */
   extensionOperationalEventSink?: ExtensionOperationalEventSink;

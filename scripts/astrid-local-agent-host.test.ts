@@ -38,6 +38,13 @@ const expected = ${JSON.stringify(LOCAL_AGENT_ADAPTERS)};
 if (!native && (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter))) process.exit(98);
 if (native && process.argv[2] !== 'acp') process.exit(98);
 const agent = native ? 'hermes' : adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
+let model = 'model-a';
+let effort = 'low';
+const effortId = agent === 'codex-acp' ? 'reasoning_effort' : 'effort';
+const configOptions = () => native ? [] : [
+  {id:'model',name:'Model',category:'model',type:'select',currentValue:model,options:[{value:'model-a',name:'A'},{value:'model-b',name:'B'}]},
+  {id:effortId,name:'Effort',category:'thought_level',type:'select',currentValue:effort,options:[{value:'low',name:'Low'},{value:'high',name:'High'}],_meta:{jetbrains:{air:{version:1,recommendedValue:'high'}}}}
+];
 const write = value => process.stdout.write(JSON.stringify(value) + '\\n');
 const record = value => fs.appendFileSync(log, JSON.stringify({agent, value}) + '\\n');
 const waiting = new Map();
@@ -64,7 +71,12 @@ rl.on('line', async line => {
     return;
   }
   record({method:message.method, params:message.params});
-  if (message.method === 'session/new') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'shared-native-id'}}); return; }
+  if (message.method === 'session/new') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'shared-native-id',configOptions:configOptions()}}); return; }
+  if (message.method === 'session/set_config_option') {
+    if (message.params.configId === 'model') model = message.params.value;
+    else if (message.params.configId === effortId) effort = message.params.value;
+    write({jsonrpc:'2.0',id:message.id,result:{configOptions:configOptions()}}); return;
+  }
   if (message.method === 'session/list') { write({jsonrpc:'2.0',id:message.id,result:{sessions:[{sessionId:'shared-native-id'}]}}); return; }
   if (message.method === 'session/load' || message.method === 'session/resume') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:message.params.sessionId}}); return; }
   if (message.method === 'session/fork') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'forked-native-id'}}); return; }
@@ -131,6 +143,17 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const created = await Promise.all([rpc(claudeId, 'session/new'), rpc(codexId, 'session/new')]);
     const sessionIds = await Promise.all(created.map(async response => (await response.json() as Json).result as Json));
     assert.deepEqual(sessionIds.map(result => result.sessionId), ['claude-code:shared-native-id', 'codex:shared-native-id']);
+    for (const [connection, agent, configId] of [[claudeId, 'claude-code', 'effort'], [codexId, 'codex', 'reasoning_effort']] as const) {
+      const sessionId = `${agent}:shared-native-id`;
+      const selected = await call(`/${connection}/model`, { sessionId, modelId: 'model-b' });
+      assert.equal(selected.status, 200);
+      assert.equal((await rpc(connection, 'session/set_config_option', { sessionId, configId, value: 'high' })).status, 200);
+      const catalog = await (await call(`/${connection}/models?sessionId=${sessionId}`)).json();
+      assert.equal(catalog.models.currentModelId, 'model-b');
+      assert.equal(catalog.models.thoughtLevel.currentValue, 'high');
+      assert.equal(catalog.models.thoughtLevel.recommendedValue, 'high');
+      assert.equal((await rpc(connection, 'session/set_config_option', { sessionId, configId, value: 'invented' })).status, 400);
+    }
     assert.equal((await rpc(claudeId, 'session/load', { sessionId: 'claude-code:shared-native-id' })).status, 200);
     assert.equal((await rpc(codexId, 'session/load', { sessionId: 'codex:shared-native-id' })).status, 200);
     assert.equal((await rpc(claudeId, 'session/resume', { sessionId: 'claude-code:shared-native-id' })).status, 200);
@@ -163,6 +186,14 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     const logged = records(f.logs);
     const claudeRecords = logged.filter(row => row.agent === 'claude-agent-acp').map(row => row.value as Json);
     const codexRecords = logged.filter(row => row.agent === 'codex-acp').map(row => row.value as Json);
+    for (const [rows, configId] of [[claudeRecords, 'effort'], [codexRecords, 'reasoning_effort']] as const) {
+      assert.deepEqual(rows.filter(row => row.method === 'session/set_config_option').map(row => row.params), [
+        { sessionId: 'shared-native-id', configId: 'model', value: 'model-b' },
+        { sessionId: 'shared-native-id', configId, value: 'high' },
+      ]);
+      const capabilities = (rows.find(row => row.method === 'initialize')!.params as Json).clientCapabilities as Json;
+      assert.deepEqual(((capabilities._meta as Json).jetbrains as Json).air, { version: 1, capabilities: ['recommendedValue'] });
+    }
     assert.equal((claudeRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS['claude-code']);
     assert.equal((codexRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS.codex);
     const claudeNew = claudeRecords.find(row => row.method === 'session/new')!.params as Json;

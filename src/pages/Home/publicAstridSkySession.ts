@@ -15,7 +15,6 @@ import {
 } from './publicAstridSkyRender';
 import {
   locationForTimeZone,
-  PUBLIC_ASTRID_REVIEW_PLACES,
   visitorLocation,
   zonedHours,
   type PublicAstridLocation,
@@ -28,7 +27,6 @@ const CLOCK_TICK_MS = 60_000;
 const AMBIENT_TICK_MS = 450;
 const REVEAL_MS = 1800;
 const REPLAY_DAY_MS = 9000;
-const PLAY_DAY_MS = 24_000;
 const PARALLAX_MARGIN = 24;
 const PARALLAX_DEPTH = { sky: 3, stars: 3, far: 6, near: 12 } as const;
 const SCROLL_DEPTH = { sky: 6, stars: 6, far: 12, near: 20 } as const;
@@ -105,7 +103,6 @@ export interface PublicAstridSkySceneSnapshot {
   visible: boolean;
   reducedMotion: boolean;
   phone: boolean;
-  reviewPlaying: boolean;
 }
 
 export interface PublicAstridSkyControlsSnapshot {
@@ -116,7 +113,6 @@ export interface PublicAstridSkyControlsSnapshot {
   location: PublicAstridLocation;
   times: PublicAstridSunTimes;
   phase: number;
-  reviewPlaying: boolean;
 }
 
 export interface PublicAstridSkySession {
@@ -140,8 +136,6 @@ export interface PublicAstridSkySession {
   setNow: () => void;
   startHomeReplay: (onEnd?: () => void) => boolean;
   cancelHomeReplay: () => void;
-  startReviewDay: () => boolean;
-  stopReviewDay: () => void;
   registerPaletteTarget: (target: HTMLElement | null, owner: string) => () => void;
 }
 
@@ -169,7 +163,7 @@ function scrollDrift(): number {
   return -Math.min(window.scrollY, SCROLL_DRIFT_SPAN) / SCROLL_DRIFT_SPAN;
 }
 
-/** The place whose sky is shown: the visitor's own, or one picked in review. */
+/** The place whose sky is shown: the visitor's own, or an explicit location. */
 export function skyLocation(settings: PublicAstridSkySettings, at: Date): PublicAstridLocation {
   return settings.location ? locationForTimeZone(settings.location, at) : visitorLocation(at);
 }
@@ -200,7 +194,7 @@ export function derivePublicAstridSkyScene(
   now: number,
   cloudHours: number,
   replay: PublicAstridSkyReplay | null,
-): Omit<PublicAstridSkySceneSnapshot, 'settings' | 'replay' | 'reveal' | 'tick' | 'parallaxX' | 'parallaxY' | 'visible' | 'reducedMotion' | 'phone' | 'reviewPlaying'> {
+): Omit<PublicAstridSkySceneSnapshot, 'settings' | 'replay' | 'reveal' | 'tick' | 'parallaxX' | 'parallaxY' | 'visible' | 'reducedMotion' | 'phone'> {
   const date = skyDate(settings, now);
   const location = skyLocation(settings, date);
   const replayOffset = replay ? replayOffsetHours(replay.elapsed) : 0;
@@ -268,18 +262,15 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
   let cloudHours = zonedHours(new Date(now()), visitorLocation(new Date(now())).timeZone);
   let replay: PublicAstridSkyReplay | null = null;
   let replayEnd: (() => void) | undefined;
-  let reviewPlaying = false;
   let mounted = false;
   let destroyed = false;
   let clockTimer: number | null = null;
   let ambientTimer: number | null = null;
   let replayFrame = 0;
-  let reviewFrame = 0;
   let revealFrame = 0;
   let parallaxFrame = 0;
   let visibilityTimer: number | null = null;
   let operation = 0;
-  let reviewOperation = 0;
   let revealOperation = 0;
   let visibilityOperation = 0;
   let reveal = environment.reducedMotion ? 1 : 0;
@@ -308,7 +299,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     visible: environment.visible,
     reducedMotion: environment.reducedMotion,
     phone: environment.phone,
-    reviewPlaying,
   };
   let controlsSnapshot: PublicAstridSkyControlsSnapshot = {
     settings,
@@ -318,7 +308,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     location: snapshot.location,
     times: snapshot.times,
     phase: snapshot.phase,
-    reviewPlaying,
   };
 
   const emit = (controlsChanged: boolean, rasterChanged = true) => {
@@ -335,7 +324,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
       visible: environment.visible,
       reducedMotion: environment.reducedMotion,
       phone: environment.phone,
-      reviewPlaying,
     };
     const nextSettingsKey = settingsKey(settings);
     const nextPaletteKey = paletteKey(snapshot.palette);
@@ -350,7 +338,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
         location: snapshot.location,
         times: snapshot.times,
         phase: snapshot.phase,
-        reviewPlaying,
       };
       previousSettingsKey = nextSettingsKey;
       previousPaletteKey = nextPaletteKey;
@@ -366,14 +353,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     replayFrame = 0;
     replay = null;
     replayEnd = undefined;
-    if (notify) emit(true);
-  };
-  const stopReview = (notify = true) => {
-    reviewOperation += 1;
-    cancelFrame(reviewFrame);
-    reviewFrame = 0;
-    if (!reviewPlaying) return;
-    reviewPlaying = false;
     if (notify) emit(true);
   };
   const startReveal = () => {
@@ -455,14 +434,12 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     destroyed = true;
     mounted = false;
     operation += 1;
-    reviewOperation += 1;
     revealOperation += 1;
     visibilityOperation += 1;
     if (clockTimer !== null) window.clearInterval(clockTimer);
     if (ambientTimer !== null) window.clearInterval(ambientTimer);
     if (visibilityTimer !== null) window.clearTimeout(visibilityTimer);
     cancelFrame(replayFrame);
-    cancelFrame(reviewFrame);
     cancelFrame(revealFrame);
     cancelFrame(parallaxFrame);
     geometry.destroy();
@@ -472,7 +449,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     document.removeEventListener('visibilitychange', onVisibility);
     replay = null;
     replayEnd = undefined;
-    reviewPlaying = false;
     listeners.clear();
     parallaxListeners.clear();
     controlListeners.clear();
@@ -486,7 +462,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     visibilityOperation += 1;
     if (!next.visible || next.reducedMotion) {
       stopReplay(false);
-      stopReview(false);
       cancelFrame(parallaxFrame);
       parallaxFrame = 0;
       cancelFrame(revealFrame);
@@ -510,17 +485,14 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
   const patchSettings = (patch: Partial<PublicAstridSkySettings>) => setSettings({ ...settings, ...patch });
   const setManualHours = (hours: number) => {
     stopReplay(false);
-    stopReview(false);
     patchSettings({ hours: wrapHours(hours) });
   };
   const setNow = () => {
     stopReplay(false);
-    stopReview(false);
     patchSettings({ hours: null, dayOffset: 0 });
   };
   const startHomeReplay = (onEnd?: () => void) => {
     if (!mounted || !environment.visible || environment.reducedMotion || !settings.enabled) return false;
-    stopReview(false);
     stopReplay(false);
     const id = ++operation;
     replay = { startedAt: performanceNow(), elapsed: 0, operation: id };
@@ -543,25 +515,6 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     };
     emit(true);
     replayFrame = window.requestAnimationFrame(step);
-    return true;
-  };
-  const startReviewDay = () => {
-    if (!mounted || !environment.visible || environment.reducedMotion || !settings.enabled) return false;
-    stopReplay(false);
-    stopReview(false);
-    reviewPlaying = true;
-    const id = ++reviewOperation;
-    let last = performanceNow();
-    const step = (time: number) => {
-      if (!mounted || !environment.visible || reviewOperation !== id || !reviewPlaying) return;
-      const current = settings.hours ?? snapshot.hours;
-      settings = cloneSettings({ ...settings, hours: wrapHours(current + ((time - last) / PLAY_DAY_MS) * 24) });
-      last = time;
-      emit(true);
-      reviewFrame = window.requestAnimationFrame(step);
-    };
-    emit(true);
-    reviewFrame = window.requestAnimationFrame(step);
     return true;
   };
   const registerPaletteTarget = (target: HTMLElement | null, owner: string) => {
@@ -594,12 +547,9 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
     setNow,
     startHomeReplay,
     cancelHomeReplay: () => stopReplay(true),
-    startReviewDay,
-    stopReviewDay: () => stopReview(true),
     registerPaletteTarget,
   };
   return session;
 }
 
 export { PARALLAX_DEPTH, PARALLAX_MARGIN, SCROLL_DEPTH };
-export { PUBLIC_ASTRID_REVIEW_PLACES };

@@ -89,14 +89,14 @@ describe('extension operational analytics browser sink', () => {
     })).toBeNull();
   });
 
-  it('accepts the reviewed mapped Runaway Timeline extension ID', () => {
+  it('accepts the reviewed Transcript extension ID', () => {
     expect(toTransportSafeOperationalEvent({
       ...event,
-      extensionId: 'haus.astrid-runaway-timeline',
+      extensionId: 'haus.astrid.transcript-lane',
       extensionVersion: '1.0.0',
     })).toEqual({
       ...event,
-      extensionId: 'haus.astrid-runaway-timeline',
+      extensionId: 'haus.astrid.transcript-lane',
       extensionVersion: '1.0.0',
     });
   });

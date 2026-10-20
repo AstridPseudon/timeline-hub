@@ -14,43 +14,29 @@ describe('browser entry classification', () => {
     localStorage.clear();
   });
 
-  it('selects the dedicated public entry for ordinary WEB root documents', () => {
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'), { VITE_APP_ENV: 'WEB' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home?source=guard#public'), { VITE_APP_ENV: 'web' })).toBe('public');
-  });
+  it.each(['/', '/home?source=guard#public', '/vision'])(
+    'serves %s from the public entry in every build', (path) => {
+      expect(classifyBrowserEntry(new URL(`https://astrid.test${path}`))).toBe('public');
+    },
+  );
 
-  it('preserves app ownership for non-WEB root and protected documents', () => {
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'), { VITE_APP_ENV: 'APP' })).toBe('app');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/tools/video-editor'), { VITE_APP_ENV: 'WEB' })).toBe('app');
-  });
-
-  it('selects the dedicated public entry for ordinary dev and local /home documents', () => {
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home'), { VITE_APP_ENV: 'DEV' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home?source=desktop'), { VITE_APP_ENV: 'LOCAL' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'), { VITE_APP_ENV: 'DEV' })).toBe('app');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'), { VITE_APP_ENV: 'LOCAL' })).toBe('app');
-  });
-
-  it('serves the Vision & Issues page from the public entry', () => {
-    expect(classifyBrowserEntry(new URL('https://astrid.test/vision'), { VITE_APP_ENV: 'WEB' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/vision'), { VITE_APP_ENV: 'DEV' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/vision'), { VITE_APP_ENV: 'APP' })).toBe('app');
+  it('preserves app ownership for protected documents', () => {
+    expect(classifyBrowserEntry(new URL('https://astrid.test/tools/video-editor'))).toBe('app');
+    expect(classifyBrowserEntry(new URL('https://astrid.test/tools/image-generation'))).toBe('app');
   });
 
   it('latches existing complete hash-token callbacks to the app for this boot', () => {
     const rootCallback = new URL('https://astrid.test/#access_token=access&refresh_token=refresh');
     const homeCallback = new URL('https://astrid.test/home#access_token=access&refresh_token=refresh');
     expect(isRecognizedOAuthCallbackUrl(rootCallback)).toBe(true);
-    expect(classifyBrowserEntry(rootCallback, { VITE_APP_ENV: 'WEB' })).toBe('app');
-    expect(classifyBrowserEntry(homeCallback, { VITE_APP_ENV: 'WEB' })).toBe('app');
-    expect(classifyBrowserEntry(homeCallback, { VITE_APP_ENV: 'DEV' })).toBe('app');
-    expect(classifyBrowserEntry(homeCallback, { VITE_APP_ENV: 'LOCAL' })).toBe('app');
+    expect(classifyBrowserEntry(rootCallback)).toBe('app');
+    expect(classifyBrowserEntry(homeCallback)).toBe('app');
   });
 
   it('does not let a stale oauthInProgress flag claim an ordinary public document', () => {
     localStorage.setItem('oauthInProgress', 'true');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'), { VITE_APP_ENV: 'WEB' })).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home'), { VITE_APP_ENV: 'WEB' })).toBe('public');
+    expect(classifyBrowserEntry(new URL('https://astrid.test/'))).toBe('public');
+    expect(classifyBrowserEntry(new URL('https://astrid.test/home'))).toBe('public');
   });
 
   it('keeps app bootstrap and extension initialization behind dynamic app imports', () => {

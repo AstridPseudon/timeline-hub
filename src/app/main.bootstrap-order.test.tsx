@@ -14,8 +14,8 @@ const indexDocument = new DOMParser().parseFromString(indexHtml, 'text/html');
 const bootMarkup = indexDocument.getElementById('boot');
 const bootStyles = Array.from(indexDocument.querySelectorAll('style')).find((style) => style.textContent?.includes('#boot {'));
 
-// Mock both supported import paths to one implementation. This keeps the test
-// focused on the real entry's initialization-before-render sequence.
+// Mock both supported import paths to the same initializer. This keeps
+// the test focused on the real entry's initialization-before-render sequence.
 vi.mock('@/tools/video-editor/browser', () => ({
   initializeVideoEditorExtensionRuntime: bootstrapMocks.initializeVideoEditorExtensionRuntime,
 }));
@@ -49,22 +49,11 @@ describe('main entry bootstrap order', () => {
     window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
   });
 
-  it('installs the extension runtime before awaiting identity and rendering the app', async () => {
+  it('initializes the extension runtime before rendering the app', async () => {
     bootstrapMocks.migrateAstridBrowserStorage.mockResolvedValue({ success: true });
-    const bootstrapEvents: string[] = [];
-    let resolveIdentity!: () => void;
-    bootstrapMocks.initializeVideoEditorExtensionRuntime.mockImplementation(() => {
-      bootstrapEvents.push('extension-runtime-install');
-    });
-    bootstrapMocks.initializeWorkspaceRuntimeIdentity.mockImplementation(() => {
-      bootstrapEvents.push('workspace-runtime-identity');
-      return new Promise<void>((resolve) => {
-        resolveIdentity = resolve;
-      });
-    });
-    bootstrapMocks.renderApp.mockImplementation(() => {
-      bootstrapEvents.push('render-app');
-    });
+    const order: string[] = [];
+    bootstrapMocks.initializeVideoEditorExtensionRuntime.mockImplementation(() => { order.push('initialize'); });
+    bootstrapMocks.renderApp.mockImplementation(() => { order.push('render'); });
 
     const root = document.createElement('div');
     root.id = 'root';
@@ -72,17 +61,9 @@ describe('main entry bootstrap order', () => {
 
     await import('@/app/main');
 
-    // main() is fire-and-forget: its dynamic imports settle after the module
-    // evaluates, so wait for the initialization call instead of racing it.
-    await vi.waitFor(() => expect(bootstrapMocks.initializeVideoEditorExtensionRuntime).toHaveBeenCalledOnce());
-    await vi.waitFor(() => expect(bootstrapMocks.initializeWorkspaceRuntimeIdentity).toHaveBeenCalledOnce());
-    expect(bootstrapEvents).toEqual(['extension-runtime-install', 'workspace-runtime-identity']);
-    expect(bootstrapMocks.renderApp).not.toHaveBeenCalled();
-
-    resolveIdentity();
     await vi.waitFor(() => expect(bootstrapMocks.renderApp).toHaveBeenCalledOnce());
+    expect(order).toEqual(['initialize', 'render']);
     expect(bootstrapMocks.renderApp).toHaveBeenCalledWith(root);
-    expect(bootstrapEvents).toEqual(['extension-runtime-install', 'workspace-runtime-identity', 'render-app']);
   });
 
   it('blocks app initialization on migration failure and renders after a successful retry', async () => {

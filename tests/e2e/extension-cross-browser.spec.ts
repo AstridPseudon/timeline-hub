@@ -7,8 +7,7 @@ import {
   resetFakeRuntimeBaseline,
 } from './timeline/support';
 
-const RUNAWAY_PROJECT = 'cross-browser-release-gate';
-const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: RUNAWAY_PROJECT } });
+const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1' } });
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];
@@ -52,13 +51,6 @@ async function openCombinedEditor(page: Page): Promise<string[]> {
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
   await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
-  await expect(page.locator('[data-lane-kind="astrid.runaway.transitions"]')).toBeVisible();
-  // The lane is virtualized: the exact mounted count depends on viewport and
-  // engine layout. Assert that data arrived and the host stays within its
-  // documented 128-item mount budget instead of baking in one raster count.
-  await expect.poll(() => page.getByTestId('runaway-transition-chip').count()).toBeGreaterThan(0);
-  expect(await page.getByTestId('runaway-transition-chip').count()).toBeLessThanOrEqual(128);
-  await expect(page.getByTestId('timeline-marker-layer-legend')).toBeVisible();
   return issues;
 }
 
@@ -91,52 +83,15 @@ test('combined extension surfaces compose and expose keyboard semantics', async 
   await page.setViewportSize({ width: 1440, height: 900 });
   const issues = await openCombinedEditor(page);
 
-  const markerLayers = page.locator('[data-testid="timeline-marker-layer"]');
-  const pager = page.getByRole('group', { name: 'Marker layer pages' });
-  const next = pager.getByRole('button', { name: 'Next marker layers' });
-  const firstKeys = await markerLayers.evaluateAll((layers) =>
-    layers.map((layer) => layer.getAttribute('data-marker-layer-key')),
-  );
-  expect(firstKeys).toHaveLength(6);
-  expect(new Set(firstKeys).size).toBe(firstKeys.length);
-
-  await next.focus();
-  await expect(next).toBeFocused();
+  const lane = page.locator('[data-lane-kind="astrid.transcript"]');
+  const chips = lane.getByTestId('transcript-lane-occurrence');
+  expect(await chips.count()).toBeGreaterThan(0);
+  expect(await chips.count()).toBeLessThanOrEqual(128);
+  const first = chips.first();
+  await first.focus();
   await page.keyboard.press('Enter');
-  await expect(pager).toHaveAttribute('data-marker-layer-page', '1');
-  const secondKeys = await markerLayers.evaluateAll((layers) =>
-    layers.map((layer) => layer.getAttribute('data-marker-layer-key')),
-  );
-  expect(secondKeys).toHaveLength(5);
-  expect(secondKeys.some((key) => firstKeys.includes(key))).toBe(false);
+  await expect(first).toHaveAttribute('aria-pressed', 'true');
 
-  const transcriptActions = page.getByRole('button', { name: 'Transcript actions' });
-  await transcriptActions.focus();
-  await page.keyboard.press('ArrowDown');
-  const menu = page.getByRole('menu', { name: 'Transcript actions' });
-  await expect(menu).toBeVisible();
-  const transcriptMenuItems = menu.getByRole('menuitem');
-  await expect(transcriptMenuItems).toHaveText([
-    'Add missing',
-    'Regenerate',
-    'Propose edits',
-    'Accept proposals',
-    'Reject proposals',
-  ]);
-  await expect(transcriptMenuItems.nth(0)).toHaveAccessibleName('Render transcript as editable video text');
-  await expect(transcriptMenuItems.nth(1)).toHaveAccessibleName('Regenerate transcript captions and replace edits');
-  await expect(transcriptMenuItems.nth(2)).toHaveAccessibleName('Propose caption edits back to transcript source');
-  await expect(transcriptMenuItems.nth(3)).toHaveAccessibleName('Accept pending caption edits for transcript source update');
-  await expect(transcriptMenuItems.nth(4)).toHaveAccessibleName('Reject pending caption edits for transcript source update');
-  await expect(transcriptMenuItems.first()).toBeFocused();
-  await page.keyboard.press('Escape');
-  await expect(menu).toHaveCount(0);
-  await expect(transcriptActions).toBeFocused();
-
-  const accessibleItems = page.locator(
-    '[data-lane-kind="astrid.transcript"] [aria-label], [data-lane-kind="astrid.runaway.transitions"] [aria-label]',
-  );
-  expect(await accessibleItems.count()).toBeGreaterThanOrEqual(4);
   expect(issues).toEqual([]);
   await page.screenshot({
     path: evidencePath(testInfo, 'combined-extension-surfaces.png'),
@@ -157,22 +112,13 @@ test('combined extension controls remain visible and operable at phone width', a
   expect(geometry.bodyWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
   expect(geometry.documentWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth);
 
-  const pager = page.getByRole('group', { name: 'Marker layer pages' });
-  await expect(pager).toContainText(/Layers 1[–-]3\/11/);
-  await expect(page.locator('[data-testid="timeline-marker-layer"]')).toHaveCount(3);
-
-  const transcriptActions = page.getByRole('button', { name: 'Transcript actions' });
+  const lane = page.locator('[data-lane-kind="astrid.transcript"]');
   await page.locator('.timeline-canvas-edit-area').evaluate((scroller) => {
     scroller.scrollTop = scroller.scrollHeight;
   });
-  await expect(transcriptActions).toBeInViewport();
-  await transcriptActions.click();
-  const menu = page.getByRole('menu', { name: 'Transcript actions' });
-  await expect(menu).toBeVisible();
-  const menuBox = await menu.boundingBox();
-  expect(menuBox).not.toBeNull();
-  expect(menuBox!.x).toBeGreaterThanOrEqual(0);
-  expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(390);
+  await expect(lane).toBeInViewport();
+  await lane.getByTestId('transcript-lane-occurrence').first().click();
+  await expect(lane.getByTestId('transcript-lane-occurrence').first()).toHaveAttribute('aria-pressed', 'true');
   expect(issues).toEqual([]);
   await page.screenshot({
     path: evidencePath(testInfo, 'phone-extension-surfaces.png'),

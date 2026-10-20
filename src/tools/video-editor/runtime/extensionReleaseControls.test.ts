@@ -4,16 +4,11 @@ import {
   buildExtensionLifecycleOperationalEvents,
   createHostOwnedExtensionOperationalEmitter,
   createPrivacySafeExtensionTelemetryHost,
-  getExtensionReleaseFlags,
-  isExtensionReleaseEnabled,
   operationalCountBucket,
   REVIEWED_PRODUCTION_EXTENSION_IDS,
-  RUNAWAY_RELEASE_EXTENSION_ID,
-  TRANSCRIPT_RELEASE_EXTENSION_ID,
   sanitizeExtensionOperationalEvent,
-  selectReleaseEnabledExtensions,
+  selectReviewedExtensions,
 } from './extensionReleaseControls';
-import { RUNAWAY_TIMELINE_EXTENSION_ID } from '@/tools/video-editor/dev/runaway-timeline/extension';
 import { TRANSCRIPT_LANE_EXTENSION_ID } from '@/tools/video-editor/dev/transcript-lane/extension';
 import { devLocalExtensions } from '@/tools/video-editor/dev/localExtensions';
 
@@ -24,90 +19,29 @@ const extension = (id: string) => defineExtension({
 const operationalPolicy = {
   releaseRevision: 'rc1',
   extensionVersions: new Map([
-    ['haus.astrid.runaway-timeline', new Set(['1.0.0'])],
+    ['haus.astrid.transcript-lane', new Set(['1.0.0'])],
     ['haus.astrid.example', new Set(['1.0.0'])],
   ]),
 };
 
 describe('extension release controls', () => {
-  it('pins child rollout IDs to the actual bundled manifests', () => {
-    expect(RUNAWAY_RELEASE_EXTENSION_ID).toBe(RUNAWAY_TIMELINE_EXTENSION_ID);
-    expect(TRANSCRIPT_RELEASE_EXTENSION_ID).toBe(TRANSCRIPT_LANE_EXTENSION_ID);
+  it('admits the actual generated catalog including Transcript', () => {
     const localIds = devLocalExtensions.map((item) => item.manifest.id as string);
     expect(localIds).toContain('haus.astrid.live-scenes');
-    expect(localIds).toContain('haus.astrid.transcript-lane');
-    const reviewedIds = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
-    expect(devLocalExtensions.every((item) =>
-      reviewedIds.has(item.manifest.id as string),
-    )).toBe(true);
+    expect(localIds).toContain(TRANSCRIPT_LANE_EXTENSION_ID);
+    expect(selectReviewedExtensions(devLocalExtensions)).toEqual(devLocalExtensions);
+    expect(new Set(REVIEWED_PRODUCTION_EXTENSION_IDS).size).toBe(REVIEWED_PRODUCTION_EXTENSION_IDS.length);
   });
 
-  it('ships the extension host and Transcript on in every build, with no config fetch or wait', () => {
-    expect(getExtensionReleaseFlags()).toMatchObject({
-      extensionHostEnabled: true,
-      transcriptCaptionFoundryEnabled: true,
-    });
-    const all = [
-      extension('haus.astrid.scene-phase-markers'),
-      extension(TRANSCRIPT_LANE_EXTENSION_ID),
-    ];
-    expect(selectReleaseEnabledExtensions(all, getExtensionReleaseFlags()).map((item) => item.manifest.id))
-      .toEqual(['haus.astrid.scene-phase-markers', TRANSCRIPT_LANE_EXTENSION_ID]);
-  });
-
-  it('selects independent Transcript and Runaway children from reviewed bundled extensions', () => {
+  it('rejects unreviewed extensions while admitting shipped extensions', () => {
     const all = [
       extension('haus.astrid.scene-phase-markers'),
       extension('haus.astrid.unreviewed-local-example'),
       extension(TRANSCRIPT_LANE_EXTENSION_ID),
-      extension(RUNAWAY_TIMELINE_EXTENSION_ID),
     ];
-    expect(selectReleaseEnabledExtensions(all, {
-      extensionHostEnabled: true,
-      transcriptCaptionFoundryEnabled: false,
-      runawayTypedTimelineEnabled: true,
-      configurationRevision: 'r1',
-    }).map((item) => item.manifest.id)).toEqual([
-      'haus.astrid.scene-phase-markers',
-      RUNAWAY_TIMELINE_EXTENSION_ID,
+    expect(selectReviewedExtensions(all).map((item) => item.manifest.id)).toEqual([
+      'haus.astrid.scene-phase-markers', TRANSCRIPT_LANE_EXTENSION_ID,
     ]);
-  });
-
-  it('resolves child rollout admission through extension IDs', () => {
-    const flags = { extensionHostEnabled: true, transcriptCaptionFoundryEnabled: false,
-      runawayTypedTimelineEnabled: true, configurationRevision: 'r1' };
-    expect(isExtensionReleaseEnabled(TRANSCRIPT_RELEASE_EXTENSION_ID, flags)).toBe(false);
-    expect(isExtensionReleaseEnabled(RUNAWAY_RELEASE_EXTENSION_ID, flags)).toBe(true);
-    expect(isExtensionReleaseEnabled('haus.astrid.scene-phase-markers', flags)).toBe(true);
-    expect(isExtensionReleaseEnabled('haus.astrid.scene-phase-markers', { ...flags, extensionHostEnabled: false })).toBe(false);
-  });
-
-  it('keeps disable and downgrade scope bounded to the host and reviewed children', () => {
-    const all = [
-      extension('haus.astrid.scene-phase-markers'),
-      extension('haus.astrid.unreviewed-local-example'),
-      extension(TRANSCRIPT_LANE_EXTENSION_ID),
-      extension(RUNAWAY_TIMELINE_EXTENSION_ID),
-    ];
-
-    expect(selectReleaseEnabledExtensions(all, {
-      extensionHostEnabled: true,
-      transcriptCaptionFoundryEnabled: false,
-      runawayTypedTimelineEnabled: true,
-      configurationRevision: 'rollback-18',
-    }).map((item) => item.manifest.id)).toEqual([
-      'haus.astrid.scene-phase-markers',
-      RUNAWAY_TIMELINE_EXTENSION_ID,
-    ]);
-
-    // Disabling the parent is the only operation allowed to take the whole
-    // reviewed extension surface offline; child switches cannot override it.
-    expect(selectReleaseEnabledExtensions(all, {
-      extensionHostEnabled: false,
-      transcriptCaptionFoundryEnabled: true,
-      runawayTypedTimelineEnabled: true,
-      configurationRevision: 'rollback-18',
-    })).toEqual([]);
   });
 
   it('accepts only host-owned manifest identities, versions, revisions, and error classes', () => {
@@ -115,7 +49,7 @@ describe('extension release controls', () => {
       event: 'bridge.request',
       outcome: 'failure',
       releaseRevision: 'rc1',
-      extensionId: 'haus.astrid.runaway-timeline',
+      extensionId: 'haus.astrid.transcript-lane',
       extensionVersion: '1.0.0',
       errorClass: 'bridge.timeout',
       durationMs: 125,

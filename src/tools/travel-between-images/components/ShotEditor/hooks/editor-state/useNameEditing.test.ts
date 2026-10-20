@@ -90,4 +90,3 @@ describe('native shot name form completion', () => {
     expect(editorActions.setEditingName).not.toHaveBeenCalledWith(false);
   });
 });
-

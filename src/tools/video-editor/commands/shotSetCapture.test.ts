@@ -106,4 +106,3 @@ describe('portable occurrence-owned shot.set name capture', () => {
     expect(() => captureShotSet(bundle(), select, { values: { name: 'N' }, clear: [] })).toThrow();
   });
 });
-

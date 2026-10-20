@@ -12,7 +12,6 @@ import { readShotSettings, type ShotVideoSettings } from '@/shared/lib/settingsM
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { assertDeferredCloudShotOperation } from '@/shared/hooks/shots/shotAuthority';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 
 interface UseShotVideoSettingsReturn {
   data: ShotVideoSettings | null | undefined;
@@ -49,7 +48,7 @@ export function useShotVideoSettings(
 
       return readShotSettings(rawSettings);
     },
-    enabled: !!shotId && isDeferredCloudDataAuthority(),
+    enabled: false,
     staleTime: 0, // Always refetch - settings can change from BatchSettingsForm
   });
 

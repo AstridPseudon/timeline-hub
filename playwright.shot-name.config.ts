@@ -9,4 +9,3 @@ export default defineConfig({
   timeout: 300_000,
   workers: 1,
 });
-

@@ -119,7 +119,6 @@ describe('useVideoTravelTaskData', () => {
     expect(result.current.videoTreatment).toBe('clip');
     expect(result.current.motionStrength).toBe(0.42);
     expect(result.current.presetId).toBe('db-preset-1');
-    expect(result.current.isDbPreset).toBe(true);
     expect(result.current.modelName).toBe('wan_2_2_i2v_lightning_baseline_2_2_1');
     expect(result.current.resolution).toBe('1280x720');
     expect(result.current.frames).toBe(16);

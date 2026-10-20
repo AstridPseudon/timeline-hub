@@ -1,14 +1,11 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { PROJECT_SLUG, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './timeline/support';
 
-const RUNAWAY_PROJECT = 'extension-accessibility';
-const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1', runawayTimelineProject: RUNAWAY_PROJECT } });
+const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1' } });
 // The harness mounts no data provider. `localProject` is kept only because Layout's sessionless auth gate keys off it.
 const HARNESS_URL = `/tools/video-editor/harness?scenario=populated&localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`;
-// This spec exercises the historical 13-extension SDK capability matrix via
-// the explicit fixture catalog enabled by playwright.extension-accessibility.config.ts.
-// The live product dev catalog is generated from Astrid and currently has two entries.
-const EXTENSION_COUNT = 13;
+// The routed editor uses the generated Astrid catalog.
+const EXTENSION_COUNT = 2;
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];
@@ -46,8 +43,6 @@ async function openComposedEditor(page: Page): Promise<string[]> {
   const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   expect(response?.ok()).toBe(true);
   await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
-  await expect(page.locator('[data-lane-kind="astrid.runaway.transitions"]')).toBeVisible();
-  await expect(page.getByTestId('timeline-marker-layer-legend')).toBeVisible();
   return issues;
 }
 
@@ -113,7 +108,7 @@ async function saveScreenshot(page: Page, testInfo: TestInfo, name: string): Pro
   await page.screenshot({ path: testInfo.outputPath(name), fullPage: true });
 }
 
-test('all 13 SDK fixture extensions expose state and retain keyboard focus through disable and re-enable', async ({ page }, testInfo) => {
+test('the bundled extensions expose state and retain keyboard focus through disable and re-enable', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   const issues = await openComposedEditor(page);
@@ -148,14 +143,14 @@ test('all 13 SDK fixture extensions expose state and retain keyboard focus throu
     JSON.stringify(focusStyle),
   ).toBe(true);
   expect(issues).toEqual([]);
-  await saveScreenshot(page, testInfo, 'all-13-fixture-extensions-keyboard-focus.png');
+  await saveScreenshot(page, testInfo, 'bundled-extensions-keyboard-focus.png');
 });
 
 for (const viewport of [
   { name: 'tablet', width: 834, height: 1194 },
   { name: 'phone', width: 420, height: 820 },
 ] as const) {
-  test(`all 13 SDK fixture extension states remain reachable at ${viewport.name} size`, async ({ page }, testInfo) => {
+  test(`bundled extension states remain reachable at ${viewport.name} size`, async ({ page }, testInfo) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const issues = await openComposedEditor(page);
@@ -163,7 +158,7 @@ for (const viewport of [
     await expectToggleSemantics(inventory);
     await expectViewportContained(page, viewport.width);
     expect(issues).toEqual([]);
-    await saveScreenshot(page, testInfo, `all-13-fixture-extensions-${viewport.name}.png`);
+    await saveScreenshot(page, testInfo, `bundled-extensions-${viewport.name}.png`);
   });
 }
 

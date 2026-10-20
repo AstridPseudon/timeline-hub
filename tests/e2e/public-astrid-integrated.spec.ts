@@ -6,13 +6,8 @@ async function surface(page: Page, name: 'home' | 'vision') {
 }
 
 async function hours(page: Page, value: number) {
-  const slider = page.locator('.astrid-sky-review input[type="range"]').first();
-  await slider.evaluate((element, next) => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(element, String(next));
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-  }, value);
-  await expect(slider).toHaveValue(String(value));
+  const whole = Math.floor(value);
+  await page.clock.setFixedTime(new Date(2026, 9, 20, whole, (value - whole) * 60));
 }
 
 async function shot(page: Page, info: TestInfo, name: string) {
@@ -114,43 +109,27 @@ test('A01/A02/A03/A10/A13 production entries and repeated retained-state history
   await shot(page, info, 'returned-app');
 });
 
-test('A04/A05/A06/A07/A08 dusk controls, resize, disclosure and live motion', async ({ page }, info) => {
-  await page.goto('/vision?sky-review');
+test('A04/A05/A06/A07/A08 daylight palettes, resize, disclosure and live motion', async ({ page }, info) => {
+  await page.goto('/vision');
   await surface(page, 'vision');
   const samples: unknown[] = [];
   for (const time of [12, 17, 18, 18.5, 19, 19.5, 20, 0]) {
     await hours(page, time);
     await page.waitForTimeout(180);
-    samples.push(await page.locator('main.astrid-vision').evaluate((element) => ({
-      time: (document.querySelector('input[type=range]') as HTMLInputElement).value,
+    samples.push(await page.locator('main.astrid-vision').evaluate((element, sampleTime) => ({
+      time: sampleTime,
       theme: element.getAttribute('data-theme'),
       paper: getComputedStyle(element).getPropertyValue('--astrid-paper'),
       rootPaper: getComputedStyle(document.documentElement).getPropertyValue('--astrid-root-paper'),
       ink: getComputedStyle(element).getPropertyValue('--astrid-ink'),
       background: getComputedStyle(element).backgroundColor,
       headingInk: getComputedStyle(element.querySelector('h1')!).color,
-    })));
+    }), time));
     await shot(page, info, `dusk-${time}`);
   }
   for (const sample of samples as { paper: string; rootPaper: string }[]) expect(sample.paper.trim()).toBe(sample.rootPaper.trim());
   await info.attach('palette-samples', { body: JSON.stringify(samples, null, 2), contentType: 'application/json' });
-  await page.getByRole('button', { name: 'Play day', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Hide sky controls' }).click();
-  await page.getByRole('button', { name: /^Sky ·/ }).click();
-  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
-  await hours(page, 12);
-  await expect(page.getByRole('button', { name: 'Play day', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Now', exact: true }).click();
-  await hours(page, 19);
-  await page.getByRole('button', { name: 'Sky on', exact: true }).click();
-  await expect(page.locator('.astrid-sky canvas')).toHaveCount(0);
-  await hours(page, 12);
-  await shot(page, info, 'sky-off-live-palette');
-  await page.getByRole('button', { name: 'Sky off', exact: true }).click();
-  await page.getByRole('button', { name: 'Play day', exact: true }).click();
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.getByRole('button', { name: 'Play day', exact: true })).toBeVisible();
   await hours(page, 0);
   for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }]) {
     await page.setViewportSize(size);

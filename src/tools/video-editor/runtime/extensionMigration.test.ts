@@ -857,7 +857,7 @@ describe('executeLocalToInstalledMigration', () => {
     const result = await executeLocalToInstalledMigration({
       localManifest: makeLocalManifest({ id: operationalExtensionId as never }),
       installedPack: makeInstalledPack({
-        manifest: { id: 'haus.astrid-runaway-timeline' as never },
+        manifest: { id: 'haus.astrid.live-scenes' as never },
       }),
       repository: makeMockRepository(),
       localSettings: {},

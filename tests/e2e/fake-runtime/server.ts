@@ -7,7 +7,6 @@
  *   workspace.json, health/handshake/realm, objects, media imports, timelines/:t/*  -> runtimeFixture
  *   every other /v1/*                                                               -> createFakeRuntimeRouter
  *   ACP chat reads                                                                  -> acp.ts
- *   runaway-transitions                                                             -> runaway.ts
  *
  * Run with `tsx --tsconfig tests/e2e/fake-runtime/tsconfig.json` (see launch.mjs). Env: FAKE_RUNTIME_PORT
  * (0 or unset picks a free port) and FAKE_RUNTIME_TOKEN_FILE (required). On start it prints
@@ -29,7 +28,6 @@ import {
 } from '../../../src/test/fakeRuntimeIdentity.mjs';
 import type { FakeObjectStore } from '../../../src/test/fakeObjectStore.ts';
 import { createFakeAcp, type FakeAcp } from './acp.ts';
-import { runawayPage } from './runaway.ts';
 import { createSeedObjectStore, createSeedTimelines, DEMO_PROJECT_ID, DEMO_PROJECT_SLUG } from './seed.ts';
 
 export const READY_PREFIX = 'FAKE_RUNTIME_READY';
@@ -219,15 +217,6 @@ export async function startFakeRuntimeServer(options: { token: string; port?: nu
       }
       console.error(`[fake-runtime] no fake route for ${method} ${pathname}`);
       return errorReply(404, 'not_found', `No fake route for ${pathname}`);
-    }
-
-    // The Runaway lane is a Runtime-adjacent read the App requires the protocol header on (A7).
-    if (method === 'GET' && /^\/v1\/projects\/[^/]+\/runaway-transitions$/.test(pathname)) {
-      return {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Astrid-Bridge-Version': 'v1', 'Cache-Control': 'no-store' },
-        body: jsonBody(runawayPage(url)),
-      };
     }
 
     if (pathname === '/v1/health' || pathname === '/v1/handshake' || pathname === '/v1/realm') {

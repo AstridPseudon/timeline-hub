@@ -28,16 +28,12 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import ShotsPage from '@/pages/ShotsPage';
 import { Layout } from './Layout';
 import { DefaultToolRedirect } from './DefaultToolRedirect';
-import { AppEnv } from '@/types/env';
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { ToolErrorBoundary } from '@/shared/components/ToolErrorBoundary';
 import { ToolLaunchBoundary } from '@/shared/components/ToolLaunchBoundary';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
 import { isRecognizedOAuthCallbackUrl } from './entryClassification.ts';
-
-// Determine the environment
-const currentEnv = (import.meta.env.VITE_APP_ENV?.toLowerCase() || AppEnv.WEB);
 
 // Loading fallback component for lazy loaded pages
 const LazyLoadingFallback = () => (
@@ -63,10 +59,6 @@ function PublicHomeAppEntry({
   return <HomeDocumentHandoff replaceDocument={replaceDocument} />;
 }
 
-const usesPublicHomeDocument = currentEnv === AppEnv.WEB
-  || currentEnv === AppEnv.DEV
-  || currentEnv === AppEnv.LOCAL;
-
 export function AppRoutes({
   homeDocumentReplacement,
 }: {
@@ -74,15 +66,13 @@ export function AppRoutes({
 } = {}) {
   return (
     <Routes>
-      {currentEnv === AppEnv.WEB ? (
+      {isRecognizedOAuthCallbackUrl(new URL(window.location.href)) && (
         <Route path="/" element={<HomeWithAuthRedirect />} />
-      ) : null}
+      )}
 
       <Route
         path="/home"
-        element={usesPublicHomeDocument ? (
-          <PublicHomeAppEntry replaceDocument={homeDocumentReplacement} />
-        ) : <HomeWithAuthRedirect />}
+        element={<PublicHomeAppEntry replaceDocument={homeDocumentReplacement} />}
       />
 
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
@@ -107,9 +97,7 @@ export function AppRoutes({
       />
 
       <Route element={<Layout />}>
-        {currentEnv !== AppEnv.WEB ? (
-          <Route path="/" element={<DefaultToolRedirect />} />
-        ) : null}
+        <Route path="/" element={<DefaultToolRedirect />} />
         <Route path="/tools" element={<DefaultToolRedirect />} />
         <Route
           path="/tools/image-generation"

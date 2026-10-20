@@ -6,7 +6,6 @@ const {
   mockSelect,
   mockUpdate,
   mockGetSupabaseClient,
-  isDeferredCloudDataAuthorityMock,
   checkAvailabilityMock,
   runtimeSessionMock,
 } = vi.hoisted(() => ({
@@ -14,7 +13,6 @@ const {
   mockSelect: vi.fn(),
   mockUpdate: vi.fn(),
   mockGetSupabaseClient: vi.fn(),
-  isDeferredCloudDataAuthorityMock: vi.fn().mockReturnValue(true),
   checkAvailabilityMock: vi.fn(),
   runtimeSessionMock: vi.fn(),
 }));
@@ -32,10 +30,6 @@ vi.mock("@/integrations/astrid/doctorAvailability.ts", () => ({
 
 vi.mock("@/integrations/supabase/client", () => ({
   getSupabaseClient: mockGetSupabaseClient,
-}));
-
-vi.mock("@/app/runtime/dataAuthority", () => ({
-  isDeferredCloudDataAuthority: isDeferredCloudDataAuthorityMock,
 }));
 
 import { ASTRID_SETUP_COMPLETE_KEY, useOnboarding } from "../useOnboarding";
@@ -73,7 +67,6 @@ describe("useOnboarding", () => {
       });
     window.localStorage.removeItem(ASTRID_SETUP_COMPLETE_KEY);
     checkAvailabilityMock.mockResolvedValue({ status: "available" });
-    isDeferredCloudDataAuthorityMock.mockReturnValue(true);
     window.history.replaceState({}, "", "/");
     mockGetSupabaseClient.mockReturnValue({
       auth: {
@@ -196,17 +189,6 @@ describe("useOnboarding", () => {
     expect(result.current.showOnboardingModal).toBe(true);
   });
 
-  it("does not show modal when no user", async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null } });
-    const { result } = renderHook(() => useOnboarding());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(600);
-    });
-
-    expect(result.current.showOnboardingModal).toBe(false);
-  });
-
   it("does not probe Supabase in local Astrid editor mode, and uses negotiated Runtime readiness", async () => {
     window.history.replaceState(
       {},
@@ -227,7 +209,6 @@ describe("useOnboarding", () => {
   });
 
   it("does not probe Supabase under default Astrid authority", async () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     const { result } = renderHook(() => useOnboarding());
 
     await act(async () => {
@@ -242,7 +223,6 @@ describe("useOnboarding", () => {
   });
 
   it("keeps showing first-run setup on every launch until it is finished", async () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     const first = renderHook(() => useOnboarding());
     await act(async () => {
       await vi.advanceTimersByTimeAsync(600);
@@ -261,7 +241,6 @@ describe("useOnboarding", () => {
   });
 
   it("asks a set-up install to restart its Runtime when it is not running", async () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     window.localStorage.setItem(ASTRID_SETUP_COMPLETE_KEY, "true");
     checkAvailabilityMock.mockResolvedValue({
       status: "unavailable",
@@ -278,7 +257,6 @@ describe("useOnboarding", () => {
   });
 
   it("stays out of the way once set up and the Runtime is running", async () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
     window.localStorage.setItem(ASTRID_SETUP_COMPLETE_KEY, "true");
 
     const { result } = renderHook(() => useOnboarding());
