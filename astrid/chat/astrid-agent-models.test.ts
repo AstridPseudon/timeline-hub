@@ -214,6 +214,7 @@ if (args[0] === '--agent-profile-file') {
       assert.equal(response.status, 200);
       assert.ok(Date.now() - started < 16_000, 'discovery and bootstrap must stay below the browser deadline');
       const agents = localAgentCatalogSchema.parse(await response.json()).agents;
+      assert.match(agents.find(agent => agent.id === 'astrid')!.signInLine!, /run-astrid.*\/login/);
       assert.equal(agents.find(agent => agent.id === 'astrid')?.state, 'ready', 'unknown catalog preserves the existing classification');
       assert.deepEqual(agents.find(agent => agent.id === 'codex')?.models, [{ modelId: 'fixture', name: 'Fixture' }]);
       const children = readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; agent: string; args: string[] });

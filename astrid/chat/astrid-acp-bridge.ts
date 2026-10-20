@@ -440,6 +440,7 @@ export class AstridAcpBridge {
         jsonResponse(response, 200, {
           defaultAgent: this.modelState.defaultAgent,
           agents: choices.map(agent => ({ ...agent,
+            ...(agent.id === 'astrid' ? { signInLine: LOCAL_AGENT_TABLE.astrid.signInLine } : {}),
             models: this.modelState.catalogs.get(agent.id)?.availableModels ?? [],
             defaultModel: this.modelState.defaults.get(agent.id) ?? null,
           })),

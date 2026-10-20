@@ -58,6 +58,7 @@ export const localAgentCatalogSchema = z.object({
     name: z.string(),
     state: z.enum(['ready', 'sign-in', 'not-installed']),
     line: z.string().nullable(),
+    signInLine: z.string().optional(),
     models: z.array(agentModelSchema),
     defaultModel: z.string().nullable(),
   })),
