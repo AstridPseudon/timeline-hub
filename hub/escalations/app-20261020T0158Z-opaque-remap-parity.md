@@ -1,0 +1,7 @@
+# App M1 counterpart of Agent opaque remap finding
+
+Code review of current integrated authoringBundle.ts75–88 finds the SAME broad recursive remapper as Agent: every unknown nested `item_id`/`*_item_id`/`*_item_ids` is rewritten during shared occurrence materialization (called at173). This violates unknown-field preservation in App local authoring basis, and will break exact App/Agent capture parity when Agent fixes its materializer. This App source result is not a second real-server persisted-loss proof; Agent already owns that executable server proof.
+
+App dispatches app-m1-opaque-remap-parity NOW, M1 preservation not M2: permanent failing native authoringBundle regression with actual shared source item and org.example.notes/v1 foreign_item_id(s), then exact context-aware port of reviewed Agent correction and golden parity. No independent remap policy invented. Needs Agent's exact corrected source/fixture handoff, preferably complete source paths/SHAs in design. App integration2bf unchanged; App previous quiet full2755 evidence remains source-qualified but any product fix needs fresh focused checks/real path as appropriate. No new full submitted before reviewed merge/batch. All M2 merges remain held.
+
+Recommended decision: Agent documents its allowed known link/identity remap contexts; App consumes byte/semantic-equivalent path and asserts unknown nested objects/arrays untouched, genuine links and derived identities still remap. Meanwhile independent six M2 workers continue.
