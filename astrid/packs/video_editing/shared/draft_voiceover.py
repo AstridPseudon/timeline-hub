@@ -7,10 +7,14 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import json
 import math
-import uuid
 from typing import Any, Callable, Mapping
+
+from .draft_voiceover_proposal import (
+    _MEDIA_SELECTION_FIELDS, _PRODUCER_FIELDS, _capture_voiceover_commands,
+    _commit_voiceover_proposal, _known_voiceover_insertions, _voiceover_proposal,
+    runtime_synthesizer,
+)
 
 KEY = "draft_voiceover"
 DEFAULT_SETTINGS = {"provider": "edge-tts", "voice": "en-US-ChristopherNeural",
@@ -360,7 +364,8 @@ def prepare_draft_voiceover(candidate: Mapping, scripts: Mapping, *, synthesize:
         durations[job["occurrence_id"]] = result["duration_seconds"]
     retime_candidate(work, durations, policy=timing_policy, padding_seconds=padding_seconds)
     return {"candidate": work, "plan": plan, "changed": bool(generated),
-            "generated": [{"occurrence_id": job["occurrence_id"], **result} for job,result in generated]}
+            "generated": [{"occurrence_id": job["occurrence_id"], "shot_id": job["shot_id"],
+                            "clip_id": job["clip_id"], **result} for job, result in generated]}
 
 
 def _data(result):
@@ -369,46 +374,6 @@ def _data(result):
             raise VoiceoverSyncError(str(result.error))
         return result.data
     return result.get("data", result)
-
-
-def _artifact_identity(row):
-    for key in ("object_id", "media_id", "content_hash", "digest", "sha256"):
-        value = row.get(key)
-        if isinstance(value, str) and value:
-            return value if value.startswith("sha256:") else "sha256:" + value
-    raise VoiceoverSyncError("Managed artifact has no digest")
-
-
-def runtime_synthesizer(client, project):
-    """Invoke speech through SDK; verify provenance bytes from managed outputs."""
-    # A deliberate regeneration must not replay a failed or missing old output.
-    # Share one identity within this batch; a later explicit sync gets a new one.
-    request_context = {"draft_voiceover_sync": uuid.uuid4().hex}
-    def synthesize(text, settings):
-        import astrid.sdk as sdk
-        result = sdk.invoke("generation.generate_speech", kind="executor", project=project,
-            inputs={"text": text, **settings}, client=client, wait=True,
-            idempotency_context=request_context)
-        if not result.ok:
-            raise VoiceoverSyncError(str(result.error))
-        artifacts = result.outputs.get("managed_outputs") or result.outputs.get("artifacts") or []
-        manifest_row = next((r for r in artifacts if r.get("name") in {"speech_manifest", "manifest", "manifest.json"}
-                             or str(r.get("path", "")).endswith("manifest.json")), None)
-        audio_row = next((r for r in artifacts if r.get("name") in {"speech", "generated_audio"}
-                          or str(r.get("path", "")).endswith("speech.wav")), None)
-        if manifest_row is None or audio_row is None:
-            raise VoiceoverSyncError("Completed speech run has no managed WAV/provenance outputs")
-        manifest = json.loads(client.media.read_bytes(_artifact_identity(manifest_row)))
-        audio_id = _artifact_identity(audio_row)
-        audio_bytes = client.media.read_bytes(audio_id)
-        if ("sha256:" + hashlib.sha256(audio_bytes).hexdigest() != audio_id
-                or manifest.get("audio_sha256") != audio_id.removeprefix("sha256:")
-                or manifest.get("text_sha256") != digest(text).removeprefix("sha256:")):
-            raise VoiceoverSyncError("Managed speech provenance failed hash verification")
-        return {"text": manifest["text"], "settings": manifest["settings"],
-                "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
-                "run_id": result.run_id, "task_id": result.kernel_task_id}
-    return synthesize
 
 
 def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
@@ -424,15 +389,24 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
     if not math.isfinite(padding_seconds) or padding_seconds < 0:
         raise VoiceoverSyncError("padding_seconds must be finite and nonnegative")
     shown = _data(client.timelines.open_composition(project, timeline))
-    head = shown["summary"]["head_revision_id"]
+    summary = shown["summary"]
+    head = summary["head_revision_id"]
     scope = _data(client.timelines.resolve_scope(project, timeline))
     project_row = _data(client.projects.show(project))
     project_id = project_row.get("project_id") or project_row["id"]
     timeline_id = scope["timeline_id"]
     endpoint = getattr(client, "endpoint", None)
     endpoint = getattr(endpoint, "url", endpoint)
+    base_publication_id = summary.get("head_publication_id") or summary.get("publication_id")
+    if not isinstance(base_publication_id, str) or not base_publication_id:
+        history = getattr(client.timelines, "history", None)
+        if callable(history):
+            page = _data(history(project_id, timeline_id, limit=1))
+            head_row = page.get("head") if isinstance(page, Mapping) else None
+            base_publication_id = head_row.get("publication_id") if isinstance(head_row, Mapping) else None
     bound = client.open_authoring_target({"endpoint": endpoint, "project_id": project_id,
         "timeline_id": timeline_id, "head_revision_id": head,
+        "head_publication_id": base_publication_id,
         "capabilities": {"edit": {"status": "available", "route": "authoring-bundle validate/commit"}}})
     candidate = bound.open()
     scripts = _data(client.timelines.script(project_id, timeline_id, revision_id=head))
@@ -472,6 +446,26 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
     bound.validate(prepared["candidate"])
     diff = bound.diff(prepared["candidate"])
     frozen = bound.preview(prepared["candidate"])
-    receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
+    if not _known_voiceover_insertions(candidate, prepared["generated"]):
+        receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
+        return {"status": "published", "published": True, "plan": plan, "diff": diff,
+                "generated": prepared["generated"], "receipt": receipt}
+    if timing_policy != "preserve":
+        return {"status": "proposal_open", "published": False, "plan": plan,
+                "diff": diff, "generated": prepared["generated"],
+                "gaps": [{"capability": "voiceover timing retime",
+                          "reason": "known insertion proposal has no native placement/parent retime command"}],
+                "candidate_digest": frozen.get("candidate_digest")}
+    commands, gaps, producer = _capture_voiceover_commands(
+        candidate, scripts, prepared["generated"])
+    if not isinstance(base_publication_id, str) or not base_publication_id:
+        gaps.append({"capability": "producer proposal admitted target",
+                     "reason": "the pinned Runtime head has no publication identity"})
+    if gaps or producer is None:
+        return {"status": "proposal_open", "published": False, "plan": plan,
+                "diff": diff, "generated": prepared["generated"], "gaps": gaps,
+                "candidate_digest": frozen.get("candidate_digest")}
+    proposal = _voiceover_proposal(producer, candidate, base_publication_id, commands)
+    receipt = _commit_voiceover_proposal(client, proposal)
     return {"status": "published", "published": True, "plan": plan, "diff": diff,
-            "generated": prepared["generated"], "receipt": receipt}
+            "generated": prepared["generated"], "proposal": proposal, "receipt": receipt}
