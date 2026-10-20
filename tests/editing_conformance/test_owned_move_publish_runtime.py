@@ -58,6 +58,30 @@ def trim_film(film):
     return fixture, parent, baseline
 
 
+@pytest.fixture
+def delete_film(trim_film):
+    """Reuse the trim harness with its occurrence dependencies removed."""
+    from runtime_protocol.service import RuntimeService
+
+    fixture, original, _ = trim_film
+    parent = copy.deepcopy(original)
+    parent['occurrences'] = []
+    parent['config']['clips'] = copy.deepcopy(parent['clips'])
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
+        baseline = service.publish_parent_composition(
+            fixture.project_id, fixture.timeline_id,
+            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+             'expected_head': head, 'parent_revision_id': 'owned-delete-baseline',
+             'parent_composition': parent},
+            idempotency_key='owned-delete-baseline',
+        )
+    finally:
+        service.close()
+    return fixture, parent, baseline
+
+
 def test_http_original_sdk_move_publish_disjoint_rebase_reload_undo(runtime):
     seed(runtime)
     tl = attach(runtime)
@@ -165,6 +189,68 @@ def test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo(
     assert loaded.clip('parent/clip:music-bed').data['from'] == 1.0
     assert loaded.clip('parent/clip:music-bed').data['to'] == 4.000001
     assert loaded.clip('parent/clip:music-bed').data['hold'] == 3.000001
+    assert loaded.clip('music-other').start == 2
+
+    loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:music-bed').data == original
+    assert loaded.clip('music-other').start == 2
+
+
+def test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo(
+    tmp_path, delete_film, wire, real_runtime,
+):
+    fixture, _, _ = delete_film
+    observed, lose = wire
+    support = tmp_path / 'support'
+    outbox = tmp_path / 'owned-delete.json'
+
+    def start(port=0):
+        return real_runtime(fixture.duplicate_root, support_root=support,
+                            port=port, authoring_profile='astrid')
+
+    daemon = start()
+    client = m1.open_client(daemon)
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                   client=client, outbox_path=outbox)
+    tl = Checkout.attach(session)
+    original = copy.deepcopy(tl.clip('parent/clip:music-bed').data)
+    peer = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=client,
+        outbox_path=tmp_path / 'peer.json'))
+    peer.clip('music-other').on(2)
+    peer.flush(idempotency_key='owned-delete-peer')
+
+    clip = tl.clip('parent/clip:music-bed')
+    clip.remove()
+    captured = json.loads(outbox.read_bytes())['pending']
+    assert captured[0]['op'] == 'clip.delete'
+    assert captured[0]['select'] == 'parent/clip:music-bed'
+    assert captured[0]['args'] == {}
+    assert not State(tl.bundle).entity('parent/clip:music-bed', optional=True)
+
+    lose.add('owned-delete')
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Remove the opening', idempotency_key='owned-delete')
+    first = copy.deepcopy(observed[-1])
+    durable = json.loads(outbox.read_bytes())
+    assert json.loads(first['body'])['commands'] == captured
+    assert json.loads(first['body'])['rationale'] == 'Remove the opening'
+    assert durable['flight']['body'].encode() == first['body']
+    assert durable['flight']['key'] == 'owned-delete'
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = start(port)
+    loaded = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=m1.open_client(daemon),
+        outbox_path=outbox))
+    retried = loaded.publish()
+    assert observed[-1]['body'] == first['body']
+    assert observed[-1]['key'] == first['key']
+    assert retried['receipt'] == first['response']['receipt']
+    assert retried['message'] == 'Remove the opening'
+    assert retried['receipt']['result']['status'] == 'rebased'
+    assert not State(loaded.bundle).entity('parent/clip:music-bed', optional=True)
     assert loaded.clip('music-other').start == 2
 
     loaded.undo([retried['receipt']['receipt_id']])
