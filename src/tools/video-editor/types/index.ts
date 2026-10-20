@@ -584,6 +584,13 @@ export type AssetMetadata = {
 export type AssetRegistryEntry = {
   /** Optional legacy/source locator; managed Astrid media may use media_id only. */
   file?: string;
+  /** Human-readable source metadata used for timeline clip labels. */
+  original_name?: string;
+  original_filename?: string;
+  filename?: string;
+  name?: string;
+  title?: string;
+  prompt?: string;
   /** Stable project-owned media identity used by the Astrid bridge byte route. */
   media_id?: string;
   url?: string;

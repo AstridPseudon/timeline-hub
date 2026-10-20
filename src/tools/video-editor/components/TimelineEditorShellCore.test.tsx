@@ -1,3 +1,5 @@
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
+import { ClipInspectorActions } from './PropertiesPanel/ClipInspectorActions.tsx';
 import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -44,6 +46,8 @@ let __conflictDialog: Record<string, unknown> = {};
 /** Interaction mode reported by the mocked timeline store. */
 let __interactionMode: 'browse' | 'select' | 'move' | 'trim' | 'precision' = 'browse';
 const __seek = vi.fn();
+const __playerMount = vi.fn();
+const __playerUnmount = vi.fn();
 const __previewRef = { current: { togglePlayPause: vi.fn(), seek: __seek } };
 let __playback = {
   currentTime: 0,
@@ -227,15 +231,24 @@ vi.mock('@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx', () => (
   default: () => <div data-testid="preview-panel">Preview</div>,
 }));
 
-vi.mock('@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx', () => ({
-  useVideoEditorPreviewSurface: () => ({
-    slotRef: { current: null },
-    portal: <div data-testid="preview-portal">Preview portal</div>,
-  }),
-}));
+vi.mock('@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx', async () => {
+  const React = await vi.importActual<typeof import('react')>('react');
+  function Player() {
+    const [playing, setPlaying] = React.useState(false);
+    React.useEffect(() => { __playerMount(); return () => { __playerUnmount(); }; }, []);
+    return <div data-testid="preview-portal" data-playing={String(playing)} onClick={() => setPlaying(!playing)}>Preview portal</div>;
+  }
+  return { useVideoEditorPreviewSurface: () => ({ slotRef: { current: null }, portal: <Player /> }) };
+});
 
 vi.mock('@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx', () => ({
-  PropertiesPanel: () => <div data-testid="properties-panel">Properties</div>,
+  PropertiesPanel: () => <div data-testid="properties-panel">Properties
+    {__deviceClass !== 'desktop' && __selectedClipIds.size === 1 && <ClipInspectorActions
+      muted={false} canMoveTrack canSplit canToggleMute setActiveTab={() => {}}
+      onSetInteractionMode={__editorOps.setInteractionMode} onMoveTrackUp={() => {}} onMoveTrackDown={() => {}}
+      onSplitAtPlayhead={__editorOps.handleSplitSelectedClip} onToggleMute={() => {}}
+    />}
+  </div>,
 }));
 
 vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx', () => ({
@@ -259,7 +272,8 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx', () 
     return (
       <div data-testid="timeline-editor">
         Timeline Editor
-        {/* One clip, with a control drawn inside it, for the phone's tap-to-open sheet. */}
+        {/* Timeline picks bubble to the touch shell; inner controls keep their own action. */}
+        <div data-track-id="V1" data-track-label="" data-testid="mock-track">Video 1</div>
         <div className="clip-action" role="button" tabIndex={0} data-testid="mock-clip" data-selected={__selectedClipIds.has('clip-1') ? 'true' : undefined}>
           Clip
           <button type="button">Clip control</button>
@@ -1620,7 +1634,7 @@ describe('TimelineEditorShellCore — touch editing without a mode switcher', ()
 });
 
 // ---------------------------------------------------------------------------
-// Phone: a clear picture, one document row, and a sheet a clip tap opens
+// Touch: shared picture-area tabs and one Inspector for timeline picks
 // ---------------------------------------------------------------------------
 
 describe('TimelineEditorShellCore — phone layout', () => {
@@ -1676,55 +1690,95 @@ describe('TimelineEditorShellCore — phone layout', () => {
     }
   });
 
-  it('has no Inspector dock, Inspector button or panel-display control, whatever the saved preference', () => {
+  it.each(['phone', 'tablet'] as const)('defaults to Video with three shared 44px tabs on %s', (device) => {
+    __deviceClass = device;
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    expect(screen.queryByTestId('video-editor-right-panel-dock')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Inspector|Clip$|Selection/ })).toBeNull();
+    const tabs = within(screen.getByRole('tablist', { name: 'Right panel surface' })).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Video', 'Inspector', 'Extensions']);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    // The header's controls: drawn at 36px with a 44px touch ring.
+    for (const tab of tabs) expect(tab.className).toContain(COARSE_TOUCH_TARGET);
     expect(screen.queryByRole('button', { name: 'Panel display' })).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('opens the clip sheet when a clip is tapped', () => {
+  it('opens Inspector with the clip action grid when a clip is tapped, without a sheet', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
-
     fireEvent.click(screen.getByTestId('mock-clip'));
-
-    const sheet = screen.getByTestId('timeline-clip-sheet');
-    expect(within(sheet).getByTestId('properties-panel')).toBeTruthy();
-    expect(within(sheet).getByText('Selected clip')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('properties-panel')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Clip actions' })).toBeVisible();
+    for (const name of ['Move', 'Trim', 'Split', 'Mute', 'Track up', 'Track down']) {
+      expect(screen.getByRole('button', { name })).toBeVisible();
+    }
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
   });
 
-  it('leaves the sheet closed for a control inside the clip, and while a gesture is armed', () => {
+  it('opens Inspector for a track name tap, without a sheet', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    fireEvent.click(screen.getByTestId('mock-track'));
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('properties-panel')).toBeVisible();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByTestId('timeline-track-sheet')).toBeNull();
+  });
+
+  it('ignores a control inside the clip and an unselected clip while a gesture is armed', () => {
     const { unmount } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
     fireEvent.click(screen.getByRole('button', { name: 'Clip control' }));
-    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
     unmount();
 
-    // Armed, a tap on a clip that is not selected is the start of a drag, not a sheet.
     __interactionMode = 'move';
     __selectedClipIds = new Set();
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     fireEvent.click(screen.getByTestId('mock-clip'));
-    expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    expect(__editorOps.setInteractionMode).not.toHaveBeenCalled();
   });
 
-  it('reopens the sheet on every tap of the same clip after it is closed', async () => {
+  it('opens Inspector on every tap of the same clip after returning to Video', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     for (let tap = 0; tap < 3; tap += 1) {
       fireEvent.click(screen.getByTestId('mock-clip'));
-      expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
-      fireEvent.keyDown(screen.getByTestId('timeline-clip-sheet'), { key: 'Escape' });
-      await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
+      expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+      fireEvent.click(screen.getByRole('tab', { name: 'Video' }));
     }
   });
 
-  it('tapping the selected clip while Move or Trim is armed releases it and opens the sheet', () => {
-    __interactionMode = 'trim';
+  it.each(['move', 'trim'] as const)('tapping the selected clip while %s is armed releases it and opens Inspector', (mode) => {
+    __interactionMode = mode;
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     fireEvent.click(screen.getByTestId('mock-clip'));
     expect(__editorOps.setInteractionMode).toHaveBeenCalledWith('browse');
-    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('shows admitted extension panels and keeps the player mounted and playing through every tab', () => {
+    __assetPanels = [{ id: 'transcript', extensionId: 'ext.transcript', label: 'Transcript', placement: 'asset-panel', render: () => null }];
+    __editorDataOverrides = { data: { rows: [], meta: {} } };
+    try {
+      render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      const player = screen.getByTestId('preview-portal');
+      const preview = screen.getByTestId('preview-panel');
+      fireEvent.click(player);
+      expect(player).toHaveAttribute('data-playing', 'true');
+      fireEvent.click(screen.getByRole('tab', { name: /Inspector/ }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Extensions' }));
+      expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Transcript');
+      expect(screen.getByTestId('asset-panel-surface')).toBeVisible();
+      fireEvent.click(screen.getByRole('tab', { name: 'Video' }));
+      expect(screen.getByTestId('preview-panel')).toBe(preview);
+      expect(screen.getByTestId('preview-portal')).toBe(player);
+      expect(player).toHaveAttribute('data-playing', 'true');
+      expect(__playerMount).toHaveBeenCalledTimes(1);
+      expect(__playerUnmount).not.toHaveBeenCalled();
+    } finally {
+      __assetPanels = [];
+      __editorDataOverrides = {};
+    }
   });
 
   it('opens Astrid and the gallery from its own bar, and the app\'s floating pane tabs step aside', () => {
@@ -1768,7 +1822,7 @@ describe('TimelineEditorShellCore — phone layout', () => {
     }
   });
 
-  it('gives a tablet the same touch shell: Astrid bar, hosted pane tabs, no dock', () => {
+  it('gives a tablet the same touch shell: Astrid bar, hosted pane tabs and picture tabs', () => {
     __deviceClass = 'tablet';
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(document.querySelector('main[data-shell-layout="touch"]')).not.toBeNull();
@@ -1783,25 +1837,95 @@ describe('TimelineEditorShellCore — phone layout', () => {
     expect(paneControlsHosted()).toBe(false);
   });
 
-  it('closes the sheet when Move arms the gesture, and when the clip is closed', async () => {
-    // The shell is memoised on its props; a fresh callback stands in for the store update.
+  it.each(['Move', 'Trim'] as const)('keeps Inspector through %s and Done; clearing the pick returns to Video', (action) => {
+    // A new callback stands in for the mocked store notification to the memoised shell.
     const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;
     const { rerender } = render(renderShell());
     fireEvent.click(screen.getByTestId('mock-clip'));
-    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
-
-    __interactionMode = 'move';
+    fireEvent.click(screen.getByRole('button', { name: action }));
+    expect(__editorOps.setInteractionMode).toHaveBeenCalledWith(action.toLowerCase());
+    __interactionMode = action === 'Move' ? 'move' : 'trim';
     rerender(renderShell());
-    await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
-
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(__editorOps.setInteractionMode).toHaveBeenLastCalledWith('browse');
     __interactionMode = 'browse';
     rerender(renderShell());
-    fireEvent.click(screen.getByTestId('mock-clip'));
-    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
-
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    // Closed or deleted: nothing is picked any more, so the picture comes back.
     __selectedClipIds = new Set();
     rerender(renderShell());
-    await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
+    expect(screen.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('stays on Inspector when the pick moves from a clip to a track name', () => {
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    fireEvent.click(screen.getByTestId('mock-clip'));
+    fireEvent.click(screen.getByTestId('mock-track'));
+    __selectedClipIds = new Set();
+    __selectedTrackId = 'V1';
+    try {
+      rerender(renderShell());
+      expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      __selectedTrackId = null;
+    }
+  });
+
+  it('keeps Inspector open when it was opened by hand with nothing picked', () => {
+    __selectedClipIds = new Set();
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Inspector' }));
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it.each(['phone', 'tablet'] as const)('returns to Video on %s when the playhead is moved by hand, not by playback', (device) => {
+    __deviceClass = device;
+    // A fresh prop each time gets past the shell's memo, as a store update would.
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    // Named "Inspector — selection available" while a picked clip waits behind Video.
+    const inspector = () => screen.getByRole('tab', { name: /^Inspector/ });
+    const video = () => screen.getByRole('tab', { name: 'Video' });
+
+    // Playback (or an agent's edit) moves the playhead: the Inspector stays.
+    fireEvent.click(inspector());
+    act(() => __setPlaybackTime(4));
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+
+    // The scrubber under the picture.
+    fireEvent.keyDown(within(screen.getByTestId('touch-playback-row')).getByRole('slider'), { key: 'ArrowRight' });
+    expect(__seek).toHaveBeenCalled();
+    expect(video()).toHaveAttribute('aria-selected', 'true');
+
+    // A tap or a drag on the timeline ruler.
+    fireEvent.click(inspector());
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    __editorDataOverrides = { gestureOwner: 'ruler' };
+    try {
+      rerender(renderShell());
+      expect(video()).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      __editorDataOverrides = {};
+    }
+  });
+
+  it('leaves the desktop sidebar on Inspector when the ruler moves the playhead', () => {
+    __deviceClass = 'desktop';
+    const renderShell = () => <TimelineEditorShellCore timelineId="test-timeline" forceCondensed onNavigateHome={vi.fn()} />;
+    const { rerender } = render(renderShell());
+    const inspector = () => within(screen.getByRole('region', { name: 'Video editor right panel' })).getByRole('tab', { name: /^Inspector/ });
+    fireEvent.click(inspector());
+    expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    __editorDataOverrides = { gestureOwner: 'ruler' };
+    try {
+      rerender(renderShell());
+      expect(inspector()).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      __editorDataOverrides = {};
+    }
   });
 });
 

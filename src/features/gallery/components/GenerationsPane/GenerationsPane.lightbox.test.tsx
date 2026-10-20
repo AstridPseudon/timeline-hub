@@ -27,6 +27,9 @@ vi.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: '/home', search: '' }),
 }));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: vi.fn() }) }));
+vi.mock('@/shared/hooks/projects/useProjectGenerations', () => ({
+  useProjectGenerations: () => ({ data: { total: 1 }, isLoading: false, isFetching: false, error: null }),
+}));
 vi.mock('@/shared/lib/debug/debugRendering', () => ({ useRenderLogger: vi.fn() }));
 vi.mock('@/app/hooks/useVideoEditorRouteState', () => ({ isVideoEditorShellActiveForLocation: () => false }));
 vi.mock('@/shared/contexts/ProjectContext', () => ({

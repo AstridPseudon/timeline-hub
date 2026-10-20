@@ -394,6 +394,63 @@ describe('AgentChat', () => {
     expect(screen.queryByRole('button', { name: 'Chat model information' })).toBeNull();
   });
 
+  it.each(['success', 'failure'] as const)('locks the composer and shows the chosen agent during slow startup (%s)', async (outcome) => {
+    const state = createState();
+    state.activeSessionData.turns = [createUserTurn('Previous chat transcript', 1)];
+    let resolve!: (value: { id: string }) => void;
+    let reject!: (error: Error) => void;
+    state.createSession.mutateAsync.mockImplementationOnce(() => new Promise((yes, no) => { resolve = yes; reject = no; }));
+    mockFromState(state);
+    mocks.useLocalAgents.mockReturnValue({
+      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null }], selectedAgent: 'astrid' },
+      isLoading: false, error: null, refetch: vi.fn(),
+    });
+    renderAgentChat();
+    const input = await getInput();
+    fireEvent.change(input, { target: { value: 'Retain this draft' } });
+    expect(screen.getByText('Previous chat transcript')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
+    fireEvent.click(await screen.findByRole('option', { name: /Codex/ }));
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalled());
+    vi.useFakeTimers();
+    try {
+      await act(async () => { await vi.advanceTimersByTimeAsync(24_000); });
+      expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Codex$/);
+      expect(screen.queryByText('Previous chat transcript')).toBeNull();
+      expect(input).toBeDisabled();
+      expect(input).toHaveAttribute('placeholder', 'Starting Codex…');
+      expect(input).toHaveValue('');
+      expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeDisabled();
+      fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.keyDown(window, { key: 'r', metaKey: true, shiftKey: true });
+      expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+      expect(state.voice.startRecording).not.toHaveBeenCalled();
+      await act(async () => {
+        if (outcome === 'failure') reject(new Error('Slow adapter failed'));
+        else {
+          state.projectChats['project-1'] = { ...state.projectChats['project-1'], revision: 2, selected_session_id: 'codex:session-2', sessions: [{ id: 'session-1' }, { id: 'codex:session-2' }] };
+          state.activeSessionData = { ...state.activeSessionData, id: 'codex:session-2', turns: [] };
+          resolve({ id: 'codex:session-2' });
+        }
+      });
+      expect(input).not.toBeDisabled();
+      expect(input).toHaveValue('Retain this draft');
+      if (outcome === 'failure') {
+        expect(screen.getByRole('alert')).toHaveTextContent("Codex didn't start.");
+        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Astrid$/);
+        expect(screen.getByText('Previous chat transcript')).toBeInTheDocument();
+        expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
+      } else {
+        expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent(/^Codex$/);
+        expect(screen.queryByText('Previous chat transcript')).toBeNull();
+        expect(mocks.useAgentSession).toHaveBeenLastCalledWith('codex:session-2', 'project-1');
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the failed agent start details and retries the same new chat', async () => {
     const state = createState();
     state.createSession.mutateAsync.mockRejectedValueOnce(new Error('adapter failed'));
@@ -1165,10 +1222,13 @@ describe('project draft consumer ownership', () => {
     };
     await act(async () => { client.setQueryData(key, created); });
     const selector = screen.getByRole('combobox', { name: 'Project chat session' });
+    expect(selector).toBeDisabled();
+    await act(async () => { finish({ id: newId }); });
+    expect(selector).not.toBeDisabled();
+    expect(composer).toHaveFocus();
     fireEvent.click(selector);
     expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
     fireEvent.click(selector);
-    await act(async () => { finish({ id: newId }); });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith(newId, 'project-1'));
     expect(selector).toHaveTextContent('Chat 2');
     view.rerender(<QueryClientProvider client={client}><AgentChatPanel isExpanded /></QueryClientProvider>);
@@ -1176,7 +1236,6 @@ describe('project draft consumer ownership', () => {
     expect(state.createSession.mutate).not.toHaveBeenCalled();
     expect(composer).toHaveValue('Keep my unsent draft');
     expect(openPane).toHaveBeenCalledWith(true);
-    expect(composer).toHaveFocus();
     expect(state.sessionsData).toEqual([
       { id: 'session-1', status: 'waiting_user' },
     ]);

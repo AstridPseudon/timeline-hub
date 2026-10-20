@@ -15,7 +15,6 @@ import {
   ExtensionContextMenuItems,
   hasEligibleExtensionContextMenuItems,
 } from '@/tools/video-editor/components/TimelineEditor/ExtensionContextMenuItems.tsx';
-import { MOBILE_SHEET_CLASS } from '@/tools/video-editor/lib/mobile-sheet.ts';
 import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { isTrackMuted } from '@/tools/video-editor/lib/editor-utils.ts';
@@ -50,8 +49,6 @@ interface TrackLabelContentProps {
   onRemove: (trackId: string) => void;
   readOnly?: boolean;
   rowDragging?: boolean;
-  /** Adds a track; offered in the touch track sheet (desktop has + Video / + Audio in the footer). */
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
   dragListeners?: SyntheticListenerMap;
   dragAttributes?: DraggableAttributes;
 }
@@ -160,18 +157,24 @@ function TrackExtensionContextMenu({
   );
 }
 
-function TrackSettingsFields({
+export function TrackSettingsFields({
   track,
   onChange,
+  disabled = false,
+  className,
 }: {
   track: TrackDefinition;
+  disabled?: boolean;
+  /** Lays the fields out; each field is a direct child. */
+  className?: string;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
 }) {
   return (
-    <div className="space-y-4 pt-2">
+    <div className={cn('space-y-4 pt-2', className)}>
       <div className="space-y-1.5">
         <FieldLabel>Use</FieldLabel>
         <Select
+          disabled={disabled}
           value={trackRole(track)}
           onValueChange={(value) => {
             if (value === 'output' || value === 'source') onChange(track.id, { role: value });
@@ -193,6 +196,7 @@ function TrackSettingsFields({
           <div className="space-y-1.5">
             <FieldLabel>Fit</FieldLabel>
             <Select
+              disabled={disabled}
               value={track.fit ?? 'contain'}
               onValueChange={(value) => onChange(track.id, { fit: value as TrackFit })}
             >
@@ -207,6 +211,7 @@ function TrackSettingsFields({
           <div className="space-y-1.5">
             <FieldLabel>Scale ({((track.scale ?? 1) * 100).toFixed(0)}%)</FieldLabel>
             <Slider
+              disabled={disabled}
               value={[track.scale ?? 1]}
               min={0.1}
               max={2}
@@ -217,6 +222,7 @@ function TrackSettingsFields({
           <div className="space-y-1.5">
             <FieldLabel>Opacity ({((track.opacity ?? 1) * 100).toFixed(0)}%)</FieldLabel>
             <Slider
+              disabled={disabled}
               value={[track.opacity ?? 1]}
               min={0}
               max={1}
@@ -227,6 +233,7 @@ function TrackSettingsFields({
           <div className="space-y-1.5">
             <FieldLabel>Blend Mode</FieldLabel>
             <Select
+              disabled={disabled}
               value={track.blendMode ?? 'normal'}
               onValueChange={(value) => onChange(track.id, { blendMode: value as TrackBlendMode })}
             >
@@ -245,6 +252,7 @@ function TrackSettingsFields({
           <div className="space-y-1.5">
             <FieldLabel>Default Volume ({((track.volume ?? 1) * 100).toFixed(0)}%)</FieldLabel>
             <Slider
+              disabled={disabled}
               value={[track.volume ?? 1]}
               min={0}
               max={1}
@@ -256,6 +264,7 @@ function TrackSettingsFields({
             type="button"
             variant="secondary"
             size="sm"
+            disabled={disabled}
             className="gap-1.5"
             onClick={() => onChange(track.id, { muted: !isTrackMuted(track) })}
           >
@@ -309,85 +318,6 @@ function TrackSettingsDialog({
   );
 }
 
-/**
- * The touch track sheet: tapping a track's name opens the same actions the
- * desktop track row offers (rename, settings, add track, delete with its
- * confirm), in the clip sheet's bottom-sheet look.
- */
-function TrackSheet({
-  open,
-  onOpenChange,
-  track,
-  hasClips,
-  confirmingDelete,
-  onChange,
-  onRemoveClick,
-  onAddTrack,
-  nameInputProps,
-  nameError,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  track: TrackDefinition;
-  hasClips: boolean;
-  confirmingDelete: boolean;
-  onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onRemoveClick: (event: React.MouseEvent) => void;
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
-  nameInputProps: React.InputHTMLAttributes<HTMLInputElement> & { ref: React.RefCallback<HTMLInputElement> };
-  nameError: string | null;
-}) {
-  const sheetButton = 'h-11 flex-1 justify-center gap-1.5';
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        data-testid="timeline-track-sheet"
-        className={MOBILE_SHEET_CLASS}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <DialogHeader className="sr-only">
-          <DialogTitle>{track.label} — Track</DialogTitle>
-          <DialogDescription>Track name, settings and actions.</DialogDescription>
-        </DialogHeader>
-        <div aria-hidden="true" className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border" />
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3 [&_[role=combobox]]:h-11">
-          <div className="space-y-1.5">
-            <FieldLabel>Name</FieldLabel>
-            <input
-              className="h-11 w-full rounded-md border border-border bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              {...nameInputProps}
-            />
-          </div>
-          {nameError && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
-          <TrackSettingsFields track={track} onChange={onChange} />
-          {onAddTrack && (
-            <div className="flex gap-2">
-              <Button type="button" variant="secondary" className={sheetButton} onClick={() => onAddTrack('visual')}>
-                Add video track
-              </Button>
-              <Button type="button" variant="secondary" className={sheetButton} onClick={() => onAddTrack('audio')}>
-                Add audio track
-              </Button>
-            </div>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            className={cn('h-11 w-full justify-center gap-1.5', confirmingDelete && 'border-destructive text-destructive')}
-            onClick={(event) => {
-              onRemoveClick(event);
-              if (!hasClips || confirmingDelete) onOpenChange(false);
-            }}
-          >
-            {confirmingDelete ? <Check className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-            {confirmingDelete ? 'Tap again to confirm deletion' : 'Delete track'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function TrackLabelContent({
   track,
   displayLabel,
@@ -400,7 +330,6 @@ export function TrackLabelContent({
   onRemove,
   readOnly = false,
   rowDragging = false,
-  onAddTrack,
   dragListeners,
   dragAttributes,
 }: TrackLabelContentProps) {
@@ -499,7 +428,6 @@ export function TrackLabelContent({
   };
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [trackSheetOpen, setTrackSheetOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<TrackContextMenuState | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -562,10 +490,8 @@ export function TrackLabelContent({
     });
   }, [commandRegistry, extensions, onSelect, readOnly, track.id]);
 
-  // Desktop reveals the track actions on hover. Touch has no hover: tapping the
-  // name opens the track sheet instead (reordering stays a desktop drag).
+  // Touch selects the track for the shared Inspector; desktop keeps hover actions.
   const showTrackActions = !readOnly && deviceClass === 'desktop';
-  const opensTrackSheet = !readOnly && deviceClass !== 'desktop';
   const isSource = trackRole(track) === 'source';
 
   return (
@@ -579,10 +505,7 @@ export function TrackLabelContent({
         )}
         {...trackLabelAttrs(track.id)}
         data-track-dragging={rowDragging ? 'true' : undefined}
-        onClick={() => {
-          onSelect(track.id);
-          if (opensTrackSheet) setTrackSheetOpen(true);
-        }}
+        onClick={() => onSelect(track.id)}
         onContextMenu={readOnly ? undefined : handleContextMenu}
       >
         <span className="pointer-events-none relative z-10 shrink-0 text-muted-foreground">
@@ -645,28 +568,7 @@ export function TrackLabelContent({
           </div>
         ) : null}
       </div>
-      {nameError && !trackSheetOpen && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
-      {opensTrackSheet && (
-        <TrackSheet
-          open={trackSheetOpen}
-          onOpenChange={(open) => {
-            if (!open && nameInputFocusedRef.current) {
-              const finish = nameInputFocusedRef.current;
-              nameInputFocusedRef.current = null;
-              finish();
-            }
-            setTrackSheetOpen(open);
-          }}
-          track={track}
-          hasClips={hasClips}
-          confirmingDelete={confirmingDelete}
-          onChange={onChange}
-          onRemoveClick={handleRemoveClick}
-          onAddTrack={onAddTrack}
-          nameInputProps={nameInputProps}
-          nameError={nameError}
-        />
-      )}
+      {nameError && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
       {contextMenu && (
         <TrackExtensionContextMenu
           menu={contextMenu}

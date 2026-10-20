@@ -13,6 +13,7 @@ interface AgentChatSessionSelectorProps {
   sessions: Array<{ id: string; title?: string; chatNumber?: number }>;
   activeSessionId: string | null;
   mainSessionId?: string | null;
+  disabled?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSelectSession: (sessionId: string) => void;
   onSetMainSession?: (sessionId: string) => void;
@@ -26,6 +27,7 @@ export function AgentChatSessionSelector({
   sessions,
   activeSessionId,
   mainSessionId = null,
+  disabled = false,
   onOpenChange,
   onSelectSession,
   onSetMainSession,
@@ -58,11 +60,12 @@ export function AgentChatSessionSelector({
           role="combobox"
           aria-label="Project chat session"
           aria-expanded={open}
+          disabled={disabled}
           title={`Choose chat session: ${activeLabel}`}
           className="flex h-7 min-w-0 max-w-40 shrink items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className={`min-w-0 truncate ${activeSession?.title?.trim() ? 'preserve-case' : 'normal-case'}`}>{activeLabel}</span>
-          <ChevronsUpDown className="ml-auto hidden h-3.5 w-3.5 shrink-0 opacity-50 @[24rem]/agent-header:block" aria-hidden="true" />
+          <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 max-w-[calc(100vw-2rem)] p-0" align="end">
@@ -92,7 +95,7 @@ export function AgentChatSessionSelector({
                   >
                     <Check className={`mr-2 h-3.5 w-3.5 shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className={`min-w-0 truncate ${session.title?.trim() ? 'preserve-case' : 'normal-case'}`}>{label}</span>
+                      <span title={label} className={`min-w-0 truncate ${session.title?.trim() ? 'preserve-case' : 'normal-case'}`}>{label}</span>
                       {meta && (
                         <span className="flex min-w-0 items-center gap-1 text-[11px] leading-4 text-muted-foreground normal-case" title={metaLabel ?? undefined}>
                           <AgentIcon agent={meta.agent} className="h-3 w-3 shrink-0" />
@@ -103,8 +106,9 @@ export function AgentChatSessionSelector({
                     {(isMain || onSetMainSession || (onRenameSession && selected)) && (
                       <span className="ml-auto flex shrink-0 items-center gap-0.5">
                         {isMain ? (
-                          <span className="flex items-center gap-1 pl-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                            <Star className="h-3 w-3 fill-current" aria-hidden="true" />Main
+                          <span title="Main chat" className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground">
+                            <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                            <span className="sr-only">Main</span>
                           </span>
                         ) : onSetMainSession && (
                           <button

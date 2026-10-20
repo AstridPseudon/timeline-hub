@@ -10,6 +10,14 @@ import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import {
+  captureElementBasis,
+  finishElementEdit,
+  selectForClip,
+  type ElementCaptureBasis,
+  type ElementCapturePort,
+  type ElementEdit,
+} from './elementGesture.ts';
+import {
   captureGenericPatch,
   type GenericPatchBasis,
   type GenericPatchCapturePort,
@@ -323,6 +331,40 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const elementPort: ElementCapturePort = {
+    capture({ clipId, current, edit }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const select = selectForClip(current, clipId);
+      const captured = captureElementBasis(bundle, select, edit);
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      return Object.freeze({ clipId, select, edit: copy(edit) as ElementEdit, capture: captured,
+        before: bundle, localGeneration, localBasis, previewVersion: current.configVersion }) as ElementCaptureBasis;
+    },
+    finish(basis, edit) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the element edit');
+      const result = finishElementEdit(basis, edit);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: basis.before, after: result.bundle, preview: result.preview,
+      }, generation: localGeneration, basis: basis.localBasis as OutboxBasis });
+      return { command: result.command, preview: result.preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Element edit was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Element edit requires its exact preview');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
   type CapturedGenericPatchBasis = GenericPatchBasis & { bundle: AuthoredBundle };
   const genericPatchPort: GenericPatchCapturePort = {
     capture({ patch, current }) {
@@ -477,6 +519,7 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    elementPort,
     genericPatchPort,
     trackLabelPort,
     useLatest: () => resolveRejected(false),

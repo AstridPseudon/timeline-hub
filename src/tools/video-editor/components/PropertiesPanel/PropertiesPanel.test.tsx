@@ -18,6 +18,7 @@ import type { DataItemInspectorProps } from '@astrid/editor-sdk';
 let realStoreSelectionTest = false;
 const useTimelineEditorDataMock = vi.fn();
 const useTimelineEditorOpsMock = vi.fn();
+const handleAddTrackMock = vi.fn();
 const useVideoEditorRenderContextMock = vi.fn();
 const useVideoEditorPanelRegistryMock = vi.fn();
 const getInspectorContributionsMock = vi.fn();
@@ -39,6 +40,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore', async (importOriginal) => {
     useTimelineStoreApiSafe: () => realStoreSelectionTest ? actual.useTimelineStoreApiSafe() : null,
     useTimelineEditorOps: () => realStoreSelectionTest ? actual.useTimelineEditorOps() : useTimelineEditorOpsMock(),
     useTimelinePlaybackContext: () => ({ currentTime: 0 }),
+    useTimelineChromeContext: () => ({ handleAddTrack: handleAddTrackMock }),
   };
 });
 
@@ -107,7 +109,9 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/AssetPanel', () => ({
 vi.mock('@/tools/video-editor/components/PropertiesPanel/ClipPanel', () => ({
   NO_EFFECT: 'no-effect',
   getVisibleClipTabs: () => ['effects', 'timing', 'position', 'audio', 'text'],
-  ClipPanel: () => <div data-testid="mock-clip-panel">Clip panel</div>,
+  ClipPanel: ({ onDelete }: { onDelete?: () => void }) => (
+    <div data-testid="mock-clip-panel">Clip panel{onDelete && <button type="button" onClick={onDelete}>Delete clip</button>}</div>
+  ),
 }));
 
 vi.mock('@/tools/video-editor/components/PropertiesPanel/BulkClipPanel', () => ({
@@ -141,6 +145,7 @@ function createBaseEditorData() {
       },
     },
     resolvedConfig: {
+      tracks: [],
       clips: [
         { id: 'clip-1', assetEntry: { duration: 5 } },
         { id: 'clip-2', assetEntry: { duration: 5 } },
@@ -218,6 +223,8 @@ function createEditorOps() {
     handleUpdateClipsDeep: vi.fn(),
     handleDeleteClip: vi.fn(),
     handleDeleteClips: vi.fn(),
+    handleTrackPopoverChange: vi.fn(),
+    handleRemoveTrack: vi.fn(),
     handleSelectedClipChange: vi.fn(),
     handleResetClipPosition: vi.fn(),
     handleResetClipsPosition: vi.fn(),
@@ -278,6 +285,86 @@ describe('PropertiesPanel registry surfaces', () => {
       (_registry: unknown, _context: unknown, _selection: unknown) => createInspectorContributions(),
     );
     useVideoEditorAssetPanelsMock.mockReturnValue([createAssetPanel('asset-panel-extra')]);
+  });
+
+  it.each([['media', 'timing'], ['text', 'text']] as const)('opens a retained touch Inspector on the %s clip’s own tab', (clipType, tab) => {
+    const data = createBaseEditorData();
+    useTimelineEditorDataMock.mockReturnValue({
+      ...data, deviceClass: 'phone', selectedClip: { ...data.selectedClip, clipType },
+      selectedTrack: { id: 'V1', kind: 'visual', label: 'Video 1' },
+    });
+    const ops = createEditorOps();
+    useTimelineEditorOpsMock.mockReturnValue(ops);
+    const { rerender } = render(<PropertiesPanel visible={false} />);
+    ops.setActiveClipTab.mockClear();
+    rerender(<PropertiesPanel visible />);
+    expect(ops.setActiveClipTab).toHaveBeenCalledWith(tab);
+    ops.setActiveClipTab.mockClear();
+    rerender(<PropertiesPanel visible={false} />);
+    rerender(<PropertiesPanel visible />);
+    expect(ops.setActiveClipTab).toHaveBeenCalledWith(tab);
+  });
+
+  it.each([['phone', 1], ['tablet', 1], ['desktop', 0]] as const)('Delete clip on %s leaves nothing picked (clears: %s)', (deviceClass, clears) => {
+    // Touch: the Inspector then returns to Video, rather than showing the deleted clip's track.
+    const data = createBaseEditorData();
+    useTimelineEditorDataMock.mockReturnValue({ ...data, deviceClass });
+    const ops = createEditorOps();
+    useTimelineEditorOpsMock.mockReturnValue(ops);
+    render(<PropertiesPanel />);
+    const before = ops.clearSelection.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Delete clip' }));
+    expect(ops.handleDeleteClip).toHaveBeenCalledWith(data.selectedClip.id);
+    expect(ops.clearSelection.mock.calls.length - before).toBe(clears);
+  });
+
+  it.each(['phone', 'tablet'] as const)('edits the track target in Inspector on %s, sharing settings and confirming deletion', (deviceClass) => {
+    const track = { id: 'V1', kind: 'visual' as const, label: 'Video 1' };
+    const data = createBaseEditorData();
+    useTimelineEditorDataMock.mockReturnValue({
+      ...data, deviceClass, selectedClip: null, selectedClipIds: new Set(),
+      selectedTrackId: track.id, selectedTrack: track, inspectorTarget: { kind: 'track', trackId: track.id },
+      resolvedConfig: { ...data.resolvedConfig, tracks: [track], clips: [{ id: 'clip-1', track: track.id }] },
+    });
+    const ops = createEditorOps();
+    useTimelineEditorOpsMock.mockReturnValue(ops);
+    handleAddTrackMock.mockClear();
+    render(<PropertiesPanel />);
+    expect(screen.getByLabelText('Track name')).toHaveValue('Video 1');
+    expect(screen.getByRole('combobox', { name: 'Track role' })).toBeInTheDocument();
+    expect(screen.getByText('Fit')).toBeInTheDocument();
+    expect(screen.getByText('Blend Mode')).toBeInTheDocument();
+    expect(screen.queryByTestId('mock-clip-panel')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Track name'), { target: { value: 'Titles' } });
+    expect(ops.handleTrackPopoverChange).toHaveBeenCalledWith('V1', { label: 'Titles' });
+    fireEvent.click(screen.getByRole('button', { name: 'Add video track' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add audio track' }));
+    expect(handleAddTrackMock.mock.calls).toEqual([['visual'], ['audio']]);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete track' }));
+    expect(ops.handleRemoveTrack).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to confirm deletion' }));
+    expect(ops.handleRemoveTrack).toHaveBeenCalledWith('V1');
+  });
+
+  it('keeps track settings disabled when the timeline is read only', () => {
+    const track = { id: 'V1', kind: 'visual', label: 'Video 1' };
+    const data = createBaseEditorData();
+    useTimelineEditorDataMock.mockReturnValue({
+      ...data, deviceClass: 'phone', selectedClip: null, selectedClipIds: new Set(), selectedTrackId: 'V1',
+      resolvedConfig: { ...data.resolvedConfig, tracks: [track] },
+    });
+    useOptionalVideoEditorRuntimeMock.mockReturnValue({ timelineEditability: { checkTimeline: () => ({ allowed: false }) } });
+    try {
+      render(<PropertiesPanel />);
+      expect(screen.getByLabelText('Track name')).toBeDisabled();
+      expect(screen.getByRole('combobox', { name: 'Track role' })).toBeDisabled();
+      for (const slider of screen.getAllByRole('slider')) expect(slider).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Add video track' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Delete track' })).toBeDisabled();
+    } finally {
+      useOptionalVideoEditorRuntimeMock.mockReturnValue(null);
+    }
   });
 
   it('renders inspector sections before and after the built-in clip inspector additively', () => {

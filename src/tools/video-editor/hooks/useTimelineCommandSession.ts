@@ -6,15 +6,16 @@ import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
-import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
+  initialReadReady?: boolean;
   snapshotWriteBlockedRef: MutableRefObject<boolean>;
   provider: DataProvider;
   timelineId: string;
@@ -38,9 +39,10 @@ export function useTimelineCommandSession(options: {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
+  const initialReadReady = options.initialReadReady ?? true;
   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !initialReadReady) return;
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
@@ -161,14 +163,20 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
-        const labelPort = session.trackLabelPort;
-        const requireCleanLabelEdit = () => {
-          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
-        };
-        session.trackLabelPort = {
-          capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
-          finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
-          submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        const realElementPort = session.elementPort;
+        session.elementPort = {
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.capture(input);
+          },
+          finish(basis, edit) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.finish(basis, edit);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            realElementPort.submit(input);
+          },
         };
         const genericPatchPort = session.genericPatchPort;
         const requireCleanGenericPatch = () => {
@@ -178,6 +186,15 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanGenericPatch(); return genericPatchPort.capture(input); },
           finish(basis) { requireCleanGenericPatch(); return genericPatchPort.finish(basis); },
           submit(input) { requireCleanGenericPatch(); genericPatchPort.submit(input); },
+        };
+        const labelPort = session.trackLabelPort;
+        const requireCleanLabelEdit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
+        };
+        session.trackLabelPort = {
+          capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
+          finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
+          submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -197,7 +214,7 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
+  }, [provider, timelineId, enabled, initialReadReady, attempt, snapshotWriteBlockedRef]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;
@@ -250,6 +267,7 @@ export function useTimelineCommandSession(options: {
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     genericPatchPort: sessionRef.current?.genericPatchPort,
+    elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }

@@ -12,9 +12,11 @@ import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/shared/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
+import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 
-import { HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
-export { HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
+import { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
+export { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
 export type VideoEditorRightPanelTab = 'video' | 'inspector' | 'extensions';
 export interface VideoEditorRightPanelDockProps {
   readonly leftPanelPresent: boolean;
@@ -28,6 +30,8 @@ export interface VideoEditorRightPanelDockProps {
   /** Use the editor shell's shared Extension Manager dialog. */
   readonly onOpenExtensionManager?: () => void;
   readonly extensionManagerOpen?: boolean;
+  /** Embed the shared tab surface in the touch picture area. */
+  readonly touch?: boolean;
   /** The condensed shell's transient Video surface; host panel preferences stay intact. */
   readonly video?: {
     content: ReactNode;
@@ -35,7 +39,13 @@ export interface VideoEditorRightPanelDockProps {
     onTabChange: (tab: VideoEditorRightPanelTab) => void;
   };
 }
-const control = 'flex h-8 min-h-10 sm:min-h-8 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const controlLook = 'flex min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const control = `${controlLook} h-8 min-h-10 sm:min-h-8`;
+// Touch: the header's 36px controls with a 44px touch ring.
+const touchControl = cn(controlLook, COARSE_TOUCH_TARGET, 'h-9 text-sm');
+// The film-shaped box under the touch tab row (`--film-aspect` comes from the touch shell);
+// in short landscape it fills the column instead.
+const TOUCH_CONTENT = 'relative flex w-full flex-col overflow-hidden aspect-[var(--film-aspect)] max-h-[42dvh] min-h-[140px] [@media(orientation:landscape)_and_(max-height:500px)]:aspect-auto [@media(orientation:landscape)_and_(max-height:500px)]:max-h-none [@media(orientation:landscape)_and_(max-height:500px)]:min-h-0 [@media(orientation:landscape)_and_(max-height:500px)]:flex-1';
 
 /** Visibility changes never replace the retained panel subtree or its React key. */
 export function VideoEditorRightPanelDock({
@@ -47,6 +57,7 @@ export function VideoEditorRightPanelDock({
   measuredHeight,
   onOpenExtensionManager,
   extensionManagerOpen,
+  touch = false,
   video,
 }: VideoEditorRightPanelDockProps) {
   const panels = useVideoEditorAssetPanels();
@@ -56,7 +67,9 @@ export function VideoEditorRightPanelDock({
   const preferences = data.preferences ?? defaultPreferences;
   const inspectorTargetKind = data.inspectorTarget?.kind;
   const hasInspectableSelection = (data.selectedClipIds?.size ?? 0) > 0
-    || Boolean(data.selectedTrackId)
+    // On touch the selected track is ambient (where new media lands) and tapping its
+    // name opens Inspector itself, so only a picked item earns the hint.
+    || (!touch && Boolean(data.selectedTrackId))
     || inspectorTargetKind === 'dataItem'
     || inspectorTargetKind === 'selection'
     || inspectorTargetKind === 'dataLane'
@@ -82,7 +95,7 @@ export function VideoEditorRightPanelDock({
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  const open = Boolean(video) || (selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected)));
+  const open = Boolean(video) || (selected !== null && (tab === 'inspector' || selected === HOST_EXTENSIONS_PANEL_KEY || panels.some((panel) => getPanelKey(panel) === selected)));
   const dock = Boolean(video) || layout === 'dock';
   const compactInGrid = !video && open && layout === 'compact' && compactDock && !responsive;
   const inGrid = !responsive;
@@ -100,7 +113,8 @@ export function VideoEditorRightPanelDock({
     // Capture the visible mode before changing the selected panel. This
     // promotes legacy per-panel state to the shared placement slot.
     ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, displayMode);
-    ops.setSelectedRightPanelId(next === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey);
+    // Extensions never closes the dock: with no panel to select it parks on the host key.
+    ops.setSelectedRightPanelId(next === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey ?? HOST_EXTENSIONS_PANEL_KEY);
   };
   const inventory = runtime?.extensionRuntime?.packageStateInventory ?? [];
   const enabledExtensionLabelsById = new Map(inventory
@@ -128,17 +142,43 @@ export function VideoEditorRightPanelDock({
     if (onOpenExtensionManager) onOpenExtensionManager();
     else setLocalManagerOpen(true);
   };
+  const extensionsHeader = tab === 'extensions' && <div className={`flex shrink-0 items-center border-b border-border/60 p-2 ${touch ? 'gap-2' : 'gap-1.5'}`} style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
+    <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} flex-1 justify-between`} aria-label="Active extension"><span className="min-w-0 truncate">Active · {tool?.label ?? (panels.length ? 'Choose tool' : 'None')}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
+    </DropdownMenu>
+    <div className={touch ? 'relative shrink-0' : 'relative flex-1'} onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
+      <button type="button" className={touch ? cn(touchControl, 'w-9 justify-center px-0') : `${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
+        {/* Touch: an icon, so the active panel's name keeps the row. */}
+        <Settings2 className="h-4 w-4 shrink-0" />{!touch && <span>Manage</span>}
+      </button>
+      {manageTooltipOpen && <div id={manageTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 max-h-64 max-w-64 overflow-auto rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
+        <span className="font-medium">Enabled extensions</span>
+        {enabledExtensionLabels.length
+          ? <ul className="mt-1 list-inside list-disc">{enabledExtensionLabels.map(({ key, label }) => <li key={key}>{label}</li>)}</ul>
+          : <p className="mt-1">No extensions are currently enabled.</p>}
+      </div>}
+    </div>
+  </div>;
+  const body = <div className="min-h-0 flex-1 overflow-hidden" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
+    {enabled && <>
+      {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
+      <div className={`h-full min-h-0 overflow-auto ${touch ? 'px-3' : 'p-3'}`} hidden={tab !== 'inspector'}><PropertiesPanel visible={open && tab === 'inspector'} /></div>
+      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
+    </>}
+  </div>;
+  // Touch: the Extensions picker sits inside the film-shaped box, so switching tabs never
+  // changes the card's height.
   return <section hidden={hidden} aria-hidden={!enabled || !open} role="region" aria-label="Video editor right panel"
     data-testid="video-editor-right-panel-dock" data-layout={video ? 'dock' : layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
-    data-placement={compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
-    className={`video-editor-right-panel-motion ${inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
-    style={inGrid
+    data-placement={touch ? 'picture' : compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
+    className={`video-editor-right-panel-motion ${touch ? 'relative h-full w-full' : inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid || touch ? '' : 'shadow-xl'}`}
+    style={touch ? undefined : inGrid
       ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1 / -1', alignSelf: 'start', width: 'calc(100% - 12px)', marginInlineStart: 12, height: measuredHeight && measuredHeight > 0 ? measuredHeight : '100%', maxHeight: '100%', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
       : dock
         ? { top: 12, right: rightInset, width: open ? `calc(100% - ${12 + rightInset}px)` : 0, height: 'calc(100% - 24px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
         : { top: 12, right: rightInset, width: open ? `calc(100vw - ${12 + rightInset}px)` : 0, maxWidth: 420, maxHeight: 'min(70dvh, 620px)', height: 'min(70dvh, 620px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }}>
-    <div className="flex shrink-0 items-center gap-1 border-b border-border/70 px-2 py-1.5" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
+    <div className={`flex shrink-0 items-center gap-1 border-b border-border/70 ${touch ? 'h-11 px-1' : 'px-2 py-1.5'}`} style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       <div role="tablist" aria-label="Right panel surface" className="flex min-w-0 flex-1 gap-1" style={VIDEO_EDITOR_THEME_VARS}>
         {tabs.map((value) => {
           const showInspectorHint = value === 'inspector' && tab !== 'inspector' && hasInspectableSelection;
@@ -150,7 +190,7 @@ export function VideoEditorRightPanelDock({
             showTab(next);
             event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-surface-tab="${next}"]`)?.focus();
           }
-        }} data-surface-tab={value} onClick={() => showTab(value)} className={`min-h-10 sm:min-h-8 rounded-md px-2.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tab === value ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+        }} data-surface-tab={value} onClick={() => showTab(value)} className={`${touch ? `${COARSE_TOUCH_TARGET} h-9 min-w-0 flex-1 px-1 text-sm` : 'min-h-10 px-2.5 text-xs sm:min-h-8'} rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tab === value ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
             {value === 'video' ? 'Video' : value === 'inspector' ? 'Inspector' : 'Extensions'}
             {showInspectorHint && <span data-testid="inspector-selection-hint" aria-hidden="true" className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--video-editor-accent-border-strong)] align-middle" />}
           </button>;
@@ -158,32 +198,7 @@ export function VideoEditorRightPanelDock({
       </div>
       {!video && <VideoEditorPanelDisplayControl visible={open} />}
     </div>
-    {tab === 'extensions' && <div className="flex shrink-0 items-center gap-1.5 border-b border-border/60 p-2" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
-      <>
-        <DropdownMenu><DropdownMenuTrigger className={`${control} flex-1 justify-between`} aria-label="Active extension"><span className="min-w-0 truncate">Active · {tool?.label ?? 'Choose tool'}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
-        </DropdownMenu>
-        <div className="relative flex-1" onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
-          <button type="button" className={`${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
-              <Settings2 className="h-4 w-4 shrink-0" /><span>Manage</span>
-          </button>
-          {manageTooltipOpen && <div id={manageTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 max-h-64 max-w-64 overflow-auto rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
-              <span className="font-medium">Enabled extensions</span>
-              {enabledExtensionLabels.length
-                ? <ul className="mt-1 list-inside list-disc">{enabledExtensionLabels.map(({ key, label }) => <li key={key}>{label}</li>)}</ul>
-                : <p className="mt-1">No extensions are currently enabled.</p>}
-            </div>}
-        </div>
-      </>
-    </div>}
-    <div className="min-h-0 flex-1 overflow-hidden" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
-      {enabled && <>
-        {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
-        <div className="h-full min-h-0 overflow-auto p-3" hidden={tab !== 'inspector'}><PropertiesPanel /></div>
-        <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
-      </>}
-    </div>
+    {touch ? <div className={TOUCH_CONTENT}>{extensionsHeader}{body}</div> : <>{extensionsHeader}{body}</>}
     {!onOpenExtensionManager && <Dialog open={localManagerOpen} onOpenChange={setLocalManagerOpen}><DialogContent className="max-h-[85dvh] overflow-auto"><DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader><ExtensionManager /></DialogContent></Dialog>}
   </section>;
-
 }

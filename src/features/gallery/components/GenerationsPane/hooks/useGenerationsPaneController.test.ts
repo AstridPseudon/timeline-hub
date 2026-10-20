@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGenerationsPaneController } from './useGenerationsPaneController';
 
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   calculateGalleryLayout: vi.fn(),
   panesState: {} as Record<string, unknown>,
   useGalleryPageState: vi.fn(),
+  useProjectGenerations: vi.fn(),
   useIsMobile: vi.fn(),
   useCurrentShot: vi.fn(),
   useShots: vi.fn(),
@@ -64,6 +65,10 @@ vi.mock('@/shared/state/panesStore', () => ({
 
 vi.mock('@/features/gallery/hooks/useGalleryPageState', () => ({
   useGalleryPageState: (...args: unknown[]) => mocks.useGalleryPageState(...args),
+}));
+
+vi.mock('@/shared/hooks/projects/useProjectGenerations', () => ({
+  useProjectGenerations: (...args: unknown[]) => mocks.useProjectGenerations(...args),
 }));
 
 vi.mock('@/shared/hooks/mobile', () => ({
@@ -181,6 +186,7 @@ function buildPanesState(overrides: Record<string, unknown> = {}) {
 describe('useGenerationsPaneController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     mocks.eventHandlers = {};
     mocks.selectedEditor = null;
 
@@ -209,6 +215,12 @@ describe('useGenerationsPaneController', () => {
     mocks.useShots.mockReturnValue({ shots: [{ id: 'fallback-shot' }] });
     mocks.useShotCreation.mockReturnValue({ createShot: vi.fn() });
     mocks.useGalleryPageState.mockReturnValue(buildGalleryPageState());
+    mocks.useProjectGenerations.mockReturnValue({
+      data: { total: 10 },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    });
     mocks.useQueryClient.mockReturnValue({ invalidateQueries: vi.fn() });
     mocks.useResolvedGalleryProject.mockReturnValue({
       projectId: null,
@@ -385,6 +397,50 @@ describe('useGenerationsPaneController', () => {
       runtimeProjectId: 'project-1',
       runtimeAuthority: true,
     }));
+  });
+
+  it('opens on the first media kind with results, keeping images as the first choice', async () => {
+    mocks.useProjectGenerations.mockImplementation((
+      _projectId: unknown,
+      _page: unknown,
+      _limit: unknown,
+      _enabled: unknown,
+      filters: { mediaType: string },
+    ) => ({
+      data: { total: filters.mediaType === 'image' ? 0 : 4 },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }));
+
+    const { result } = renderHook(() => useGenerationsPaneController());
+
+    await waitFor(() => expect(result.current.filters.mediaTypeFilter).toBe('video'));
+    expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['image', 'video']);
+  });
+
+  it('shows the project empty state only after all three media kinds return zero', async () => {
+    mocks.useProjectGenerations.mockImplementation(() => ({
+      data: { total: 0 },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }));
+
+    const { result } = renderHook(() => useGenerationsPaneController());
+
+    await waitFor(() => expect(result.current.gallery.emptyStateMessage).toBe('No generations yet.'));
+    expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['image', 'video', 'audio']);
+  });
+
+  it('remembers an explicit media tab for the rest of the session', () => {
+    const first = renderHook(() => useGenerationsPaneController());
+    act(() => first.result.current.filters.setMediaTypeFilter('audio'));
+    first.unmount();
+
+    const next = renderHook(() => useGenerationsPaneController());
+    expect(next.result.current.filters.mediaTypeFilter).toBe('audio');
+    expect(mocks.useGalleryPageState).toHaveBeenLastCalledWith(expect.objectContaining({ mediaType: 'audio' }));
   });
 
   it('captures the selected editor recipient without changing the primary route', () => {

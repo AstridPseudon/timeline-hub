@@ -153,6 +153,7 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
       generationFilters: undefined,
       currentViewingShotId: undefined,
       onCreateShot: vi.fn(async () => undefined),
+      emptyStateMessage: 'No generations yet.',
     },
     ...overrides,
   };
@@ -515,14 +516,26 @@ describe('GenerationsPaneGallery', () => {
     );
 
     expect(screen.getByText('Error: failed')).toBeInTheDocument();
-    expect(screen.queryByText('No generations found for this project.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No generations yet.')).not.toBeInTheDocument();
   });
 
   it('shows the empty state after a successful read with no generations', () => {
     render(<GenerationsPaneGallery {...buildProps()} />);
 
-    expect(screen.getByText('No generations found for this project.')).toBeInTheDocument();
+    expect(screen.getByText('No generations yet.')).toBeInTheDocument();
     expect(screen.queryByText(/^Error:/)).not.toBeInTheDocument();
+  });
+
+  it('uses a view-specific empty message when the selected tab has no items', () => {
+    render(<GenerationsPaneGallery {...buildProps({
+      gallery: {
+        ...buildProps().gallery,
+        emptyStateMessage: 'No videos in this view.',
+      },
+    })} />);
+
+    expect(screen.getByText('No videos in this view.')).toBeInTheDocument();
+    expect(screen.queryByText('No generations yet.')).not.toBeInTheDocument();
   });
 
   it('passes only full-match existing shots to the selection context menu using gallery selection generation ids', () => {

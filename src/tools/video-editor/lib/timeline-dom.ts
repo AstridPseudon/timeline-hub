@@ -35,6 +35,7 @@ export const ROW_ID_ATTR = 'data-row-id';
 export const RESIZE_EDGE_ATTR = 'data-resize-edge';
 export const ACTION_ID_ATTR = 'data-action-id';
 export const TRACK_ID_ATTR = 'data-track-id';
+export const TRACK_LABEL_ATTR = 'data-track-label';
 export const TOUCH_GESTURE_MODE_ATTR = 'data-touch-gesture-mode';
 export const SHOT_GROUP_DRAG_ANCHOR_CLIP_ID_ATTR = 'data-shot-group-drag-anchor-clip-id';
 export const SHOT_GROUP_DRAG_ANCHOR_ROW_ID_ATTR = 'data-shot-group-drag-anchor-row-id';
@@ -153,6 +154,7 @@ export const resizeHandleAttrs = (edge: 'left' | 'right', clipId: string, rowId:
 /** `TrackLabel` row header. */
 export const trackLabelAttrs = (trackId: string) => ({
   [TRACK_ID_ATTR]: trackId,
+  [TRACK_LABEL_ATTR]: '',
 });
 
 /** `ShotGroupOverlay` label — drags the group via its anchor clip. */

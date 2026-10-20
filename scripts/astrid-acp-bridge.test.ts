@@ -262,70 +262,97 @@ test('real HTTP bridge enforces RPC and project policy for hosted calls and pres
   }
 });
 
-test('idle sweep disposes abandoned connections, keeps polled and in-flight ones, and answers late polls as disconnected', async () => {
-  let clock = 0;
-  let nextId = 0;
-  const disposed: string[] = [];
-  const started = deferred();
-  const releasePrompt = deferred();
-  let pendingPrompt: Promise<Response> | undefined;
-  const { server, bridge } = createAstridAcpHttpServer({
-    config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
-    chatRegistry: {} as never,
-    now: () => clock,
-    idFactory: () => `c${++nextId}`,
-    hostFactory: () => {
-      const id = `c${nextId}`;
-      return {
-        initialize: async () => ({ protocolVersion: 1 }),
-        request: async (method: string, params: unknown) => {
-          if (method === 'session/load') return { sessionId: (params as { sessionId: string }).sessionId };
-          if (method === 'session/prompt') { started.resolve(); await releasePrompt.promise; }
-          return {};
-        },
-        cancel: async () => {},
-        dispose: async () => { disposed.push(id); },
-      } as never;
-    },
-  });
-  try {
-    const base = await listen(server);
-    const call = (path: string, init: RequestInit = {}) => fetch(base + path, {
-      ...init, headers: { Authorization: 'Bearer dedicated', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
+// Exercise the real HTTP handler without binding a socket (sandbox compatible).
+function directCall(bridge: ReturnType<typeof createAstridAcpHttpServer>['bridge']) {
+  return async (path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST') => {
+    const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+      method, url: path, headers: {
+        authorization: 'Bearer dedicated', 'x-astrid-bridge-version': 'v1', 'content-type': 'application/json',
+      },
     });
-    for (let i = 0; i < 4; i++) assert.equal((await call('/connect', { method: 'POST', body: '{}' })).status, 200);
-    // c1 abandoned, c2 keeps polling, c3 has a prompt in flight, c4 is fresh.
-    clock = 10 * 60_000;
-    assert.equal((await call('/c2/events')).status, 200);
-    assert.equal((await call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/load', params: { sessionId: 's' } }) })).status, 200);
-    pendingPrompt = call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/prompt', params: { sessionId: 's', prompt: [] } }) });
-    await started.promise;
-    clock = 16 * 60_000;
-    assert.equal((await call('/c4/events')).status, 200);
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1']);
-    assert.equal((await call('/c2/events')).status, 200);
-    assert.deepEqual(await (await call('/c1/events')).json(), { notifications: [], disconnected: true });
-    assert.equal((await call('/c1/rpc', { method: 'POST', body: '{}' })).status, 404);
-    // The in-flight prompt restarts its idle clock when it finishes, not before.
-    clock = 60 * 60_000;
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
-    releasePrompt.resolve();
-    assert.equal((await pendingPrompt).status, 200);
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
-    clock = 120 * 60_000;
-    await bridge.reapIdle();
-    assert.deepEqual(disposed, ['c1', 'c2', 'c4', 'c3']);
-  } catch (error) {
-    console.error(error);
-    throw error;
-  } finally {
-    releasePrompt.resolve();
-    await (pendingPrompt ?? Promise.resolve()).catch(() => {});
-    await bridge.close();
-    server.closeAllConnections();
-    server.close();
-  }
-});
+    let responseBody = '';
+    const response = { statusCode: 200, setHeader() {}, end(value?: string) { responseBody = value ?? ''; } };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(responseBody) };
+  };
+}
+
+for (const release of ['disconnect', 'expiry'] as const) {
+  test(`writer ${release} automatically promotes exactly one survivor and preserves an active turn`, async (t) => {
+    t.mock.timers.enable({ apis: ['setInterval'] });
+    let clock = 0;
+    let nextId = 0;
+    const disposed: number[] = [];
+    const started = deferred();
+    const finish = deferred();
+    let prompts = 0;
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
+      chatRegistry: {} as never, now: () => clock, idFactory: () => `c${++nextId}`,
+      hostFactory: () => {
+        const id = nextId;
+        return {
+          initialize: async () => ({ protocolVersion: 1 }),
+          request: async (method: string) => {
+            if (method === 'session/load') return { sessionId: 's' };
+            if (method === 'session/prompt') {
+              prompts++;
+              if (prompts === 1) { started.resolve(); await finish.promise; }
+              return { stopReason: 'end_turn' };
+            }
+            return {};
+          },
+          cancel: async () => {}, dispose: async () => { disposed.push(id); },
+        } as never;
+      },
+    });
+    const call = directCall(bridge);
+    const rpc = (id: string, method: string) => call(`/${id}/rpc`, { method, params: { sessionId: 's', prompt: [] } });
+    const latestControl = (body: { notifications: Array<{ params?: { update?: { sessionUpdate: string; role: string; active: boolean } } }> }) =>
+      body.notifications.map(item => item.params?.update).filter(item => item?.sessionUpdate === 'astrid_session_control').at(-1);
+    let pending: ReturnType<typeof call> | undefined;
+    try {
+      for (let i = 0; i < 3; i++) {
+        assert.equal((await call('/connect', {})).status, 200);
+        assert.equal((await rpc(`c${i + 1}`, 'session/load')).status, 200);
+      }
+      pending = rpc('c1', 'session/prompt');
+      await started.promise;
+      // Both survivors renew their heartbeat before the owner's lease expires.
+      clock = 75_000;
+      t.mock.timers.tick(75_000);
+      assert.equal(latestControl((await call('/c2/events')).body)?.role, 'follower');
+      await call('/c3/events');
+      if (release === 'disconnect') assert.equal((await call('/c1', undefined, 'DELETE')).status, 200);
+      else {
+        clock = 90_000;
+        t.mock.timers.tick(15_000);
+      }
+      const promoted = latestControl((await call('/c2/events')).body);
+      assert.equal(promoted?.role, 'writer');
+      assert.equal(promoted?.active, true);
+      assert.equal(latestControl((await call('/c3/events')).body)?.role, 'follower');
+      assert.deepEqual(disposed, [], 'keep the owner host while its turn runs');
+      assert.equal((await rpc('c3', 'session/prompt')).status, 409);
+      assert.equal((await rpc('c2', 'session/prompt')).status, 409, 'promotion must not allow an overlapping turn');
+      assert.deepEqual((await call('/c1/events')).body, { notifications: [], disconnected: true });
+      assert.equal((await call('/c1', undefined, 'DELETE')).status, 404, 'a late release cannot revoke the successor');
+      finish.resolve();
+      assert.equal((await pending).status, 200);
+      assert.equal(latestControl((await call('/c2/events')).body)?.active, false);
+      assert.equal((await rpc('c2', 'session/prompt')).status, 200);
+      assert.equal(prompts, 2);
+      assert.deepEqual(disposed, [], 'surviving subscribers still need the shared host');
+      await call('/c2', undefined, 'DELETE');
+      assert.equal(latestControl((await call('/c3/events')).body)?.role, 'writer');
+      await call('/c3', undefined, 'DELETE');
+      assert.deepEqual(disposed.sort(), [1, 2, 3]);
+    } finally {
+      finish.resolve();
+      await pending;
+      await bridge.close();
+      server.close();
+      t.mock.timers.reset();
+    }
+  });
+}

@@ -28,6 +28,10 @@ import {
 } from '@/tools/video-editor/lib/timeline-patch';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability';
+import {
+  classifyGenericPatch,
+  type GenericPatchCapturePort,
+} from '../commands/genericPatchCapture.ts';
 import type { CommitDataOptions } from '@/tools/video-editor/hooks/useTimelineCommit';
 import type { Checkpoint } from '@/tools/video-editor/types/history';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
@@ -36,10 +40,6 @@ import {
   submitTrackLabelEdit,
   type TrackLabelCapturePort,
 } from '../commands/trackLabelGesture.ts';
-import {
-  classifyGenericPatch,
-  type GenericPatchCapturePort,
-} from '../commands/genericPatchCapture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -126,7 +126,6 @@ interface SortableRowProps {
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
 }
 
 interface RowActionLayerProps {
@@ -166,7 +165,6 @@ interface TrackListRendererProps {
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onTrackLabelEditStart?: (trackId: string) => (label: string) => void;
   onRemoveTrack: (trackId: string) => void;
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
   onTrackDragEnd: (event: DragEndEvent) => void;
   trackSensors: ReturnType<typeof useSensors>;
   readOnly?: boolean;
@@ -192,7 +190,6 @@ function SortableRow({
   onTrackChange,
   onTrackLabelEditStart,
   onRemoveTrack,
-  onAddTrack,
 }: SortableRowProps) {
   useRenderBudget('SortableRow', 4);
   const sortableId = `track-${track.id}`;
@@ -247,7 +244,6 @@ function SortableRow({
           onChange={onTrackChange}
           onLabelEditStart={onTrackLabelEditStart}
           onRemove={onRemoveTrack}
-          onAddTrack={onAddTrack}
           readOnly={readOnly}
           rowDragging={sortable.isDragging}
           dragListeners={sortable.listeners}
@@ -384,7 +380,6 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.onTrackLabelEditStart === right.onTrackLabelEditStart
     && left.onTrackChange === right.onTrackChange
     && left.onRemoveTrack === right.onRemoveTrack
-    && left.onAddTrack === right.onAddTrack
   );
 }
 
@@ -413,7 +408,6 @@ export function TrackListRenderer({
   onTrackChange,
   onTrackLabelEditStart,
   onRemoveTrack,
-  onAddTrack,
   onTrackDragEnd,
   trackSensors,
   readOnly = false,
@@ -453,7 +447,6 @@ export function TrackListRenderer({
         onTrackChange={onTrackChange}
         onTrackLabelEditStart={onTrackLabelEditStart}
         onRemoveTrack={onRemoveTrack}
-        onAddTrack={onAddTrack}
       />
     );
   };

@@ -2502,29 +2502,27 @@ it('paints clip-empty row bands across the viewport without leaking grid below t
 
 
 describe('track label command capture forwarding', () => {
-  for (const deviceClass of ['desktop', 'phone', 'tablet'] as const) {
-    it(`forwards the ${deviceClass} name edit through the canvas and memoized row`, () => {
-      const finish = vi.fn();
-      const onTrackLabelEditStart = vi.fn(() => finish);
-      const onSelectTrack = vi.fn();
-      const onAddTrack = vi.fn();
-      renderCanvas({ deviceClass, onTrackLabelEditStart, onSelectTrack, onAddTrack });
-      if (deviceClass !== 'desktop') {
-        fireEvent.click(screen.getByText(track.label));
-        expect(screen.getByTestId('timeline-track-sheet')).toBeInTheDocument();
-        expect(onSelectTrack).toHaveBeenCalledExactlyOnceWith(track.id);
-      }
-      const input = screen.getByRole('textbox', { name: 'Track name' });
-      fireEvent.focus(input);
-      expect(onTrackLabelEditStart).toHaveBeenCalledExactlyOnceWith(track.id);
-      fireEvent.change(input, { target: { value: 'Captured name' } });
-      expect(finish).not.toHaveBeenCalled();
-      fireEvent.blur(input);
-      expect(finish).toHaveBeenCalledExactlyOnceWith('Captured name');
-      if (deviceClass !== 'desktop') {
-        fireEvent.click(screen.getByRole('button', { name: 'Add video track' }));
-        expect(onAddTrack).toHaveBeenCalledExactlyOnceWith('visual');
-      }
-    });
-  }
+  it.each(['phone', 'tablet'] as const)('forwards %s touch track selection to the Inspector target', (deviceClass) => {
+    const onSelectTrack = vi.fn();
+    renderCanvas({ deviceClass, onSelectTrack });
+    fireEvent.click(screen.getByText(track.label));
+    expect(onSelectTrack).toHaveBeenCalledExactlyOnceWith(track.id);
+  });
+
+  it('forwards the desktop name edit through the canvas and memoized row', () => {
+    const deviceClass = 'desktop' as const;
+    const finish = vi.fn();
+    const onTrackLabelEditStart = vi.fn(() => finish);
+    const onSelectTrack = vi.fn();
+    const onAddTrack = vi.fn();
+    renderCanvas({ deviceClass, onTrackLabelEditStart, onSelectTrack, onAddTrack });
+    const input = screen.getByRole('textbox', { name: 'Track name' });
+    fireEvent.focus(input);
+    expect(onTrackLabelEditStart).toHaveBeenCalledExactlyOnceWith(track.id);
+    fireEvent.change(input, { target: { value: 'Captured name' } });
+    expect(finish).not.toHaveBeenCalled();
+    fireEvent.blur(input);
+    expect(finish).toHaveBeenCalledExactlyOnceWith('Captured name');
+    expect(onAddTrack).not.toHaveBeenCalled();
+  });
 });

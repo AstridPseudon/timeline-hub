@@ -818,6 +818,12 @@ it('does not expose media-subset context actions on a mixed selected member', ()
 
 
 describe('theme-safe timeline clip labels', () => {
+  it('shows the shared human-readable label before the asset key', () => {
+    render(<ClipAction {...buildProps({ clipMeta: { asset: 'asset-1', track: 'V1', clipType: 'media', label: 'first take.mp4' } })} />);
+    expect(screen.getByText('first take.mp4')).toBeInTheDocument();
+    expect(screen.queryByText('asset-1')).not.toBeInTheDocument();
+  });
+
   it.each([['media', false], ['media', true], ['effect-layer', false], ['effect-layer', true]] as const)('keeps %s labels readable with selection=%s', (clipType, isSelected) => {
     render(<ClipAction {...buildProps({isSelected, clipMeta: {asset: 'Readable clip', track: 'V1', clipType, continuous: clipType === 'effect-layer' ? {type: 'Readable effect'} : undefined}})} />);
     const label = screen.getByText(clipType === 'effect-layer' ? 'Readable effect' : 'Readable clip');
