@@ -242,11 +242,14 @@ def test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo(
         return original_route(handler)
 
     def send(handler, status, payload=None, **kwargs):
-        if (handler._is_timeline_commit() and getattr(handler, "_defer_response", False)):
+        if (handler._is_timeline_commit()
+                and not getattr(handler, "_defer_response", False)):
             request_key = handler.headers["Idempotency-Key"]
+            error = kwargs.get("error")
             observed.append({"path": handler.path, "key": request_key,
                              "body": handler._prefetched_body,
-                             "status": status, "response": copy.deepcopy(payload)})
+                             "status": status,
+                             "response": copy.deepcopy(payload if error is None else error)})
             if status == 200 and request_key in lose:
                 lose.remove(request_key)
                 # Existing M1 seam: acceptance is durable; no response bytes
@@ -319,6 +322,35 @@ def test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo(
                 labelled = peer.commit(label, idempotency_key="public-s2-python-label")
                 assert labelled["data"]["status"] == "accepted"
                 assert labelled["data"]["publisher"] == "python-label-editor"
+                accepted_wires = [row for row in observed
+                                  if row["key"] == "public-s2-python-label"]
+                assert len(accepted_wires) == 1
+                assert accepted_wires[0]["path"] == edit.path
+                assert accepted_wires[0]["status"] == 200
+                assert accepted_wires[0]["response"]["data"] == {
+                    key: value for key, value in labelled["data"].items()
+                    if key not in {"accepted_publication_id", "show_command"}
+                }
+                assert accepted_wires[0]["response"]["receipt"] == labelled["receipt"]
+                after_label = rows(edit.service)
+                refusal_body = edit.body([label], base=h0)
+                refusal_raw = json.dumps(refusal_body).encode()
+                refusal_response = world.call(
+                    "/api/runtime" + edit.path, "POST", body=refusal_raw,
+                    headers={"Content-Type": "application/json",
+                             "Idempotency-Key": "public-s2-observer-refusal"},
+                )
+                assert refusal_response.status == 409
+                refusal_wires = [row for row in observed
+                                 if row["key"] == "public-s2-observer-refusal"]
+                assert len(refusal_wires) == 1
+                assert (refusal_wires[0]["path"], refusal_wires[0]["body"],
+                        refusal_wires[0]["key"], refusal_wires[0]["status"]) == (
+                    edit.path, refusal_raw, "public-s2-observer-refusal", 409,
+                )
+                assert refusal_wires[0]["response"]["code"] == "conflict"
+                assert refusal_wires[0]["response"]["details"]["reason"] == "dependency_changed"
+                assert rows(edit.service) == after_label
                 release.set()
                 code, ambiguous = pending.result(timeout=30)
                 assert code == 1 and not ambiguous["ok"], (code, ambiguous)
@@ -326,6 +358,15 @@ def test_public_cli_stale_trim_rebases_label_lost_ack_restart_retry_and_undo(
                 release.set()
 
         trim_wire = next(row for row in observed if row["key"] == key)
+        # On the current Agent checkout this is the real refusal that the
+        # previous deferred-only observer hid. Keep the proof bounded to the
+        # actual final HTTP send; the original acceptance assertion below
+        # remains unchanged and reports the Agent-owned guard conflict.
+        if trim_wire["status"] == 409:
+            assert trim_wire["path"] == flight["path"]
+            assert trim_wire["body"] == flight["body"].encode()
+            assert trim_wire["response"]["code"] == "conflict"
+            assert trim_wire["response"]["details"]["reason"] == "dependency_changed"
         assert trim_wire["status"] == 200
         assert (trim_wire["path"], trim_wire["body"], trim_wire["key"]) == (
             flight["path"], flight["body"].encode(), flight["key"],
