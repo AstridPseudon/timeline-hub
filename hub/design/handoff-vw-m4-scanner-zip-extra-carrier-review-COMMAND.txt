@@ -1,0 +1,76 @@
+# Independent private review commands
+set -eu
+
+OUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-scanner-zip-extra-carrier-review
+KIT=/home/user/timeline-hub/hub/kit/bin/delivery-build
+ORIGINAL=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/delivery-build-owner-scanner-extra.unapplied.patch
+ZIP=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/payload/owner_film_cliplook_scan-v1.0.8.zip
+INSTRUCTIONS=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/payload/owner-film-differences.md
+MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/payload/MANIFEST.txt
+sha256sum "$KIT" "$ORIGINAL" "$ZIP" "$INSTRUCTIONS" "$MANIFEST"
+cmp -s "$ZIP" /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-package/delivery/owner_film_cliplook_scan-v1.0.8.zip
+cmp -s "$INSTRUCTIONS" /home/user/timeline-hub/hub/design/owner-film-differences.md
+
+# Private patch check; no write to /home/user/timeline-hub/hub/kit.
+R=$(mktemp -d /tmp/vw-m4-scanner-command.XXXXXX)
+export R
+cleanup() { for d in "${R:-}" "${R2:-}"; do test -n "$d" || continue; CLEANUP_PATH="$d" python3 -B -c 'import os, shutil; shutil.rmtree(os.environ["CLEANUP_PATH"], ignore_errors=True)'; done; }
+trap cleanup EXIT
+mkdir -p "$R/kit/bin"
+cp "$KIT" "$R/kit/bin/delivery-build"
+(cd "$R/kit" && patch --dry-run -p0 < "$ORIGINAL")
+(cd "$R/kit" && patch -p0 < "$ORIGINAL")
+PYTHONDONTWRITEBYTECODE=1 python3 -B "$R/kit/bin/delivery-build" --help >/dev/null
+PYTHONDONTWRITEBYTECODE=1 SCRIPT="$R/kit/bin/delivery-build" python3 -B - <<'PY'
+import importlib.machinery, importlib.util, os, pathlib
+loader = importlib.machinery.SourceFileLoader("delivery_build", os.environ["SCRIPT"])
+spec = importlib.util.spec_from_loader(loader.name, loader)
+mod = importlib.util.module_from_spec(spec)
+loader.exec_module(mod)
+root = pathlib.Path(os.environ["R"])
+source = root / "source.bin"
+source.write_bytes(b"source\n")
+staging = root / "staging"
+staging.mkdir()
+(staging / "README.md").write_bytes(b"readme\n")
+(staging / "bundles").mkdir()
+(staging / "bundles/agent.bundle").write_bytes(b"bundle\n")
+(staging / "patches").mkdir()
+(staging / "patches/agent.patch").write_bytes(b"patch\n")
+assert mod.parse_extra(f"extras//owner.bin={source}")[0] == "extras/owner.bin"
+for value in [f"extras/../escape={source}", f"../escape={source}", f"/absolute={source}", f"extras\\backslash={source}"]:
+    try: mod.parse_extra(value)
+    except ValueError: pass
+    else: raise AssertionError(value)
+for destination in ["README.md", "bundles/agent.bundle", "patches/agent.patch"]:
+    try: mod.add_extras(str(staging), [f"{destination}={source}"])
+    except ValueError: pass
+    else: raise AssertionError(destination)
+# Direct negative: leaf is regular, parent is a symlink; original accepts it.
+external = root / "external"
+external.mkdir()
+(external / "secret.bin").write_bytes(b"outside\n")
+parent = root / "linked-parent"
+parent.symlink_to(external, target_is_directory=True)
+assert not (parent / "secret.bin").is_symlink()
+mod.add_extras(str(staging), [f"extras/linked.bin={parent / 'secret.bin'}"])
+assert (staging / "extras/linked.bin").read_bytes() == b"outside\n"
+# SHA256SUMS is absent before write_checksums, so original accepts it.
+unc = root / "unc"
+unc.mkdir()
+mod.add_extras(str(unc), [f"SHA256SUMS={source}"])
+assert (unc / "SHA256SUMS").read_bytes() == b"source\n"
+mod.add_extras(str(unc), [f"arbitrary-top-level.bin={source}"])
+assert (unc / "arbitrary-top-level.bin").exists()
+print("original private carrier checks: PASS; three requested boundary gaps reproduced")
+PY
+
+# Amendment check; this is the review artifact, still unapplied to any shared script.
+R2=$(mktemp -d /tmp/vw-m4-scanner-amendment-command.XXXXXX)
+export R2
+mkdir -p "$R2/kit/bin"
+cp "$KIT" "$R2/kit/bin/delivery-build"
+(cd "$R2/kit" && patch --dry-run -p0 < "$OUT/delivery-build-owner-scanner-extra-review.unapplied.patch")
+(cd "$R2/kit" && patch -p0 < "$OUT/delivery-build-owner-scanner-extra-review.unapplied.patch")
+PYTHONDONTWRITEBYTECODE=1 python3 -B "$R2/kit/bin/delivery-build" --help >/dev/null
+printf '%s\n' 'original private checks and amended patch checks completed'
