@@ -11,6 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from jsonschema import Draft202012Validator
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
@@ -18,6 +19,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, RuntimeErrorBase, ValidationError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.timeline_commit_port import CommitUnavailable
 
 
 # Direct replace_timeline_clip is retired (ledger D04; refusal asserted in
@@ -229,29 +231,6 @@ def _native_commit(service, project, body, key, *, timeline="film"):
     )
 
 
-class _ParentOwnershipSchemaBoundary(ValidationError):
-    """Private marker for the current schema's parent-ownership refusal."""
-
-
-def _native_parent_ownership_commit(service, project, body, key, *, timeline="film"):
-    try:
-        return _native_commit(service, project, body, key, timeline=timeline)
-    except ValidationError as error:
-        cause = error.__cause__
-        if (
-            str(error) == "invalid CommitRequest: 'parent' is not one of ['shared', 'occurrence']"
-            and getattr(cause, "message", None) == "'parent' is not one of ['shared', 'occurrence']"
-            and tuple(getattr(cause, "absolute_path", ())) == (
-                "commands", 0, "intent", "ownership",
-            )
-            and getattr(cause, "validator", None) == "enum"
-            and getattr(cause, "validator_value", None) == ["shared", "occurrence"]
-            and getattr(cause, "instance", None) == "parent"
-        ):
-            raise _ParentOwnershipSchemaBoundary(str(error)) from error
-        raise
-
-
 def _native_rows(service):
     return tuple(service.store.conn.iterdump())
 
@@ -429,22 +408,25 @@ def test_native_clip_swap_rebases_after_disjoint_intervening_edit(native_editing
 
 
 @pytest.mark.integration
-def test_native_parent_clip_swap_route_refuses_parent_ownership_on_current_schema(native_editing):
+def test_native_parent_clip_swap_route_refuses_parent_ownership_on_public013_schema(native_editing):
     command = native_editing.native.capture_parent_swap_media(
         native_editing.native.bundle_from_document(native_editing.document),
         NATIVE_PARENT_TARGET, native_editing.old, native_editing.new,
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
-    body = _native_body(native_editing.service, native_editing.project, [command])
-    with pytest.raises(ValidationError, match=r"'parent' is not one of \['shared', 'occurrence'\]"):
-        _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap-refused")
+    public_schema = json.loads(
+        (Path(__file__).parent / "fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes()
+    )
+    errors = [
+        error for error in Draft202012Validator(public_schema).iter_errors(command)
+        if tuple(error.path) == ("intent", "ownership")
+    ]
+    assert len(errors) == 1
+    assert errors[0].validator == "enum"
+    assert errors[0].validator_value == ["shared", "occurrence"]
+    assert errors[0].instance == "parent"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=_ParentOwnershipSchemaBoundary,
-    reason="needs schema 0.2.14 parent ownership; ledger D04",
-)
 @pytest.mark.integration
 def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
     command = native_editing.native.capture_parent_swap_media(
@@ -453,9 +435,7 @@ def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
         verified_media=[native_editing.old_verified, native_editing.new_verified],
     )
     body = _native_body(native_editing.service, native_editing.project, [command])
-    accepted = _native_parent_ownership_commit(
-        native_editing.service, native_editing.project, body, "native-parent-swap",
-    )
+    accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
     assert accepted["data"]["status"] in {"accepted", "rebased"}
     assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
 
@@ -661,6 +641,45 @@ def test_rt02_project_shot_crud_native_replacement_retries_after_restart(native_
         assert reopened.store.conn.execute(
             "SELECT COUNT(*) FROM command_idempotency WHERE command_kind='timeline.commit'",
         ).fetchone()[0] == before_receipts + 1
+    finally:
+        reopened.close()
+
+
+@pytest.mark.integration
+def test_rt02_native_occurrence_swap_rolls_back_before_restart_retry(native_editing, monkeypatch):
+    """A persistence failure leaves the occurrence-owned shot untouched before retry."""
+    service = native_editing.service
+    commits, _ = service._timeline_commits()
+    body = _native_body(service, native_editing.project, [_native_swap(native_editing)])
+    before_rows = _native_rows(service)
+    before_head = service.get_project_timeline(native_editing.project, "film")
+    original_persist = commits._persist_closure
+
+    def fail_after_persist(document):
+        original_persist(document)
+        raise RuntimeError("injected native persistence failure")
+
+    monkeypatch.setattr(commits, "_persist_closure", fail_after_persist)
+    with pytest.raises(CommitUnavailable, match="exact request"):
+        _native_commit(service, native_editing.project, body, "rt02-native-rollback")
+    assert _native_rows(service) == before_rows
+    assert service.get_project_timeline(native_editing.project, "film") == before_head
+
+    monkeypatch.undo()
+    service.close()
+    reopened = RuntimeService(native_editing.root)
+    try:
+        reopened.register_timeline_commit_provider(native_editing.native.load_timeline_commit_provider("astrid"))
+        accepted = _native_commit(
+            reopened, native_editing.project, body, "rt02-native-rollback",
+        )
+        assert accepted["data"]["status"] == "accepted"
+        assert _native_payload(accepted["data"]["canonical_document"], "internal")["clips"][0]["asset"] == native_editing.new["asset"]
+        after_accept = _native_rows(reopened)
+        assert _native_commit(
+            reopened, native_editing.project, body, "rt02-native-rollback",
+        ) == accepted
+        assert _native_rows(reopened) == after_accept
     finally:
         reopened.close()
 
