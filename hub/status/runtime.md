@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:18:39Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T10:24:05Z | dispatcher heartbeat 9s -->
 # runtime — 2026-10-20T10:03:46Z
 Milestone: M1 RECORDED; M2 ongoing. F1/F2 DATA-SAFETY FIXES BOTH MERGED. NextconsumerpinONLYaftercanonicalunion+realproducerpositive+postrefreshnormalnewrelease.
 Integrated: Runtimec0dcd38 (tree5f86f0ef): F2adoptionlegacyprojectdocumentDENY642eef7 and F1unrelatedsame/foreign/archivedshotdestinationDENY247f08f3. F2ordinary64PASS+markedcommit9PASS. F1currentcomposedordinary156PASS+markedoccupancy1PASS+markedcommit9PASS;11negativecasesREDat602. Exactretry/validownupdate/C4historicalreuse/zeroDB-CASwrites retained. Managerreviewedbothdiffs; independentF1reviewAPPROVE. Prior0.2.9AND0.2.10AFFECTED; published602/010docflagged, immutablepinsunchanged.

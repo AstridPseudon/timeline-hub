@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:18:39Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T10:24:05Z | dispatcher heartbeat 9s -->
 # agent — 2026-10-20 10:09 UTC
 Milestone: M1 RECORDED; M2 active, M3 source/viewing active. Gates1/6/7 OPEN; no current-tuple release, normalPCM or foundation-complete claim.
 Integrated: Agent tl/integrationdf2739f9. Public12ed60bf15 (47owner+292readinessPASS, exact0a7b6152/58444B/sharedlock/runtime941pin unchanged); identity5c3f0c99 (3pinned+3current regressionsPASS); auto timing/owner correctionefb96034 (1911targeted+173review/matrix); ordinarydeleteequalstate26c3b0a8 (269PASS; inverseABAstrictkept); D07deleted76737ca2 (-206helpers, unitsrelocated, native/compiler+facadereplacements36/90/4PASS); pool+legacyoriginalreadguardsdf2739f9 (348PASS/36redbefore).
@@ -28,3 +28,5 @@ Resources:17Gfree; target5–7ACTUALmodels. Optionalemptymerge-parentfilesharmle
 2026-10-20 10:12 UTC: ACK10:08viewscope/keyhandoff; agt-m2-view-write-caller dispatched (landsWITHfinalsafeunionpinonly). db982/540bothrootreviewAPPROVEDnarrowly; agt-m2-auto-fixture-gate composesoverlappinggoldens oncurrent with10exactreconstructionproofs/expandedApphandoffexports, no stalewholecliprecords. Actualfivepreviouslive+twojobs=seven.
 
 2026-10-20 10:16 UTC: inactivePCMcentral103PASS/2existingxfail (privatehelperlane), normalactivationstillheld; b85eb057mergeQUEUED afterreview10-pathdiffonly. S2canonical26ef2bbb/a6f1aaa9 explicitFREEZEfornormalgeneration nowpublished, onlyexistingClipSetElementArgs optionalDocumentPin widens; S1unchanged. No consumerpin/productsourceunionmerge/producergreenclaim.
+
+2026-10-20 10:19 UTC: native trim sourceDONE281+168PASS (17interiorvectors), kernelDONE201+97+2V1V2+93D07PASS, viewsourcesDONE31+26+2unit(currenttuplepairheld), SDKsourceguardDONE72+3+importfencePASS. Refilledjobs: agt-review-trim-interior; agt-m2-timing-kernel-gate(review+rootdesignhygiene/shareddocfix); agt-m2-parent-media-real-proof(actualordinarymedia separateproducerhold). InactivePCM MERGEDe2ad5958 (103central/2oldxfail), stillNOactivation. Sevenactualrequested/live.
