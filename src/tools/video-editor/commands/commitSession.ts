@@ -320,6 +320,38 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
+    requestedOwner: string | undefined, refusal: string): string {
+    const parentRef = `parent/clip:${clipId}`;
+    const raw = new AuthoredState(bundle);
+    // Parent app fields are authored opaque data, not projected ownership facts.
+    const ownerRef = requestedOwner ?? (
+      !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true) ? 'parent' : identity?.ownerRef);
+    const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
+    if (typeof ownerRef !== 'string' || typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
+      || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
+      || !raw.entity(select, true)) {
+      throw new Error(refusal);
+    }
+    if (ownerRef !== 'parent') {
+      if (!identity || typeof identity.occurrenceId !== 'string'
+        || identity.ownerRef !== ownerRef || ownerRef !== `occurrence:${identity.occurrenceId}`
+        || typeof identity.rawClipId !== 'string' || select !== `${ownerRef}/clip:${identity.rawClipId}`
+        // Confirm the projector's output ID only after binding the explicit owner.
+        || clipId !== `${identity.occurrenceId}:${identity.rawClipId}` || raw.entity(parentRef, true)
+        || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
+        throw new Error(refusal);
+      }
+      const occurrence = raw.occurrence(ownerRef);
+      const source = (bundle as AuthoringBundle).source_mapping.shots[String(occurrence.shot_id)];
+      if (!source || identity.shotId !== source.shot_id || identity.revisionId !== source.revision_id
+        || identity.internalTimelineRevisionId !== source.internal_timeline_revision_id
+        || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
+        throw new Error(refusal);
+      }
+    }
+    return select;
+  }
   const clipParamsPort: ClipParamsCapturePort = {
     capture({ clipId, current }) {
       assertReady();
@@ -331,24 +363,8 @@ export async function createTimelineCommandSession(options: Options) {
       if (matches.length !== 1 || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
         throw new Error('Clip parameters require one unambiguous raw clip identity');
       }
-      const identity = matches[0].app?.canonical;
-      let select = `parent/clip:${clipId}`;
-      if (identity !== undefined) {
-        if (!object(identity) || typeof identity.occurrenceId !== 'string' || typeof identity.rawClipId !== 'string'
-          || identity.ownerRef !== `occurrence:${identity.occurrenceId}`
-          || identity.clipRef !== `${identity.ownerRef}/clip:${identity.rawClipId}`
-          || clipId !== `${identity.occurrenceId}:${identity.rawClipId}`) {
-          throw new Error('Clip parameters require an addressable canonical clipRef');
-        }
-        select = identity.clipRef;
-      } else if (Object.values(bundle.shots).some((shot) => Array.isArray(shot.internal_timeline.clips)
-        && shot.internal_timeline.clips.some((clip) => object(clip) && clip.id === clipId))) {
-        throw new Error('Clip parameters require explicit occurrence ownership');
-      }
-      if (!/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')) {
-        throw new Error('Clip parameters require a stable scoped clip identity');
-      }
-      new AuthoredState(bundle).entity(select);
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, undefined, 'Clip parameters require explicit occurrence ownership or a matching raw parent');
       const basis = { bundle: copy(bundle), select, clipId, localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } };
       assertFiniteJson(basis);
@@ -409,34 +425,7 @@ export async function createTimelineCommandSession(options: Options) {
       const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
       if (matches.length !== 1) throw new Error('Scalar edit requires one raw clip identity');
       const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
-      const parentRef = `parent/clip:${clipId}`;
-      const raw = new AuthoredState(bundle);
-      // Parent app fields are authored opaque data, not projected ownership facts.
-      const ownerRef = requestedOwner ?? (
-        !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true) ? 'parent' : identity?.ownerRef);
-      const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
-      if (typeof ownerRef !== 'string' || typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
-        || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
-        || !raw.entity(select, true)) {
-        throw new Error('Scalar edit requires an explicit matching raw clip owner');
-      }
-      if (ownerRef !== 'parent') {
-        if (!identity || typeof identity.occurrenceId !== 'string'
-          || identity.ownerRef !== ownerRef || ownerRef !== `occurrence:${identity.occurrenceId}`
-          || typeof identity.rawClipId !== 'string' || select !== `${ownerRef}/clip:${identity.rawClipId}`
-          // Confirm the projector's output ID only after binding the explicit owner.
-          || clipId !== `${identity.occurrenceId}:${identity.rawClipId}` || raw.entity(parentRef, true)
-          || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
-          throw new Error('Scalar edit requires an explicit matching raw clip owner');
-        }
-        const occurrence = raw.occurrence(ownerRef);
-        const source = (bundle as AuthoringBundle).source_mapping.shots[String(occurrence.shot_id)];
-        if (!source || identity.shotId !== source.shot_id || identity.revisionId !== source.revision_id
-          || identity.internalTimelineRevisionId !== source.internal_timeline_revision_id
-          || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
-          throw new Error('Scalar edit requires an explicit matching raw clip owner');
-        }
-      }
+      const select = resolveOwnedClipRef(clipId, identity, requestedOwner, 'Scalar edit requires an explicit matching raw clip owner');
       return json({ bundle, select, clipId, localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipScalarCapturePort['capture']>;
     },
