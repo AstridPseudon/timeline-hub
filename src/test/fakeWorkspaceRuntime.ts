@@ -397,6 +397,20 @@ export function runtimeFixture(options: RuntimeFixtureOptions = {}) {
         }),
       };
     }
+    if (method === 'GET' && (path === `${timelinePath}/commits` || path.startsWith(`${timelinePath}/commits?`))) {
+      // The generated history read is distinct from the legacy composition-revisions list. This
+      // fixture has no timeline commit receipts to expose, but it still has a deterministic seeded
+      // head pin for the consumer's readonly bootstrap read.
+      return {
+        status: 200,
+        headers: {},
+        body: json({
+          items: [],
+          next_cursor: null,
+          head: { revision_id: headRevisionId, publication_id: `bootstrap-${headRevisionId}` },
+        }),
+      };
+    }
     const restoreMatch = method === 'POST' && path.startsWith(revisionPath) && path.endsWith('/restore')
       ? decodeURIComponent(path.slice(revisionPath.length, -'/restore'.length))
       : '';

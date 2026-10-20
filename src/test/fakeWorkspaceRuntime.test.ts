@@ -95,6 +95,20 @@ describe('runtimeFixture revision history', () => {
     expect(created[0] > created[1]).toBe(true);
   });
 
+  it('serves the generated readonly history envelope without inventing commit receipts', async () => {
+    const fixture = runtimeFixture({ priorRevisions: [], headRevisionId: 'seed-r1' });
+    const response = await fixture.transport('GET', `${TIMELINE}/commits?limit=50`, {});
+    expect(response.status).toBe(200);
+    expect(decode(response.body)).toEqual({
+      items: [],
+      next_cursor: null,
+      head: { revision_id: 'seed-r1', publication_id: 'bootstrap-seed-r1' },
+    });
+    await expect(fixture.transport('GET', `${TIMELINE}/commits/unknown`, {})).rejects.toThrow(
+      `unexpected GET ${TIMELINE}/commits/unknown`,
+    );
+  });
+
   it('restores any revision it holds, and 404s one it does not', async () => {
     const fixture = runtimeFixture({ priorRevisions: [], headRevisionId: 'seed-r1' });
     await publish(fixture, 'seed-r1', 'next', 'publish-1');
