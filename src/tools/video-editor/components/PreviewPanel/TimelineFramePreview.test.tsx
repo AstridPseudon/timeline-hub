@@ -2,11 +2,12 @@
 import React, { useEffect } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import { TimelineFramePreview, framePreviewPlacement, framePreviewSize, usePanelFramePreview } from './TimelineFramePreview';
 
 const mocks = vi.hoisted(() => ({
-  renders: [] as Array<{ component: unknown; frameToDisplay: number; config: ResolvedTimelineConfig }>,
+  renders: [] as Array<{ component: unknown; frameToDisplay: number; config: ResolvedTimelineConfig; compiledTransitions?: unknown; durationInFrames: number }>,
   mounted: 0,
   renderer: vi.fn(() => null),
   admission: Object.freeze({ id: 'admission' }),
@@ -16,9 +17,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@remotion/player', async () => {
   const React = await import('react');
   return {
-    Thumbnail: (props: { component: React.ComponentType<any>; frameToDisplay: number; inputProps: { config: ResolvedTimelineConfig } }) => {
+    Thumbnail: (props: { component: React.ComponentType<any>; frameToDisplay: number; durationInFrames: number; inputProps: { config: ResolvedTimelineConfig; compiledTransitions?: unknown } }) => {
       React.useEffect(() => { mocks.mounted += 1; return () => { mocks.mounted -= 1; }; }, []);
-      mocks.renders.push({ component: props.component, frameToDisplay: props.frameToDisplay, config: props.inputProps.config });
+      mocks.renders.push({ component: props.component, frameToDisplay: props.frameToDisplay, config: props.inputProps.config,
+        compiledTransitions: props.inputProps.compiledTransitions, durationInFrames: props.durationInFrames });
       const clipIds = props.inputProps.config.clips.map((clip) => clip.id).join(',');
       return <div data-testid="thumbnail"><div className="mock-composition-frame" data-frame={props.frameToDisplay}>{clipIds}</div></div>;
     },
@@ -72,6 +74,18 @@ describe('TimelineFramePreview', () => {
     await waitFor(() => expect(mocks.renders.at(-1)?.frameToDisplay).toBe(20));
     rerender(<TimelineFramePreview config={config} request={null} />);
     expect(mocks.mounted).toBe(1);
+  });
+
+  it('delivers the paired vector and bounded extent through the still composition seam', async () => {
+    const config = makeConfig('paired');
+    const compiledTransitions = {} as CompiledCanonicalTransitions;
+    const projectionFact = { kind: 'local' as const, base: { revisionId: 'R', publicationId: 'p-R' }, generation: 1 };
+    render(<TimelineFramePreview config={config} request={{ seconds: 0.1, anchor }}
+      compiledTransitions={compiledTransitions} boundedDurationInFrames={7}
+      pairedConfig={config} projectionFact={projectionFact} />);
+
+    await waitFor(() => expect(mocks.renders.length).toBeGreaterThan(0));
+    expect(mocks.renders.at(-1)).toMatchObject({ compiledTransitions, durationInFrames: 7, frameToDisplay: 1 });
   });
 
   it('shows a cached frozen frame without changing the live Thumbnail delivery', async () => {

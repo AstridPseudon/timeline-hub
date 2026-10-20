@@ -1632,7 +1632,7 @@ function requiredString(value: unknown, label: string): string {
 function sameMediaSelection(value: unknown, right: MediaSelection): boolean {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   const left = value as Record<string, unknown>;
-  const keys = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
+  const keys = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'] as const;
   return Object.keys(left).length === keys.length
     && keys.every((key) => left[key] === right[key]);
 }

@@ -110,7 +110,7 @@ export function useTimelineCommandSession(options: {
             : { kind: 'accepted', head: { ...accepted.head } } : undefined;
         context.configVersionRef.current = data.configVersion;
         context.headRevisionRef.current = head;
-        context.recoveryConfig?.remember(head, parent.config);
+        context.recoveryConfig?.remember(head, parent.config, composition);
         context.store.getState().setConfigVersion(data.configVersion);
         context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
         if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
@@ -153,7 +153,8 @@ export function useTimelineCommandSession(options: {
         if (latest.current.commit.dataRef.current === initialData && head === initialHead
           && head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
           && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
-          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config,
+            basis.graph && provider.shotComposition ? createShotCompositionAdapter(provider.shotComposition).prepare(basis.graph) : undefined);
         }
         // A retained outbox owns its original display basis until explicit recovery.
         if (session.getState().status === 'saved') await project(basis, [], true);
@@ -274,7 +275,8 @@ export function useTimelineCommandSession(options: {
         if (currentHead?.projectId === basis.canonicalDocument.project_id && currentHead.timelineId === timelineId
           && basis.canonicalDocument.timeline_id === timelineId
           && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
-          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
+          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config,
+            basis.graph && provider.shotComposition ? createShotCompositionAdapter(provider.shotComposition).prepare(basis.graph) : undefined);
         }
         session.observe(basis);
       }

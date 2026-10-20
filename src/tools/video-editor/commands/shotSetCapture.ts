@@ -132,35 +132,36 @@ function addRead(reads: AgentRead[], ref: string, path: string[], value: AgentSt
 }
 
 function apply(bundle: AuthoredBundle, supplied: EditCommand): ShotSetResult {
-  assertSelect(supplied.select);
+  const select = supplied.select;
+  assertSelect(select);
   if (supplied.schema_version !== 1 || supplied.op !== 'shot.set' || supplied.version !== '1'
     || !equal(supplied.intent ?? {}, { ownership: 'occurrence' })) {
     throw new ClipMoveError('shot.set has an unsupported operation or intention');
   }
   assertArgs(supplied.args);
-  const owner = supplied.select.slice(0, -'/shot'.length);
+  const owner = select.slice(0, -'/shot'.length);
   const selected = shot(bundle, owner);
   const sourceId = selected.source.shot_id;
   if (typeof sourceId !== 'string') throw new ClipMoveError('shot.set source pin has no shot owner', 'identity_conflict');
   const command: EditCommand = {
     ...copy(supplied),
-    resolved: [supplied.select], reads: [], selections: [], expect: {}, authorship: {},
+    resolved: [select], reads: [], selections: [], expect: {}, authorship: {},
     bindings: { 'shot.owner': owner }, created: [], intent: { ownership: 'occurrence' },
   };
   const reads = command.reads!;
   addRead(reads, owner, ['occurrence_id'], state(selected.occurrence.occurrence_id));
-  addRead(reads, supplied.select, ['shot_id'], state(sourceId));
+  addRead(reads, select, ['shot_id'], state(sourceId));
   const writes: AgentWrite[] = [];
   const dependencies: AgentDependency[] = [{ key: 'shot.source', kind: 'entity', pin: { source: copy(selected.source) }, policy: 'exact' }];
   const bindings: AgentBinding[] = [{ key: 'shot.owner', ref: owner, policy: 'fixed', dependencies: [] }];
   const next = copy(bundle);
   const nextSelected = shot(next, owner);
   const assign = (path: string[], after: AgentState) => {
-    const address = `${supplied.select}::${path.join('.')}`;
+    const address = `${select}::${path.join('.')}`;
     const before = pathValue(selected.payload, path.slice(1));
     command.expect![address] ??= before;
     command.authorship![address] = 'direct';
-    writes.push({ ref: supplied.select, path, before, after: copy(after) });
+    writes.push({ ref: select, path, before, after: copy(after) });
     let target: ObjectValue = nextSelected.payload;
     for (const key of path.slice(1, -1)) {
       if (!object(target[key])) target[key] = {};
@@ -177,7 +178,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand): ShotSetResult {
       throw new ClipMoveError('shot.set settings root is not an object');
     }
     if (!object(rawSettings)) {
-      addRead(reads, supplied.select, ['payload', 'settings'], pathValue(selected.payload, ['settings']));
+      addRead(reads, select, ['payload', 'settings'], pathValue(selected.payload, ['settings']));
       assign(['payload', 'settings'], { state: 'present', value: {} });
     }
     const settings = supplied.args.values.settings as Record<string, JSON>;

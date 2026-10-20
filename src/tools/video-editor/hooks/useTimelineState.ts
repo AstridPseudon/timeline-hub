@@ -738,6 +738,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     save.flushPendingSave,
     persistVisualSeamConfig,
     canPersistVisualSeamConfig,
+    save.data,
   );
   const assetOperations = useAssetOperations(
     runtime.provider,

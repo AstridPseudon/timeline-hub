@@ -159,12 +159,13 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   // update jump ahead of a deferred config update.
   useEffect(() => {
     setDelivery((current) => current.config === config
+      && current.compiledTransitions === compiledTransitions
       && current.revision.kind === previewRevision.kind
       && current.revision.revisionId === previewRevision.revisionId
       && current.revision.baseRevisionId === previewRevision.baseRevisionId
       ? { ...current, revision: previewRevision }
       : current);
-  }, [config, previewRevision]);
+  }, [config, compiledTransitions, previewRevision]);
 
   // Stable identity: reads only the state setter and refs, so effects can depend on it.
   const setDeferredConfig = useCallback(
