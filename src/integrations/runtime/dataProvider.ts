@@ -6,6 +6,8 @@ import type {
   CommitRequest,
   EditCommand,
   HistoryPage,
+  MediaSelection,
+  VerifiedMedia,
 } from './generated.ts';
 import {
   AstridRuntimeClient,
@@ -772,6 +774,18 @@ export class RuntimeDataProvider implements DataProvider {
 
   async resolveTimelineCommandAsset(file: string, registry: AssetRegistry): Promise<string> {
     return this.resolveAssetUrlFromRegistry(file, registry);
+  }
+
+  async getProjectVerifiedMedia(
+    projectId: string,
+    selection: MediaSelection,
+  ): Promise<VerifiedMedia> {
+    if (projectId !== this.projectId) {
+      throw new Error(
+        `Workspace Runtime verified media read requires project ${this.projectId}, got ${projectId}`,
+      );
+    }
+    return this.client.getProjectVerifiedMedia(projectId, selection);
   }
 
   /** Public verified history pins plus scoped immutable reads, never projected rows. */

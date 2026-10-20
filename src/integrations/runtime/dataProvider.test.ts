@@ -13,6 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
+import type { MediaSelection, VerifiedMedia } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
@@ -68,6 +69,41 @@ function compactParentComposition() {
 
 
 describe('RuntimeDataProvider', () => {
+  it('reads exact verified media through the project-scoped Runtime facade', async () => {
+    const fixture = runtimeFixture();
+    const selection: MediaSelection = {
+      asset: 'prepared-video',
+      generation_id: 'generation-prepared',
+      variant_id: 'variant-prepared',
+      object_id: MANAGED_OBJECT_DIGEST,
+      catalog_digest: `sha256:${'c'.repeat(64)}`,
+    };
+    const verified: VerifiedMedia = {
+      selection,
+      media_type: 'video/mp4',
+      size: 123,
+      duration_seconds: 4,
+      width: 1920,
+      height: 1080,
+    };
+    const verifiedPath = `/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection/verified?asset=${encodeURIComponent(selection.asset)}&generation_id=${encodeURIComponent(selection.generation_id)}&variant_id=${encodeURIComponent(selection.variant_id)}&object_id=${encodeURIComponent(selection.object_id)}&catalog_digest=${encodeURIComponent(selection.catalog_digest)}`;
+    const verifiedRequests: string[] = [];
+    const transport: typeof fixture.transport = async (method, path, headers, body) => {
+      if (method === 'GET' && path === verifiedPath) {
+        verifiedRequests.push(path);
+        return { status: 200, headers: {}, body: json(verified) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+
+    await expect(provider.getProjectVerifiedMedia(PROJECT_ID, selection)).resolves.toEqual(verified);
+    expect(verifiedRequests).toEqual([verifiedPath]);
+    await expect(provider.getProjectVerifiedMedia('project-other', selection)).rejects.toThrow(
+      `Workspace Runtime verified media read requires project ${PROJECT_ID}, got project-other`,
+    );
+  });
+
   it('reads placements from the parent payload already used by timeline rows', async () => {
     const fixture = runtimeFixture({ parentComposition: {
       ...compactParentComposition(),
