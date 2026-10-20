@@ -356,6 +356,41 @@ def _post_door(world, path, body, key):
     return response.json()
 
 
+def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path):
+    world = _start_door(film, tmp_path)
+    try:
+        evil_origin = "https://evil.test"
+        edit = Editing(world.daemon.service, film, agent)
+        edit.assert_baseline()
+        body = edit.body([edit.move("music-bed", 1)])
+        encoded = json.dumps(body).encode()
+        path = "/api/runtime" + edit.path
+        headers = {"Content-Type": "application/json", "Idempotency-Key": "door-admission"}
+        before = rows(edit.service)
+
+        refused = world.call(path, "POST", origin=evil_origin, body=encoded, headers=headers)
+        assert refused.status == 403
+        assert refused.json() == {"error": "hosted_origin_required"}
+
+        refused = world.call(path, "POST", body=encoded,
+                             headers={**headers, "Authorization": f"Bearer {world.product_token}"})
+        assert refused.status == 403
+        assert refused.json() == {"error": "browser_credentials_forbidden"}
+
+        foreign = copy.deepcopy(body)
+        foreign["project_id"] = "foreign-project"
+        refused = world.call(path, "POST", body=json.dumps(foreign).encode(),
+                             headers={**headers, "Idempotency-Key": "door-foreign-project"})
+        assert refused.status == 409
+        assert refused.json()["code"] == "conflict"
+        assert rows(edit.service) == before
+
+        accepted = _post_door(world, edit.path, body, "door-admission")
+        assert accepted["data"]["status"] == "accepted"
+    finally:
+        world.stop()
+
+
 def test_real_door_lost_ack_restart_exact_retry_never_executes_provider(film, agent, tmp_path, monkeypatch):
     def start():
         return _start_door(film, tmp_path)
