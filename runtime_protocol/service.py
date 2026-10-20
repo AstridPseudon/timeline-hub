@@ -1674,7 +1674,7 @@ class RuntimeService:
         if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
             return self._adopt_empty_shell_create(project["id"], timeline_id, name, idempotency_key, request_hash)
         if self._timeline_commit_provider is not None and not timeline_scope_is_empty(self.store.conn, timeline_id, project_id=project["id"]):
-            raise ConflictError("headless timeline holds authored content", details={"status": "refused", "reason": "headless_content_not_empty"})
+            raise ConflictError(f"headless timeline holds authored content (timeline:{timeline_id})", details={"status": "refused", "reason": "headless_content_not_empty"})
         timestamp = now()
         self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], name, timestamp))
         resource = self._timeline_resource(timeline_id)
