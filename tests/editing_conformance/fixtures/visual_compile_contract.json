@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "contract": "design/visual-compile-contract.md",
+  "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py:_project_clip (visible window clamped to the occurrence, lines 308-326)",
+  "fps": 30,
+  "lane": "video",
+  "base": {"graph": "tests/fixtures/timeline/shot_composition.json", "child": "alpha-video"},
+  "closure": {
+    "note": "Popup closure: occurrence A (8 s) and occurrence B (10 s) on one shared lane. Each child overhangs its occurrence by 2 s, so the clamp is what keeps A from running into B.",
+    "occurrences": [
+      {"occurrence_id": "occ-1", "shot_revision": ["shot-alpha", "rev-a"], "at_ms": 0, "duration_ms": 8000, "child_duration_ms": 10000},
+      {"occurrence_id": "occ-3", "shot_revision": ["shot-alpha", "rev-b"], "at_ms": 8000, "duration_ms": 10000, "child_duration_ms": 12000}
+    ]
+  },
+  "vectors": [
+    {"id": "popup-occurrence-a-clamped-to-8s", "occurrence_id": "occ-1", "expect": {"start_frame": 0, "end_frame": 240}},
+    {"id": "popup-occurrence-b-clamped-to-10s-after-a", "occurrence_id": "occ-3", "expect": {"start_frame": 240, "end_frame": 540}}
+  ]
+}
