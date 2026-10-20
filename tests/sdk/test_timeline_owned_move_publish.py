@@ -71,6 +71,30 @@ def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_write
     assert client.reads
 
 
+def test_parent_publish_captures_asset_clear_and_undoes_without_legacy_writer(connected):
+    client, generated, _ = connected
+    generated.bundles['r0'] = bundle_from_document(media_document())
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    tl = Checkout.attach(open_session(connected))
+    original = copy.deepcopy(tl.clip('parent/clip:clip-a').data)
+
+    clip = tl.clip('parent/clip:clip-a')
+    clip.clear_asset()
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.set'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == {'values': {}, 'clear': ['asset']}
+    assert 'asset' not in clip.data
+
+    accepted = tl.publish('Clear the source', idempotency_key='owned-asset-clear')
+    assert json.loads(generated.calls[-1][0])['commands'] == [command]
+    loaded = Checkout.attach(open_session(connected))
+    assert 'asset' not in loaded.clip('parent/clip:clip-a').data
+    loaded.undo([accepted['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:clip-a').data == original
+    assert client.reads
+
+
 def test_parent_publish_captures_transition_clear_and_undoes_without_legacy_writer(connected):
     client, generated, _ = connected
     generated.bundles['r0'] = bundle_from_document(

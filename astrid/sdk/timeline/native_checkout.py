@@ -48,7 +48,8 @@ def _publishable_parent_command(command):
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
             and ((args.get('clear') == [] and isinstance(values, dict)
                   and set(values) == {'hold'} and values['hold'] is not None)
-                 or (args.get('values') == {} and args.get('clear') == ['transition'])))
+                 or (set(args) == {'values', 'clear'} and values == {}
+                     and args.get('clear') in (['asset'], ['transition']))))
 
 
 class AttachedCheckout(Checkout):
