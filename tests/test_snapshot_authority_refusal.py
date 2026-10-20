@@ -17,7 +17,10 @@ from runtime_protocol.errors import ConflictError, NotFoundError, ValidationErro
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.snapshot_refs import snapshot_bytes, snapshot_digest
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from runtime_protocol.util import canonical_json
+from test_timeline_commit_acceptance import validate_prepared
+from test_timeline_native_inspection import _publish
 
 CAPABILITY = "rendering.timeline_visualize"
 CAPABILITY_DIGEST = "sha256:" + hashlib.sha256(CAPABILITY.encode()).hexdigest()
@@ -44,6 +47,8 @@ def capture(tmp_path):
     try:
         project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
         service.create_timeline(project, "main", idempotency_key="timeline")
+        TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
+            project, "main", authorize=lambda: None)
         service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
         service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
         template = Path(__file__).with_name("fixtures") / "capture_authority.json"
@@ -73,7 +78,7 @@ def capture(tmp_path):
                 return deepcopy(projection)
 
         service.register_timeline_commit_provider(FrozenProjectionProvider())
-        service.publish_parent_composition(project, "main", publication, idempotency_key="source")
+        _publish(service, project, publication, idempotency_key="source")
         parent = service.get_project_parent_composition_revision(project, "main", "parent-1")
         shot = service.get_project_shot_revision(project, "shot-shared", "shot-rev-1")
         internal = service.get_project_timeline_revision(project, "main", "internal-1")
@@ -297,7 +302,7 @@ def test_exact_saved_capture_passes_without_canonical_writes(capture, inline, ad
         child = newer["internal_timeline_revisions"][0]
         child["revision_id"] = "internal-2"
         child["payload"]["opaque_new_head"] = True
-        service.publish_parent_composition(project, "main", newer, idempotency_key="new-head")
+        _publish(service, project, newer, idempotency_key="new-head")
         assert service.get_project_timeline(project, "main")["head_revision_id"] == "parent-2"
     before = _state(service)
     ref = _admit_and_claim(capture, request)

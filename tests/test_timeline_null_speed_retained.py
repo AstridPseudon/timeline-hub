@@ -14,12 +14,12 @@ import pytest
 
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import ConflictError, ValidationError
+from runtime_protocol.errors import RetiredRouteError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.util import canonical_json
 from test_timeline_commit_port import PreparedProvider
-from test_timeline_native_inspection import _clip, _parent_clip, _project_speed, _publication, _service
+from test_timeline_native_inspection import _clip, _parent_clip, _project_speed, _publication, _publish, _service
 
 
 def _cas_bytes(service):
@@ -44,7 +44,7 @@ def _trusted_setup(tmp_path, speed):
                 (publication["internal_timeline_revisions"][0]["payload"], _clip("child"))):
             payload["clips"] = [{**clip, "asset": "picture", "extension": {"keep": [None, True]}}]
             payload["registry"] = {"assets": {"picture": {"object_id": media, "type": "video"}}}
-        service.publish_parent_composition(project, "main", publication, idempotency_key="valid-public-seed")
+        _publish(service, project, publication, idempotency_key="valid-public-seed")
         prepared_values = []
 
         def prepare(context, port):
@@ -204,7 +204,7 @@ def test_legacy_visual_publisher_cannot_seed_retained_speed_shapes(tmp_path, sco
         else:
             publication["internal_timeline_revisions"][0]["payload"]["clips"][0]["speed"] = speed
         before, cas = tuple(service.store.conn.iterdump()), _cas_bytes(service)
-        with pytest.raises((ValidationError, ConflictError), match="speed"):
+        with pytest.raises(RetiredRouteError):
             service.publish_parent_composition(project, "main", publication, idempotency_key="public-speed-refusal")
         assert tuple(service.store.conn.iterdump()) == before
         assert _cas_bytes(service) == cas

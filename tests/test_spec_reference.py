@@ -295,23 +295,20 @@ def test_expired_parent_publish_body_keeps_bounded_receipt_facts(tmp_path):
 
 def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
     from datetime import datetime, timedelta, timezone
+    from precut_realm_fixture import readonly_tree_digest
+    from restore_history_fixture import load_restore_history_fixture
+    from runtime_protocol.errors import RetiredRouteError
+    from test_shot_composition_runtime import _publication
 
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
+    captured = load_restore_history_fixture(tmp_path)
+    root = captured.root
+    project_id = captured.project_id
+    original = captured.first
+    key = original["receipt"]["idempotency_key"]
     service = RuntimeService(root)
     try:
-        project = service.create_project({"slug": "publication", "name": "Publication"}, idempotency_key="project")
-        project_id = project["id"]
-        service.create_timeline(project_id, "main", idempotency_key="timeline")
-        publication = {
-            "project_id": project_id, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "parent-1",
-            "parent_composition": {"config": {"clips": [], "tracks": []},
-                                   "registry": {"assets": {}}, "clips": [], "occurrences": []},
-            "shot_revisions": [], "internal_timeline_revisions": [],
-            "dependency_manifest": {"shots": [], "internal_timelines": [], "media": []},
-        }
-        original = service.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
+        assert service.committed_receipt("parent_composition.publish", "main", key, project_id=project_id) == original["receipt"]
+        # Deliberately age the restored test copy, leaving the capture intact.
         with service.store._transaction():
             service.store.conn.execute(
                 "UPDATE command_idempotency SET created_at=? WHERE command_kind='parent_composition.publish'",
@@ -329,10 +326,25 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
     reopened = RuntimeService(root)
     try:
         assert reopened.store.integrity_report()["ok"] is True
-        replay = reopened.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
-        assert replay["data"] == original["data"]
-        assert replay["receipt"]["result"] == original["receipt"]["result"]
-        assert reopened.committed_receipt("parent_composition.publish", "main", "publish", project_id=project_id)["result"] == original["data"]
+        stored = reopened.store.conn.execute(
+            "SELECT result_json FROM command_idempotency "
+            "WHERE command_kind='parent_composition.publish' AND aggregate_id='main' AND idempotency_key=?",
+            (key,),
+        ).fetchone()[0]
+        assert IDEMPOTENCY_RESULT_MARKER in json.loads(stored)
+        changes = reopened.store.conn.total_changes
+        before = readonly_tree_digest(root)
+        # Historical receipt lookup preserves the exact result; it is no new mutation.
+        receipt = reopened.committed_receipt("parent_composition.publish", "main", key, project_id=project_id)
+        assert receipt["result"] == original["data"]
+        assert receipt["result"] == original["receipt"]["result"]
+        assert reopened.store.conn.total_changes == changes
+        assert readonly_tree_digest(root) == before
+        with pytest.raises(RetiredRouteError) as error:
+            reopened.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key=key)
+        assert (error.value.status, error.value.code) == (410, "retired_route")
+        assert reopened.store.conn.total_changes == changes
+        assert readonly_tree_digest(root) == before
     finally:
         reopened.close()
 

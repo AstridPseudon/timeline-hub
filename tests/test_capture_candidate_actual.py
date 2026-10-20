@@ -16,7 +16,10 @@ from runtime_protocol.service import RuntimeService
 from runtime_protocol.snapshot_refs import snapshot_bytes, snapshot_digest
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from runtime_protocol.util import canonical_json
+from test_timeline_commit_acceptance import validate_prepared
+from test_timeline_native_inspection import _publish
 from tests.test_snapshot_authority_refusal import (
     CAPABILITY,
     CAPABILITY_DIGEST,
@@ -72,6 +75,8 @@ def candidate(tmp_path, astrid_importable):
     try:
         project = service.create_project({"slug": "actual-candidate", "name": "Actual candidate"})["id"]
         service.create_timeline(project, "main", idempotency_key="timeline")
+        TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
+            project, "main", authorize=lambda: None)
         service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
         service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
         # Borrow only publication data, never the frozen projection/provider.
@@ -85,7 +90,7 @@ def candidate(tmp_path, astrid_importable):
         # not have to enrich an incomplete registry after pure projection.
         asset = publication["internal_timeline_revisions"][0]["payload"]["registry"]["assets"]["picture"]
         asset["content_sha256"] = media.removeprefix("sha256:")
-        service.publish_parent_composition(project, "main", publication, idempotency_key="source")
+        _publish(service, project, publication, idempotency_key="source")
         provider = load_timeline_commit_provider("astrid")
         assert type(provider) is agent.RuntimeCommitService
         assert callable(provider.project_capture)

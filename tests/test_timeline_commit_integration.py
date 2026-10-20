@@ -14,37 +14,37 @@ import pytest
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
-from timeline_commit_film_fixture import build_film_fixture
+from runtime_protocol.timeline_commit_baseline import verify_baseline
+from precut_realm_fixture import load_precut_realm_fixture
+from timeline_commit_film_fixture import FilmFixture
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
 def film(tmp_path):
-    fixture = build_film_fixture(tmp_path)
-    # Main's neutral publication API seeds a second, independent music clip.
-    # This is fixture construction, never a production command implementation.
+    captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
+    pins = captured.pins
+    fixture = FilmFixture(
+        source_root=captured.copy_roots[0],
+        duplicate_root=captured.copy_roots[1],
+        project_id=pins["project_id"],
+        timeline_id=pins["timeline_id"],
+        parent_revision_id=pins["parent_revision_id"],
+        media_ids=pins["media_ids"],
+        transcript_document_id=pins["transcript_document_id"],
+        text_binding_id=pins["text_binding_id"],
+    )
+    # The capture contains the original two clips, opaque data and config mirror.
+    # Read its verified publication without replaying the retired writer.
     service = RuntimeService(fixture.duplicate_root)
     try:
-        original = service.get_project_parent_composition_revision(
-            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+        baseline = verify_baseline(
+            service.store.conn, fixture.project_id, fixture.timeline_id,
+            read_object=service.cas.read,
         )
-        payload = copy.deepcopy(original["payload"])
-        payload["config"]["tracks"].append({"id": "music-2", "kind": "audio"})
-        payload["clips"].append({
-            "id": "music-other", "clipType": "audio", "asset": "music-bed",
-            "track": "music-2", "at": 0, "hold": 5.5,
-            "extension": {"opaque": [None, {"keep": True}]},
-        })
-        # Exercise main's two authored parent clip spellings and compiler mirror.
-        payload["config"]["clips"] = copy.deepcopy(payload["clips"])
-        publication = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
-             "expected_head": fixture.parent_revision_id,
-             "parent_revision_id": "film-move-baseline", "parent_composition": payload},
-            idempotency_key="film-two-clip-publication",
-        )
+        receipt = baseline["entries"][-1]["receipt"]
+        publication = {"data": receipt["result"], "receipt": receipt}
         original_events = [tuple(row) for row in service.store.conn.execute(
             "SELECT * FROM timeline_events ORDER BY id",
         )]
