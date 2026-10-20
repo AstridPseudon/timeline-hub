@@ -192,16 +192,72 @@ def test_unverified_unsupported_or_too_short_media_is_refused():
         execute(vbundle, result['commands'], verified_media=short)
 
 
-@pytest.mark.parametrize('kind', ['image', 'video'])
-def test_replay_keeps_the_recorded_start_when_the_anchor_moved_or_the_shot_grew(kind):
-    _, bundle, result, verified = build(kind, anchor='clip-c')
+def replays_conflict(kind, change, **request):
+    _, bundle, result, verified = build(kind, **request)
     plan = execute(bundle, result['commands'], verified_media=verified)
     head = copy.deepcopy(bundle)
-    State(head).entity(OWNER + '/clip:clip-c')['at'] = 0.5
-    rebased = replay(plan, head, verified_media=verified)
-    assert rebased.commands == plan.commands
-    assert State(rebased.bundle).entity(CHILD)['at'] == State(plan.bundle).entity(CHILD)['at']
-    assert inverse(rebased.bundle, rebased.records).bundle == head
+    change(State(head))
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, verified_media=verified)
+    assert error.value.kind == 'dependency_changed'
+    return head, verified
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_replay_conflicts_when_the_anchor_lane_changed_and_a_rebuild_inherits_the_new_lane(kind):
+    # Was: the birth stayed on the old lane (overlay) while a fresh capture inherits picture.
+    *_, head, verified = replays_conflict(
+        kind, lambda state: state.entity(OWNER + '/clip:clip-c').update(track='picture'), anchor='clip-c')
+    rebuilt = auto_place_shared(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                                verified_media=verified, anchor='clip-c')
+    assert rebuilt['capture']['lane'] == 'picture'
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_replay_conflicts_when_the_shot_extent_grew_and_a_rebuild_appends_after_it(kind):
+    # Was: append landed at the stale extent (510 vs a fresh 540).
+    *_, head, verified = replays_conflict(
+        kind, lambda state: state.entity(OWNER + '/clip:clip-c').update(hold=9))
+    rebuilt = auto_place_shared(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                                verified_media=verified)
+    assert rebuilt['capture']['start_frame'] == SHOT_END + 30
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_replay_conflicts_when_a_clip_moved_onto_the_shifted_start_and_a_rebuild_shifts_again(kind):
+    # Was: 390 shifted to 391 at capture, another clip moved to 391, replay still created at 391.
+    def occupy(state):
+        state.entity(OWNER + '/clip:clip-a')['at'] = (CLIP_B_START + 1) * 1001 / 30000 - 8
+
+    *_, head, verified = replays_conflict(kind, occupy, frame=CLIP_B_START)
+    rebuilt = auto_place_shared(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                                verified_media=verified, frame=CLIP_B_START)
+    assert (rebuilt['capture']['skipped'], rebuilt['capture']['start_frame']) == (
+        [CLIP_B_START, CLIP_B_START + 1], CLIP_B_START + 2)
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_an_exact_retry_of_the_same_request_returns_the_same_result(kind):
+    _, bundle, result, verified = build(kind, anchor='clip-c')
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    again = auto_place_shared(bundle, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                              verified_media=verified, anchor='clip-c')
+    assert again == result
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_a_birth_cannot_appear_through_both_occurrences_after_a_retarget(kind):
+    # Was: add-media (video, and an image on an inherited lane) had no replay-time owner check.
+    for anchor in (None, 'clip-c'):
+        _, bundle, result, verified = build(kind, anchor=anchor)
+        plan = execute(bundle, result['commands'], verified_media=verified)
+        head = copy.deepcopy(bundle)
+        head['placements'][1]['shot_id'] = head['placements'][0]['shot_id']
+        with pytest.raises(CommandError) as error:
+            replay(plan, head, verified_media=verified)
+        # The recorded placement.owners selection catches the retarget before the handler re-runs.
+        assert error.value.kind == 'selection_changed'
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])

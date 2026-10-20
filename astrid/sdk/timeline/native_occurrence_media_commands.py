@@ -39,6 +39,21 @@ def _owner(ctx, ref, *, child=False):
     return owner, row['duration_ms'] / 1000
 
 
+def _exclusive(ctx, owner):
+    if ctx.select('placement.owners', owner) != [owner]:
+        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
+
+
+def _consume(ctx, owner, ids):
+    """Record the clip rows an automatic builder read, so a later change conflicts at replay."""
+    members = ctx.select('collection.clips', owner)
+    for clip_id in ids:
+        ref = owner + '/clip:' + clip_id
+        if ref not in members:
+            raise CommandError('consumed clip is not in the occurrence', kind='identity_conflict', ref=ref)
+        ctx.read(ref)
+
+
 def _binding(pin, kind):
     return {'media_id': pin['object_id'], 'type': kind,
             'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
@@ -113,7 +128,9 @@ def _clip(ctx, owner, row, limit, kind, verified):
 
 def add_media(ctx, command):
     owner, limit = _owner(ctx, command['select'])
+    _exclusive(ctx, owner)
     row, pin = command['args']['row'], command['args']['media']
+    _consume(ctx, owner, command['args'].get('consumed', ()))
     value, kind = _verified(ctx, pin)
     if row.get('asset') != pin['asset']:
         raise CommandError('child asset must equal the reserved selection alias')
@@ -141,12 +158,14 @@ def swap_media(ctx, command):
     ctx.write(ref, ['asset'], pin['asset'])
 
 
-def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media):
+def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, consumed=()):
     """Caller keeps the selected asset alias and allocates row.id before capture."""
     from .commands import execute
+    args = {'row': copy.deepcopy(row), 'media': copy.deepcopy(media)}
+    if consumed:
+        args['consumed'] = list(consumed)
     return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.add-media', 'version': '1',
-                             'select': owner, 'args': {'row': copy.deepcopy(row), 'media': copy.deepcopy(media)},
-                             'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
+                             'select': owner, 'args': args, 'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
 
 
 def capture_occurrence_swap_media(bundle, select, old_media, media, *, verified_media):

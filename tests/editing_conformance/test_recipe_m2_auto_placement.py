@@ -31,13 +31,15 @@ CASES = {'image-anchor': ('image', 'clip-a'), 'image-absent': ('image', 'gone'),
          'video-anchor': ('video', 'clip-a'), 'video-absent': ('video', None)}
 
 
-def build(kind, anchor, *, duration=None, wide=False):
+def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
     document, _, new, verified = inputs(kind)
     bundle = bundle_from_document(document)
     if wide:
         State(bundle).occurrence(OWNER)['duration_ms'] = 20000
+    if overlay:
+        State(bundle).config(OWNER)['tracks'].append({'id': 'overlay', 'kind': 'visual'})
     result = auto_place_completion(bundle, OWNER, 'placed', new, ownership='occurrence',
-                                   verified_media=verified, anchor=anchor, duration=duration)
+                                   verified_media=verified, anchor=anchor, duration=duration, **saved)
     return document, bundle, result, verified
 
 
@@ -166,19 +168,96 @@ def test_an_anchor_with_unusable_timing_refuses_instead_of_falling_back():
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
-def test_replay_keeps_the_recorded_start_when_the_anchor_moved_meanwhile(kind):
+def test_replay_conflicts_when_the_anchor_moved_meanwhile_and_a_rebuild_follows_it(kind):
+    # Was: replay kept the recorded start after the anchor moved (330 vs a fresh 360).
     _, bundle, result, verified = build(kind, 'clip-a')
+    assert result['capture']['consumed'] == ['clip-a']
     plan = execute(bundle, result['commands'], verified_media=verified)
     head = copy.deepcopy(bundle)
     State(head).entity(OWNER + '/clip:clip-a')['at'] = 2
-    rebased = replay(plan, head, verified_media=verified)
-    assert rebased.commands == plan.commands
-    assert State(rebased.bundle).entity(CHILD)['at'] == State(plan.bundle).entity(CHILD)['at']
-    assert inverse(rebased.bundle, rebased.records).bundle == head
-    # A new completion resolves against the moved anchor instead (global 10 s + 2 s = frame 360).
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, verified_media=verified)
+    assert error.value.kind == 'dependency_changed'
     moved = auto_place_completion(head, OWNER, 'again', verified[1]['selection'], ownership='occurrence',
                                   verified_media=verified, anchor='clip-a')
     assert moved['capture']['start_frame'] == 360
+    # An exact retry on the unchanged head is the same request and the same result.
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_replay_conflicts_when_the_lane_end_moved_meanwhile_and_a_rebuild_follows_it(kind):
+    # Was: replay landed at the stale lane end (450 vs a fresh 480).
+    _, bundle, result, verified = build(kind, None, wide=True)
+    assert result['capture']['start_frame'] == LANE_END_FRAME
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    head = copy.deepcopy(bundle)
+    State(head).entity(OWNER + '/clip:clip-b')['hold'] += 1
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, verified_media=verified)
+    assert error.value.kind == 'dependency_changed'
+    rebuilt = auto_place_completion(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                                    verified_media=verified)
+    assert rebuilt['capture']['start_frame'] > LANE_END_FRAME
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_a_clip_moving_onto_the_lane_conflicts_with_the_recorded_lane_end(kind):
+    _, bundle, result, verified = build(kind, None, wide=True, overlay=True)
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    head = copy.deepcopy(bundle)
+    State(head).entity(OWNER + '/clip:clip-a')['track'] = 'overlay'
+    with pytest.raises(CommandError):
+        replay(plan, head, verified_media=verified)
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_the_saved_fallback_time_and_track_win_and_stay_fixed_when_siblings_move(kind):
+    _, bundle, result, verified = build(kind, 'gone', wide=True, overlay=True, fallback_at=22.25,
+                                        fallback_track='overlay')
+    capture = result['capture']
+    assert (capture['resolution'], capture['lane'], capture['consumed']) == ('fallback-at', 'overlay', [])
+    assert capture['start_frame'] == round(22.25 * 30000 / 1001)
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    child = State(plan.bundle).entity(CHILD)
+    assert (child['track'], child['hold']) == ('overlay', 5)
+    assert child['at'] == pytest.approx(capture['start_frame'] * 1001 / 30000 - 8)
+    # Nothing was consumed from the lane, so a sibling moving does not change the approved intent.
+    head = copy.deepcopy(bundle)
+    State(head).entity(OWNER + '/clip:clip-b')['hold'] += 1
+    assert State(replay(plan, head, verified_media=verified).bundle).entity(CHILD)['at'] == child['at']
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_the_saved_preferred_track_wins_with_a_present_anchor(kind):
+    _, bundle, result, verified = build(kind, 'clip-a', overlay=True, preferred_track='overlay',
+                                        fallback_at=22.25, fallback_track='picture')
+    assert (result['capture']['resolution'], result['capture']['start_frame']) == ('anchor-after', ANCHOR_FRAME)
+    child = State(execute(bundle, result['commands'], verified_media=verified).bundle).entity(CHILD)
+    assert child['track'] == 'overlay'
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_a_deleted_saved_track_refuses_instead_of_recomputing_another_lane(kind):
+    for anchor, saved in [('clip-a', {'preferred_track': 'gone-lane'}),
+                          ('gone', {'fallback_track': 'gone-lane', 'fallback_at': 22.25})]:
+        with pytest.raises(CommandError) as error:
+            build(kind, anchor, wide=True, **saved)
+        assert error.value.kind == 'dependency_changed'
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_a_birth_cannot_appear_through_both_occurrences_after_a_retarget(kind):
+    # Was: add-media (every video, and an image off the home lane) had no replay-time owner check.
+    for saved in ({}, {'preferred_track': 'overlay'}):
+        _, bundle, result, verified = build(kind, 'clip-a', overlay=True, **saved)
+        plan = execute(bundle, result['commands'], verified_media=verified)
+        head = copy.deepcopy(bundle)
+        head['placements'][1]['shot_id'] = head['placements'][0]['shot_id']
+        with pytest.raises(CommandError) as error:
+            replay(plan, head, verified_media=verified)
+        # The recorded placement.owners selection catches the retarget before the handler re-runs.
+        assert error.value.kind == 'selection_changed'
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
