@@ -4,8 +4,8 @@ You're testing the path a new person takes: one line installs Astrid on this com
 https://astrid.haus connects to it. Work through the journeys below in order; together they take 30–45 minutes per
 OS. When a step fails, write down what you did and what you saw (the exact words, or a screenshot), and attach a
 doctor bundle (see [Reporting](#reporting)). The bundle is a small zip with Astrid's status, its versions and the
-last part of its installer logs. Passwords, tokens, keys, credentials, home paths and user names are redacted. Chat
-and service logs are excluded from the bundle.
+last part of its installer and Runtime logs. Passwords, tokens, keys, credentials, home paths and user names are redacted.
+Chat and other service logs (`service-*.log`) are excluded from the bundle.
 
 ## Before you start
 
@@ -21,6 +21,7 @@ and service logs are excluded from the bundle.
 | Program files | `~/.local/share/astrid` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` | `%LOCALAPPDATA%\Astrid` |
 | Your workspace (projects, media) | `~/Library/Application Support/Astrid Runtime` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid-runtime` | `%LOCALAPPDATA%\Astrid Runtime` |
 | Installer log | `~/Library/Logs/Astrid Runtime/install.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/install.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\install.log` |
+| Runtime log | `~/Library/Logs/Astrid Runtime/runtime.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/runtime.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\runtime.log` |
 | Runtime service log | `~/Library/Logs/Astrid Runtime/runtime-service.log` | `${XDG_STATE_HOME:-$HOME/.local/state}/astrid-runtime/logs/runtime-service.log` | `%LOCALAPPDATA%\Astrid Runtime\logs\runtime-service.log` |
 | What keeps Astrid running | LaunchAgent `haus.astrid.runtime` | systemd user unit `astrid.service` | Task Scheduler task `Astrid Runtime` |
 | Optional service settings | `~/.local/share/astrid/service-env.json` | `${XDG_DATA_HOME:-$HOME/.local/share}/astrid/service-env.json` | `%LOCALAPPDATA%\Astrid\service-env.json` |
@@ -237,9 +238,7 @@ Good: `State` is `Running`.
   (for example npm, Homebrew or the official installer).
 - The chat panel says `Chat isn't running on this computer right now.` while the page is connected.
 - You see a raw error, an error code or "404" anywhere in chat.
-- A known signed-in provider or available model catalog does not show **Ready**; a known signed-out provider with no
-  usable models does not show **Sign in** with its absolute launcher path and `/login` instruction; or an unknown/unavailable catalog shows
-  **Sign in** instead of remaining **Ready**.
+- An agent you're signed in to shows **Sign in**, or one you're signed out of shows **Ready**.
 
 ## 4. A GPU task, then idle
 
@@ -364,7 +363,8 @@ Record its title and a sentence you can find again.
 
    Windows qualification: Astrid must still be running when you run this line. Confirm the update succeeds while its
    service is writing `runtime-service.log`, then check that `install.log` and `runtime-service.log` both remain in
-   the log folder. The doctor bundle should include the installer log and exclude the Runtime service log.
+   the log folder. The doctor bundle should include the installer and Runtime logs, including `runtime-service.log`,
+   and exclude other service logs (`service-*.log`).
 
 2. Watch the page while it runs, and reload it if it asks.
 3. List the program versions and backups:
@@ -414,7 +414,7 @@ Note which OS line it gave you.
    the previous version, the retry succeeds, and the page still shows the same workspace and projects. Check the
    installer log for permission/DACL errors opening credentials or source profiles; none should appear.
 
-You should see `Astrid couldn't finish. Nothing in your workspace was changed or removed.` followed by a
+You should see `Astrid couldn't finish. Your work is kept.` followed by a
 `Details:` line. Astrid then runs the previous version, on the same workspace, with the same projects. It's a failure if Astrid
 isn't running afterwards, a project is missing, or the log says `recovery also failed`. If it isn't running, run the
 plain install line and report what it prints.
@@ -576,8 +576,8 @@ finished or Astrid was uninstalled), attach the install log from the table above
 
 **What the bundle holds:** `status.json` (Astrid's health check, with secrets and most paths removed), `versions.json`,
 `install-manifest.json` (version numbers, source revisions, and selected FFmpeg/FFprobe tools and provenance), and
-`logs/` (the last 256 KB of each installer log, 1 MB at most). Passwords, tokens, keys, credentials, home paths and
-user names are redacted. Chat and service logs are excluded.
+`logs/` (the last 256 KB of each installer and Runtime log, 1 MB at most). Passwords, tokens, keys, credentials, home paths and
+user names are redacted. Chat and other service logs (`service-*.log`) are excluded.
 
 ## Known gaps
 

@@ -26,8 +26,8 @@ access is needed. Without a systemd user service on Linux, run the line to get
 Astrid running again or to apply changed service settings.
 Installation ends with `Open https://astrid.haus` and opens the connection page.
 On failure, report the sentence and the `Details:` path to `install.log`. The
-login service writes its output to the neighboring `runtime-service.log`; a
-doctor bundle includes both logs.
+Runtime writes `runtime.log` and the login service writes `runtime-service.log`
+in the same log folder. A doctor bundle includes redacted tails of all three logs.
 
 The installer reuses FFmpeg and FFprobe from `PATH` when both run and FFmpeg has
 all required encoders and filters. Otherwise it downloads the pinned build.
@@ -47,8 +47,9 @@ it reattaches the existing realm. Repeating uninstall is safe, including adding
 
 Linux uses `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` for program files.
 Windows GPU environments live separately at `%LOCALAPPDATA%\Astrid GPU` and
-survive uninstall. On Windows, an installer executable may remain locked until
-the line exits; the output lists residue and gives one manual removal step.
+survive uninstall. On Windows, the line removes its installer files after the
+shared installer finishes. If another program keeps those files open, the output
+gives their path so you can remove them after closing the window.
 
 To configure the background pack host, edit `service-env.json` in the program
 directory, then run the ordinary line to restart. This JSON file supports these

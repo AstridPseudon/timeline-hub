@@ -6,7 +6,7 @@ Configure only what your work needs.
 
 The launcher creates the workspace connection credentials automatically. Keep them separate from creative-provider API keys and let the launcher manage them.
 
-For a source checkout, `config/astrid-runtime.json` selects `Astrid/.astrid-data` as the default Runtime support root; a wheel installation uses `~/.astrid-data`. An explicit `ASTRID_RUNTIME_DATA_ROOT` or launcher `--data-root` overrides this location. The support root contains the launcher catalog, credentials, and Runtime realm. See [Getting Started](../getting-started.md) for details.
+The installer keeps your workspace at `~/Library/Application Support/Astrid Runtime` on macOS, `${XDG_DATA_HOME:-$HOME/.local/share}/astrid-runtime` on Linux, or `%LOCALAPPDATA%\Astrid Runtime` on Windows. If you chose `--data-root` when installing, Astrid uses that folder instead. This support root contains connection credentials and the Runtime realm, including projects and media. See [Getting Started](../getting-started.md) for the install line.
 
 `ASTRID_RUNTIME_SOURCE_MANIFEST` selects an explicit source-profile file when needed. `ASTRID_RUNTIME_CREDENTIAL` identifies a Runtime credential file for connection paths that use that override. Normal launcher setup supplies its connection information automatically.
 

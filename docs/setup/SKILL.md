@@ -17,6 +17,9 @@ from [Getting Started](../getting-started.md):
 - macOS or Linux: `curl -fsSL https://astrid.haus/install | sh`
 - Windows PowerShell: `irm https://astrid.haus/install.ps1 | iex`
 
+For an agent using another shell on Windows (such as Git Bash), run
+`powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astrid.haus/install.ps1 | iex"`.
+
 Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Carry
 out requested checks, report their actual results, and do not claim a check
 passed when it could not be run.

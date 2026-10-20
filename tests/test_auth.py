@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from astrid.core import auth
 
 
@@ -29,6 +31,23 @@ def test_auth_system_notice_does_not_expose_key(monkeypatch, tmp_path: Path) -> 
 
     assert "logged in" in notice
     assert key not in notice
+
+
+@pytest.mark.parametrize("system", ["linux", "win32"])
+def test_missing_auth_helper_shows_quoted_installed_launcher(monkeypatch, tmp_path, system):
+    root = tmp_path / "Astrid's program files"
+    monkeypatch.setenv("ASTRID_INSTALL_PROGRAM_ROOT", str(root))
+    monkeypatch.setattr(auth.sys, "platform", system)
+    monkeypatch.setattr(auth, "_auth_cli_candidates", lambda: [])
+
+    with pytest.raises(auth.AuthCommandError) as error:
+        auth._resolve_auth_cli(provision_if_missing=False)
+
+    if system == "win32":
+        command = f"& '{str(root / 'run-astrid.cmd').replace(chr(39), chr(39) * 2)}' login"
+    else:
+        command = f"{auth.shlex.quote(str(root / 'run-astrid'))} login"
+    assert f"retry `{command}`" in str(error.value)
 
 
 def test_run_auth_forwards_to_managed_hivemind_cli(monkeypatch) -> None:
