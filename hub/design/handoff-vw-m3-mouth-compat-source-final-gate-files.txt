@@ -1,0 +1,8 @@
+Agent ref reviewed: tl/vw-m3-mouth-partial-compat-source-unit
+Agent commit reviewed: ee71010a0947edcbbacbf8178e5fee11ab6bab3d
+Changed source/direct-test files:
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+tests/packs/rendering/presenter_scene_capability.mjs
+tests/packs/rendering/test_presenter_crop_equivalence.py

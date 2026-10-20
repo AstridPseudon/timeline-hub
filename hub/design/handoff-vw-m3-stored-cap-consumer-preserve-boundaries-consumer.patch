@@ -60,7 +60,10 @@
  }
 --- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
 +++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
-@@ -2,14 +2,30 @@
+@@ -1,15 +1,35 @@
+ import { useMemo } from 'react';
++import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
++import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
  import { useOptionalVideoEditorRuntime } from '../../contexts/VideoEditorRuntimeContext.tsx';
  import { resolveCanonicalComposition } from '../../data/canonicalCompositionState.ts';
  import { projectOutputTimelineConfig } from '../../data/timelineOutputProjection.ts';
@@ -71,6 +74,8 @@
 +type PreviewCompositionResolution = ReturnType<typeof resolveCanonicalComposition> & {
 +  /** The exact config/fact pair selected for delivery, including its private copy. */
 +  pairedConfig: ResolvedTimelineConfig | null;
++  /** One compiled vector shared by Player, client render, and panel stills. */
++  compiledTransitions?: CompiledCanonicalTransitions;
 +};
 +
 +function hasStoredOccurrenceCap(config: ResolvedTimelineConfig): boolean {
@@ -92,20 +97,23 @@
    const runtime = useOptionalVideoEditorRuntime();
    const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
    const composition = runtime?.userId === null
-@@ -26,9 +42,10 @@
+@@ -26,9 +46,12 @@
      baseConfig: resolvedConfig,
    }), [hasShotClips, composition, compositionErrorDependency, resolvedConfig,
      runtime?.shots?.shotComposition, runtime?.userId]);
 -  const projectedConfig = timelineData?.editProjection ? timelineData.resolvedConfig : null;
+-  return useMemo(() => {
+-    if (!projectedConfig) return canonical;
 +  const projectionFact = timelineData?.editProjection;
 +  const projectedConfig = projectionFact ? timelineData.resolvedConfig : null;
-   return useMemo(() => {
--    if (!projectedConfig) return canonical;
-+    if (!projectedConfig) return { ...canonical, pairedConfig: null };
++  const resolution = useMemo(() => {
++    if (!projectionFact || !projectedConfig) {
++      return { ...canonical, pairedConfig: null };
++    }
      // Command acceptance already flattens the returned pinned closure. Shot
      // shells would load unrelated latest children; they cannot carry its fact.
      const output = projectOutputTimelineConfig(projectedConfig).config;
-@@ -36,13 +53,25 @@
+@@ -36,13 +59,28 @@
        && (!(clip.asset || clip.clipType === 'media') || Boolean(clip.assetEntry?.src)));
      // The command producer pairs this config with its canonical projection
      // fact, independently of whether an older shot graph has loaded.
@@ -132,11 +140,24 @@
      };
 -  }, [canonical, projectedConfig]);
 +  }, [canonical, projectionFact, projectedConfig]);
++  const compiledTransitions = useMemo(() => resolution.source === 'canonical' && resolution.config
++    ? compilePlayerTransitions(resolution.config) : undefined, [resolution.config, resolution.source]);
++  return useMemo(() => ({ ...resolution, compiledTransitions }), [compiledTransitions, resolution]);
  }
 --- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
 +++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
-@@ -42,7 +42,7 @@
-     ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
+@@ -1,4 +1,3 @@
+-import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
+ import type { ReactPortal } from 'react';
+ import { createPortal } from 'react-dom';
+ import {
+@@ -38,11 +37,10 @@
+   const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
+   const previewConfig = compositionResolution.config;
+   const previewSource = compositionResolution.source;
+-  const compiledTransitions = useMemo(() => previewSource === 'canonical' && previewConfig
+-    ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
++  const compiledTransitions = compositionResolution.compiledTransitions;
    const previewRevision = useMemo<PreviewRevision>(() => {
      const fact = timelineData?.editProjection;
 -    const paired = fact && previewConfig === timelineData.resolvedConfig;
@@ -144,7 +165,7 @@
      const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
      const unavailableTarget = fact && !paired
        ? {
-@@ -105,7 +105,7 @@
+@@ -105,7 +103,7 @@
      return unavailableTarget
        ? { kind: 'unavailable', unavailableTarget }
        : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
@@ -155,13 +176,7 @@
    const {
 --- a/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
 +++ b/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
-@@ -1,4 +1,5 @@
- import { memo, useMemo, useRef } from 'react';
-+import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
- import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
- import {
-   useTimelineEditorData,
-@@ -15,6 +16,8 @@
+@@ -15,6 +15,8 @@
  import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
  import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
  import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
@@ -170,14 +185,13 @@
  import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
  import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';
  import { useVideoEditorPreviewComposition } from '../PreviewPanel/useVideoEditorPreviewComposition.ts';
-@@ -37,7 +40,14 @@
+@@ -37,7 +39,13 @@
    const store = useTimelineStoreApiSafe();
    const view = runtime?.timelineViewStore;
    const { data, preferences, resolvedConfig } = useTimelineEditorData();
 -  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
 +  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig, data);
-+  const compiledTransitions = useMemo(() => previewComposition.source === 'canonical' && previewComposition.config
-+    ? compilePlayerTransitions(previewComposition.config) : undefined, [previewComposition.config, previewComposition.source]);
++  const compiledTransitions = previewComposition.compiledTransitions;
 +  const boundedDurationInFrames = useMemo(() => {
 +    if (!previewComposition.config) return undefined;
 +    const output = projectOutputTimelineConfig(previewComposition.config).config;
@@ -186,7 +200,7 @@
    const framePreview = usePanelFramePreview();
    const surfaceRef = useRef<HTMLDivElement>(null);
    const latestRuntime = useRef(runtime);
-@@ -103,7 +113,15 @@
+@@ -103,7 +111,15 @@
      <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
        {builtInPanel}
        <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
@@ -256,13 +270,14 @@
      setRenderDirty,
 --- a/src/tools/video-editor/hooks/useRenderState.ts
 +++ b/src/tools/video-editor/hooks/useRenderState.ts
-@@ -1,5 +1,6 @@
+@@ -1,6 +1,7 @@
  import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
  import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
-+import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
  import { isLocalTestMode } from '@/app/localTestRuntime.ts';
++import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
  import { useClientRender } from '@/tools/video-editor/hooks/useClientRender.ts';
  import type { CompositionMetadata } from '@/tools/video-editor/hooks/useDerivedTimeline.ts';
+ import type { VideoEditorExporter } from '@/tools/video-editor/lib/browser-runtime.ts';
 @@ -32,6 +33,9 @@
  import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
  import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';

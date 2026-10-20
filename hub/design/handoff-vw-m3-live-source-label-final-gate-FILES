@@ -1,0 +1,11 @@
+Review-only worker; no Composition worktree files changed.
+
+Exact Agent target diff inspected:
+astrid/packs/rendering/actions/timeline_visualize/provenance.py
+tests/packs/rendering/test_fast_lane.py
+tests/packs/rendering/test_live_source_label_native.py
+tests/packs/rendering/test_timeline_filmstrip_cards.py
+tests/packs/rendering/test_timeline_filmstrip_execution.py
+
+Preserved blocker inspected:
+tests/packs/rendering/test_scene_source_carry.py
