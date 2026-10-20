@@ -45,13 +45,16 @@ def _exclusive(ctx, owner):
 
 
 def _consume(ctx, owner, ids):
-    """Record the clip rows an automatic builder read, so a later change conflicts at replay."""
+    """Guard automatic placement's timing and lane inputs, including absent fields."""
     members = ctx.select('collection.clips', owner)
     for clip_id in ids:
         ref = owner + '/clip:' + clip_id
         if ref not in members:
             raise CommandError('consumed clip is not in the occurrence', kind='identity_conflict', ref=ref)
-        ctx.read(ref)
+        # _end_frame supplies at/at_ms to duration.py, which validates speed
+        # and uses numeric hold before from/to. Track selects/inherits the lane.
+        for field in ('at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed'):
+            ctx.read(ref, [field])
 
 
 def _binding(pin, kind):
