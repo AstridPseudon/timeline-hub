@@ -2871,7 +2871,13 @@ def _kernel_invoke(
         isinstance(snapshot_context.get(key), Mapping)
         for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
     )
-    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot:
+    # Capture admission must validate the candidate and every duplicate before
+    # Runtime publishes anything. Leave its inline snapshot for that publisher.
+    capture_snapshot = snapshot_context.get("capture_snapshot")
+    capture_authority = capture_snapshot.get("metadata", {}).get("capture_authority", {}) if isinstance(capture_snapshot, Mapping) else {}
+    runtime_capture = (str(capability.id) == "rendering.timeline_visualize"
+                       and bool(capture_authority.get("parent_revision_id")))
+    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot and not runtime_capture:
         remote = getattr(_client, "_remote", _client)
         transport = getattr(remote, "_transport", remote)
         ingest = getattr(transport, "ingest_project_object", None)
@@ -4241,6 +4247,13 @@ def invoke(
     # a project tree or materialize a render snapshot.
     if not dry_run:
         if capability.id == "rendering.timeline_visualize":
+            inputs = dict(inputs or {})
+            preview = inputs.get("authoring_preview")
+            if preview is not None:
+                if not isinstance(preview, Mapping):
+                    raise CapabilityValidationError("authoring_preview must be a frozen candidate artifact")
+                # Keep the authored task data identical to what preflight projects.
+                inputs["authoring_preview"] = _json_safe_mapping(preview)
             invocation_authority_context = _validate_timeline_visualize_inputs(
                 inputs,
                 project=project,
@@ -4284,17 +4297,16 @@ def invoke(
                 # and the admission receipt. Store the authority and the
                 # snapshot's timeline and registry as managed objects instead;
                 # the host materializes them as the executor's input files.
-                # A canonical capture must reach the existing snapshot-ref
-                # publisher below. Objectifying its authority first discards
-                # the revision/working-copy binding before Runtime admission.
+                # Runtime must see a canonical capture before publishing it;
+                # objectifying authority first hides its binding from admission.
                 capture_authority = authority_snapshot.get("metadata", {}).get("capture_authority", {})
-                canonical_capture = (invocation_authority_context.get("mode") == "composed_capture"
+                canonical_capture = (isinstance(invocation_authority_context.get("capture_snapshot"), Mapping)
                                      and bool(capture_authority.get("parent_revision_id")))
                 stored = None if canonical_capture else _store_visualize_objects(
                     _client, project, authority_json, authority_snapshot,
                 )
                 if stored is None:
-                    inputs["filmstrip_authority"] = authority_json  # kernel publishes canonical snapshot refs
+                    inputs["filmstrip_authority"] = authority_json  # admission publishes snapshot refs
                 else:
                     inputs.update(stored)
                     invocation_authority_context = {
