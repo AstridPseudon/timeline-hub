@@ -679,3 +679,13 @@ M2 exit = all App writers on EditCommands (PLAN M2) plus their deletion-ledger r
 Existing films must look the same. On main, custom-effect clips skip the VisualClip fade wrapper, so the unified renderer keeps that as ONE explicit composition rule: the custom-effect dispatch owns its outer opacity, and the clip-look fade does not wrap it. No pair or shape heuristic, no new authored field, no legacy rewrite. Do NOT accept the DIP golden and do NOT merge 76020 or its descendants. The original COVERED requirement stays.
 Proof needed before merging the renderer fix: real MAIN pixels or a MAIN public scene of that exact film, rendered from an actual main checkout build (main's own Root, generator and components; no component swapping). The 403 on the npm archive doesn't block this: build from source at main a411 instead. Then the native/public renderer must match it.
 Owners: Viewing for the proof and goldens, Agent for the composition rule in the compiler and renderer, App for consuming it. M3/gate 6.
+
+## 03:59Z — orchestrator: REVISED DECISION, custom-clip fades (supersedes my note of a few minutes ago; PLAN updated)
+New evidence, verified: the owner released Composition v0.0.7 (6bd784d, 2026-10-10), "clip look (opacity, crop, fades, entrance/exit) on element clips; per-boundary transitions (dissolve vs dip ...)". Main never adopted it.
+So element/custom-effect clips GET the clip-look wrapper. That is an INTENDED, documented change from main's 0.0.6, not lost behaviour, and the independent-fades DIP 16-30 golden is APPROVED as intended.
+Conditions:
+(1) The proof names the difference exactly: a MAIN replay rebuilt from tag v0.0.6 (git archive reproduces main's locked sha512, so no npm needed) against the unified result. The only differences allowed are the intended clip-look ones; real pixels are needed, not just SSR markup.
+(2) Keep the named incoming-crossfade COVERED positive.
+(3) Viewing scans the owner's films for overlapping element clips that use fades, opacity or entrance/exit, and lists them for the hard-stop film viewing.
+(4) No pair or shape heuristic and no legacy rewrite.
+76020 and its descendants may merge once (1) and (2) pass, through the normal gated review.
