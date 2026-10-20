@@ -1568,55 +1568,6 @@ def approve_authoring_candidate(
     }
 
 
-def promote_approved_authoring_candidate(
-    candidate: Mapping[str, Any],
-    approval: Mapping[str, Any],
-    writer: AuthoringCandidateWriter,
-    *,
-    idempotency_key: str,
-) -> dict[str, Any]:
-    """Promote exactly the candidate represented by an approval artifact."""
-
-    if not isinstance(idempotency_key, str) or not idempotency_key:
-        raise AuthoringBundleError("idempotency_key must be a non-empty string")
-    approval_value = _mapping(approval, "approval")
-    if approval_value.get("kind") != "authoring-candidate-approval":
-        raise AuthoringBundleError("approval.kind is invalid")
-    if approval_value.get("schema_version") != AUTHORING_BUNDLE_SCHEMA_VERSION:
-        raise AuthoringBundleError("approval.schema_version is invalid")
-    if approval_value.get("decision") != "approved":
-        raise AuthoringBundleError("candidate is not approved")
-    compilation = compile_authoring_candidate(candidate)
-    root = _mapping(candidate, "candidate")
-    base_parent = _mapping(root.get("base_parent"), "candidate.base_parent")
-    expected = {
-        "project_id": root["project_id"],
-        "timeline_id": root["timeline_id"],
-        "candidate_digest": compilation.candidate_digest,
-        "publication_digest": _digest(compilation.publication),
-        "base_parent": dict(base_parent),
-    }
-    for field, value in expected.items():
-        if approval_value.get(field) != value:
-            raise AuthoringBundleError(
-                f"approval is stale or does not match candidate: {field}"
-            )
-    publication = compilation.publication
-    result = writer.publish_parent_composition(
-        publication["project_id"],
-        publication["timeline_id"],
-        _copy(dict(publication)),
-        idempotency_key=idempotency_key,
-    )
-    return {
-        "approval": _copy(dict(approval_value)),
-        "candidate_digest": compilation.candidate_digest,
-        "identity_mapping": _copy(dict(compilation.identity_mapping)),
-        "changed_identities": _copy(list(compilation.changed_identities)),
-        "publication": result,
-    }
-
-
 def publish_authoring_candidate(
     candidate: Mapping[str, Any],
     writer: AuthoringCandidateWriter,
@@ -1670,7 +1621,6 @@ __all__ = [
     "inspect_authoring_candidate",
     "open_authoring_bundle",
     "publish_authoring_candidate",
-    "promote_approved_authoring_candidate",
     "preview_authoring_candidate",
     "validate_authoring_candidate",
 ]
