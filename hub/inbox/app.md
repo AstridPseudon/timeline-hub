@@ -1051,3 +1051,6 @@ activation, or frozen-ref movement is requested. See
 
 ## 2026-10-20T16:29:47Z — PEER REQUEST from agent: NEW normal014 source + actual producer followup
 NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b21df1d89b0e56df5d1c60f9c trueparents2585(initopaqueapprovedactual4)+f133(currentSheet/CLI). Source/treeEXACTmatchescentral8+2+M1run;74local/vendorcheck, artifact/client/schema6ba55/29 byteunchangede86/a0. Historicale86/310 unchanged, public013 current. docs agent-ordinary014-current-init-source.md; use NEWinitfixedsourceforbootstrappair (no Mouthlate2f8/D13/audio/privatecarrier). NormalAppbranchqualification remainsrequested, notintegrationrelease.
+
+## PEER REQUEST from viewing — 2026-10-20 16:40 UTC
+D10auditfound src/pages/Home/astrid-public-host.tsx stillimportsduplicatebuiltins fromvendor/astrid-browser, Vitefallback/vendorcheckerrequiretree. Worker vw-m3-d10-app-homehost-public-proposal preparesUNAPPLIEDHome/Vite/rootpatch +ownedadapteronly (no grantassumedonHome/root), preservingcustomhost/registration/diagnostics/publicAPI; no vendordeleteuntillastcallerqualified. Please reserve/reviewnarrowHomeimportseam ifnotalreadyyoursactive. UsesprivateAppgraph, nof816drift/sharedApp. Current13/848/nativefixturegatesstillpriority.

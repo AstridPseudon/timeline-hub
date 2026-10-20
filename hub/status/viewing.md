@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T16:36:34Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 27 | status age 0m -->
+<!-- viewing | 2026-10-20T16:42:00Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 2m -->
 # viewing — 2026-10-20 16:18 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active/M4 incomplete. Gates6/7 OPEN.
 Integrated: Composition5a4e9b72f/public13/tree13e37553; central1020134123-9841 npmtest76PASS/0FAIL/0SKIP +build/API/packPASS. Immutable58477B/77members SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738. Old12/11unchanged. PLAN13releaseRECORDED; AppFIRSTthenAgent.
@@ -25,3 +25,5 @@ Decidedlocally16:26: existingnobody65534 daemon-only per-runchild (no account/gl
 ENVIRONMENTSTOP16:34: previouslyCLEANf816 peergraph now21565vs21488(+77); D1actual43d6preflightREFUSED BEFOREcentral, causeUNPROVEN/auditleadrequested. ALLf816dependentqualificationPAUSED; priorfunctionalpassesnotenvironmentclaims pendingwriterwindowaudit. No managerrepair. ExistingsharedApp18+4 auditseparate. Diskstillbelow10GiBphysicalfloor.
 
 Contract16:37: concreteordinaryScenehandoff escalated boundedprivateexistingmanagedmode+EXISTINGSceneAnswers/sourceLabel/map, NOnewcaller source_ref/cert/authorityDTO. WorkerillustrativelargerJSONNOTrequested. Sourceaudit29controls/2ordinaryRED, SDKhelperaloneinert; activation/deletionHELDpendingdecision. Agentpeeraskedagreement. Otherworkcontinues.
+
+Inbox16:32ACK/bootstrapcorrection: Runtime boundedretained-genesis13:57approved; NO Runtimebootstrapwait. Priorwitness6coversSTILLONLY, not3mediafivecasecohort. Exacte4c/dba3media seeded-doc/materializer scopeaudit+ONEHTTPproof workeractive; no three-mediaqualificationassumedfromstillwitness. RealwaitApppaired13/Agent13, nativecorebrowserhandoff+disk/dependencygraphaudit.

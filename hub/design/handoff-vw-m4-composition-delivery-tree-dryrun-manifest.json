@@ -1,0 +1,60 @@
+{
+  "artifact": "handoff-vw-m4-composition-delivery-tree-dryrun",
+  "repo": "composition",
+  "scope": "M4 limited composition delivery mechanics",
+  "foundation_or_zip_claim": false,
+  "observed_refs": {
+    "main_ref": "origin/main",
+    "main_commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+    "main_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+    "target_ref": "tl/integration",
+    "target_commit": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "target_tree": "13e375534fffd704305eced5686699d2c8c9c948",
+    "network_fetch": false,
+    "latest_main_claim": false
+  },
+  "patch": {
+    "file": "handoff-vw-m4-composition-delivery-tree-dryrun-composition.patch",
+    "kind": "single linearized git diff",
+    "options": ["--binary", "--full-index", "--no-ext-diff", "--no-renames"],
+    "not_format_patch_series": true,
+    "bytes": 463276,
+    "sha256": "ffcde5f77a2b10fc34a101e838c8ef24cf2ac2cb106089c3b5d8a8061cb39206",
+    "changed_paths": 109,
+    "added_lines": 7674,
+    "deleted_lines": 773
+  },
+  "fresh_archive_proof": {
+    "source_archive": "git archive origin/main",
+    "archive_location": "private worker staging outside product repository",
+    "fresh_archives_checked": 2,
+    "git_apply_check": "PASS on both fresh archives",
+    "git_apply": "PASS on both fresh archives",
+    "exact_manifest_comparison": "PASS on both applied archives",
+    "source_main_manifest_sha256": "21668dd5ff0e7b5f46f7fd8af5d934cd6f0ef81af258cd1b3eea7ef752e0144e",
+    "target_manifest_sha256": "919b30bc07bc5f7cf2329b28760d7945db6d376a5d330b160c0981ff42f6ca9b",
+    "tracked_files": 113,
+    "modes": {"100644": 113},
+    "executable_files": 0,
+    "symlinks": 0,
+    "blob_ids_and_bytes_equal": true
+  },
+  "bundle": {
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-composition-delivery-tree-dryrun/handoff-vw-m4-composition-delivery-tree-dryrun-composition.bundle",
+    "ref": "tl/integration",
+    "head": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "bytes": 239217,
+    "sha256": "f0395412890441d45956abcb1a4eb41caef0c250ffe1da9c214c28797d2f4461",
+    "verify": "PASS: complete history; exact tl/integration head"
+  },
+  "product_tests": {
+    "run": false,
+    "reason": "delivery-only task; prior exact-tree build/full evidence was not rerun",
+    "browser_npm_build_full_suite": "NOT RUN"
+  },
+  "worktree": {
+    "clean": true,
+    "git_mutation": false,
+    "shared_install_write": false
+  }
+}
