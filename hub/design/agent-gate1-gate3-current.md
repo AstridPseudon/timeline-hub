@@ -359,6 +359,26 @@ report but also the `platform.durable_replace` Runtime dependency and an
 unqualified Gate3; the candidate is not on current Agent integration, so no
 replay or Gate claim was added.
 
+At 2026-10-20T23:12:36Z Agent advanced to `d6608545b` with the root-build
+write-guard rendering helper and staging tests. This is rendering test/support
+code only and does not alter the timeline commit provider, save path, or the
+current Gate3 nodes, so no replay was needed. Current heads: Agent
+`d6608545b`, Runtime `9d1c43c`, App `a12b19be5`, Composition `e7ef7a0`.
+
+At 2026-10-20T23:13:13Z Agent advanced to `2c34cb967` with a test-only
+Gate5 media-import fixture (11 central `commit-integration` passes; no Agent
+product/API/schema change). App advanced to `812a609ee` with clip-scalar
+transition capture/gesture tests. The Agent fixture is outside Gate1/Gate3,
+and the App producer change has no Agent-side node dependency in this watch;
+no Gate1/Gate3 replay was needed. Current heads: Agent `2c34cb967`, Runtime
+`9d1c43c`, App `812a609ee`, Composition `e7ef7a0`.
+
+The independent review for the pending parent `afterClipId` source candidate
+returned **APPROVE** with the existing carrier/schema preserved, but App2 and
+Runtime qualification remain open and the candidate is not merged. The scene
+proof clean-land report likewise remains a candidate with a missing exact
+control lane; neither changed current Agent integration or warranted replay.
+
 The `agt-m2-upstream497-current-merge` worker reported a pending upstream
 merge candidate with 92 Gate1 tests passing and a broader conformance run
 blocked by an incompatible shared Runtime checkout. It has not changed Agent
@@ -406,3 +426,29 @@ its worker report has 47 local and 2 central HTTP passes, but it is not merged
 into Agent integration, so no replay is claimed yet. The concurrent root-build
 write-guard report is rendering-test-only and likewise has no Gate1/Gate3
 Agent replay impact.
+
+## Incremental watch: attached parent clear-asset merge
+
+Date: 2026-10-20T23:15:43Z
+
+Agent integration advanced to `340a2d487`, adding attached-parent
+`Clip.clear_asset()` publication through the existing `clip.set` carrier and
+durable retry/undo path. This is a relevant semantic adapter change.
+
+The first generic `targeted` request for the exact node collected zero tests
+(exit 5) because that command does not apply the integration marker. It was a
+selection/lane mismatch, not a product failure. The same node was then run
+through the existing integration-marked named suite on the actual integration
+branch:
+
+- Suite: `current-owned-parent-delete-http`, invoked as `integration:agent`
+  with the clear-asset node file override
+- Run: `agent-current-owned-parent-delete-http-1020231514-26683`
+- Agent source tree: `52239ff7c1c5d45ee0705aecdf5df1c35e765bf2`
+- Result: **2 passed in 7.68s**, exit 0
+- Nodes: existing parent-delete control and
+  `tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo`
+
+Live heads at this replay: Agent `340a2d487`, Runtime `9d1c43c`, App
+`812a609ee`, Composition `e7ef7a0`. No full/full* suite or unrelated node was
+run.

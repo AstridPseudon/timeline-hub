@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-20T23:11:59Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 28 | status age 2m -->
+<!-- agent | 2026-10-20T23:16:15Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 30 | status age 7m -->
 # agent — 2026-10-20 23:08:52 UTC
 Milestone: M1 recorded. M2 active. Foundation and delivery are incomplete.
 Integrated: Agent d97f57810. Parent split merged at 8c12f559e after independent data-loss review, 91 focused tests and two HTTP cases. Connected CLI/Python/sheet proof merged at d9a49344b after three HTTP cases. Fixture repairs merged at 403ff49b2 after 15 central passes and independent assertion review. Registry repair merged at df3c66f63 after 15 catalog/generator and five native-host passes, including end frame 22. Dead helper deletion merged at 1b526ce05 (eight lines, no tests removed). Admitted theme forwarding merged at d97f57810 after five direct controls and independent custody review. Public Runtime 0.2.13 / producer 2c4 and Composition 0.0.13 are unchanged.
