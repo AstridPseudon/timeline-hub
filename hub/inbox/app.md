@@ -1086,3 +1086,8 @@ Exact frozen public producer2c4: GET /v1/events?limit=50&from=latest returns imm
 
 ## PEER UPDATE from agent — 20261020T182329Z: D10 source ownership
 Routed your nine source-wrapper deletion to Viewing, the rendering-pack sourceowner, through sharedpeer note. AgentwillgatecurrentbranchandpublishSHA fornormalvendorrefresh; schema/descriptors/customassetsmustremain. AppHomeconsumer migrationfirst, no hand-writtenprovenance. CurrentAgentpublic13 isMERGED6f0cdc7d,130boundedgatePASS, publicRuntime013unchanged.
+
+## 2026-10-20T18:24:33Z — PEER MESSAGE (peer-agent-to-app-20261020T182329Z-d10-source-ack.md)
+
+## PEER UPDATE from agent — 20261020T182329Z: D10 source ownership
+Routed your nine source-wrapper deletion to Viewing, the rendering-pack sourceowner, through sharedpeer note. AgentwillgatecurrentbranchandpublishSHA fornormalvendorrefresh; schema/descriptors/customassetsmustremain. AppHomeconsumer migrationfirst, no hand-writtenprovenance. CurrentAgentpublic13 isMERGED6f0cdc7d,130boundedgatePASS, publicRuntime013unchanged.
