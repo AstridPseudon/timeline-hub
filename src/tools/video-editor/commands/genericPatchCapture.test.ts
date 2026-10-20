@@ -8,7 +8,7 @@ import {
   GenericPatchRefusal,
   projectGenericPatchPreview,
 } from './genericPatchCapture.ts';
-import { copy, freezeJson } from './clipMovePrimitives.ts';
+import { AuthoredState, copy, freezeJson } from './clipMovePrimitives.ts';
 import { environment } from './__tests__/commitSessionEnvironment.ts';
 
 const nativePatch = (hold = 1.25): TimelinePatch => ({ version: 1, operations: [
@@ -83,6 +83,49 @@ describe('bounded native generic patch capture', () => {
     expect(replay).toEqual({ bundle: result.bundle, records: result.records });
     expect(result.bundle.parent.clips[0]).toMatchObject({ hold: 4, at: 4 });
     expect(result.bundle.parent.clips[0]).not.toHaveProperty('transition');
+  });
+
+  it('carries a matching move-derived static duration through the producer hold member', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const clip = new AuthoredState(bundle).entity('parent/clip:x')!;
+    clip.app = { opaque: { keep: [null, false] }, astrid: { for: 1 } };
+    const patch: TimelinePatch = { version: 1, source: 'timeline.native-ordinary', operations: [
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 0 },
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 5 }, clear: [] }, order: 1 },
+    ] };
+
+    const result = captureGenericPatch(bundle, patch, () => 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.move', 'clip.set']);
+    expect(result.records[1]!.writes).toEqual([
+      { ref: 'parent/clip:x', path: ['app', 'astrid', 'for'], before: { state: 'present', value: 1 }, after: { state: 'present', value: 5 } },
+      { ref: 'parent/clip:x', path: ['hold'], before: { state: 'present', value: 1 }, after: { state: 'present', value: 5 } },
+    ]);
+    expect(new AuthoredState(result.bundle).entity('parent/clip:x')).toMatchObject({
+      at: 4, hold: 5, app: { opaque: { keep: [null, false] }, astrid: { for: 5, fixed_start: true } },
+    });
+
+    const replay = executeGenericPatch(copy(bundle), result.commands);
+    expect(replay).toEqual({ bundle: result.bundle, records: result.records });
+  });
+
+  it('refuses an independent static duration atomically after a move', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const moved = executeGenericPatch(bundle, [{
+      schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:x',
+      args: { on: 4 }, intent: { ripple: 'none', anchor: 'fixed', position: 'absolute' },
+    }]).bundle;
+    const clip = new AuthoredState(moved).entity('parent/clip:x')!;
+    clip.app = { opaque: null, astrid: { for: 2 } };
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 5 }, clear: [] } },
+    ] };
+    const before = copy(moved);
+
+    expect(() => captureGenericPatch(moved, patch, () => 'parent/clip:x')).toThrow(GenericPatchRefusal);
+    expect(moved).toEqual(before);
   });
 
   it('refuses the complete batch before resolving any owner or executing a member', async () => {

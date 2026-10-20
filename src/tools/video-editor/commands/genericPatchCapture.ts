@@ -264,7 +264,7 @@ function clipBasis(ctx: MoveRecording, ref: string): void {
   }
 }
 
-function clipHold(ctx: MoveRecording, ref: string, hold: number): void {
+function clipHold(ctx: MoveRecording, ref: string, hold: number): [string[][], number] {
   const owner = ref.slice(0, ref.lastIndexOf('/'));
   const clipFields = [
     'id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
@@ -277,13 +277,20 @@ function clipHold(ctx: MoveRecording, ref: string, hold: number): void {
   for (const key of ['time_map', 'timeMap', 'clips', 'children', 'from_ms', 'to_ms']) {
     if (row[key] != null) throw new ClipMoveError(`clip.set does not support ${key}`, 'unsupported_timing');
   }
+  const durationPaths: string[][] = [];
   for (const prefix of [[], ['app'], ['app', 'astrid']]) {
     for (const key of ['on', 'fixed_start', 'until', 'until_film_end', 'for', 'cut', 'sequence',
       'sequence_index', 'sequence_fit', 'orphan', 'formulas']) {
       const value = ctx.read(ref, [...prefix, key]);
-      if (value != null && key !== 'fixed_start') {
-        throw new ClipMoveError(`clip.set hold does not support ${key}`, 'unsupported_timing');
+      if (value == null || (key === 'fixed_start' && typeof value === 'boolean')) continue;
+      if (key === 'for') {
+        if (!close(number(value, 'for', true), timelineDuration(row))) {
+          throw new ClipMoveError('clip.set hold conflicts with static for', 'unsupported_timing');
+        }
+        durationPaths.push([...prefix, key]);
+        continue;
       }
+      throw new ClipMoveError(`clip.set hold does not support ${key}`, 'unsupported_timing');
     }
   }
   row.hold = hold;
@@ -297,7 +304,7 @@ function clipHold(ctx: MoveRecording, ref: string, hold: number): void {
     denominator: Number(fps[1]),
     rounding: 'half-toward-positive-infinity',
   });
-  if (owner === 'parent') return;
+  if (owner === 'parent') return [durationPaths, duration];
   const childFps = ctx.read(`${owner}/source`, ['output', 'fps']);
   if (childFps != null && !equal(rate(childFps), fps)) {
     throw new ClipMoveError('parent and child fps differ', 'unsupported_timing');
@@ -328,6 +335,7 @@ function clipHold(ctx: MoveRecording, ref: string, hold: number): void {
   if (number(row.at, 'clip.at') < 0 || number(row.at, 'clip.at') + duration > limit - origin + 1e-9 || end > boundary) {
     throw new ClipMoveError('clip.set interval crosses occurrence boundary', 'occurrence_boundary');
   }
+  return [durationPaths, duration];
 }
 
 function setClip(bundle: AuthoredBundle, command: EditCommand) {
@@ -352,7 +360,8 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   if (typeof asset === 'string') {
     ctx.read(`${ref.slice(0, ref.lastIndexOf('/'))}/registry`, ['assets', asset, 'content_sha256']);
   }
-  clipHold(ctx, ref, hold);
+  const [durationPaths, duration] = clipHold(ctx, ref, hold);
+  for (const path of durationPaths) ctx.write(ref, path, duration);
   ctx.write(ref, ['hold'], hold);
   ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
