@@ -101,8 +101,13 @@ def test_authenticated_foreign_owned_resources_are_refused_without_writes_or_dis
     method, path, body = _cases(case, foreign)[family]
     before = _snapshot(daemon.service)
     status, detail = _request_error(api, method, path, body, f"foreign-{family}")
-    assert status == 410
-    assert detail["code"] == "retired_route"
+    if family == "reference":
+        assert status == 404
+        assert detail["code"] == "not_found"
+        assert detail["message"] == "reference not found"
+    else:
+        assert status == 410
+        assert detail["code"] == "retired_route"
     assert foreign not in json.dumps(detail)
     assert case.reference not in json.dumps(detail)
     assert _snapshot(daemon.service) == before
