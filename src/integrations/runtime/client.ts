@@ -25,6 +25,10 @@ import {
   type HistoryPage,
   type MediaSelection,
   type MediaSelectionQuery,
+  type DocumentPin,
+  type VerifiedDocument,
+  type VerifiedDocumentObject,
+  type VerifiedMedia,
   type Transport,
   type RequestBody,
 } from './generated.ts';
@@ -634,6 +638,28 @@ export class AstridRuntimeClient {
     selection: MediaSelectionQuery,
   ): Promise<MediaSelection> {
     return this.withSession(() => this.client.getProjectMediaSelection(projectId, selection));
+  }
+
+  async getProjectVerifiedMedia(
+    projectId: string,
+    selection: MediaSelection,
+  ): Promise<VerifiedMedia> {
+    return this.withSession(() => this.client.getProjectVerifiedMedia(projectId, selection));
+  }
+
+  async getProjectVerifiedDocument(
+    projectId: string,
+    pin: DocumentPin,
+  ): Promise<VerifiedDocument> {
+    return this.withSession(() => this.client.getProjectVerifiedDocument(projectId, pin));
+  }
+
+  async getProjectVerifiedDocumentObject(
+    projectId: string,
+    pin: DocumentPin,
+    objectId: string,
+  ): Promise<VerifiedDocumentObject> {
+    return this.withSession(() => this.client.getProjectVerifiedDocumentObject(projectId, pin, objectId));
   }
 
   async publishParentComposition(
