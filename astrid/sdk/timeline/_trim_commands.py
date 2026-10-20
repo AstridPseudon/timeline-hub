@@ -8,8 +8,48 @@ from astrid.sdk import timeline_intent as intent
 
 from ._command_state import CommandError
 from ._common import TimelineEditError
+from ._recording import active
 from .capture import CLIP_FIELDS, RELATIONS, number
 from .units import trim_source_interval
+
+
+def _media_kind(value):
+    media_type = (value.get('type') if 'type' in value else value.get('media_type')) \
+        if isinstance(value, dict) else None
+    if isinstance(media_type, str):
+        return media_type.split('/', 1)[0]
+    return None
+
+
+def _verified_source_duration(ctx, source, expected_kind):
+    """Use request-scoped Runtime metadata when authored duration is absent."""
+    limit = source['duration']
+    if limit is not None:
+        number(limit, 'registry source duration', positive=True)
+        return limit, None
+    object_id = next((source.get(key) for key in
+                      ('object_id', 'media_id', 'digest', 'content_digest')
+                      if source.get(key) is not None), None)
+    if object_id is None:
+        raise CommandError('registry source duration requires an exact media identity',
+                           kind='dependency_changed')
+    matches = [value for value in ctx.verified_media
+               if isinstance(value, dict) and 'selection' not in value
+               and value.get('object_id') == object_id]
+    if not matches or any(value != matches[0] for value in matches):
+        raise CommandError('registry source duration requires exact Runtime-verified media metadata',
+                           kind='dependency_changed')
+    value = matches[0]
+    if value.get('object_id') != object_id or _media_kind(value) != expected_kind \
+            or type(value.get('size')) is not int or value['size'] <= 0:
+        raise CommandError('trim source media metadata is not exact audio media',
+                           kind='unsupported_media')
+    media_id = source.get('media_id') or object_id
+    content_digest = source.get('content_digest') or source.get('digest') or media_id
+    pin = {'media_id': media_id, 'content_digest': content_digest}
+    limit = ctx.read_media(pin, ['duration_seconds'])
+    number(limit, 'intrinsic duration', positive=True)
+    return limit, value
 
 
 def clip_trim(ctx, command):
@@ -43,7 +83,7 @@ def clip_trim(ctx, command):
                 number(value, 'for', positive=True)
             elif value is not None:
                 raise CommandError(f'clip.trim v1 does not support {key}', kind='unsupported_timing', ref=ref)
-    if clip['clipType'] not in (None, 'media') or clip['clip_type'] not in (None, 'media'):
+    if clip['clipType'] not in (None, 'media', 'audio') or clip['clip_type'] not in (None, 'media', 'audio'):
         raise CommandError('clip.trim applies to media clips', ref=ref)
     asset = clip['asset']
     if not isinstance(asset, str) or not asset or any(clip[key] is not None for key in
@@ -61,8 +101,15 @@ def clip_trim(ctx, command):
                'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
     if any(source[key] is not None for key in ('source', 'source_window', 'time_map', 'timeMap')):
         raise CommandError('clip.trim v1 does not support a mapped media source', kind='unsupported_map', ref=ref)
-    limit = source['duration']
-    number(limit, 'registry source duration', positive=True)
+    source_kind = _media_kind(source)
+    clip_kind = 'audio' if 'audio' in (clip['clipType'], clip['clip_type'], source_kind) else source_kind
+    if clip_kind == 'audio':
+        track = ctx.read('parent/track:' + str(clip['track']))
+        if not isinstance(track, dict) or track.get('kind') != 'audio' or not active(track):
+            raise CommandError('clip.trim requires an active raw audio track', ref=ref)
+        if source_kind != 'audio':
+            raise CommandError('clip.trim audio track requires an audio registry asset', ref=ref)
+    limit, _ = _verified_source_duration(ctx, source, clip_kind)
     endpoints = []
     for key, arg, default in (('from', 'in_s', 0), ('to', 'out_s', limit)):
         current = default if clip[key] is None else clip[key]
@@ -92,10 +139,10 @@ def clip_trim(ctx, command):
         ctx.clear(ref, ['app'])
 
 
-def capture_clip_trim(bundle, select, *, in_s=None, out_s=None):
+def capture_clip_trim(bundle, select, *, in_s=None, out_s=None, verified_media=()):
     """Capture original claims. Null endpoints retain the current/default bound."""
     from .commands import execute
 
     return execute(bundle, [{'schema_version': 1, 'op': 'clip.trim', 'version': '1',
                              'select': select, 'args': {'in_s': in_s, 'out_s': out_s},
-                             'intent': {}}]).commands[0]
+                             'intent': {}}], verified_media=verified_media).commands[0]

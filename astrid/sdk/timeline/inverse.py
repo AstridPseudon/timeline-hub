@@ -347,7 +347,8 @@ def _validate_inputs(state, record, records):
                 else:
                     stage.set(write['ref'], write['path'], write['after'])
             reads.extend(read for read in record['reads']
-                         if stage.matches(read['ref'], read['path'], read['state']))
+                         if read['ref'].startswith('media:')
+                         or stage.matches(read['ref'], read['path'], read['state']))
             selections.extend(selected for selected in record['selections']
                               if equal(selection(stage, selected['key'], selected['owner'],
                                                  selected['members']), selected))
@@ -356,6 +357,10 @@ def _validate_inputs(state, record, records):
         return reads, selections, bindings
 
     for read in record['reads']:
+        if read['ref'].startswith('media:'):
+            # Media metadata is a request-scoped Runtime read. Undo restores
+            # the recorded authored writes and does not re-probe the source.
+            continue
         if state.matches(read['ref'], read['path'], read['state']):
             continue
         if sites is None:
@@ -438,7 +443,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     # the same address is read after another reversal during installation.
     for record in records:
         for read in record['reads']:
-            ctx.read(read['ref'], read['path'])
+            if not read['ref'].startswith('media:'):
+                ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
             if selected['key'].endswith('.after'):
                 ctx.select(selected['key'].removesuffix('.after'), selected['owner'])

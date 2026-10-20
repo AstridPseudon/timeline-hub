@@ -283,7 +283,36 @@ class TimelineSession:
         """Capture a literal source trim once, retrying its original flight."""
         from astrid.sdk.timeline._trim_commands import capture_clip_trim
 
-        self._queue(lambda state: capture_clip_trim(self._bundle(state), select, in_s=in_s, out_s=out_s),
+        def capture(state):
+            bundle = self._bundle(state)
+            # This is only a local convenience for the authoring preflight.
+            # Runtime recomputes the descriptor from the exact manifest pin.
+            from astrid.sdk.timeline.commit import _raw_audio_trim_pin
+
+            pin = _raw_audio_trim_pin(bundle, {
+                'op': 'clip.trim', 'select': select,
+            })
+            verified_media = ()
+            if pin is not None:
+                try:
+                    data = self.client.media.read_bytes(pin['media_id'])
+                    import io
+                    import math
+                    import wave
+
+                    with wave.open(io.BytesIO(data)) as wav:
+                        duration = wav.getnframes() / float(wav.getframerate())
+                    if data and math.isfinite(duration) and duration > 0:
+                        verified_media = ({
+                            'object_id': pin['media_id'], 'media_type': 'audio/wav',
+                            'size': len(data), 'duration_seconds': duration,
+                        },)
+                except Exception:  # noqa: BLE001 - preflight is nonauthoritative
+                    verified_media = ()
+            return capture_clip_trim(bundle, select, in_s=in_s, out_s=out_s,
+                                     verified_media=verified_media)
+
+        self._queue(capture,
                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
                     and pending[0]["select"] == select
                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
