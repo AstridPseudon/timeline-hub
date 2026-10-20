@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync, statfsSync } from 'node:fs';
-import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
@@ -112,7 +112,7 @@ function artifactPath(name: string): string {
 }
 
 function compositionArtifactProof(root: string): { sha256: string; members: number } {
-  const artifact = join(root, 'remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz');
+  const artifact = join(root, 'remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz');
   const members = execFileSync('tar', ['-tzf', artifact], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
   return { sha256: createHash('sha256').update(readFileSync(artifact)).digest('hex'), members: members.length };
 }
@@ -157,18 +157,78 @@ function requiredPath(name: string): string {
   return resolved;
 }
 
-async function prepareOwnedRemotionProject(directory: string, agent: string): Promise<string> {
+async function prepareOwnedRemotionProject(directory: string, agent: string, python: string): Promise<string> {
   const qualified = requiredPath('ASTRID_REMOTION_PROJECT_DIR');
   const projectRoot = join(directory, 'project');
   const remotion = join(projectRoot, 'remotion');
-  await cp(qualified, remotion, {
+  await cp(join(agent, 'remotion'), remotion, {
     recursive: true,
     filter: source => basename(source) !== 'node_modules',
   });
-  await cp(join(qualified, 'node_modules'), join(remotion, 'node_modules'), { recursive: true });
   await cp(join(agent, 'astrid'), join(projectRoot, 'astrid'), { recursive: true });
+
+  // The project source must come from the frozen Agent archive. Only the
+  // dependency graph is borrowed, and each package is linked into this owned
+  // project as a leaf so build output and caches cannot touch the source graph.
+  const sharedNodeModules = join(qualified, 'node_modules');
+  const privateNodeModules = join(remotion, 'node_modules');
+  assert.equal(realpathSync(sharedNodeModules), sharedNodeModules);
+  await mkdir(privateNodeModules);
+  const linkPackage = async (source: string, destination: string): Promise<void> => {
+    assert.equal(await stat(source).then(() => true).catch(() => false), true, `dependency missing: ${source}`);
+    assert.equal(await stat(destination).then(() => true).catch(() => false), false, `dependency collision: ${destination}`);
+    await symlink(realpathSync(source), destination, 'dir');
+  };
+  for (const entry of await readdir(sharedNodeModules, { withFileTypes: true })) {
+    if (entry.name === '.bin' || entry.name === '.cache' || entry.name === '@banodoco') continue;
+    const source = join(sharedNodeModules, entry.name);
+    const destination = join(privateNodeModules, entry.name);
+    if (entry.name.startsWith('@') && entry.isDirectory()) {
+      await mkdir(destination);
+      for (const scoped of await readdir(source, { withFileTypes: true })) {
+        if (scoped.name === '.bin' || scoped.name === '.cache') continue;
+        await linkPackage(join(source, scoped.name), join(destination, scoped.name));
+      }
+    } else {
+      await linkPackage(source, destination);
+    }
+  }
+  await mkdir(join(privateNodeModules, '.bin'));
+  for (const entry of await readdir(join(sharedNodeModules, '.bin'), { withFileTypes: true })) {
+    await linkPackage(join(sharedNodeModules, '.bin', entry.name), join(privateNodeModules, '.bin', entry.name));
+  }
+
+  // Runtime's source-custody validator requires the Remotion CLI itself to
+  // resolve inside the owned project. Its package bytes remain the qualified
+  // read-only dependency; only this small entry package is materialized.
+  const privateCli = join(privateNodeModules, '@remotion', 'cli');
+  await rm(privateCli, { recursive: true, force: true });
+  await cp(join(sharedNodeModules, '@remotion', 'cli'), privateCli, { recursive: true });
+
+  const publicPackage = join(privateNodeModules, '@banodoco', 'timeline-composition');
+  await mkdir(join(privateNodeModules, '@banodoco'));
+  execFileSync('tar', ['-xzf', join(remotion, 'artifacts/banodoco-timeline-composition-0.0.13.tgz'),
+    '-C', join(privateNodeModules, '@banodoco')]);
+  await rename(join(privateNodeModules, '@banodoco', 'package'), publicPackage);
+  execFileSync(python, ['-B', join(agent, 'scripts/gen_remotion_types.py'),
+    join(remotion, 'src/types.generated.ts'), '--include-element-registries'], {
+    cwd: agent,
+    env: {
+      ...process.env,
+      ASTRID_REMOTION_PROJECT_DIR: remotion,
+      ASTRID_NODE_EXECUTABLE: requiredPath('ASTRID_NODE_EXECUTABLE'),
+      PYTHONPATH: agent,
+      PYTHONDONTWRITEBYTECODE: '1',
+    },
+    encoding: 'utf8',
+    maxBuffer: 2 * 1024 * 1024,
+  });
   assert.equal(realpathSync(remotion), remotion);
   assert.equal(realpathSync(join(projectRoot, 'astrid')), join(projectRoot, 'astrid'));
+  assert.equal(realpathSync(publicPackage), publicPackage);
+  assert.equal(await stat(join(remotion, 'src/LiveSceneClip.tsx')).then(() => true).catch(() => false), true);
+  assert.equal(await stat(join(projectRoot, 'astrid/packs/rendering/editor/live-scenes/SceneSurface.tsx'))
+    .then(() => true).catch(() => false), true);
   return remotion;
 }
 
@@ -308,6 +368,7 @@ test('native retained frame fixture restores and admits one normal render task',
       moduleProof,
     };
     assert.equal(before.compositionArtifact.members, 77);
+    assert.equal(before.compositionArtifact.sha256, '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738');
     console.log(`[native-frame-source-proof] before ${JSON.stringify(before)}`);
     harness = new DirectHarness();
     await harness.start({ seed: false, beforeRuntimeStart: async current => {
@@ -343,7 +404,7 @@ test('native retained frame fixture restores and admits one normal render task',
     await mkdir(privateCache);
     assert.equal(realpathSync(privateRenderRoot), privateRenderRoot);
     assert.equal(realpathSync(privateTemp), privateTemp);
-    process.env.ASTRID_REMOTION_PROJECT_DIR = await prepareOwnedRemotionProject(privateRenderRoot, archived.agent.root);
+    process.env.ASTRID_REMOTION_PROJECT_DIR = await prepareOwnedRemotionProject(privateRenderRoot, archived.agent.root, agentPython);
     Object.assign(process.env, {
       HOME: privateHome,
       TMPDIR: privateTemp,
