@@ -1,4 +1,4 @@
-import type { CommitRequest, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitRequest, DocumentPin, EditCommand, JSON, MediaSelection, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
@@ -13,6 +13,10 @@ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.t
 import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import type { ClipParamsArgs } from './clipParamsCapture.ts';
+import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
+import { selectedParamsCommand } from './clipParamsCapture.ts';
+import { readRetainedParamInputs } from '@/integrations/runtime/retainedParamInputs.ts';
 import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
 import type { OccurrenceDuplicateCapturePort } from './occurrenceDuplicateGesture.ts';
 import {
@@ -67,6 +71,10 @@ type Options = {
   preview(patch: TimelinePatch): void;
   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
   changed(state: CommandSessionState): void;
+  paramReadClient?: {
+    getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>;
+    getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string): Promise<VerifiedDocumentObject>;
+  };
 };
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
@@ -99,6 +107,9 @@ export async function createTimelineCommandSession(options: Options) {
   let appendedGeneration = 0;
   let persistenceFailed = false;
   let persistenceError: string | undefined;
+  let paramReadGeneration = 0;
+  let paramsCapture: { basis: JSON; selected: Record<string, JSON>; schemaSource?: DocumentPin;
+    inputs?: [VerifiedDocument, Record<string, VerifiedDocumentObject>][]; realmId?: string } | undefined;
   const latestOwn = options.initial.history?.next_cursor == null ? options.initial.history?.items.slice().reverse().find((entry) => entry.publisher === options.scope.actorId
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
@@ -573,6 +584,83 @@ export async function createTimelineCommandSession(options: Options) {
     },
     submitBatch({ commands, preview }) { submitScalarEdits(commands, preview); },
   };
+  const clipParamsPort: ClipParamsCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Selected PARAM edit requires one raw clip identity');
+      const row = matches[0];
+      const element = row.elementRef;
+      if (!element?.packId || typeof element.id !== 'string' || typeof element.kind !== 'string' || typeof element.revision !== 'string') {
+        throw new Error('Selected PARAM edit requires an admitted owner-qualified element reference');
+      }
+      const identity = row.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, undefined, 'Selected PARAM edit requires an explicit matching raw clip owner');
+      const basis = json({ select, clipId, selected: copy(element), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: copy(known.head) },
+        bundle: copy(bundle) }) as import('./types.ts').JsonObject;
+      paramsCapture = { basis, selected: copy(element) as Record<string, JSON> };
+      paramReadGeneration++;
+      return basis;
+    },
+    async prefetch(basis, pin) {
+      assertReady();
+      const captured = paramsCapture;
+      const generation = paramReadGeneration;
+      if (!captured || !equal(captured.basis, basis) || (basis as { localGeneration?: number }).localGeneration !== localGeneration) {
+        throw new Error('Selected PARAM capture is no longer current; draft preserved');
+      }
+      if (captured.schemaSource && !equal(captured.schemaSource, pin)) {
+        throw new Error('Selected PARAM schema source changed; draft preserved');
+      }
+      if (!options.paramReadClient) throw new Error('Selected PARAM schema carrier is unavailable; Agent retained-read support is required');
+      const result = await readRetainedParamInputs(options.paramReadClient,
+        { project_id: options.scope.projectId, realm_id: options.scope.realmId }, pin, captured.selected);
+      if (stopped || generation !== paramReadGeneration || paramsCapture !== captured
+        || (basis as { localGeneration?: number }).localGeneration !== localGeneration) {
+        throw new Error('Selected PARAM authority basis changed during loading; draft preserved');
+      }
+      captured.schemaSource = copy(pin);
+      captured.inputs = [[result.verified, result.objects]];
+      captured.realmId = options.scope.realmId;
+      return Object.freeze({ basis: copy(basis), schema_source: copy(pin), schema_inputs: copy(captured.inputs), realm_id: options.scope.realmId });
+    },
+    invalidatePrefetch() {
+      paramReadGeneration++;
+      paramsCapture = undefined;
+    },
+    finish(basis, args: ClipParamsArgs) {
+      assertReady();
+      const captured = paramsCapture;
+      if (!captured || !equal(captured.basis, basis) || (basis as { localGeneration?: number }).localGeneration !== localGeneration
+        || !captured.schemaSource || !captured.inputs || !captured.realmId) {
+        throw new Error('Selected PARAM schema inputs are unavailable; draft preserved');
+      }
+      if (!equal(args.schema_source, captured.schemaSource)) {
+        throw new Error('Selected PARAM schema source changed; draft preserved');
+      }
+      const command = selectedParamsCommand(String(basis.select), args);
+      prepared.set(JSON.stringify(command), { payload: {
+        commands: [command], before: bundle, after: bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command, previewParams: null };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const entry = prepared.get(JSON.stringify(command));
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle || preview !== null) {
+        throw new Error('Selected PARAM edit was not captured by this session or the timeline changed');
+      }
+      prepared.delete(JSON.stringify(command));
+      paramsCapture = undefined;
+      paramReadGeneration++;
+      enqueue({ ...entry.payload, preview: null }, null, entry.basis);
+    },
+  };
   function prepareScalarEdits(bases: Parameters<ClipScalarCapturePort['finish']>[0][], args: ClipScalarArgs) {
     assertReady();
     if (!bases.length || new Set(bases.map((basis) => basis.select)).size !== bases.length) {
@@ -800,6 +888,7 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    clipParamsPort,
     clipScalarPort,
     elementPort,
     genericPatchPort,

@@ -12,6 +12,8 @@ import { createTimelineCommandSession, type CommandSessionState, type TimelineCo
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
+import { createSelectedParamPort, type SelectedParamCapture, type SelectedParamLiveBasis } from '../commands/selectedParamPort.ts';
+import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
@@ -27,6 +29,7 @@ export function useTimelineCommandSession(options: {
   lastSavedSignatureRef: MutableRefObject<string>;
   store: TimelineStoreApi;
   shots: VideoEditorShotsHost;
+  paramReadClient?: Parameters<typeof createTimelineCommandSession>[0]['paramReadClient'];
   recoveryConfig?: ReturnType<typeof import('./useTimelineSave.draftConfig.ts').createRecoveryConfig>;
 }) {
   const { provider, timelineId, snapshotWriteBlockedRef } = options;
@@ -36,13 +39,31 @@ export function useTimelineCommandSession(options: {
   const activeRef = useRef(false);
   const ownsHistoryRef = useRef(false);
   const readGenerationRef = useRef(0);
+  const basisRef = useRef<SelectedParamLiveBasis>();
+  const basisGenerationRef = useRef(0);
+  const selectedParamPort = useRef(createSelectedParamPort(() => basisRef.current)).current;
+  const selectedAuthorityCaptureRef = useRef<SelectedParamCapture>();
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
   const initialReadReady = options.initialReadReady ?? true;
   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
+  const clearSelectedBasis = useCallback(() => {
+    basisGenerationRef.current++;
+    basisRef.current = undefined;
+    selectedAuthorityCaptureRef.current = undefined;
+  }, []);
+  const publishSelectedBasis = useCallback((basis: TimelineCommandBasis) => {
+    basisGenerationRef.current++;
+    basisRef.current = {
+      basis,
+      head: { ...basis.head },
+      generation: basisGenerationRef.current,
+    };
+  }, []);
   useEffect(() => {
     if (!enabled || !initialReadReady) return;
+    clearSelectedBasis();
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
@@ -70,8 +91,10 @@ export function useTimelineCommandSession(options: {
         || (initialHead?.timelineId === timelineId && initialHead.projectId !== basis.canonicalDocument.project_id)) {
         throw new Error('Initialization requires a verified closure in the current project and timeline');
       }
+      publishSelectedBasis(basis);
       const project = async (accepted: TimelineCommandBasis, previews: TimelinePatch[], initial = false) => {
         if (disposed) return;
+        clearSelectedBasis();
         const generation = initial ? projectGeneration : ++projectGeneration;
         const context = latest.current;
         const document = accepted.canonicalDocument;
@@ -105,6 +128,7 @@ export function useTimelineCommandSession(options: {
         if (initial && (context.commit.dataRef.current !== initialData || initialData?.editProjection
           || context.headRevisionRef.current !== initialHead || (initialHead && initialHead.timelineId !== timelineId)
           || !latest.current.legacyClean())) return;
+        publishSelectedBasis(accepted);
         data.editProjection = accepted.head.revisionId && accepted.head.publicationId
           ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
             : { kind: 'accepted', head: { ...accepted.head } } : undefined;
@@ -117,14 +141,17 @@ export function useTimelineCommandSession(options: {
       };
       session = await createTimelineCommandSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
+        paramReadClient: latest.current.paramReadClient,
         loadLatest: async () => {
           if (disposed) throw new Error('Timeline command session is closed');
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before resolving commands');
           projectGeneration++;
           invalidateReads();
+          clearSelectedBasis();
           const fresh = await provider.loadTimelineCommandBasis!(timelineId);
           invalidateReads();
           if (disposed) throw new Error('Timeline command session is closed');
+          publishSelectedBasis(fresh);
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
@@ -163,6 +190,39 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const realClipParamsPort = session.clipParamsPort;
+        session.clipParamsPort = {
+          resolveAuthority(input) {
+            const capture = selectedParamPort.capture(input);
+            selectedAuthorityCaptureRef.current = capture;
+            return selectedParamPort.resolve(capture);
+          },
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing selected parameters');
+            return realClipParamsPort.capture(input);
+          },
+          async prefetch(basis, pin) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before loading selected parameter schema');
+            const authorityCapture = selectedAuthorityCaptureRef.current;
+            if (!authorityCapture) throw new Error('Selected PARAM authority is unavailable; draft preserved');
+            const currentPin = selectedParamPort.resolve(authorityCapture);
+            if (JSON.stringify(currentPin) !== JSON.stringify(pin)) {
+              throw new Error('Selected PARAM authority basis changed; draft preserved');
+            }
+            const result = await realClipParamsPort.prefetch!(basis, pin);
+            selectedParamPort.resolve(authorityCapture);
+            return result;
+          },
+          invalidatePrefetch() { realClipParamsPort.invalidatePrefetch?.(); },
+          finish(basis, args) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing selected parameters');
+            return realClipParamsPort.finish(basis, args);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing selected parameters');
+            realClipParamsPort.submit(input);
+          },
+        };
         const realElementPort = session.elementPort;
         session.elementPort = {
           capture(input) {
@@ -244,6 +304,7 @@ export function useTimelineCommandSession(options: {
         setState({ ...session.getState() });
       }
     })().catch((error) => {
+      clearSelectedBasis();
       disposeSession();
       changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
         ownerId: null, recoverableOwners: [], canUndo: false });
@@ -251,6 +312,7 @@ export function useTimelineCommandSession(options: {
     return () => {
       disposed = true;
       invalidateReads();
+      clearSelectedBasis();
       ownsHistoryRef.current = false;
       projectGeneration++;
       sessionRef.current = null;
@@ -258,9 +320,10 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [provider, timelineId, enabled, initialReadReady, attempt, snapshotWriteBlockedRef]);
+  }, [clearSelectedBasis, initialReadReady, publishSelectedBasis, provider, selectedParamPort, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
+    clearSelectedBasis();
     let cancelled = false;
     const session = sessionRef.current;
     const generation = readGenerationRef.current;
@@ -276,6 +339,7 @@ export function useTimelineCommandSession(options: {
           && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
           latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
         }
+        publishSelectedBasis(basis);
         session.observe(basis);
       }
     }).catch((error) => {
@@ -285,7 +349,7 @@ export function useTimelineCommandSession(options: {
       }
     });
     return () => { cancelled = true; };
-  }, [enabled, options.loaded, provider, timelineId, state.ownerId]);
+  }, [clearSelectedBasis, enabled, options.loaded, provider, publishSelectedBasis, timelineId, state.ownerId]);
   const requireSession = useCallback(() => {
     const session = sessionRef.current;
     if (!session) throw new Error(state.error ?? 'Timeline command session is not ready');
@@ -309,11 +373,24 @@ export function useTimelineCommandSession(options: {
   }, [requireSession]);
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+  const resolveSelectedParamAuthority = useCallback((input: {
+    select: string;
+    rawClip: Record<string, unknown> | null | undefined;
+  }): DocumentPin => selectedParamPort.resolve(selectedParamPort.capture(input)), [selectedParamPort]);
+  const resolveSelectedParamAuthorityAsync = useCallback(<T,>(
+    input: { select: string; rawClip: Record<string, unknown> | null | undefined },
+    resolveScope: (basis: SelectedParamLiveBasis) => Promise<T>,
+  ): Promise<T> => {
+    const capture = selectedParamPort.capture(input);
+    return selectedParamPort.resolveAsync(capture, async () => resolveScope(capture.live));
+  }, [selectedParamPort]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     genericPatchPort: sessionRef.current?.genericPatchPort,
     elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort, shotSetPort: sessionRef.current?.shotSetPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
+    clipParamsPort: sessionRef.current?.clipParamsPort,
+    selectedParamPort, resolveSelectedParamAuthority, resolveSelectedParamAuthorityAsync,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
