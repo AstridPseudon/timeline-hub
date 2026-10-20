@@ -7,6 +7,7 @@ import type {
 import {
   assertValidTimelineConfigSnapshot,
   cloneAppExtension,
+  cloneTimelineExtras,
   sanitizeTimelineClipSnapshot,
   sanitizeTrackDefinitionSnapshot,
 } from './timeline-domain.ts';
@@ -70,4 +71,16 @@ export const serializeForDisk = (
   // honoring the wire contract: output is derived and must not be persisted.
   Reflect.deleteProperty(serialized, 'output');
   return serialized;
+};
+
+/** Editor edits keep opaque authored roots; strict disk serialization stays closed. */
+export const serializeResolvedTimelineEdit = (
+  resolved: ResolvedTimelineConfig,
+  pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
+): TimelineConfig => {
+  const { registry: _resolvedRegistry, ...authored } = resolved;
+  return {
+    ...cloneTimelineExtras(authored),
+    ...serializeForDisk(resolved, pinnedShotGroups),
+  };
 };

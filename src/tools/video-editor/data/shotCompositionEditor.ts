@@ -132,17 +132,15 @@ function remapOwnedItemReferences(value: unknown, itemIds: Map<string, string>):
   }
   if (value === null || typeof value !== 'object') return value;
   const row = value as JsonObject;
-  const next: JsonObject = {};
-  for (const [childKey, child] of Object.entries(row)) {
+  return Object.fromEntries(Object.entries(row).map(([childKey, child]) => {
     if ((childKey === 'item_id' || childKey.endsWith('_item_id')) && typeof child === 'string') {
-      next[childKey] = itemIds.get(child) ?? child;
+      return [childKey, itemIds.get(child) ?? child];
     } else if ((childKey === 'item_ids' || childKey.endsWith('_item_ids')) && Array.isArray(child)) {
-      next[childKey] = child.map((item) => typeof item === 'string' ? (itemIds.get(item) ?? item) : item);
+      return [childKey, child.map((item) => typeof item === 'string' ? (itemIds.get(item) ?? item) : item)];
     } else {
-      next[childKey] = remapOwnedItemReferences(child, itemIds);
+      return [childKey, remapOwnedItemReferences(child, itemIds)];
     }
-  }
-  return next;
+  }));
 }
 
 function remapIndependentInternalTimeline(value: unknown, prefix: string): JsonObject {
@@ -282,7 +280,9 @@ export async function updateCanonicalShotRevision(
         ...sourceInternal,
         revision_id: newIdentity(`timeline-${String(sourceOccurrence.shot_id)}`, patch.identitySeed ? `${patch.identitySeed}-timeline` : undefined),
         publish: true,
-        timeline: clone(patch.timeline),
+        // The popup edits a projection. Keep roots owned by the raw child
+        // timeline rather than replacing them with the projected field set.
+        timeline: { ...record(sourceInternal.timeline), ...clone(patch.timeline) },
       }
     : undefined;
   const updatedRevision: JsonObject = {
