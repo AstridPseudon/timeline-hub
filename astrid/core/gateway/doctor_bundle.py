@@ -110,13 +110,12 @@ def redact_log(text: str) -> str:
 
 
 def _installed_record() -> tuple[Path | None, Path | None]:
-    """Find the managed install through its service record, including custom roots."""
+    """Find the managed install through its selection record, including custom roots."""
     try:
         from astrid.installer.core import current, read_json
-        from astrid.installer.service import LABEL, default_program_root
+        from astrid.installer.service import LABEL, install_selection
 
-        default_root = default_program_root(Path.home(), sys.platform)
-        record = read_json(default_root / "service.json")
+        record = read_json(install_selection(Path.home(), sys.platform))
         if record.get("owner") != LABEL:
             return None, None
         program_root = Path(record["program_root"])

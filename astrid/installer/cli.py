@@ -27,7 +27,6 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="astrid install", description="Install or restart Astrid for astrid.haus.")
     mode = result.add_mutually_exclusive_group()
     mode.add_argument("--update", action="store_true", help="back up and install the pinned version")
-    mode.add_argument("--repair", action="store_true", help="restart the installed version without upgrading")
     mode.add_argument("--uninstall", action="store_true")
     mode.add_argument("--doctor", nargs="?", const="__default__", metavar="PATH",
                       help="write a redacted support bundle using the installed version")
@@ -41,7 +40,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    mode = ("update" if args.update else "repair" if args.repair else "uninstall" if args.uninstall
+    mode = ("update" if args.update else "uninstall" if args.uninstall
             else "doctor" if args.doctor is not None else "install")
     if args.delete_data and mode != "uninstall":
         parser().error("--delete-data is only valid for uninstall.")

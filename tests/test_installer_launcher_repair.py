@@ -179,7 +179,7 @@ def test_repair_restart_decision_preserves_or_replaces_real_processes(tmp_path, 
     backend = ProcessBackend(root, data, failed_service=failed_service)
     old_pids = (backend.runtime.pid, backend.service.pid)
     try:
-        Installer(root, data, backend).run("repair", {})
+        Installer(root, data, backend).run("install", {})
         if failed_service:
             assert backend.verify_count == 2
             assert backend.runtime.pid != old_pids[0]

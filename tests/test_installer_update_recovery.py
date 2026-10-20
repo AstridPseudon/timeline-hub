@@ -240,7 +240,7 @@ def test_sigkill_during_recovery_replays_same_retained_backup(tmp_path, point):
 def test_repair_also_recovers_before_workspace_inspection(tmp_path):
     _setup(tmp_path)
     assert _run(tmp_path, "runtime:stopped").returncode == -signal.SIGKILL
-    result = _run(tmp_path, mode="repair")
+    result = _run(tmp_path, mode="install")
     assert result.returncode == 0, result.stderr
     assert current(tmp_path / "program").root.name == "old"
     assert read_json(tmp_path / "program/update-transaction.json")["step"] == "rolled_back"

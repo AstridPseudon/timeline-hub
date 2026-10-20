@@ -106,7 +106,7 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
                 backend.verify(version, data, realm_id, timeout=0.5)
             shutil.rmtree(platform.log_dir() / "service-probe.log")
 
-        Installer(root, data, backend, say=lambda _line: None).run("repair", {})
+        Installer(root, data, backend, say=lambda _line: None).run("install", {})
         post_health = wait_for_service(backend, version, data, "running")
         post_discovery = json.loads((data / "runtime" / "discovery.json").read_text(encoding="utf-8"))
         post_runtime = (post_discovery["pid"], post_discovery["process_birth_id"])

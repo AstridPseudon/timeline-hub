@@ -4,8 +4,8 @@ You're testing the path a new person takes: one line installs Astrid on this com
 https://astrid.haus connects to it. Work through the journeys below in order; together they take 30–45 minutes per
 OS. When a step fails, write down what you did and what you saw (the exact words, or a screenshot), and attach a
 doctor bundle (see [Reporting](#reporting)). The bundle is a small zip with Astrid's status, its versions and the
-last part of its logs. Passwords, tokens, keys and credentials are removed before anything is written. File paths
-in the logs and tool details stay, so they can show your user name.
+last part of its installer logs. Passwords, tokens, keys, credentials, home paths and user names are redacted. Chat
+and service logs are excluded from the bundle.
 
 ## Before you start
 
@@ -37,7 +37,7 @@ pack that is not qualified yet, edit it with string values, for example:
 }
 ```
 
-Only those two keys are accepted. After saving, run the install line again or use `--repair` to restart Astrid; the
+Only those two keys are accepted. After saving, run the install line again to restart Astrid; the
 service reads the file when it starts. Shell profile changes do not reach the login service.
 
 ### Two checks you'll use often
@@ -111,7 +111,8 @@ Good: `State` is `Running`.
 
 **You should see**
 
-- The line prints, in order: `Using your workspace at …`, `Installing the pinned Astrid version.`,
+- The line first prints `Getting Astrid ready. The first time takes a few minutes.`, then
+  `Using your workspace at …`, `Installing Astrid.`,
   `Starting Astrid at sign-in.`, `Open https://astrid.haus`.
 - Your default browser opens astrid.haus. If it isn't Chrome or Edge, open https://astrid.haus in Chrome or Edge yourself.
 - The page says **Choose Allow in Chrome** (or Edge). After you allow, it opens the editor by itself. A new workspace
@@ -311,7 +312,7 @@ installer line again to restart the service.
 
 - The page shows **Astrid stopped**, then **Astrid restarted** with a **Reload** button. After Reload, your project is there.
 - macOS restarts it within about 20 seconds (launchd's KeepAlive). Linux restarts it after about 5 seconds
-  (systemd's Restart=on-failure). Windows retries after 1 minute (Task Scheduler's restart on failure).
+  (systemd's Restart=always). Windows retries after 1 minute (Task Scheduler's repeating sign-in trigger).
 - Chat answers again.
 
 **It's a failure if**
@@ -363,7 +364,7 @@ Record its title and a sentence you can find again.
 
    Windows qualification: Astrid must still be running when you run this line. Confirm the update succeeds while its
    service is writing `runtime-service.log`, then check that `install.log` and `runtime-service.log` both remain in
-   the log folder. The doctor bundle should include both logs.
+   the log folder. The doctor bundle should include the installer log and exclude the Runtime service log.
 
 2. Watch the page while it runs, and reload it if it asks.
 3. List the program versions and backups:
@@ -389,8 +390,8 @@ Record its title and a sentence you can find again.
 **You should see**
 
 - The line prints, in order: `Stopping Astrid before the update.`, `Backing up your workspace.`,
-  `Installing the pinned Astrid version.`, `Updating the workspace with Astrid Runtime.`, `Starting Astrid at sign-in.`,
-  `Open https://astrid.haus`.
+  `Installing Astrid.`, `Updating the workspace with Astrid Runtime.`, `Starting Astrid at sign-in.`,
+  `Open https://astrid.haus`. After a successful update, it prints `A backup of your workspace is kept at …`.
 - The page shows **Astrid stopped**, then **Astrid restarted**. After Reload, the same projects are there.
 - Two folders under `versions` (the new one and the previous one) and one under `backups`.
 - Your earlier conversations still appear once in the session list and reopen with their messages.
@@ -405,13 +406,13 @@ Note which OS line it gave you.
 **Rollback (optional).** This checks that a failed update puts everything back.
 
 1. Run the update line again. Progress appears as it happens. When it prints
-   `Installing the pinned Astrid version.`, press Ctrl+C once.
+   `Installing Astrid.`, press Ctrl+C once.
 2. Keep the terminal open and wait for recovery to finish and the failure message with its `Details:` line.
    Do not press Ctrl+C again while Astrid is restoring the previous version.
 3. Run the two checks and open the page.
 
-You should see a short failure message with a `Details:` line, saying your workspace and the update backup were
-kept. Astrid then runs the previous version, on the same workspace, with the same projects. It's a failure if Astrid
+You should see `Astrid couldn't finish. Nothing in your workspace was changed or removed.` followed by a
+`Details:` line. Astrid then runs the previous version, on the same workspace, with the same projects. It's a failure if Astrid
 isn't running afterwards, a project is missing, or the log says `recovery also failed`. If it isn't running, run the
 plain install line and report what it prints.
 
@@ -455,8 +456,8 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
    Get-ScheduledTask -TaskName 'Astrid Runtime'
    ```
 
-3. Check that the managed program folder is gone. On Windows, the running bootstrap may leave its directory behind.
-   If the line prints a manual cleanup instruction, follow it after the installer exits, then check that the folder is gone:
+3. Check that the managed program folder is gone. On Windows, wait briefly for the installer to remove its external
+   bootstrap after the line returns, then check both folders:
 
    macOS:
 
@@ -474,6 +475,7 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 
    ```powershell
    Test-Path "$env:LOCALAPPDATA\Astrid"
+   Test-Path "$env:LOCALAPPDATA\Astrid Installer"
    ```
 
 4. Run the plain install line once more (journey 1) to reinstall. The installer should adopt the kept workspace; check
@@ -488,15 +490,15 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 - The line prints `Astrid was uninstalled.` and `Workspace kept at …`.
 - Step 2: the service isn't found (macOS: "Could not find service" and no such file; Linux: the unit "could not be
   found"; Windows: no scheduled task found).
-- Step 3: no such folder (Windows: `False` after any printed cleanup instruction is followed).
+- Step 3: no such folder (Windows: `False` for both paths, without a manual cleanup command).
 - After the first uninstall, the page says **Astrid isn't running**. After reinstalling in step 4, the page opens the same workspace.
 
 **What's left behind, on purpose:**
 
 - your workspace folder (projects and media), from the table above;
 - the log folder on macOS and Linux (on Windows it sits inside the workspace folder);
-- the per-user installer lock (Windows: `%LOCALAPPDATA%\Astrid Installer\astrid-install.lock`; macOS and Linux:
-  `astrid-install.lock` next to the program folder);
+- on macOS and Linux, the per-user `astrid-install.lock` next to the program folder; Windows removes its installer
+  lock and bootstrap folder after the uninstall exits;
 - the `astrid-install.json` selection record next to the program folder, supporting repeat uninstall and reinstall;
 - installer-managed Windows GPU environments under `%LOCALAPPDATA%\Astrid GPU`, if you have any;
 - uv's download cache (macOS: `~/Library/Caches/uv`; Linux: `${XDG_CACHE_HOME:-$HOME/.cache}/uv`;
@@ -513,8 +515,9 @@ Make a doctor bundle first (see [Reporting](#reporting)); there is no installed 
 
 **Delete the workspace after testing.** Before continuing, copy the doctor bundle and install log to a folder
 outside Astrid's workspace and program folders, such as a folder on your Desktop. Use the paths printed by doctor
-and listed under [Where things live](#where-things-live). On Windows, both artifacts normally live inside the
-workspace and will be deleted with it. Confirm the copied files open before proceeding.
+and listed under [Where things live](#where-things-live). On Windows, the install log lives inside the
+workspace and will be deleted with it; the default doctor bundle is already outside it. Confirm the copied files
+open before proceeding.
 
 This removes Astrid's workspace and projects. Run the uninstall line with `--delete-data` twice to check that the
 command is safe to repeat.
@@ -547,7 +550,8 @@ For each failure, send:
 Make a bundle at the end of a run too, even if everything passed.
 
 **Make a doctor bundle.** The installer line runs the doctor from the installed version, supplies the selected workspace
-root, and saves the bundle in the log folder. It works while Astrid is down.
+root, and saves the bundle on your Desktop (or in Downloads if there is no Desktop folder), then reveals its
+location. It works while Astrid is down.
 
 macOS and Linux:
 
@@ -561,14 +565,16 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --doctor
 ```
 
-Look for `Astrid doctor bundle: <path>` and attach that ZIP. By default it writes `doctor.zip` in the log folder; the
-line can also take an explicit bundle path after `--doctor`. An unhealthy Runtime still produces a bundle, and the
+Look for `Astrid doctor bundle: <path>` and attach that ZIP using the
+[Asking for help instructions](../setup/troubleshooting.md#asking-for-help). By default the file is called `astrid-doctor.zip`; the line can also
+take an explicit bundle path after `--doctor`. An unhealthy Runtime still produces a bundle, and the
 installer line succeeds when the bundle is written. If no installed version exists (for example, the install never
 finished or Astrid was uninstalled), attach the install log from the table above instead.
 
 **What the bundle holds:** `status.json` (Astrid's health check, with secrets and most paths removed), `versions.json`,
-`install-manifest.json` (version numbers, source revisions, and selected FFmpeg/FFprobe paths and provenance), and `logs/` (the last 256 KB of each Astrid log,
-1 MB at most). Passwords, tokens, keys and credentials are removed from the logs. File paths in the logs stay.
+`install-manifest.json` (version numbers, source revisions, and selected FFmpeg/FFprobe tools and provenance), and
+`logs/` (the last 256 KB of each installer log, 1 MB at most). Passwords, tokens, keys, credentials, home paths and
+user names are redacted. Chat and service logs are excluded.
 
 ## Known gaps
 
@@ -595,10 +601,9 @@ These are known. Report what you see, but don't stop testing for them.
   reach the service.
 - The installer has not been run natively on Windows. Windows PowerShell 5.1 in particular remains unverified; if
   the line fails or its window closes, report the exact message and attach the install log.
-- Coming back after the Runtime is killed relies on Task Scheduler's restart on failure. It hasn't been confirmed.
-- Windows may retain the bootstrap directory while an Astrid terminal is open. If uninstall prints
-  `After this line returns, run: Remove-Item …`, wait for the installer to exit, close Astrid terminals, run each
-  printed cleanup command, and check that those paths are gone.
+- Coming back after the Runtime is killed uses Task Scheduler's repeating sign-in trigger. It needs native confirmation.
+- Uninstall removes the external `%LOCALAPPDATA%\Astrid Installer` folder after exit. Confirm that the program and
+  installer folders both disappear without a manual cleanup command.
 - Windows on ARM cannot install: the pinned downloads have no Bun or FFmpeg build for it. The install line
   refuses before downloading the bootstrap environment.
 - A PC whose execution policy is set by the organization stops with a message asking the administrator to allow the installer.
@@ -636,5 +641,5 @@ These are known. Report what you see, but don't stop testing for them.
 
 - Without a systemd user session (some minimal or container setups), nothing restarts Astrid after a crash or at
   sign-in. The line is the restart.
-- Astrid restarts by itself only after a crash. If it's stopped normally (for example `kill` without `-9`), it stays
-  stopped until the line runs or you sign in again. macOS always restarts it.
+- With a systemd user session, Astrid restarts after a crash or an ordinary process kill. Stopping the unit with
+  `systemctl --user stop astrid.service` keeps it stopped until the install line runs again.

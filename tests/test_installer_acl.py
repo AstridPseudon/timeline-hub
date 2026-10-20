@@ -62,7 +62,7 @@ def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, mo
     unlock = Mock()
     monkeypatch.setattr(platform, "unlock_file", unlock)
 
-    args = ["--repair", "--root", str(root)] if custom_root else ["--repair"]
+    args = ["--root", str(root)] if custom_root else []
     assert cli.main(args) == 0
     lock = local / "Astrid Installer" / "astrid-install.lock"
     assert admitted == [log_dir, lock.parent, root]
@@ -105,7 +105,7 @@ def test_windows_installer_does_not_bypass_existing_directory_validation(tmp_pat
     installer = Mock()
     monkeypatch.setattr(cli, "Installer", installer)
 
-    assert cli.main(["--repair", "--root", str(root)]) == 1
+    assert cli.main(["--root", str(root)]) == 1
     installer.assert_not_called()
     assert not (root / "install.json").exists()
 
@@ -128,8 +128,7 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path
 
     monkeypatch.setattr(windows_security, "private_directory", private_directory)
     backend = Backend(root, platform.log_dir() / "install.log", local / "Astrid Installer/bootstrap/uv.exe")
-    backend.service = SimpleNamespace(recorded=lambda: {}, registry=root / "service.json",
-                                     selection=local / "astrid-install.json", system="win32", say=print,
+    backend.service = SimpleNamespace(recorded=lambda: {}, selection=local / "astrid-install.json", system="win32", say=print,
                                      home=Path.home())
     monkeypatch.setattr(backend, "existing", Mock(return_value=None))
     monkeypatch.setattr(backend, "stop", Mock())
@@ -191,7 +190,7 @@ def test_windows_refuses_selected_roots_containing_installer_lock(tmp_path, monk
     installer = Mock()
     monkeypatch.setattr(cli, "Installer", installer)
 
-    assert cli.main(["--repair", "--root", str(root), "--data-root", str(data)]) == 1
+    assert cli.main(["--root", str(root), "--data-root", str(data)]) == 1
     installer.assert_not_called()
     assert not (root / "install.json").exists()
     assert f"contains protected installer state at {state}" in (platform.log_dir() / "install.log").read_text()
@@ -213,7 +212,7 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy
     monkeypatch.setattr(platform, "lock_file", Mock())
     monkeypatch.setattr(platform, "unlock_file", Mock())
 
-    assert cli.main(["--repair", "--root", str(tmp_path / "program")]) == 0
+    assert cli.main(["--root", str(tmp_path / "program")]) == 0
     original = default_program_root(Path.home(), system).parent / "astrid-install.lock"
     assert original.is_file()
     assert not (tmp_path / "logs" / "installer").exists()

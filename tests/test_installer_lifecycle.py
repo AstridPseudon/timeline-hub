@@ -248,7 +248,7 @@ def test_cli_rejects_positional_operations(operation):
     assert failure.value.code == 2
 
 
-@pytest.mark.parametrize("operation", ["repair", "update", "uninstall", "doctor"])
+@pytest.mark.parametrize("operation", ["update", "uninstall", "doctor"])
 def test_cli_accepts_operation_flags(operation):
     from astrid.installer.cli import parser
 
@@ -362,7 +362,7 @@ def _runtime_with_discovery(tmp_path, monkeypatch, pid, birth, *, foreground=Fal
     write_json(discovery, {"pid": pid, "process_birth_id": birth,
                            "runtime_instance_id": "test-instance"})
     if foreground:
-        write_json(backend.service.registry, {
+        write_json(backend.service.selection, {
             "owner": LABEL, "program_root": str(root), "data_root": str(data),
             "foreground": {"pid": pid, "birth_id": birth},
         })
@@ -401,7 +401,7 @@ def test_repair_skips_down_for_proven_dead_runtime_and_keeps_discovery(tmp_path,
         backend.verify = verify
         backend.open = lambda: calls.append("open")
 
-        Installer(backend.root, data, backend, say=lambda _line: None).run("repair", {})
+        Installer(backend.root, data, backend, say=lambda _line: None).run("install", {})
 
         assert calls == ["verify-unhealthy", "register", "start", "verify", "open"]
         assert discovery.is_file(), "Runtime startup must reconcile stale discovery"
@@ -528,3 +528,12 @@ def test_stop_treats_discovery_removed_during_read_as_stopped(tmp_path, monkeypa
 
     assert service_stopped == [True]
     assert not discovery.exists()
+
+
+def test_cli_rejects_removed_repair_flag():
+    from astrid.installer.cli import parser
+
+    with pytest.raises(SystemExit) as failure:
+        parser().parse_args(["--repair"])
+
+    assert failure.value.code == 2

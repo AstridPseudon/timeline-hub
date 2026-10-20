@@ -96,8 +96,8 @@ class Backend:
         record = self.service.recorded()
         if record.get("uninstalled"):
             return None
-        if record.get("version"):
-            version = Version.load(record["version"])
+        version = current(self.root)
+        if version is not None:
             return version if version.python.is_file() else None
         profile = data / "runtime" / "source-profiles" / "astrid.json"
         value = read_json(profile)
@@ -522,8 +522,8 @@ class Backend:
         if record:
             kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root", "chat_settings")
                     if key in record}
-            if "chat_settings" not in kept and isinstance(record.get("version"), dict):
-                version = Version.load(record["version"])
+            version = current(self.root)
+            if "chat_settings" not in kept and version is not None:
                 chat_cwd, options = self._selected_chat_settings(version, Path(record["data_root"]))
                 kept["chat_settings"] = {"ASTRID_ACP_CWD": str(chat_cwd), **options}
             write_json(self.service.selection, {**kept, "uninstalled": True})

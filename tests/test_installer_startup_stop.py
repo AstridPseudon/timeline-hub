@@ -26,7 +26,7 @@ def backend(tmp_path, monkeypatch):
 
 
 def record(manager, pid=123, birth="original"):
-    write_json(manager.registry, {"owner": LABEL, "foreground": {"pid": pid, "birth_id": birth}})
+    write_json(manager.selection, {"owner": LABEL, "foreground": {"pid": pid, "birth_id": birth}})
 
 
 @pytest.mark.parametrize("stale_discovery", [False, True])
@@ -128,7 +128,7 @@ def test_native_identity_drift_failure_is_not_retried_with_a_pid(tmp_path, monke
                                          {"pid": 123, "birth_id": ""}, {"pid": -1, "birth_id": "old"}])
 def test_incomplete_foreground_identity_fails_before_signaling(tmp_path, monkeypatch, foreground):
     value = backend(tmp_path, monkeypatch)
-    write_json(value.service.registry, {"owner": LABEL, "foreground": foreground})
+    write_json(value.service.selection, {"owner": LABEL, "foreground": foreground})
     signal = Mock()
     monkeypatch.setattr(platform, "signal_process", signal)
 

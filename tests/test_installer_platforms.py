@@ -14,7 +14,7 @@ import pytest
 
 from astrid.installer import service, tools
 from astrid.installer.backend import Backend, _legacy_omp_session_dir
-from astrid.installer.core import Version, read_json, write_json
+from astrid.installer.core import Version, read_json, switch, write_json
 
 FIXTURES = Path(__file__).parent / 'fixtures/installer'
 
@@ -139,7 +139,9 @@ def test_non_systemd_fallback_is_explicit_and_requests_runtime_start(tmp_path):
     manager.register(version, tmp_path / 'data')
     assert manager.start() is False
     assert lines == ['There is no systemd user service; run the install line to restart Astrid.']
-    assert read_json(manager.registry)['data_root'] == str(tmp_path / 'data')
+    assert read_json(manager.selection)['data_root'] == str(tmp_path / 'data')
+    assert 'version' not in read_json(manager.selection)
+    assert not (service.default_program_root(tmp_path, 'linux') / 'service.json').exists()
 
 
 def test_task_registration_is_no_profile_and_failure_is_not_hidden(tmp_path):
@@ -154,7 +156,7 @@ def test_task_registration_is_no_profile_and_failure_is_not_hidden(tmp_path):
 
 def test_service_record_preserves_an_unavailable_workspace_instead_of_falling_back(tmp_path):
     manager = service.Service(tmp_path / 'program', tmp_path / 'log', Mock(), home=tmp_path, system='linux')
-    write_json(manager.registry, {'owner': service.LABEL, 'data_root': str(tmp_path / 'offline-drive')})
+    write_json(manager.selection, {'owner': service.LABEL, 'data_root': str(tmp_path / 'offline-drive')})
     assert manager.recorded()['data_root'] == str(tmp_path / 'offline-drive')
 
 
@@ -526,7 +528,7 @@ def test_no_systemd_starts_foreground_runtime_supervisor_with_recorded_birth_ide
     assert str(manager.env_file) in spawn.call_args.args[0][3]
     assert spawn.call_args.kwargs['detached'] is True
     assert spawn.call_args.kwargs['env']['PATH'] == '/tools:/bin'
-    assert read_json(manager.registry)['foreground'] == {'pid': 123, 'birth_id': 'birth-123'}
+    assert read_json(manager.selection)['foreground'] == {'pid': 123, 'birth_id': 'birth-123'}
     # PID reuse cannot make uninstall wait for an unrelated process.
     monkeypatch.setattr(platform, 'process_identity', lambda pid: {'birth_id': 'new-owner'})
     manager.stop()
@@ -596,8 +598,10 @@ def test_uninstall_records_legacy_managed_chat_settings_before_program_removal(t
     profile = old_root / 'profile.json'
     profile.write_text(json.dumps({'service_declaration': str(declaration)}))
     old = Version(old_root, old_root / 'python', profile, {})
+    write_json(old_root / 'version.json', old.document())
+    switch(backend.root, old)
     record = {'owner': service.LABEL, 'program_root': str(backend.root),
-              'data_root': str(data), 'version': old.document()}
+              'data_root': str(data)}
     backend.service.selection = tmp_path / 'outside-program' / 'astrid-install.json'
     monkeypatch.setattr(backend.service, 'recorded', lambda: record)
     monkeypatch.setattr(backend.service, 'unregister', lambda: None)

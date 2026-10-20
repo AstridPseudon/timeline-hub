@@ -140,7 +140,6 @@ class Service:
                  system: str | None = None, say=print):
         self.root, self.log, self.run = root, log.with_name("runtime-service.log"), run
         self.home, self.system, self.say = home or Path.home(), system or sys.platform, say
-        self.registry = default_program_root(self.home, self.system) / "service.json"
         self.selection = install_selection(self.home, self.system)
         self.env_file = root / "service-env.json"
         if self.system == "darwin":
@@ -151,7 +150,7 @@ class Service:
             self.path = root / "task.xml"
 
     def recorded(self) -> dict:
-        record = {**read_json(self.selection), **read_json(self.registry)}
+        record = read_json(self.selection)
         if record and record.get("owner") != LABEL:
             raise ValueError("The service record belongs to another installer.")
         if record:
@@ -288,9 +287,8 @@ class Service:
             xml_path = str(self.path).replace("'", "''")
             self.powershell(f"Register-ScheduledTask -TaskName '{TASK}' -Xml ([IO.File]::ReadAllText('{xml_path}')) -Force | Out-Null")
         record = {"owner": LABEL, "program_root": str(self.root),
-                  "data_root": str(data), "version": version.document(),
+                  "data_root": str(data),
                   "service_settings": settings}
-        write_json(self.registry, record)
         write_json(self.selection, record)
 
     def settings(self) -> dict:
@@ -331,7 +329,7 @@ class Service:
         if identity is None:
             raise RuntimeError("The foreground Astrid Runtime exited before startup.")
         record = self.recorded()
-        write_json(self.registry, {**record, "foreground": {
+        write_json(self.selection, {**record, "foreground": {
             "pid": process.pid, "birth_id": identity["birth_id"]}})
 
     def unregister(self) -> None:
@@ -340,6 +338,5 @@ class Service:
         self.path.unlink(missing_ok=True)
         if self.system == "linux" and self.systemd():
             self.run(["systemctl", "--user", "daemon-reload"])
-        self.registry.unlink(missing_ok=True)
 
 

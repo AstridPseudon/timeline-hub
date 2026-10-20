@@ -105,7 +105,7 @@ def test_install_manifest_uses_recorded_custom_program_root(tmp_path, monkeypatc
         "token": "must-not-ship",
     }))
     default_root.mkdir()
-    (default_root / "service.json").write_text(json.dumps({
+    (default_root.parent / "astrid-install.json").write_text(json.dumps({
         "owner": astrid.installer.service.LABEL, "program_root": str(program_root),
     }))
     monkeypatch.setattr(astrid.installer.service, "default_program_root", lambda *_args: default_root)
