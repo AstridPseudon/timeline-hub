@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
-import { document as commandDocument, environment, scope } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { document as commandDocument, environment, scope, trimDocument } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
@@ -21,6 +21,10 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
+import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
+import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
+import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
+import { captureClipDeleteEdit, clipDeletePreview, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -70,8 +74,8 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
 }
 
-async function scoped() {
-  const env = await environment();
+async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
+  const env = existingEnv ?? await environment();
   installStorage(env);
   const initial = env.current();
   const snapshotWriteBlockedRef = { current: false };
@@ -98,6 +102,163 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('exposes only explicit parent deletion and fences capture, finish and submit behind earlier saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const current = hook.result.current.commit.data!;
+    expect(port).toBeDefined();
+    setLegacyClean(false);
+    expect(() => captureClipDeleteEdit(port, current, 'x', 'parent')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipDeleteEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipDeleteEdit(captured)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(captured.basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: clipDeletePreview('x') })).toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('keeps the local deletion preview when the command is refused', async () => {
+    const { env, hook } = await scoped();
+    env.setFault('conflict');
+    const current = hook.result.current.commit.data!;
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort!, current, 'x', 'parent')));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commit.data!.resolvedConfig.clips).toEqual([]);
+    expect(hook.result.current.commit.data!.dataLanes).toBe(current.dataLanes);
+    expect(hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: {
+      revisionId: current.head!.headRevisionId, publicationId: current.head!.headPublicationId } });
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x' });
+    hook.unmount();
+  });
+  it('exposes the scalar port and fences capture, finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: {}, clear: ['asset'] } as const;
+    setLegacyClean(false);
+    expect(() => captureClipScalarEdit(port, current, 'x', 'parent')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipScalarEdit(captured, { values: {}, clear: ['asset'] })).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, { values: {}, clear: ['asset'] });
+    setLegacyClean(false);
+    expect(() => port.submit({ command: prepared.command,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['asset'] }] } })).toThrow('earlier timeline saves');
+    expect(args.clear).toEqual(['asset']);
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('previews scalar ABSENT through the mounted hook and keeps the draft on command refusal without snapshot traffic', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    act(() => submitClipScalarEdit(captureClipScalarEdit(hook.result.current.commands.clipScalarPort!,
+      hook.result.current.commit.data!, 'x', 'parent'), { values: {}, clear: ['asset'] }));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data!.config.clips[0]).not.toHaveProperty('asset');
+    expect(hook.result.current.commit.data!.resolvedConfig.clips[0]).not.toHaveProperty('asset');
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set', select: 'parent/clip:x',
+      args: { values: {}, clear: ['asset'] }, expect: { 'parent/clip:x::asset': { state: 'absent' } } });
+    expect(env.calls.filter((call) => call.method !== 'GET' && call.path !== '/v1/handshake')
+      .every((call) => call.path.endsWith('/commit'))).toBe(true);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('fences discrete params capture, finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipParamsPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: { optional: null }, clear: ['old'] };
+    setLegacyClean(false);
+    expect(() => captureClipParamsEdit(port, current, 'x')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipParamsEdit(port, current, 'x');
+    setLegacyClean(false);
+    expect(() => submitClipParamsEdit(captured, args)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command, previewParams } = port.finish(captured.basis, args);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { params: previewParams } },
+    ] } })).toThrow('earlier timeline saves');
+    expect(args).toEqual({ values: { optional: null }, clear: ['old'] });
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('previews only raw params with save:false and awaits acknowledgement through the same flush', async () => {
+    const raw = commandDocument();
+    for (const clips of [raw.parent_revision.payload.clips, raw.parent_revision.payload.config.clips]) {
+      (clips as Array<Record<string, unknown>>)[0].params = { old: null, opaque: { keep: [false, {}, ''] } };
+    }
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(raw));
+    const before = hook.result.current.commit.dataRef.current!;
+    const gate = env.pause();
+    const acknowledged = vi.fn();
+    let flushing!: Promise<void>;
+    act(() => {
+      submitClipParamsEdit(captureClipParamsEdit(hook.result.current.commands.clipParamsPort, before, 'x'),
+        { values: { 'literal.key': null }, clear: ['old'] });
+      flushing = hook.result.current.commands.flush().then(acknowledged);
+    });
+    await waitFor(() => expect(env.commits()).toHaveLength(1));
+    const preview = hook.result.current.commit.dataRef.current!;
+    expect(preview.config.clips[0]).toEqual({ ...before.config.clips[0],
+      params: { 'literal.key': null, opaque: { keep: [false, {}, ''] } } });
+    expect(preview.editProjection).toMatchObject({ kind: 'local', base: { revisionId: 'r0', publicationId: 'p0' } });
+    expect(acknowledged).not.toHaveBeenCalled();
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set-params',
+      args: { values: { 'literal.key': null }, clear: ['old'] } });
+    await act(async () => { gate.resolve(); await flushing; });
+    expect(acknowledged).toHaveBeenCalledOnce();
+    expect(hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'accepted', head: { publicationId: 'p1' } });
+    await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+    expect(hook.result.current.commit.data!.config.clips[0]).toEqual(before.config.clips[0]);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('recovers queued move → discrete params with exact pending bytes and no snapshot save', async () => {
+    const env = await environment();
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => {
+      expect(first.service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      submitClipParamsEdit(captureClipParamsEdit(first.hook.result.current.commands.clipParamsPort,
+        first.hook.result.current.commit.dataRef.current!, 'x'), { values: { optional: null }, clear: ['missing'] });
+    });
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    expect(first.hook.result.current.commit.data!.config.clips[0]).toMatchObject({ at: 5, params: { optional: null } });
+    first.hook.unmount();
+    const second = await mounted(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.status).toBe('recovery'));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(env.commits()[1]).toEqual(original);
+    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ op: 'clip.set-params',
+      args: { values: { optional: null }, clear: ['missing'] }, expect: { 'parent/clip:x::params': { state: 'absent' } } }] });
+    expect(second.hook.result.current.commit.data!.config.clips[0]).toMatchObject({ at: 5, params: { optional: null } });
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    for (const mountedHook of [first, second]) {
+      expect(mountedHook.snapshotSaves).not.toHaveBeenCalled();
+      expect(mountedHook.saveTimeline).not.toHaveBeenCalled();
+      expect(mountedHook.saveTimelineAtHead).not.toHaveBeenCalled();
+    }
+    second.hook.unmount();
+  });
   it('initializes a clean mounted save hook with a verified accepted projection', async () => {
     const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });
@@ -444,6 +605,109 @@ describe('mounted timeline command session', () => {
     await act(async () => { await hook.result.current.commands.retry(); });
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);
     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p2');
+    hook.unmount();
+  });
+});
+
+
+describe('mounted parent trim port', () => {
+  it('shares the move outbox, preserves source units and opaque rows, and never schedules a snapshot save', async () => {
+    const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(trimDocument()));
+    env.setFault('lost');
+    let otherBefore: unknown;
+    act(() => {
+      expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      const port = hook.result.current.commands.clipTrimPort;
+      const current = hook.result.current.commit.dataRef.current!;
+      otherBefore = structuredClone(current.config.clips.find((clip) => clip.id === 'other'));
+      submitClipTrimEdit(captureClipTrimEdit(port, current, 'x'), { in_s: 1.0001, out_s: 5 });
+    });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const current = hook.result.current.commit.data!;
+    expect(current.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 1.0001, to: 5, hold: 3.9999, speed: 2,
+      app: { astrid: { fixed_start: true, opaque: [null, false] }, 'org.example': { literal: 'x', clear: null } } });
+    expect(current.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('for');
+    expect(current.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('until');
+    expect(current.config.clips.find((clip) => clip.id === 'other')).toEqual(otherBefore);
+    const original = structuredClone(env.commits()[0]);
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()[1]).toEqual(original);
+    expect(env.commits()[2].body!.commands[0]).toMatchObject({ op: 'clip.trim',
+      args: { in_s: 1.0001, out_s: 5 }, expect: { 'parent/clip:x::from': { state: 'present', value: 2 } } });
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 1.0001, to: 5, hold: 3.9999, speed: 2 });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 2, to: 6, hold: 17, speed: 2 });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('recovers the exact native trim preview and pending request after a hook remount', async () => {
+    const env = await environment(trimDocument());
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => submitClipTrimEdit(captureClipTrimEdit(first.hook.result.current.commands.clipTrimPort,
+      first.hook.result.current.commit.data!, 'x'), { in_s: 9.8999, out_s: 10 }));
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    const second = await mounted(env);
+    expect(second.hook.result.current.commands.state.status).toBe('recovery');
+    env.setFault('busy');
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(second.hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ from: 9.8999, to: 10, hold: 0.1001, speed: 2 });
+    expect(second.hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('for');
+    expect(env.commits()[1]).toEqual(original);
+    env.setFault(null);
+    await act(async () => { await second.hook.result.current.commands.retry(); });
+    expect(env.commits()[2]).toEqual(original);
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    expect(second.saveTimeline).not.toHaveBeenCalled();
+    expect(second.saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(second.snapshotSaves).not.toHaveBeenCalled();
+    second.hook.unmount();
+  });
+  it('fences trim capture, finish and submission behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped(await environment(trimDocument()));
+    const port = hook.result.current.commands.clipTrimPort!;
+    const current = hook.result.current.commit.data!;
+    setLegacyClean(false);
+    expect(() => captureClipTrimEdit(port, current, 'x')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipTrimEdit(port, current, 'x');
+    const args = { in_s: 1, out_s: 5 };
+    setLegacyClean(false);
+    expect(() => submitClipTrimEdit(captured, args)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, args);
+    setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    expect(args).toEqual({ in_s: 1, out_s: 5 });
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('keeps the exact local preview when storage fails and saves through the same session after retry', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(trimDocument()));
+    const open = env.factory.open.bind(env.factory);
+    env.factory.open = () => { throw new Error('disk full'); };
+    act(() => submitClipTrimEdit(captureClipTrimEdit(hook.result.current.commands.clipTrimPort,
+      hook.result.current.commit.data!, 'x'), { in_s: 1, out_s: 5 }));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('error'));
+    expect(hook.result.current.commands.state.error).toContain('disk full');
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ from: 1, to: 5, hold: 4, speed: 2 });
+    expect(env.commits()).toHaveLength(0);
+    env.factory.open = open;
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()).toHaveLength(1);
+    expect(hook.result.current.commands.state.status).toBe('saved');
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
     hook.unmount();
   });
 });

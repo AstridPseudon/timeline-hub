@@ -1,14 +1,28 @@
+import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
+import { captureClipDelete, executeClipDelete, finishClipDelete } from './clipDeleteCapture.ts';
+import { clipDeletePreview, type ClipDeleteCapturePort } from './clipDeleteGesture.ts';
+import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
+import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
+import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
+import { captureParentClipAdd, executeParentClipAdd, finishParentClipAdd } from './parentClipAddCapture.ts';
+import { parentClipAddPreview, type ParentClipAddCapturePort } from './parentClipAddGesture.ts';
+import { stableOutputIdentity } from '../data/shotComposition.ts';
+import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
+import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
+import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
 import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
-import { authoringBundleFromDocument } from './authoringBundle.ts';
+import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { AuthoredState, MoveRecording, assertFiniteJson, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureTrackCreate, executeTrackCreate, finishTrackCreate, type TrackCreateArgs } from './trackCreateCapture.ts';
+import { trackCreatePreview, type TrackCreateCapturePort } from './trackCreateGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -312,6 +326,326 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const parentClipAddPort: ParentClipAddCapturePort = {
+    capture({ row, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.config.clips.some((clip) => clip.id === row.id)
+        || current.resolvedConfig.clips.some((clip) => clip.id === row.id)) {
+        throw new Error('Parent clip.add identity is already displayed');
+      }
+      return freezeJson(json({ ...captureParentClipAdd(bundle, 'parent', row), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ParentClipAddCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during parent clip.add');
+      const original = finishParentClipAdd(basis);
+      // Re-execute original collection/read/created claims on current raw bytes, never recapture after an ACK.
+      const result = executeParentClipAdd(bundle, original.command);
+      const preview = parentClipAddPreview(result.command.args.row as Record<string, JSON>);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.add' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Parent clip.add was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Parent clip.add requires its exact whole-row preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const clipDeletePort: ClipDeleteCapturePort = {
+    resolveOwner({ clipId, current }) {
+      assertReady();
+      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
+        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Delete requires one unambiguous raw clip identity');
+      const select = resolveOwnedClipRef(clipId, matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined,
+        undefined, 'Delete requires a matching raw parent or validated occurrence binding');
+      return select.slice(0, select.lastIndexOf('/')) as 'parent' | `occurrence:${string}`;
+    },
+    capture({ clipId, current, ownerRef }) {
+      if (ownerRef !== 'parent' || clipDeletePort.resolveOwner({ clipId, current }) !== 'parent') {
+        throw new Error('Delete requires one raw parent clip identity');
+      }
+      // Parent ownership is an explicit request; authored app.canonical JSON is never authority.
+      return freezeJson(json({ ...captureClipDelete(bundle, `parent/clip:${clipId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipDeleteCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the delete');
+      const original = finishClipDelete(basis);
+      // Verify original whole-row and dependency claims without refreshing them after an ACK.
+      const result = executeClipDelete(bundle, original.command);
+      const preview = clipDeletePreview(result.command.select!.slice('parent/clip:'.length));
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.delete' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Delete was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Delete requires its exact same-clip removal preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
+  function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
+    requestedOwner: string | undefined, refusal: string): string {
+    const parentRef = `parent/clip:${clipId}`;
+    const raw = new AuthoredState(bundle);
+    // Parent app fields are authored opaque data, not projected ownership facts.
+    const ownerRef = requestedOwner ?? (
+      !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true) ? 'parent' : identity?.ownerRef);
+    const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
+    if (typeof ownerRef !== 'string' || typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
+      || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
+      || !raw.entity(select, true)) {
+      throw new Error(refusal);
+    }
+    if (ownerRef !== 'parent') {
+      if (!identity || typeof identity.occurrenceId !== 'string'
+        || identity.ownerRef !== ownerRef || ownerRef !== `occurrence:${identity.occurrenceId}`
+        || typeof identity.rawClipId !== 'string' || select !== `${ownerRef}/clip:${identity.rawClipId}`
+        // Confirm the projector's output ID only after binding the explicit owner.
+        || clipId !== `${identity.occurrenceId}:${identity.rawClipId}` || raw.entity(parentRef, true)
+        || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
+        throw new Error(refusal);
+      }
+      const occurrence = raw.occurrence(ownerRef);
+      const source = (bundle as AuthoringBundle).source_mapping.shots[String(occurrence.shot_id)];
+      if (!source || identity.shotId !== source.shot_id || identity.revisionId !== source.revision_id
+        || identity.internalTimelineRevisionId !== source.internal_timeline_revision_id
+        || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
+        throw new Error(refusal);
+      }
+    }
+    return select;
+  }
+  const trackCreatePort: TrackCreateCapturePort = {
+    capture({ row, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.config.tracks?.some((track) => track.id === row.id)
+        || current.resolvedConfig.tracks.some((track) => track.id === row.id)) {
+        throw new Error('track.create identity is already displayed');
+      }
+      return freezeJson(json({ ...captureTrackCreate(bundle, { row }), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<TrackCreateCapturePort['capture']>;
+    },
+    finish(basis, args: TrackCreateArgs) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during track.create');
+      const original = finishTrackCreate(basis, args);
+      // Re-execute the captured native claims on current authored bytes; never recapture after an ACK.
+      const result = executeTrackCreate(bundle, original.command);
+      const preview = trackCreatePreview(result.command.args.row as TrackCreateArgs['row']);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'track.create' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('track.create was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('track.create requires its exact whole-row preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const clipParamsPort: ClipParamsCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1 || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
+        throw new Error('Clip parameters require one unambiguous raw clip identity');
+      }
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, undefined, 'Clip parameters require explicit occurrence ownership or a matching raw parent');
+      const basis = { bundle: copy(bundle), select, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } };
+      assertFiniteJson(basis);
+      return freezeJson(json(basis)) as ReturnType<ClipParamsCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the parameters edit');
+      const original = basis.bundle as AuthoredBundle;
+      const result = finishClipParams(captureClipParams(original, basis.select as string, args), args);
+      const next = new MoveRecording(bundle, result.command);
+      // Final keys and all native claims come only from the original snapshot.
+      if (!result.command.reads!.every((read) => next.state.matches(read.ref, read.path, read.state))) {
+        throw new Error('Clip parameters changed during the parameters edit');
+      }
+      for (const write of result.record.writes) {
+        if (!next.state.matches(write.ref, write.path, write.before)) {
+          throw new Error('Clip parameters changed during the parameters edit');
+        }
+        // Unchanged writes still claim the field; absent clears retain native ancestors.
+        if (!equal(write.before, write.after)) next.state.set(write.ref, write.path, write.after);
+      }
+      next.compile();
+      const beforeParams = new AuthoredState(bundle).get(result.command.select!, ['params']);
+      const afterParams = next.state.get(result.command.select!, ['params']);
+      const previewParams = afterParams.state === 'present' && object(afterParams.value) && !equal(beforeParams, afterParams)
+        ? afterParams.value : null;
+      const preview: TimelinePatch | null = previewParams === null ? null : { version: 1, operations: [{ op: 'clip.update', target: basis.clipId as string,
+        payload: { params: copy(previewParams) } }] };
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: next.state.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, previewParams: copy(previewParams) };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.set-params' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Clip parameters were not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Clip parameters require one params-only preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
+  const clipScalarPort: ClipScalarCapturePort = {
+    capture({ clipId, ownerRef: requestedOwner, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Scalar edit requires one raw clip identity');
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, requestedOwner, 'Scalar edit requires an explicit matching raw clip owner');
+      return json({ bundle, select, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipScalarCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the scalar edit');
+      const original = basis as unknown as { bundle: AuthoredBundle; select: string; clipId: string; localBasis: OutboxBasis };
+      const command = captureClipSet(original.bundle, original.select, args);
+      // Re-execute the original claims on current raw bytes; an ACK never refreshes them.
+      const result = executeClipSet(bundle, command);
+      prepared.set(JSON.stringify(command), { payload: {
+        commands: [command], before: bundle, after: result.bundle, preview: clipScalarPreview(original.clipId, args),
+      }, generation: localGeneration, basis: original.localBasis });
+      return { command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Scalar edit was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Scalar edit requires its exact leaf-only preview');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
+  const clipTrimPort: ClipTrimCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      const identity = matches[0]?.app?.canonical as { clipRef?: string; occurrenceId?: string } | undefined;
+      if (matches.length !== 1 || identity?.occurrenceId !== undefined
+        || (identity?.clipRef !== undefined && identity.clipRef !== `parent/clip:${clipId}`)) {
+        throw new Error('Trim requires one literal parent clip identity');
+      }
+      return json({ ...captureClipTrim(bundle, `parent/clip:${clipId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipTrimCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the trim');
+      if (!basis.bundle || !basis.command || !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
+        .every((key) => Object.prototype.hasOwnProperty.call(basis.command, key))) {
+        throw new Error('Incomplete clip.trim basis');
+      }
+      const original = executeClipTrim(basis.bundle as AuthoredBundle,
+        { ...copy(basis.command as EditCommand), args: { ...args, in_s: args.in_s ?? null, out_s: args.out_s ?? null } });
+      // Verify original claims on today's closure; never replace disjoint remote fields with the captured bundle.
+      const result = executeClipTrim(bundle, original.command);
+      const payload: Record<string, unknown> = {};
+      for (const write of result.record.writes) {
+        if (write.after.state === 'present') payload[write.path[0]] = copy(write.after.value);
+        else if (write.before.state === 'present') {
+          throw new Error('Exact trim intent-container removal needs the session scalar clear preview');
+        }
+      }
+      const source = new AuthoredState(result.bundle).entity(result.command.select!)!;
+      // A preceding move preview may have serialized a held clip without its source speed.
+      if ('speed' in source) payload.speed = copy(source.speed);
+      const preview: TimelinePatch = { version: 1, source: 'clip.trim', operations: [
+        { op: 'clip.update', target: result.command.select!.slice('parent/clip:'.length), payload },
+      ] };
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.trim' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Trim was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Trim requires its native source-window preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
   async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
     const label = keepLabel ? labelIntent() : undefined;
@@ -416,6 +750,12 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    clipTrimPort,
+    clipScalarPort,
+    clipParamsPort,
+    parentClipAddPort,
+    clipDeletePort,
+    trackCreatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

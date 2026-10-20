@@ -1,3 +1,4 @@
+import { useClipScalarControl } from '@/tools/video-editor/hooks/useClipScalarControl.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
@@ -232,6 +233,8 @@ function PropertiesPanelComponent({
     setPrecisionEnabled,
     setSelectedTrackId,
     applyEdit,
+    clipParams,
+    clipTrim,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
@@ -243,6 +246,7 @@ function PropertiesPanelComponent({
     addVariantAsGenerationAfterClip,
     isAddingVariantAsGenerationPending,
   } = hostObservations;
+  const captureScalarEdit = useClipScalarControl(selectedClip?.id);
   const prevClipIdRef = useRef(selectedClip?.id);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
@@ -551,6 +555,10 @@ function PropertiesPanelComponent({
             precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
+            onScalarEditStart={captureScalarEdit}
+            clipParamsPort={clipParams}
+            clipTrimPort={clipTrim}
+            current={data ?? undefined}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
             onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}

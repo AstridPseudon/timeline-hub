@@ -1,3 +1,4 @@
+import type { CapturedClipScalarEdit } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import { getPinnedTimelineElement } from '@/tools/video-editor/runtime/pinned-element-source.ts';
 import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import { lazy, Suspense, useCallback, useState, useSyncExternalStore, type ComponentType } from 'react';
@@ -12,7 +13,8 @@ import type { ClipTypeDescriptor } from '@/tools/video-editor/clip-types/defineC
 import { KeyframeInspector } from '@/tools/video-editor/components/KeyframeInspector/KeyframeInspector';
 import type { EffectResource } from '@/tools/video-editor/hooks/useEffectResources.ts';
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import type { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
 import type {
   ResolvedTimelineClip,
@@ -34,6 +36,10 @@ const LazyEffectCreatorPanel = lazy(() =>
 export function ClipEffectsTab({
   clip,
   onChange,
+  onScalarEditStart,
+  clipParamsPort,
+  current,
+  clipId,
   effectResources,
   clipDescriptor,
   isClipTypeRegistered = false,
@@ -53,6 +59,10 @@ export function ClipEffectsTab({
 }: {
   clip: ResolvedTimelineClip;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onScalarEditStart?: () => CapturedClipScalarEdit;
+  clipParamsPort?: ClipParamsCapturePort;
+  current?: TimelineData;
+  clipId?: string;
   effectResources: VideoEditorEffectCatalog;
   clipDescriptor: ClipTypeDescriptor | undefined;
   isClipTypeRegistered?: boolean;
@@ -116,6 +126,9 @@ export function ClipEffectsTab({
         params={clip.params}
         registry={registry}
         hideEmptyState={hasActiveAstridElementParams}
+        clipParamsPort={clipParamsPort}
+        current={current}
+        clipId={clipId}
         onChange={(nextParams) => onChange({ params: nextParams })}
       />
     );
@@ -161,7 +174,7 @@ export function ClipEffectsTab({
           setCreatorOpen={handleCreatorOpenChange}
         />
         <ClipShaderSection clip={clip} onChange={onChange} />
-        <ClipTransitionSection clip={clip} onChange={onChange} />
+        <ClipTransitionSection key={clip.id} clip={clip} onChange={onChange} onScalarEditStart={onScalarEditStart} />
       </div>
       {isEffectLayer && !clip.continuous && (
         <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-sm text-foreground">

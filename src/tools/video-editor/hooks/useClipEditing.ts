@@ -1,3 +1,4 @@
+import type { ClipDeleteCapturePort } from '../commands/clipDeleteGesture.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -27,6 +28,7 @@ import type { ClipEditingContext } from './clip-editing/index.ts';
 import type { DeleteClipOptions } from './clip-editing/types.ts';
 
 export interface UseClipEditingArgs {
+  clipDeletePort?: ClipDeleteCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
@@ -62,6 +64,7 @@ export type { DeleteClipOptions } from './clip-editing/types.ts';
 const PINNED_GROUP_EDIT_MESSAGE = 'Use Delete shot from the shot menu';
 
 export function useClipEditing({
+  clipDeletePort,
   dataRef,
   resolvedConfig,
   selectedClipId,
@@ -283,6 +286,7 @@ export function useClipEditing({
   }, [applyRowsEdit, dataRef, selectedClipId]);
 
   const clipEditingContext: ClipEditingContext = {
+    clipDeletePort,
     dataRef,
     resolvedConfig,
     selectedClipId,

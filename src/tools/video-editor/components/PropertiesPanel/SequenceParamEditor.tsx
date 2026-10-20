@@ -3,6 +3,10 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { Input } from '@/shared/components/ui/input.tsx';
 import { Textarea } from '@/shared/components/ui/textarea.tsx';
 import { getRegisteredClipTypeDescriptor, getSequenceDescriptorParams } from '@/tools/video-editor/clip-types/runtime.ts';
+import { captureClipParamsEdit, submitClipParamsEdit } from '@/tools/video-editor/commands/clipParamsGesture.ts';
+import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
+import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { AvailableSequenceMetadata } from '@/tools/video-editor/sequences/registry.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { getAssetDisplayReference } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -14,6 +18,10 @@ type SequenceParamEditorProps = {
   registry: ResolvedTimelineConfig['registry'];
   hideEmptyState?: boolean;
   onChange: (params: Record<string, unknown>) => void;
+  /** Native discrete params ingress. Omit for detached presentation-only stories. */
+  clipParamsPort?: ClipParamsCapturePort;
+  current?: TimelineData;
+  clipId?: string;
 };
 
 const PARAMS_WITH_TEXTAREA = new Set(['subtitle', 'caption', 'detail', 'action', 'note']);
@@ -105,11 +113,13 @@ function JsonParamField({
   value,
   onCommit,
   onClear,
+  clearDisabled = false,
 }: {
   param: NonNullable<ReturnType<typeof getSequenceDescriptorParams>[number]>;
   value: unknown;
   onCommit: (value: unknown) => void;
   onClear: () => void;
+  clearDisabled?: boolean;
 }) {
   const serialized = value === undefined ? '' : JSON.stringify(value, null, 2);
   const [draft, setDraft] = useState(serialized);
@@ -160,7 +170,9 @@ function JsonParamField({
       />
       {error && <div role="alert" className="text-xs text-destructive">{error}</div>}
       {!param.required && value !== undefined && (
-        <Button type="button" size="sm" variant="ghost" onClick={onClear}>Clear</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onClear} disabled={clearDisabled}>
+          Clear
+        </Button>
       )}
     </div>
   );
@@ -183,7 +195,32 @@ export function SequenceParamEditor({
   registry,
   hideEmptyState = false,
   onChange,
+  clipParamsPort,
+  current,
+  clipId,
 }: SequenceParamEditorProps) {
+  const [discreteError, setDiscreteError] = useState<string | null>(null);
+  const nativeContext = clipParamsPort !== undefined || current !== undefined || clipId !== undefined;
+  const nativeAvailable = Boolean(clipParamsPort && current && clipId);
+
+  const submitDiscrete = (key: string, value: unknown, clear = false): boolean => {
+    if (!nativeContext) return false;
+    if (!nativeAvailable || !clipParamsPort || !current || !clipId) {
+      setDiscreteError('Native clip parameter editing is unavailable; the value was not changed.');
+      return false;
+    }
+    try {
+      const captured = captureClipParamsEdit(clipParamsPort, current, clipId);
+      submitClipParamsEdit(captured, clear
+        ? { values: {}, clear: [key] }
+        : { values: { [key]: value as JSON }, clear: [] });
+      setDiscreteError(null);
+      return true;
+    } catch (error) {
+      setDiscreteError(error instanceof Error ? error.message : String(error));
+      return false;
+    }
+  };
   const resolvedClipType = clipType ?? metadata?.clipType;
   const descriptor = resolvedClipType
     ? getRegisteredClipTypeDescriptor(resolvedClipType)
@@ -208,6 +245,12 @@ export function SequenceParamEditor({
         <div className="text-sm font-medium text-foreground">{label}</div>
         <div className="text-xs text-muted-foreground">{description}</div>
       </div>
+      {nativeContext && !nativeAvailable && (
+        <div role="alert" className="text-xs text-muted-foreground">
+          Native clip parameter editing is unavailable for this clip; discrete choices are disabled.
+        </div>
+      )}
+      {discreteError && <div role="alert" className="text-xs text-destructive">{discreteError}</div>}
 
       {sequenceParams.map((param) => {
         const value = params?.[param.key] ?? param.defaultValue ?? (param.kind === 'asset-list' ? [] : '');
@@ -235,9 +278,13 @@ export function SequenceParamEditor({
               <Input
                 value={uniqueKeys.join(', ')}
                 placeholder="asset-key-a, asset-key-b"
+                disabled={nativeContext && !nativeAvailable}
                 onChange={(event) => {
                   const nextKeys = parseAssetKeysInput(event.target.value, registry);
-                  onChange(setParam(params, param.key, typeof param.maxItems === 'number' ? nextKeys.slice(0, param.maxItems) : nextKeys));
+                  const limitedKeys = typeof param.maxItems === 'number' ? nextKeys.slice(0, param.maxItems) : nextKeys;
+                  if (!submitDiscrete(param.key, limitedKeys)) {
+                    if (!nativeContext) onChange(setParam(params, param.key, limitedKeys));
+                  }
                 }}
               />
               {keys.length > 0 && (
@@ -263,7 +310,12 @@ export function SequenceParamEditor({
             param={param}
             value={params?.[param.key] ?? param.defaultValue}
             onCommit={(nextValue) => onChange(setParam(params, param.key, nextValue))}
-            onClear={() => onChange(removeParam(params, param.key))}
+            clearDisabled={nativeContext && !nativeAvailable}
+            onClear={() => {
+              if (!submitDiscrete(param.key, undefined, true)) {
+                if (!nativeContext) onChange(removeParam(params, param.key));
+              }
+            }}
           />;
         }
 
