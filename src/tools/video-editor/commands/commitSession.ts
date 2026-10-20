@@ -9,6 +9,8 @@ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.t
 import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
+import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -284,6 +286,49 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const clipScalarPort: ClipScalarCapturePort = {
+    capture({ clipId, ownerRef, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Scalar edit requires one raw clip identity');
+      const identity = matches[0].app?.canonical as { clipRef?: string | null } | undefined;
+      const select = identity ? identity.clipRef : `parent/clip:${clipId}`;
+      if (typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
+        || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
+        || !new AuthoredState(bundle).entity(select)) {
+        throw new Error('Scalar edit requires an explicit matching raw clip owner');
+      }
+      return json({ bundle, select, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipScalarCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the scalar edit');
+      const original = basis as unknown as { bundle: AuthoredBundle; select: string; clipId: string; localBasis: OutboxBasis };
+      const command = captureClipSet(original.bundle, original.select, args);
+      // Re-execute the original claims on current raw bytes; an ACK never refreshes them.
+      const result = executeClipSet(bundle, command);
+      prepared.set(JSON.stringify(command), { payload: {
+        commands: [command], before: bundle, after: result.bundle, preview: clipScalarPreview(original.clipId, args),
+      }, generation: localGeneration, basis: original.localBasis });
+      return { command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Scalar edit was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Scalar edit requires its exact leaf-only preview');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
   async function claim(owner?: string) {
     if (stopped) throw new Error('Timeline command session is closed');
     if (lifetime) throw new Error('An outbox is already claimed');
@@ -340,6 +385,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     trackLabelPort,
+    clipScalarPort,
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');
