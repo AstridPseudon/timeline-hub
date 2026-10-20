@@ -2875,8 +2875,18 @@ def _kernel_invoke(
     # Runtime publishes anything. Leave its inline snapshot for that publisher.
     capture_snapshot = snapshot_context.get("capture_snapshot")
     capture_authority = capture_snapshot.get("metadata", {}).get("capture_authority", {}) if isinstance(capture_snapshot, Mapping) else {}
+    # A working copy whose candidate was not forwarded cannot be certified: it
+    # is sent as explicit CAS-only data, never as a revision or working copy.
+    candidate_forwarded = isinstance(spec_inputs.get("authoring_preview"), Mapping)
+
+    def uncertified(snapshot: Any) -> bool:
+        metadata = snapshot.get("metadata") if isinstance(snapshot, Mapping) else None
+        return (isinstance(metadata, Mapping) and isinstance(metadata.get("working_copy"), Mapping)
+                and not candidate_forwarded)
+
     runtime_capture = (str(capability.id) == "rendering.timeline_visualize"
-                       and bool(capture_authority.get("parent_revision_id")))
+                       and bool(capture_authority.get("parent_revision_id"))
+                       and not uncertified(capture_snapshot))
     if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot and not runtime_capture:
         remote = getattr(_client, "_remote", _client)
         transport = getattr(remote, "_transport", remote)
@@ -2895,6 +2905,9 @@ def _kernel_invoke(
                 raise CapabilityInvocationError("Runtime snapshot object digest differs from prepared snapshot")
             if digest not in input_manifest:
                 input_manifest.append(digest)
+            if uncertified(snapshot):
+                return {"digest": digest, "project_id": provenance.get("project_id"),
+                        "timeline_id": provenance.get("timeline_id"), "source_kind": "cas"}
             revision_id = provenance.get("revision_id")
             metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), Mapping) else {}
             working_copy = metadata.get("working_copy") if isinstance(metadata.get("working_copy"), Mapping) else None
