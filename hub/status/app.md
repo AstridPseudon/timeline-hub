@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T19:14:16Z | dispatcher heartbeat 4s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 28m -->
+<!-- app | 2026-10-20T19:20:04Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 34m -->
 # app — 2026-10-20 18:45 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing remain open; no exit claimed.
 Integrated: App tl/integration 0096ba86d09560b6581f23228167777d4ec47e88, tree 0e7ad80d2a282aba27ab8c0cd27cebfb6bbb4643. MAIN bebadd0e1 ancestry; preserved TrackInspector; bootstrap four-assertion restoration b66a94006 was the required next merge and is fulfilled. Home consumer migration 4ab622443 and verified-media facade 0096ba86d are integrated after it.
