@@ -413,7 +413,7 @@ export class DirectHarness {
     ];
   }
 
-  async start(): Promise<this> {
+  async start(options: { seed?: boolean; beforeRuntimeStart?: (harness: this) => Promise<void> } = {}): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
@@ -427,10 +427,11 @@ export class DirectHarness {
 
       mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
       this.realmId = await this.createRealm();
+      await options.beforeRuntimeStart?.(this);
       await this.startRuntime();
       // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
       this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
-      this.seed = await this.seedRuntime();
+      if (options.seed !== false) this.seed = await this.seedRuntime();
     } catch (error) {
       await this.stop();
       throw error;
