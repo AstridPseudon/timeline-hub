@@ -3363,6 +3363,22 @@ class RuntimeService:
             )
         return rows[0]
 
+    def _text_binding_identity(self, project_id, body, expected):
+        if expected == 0:
+            if body.get("binding_id") is not None:
+                raise ValidationError("head 0 requires a friendly shot selector", details={"reason": "expected_head"})
+        elif body.get("binding_id") is not None:
+            if any(body.get(key) is not None for key in ("shot_id", "shot_ref", "kind", "slot")):
+                raise ValidationError("binding_id cannot be combined with friendly selectors")
+        shot_id = body.get("shot_id") or body.get("shot_ref")
+        if expected == 0 and not shot_id:
+            raise ValidationError("shot_id is required")
+        if body.get("binding_id") is not None:
+            binding_id = str(body["binding_id"])
+        else:
+            binding_id = self._text_binding_id(project_id, shot_id, body.get("kind"), body.get("slot"))
+        return binding_id, binding_id + ":shot.text_binding"
+
     def _record_text_binding_event(self, row, event_kind, payload, *, timestamp):
         prior = self.store.conn.execute(
             "SELECT event_hash FROM shot_text_binding_events WHERE binding_id=? ORDER BY seq DESC LIMIT 1",
@@ -3446,25 +3462,7 @@ class RuntimeService:
         if isinstance(expected, bool) or not isinstance(expected, int) or expected < 0:
             raise ValidationError("expected_head must be a non-negative integer", details={"reason": "expected_head"})
         data, digest = self._freeze_text(body.get("text"))
-        if expected == 0:
-            if body.get("binding_id") is not None:
-                raise ValidationError("head 0 requires a friendly shot selector", details={"reason": "expected_head"})
-            shot_id = body.get("shot_id") or body.get("shot_ref")
-            kind, slot = body.get("kind"), body.get("slot")
-            if not shot_id:
-                raise ValidationError("shot_id is required")
-            self._text_binding_id(project_id, shot_id, kind, slot)
-            binding_id = self._text_binding_id(project_id, shot_id, kind, slot)
-            stream_id = binding_id + ":shot.text_binding"
-            row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (binding_id,)).fetchone()
-        else:
-            row = self._resolve_text_binding(project_id, body)
-            binding_id, stream_id = str(row["id"]), str(row["event_stream_id"])
-            if int(row["head_seq"]) != expected:
-                raise ConflictError(
-                    "text binding head is stale",
-                    details={"expected_head": expected, "actual_head": int(row["head_seq"]), "binding_id": binding_id},
-                )
+        binding_id, stream_id = self._text_binding_identity(project_id, body, expected)
         facts = {
             "project_id": project_id, "binding_id": binding_id, "event_stream_id": stream_id,
             "expected_head": expected, "desired_content_hash": "sha256:" + digest,
@@ -3473,6 +3471,27 @@ class RuntimeService:
         replay = self._command_replay("shot.text_binding.set", binding_id, idempotency_key, req_hash, project_id=project_id)
         if replay is not None:
             return replay
+        if expected == 0:
+            shot_id = body.get("shot_id") or body.get("shot_ref")
+            kind, slot = body.get("kind"), body.get("slot")
+            row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (binding_id,)).fetchone()
+        else:
+            row = self._resolve_text_binding(project_id, body)
+            binding_id, stream_id = str(row["id"]), str(row["event_stream_id"])
+            if binding_id != facts["binding_id"]:
+                facts = {
+                    "project_id": project_id, "binding_id": binding_id, "event_stream_id": stream_id,
+                    "expected_head": expected, "desired_content_hash": "sha256:" + digest,
+                }
+                req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.set", **facts}).encode()).hexdigest()
+                replay = self._command_replay("shot.text_binding.set", binding_id, idempotency_key, req_hash, project_id=project_id)
+                if replay is not None:
+                    return replay
+            if int(row["head_seq"]) != expected:
+                raise ConflictError(
+                    "text binding head is stale",
+                    details={"expected_head": expected, "actual_head": int(row["head_seq"]), "binding_id": binding_id},
+                )
         self._require_unplaced_project_shot(project_id, shot_id if expected == 0 else row["shot_id"])
         if expected == 0 and row is not None:
             raise ConflictError(
@@ -3523,24 +3542,36 @@ class RuntimeService:
         expected = body.get("expected_head")
         if isinstance(expected, bool) or not isinstance(expected, int) or expected < 1:
             raise ValidationError("rebind requires a positive expected_head", details={"reason": "expected_head"})
+        desired_digest = str(body.get("media_id") or body.get("content_hash") or "").removeprefix("sha256:")
+        if not re.fullmatch(r"[0-9a-f]{64}", desired_digest):
+            raise ValidationError("media_id must be a SHA-256 object id", details={"reason": "media_id"})
+        binding_id, stream_id = self._text_binding_identity(project_id, body, expected)
+        facts = {
+            "project_id": project_id, "binding_id": binding_id, "event_stream_id": stream_id,
+            "expected_head": expected, "desired_media_id": "sha256:" + desired_digest,
+            "desired_content_hash": "sha256:" + desired_digest,
+        }
+        req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.rebind", **facts}).encode()).hexdigest()
+        replay = self._command_replay("shot.text_binding.rebind", binding_id, idempotency_key, req_hash, project_id=project_id)
+        if replay is not None:
+            return replay
         row = self._resolve_text_binding(project_id, body)
+        if str(row["id"]) != binding_id:
+            binding_id, stream_id = str(row["id"]), str(row["event_stream_id"])
+            facts = {
+                "project_id": project_id, "binding_id": binding_id, "event_stream_id": stream_id,
+                "expected_head": expected, "desired_media_id": "sha256:" + desired_digest,
+                "desired_content_hash": "sha256:" + desired_digest,
+            }
+            req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.rebind", **facts}).encode()).hexdigest()
+            replay = self._command_replay("shot.text_binding.rebind", binding_id, idempotency_key, req_hash, project_id=project_id)
+            if replay is not None:
+                return replay
         if int(row["head_seq"]) != expected:
             raise ConflictError(
                 "text binding head is stale",
                 details={"expected_head": expected, "actual_head": int(row["head_seq"]), "binding_id": str(row["id"])},
             )
-        desired_digest = str(body.get("media_id") or body.get("content_hash") or "").removeprefix("sha256:")
-        if not re.fullmatch(r"[0-9a-f]{64}", desired_digest):
-            raise ValidationError("media_id must be a SHA-256 object id", details={"reason": "media_id"})
-        facts = {
-            "project_id": project_id, "binding_id": str(row["id"]), "event_stream_id": str(row["event_stream_id"]),
-            "expected_head": expected, "desired_media_id": "sha256:" + desired_digest,
-            "desired_content_hash": "sha256:" + desired_digest,
-        }
-        req_hash = hashlib.sha256(canonical_json({"command_kind": "shot.text_binding.rebind", **facts}).encode()).hexdigest()
-        replay = self._command_replay("shot.text_binding.rebind", str(row["id"]), idempotency_key, req_hash, project_id=project_id)
-        if replay is not None:
-            return replay
         self._require_unplaced_project_shot(project_id, row["shot_id"])
         current = self._text_binding_resource(row)
         media = self._verify_text_object(project_id, desired_digest, candidate=True)
@@ -3558,8 +3589,8 @@ class RuntimeService:
             self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=?", (row["id"],)).fetchone()
         )
         return self._command_record(
-            "shot.text_binding.rebind", str(row["id"]), idempotency_key, req_hash, result,
-            project_id=project_id, event_ids=(event_id,), primary_stream_id=str(row["event_stream_id"]), resulting_stream_seq=seq,
+            "shot.text_binding.rebind", binding_id, idempotency_key, req_hash, result,
+            project_id=project_id, event_ids=(event_id,), primary_stream_id=stream_id, resulting_stream_seq=seq,
         )
 
     def get_project_shot_text_binding(self, project_id, binding_id):

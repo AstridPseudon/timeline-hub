@@ -78,3 +78,65 @@ def test_identity_digest_is_sha256(daemon):
     project = _seed(client, daemon)
     value = client.set_project_shot_text_binding(project.project_id, {"shot_id": "opening", "kind": "voiceover_script", "text": "voice", "expected_head": 0}, idempotency_key="voice")
     assert value["content_hash"] == "sha256:" + hashlib.sha256(b"voice").hexdigest()
+
+
+def test_exact_set_retry_after_later_rebind_survives_restart(tmp_path, monkeypatch):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    daemon = RuntimeDaemon(root).start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = _seed(client, daemon)
+        seed = client.set_project_shot_text_binding(
+            project.project_id,
+            {"shot_id": "opening", "kind": "transcript", "text": "seed", "expected_head": 0},
+            idempotency_key="seed",
+        )
+        original = client.set_project_shot_text_binding(
+            project.project_id,
+            {"binding_id": seed["binding_id"], "text": "A", "expected_head": 1},
+            idempotency_key="A",
+        )
+        replacement = client.ingest_project_object(
+            project.project_id, b"B", media_type="text/plain", idempotency_key="replacement",
+        )
+        client.rebind_project_shot_text_binding(
+            project.project_id, seed["binding_id"], media_id=replacement.digest,
+            expected_head=2, idempotency_key="B",
+        )
+        before = daemon.service.get_project_shot_text_binding(project.project_id, seed["binding_id"])
+        events_before = [
+            tuple(row) for row in daemon.service.store.conn.execute(
+                "SELECT seq, kind, event_hash FROM shot_text_binding_events WHERE binding_id=? ORDER BY seq",
+                (seed["binding_id"],),
+            )
+        ]
+        cas_root = daemon.service.store.cas_root
+        cas_before = {str(path.relative_to(cas_root)): path.read_bytes() for path in cas_root.rglob("*") if path.is_file()}
+    finally:
+        daemon.stop()
+
+    restarted = RuntimeDaemon(root).start()
+    try:
+        replay_client = WorkspaceClient(restarted.endpoint, restarted.token)
+        monkeypatch.setattr(restarted.service, "_resolve_text_binding", lambda *args, **kwargs: pytest.fail("exact retry read live binding"))
+        replay = replay_client.set_project_shot_text_binding(
+            project.project_id,
+            {"binding_id": seed["binding_id"], "text": "A", "expected_head": 1},
+            idempotency_key="A",
+        )
+        assert replay == original
+        assert replay.receipt == original.receipt
+        assert restarted.service.get_project_shot_text_binding(project.project_id, seed["binding_id"]) == before
+        events_after = [
+            tuple(row) for row in restarted.service.store.conn.execute(
+                "SELECT seq, kind, event_hash FROM shot_text_binding_events WHERE binding_id=? ORDER BY seq",
+                (seed["binding_id"],),
+            )
+        ]
+        cas_root = restarted.service.store.cas_root
+        cas_after = {str(path.relative_to(cas_root)): path.read_bytes() for path in cas_root.rglob("*") if path.is_file()}
+        assert events_after == events_before
+        assert cas_after == cas_before
+    finally:
+        restarted.stop()
