@@ -1,0 +1,6 @@
+Reviewed only (no worktree files changed):
+- App commit 247bfce2721e4fd0804faf8313b394e94157c2
+- tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+- tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+- tests/e2e/timeline/viewing-parity/tab-audio.ts
+- tests/e2e/timeline/viewing-parity/tab-audio.test.ts

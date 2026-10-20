@@ -1,0 +1,132 @@
+diff --git a/tests/packs/rendering/presenter_crop_default_partial_capture.mjs b/tests/packs/rendering/presenter_crop_default_partial_capture.mjs
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/presenter_crop_default_partial_capture.mjs
+@@ -0,0 +1,45 @@
++// Central-only: two new cases, two real stills per case.
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import path from 'node:path';
++import {bundle} from '@remotion/bundler';
++import {openBrowser, renderStill, selectComposition} from '@remotion/renderer';
++import {basis, eraseRegion, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++assert.equal(process.env.VIEWING_CROP_CENTRAL, '1');
++const browserExecutable = process.env.ASTRID_CROP_BROWSER ?? '/opt/google/chrome/chrome';
++const output = process.argv[2];
++assert.ok(path.isAbsolute(output));
++const cases = {
++  default: {params: {...params, mouth: undefined}, frames: [0, 3]},
++  partial: {params: {...params, mouth: {x: 151, y: 104}}, frames: [0, 3]},
++};
++const buildDir = path.join(output, 'bundle');
++const serveUrl = await bundle({entryPoint: path.join(process.cwd(), 'presenter_crop_entry.mjs'),
++  outDir: buildDir, webpackOverride: remotionPrimitiveAliasesFor(process.cwd()),
++  enableCaching: false});
++let browser;
++try {
++  browser = await openBrowser('chrome', {browserExecutable, logLevel: 'error'});
++  for (const [caseName, selected] of Object.entries(cases)) {
++    const props = propsFor(selected.params);
++    const scene = prepareRoot(props, basis, {});
++    const zero = seriesInspection(scene, props);
++    const rows = [{...zero, erase: eraseRegion(selected.params, 0, basis.fps)}];
++    const target = path.join(output, caseName);
++    fs.mkdirSync(target, {recursive: true});
++    const composition = await selectComposition({serveUrl, id: 'presenter-crop', inputProps: props,
++      puppeteerInstance: browser, browserExecutable, logLevel: 'error'});
++    assert.deepEqual([composition.width, composition.height, composition.fps, composition.durationInFrames],
++      [1920, 1080, 30, 60]);
++    for (const frame of selected.frames) await renderStill({serveUrl, composition, inputProps: props,
++      frame, imageFormat: 'png', output: path.join(target, `frame-${frame}.png`), scale: 1 / 3,
++      puppeteerInstance: browser, browserExecutable, logLevel: 'error'});
++    fs.writeFileSync(path.join(target, 'inspection.json'), JSON.stringify({basis, caseName,
++      frames: selected.frames, props, rows, size: [640, 360], scale: 1 / 3}));
++  }
++} finally {
++  if (browser) await browser.close({silent: true});
++  fs.rmSync(buildDir, {recursive: true, force: true});
++}
+diff --git a/tests/packs/rendering/test_presenter_crop_default_partial_physical.py b/tests/packs/rendering/test_presenter_crop_default_partial_physical.py
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_crop_default_partial_physical.py
+@@ -0,0 +1,77 @@
++"""Central-only default/partial presenter compatibility qualification.
++
++The final assertion is intentionally red on the current registered source:
++the legacy consumer cannot reach the approved public compatibility ROI for
++either normalized default or partial input. No deletion or refusal is encoded.
++"""
++
++import hashlib
++import json
++import os
++import shutil
++import signal
++import subprocess
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from astrid.packs.rendering.actions.timeline_visualize.layers.builtin import _diff_fraction
++from astrid.packs.rendering.actions.timeline_visualize.motion import model
++from tests.packs.rendering.test_presenter_crop_equivalence import area, legacy_element, png_crop, public_box, stage_geometry
++from tests.packs.rendering.test_presenter_scene_capability import presenter_query as _presenter_query
++
++presenter_query = _presenter_query
++
++
++@pytest.mark.timeout(420)
++def test_registered_default_and_partial_crop_equivalence_is_not_yet_qualified(presenter_query, tmp_path):
++    assert os.environ.get('VIEWING_CROP_CENTRAL') == '1'
++    assert subprocess.run(['flock', '-n', '/tmp/timeline-viewing-browser.lock', 'true']).returncode != 0
++    stage_geometry(presenter_query)
++    script = Path(__file__).with_name('presenter_crop_default_partial_capture.mjs')
++    shutil.copyfile(script, presenter_query.project / script.name)
++    output = tmp_path / 'capture'
++    output.mkdir()
++    env = {**presenter_query.env, 'ASTRID_CROP_BROWSER': '/opt/google/chrome/chrome'}
++    process = subprocess.Popen([str(presenter_query.node), script.name, str(output)], cwd=presenter_query.project,
++                               env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
++                               start_new_session=True)
++    try:
++        stdout, stderr = process.communicate(timeout=360)
++    finally:
++        if process.poll() is None:
++            os.killpg(process.pid, signal.SIGTERM)
++            try:
++                process.wait(timeout=10)
++            except subprocess.TimeoutExpired:
++                os.killpg(process.pid, signal.SIGKILL)
++                process.wait(timeout=10)
++    assert process.returncode == 0, stdout + stderr
++    mismatches = []
++    for case_name in ('default', 'partial'):
++        case_dir = output / case_name
++        case = json.loads((case_dir / 'inspection.json').read_text())
++        assert case['frames'] == [0, 3] and len(list(case_dir.glob('*.png'))) == 2
++        size = tuple(case['size'])
++        paths = [case_dir / f"frame-{frame}.png" for frame in case['frames']]
++        before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
++        old_box = model.mouth_box(legacy_element(case), 0)
++        compat = png_crop(public_box(case['rows'][0]), size)
++        erase = png_crop(public_box(case['rows'][0], 'erase'), size)
++        assert compat == (298, 202, 345, 219) and erase == (300, 206, 343, 215)
++        old = None if old_box is None else png_crop(old_box, size)
++        if old != compat:
++            mismatches.append({'case': case_name, 'legacy': old, 'public': compat})
++        with Image.open(paths[0]) as captured:
++            image = captured.convert('RGB')
++        assert _diff_fraction(image.crop(compat), image.crop(compat))[0] == 0
++        planted = image.copy()
++        points = [(erase[0] + 2 + index, erase[1] + 2) for index in range(20)]
++        for point in points:
++            original = image.getpixel(point)
++            planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
++        changed = _diff_fraction(image.crop(compat), planted.crop(compat))[0]
++        assert changed == 20 / area(compat) and changed > .02
++        assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
++    assert not mismatches, f'registered legacy inputs do not reach public ROI: {mismatches}'

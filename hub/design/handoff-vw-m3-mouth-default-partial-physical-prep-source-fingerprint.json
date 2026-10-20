@@ -1,0 +1,49 @@
+{
+  "worker": "vw-m3-mouth-default-partial-physical-prep",
+  "base": {
+    "composition": "5a4e9b72f",
+    "agent_source_reviewed": "8e3107853d17453758a933d1f47215cc1c002660",
+    "agent_presenter_capability_commit": "802669926e3d18372b3909fd25a0c565beb39bfb",
+    "agent_current_capture_harness": "7be48dacde3f30ae4500cd4fa03fda2966b9ea44"
+  },
+  "source": {
+    "motion.ts": "dfe1e25b01c329f6ffdd50a8be4a8b3c050abf88",
+    "scene.ts": "74512683e218641beb392b7e008a90e2a8219596",
+    "presenter_crop_geometry.mjs": "1c5d2d486c3d6b8c68d1dfdc9c19a6718051a548"
+  },
+  "composition_public12": {
+    "artifact_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "files": 77,
+    "version": "0.0.12"
+  },
+  "environment_guard": {
+    "dependency_graph_reference": "f8164bef73215272562c4d6974acadbd82c2898a",
+    "node": {
+      "path": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "version": "v20.19.4",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+    },
+    "chrome155": {
+      "path": "/opt/google/chrome/chrome",
+      "version": "155.0.8059.84",
+      "directory_sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e"
+    },
+    "export_browser_reference": {
+      "path": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+      "directory_sha256": "38fd722a5d8ea32dbc60521ec0f2760800554f045938047d6856753dba6ea5f9"
+    },
+    "flock": "/tmp/timeline-viewing-browser.lock",
+    "scratch_policy": "central-only 0700 temp directory; remove in finally"
+  },
+  "qualification_scope": {
+    "existing_explicit_case": {"frames": [0, 3, 4, 5], "crop_pixels": 799},
+    "new_cases": {
+      "default": {"frames": [0, 3], "fresh_frames": 2},
+      "partial": {"frames": [0, 3], "fresh_frames": 2}
+    },
+    "png_size": [640, 360],
+    "threshold": "strict > 0.02, unchanged",
+    "geometry": "existing component-owned padded inspection ROI only"
+  },
+  "status": "offline_preflight_only; no browser, render, socket, central request, or source activation"
+}
