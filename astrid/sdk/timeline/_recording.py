@@ -26,11 +26,18 @@ def selection(state, key, owner, members=()):
             return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
                     "order": result, "boundaries": insertion_boundary(result, members),
                     "policy": "guard-membership"}
+    elif key == 'text-binding.owners':
+        origin = state.entity(owner + '/shot', optional=True)
+        source = origin['shot_id'] if origin is not None else None
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if state.entity('occurrence:' + row['occurrence_id'] + '/shot')['shot_id'] == source]
+        boundaries = ['shot:' + source] if source is not None else []
     elif key == 'placement.owners':
-        shot = state.occurrence(owner)['shot_id']
+        origin = state.entity(owner, optional=True)
+        shot = origin['shot_id'] if origin is not None else None
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
                   if row['shot_id'] == shot]
-        boundaries = ['shot:' + shot]
+        boundaries = ['shot:' + shot] if shot is not None else []
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -45,7 +52,20 @@ def selection(state, key, owner, members=()):
         raise CommandError(f"unsupported recorded query {key!r}")
     return {"key": key, "query_version": 1, "owner": owner, "members": result,
             "order": list(result), "boundaries": list(result) if boundaries is None else boundaries,
-            "policy": "guard-membership"}
+            "policy": "include-concurrent" if key == "collection.text-bindings.append" else "guard-membership"}
+
+
+def selection_matches(expected, actual):
+    if equal(expected, actual):
+        return True
+    if expected["key"] != "collection.text-bindings.append" or expected["policy"] != "include-concurrent":
+        return False
+    # Concurrent keyed births append after the original ordered prefix. The
+    # accepted record still captures the complete new input order for inverse.
+    return (expected["members"] == expected["order"] == expected["boundaries"]
+            and actual["order"][:len(expected["order"])] == expected["order"]
+            and all(equal(value, actual[key]) for key, value in expected.items()
+                    if key not in ("members", "order", "boundaries")))
 
 
 class Recording:
@@ -201,7 +221,8 @@ class Recording:
         from astrid.core.timeline.authoring_bundle import _digest
         for capture in mapping.get('pinned_documents', []):
             pin = capture['pin']
-            if pin in retained:
+            # An inverse may reopen an exact pin from an accepted removed clip.
+            if pin in retained or self.record['command']['op'] == 'timeline.inverse':
                 kind = 'transcript' if capture['document']['kind'] == 'media.transcript' else 'source'
                 self.dependency('compile.document:' + _digest(pin), kind, pin)
 

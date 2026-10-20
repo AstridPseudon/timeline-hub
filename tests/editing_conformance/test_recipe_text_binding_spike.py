@@ -123,6 +123,17 @@ def text_set(ctx, command):
 
 @pytest.fixture
 def text_seam(monkeypatch):
+    # Isolate the historical singleton seam from the native ordered collection.
+    from astrid.sdk.timeline import _collections
+    from astrid.sdk.timeline import inverse as native_inverse
+
+    original_member = _collections.member
+
+    def member(ref):
+        return None if '/text-binding:' in ref else original_member(ref)
+
+    monkeypatch.setattr(_collections, 'member', member)
+    monkeypatch.setattr(native_inverse, 'member', member)
     original_validate = commands.validate_command
     original_operations = commands.operations
     original_entity, original_set = State.entity, State.set
