@@ -652,6 +652,19 @@
               },
               "minProperties": 1,
               "additionalProperties": false
+            },
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "draft_voiceover": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "minProperties": 1,
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -682,7 +695,8 @@
               "settings.turboMode",
               "settings.advancedMode",
               "settings.smoothContinuations",
-              "settings.ltxHdResolution"
+              "settings.ltxHdResolution",
+              "metadata.draft_voiceover"
             ]
           },
           "uniqueItems": true
@@ -709,7 +723,7 @@
           }
         }
       ],
-      "description": "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
+      "description": "Occurrence-owned raw shot payload fields: canonical root name, bounded scalar settings roots, and the known draft_voiceover metadata leaf. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
     },
     "ClipSetParamsArgs": {
       "type": "object",

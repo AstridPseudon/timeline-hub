@@ -18,6 +18,7 @@ PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a33220
 PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
 PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
+PRIVATE_VOICEOVER_SHA256 = '65bb68acbfbc72dabbbc83eab66e5309fe5cf5f42c1acb4bc821c62434742a1e'
 
 
 def without_groups(schema):
@@ -30,9 +31,21 @@ def without_groups(schema):
     return schema
 
 
+def without_voiceover(schema):
+    shot = schema['$defs']['ShotSetArgs']
+    del shot['properties']['values']['properties']['metadata']
+    shot['properties']['clear']['items']['enum'].remove('metadata.draft_voiceover')
+    shot['description'] = (
+        'Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. '
+        'Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots '
+        '(steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, '
+        'modelSettingsByModel) are unsupported.')
+    return schema
+
+
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -77,7 +90,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -85,7 +98,7 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_groups(without_voiceover(copy.deepcopy(_SCHEMA)))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -98,31 +111,37 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_groups(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+    raw = (json.dumps(without_groups(without_voiceover(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
     raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
-    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_VOICEOVER_SHA256
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+
+
+def test_voiceover_property_preserves_the_prior_group_schema_hash():
+    raw = (json.dumps(without_voiceover(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
+    current = without_voiceover(copy.deepcopy(_SCHEMA))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(
-            _SCHEMA['$defs'][name]['anyOf'][-1] if name in REFERENCES else _SCHEMA['$defs'][name])
+            current['$defs'][name]['anyOf'][-1] if name in REFERENCES else current['$defs'][name])
         old = json.dumps(previous['$defs'][name]['pattern']).encode()
         assert raw.count(old) == 1
         raw = raw.replace(old, json.dumps(addition['pattern']).encode(), 1)
         previous['$defs'][name] = addition
     current = {clause['if']['properties']['op']['const']: clause
-               for clause in _SCHEMA['$defs']['EditCommand']['allOf']}
+               for clause in current['$defs']['EditCommand']['allOf']}
     for clause in previous['$defs']['EditCommand']['allOf']:
         op = clause['if']['properties']['op']['const']
         if op in SOURCE_BOUND_OPERATIONS - {'track.create'}:
