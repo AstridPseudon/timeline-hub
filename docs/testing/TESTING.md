@@ -585,13 +585,15 @@ These are known. Report what you see, but don't stop testing for them.
 
 **Chat history with the published OMP producer**
 
-- The default published OMP 17.4.2 does not consistently use the configured session folder when listing or
-  recovering conversations. A conversation can be missing from the list or fail to reopen after a restart, even
-  though the Astrid workspace is still present.
-  Record whether the conversation appears and whether its messages reopen; do not report this symptom as loss of
-  the Astrid workspace. Installer and live ACP qualification in this delivery used a locally built fixed producer,
-  so those results do not qualify the published 17.4.2 session-folder behavior. The release owner will update the
-  producer selection after landing the fix; see the [OMP producer landing guide](../install/OMP-LANDING.md).
+- Published OMP 17.4.2 does not consistently use the configured session folder when listing or recovering
+  conversations. A conversation can be missing from the list or fail to reopen after a restart, even though the
+  Astrid workspace is still present. Record whether the conversation appears and whether its messages reopen; do
+  not report this symptom as loss of the Astrid workspace.
+- The bundled fixed fork commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`. The configured-session-folder
+  listing and recovery gap is closed only after the owner pushes that exact commit to GitHub and the app manifest
+  selects its full commit SHA. Like the selected Agent and Runtime commits, this fork commit must be available on GitHub before the app deploys. Until both conditions
+  hold, treat the published-default gap as open. Installer and live ACP qualification used the fixed producer
+  locally and do not qualify the published default. See the [OMP producer landing guide](../install/OMP-LANDING.md).
 
 **Windows**
 
