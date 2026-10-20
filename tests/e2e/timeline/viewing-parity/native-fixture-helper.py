@@ -108,6 +108,10 @@ def build_document(project_id: str, timeline_id: str, spec: dict, media: dict) -
             "provenance": {},
         }],
     }
+    if spec.get("theme_canvas") is not None:
+        parent_payload["config"]["theme_overrides"] = {
+            "visual": {"canvas": spec["theme_canvas"]},
+        }
     internal = {"timeline_id": timeline_id, "revision_id": internal_revision_id, "payload": internal_payload}
     shot = {"shot_id": shot_id, "revision_id": shot_revision_id,
             "internal_timeline_revision_id": internal_revision_id, "payload": shot_payload}

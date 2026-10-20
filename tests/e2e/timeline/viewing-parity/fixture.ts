@@ -106,6 +106,7 @@ export async function prepareNativeFrameParityRealm(harness: DirectHarness, canv
     width: canvas.width,
     height: canvas.height,
     fps: PARITY_FPS,
+    ...('themeCanvas' in canvas ? { theme_canvas: canvas.themeCanvas } : {}),
     media,
   };
   await writeFile(specPath, JSON.stringify(spec));
@@ -300,6 +301,10 @@ export function assertCanonicalNativeMedia(fixture: FrameParityFixture, canvas: 
   assert.ok(sourceAudioMetadata, 'native fixture must retain probed audio source metadata');
   assert.equal(parent.config.output.resolution,
     `${canvas.width}x${canvas.height}`);
+  if ('themeCanvas' in canvas) {
+    assert.deepEqual((parent.config as Record<string, unknown>).theme_overrides,
+      { visual: { canvas: canvas.themeCanvas } });
+  }
   assert.equal(parent.config.output.fps, PARITY_FPS);
   const occurrence = parent.occurrences[0];
   assert.equal(occurrence.duration_ms, 5500);

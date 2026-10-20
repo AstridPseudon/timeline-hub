@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import baseline from '../../../../playwright.viewing-parity.config';
 import nativeCodec from '../../../../playwright.viewing-parity.native-codec.config';
 import native1920 from '../../../../playwright.viewing-parity.normal-profile-native1920.config';
-import { NORMAL_PROFILE_NATIVE1920, ORIGINAL_640, readCanvasFrameMarker } from './canvas';
+import { EXPLICIT_CANVAS_640, NORMAL_PROFILE_NATIVE1920, ORIGINAL_640, readCanvasFrameMarker } from './canvas';
 import { assertFrameWithinBound, compareRgbFrames } from './compare';
 import { PARITY_FRAMES } from './fixture';
 import { PARITY_HEIGHT, PARITY_WIDTH, readFrameMarker } from './media';
@@ -67,6 +67,10 @@ for (const canvas of [ORIGINAL_640, NORMAL_PROFILE_NATIVE1920]) {
 
 test('original640 stays the default; only the separately named config selects native1920 with Chrome155', () => {
   assert.deepEqual(ORIGINAL_640, { width: 640, height: 360, viewport: { width: 1600, height: 1000 } });
+  assert.deepEqual(EXPLICIT_CANVAS_640, {
+    width: 640, height: 360, viewport: { width: 1600, height: 1000 },
+    themeCanvas: { width: 640, height: 360, fps: 30 },
+  });
   assert.deepEqual(NORMAL_PROFILE_NATIVE1920, { width: 1920, height: 1080, viewport: { width: 2000, height: 1200 } });
   assert.equal(baseline.testMatch, 'player-export-frame-parity.spec.ts');
   assert.equal(nativeCodec.testMatch, baseline.testMatch);
@@ -79,6 +83,12 @@ test('original640 stays the default; only the separately named config selects na
   const legacy = { width: 640, height: 360, bytes: Buffer.alloc(640 * 360 * 3) };
   assert.deepEqual(compareRgbFrames(legacy, legacy, 0), compareRgbFrames(legacy, legacy, 0, ORIGINAL_640));
   assertFrameWithinBound(compareRgbFrames(legacy, legacy, 0));
+});
+
+test('explicit640 selects the existing theme canvas field while original640 remains unbound', () => {
+  assert.equal('themeCanvas' in ORIGINAL_640, false);
+  assert.deepEqual(EXPLICIT_CANVAS_640.themeCanvas, { width: 640, height: 360, fps: 30 });
+  assert.notEqual(EXPLICIT_CANVAS_640, ORIGINAL_640);
 });
 
 test('both entries register the four baseline bodies plus tab capture before the picture negative', async () => {
