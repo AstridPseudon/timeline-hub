@@ -36,6 +36,19 @@ export const localAgentCatalogSchema = z.object({
 });
 export type LocalAgentChoice = z.infer<typeof localAgentCatalogSchema>['agents'][number];
 
+export const thoughtLevelSchema = z.object({
+  configId: z.string().min(1),
+  name: z.string(),
+  currentValue: z.string(),
+  options: z.array(z.object({ value: z.string().min(1), name: z.string(), description: z.string().nullable().optional() })),
+  recommendedValue: z.string().optional(),
+});
+export type AgentThoughtLevel = z.infer<typeof thoughtLevelSchema>;
+
+export function defaultThoughtLevel(level: AgentThoughtLevel): string {
+  return level.recommendedValue ?? level.options.find(option => option.value === 'default')?.value ?? level.currentValue;
+}
+
 export const localAgentModelsSchema = z.object({
   availableModels: z.array(z.object({
     modelId: z.string().min(1),
@@ -43,6 +56,9 @@ export const localAgentModelsSchema = z.object({
     description: z.string().nullable().optional(),
   })),
   currentModelId: z.string(),
+  modelConfigId: z.string().optional(),
+  /** Only the current model's advertised levels; never infer another model's support. */
+  thoughtLevel: thoughtLevelSchema.optional(),
 });
 export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;
 

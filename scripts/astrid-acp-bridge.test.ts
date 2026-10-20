@@ -94,6 +94,65 @@ test('PATCH chat rename route validates the body without opening a listener', as
   }
 });
 
+test('session model and thought-level routes use advertised config IDs and refresh options without a socket', async () => {
+  for (const [agent, effortId] of [['codex', 'reasoning_effort'], ['claude-code', 'effort'], ['astrid', 'thinking'], ['hermes', null]] as const) {
+    const sessionId = agent === 'astrid' ? 'omp-session' : `${agent}:session`;
+    let model = 'a';
+    let effort = 'low';
+    const forwarded: Array<{ method: string; params: Json }> = [];
+    const snapshot = () => ({ sessionId, ...(effortId ? { configOptions: [
+      { id: 'model-picker', category: 'model', type: 'select', currentValue: model, options: [{ value: 'a', name: 'A' }, { value: 'b', name: 'B' }] },
+      { id: effortId, name: 'Effort', category: 'thought_level', type: 'select', currentValue: effort,
+        options: model === 'b' ? [{ value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }] },
+    ] } : { models: { currentModelId: model, availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] } }) });
+    const host = {
+      initialize: async () => ({}), dispose: async () => undefined,
+      request: async (method: string, params: Json) => {
+        forwarded.push({ method, params });
+        if (method === 'session/set_config_option') {
+          if (params.configId === 'model-picker') model = String(params.value);
+          else effort = String(params.value);
+        }
+        if (method === 'session/set_model') model = String(params.modelId);
+        return snapshot();
+      },
+    };
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'test', port: 0, cwd: '/tmp/local' }, idFactory: () => 'c',
+      hostFactory: () => host as never, localAgentHostFactory: async () => host as never,
+    });
+    const invoke = async (url: string, body?: unknown) => {
+      const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+        method: body === undefined ? 'GET' : 'POST', url, headers: { authorization: 'Bearer test', 'x-astrid-bridge-version': 'v1' },
+      });
+      let output = '';
+      const response = { statusCode: 200, setHeader() {}, end(value: string) { output = value; } };
+      await bridge.handle(request as never, response as never);
+      return { status: response.statusCode, body: JSON.parse(output) as Json };
+    };
+    try {
+      assert.equal((await invoke('/model', { model: 'b' })).status, 404);
+      assert.equal((await invoke('/connect', { agent })).status, 200);
+      assert.equal((await invoke('/c/rpc', { method: 'session/new', params: {} })).status, 200);
+      assert.equal((await invoke('/c/model', { sessionId, modelId: 'b' })).status, 200);
+      if (effortId) {
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } })).status, 200);
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal((models.thoughtLevel as Json).currentValue, 'high');
+        assert.equal((await invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'low' } })).status, 400);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [
+          { method: 'session/set_config_option', params: { sessionId, configId: 'model-picker', value: 'b' } },
+          { method: 'session/set_config_option', params: { sessionId, configId: effortId, value: 'high' } },
+        ]);
+      } else {
+        const models = (await invoke(`/c/models?sessionId=${sessionId}`)).body.models as Json;
+        assert.equal(models.thoughtLevel, undefined);
+        assert.deepEqual(forwarded.filter(call => call.method.startsWith('session/set_')), [{ method: 'session/set_model', params: { sessionId, modelId: 'b' } }]);
+      }
+    } finally { await bridge.close(); server.close(); }
+  }
+});
+
 async function listen(server: import('node:http').Server) {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   return `http://127.0.0.1:${(server.address() as { port: number }).port}`;

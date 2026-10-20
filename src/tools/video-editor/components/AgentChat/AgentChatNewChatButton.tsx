@@ -3,7 +3,7 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Loader2, Paperclip
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
-import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { defaultThoughtLevel, type AgentThoughtLevel, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 
 const KEYCAP = 'verbatim-case select-all rounded border border-border px-1 font-mono text-[10px]';
@@ -11,7 +11,7 @@ const SEGMENT = 'flex h-7 items-center text-xs text-muted-foreground transition-
 /** A submenu lists this many models; its search reaches the rest. */
 const SUBMENU_LIMIT = 50;
 
-export interface NewChatModelChoice { id: string; name: string; detail?: string | null }
+export interface NewChatModelChoice { id: string; name: string; detail?: string | null; thoughtLevel?: AgentThoughtLevel | null }
 
 /** One agent's models for the submenu, supplied by the host as it fetches them. */
 export interface NewChatAgentModels {
@@ -36,7 +36,7 @@ interface AgentChatNewChatButtonProps {
   agentsError?: string | null;
   disabled?: boolean;
   /** Start a chat: no agent reuses the last one; no model uses that agent's default. */
-  onNewChat: (agent?: LocalAgentId, model?: string) => void;
+  onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
   onMenuOpenChange?: (open: boolean) => void;
   /** Tells the host which agent's models to fetch (null when the submenu closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
@@ -72,17 +72,21 @@ function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentI
 export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, disabled = false, onNewChat, onMenuOpenChange, onBrowseAgent, agentModels = null, attachExisting }: AgentChatNewChatButtonProps) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
+  const [levelModel, setLevelModel] = useState<NewChatModelChoice | null>(null);
   const [highlighted, setHighlighted] = useState(`agent:${defaultAgent}`);
   const [query, setQuery] = useState('');
   const [copiedCommands, setCopiedCommands] = useState<Set<string>>(() => new Set());
   const copyTimeouts = useRef(new Map<string, number>());
   const root = useRef<HTMLDivElement>(null);
   const landOnModel = useRef(false);
+  const returnModel = useRef<string | null>(null);
   const browse = (agent: LocalAgentId | null) => {
     landOnModel.current = agent !== null;
     // Coming back lands on the agent that was open, so ← then → returns to the same place.
     setHighlighted(agent ? '' : `agent:${browsing ?? defaultAgent}`);
     setBrowsing(agent);
+    setLevelModel(null);
+    returnModel.current = null;
     setQuery('');
     onBrowseAgent?.(agent);
   };
@@ -92,7 +96,17 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
     else if (browsing) browse(null);
     onMenuOpenChange?.(next);
   };
-  const start = (agent?: LocalAgentId, model?: string) => { changeOpen(false); onNewChat(agent, model); };
+  const browseLevels = (model: NewChatModelChoice | null) => {
+    returnModel.current = levelModel?.id ?? null;
+    landOnModel.current = !model;
+    setLevelModel(model);
+    setQuery('');
+  };
+  const start = (agent?: LocalAgentId, model?: string, level?: string) => {
+    changeOpen(false);
+    if (level === undefined) onNewChat(agent, model);
+    else onNewChat(agent, model, level);
+  };
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
   const copyLine = async (id: LocalAgentId, command: string, index: number) => {
     try {
@@ -122,19 +136,23 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
     }, 1_500));
   };
 
-  // The agent list has no search field, so it holds focus for the arrow keys (the popover focuses it on
-  // open); a submenu focuses its search, and coming back returns focus to the list.
+  // The agent and level lists are short and have no search field, so the list holds focus for the arrow
+  // keys (the popover focuses it on open); the model list focuses its search.
   useEffect(() => {
-    if (open && !browsing && root.current && !root.current.contains(document.activeElement)) root.current.focus();
-  }, [open, browsing]);
+    if (open && (!browsing || levelModel) && root.current && !root.current.contains(document.activeElement)) root.current.focus();
+  }, [open, browsing, levelModel]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!browsing && event.key === 'ArrowRight') {
       const agent = AGENT_IDS.find(id => `agent:${id}` === highlighted);
       if (agent && availability(agent).usable && agentCanBrowse?.[agent] !== false) { event.preventDefault(); browse(agent); }
+    } else if (browsing && !levelModel && event.key === 'ArrowRight') {
+      const model = agentModels?.models.find(model => `model:${model.id}` === highlighted);
+      if (model?.thoughtLevel?.options.length) { event.preventDefault(); browseLevels(model); }
     } else if (browsing && event.key === 'ArrowLeft' && query === '') {
       event.preventDefault();
-      browse(null);
+      if (levelModel) browseLevels(null);
+      else browse(null);
     }
   };
 
@@ -150,12 +168,18 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
   }, [browsing, onBrowseAgent, submenu]);
   // A submenu opens on the agent's default model (or its first), not on the back row.
   useEffect(() => {
-    if (!landOnModel.current || !submenu || submenu.models.length === 0) return;
-    const target = submenu.models.find(model => model.id === submenu.defaultModel) ?? submenu.models[0];
+    if (levelModel || !landOnModel.current || !submenu || submenu.models.length === 0) return;
+    const target = submenu.models.find(model => model.id === (returnModel.current ?? submenu.defaultModel)) ?? submenu.models[0];
     // After cmdk settles its own first-item pick for the freshly mounted list.
     const frame = requestAnimationFrame(() => { landOnModel.current = false; setHighlighted(`model:${target.id}`); });
     return () => cancelAnimationFrame(frame);
-  }, [submenu]);
+  }, [levelModel, submenu]);
+  useEffect(() => {
+    if (!levelModel?.thoughtLevel) return;
+    const value = defaultThoughtLevel(levelModel.thoughtLevel);
+    const frame = requestAnimationFrame(() => setHighlighted(`level:${value}`));
+    return () => cancelAnimationFrame(frame);
+  }, [levelModel]);
   const shownModels = (submenu?.models ?? []).filter(model => !query || matches(query, `${model.name} ${model.detail ?? ''} ${model.id}`));
 
   return (
@@ -174,7 +198,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0" initialFocus={root}>
           <Command ref={root} loop shouldFilter={false} value={highlighted} onValueChange={setHighlighted} onKeyDown={onKeyDown} className="outline-none">
-            {browsing && (
+            {browsing && !levelModel && (
               <CommandInput autoFocus placeholder={`Search ${agentNames[browsing]} models...`} className="h-8" value={query} onValueChange={setQuery} />
             )}
             <CommandList className="max-h-96">
@@ -213,6 +237,35 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                     );
                   })}
                 </CommandGroup>
+              ) : levelModel?.thoughtLevel ? (
+                <>
+                  <CommandGroup>
+                    <CommandItem value="back" className="gap-2 text-xs text-muted-foreground" onSelect={() => browseLevels(null)}>
+                      <ChevronLeft className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <AgentIcon agent={browsing} className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate normal-case">{levelModel.name}</span>
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandSeparator />
+                  <CommandGroup heading="Thinking level">
+                    {levelModel.thoughtLevel.options.map(level => {
+                      const preselected = level.value === defaultThoughtLevel(levelModel.thoughtLevel!);
+                      return (
+                        <CommandItem key={level.value} value={`level:${level.value}`} aria-current={preselected ? 'true' : undefined} className="items-start gap-2"
+                          onSelect={() => start(browsing, levelModel.id, level.value)}>
+                          <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', preselected ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
+                          <span className="flex min-w-0 flex-1 flex-col">
+                            <span className="flex items-baseline gap-2">
+                              <span className="normal-case">{level.name}</span>
+                              {level.value === levelModel.thoughtLevel?.recommendedValue && <span className="ml-auto shrink-0 text-[10px] text-muted-foreground normal-case">Recommended</span>}
+                            </span>
+                            {level.description && <span className="text-[11px] leading-snug text-muted-foreground normal-case">{level.description}</span>}
+                          </span>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </>
               ) : (
                 <>
                   <CommandGroup>
@@ -229,13 +282,27 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                     )}
                     {shownModels.slice(0, SUBMENU_LIMIT).map(model => {
                       const isDefault = model.id === submenu?.defaultModel;
+                      const level = model.thoughtLevel ? defaultThoughtLevel(model.thoughtLevel) : undefined;
+                      // The level a plain Enter starts with, shown like the agent row's model; a bare "Default" says nothing.
+                      const levelName = level === 'default' ? null : model.thoughtLevel?.options.find(option => option.value === level)?.name;
                       return (
-                        <CommandItem key={model.id} value={`model:${model.id}`} aria-current={isDefault ? 'true' : undefined} className="items-start gap-2" onSelect={() => start(browsing, model.id)}>
+                        <CommandItem key={model.id} value={`model:${model.id}`} aria-current={isDefault ? 'true' : undefined} className="items-start gap-2" onSelect={() => start(browsing, model.id, level)}>
                           <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', isDefault ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
-                          <span className="flex min-w-0 flex-col">
-                            <span className="truncate normal-case">{model.name}</span>
+                          <span className="flex min-w-0 flex-1 flex-col">
+                            <span className="flex items-baseline gap-2">
+                              <span className="truncate normal-case">{model.name}</span>
+                              {levelName && <span className="ml-auto shrink-0 text-[10px] text-muted-foreground normal-case">{levelName}</span>}
+                            </span>
                             {model.detail && <span className="truncate text-[11px] text-muted-foreground normal-case">{model.detail}</span>}
                           </span>
+                          {Boolean(model.thoughtLevel?.options.length) && (
+                            <button type="button" tabIndex={-1} aria-label={`Choose a thinking level for ${model.name}`} title="Choose a thinking level (→)"
+                              className="-my-0.5 shrink-0 self-center rounded p-1 text-muted-foreground hover:bg-background/40 hover:text-foreground"
+                              onPointerDown={event => event.preventDefault()}
+                              onClick={event => { event.preventDefault(); event.stopPropagation(); browseLevels(model); }}>
+                              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          )}
                         </CommandItem>
                       );
                     })}
@@ -265,7 +332,9 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
               )}
             </CommandList>
             <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground/80">
-              {browsing ? `Starts a new ${agentNames[browsing]} chat with the model you pick.` : 'A chat keeps its agent. Press → to pick its model.'}
+              {levelModel ? 'A chat keeps its model and thinking level.'
+                : browsing ? `A chat keeps its model.${submenu?.models.some(model => model.thoughtLevel?.options.length) ? ' Press → to pick its thinking level.' : ''}`
+                : 'A chat keeps its agent. Press → to pick its model.'}
             </p>
           </Command>
         </PopoverContent>

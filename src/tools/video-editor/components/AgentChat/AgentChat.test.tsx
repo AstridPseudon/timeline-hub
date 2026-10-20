@@ -323,6 +323,7 @@ describe('AgentChat', () => {
         providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }] }],
         localModels: {
           currentModelId: 'vendor/codex-current',
+          thoughtLevel: { configId: 'reasoning_effort', name: 'Reasoning effort', currentValue: 'high', options: [{ value: 'high', name: 'High' }] },
           availableModels: [
             { modelId: 'vendor/codex-current', name: 'Codex Current' },
             { modelId: 'vendor/codex-target', name: 'Codex Target', description: 'For focused coding' },
@@ -344,7 +345,7 @@ describe('AgentChat', () => {
     expect(screen.queryByText('Codex Current', { exact: true })).toBeNull();
     const user = userEvent.setup();
     await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
-    const tooltip = (await screen.findByText('Codex Current', { exact: true })).parentElement;
+    const tooltip = (await screen.findByText('Codex Current · High', { exact: true })).parentElement;
     expect(tooltip).toHaveTextContent('To use another model, start a new chat.');
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
 
@@ -392,6 +393,42 @@ describe('AgentChat', () => {
     renderAgentChat();
     expect(await screen.findByTestId('agent-chat-identity')).toHaveTextContent(/^Astrid$/);
     expect(screen.queryByRole('button', { name: 'Chat model information' })).toBeNull();
+  });
+
+  it.each(['success', 'failure'] as const)('passes the chosen model and effort to startup and holds the composer (%s)', async outcome => {
+    const state = createState();
+    const oldId = 'codex:old';
+    const newId = 'codex:new';
+    state.projectChats['project-1'].selected_session_id = oldId;
+    state.projectChats['project-1'].sessions = [{ id: oldId }];
+    state.activeSessionData.id = oldId;
+    state.createSession.mutateAsync.mockImplementationOnce(async () => {
+      state.projectChats['project-1'].selected_session_id = newId;
+      state.projectChats['project-1'].sessions.push({ id: newId });
+      return { id: newId };
+    });
+    mockFromState(state);
+    mocks.useAgentModels.mockReturnValue({ data: { providers: [], currentModel: null, localModels: {
+      currentModelId: 'sol', availableModels: [{ modelId: 'sol', name: 'Sol' }], thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low',
+        recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] },
+    } }, isLoading: false });
+    let resolve!: () => void;
+    let reject!: (error: Error) => void;
+    const selection = vi.fn(() => new Promise<void>((yes, no) => { resolve = yes; reject = no; }));
+    mocks.useSetAgentModel.mockReturnValue({ mutateAsync: selection });
+    renderAgentChat();
+    await screen.findByRole('button', { name: 'Chat model information' });
+    fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose a thinking level for Sol' }));
+    fireEvent.click(screen.getByRole('option', { name: /High/ }));
+    await waitFor(() => expect(selection).toHaveBeenCalledWith({ sessionId: newId, model: 'sol', thoughtLevel: 'high' }));
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    await act(async () => { if (outcome === 'success') resolve(); else reject(new Error('Effort rejected')); });
+    if (outcome === 'failure') {
+      expect(screen.getByRole('alert')).toHaveTextContent('Effort rejected');
+      expect(screen.getByRole('textbox')).toBeDisabled();
+    } else await waitFor(() => expect(screen.getByRole('textbox')).toBeEnabled());
   });
 
   it.each(['success', 'failure'] as const)('locks the composer and shows the chosen agent during slow startup (%s)', async (outcome) => {

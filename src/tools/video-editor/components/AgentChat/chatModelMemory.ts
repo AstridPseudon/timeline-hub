@@ -1,4 +1,4 @@
-import { EXTERNAL_AGENT_IDS } from '@/integrations/astrid/localAgents.ts';
+import { EXTERNAL_AGENT_IDS, thoughtLevelSchema, type AgentThoughtLevel, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 
 /**
  * The model each chat last used, by session ID, so the chat list can say
@@ -53,4 +53,28 @@ export function rememberAgentModels(agent: typeof EXTERNAL_AGENT_IDS[number], mo
   } catch {
     // Without storage the submenu fetches the list each time.
   }
+}
+
+const thoughtLevelsKey = (agent: LocalAgentId) => `astrid.app.modelThoughtLevels.${agent}`;
+export type ModelThoughtLevels = Record<string, AgentThoughtLevel | null>;
+
+/** Each response describes just its current model. Unseen models get no level submenu. */
+export function readModelThoughtLevels(agent: LocalAgentId): ModelThoughtLevels {
+  try {
+    const value: unknown = JSON.parse(globalThis.localStorage?.getItem(thoughtLevelsKey(agent)) ?? '{}');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).flatMap<[string, AgentThoughtLevel | null]>(([id, candidate]) => {
+      if (candidate === null) return [[id, null]];
+      const parsed = thoughtLevelSchema.safeParse(candidate);
+      return parsed.success ? [[id, parsed.data]] : [];
+    }));
+  } catch { return {}; }
+}
+
+export function rememberModelThoughtLevel(agent: LocalAgentId, model: string, level?: AgentThoughtLevel): ModelThoughtLevels {
+  const previous = readModelThoughtLevels(agent);
+  delete previous[model];
+  const next = Object.fromEntries([...Object.entries(previous), [model, level ?? null]].slice(-MAX_CHATS));
+  try { globalThis.localStorage?.setItem(thoughtLevelsKey(agent), JSON.stringify(next)); } catch { /* Display cache only. */ }
+  return next;
 }

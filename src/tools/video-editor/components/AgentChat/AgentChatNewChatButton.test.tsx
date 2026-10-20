@@ -204,4 +204,51 @@ describe('AgentChatNewChatButton', () => {
     fireEvent.click(screen.getByRole('option', { name: /Attach an existing chat/ }));
     expect(toggle).toHaveBeenCalledOnce();
   });
+
+  const effortModels = {
+    agent: 'claude-code' as const, defaultModel: 'opus', loading: false,
+    models: [{ id: 'opus', name: 'Opus', thoughtLevel: { configId: 'effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high',
+      options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }],
+  };
+
+  it('starts immediately from a model with the recommended effort', async () => {
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.keyDown(document.querySelector('[cmdk-root]')!, { key: 'Enter' });
+    expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'high');
+  });
+
+  it('opens levels with →, lands on the recommendation, returns with ← and picks another level', async () => {
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.keyDown(document.querySelector('[cmdk-root]')!, { key: 'ArrowRight' });
+    const high = screen.getByRole('option', { name: /High/ });
+    expect(high).toHaveAttribute('aria-current', 'true');
+    await waitFor(() => expect(high).toHaveAttribute('aria-selected', 'true'));
+    expect(screen.queryByRole('combobox')).toBeNull();
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+    expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'low');
+  });
+
+  it('defaults to the reported Default row without a recommendation', () => {
+    const { onNewChat } = openMenu({ agentModels: { ...effortModels, models: [{ id: 'opus', name: 'Opus', thoughtLevel: {
+      configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'default', name: 'Default' }, { value: 'high', name: 'High' }],
+    } }] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'default');
+  });
+
+  it.each(['hermes', 'astrid'] as const)('shows no level step for %s models without levels', agent => {
+    const { onNewChat } = openMenu({ agentModels: { agent, loading: false, models: [{ id: 'a', name: 'Model A' }] } });
+    fireEvent.click(screen.getByRole('button', { name: `Choose a ${LOCAL_AGENT_TABLE[agent].name} model` }));
+    expect(screen.queryByRole('button', { name: /Choose a thinking level/ })).toBeNull();
+    fireEvent.click(screen.getByRole('option', { name: 'Model A' }));
+    expect(onNewChat).toHaveBeenCalledWith(agent, 'a');
+  });
 });

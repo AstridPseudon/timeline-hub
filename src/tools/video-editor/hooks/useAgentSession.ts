@@ -15,7 +15,7 @@ import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
 import { LOCAL_AGENT_CHANGED_EVENT, localAgentIdSchema, saveLocalAgent, savedLocalAgent, sessionAgentId, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE, type AcpSessionControl } from '@/integrations/astrid/acpSessionControl.ts';
-import { localAgentModelSettingKey, savedLocalAgentModel, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+import { defaultThoughtLevel, localAgentModelSettingKey, savedLocalAgentModel, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
 
 type AgentModelCatalog = AcpModelCatalog & { localModels?: LocalAgentModels | null };
 
@@ -453,7 +453,7 @@ export class AstridAgentSessionStore {
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
   async models(sessionId?: string | null, projectId?: string | null): Promise<AgentModelCatalog> {
     const agent = sessionId ? sessionAgentId(sessionId) : savedLocalAgent();
-    if (agent === 'astrid') return this.client.acp.models();
+    if (agent === 'astrid' && (!sessionId || sessionId === 'astrid-model-catalog')) return this.client.acp.models();
     if (!sessionId) return { providers: [], currentModel: null, localModels: null };
     if (!projectId) throw new Error('Select a project to choose this chat’s model.');
     await this.assertOwned(projectId, sessionId);
@@ -461,7 +461,8 @@ export class AstridAgentSessionStore {
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
-    return { providers: [], currentModel: null, localModels: models };
+    const catalog = agent === 'astrid' ? await this.client.acp.models() : { providers: [], currentModel: null };
+    return { ...catalog, ...(agent === 'astrid' && models ? { currentModel: models.currentModelId } : {}), localModels: models };
   }
   async agents() { return { ...(await this.client.acp.agents()), selectedAgent: savedLocalAgent() }; }
   async setAgent(agent: LocalAgentId) {
@@ -475,31 +476,41 @@ export class AstridAgentSessionStore {
   }
   async setModel(model: string, sessionId?: string | null, projectId?: string | null) {
     if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching models.');
-    const agent = sessionId ? sessionAgentId(sessionId) : savedLocalAgent();
-    if (sessionId) {
-      if (!projectId) throw new Error('Select a project to choose this chat’s model.');
-      await this.assertOwned(projectId, sessionId);
-      const connectionId = await this.connection(agent);
-      await this.load(connectionId, sessionId);
-      await this.pullEvents();
-      this.assertWriter(sessionId);
-    }
-    if (agent !== 'astrid') {
-      if (!sessionId || !projectId) throw new Error('Select a chat to choose its model.');
-      const connectionId = await this.connection(agent);
-      const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model, projectId);
-      if (!models) throw new Error('This agent did not report a model selection.');
-      await this.pullEvents();
-      globalThis.localStorage?.setItem(localAgentModelSettingKey(agent), models.currentModelId);
-      return { currentModel: models.currentModelId };
-    }
-    const result = await this.client.acp.setModel(model);
+    if (!sessionId || !projectId) throw new Error('Select a project and chat to choose its model.');
+    const agent = sessionAgentId(sessionId);
+    await this.assertOwned(projectId, sessionId);
+    const connectionId = await this.connection(agent);
+    await this.load(connectionId, sessionId);
     await this.pullEvents();
-    // The bridge restarts ACP to refresh its authenticated provider catalog.
-    // Reload this conversation by its existing ID on the next request.
-    const astridConnection = this.connectionIds.get('astrid');
-    if (astridConnection) this.retireConnection(astridConnection);
-    return result;
+    this.assertWriter(sessionId);
+    const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model, projectId);
+    if (!models) throw new Error('This agent did not report a model selection.');
+    await this.pullEvents();
+    try { globalThis.localStorage?.setItem(localAgentModelSettingKey(agent), models.currentModelId); } catch { /* Preference only. */ }
+    return { currentModel: models.currentModelId };
+  }
+
+  /** Configure a newly created chat in order: model, refreshed per-model levels, then effort. */
+  async configureSessionSelection(sessionId: string, projectId: string | null | undefined, model?: string, thoughtLevel?: string) {
+    if (!projectId) throw new Error('Select a project to configure this chat.');
+    await this.assertOwned(projectId, sessionId);
+    const connectionId = await this.connection(sessionAgentId(sessionId));
+    await this.load(connectionId, sessionId);
+    await this.pullEvents();
+    this.assertCanStartTurn(sessionId);
+    if (model) await this.setModel(model, sessionId, projectId);
+    // Model setters return a new option list. Never apply effort using the previous model's list.
+    const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
+    const level = models?.thoughtLevel;
+    if (thoughtLevel && !level) throw new Error('This model no longer advertises thinking levels.');
+    if (level) {
+      const value = thoughtLevel ?? defaultThoughtLevel(level);
+      if (!level.options.some(option => option.value === value)) throw new Error('The selected thinking level is unavailable for this model.');
+      await this.client.acp.setConfigOption(connectionId, sessionId, level.configId, value);
+      await this.pullEvents();
+      const updated = await this.client.acp.sessionModels(connectionId, sessionId);
+      if (updated.models?.thoughtLevel?.currentValue !== value) throw new Error('The agent did not confirm the selected thinking level.');
+    }
   }
   async unassignedProjectSessions(projectId: string) {
     return this.client.acp.unassignedProjectSessions(projectId, await this.connection());
@@ -1041,7 +1052,9 @@ export function useAgentModels(enabled = true, sessionId?: string | null, projec
 export function useSetAgentModel(sessionId?: string | null, projectId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (model: string) => sessionId ? agentStore.setModel(model, sessionId, projectId) : agentStore.setModel(model),
+    mutationFn: async (selection: string | { sessionId: string; model?: string; thoughtLevel?: string }) => typeof selection === 'string'
+      ? sessionId ? agentStore.setModel(selection, sessionId, projectId) : agentStore.setModel(selection)
+      : agentStore.configureSessionSelection(selection.sessionId, projectId, selection.model, selection.thoughtLevel),
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey }); },
   });
 }

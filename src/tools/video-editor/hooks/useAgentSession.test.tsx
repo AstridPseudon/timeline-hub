@@ -410,6 +410,48 @@ describe('timeline agent ACP chat', () => {
     expect(connect).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['codex:startup', 'reasoning_effort'], ['claude-code:startup', 'effort'], ['omp-startup', 'thinking'],
+  ])('configures %s model before applying its refreshed recommended effort', async (sessionId, configId) => {
+    let currentModelId = 'a';
+    let currentValue = 'low';
+    const calls: string[] = [];
+    const acp = {
+      projectChat: vi.fn(async () => ({ sessions: [{ id: sessionId }] })),
+      connect: vi.fn(async () => ({ connection_id: 'connection' })),
+      loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      setSessionModel: vi.fn(async (_connection: string, _session: string, model: string) => {
+        calls.push('model'); currentModelId = model;
+        return { models: { currentModelId, availableModels: [{ modelId: model, name: model }] } };
+      }),
+      sessionModels: vi.fn(async () => {
+        calls.push('levels');
+        return { models: { currentModelId, availableModels: [], thoughtLevel: { configId, name: 'Effort', currentValue,
+          // Model a's levels intentionally do not include high.
+          options: currentModelId === 'b' ? [{ value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }], recommendedValue: currentModelId === 'b' ? 'high' : 'low' } } };
+      }),
+      setConfigOption: vi.fn(async (_connection: string, _session: string, _config: string, value: string) => { calls.push('effort'); currentValue = value; }),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.configureSessionSelection(sessionId, 'project', 'b');
+    expect(calls).toEqual(['model', 'levels', 'effort', 'levels']);
+    expect(acp.setSessionModel).toHaveBeenCalledWith('connection', sessionId, 'b', 'project');
+    expect(acp.setConfigOption).toHaveBeenCalledWith('connection', sessionId, configId, 'high');
+  });
+
+  it.each(['hermes:no-levels', 'omp-no-levels'])('does not set effort when %s has no levels', async sessionId => {
+    const setConfigOption = vi.fn();
+    const store = new AstridAgentSessionStore({ acp: {
+      projectChat: async () => ({ sessions: [{ id: sessionId }] }), connect: async () => ({ connection_id: 'c' }),
+      loadSession: async () => ({}), events: async () => ({ notifications: [], disconnected: false }),
+      sessionModels: async () => ({ models: { currentModelId: 'a', availableModels: [] } }), setConfigOption,
+    } } as never);
+    await store.configureSessionSelection(sessionId, 'p');
+    expect(setConfigOption).not.toHaveBeenCalled();
+    await expect(store.configureSessionSelection(sessionId, 'p', undefined, 'high')).rejects.toThrow('no longer advertises');
+  });
+
   it('keeps the model query scoped to the active session and refreshes it after a switch', async () => {
     const catalogs: string[] = [];
     const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockImplementation(async (sessionId) => {

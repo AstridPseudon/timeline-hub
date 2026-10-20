@@ -1,5 +1,6 @@
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE } from '../src/integrations/astrid/acpSessionControl.ts';
-import { localAgentModelsSchema, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '../src/integrations/astrid/localAgents.ts';
+import { sessionAgentId, type LocalAgentId } from '../src/integrations/astrid/localAgents.ts';
+import { sessionConfigModels } from '../src/integrations/astrid/sessionConfigOptions.ts';
 import { ChatError } from './astrid-project-chat.ts';
 import type { AcpProcessHost, AcpRpcNotification } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
 import { randomUUID } from 'node:crypto';
@@ -35,27 +36,7 @@ function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
-export function sharedSessionModels(value: unknown): LocalAgentModels | null {
-  const record = object(value);
-  const models = object(record?.models);
-  const configOptions = Array.isArray(record?.configOptions) ? record.configOptions : [];
-  const modelConfig = configOptions.map(object).find(item => item?.id === 'model');
-  if (modelConfig) {
-    const options = Array.isArray(modelConfig?.options) ? modelConfig.options : [];
-    const groupedOptions = options.flatMap(item => {
-      const option = object(item);
-      if (typeof option?.value === 'string') return [option];
-      return Array.isArray(option?.options) ? option.options.map(object).filter((nested): nested is JsonRecord => Boolean(nested)) : [];
-    });
-    const availableModels = groupedOptions.flatMap(option => typeof option.value === 'string'
-      ? [{ modelId: option.value, name: typeof option.name === 'string' ? option.name : option.value, ...(typeof option.description === 'string' || option.description === null ? { description: option.description } : {}) }]
-      : []);
-    const parsedConfigModels = localAgentModelsSchema.safeParse({ availableModels, currentModelId: modelConfig.currentValue });
-    return parsedConfigModels.success ? parsedConfigModels.data : null;
-  }
-  const parsed = localAgentModelsSchema.safeParse(models);
-  return parsed.success ? parsed.data : null;
-}
+export const sharedSessionModels = sessionConfigModels;
 
 function sessionId(value: unknown): string | null {
   const id = object(value)?.sessionId;
@@ -322,7 +303,7 @@ export class SharedAcpSessions {
       if (models) next.models = { ...models, currentModelId: update.currentModelId };
       if (Array.isArray(next.configOptions)) next.configOptions = next.configOptions.map(option => {
         const item = object(option);
-        return item?.id === 'model' ? { ...item, currentValue: update.currentModelId } : option;
+        return item?.category === 'model' || item?.id === 'model' ? { ...item, currentValue: update.currentModelId } : option;
       });
     }
     session.loadedResult = next;
