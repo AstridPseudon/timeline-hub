@@ -8,7 +8,7 @@ import { playerBrowserProfile } from './browser-profile';
 function tuple(): FrameSourceTuple {
   const source = { root: '/synthetic', commit: 'a'.repeat(40), tree: 'b'.repeat(40) };
   const digest = `sha256:${'c'.repeat(64)}`;
-  return { schema: 'timeline.viewing.next-four-case/v1', frozen: true,
+  return { schema: 'timeline.viewing.next-five-case/v1', frozen: true,
     sources: { app: { ...source }, agent: { ...source }, runtime: { ...source }, composition: { ...source } },
     appSource: { files: 1, sha256: digest }, remotionProject: '/synthetic/remotion',
     peers: { app: Object.fromEntries(PEER_FILES.map(path => [path, digest])),

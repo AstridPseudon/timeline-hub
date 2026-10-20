@@ -12,7 +12,7 @@ export const PEER_FILES = [
 
 export interface SourcePin { root: string; commit: string; tree: string }
 export interface FrameSourceTuple {
-  schema: 'timeline.viewing.next-four-case/v1';
+  schema: 'timeline.viewing.next-five-case/v1';
   frozen: true;
   sources: Record<'app' | 'agent' | 'runtime' | 'composition', SourcePin>;
   appSource: { files: number; sha256: string };
@@ -24,7 +24,7 @@ export interface FrameSourceTuple {
 /** Release owners supply pins; never derive expected hashes from a selected install. */
 export function assertFrameSourceTuple(value: unknown): asserts value is FrameSourceTuple {
   const tuple = value as FrameSourceTuple | undefined;
-  assert.equal(tuple?.schema, 'timeline.viewing.next-four-case/v1', 'final source tuple is owner-pending');
+  assert.equal(tuple?.schema, 'timeline.viewing.next-five-case/v1', 'final source tuple is owner-pending');
   assert.equal(tuple.frozen, true, 'manager source freeze is pending');
   for (const name of ['app', 'agent', 'runtime', 'composition'] as const) {
     const source = tuple.sources?.[name];
