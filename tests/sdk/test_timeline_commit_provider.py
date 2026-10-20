@@ -194,7 +194,19 @@ class DetachedPort:
         assert prepared["semantic_events"] == []
         document = prepared["canonical_document"]
         pins = document["dependency_manifest"]["documents"]
-        assert {_digest(pin) for pin in pins} == self.captures.keys()
+        captured = self.captures.keys()
+        if set(_digest(pin) for pin in pins) != captured:
+            # An accepted inverse may drop a newly introduced pin once its
+            # authored dependency is gone; Runtime still authenticated that
+            # exact captured source.
+            assert all(record["command"]["op"] == "timeline.inverse" for record in records)
+            missing = captured - {_digest(pin) for pin in pins}
+            assert missing <= {
+                _digest(dependency["pin"])
+                for record in records
+                for dependency in record["dependencies"]
+                if dependency["key"] == "params.schema"
+            }
         for pin in pins:
             assert any(dep["pin"] == pin and dep["kind"] in {"transcript", "source"}
                        for record in records for dep in record["dependencies"])

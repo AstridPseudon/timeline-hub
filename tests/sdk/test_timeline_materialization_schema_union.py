@@ -30,6 +30,22 @@ def without_groups(schema):
     return schema
 
 
+def without_transition(schema):
+    """Reconstruct a pre-transition floor without adding a copied snapshot."""
+    args = schema['$defs']['ClipSetArgs']
+    args['properties']['values']['properties'].pop('transition', None)
+    args['properties']['values']['properties'].pop('elementRef', None)
+    args['properties']['clear']['items']['enum'] = [
+        value for value in args['properties']['clear']['items']['enum'] if value != 'elementRef']
+    args['properties'].pop('schema_source', None)
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or '
+        'incoming transition. Clear removes presence, never sets null/empty. Asset assignment '
+        'requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is '
+        'outside v1.')
+    return schema
+
+
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
     candidate = without_groups(copy.deepcopy(_SCHEMA))
@@ -62,6 +78,7 @@ def ordinary_schema():
         clause['then'] = old
         affected.add(clause['if']['properties']['op']['const'])
     assert affected | {'track.create'} == SOURCE_BOUND_OPERATIONS
+    without_transition(candidate)
     return candidate
 
 
@@ -77,7 +94,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_transition(without_groups(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -85,7 +102,7 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_transition(without_groups(copy.deepcopy(_SCHEMA)))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -98,12 +115,12 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_groups(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(without_groups(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
@@ -113,16 +130,17 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
+    schema = without_transition(copy.deepcopy(_SCHEMA))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(
-            _SCHEMA['$defs'][name]['anyOf'][-1] if name in REFERENCES else _SCHEMA['$defs'][name])
+            schema['$defs'][name]['anyOf'][-1] if name in REFERENCES else schema['$defs'][name])
         old = json.dumps(previous['$defs'][name]['pattern']).encode()
         assert raw.count(old) == 1
         raw = raw.replace(old, json.dumps(addition['pattern']).encode(), 1)
         previous['$defs'][name] = addition
     current = {clause['if']['properties']['op']['const']: clause
-               for clause in _SCHEMA['$defs']['EditCommand']['allOf']}
+               for clause in schema['$defs']['EditCommand']['allOf']}
     for clause in previous['$defs']['EditCommand']['allOf']:
         op = clause['if']['properties']['op']['const']
         if op in SOURCE_BOUND_OPERATIONS - {'track.create'}:
@@ -134,7 +152,7 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
             clause['then'] = addition
     assert json.loads(raw) == previous
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_S2_SHA256
-    assert compatibility_errors(previous, _SCHEMA) == []
+    assert compatibility_errors(previous, schema) == []
 
 
 @pytest.mark.parametrize('name', (*REFERENCES, 'AnchorIdentity'))

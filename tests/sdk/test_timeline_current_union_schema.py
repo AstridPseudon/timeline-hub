@@ -46,6 +46,18 @@ def without_text(schema):
     return candidate
 
 
+def without_transition(schema):
+    """Reconstruct the reviewed pre-transition floor without copying a schema."""
+    args = schema['$defs']['ClipSetArgs']
+    args['properties']['values']['properties'].pop('transition', None)
+    args['properties']['values']['properties'].pop('elementRef', None)
+    args['properties']['clear']['items']['enum'] = [
+        value for value in args['properties']['clear']['items']['enum'] if value != 'elementRef']
+    args['properties'].pop('schema_source', None)
+    args['description'] = baseline('agent-current-c456b328')['$defs']['ClipSetArgs']['description']
+    return schema
+
+
 @pytest.mark.parametrize('name', SOURCES)
 def test_full_current_candidate_preserves_every_definition_and_registered_operation(name):
     assert compatibility_errors(baseline(name), _SCHEMA) == []
@@ -75,7 +87,7 @@ def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(n
 
 def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
     previous = baseline('agent-current-c456b328')
-    candidate = s2_slice()
+    candidate = without_transition(s2_slice())
     for definition in ('ProducerAdmittedTarget', 'ProducerIdentity', 'ProducerAttemptPin',
                        'ProducerGuardArgs', 'SettledProducerProposal'):
         del candidate['$defs'][definition]
@@ -90,7 +102,7 @@ def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
 
 def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
     previous = baseline('agent-frozen-s1-0a0ac7ba')
-    candidate = s2_slice()
+    candidate = without_transition(s2_slice())
     element = candidate['$defs']['ClipSetElementArgs']
     assert element['properties'].pop('schema_source') == {'$ref': '#/$defs/DocumentPin'}
     assert element['required'] == ['elementRef'] and element['additionalProperties'] is False
@@ -129,7 +141,7 @@ def s2_slice():
 
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
-    assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
+    assert without_transition(s2_slice()) == baseline('agent-frozen-s2-26ef2bbb')
     assert len(ordinary_schema()['$defs']) == 55
     assert len(ordinary_schema()['$defs']['EditCommand']['allOf']) == 29
     assert len(_SCHEMA['$defs']) == 58

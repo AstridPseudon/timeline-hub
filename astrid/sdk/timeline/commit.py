@@ -277,11 +277,93 @@ def _inverse_clip_transcripts(records, bundle, *, pending=False):
     return result
 
 
+def _inverse_document_removals(records, bundle):
+    """Remove only selected-pack pins proven to be introduced by an undo target."""
+    from ._collections import AcceptedRecords
+    from ._command_state import CommandError, State, equal
+
+    if not records:
+        return set()
+    if not isinstance(records, AcceptedRecords):
+        raise CommandError('document inverse needs accepted boundaries', kind='history_unavailable')
+    if not equal(list(records), [record for entry in records.entries
+                                for record in entry['records']['commands']]):
+        raise CommandError('document inverse records differ from accepted history',
+                           kind='history_unavailable')
+    removed = set()
+    for entry in reversed(records.entries):
+        before, after = records.load_boundary(entry)
+        images = [value['source_mapping']['_runtime_document'] for value in (before, after)]
+        for image, pin in zip(images, (entry['previous'], entry)):
+            _verify_document(image)
+            _require((image['project_id'], image['timeline_id']) ==
+                     (bundle['project_id'], bundle['timeline_id'])
+                     and image['parent_revision']['revision_id'] == pin['revision_id'],
+                     'inverse document boundary mismatch')
+        commands = entry['records']['commands']
+        if any(write['ref'] == 'timeline' for record in commands for write in record['writes']):
+            continue
+        prior_docs, accepted_docs = ({_json(pin) for pin in image['dependency_manifest']['documents']}
+                                     for image in images)
+        if prior_docs - accepted_docs and any(record['command']['op'] != 'timeline.inverse'
+                                              for record in commands):
+            raise CommandError('unproven document removal boundary', kind='history_unavailable')
+        removed.difference_update(prior_docs - accepted_docs)
+        introduced = accepted_docs - prior_docs
+        if not introduced:
+            continue
+        declared, pack_ids = set(), {}
+        for record in commands:
+            args = record['command'].get('args', {})
+            source = args.get('schema_source')
+            if source is not None:
+                declared.add(_json(source))
+            for dependency in record.get('dependencies', []):
+                if dependency.get('key') == 'params.schema':
+                    declared.add(_json(dependency['pin']))
+                if dependency.get('key') == 'params.snapshot':
+                    snapshot = dependency.get('pin', {})
+                    source = snapshot.get('source')
+                    element = snapshot.get('element', {})
+                    if source is not None and isinstance(element, dict) and element.get('packId'):
+                        pack_ids.setdefault(_json(source), set()).add(element['packId'])
+        if not introduced <= declared:
+            raise CommandError('introduced document pin lacks recorded authority',
+                               kind='history_unavailable')
+        state = State(copy.deepcopy(before))
+        for record in commands:
+            for write in [*record['writes'], *record['derived_writes']]:
+                if not state.matches(write['ref'], write['path'], write['before']):
+                    raise CommandError('document boundary differs from accepted writes',
+                                       kind='history_unavailable')
+                state.set(write['ref'], write['path'], write['after'])
+        replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+        if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
+                or any(not equal(replayed[key], images[1][key]) for key in (
+                    'shot_revisions', 'internal_timeline_revisions'))
+                or {_json(pin) for pin in replayed['dependency_manifest']['documents']} != prior_docs):
+            raise CommandError('unproven document boundary scope', kind='history_unavailable')
+        current_pack_ids = set()
+        for owner in ['parent', *('occurrence:' + row['occurrence_id']
+                                  for row in bundle['placements'])]:
+            for clip in State(bundle).collection(owner, 'clip'):
+                for key in ('elementRef', 'element_ref'):
+                    selected = clip.get(key)
+                    if isinstance(selected, dict) and selected.get('packId'):
+                        current_pack_ids.add(selected['packId'])
+        for pin in introduced:
+            if not current_pack_ids.intersection(pack_ids.get(pin, ())):
+                removed.add(pin)
+    return removed
+
+
 def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
     """Compile exact inputs; inverse pin removal requires provider-verified records.
 
-    Historical source images alone never authorize dropping retained media.
+    Historical source images alone never authorize dropping retained pins.
     """
+    from ._command_state import State
+
     # Immutable reuse follows exact encoded content, independently of value guards.
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
@@ -345,6 +427,32 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         for capture in bundle['source_mapping'].get('pinned_documents', []):
             if capture['pin'] not in documents:
                 documents.append(copy.deepcopy(capture['pin']))
+        if inverse_records and source_bundles:
+            current_pack_ids = {
+                selected['packId']
+                for owner in ['parent', *('occurrence:' + row['occurrence_id']
+                                          for row in bundle['placements'])]
+                for clip in State(bundle).collection(owner, 'clip')
+                for key in ('elementRef', 'element_ref')
+                for selected in [clip.get(key)]
+                if isinstance(selected, dict) and selected.get('packId')}
+            reintroduced = []
+            for record in inverse_records:
+                for dependency in record.get('dependencies', []):
+                    if dependency.get('key') != 'params.snapshot':
+                        continue
+                    snapshot = dependency.get('pin', {})
+                    source_pin = snapshot.get('source')
+                    element = snapshot.get('element', {})
+                    if not (isinstance(source_pin, dict) and isinstance(element, dict)
+                            and element.get('packId') in current_pack_ids):
+                        continue
+                    if any(source_pin in historical['source_mapping']['_runtime_document']
+                           ['dependency_manifest']['documents'] for historical in source_bundles):
+                        reintroduced.append(source_pin)
+            for pin in reintroduced:
+                if pin not in documents:
+                    documents.append(copy.deepcopy(pin))
         removals = _inverse_clip_transcripts(inverse_records, bundle)
         documents = [pin for pin in documents if pin not in removals]
     # Retained inputs may include media consumed through a transcript or other
@@ -352,6 +460,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
     removals = _inverse_media_removals(inverse_records, bundle)
+    document_removals = _inverse_document_removals(inverse_records, bundle)
     if removals:
         from ._command_state import CommandError
 
@@ -365,6 +474,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
             raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
         for identity in removals:
             media.pop(identity, None)
+    if document_removals:
+        documents = [pin for pin in documents if _json(pin) not in document_removals]
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
     if (digest == source["parent_revision"]["content_digest"]
@@ -437,7 +548,7 @@ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
                         pins.append(pin)
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
-        if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
+        if call['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and pin is not None:
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
@@ -495,10 +606,16 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
         command = ctx.record['command']
         required = []
         authority = None
-        if command['op'] == 'clip.set-params':
+        if command['op'] in ('clip.set-params', 'clip.set'):
             row = ctx.state.entity(command['select'])
             selected = row.get('elementRef') or row.get('element_ref')
-            if isinstance(selected, dict) and selected.get('packId'):
+            requested = (command['args']['values'].get('elementRef')
+                         if command['op'] == 'clip.set' else selected)
+            same_reference = (isinstance(selected, dict) and isinstance(requested, dict)
+                              and all(selected.get(key) == requested.get(key)
+                                      for key in ('packId', 'id', 'kind')))
+            if isinstance(selected, dict) and selected.get('packId') and (
+                    command['op'] == 'clip.set-params' or same_reference):
                 from ._selected_param_authority import resolve_selected_param_source
 
                 authority = resolve_selected_param_source(
@@ -507,10 +624,12 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
                 if 'schema_source' not in command['args']:
                     raise CommandError('selected project pack requires exact schema_source',
                                        ref=command['select'])
-        if command['op'] in ('clip.set-params', 'clip.set-element') and 'schema_source' in command['args']:
+        if command['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
             selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
-                        else row.get('elementRef') or row.get('element_ref'))
+                        else (command['args']['values'].get('elementRef')
+                              if command['op'] == 'clip.set'
+                              else row.get('elementRef') or row.get('element_ref')))
             if isinstance(selected, dict) and selected.get('packId'):
                 required.append((command['args']['schema_source'], selected))
         elif command['op'] == 'timeline.inverse':
@@ -1065,6 +1184,20 @@ class RuntimeCommitService:
             if not closures:
                 schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
                                          inverse_sources=inverse_sources)
+                known_pins = {
+                    _json(pin) for pin in bundle['source_mapping']['_runtime_document']
+                    ['dependency_manifest']['documents']}
+                for source in inverse_sources:
+                    source_pins = {
+                        _json(pin) for pin in source['source_mapping']['_runtime_document']
+                        ['dependency_manifest']['documents']}
+                    if source_pins <= known_pins:
+                        continue
+                    for candidate in _hydrate(port, source):
+                        if not any(candidate[0]['pin'] == existing[0]['pin']
+                                   for existing in schema_inputs):
+                            schema_inputs.append(candidate)
+                    known_pins.update(source_pins)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
             original = execute(bundle, calls, inverse_records=inverse_records,
