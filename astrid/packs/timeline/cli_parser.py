@@ -8,7 +8,7 @@ from typing import Any
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "move", "publish", "redo", "status", "undo"}
+    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "move", "track-label", "publish", "redo", "status", "undo"}
 )
 
 
@@ -37,11 +37,14 @@ class TimelinesParser(argparse.ArgumentParser):
     (address, word, query, sheet file, asset key) instead of failing with "unrecognized arguments"."""
 
     move_parser: TimelinesParser
+    track_label_parser: TimelinesParser
 
     def parse_args(self, args: Any = None, namespace: Any = None) -> argparse.Namespace:
         args = list(sys.argv[1:] if args is None else args)
         if args[:2] == ["edit", "move"] and hasattr(self, "move_parser"):
             return self.move_parser.parse_args(args[2:], namespace)
+        if args[:2] == ["edit", "track-label"] and hasattr(self, "track_label_parser"):
+            return self.track_label_parser.parse_args(args[2:], namespace)
         parsed, extras = self.parse_known_args(args, namespace)
         loose = [e for e in extras if not e.startswith("-")]
         if extras and len(loose) == len(extras):
