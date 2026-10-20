@@ -136,6 +136,7 @@ def _scene_cover(
     visual = [element for element in elements if not element.audio]
     layer_ids = [layer["clipId"] for layer in layers]
     joined: dict[str, list[model.Element]] = {}
+    public_matches: set[int] = set()
     for clip_id in layer_ids:
         identity = identities.get(clip_id)
         matches = []
@@ -151,6 +152,7 @@ def _scene_cover(
                 mapped = False
             if exact or mapped:
                 matches.append(element)
+                public_matches.add(id(element))
         joined[clip_id] = matches if layer_ids.count(clip_id) == 1 else []
     covers, unavailable = [], []
     for lower in visual:
@@ -159,7 +161,7 @@ def _scene_cover(
             # An authored window may suppress an unavailable-fact advisory
             # outside that window, but it cannot suppress a qualified public
             # layer. Public frame presence is the source of truth here.
-            if not lower.start <= t < lower.end:
+            if id(lower) not in public_matches and not lower.start <= t < lower.end:
                 continue
             unavailable.append(f"COVER unavailable for {lower.label} at frame {frame}: exact compiled clip identity is missing or ambiguous")
             continue
@@ -210,6 +212,7 @@ def _scene_boxes(
     identities = identities if isinstance(identities, Mapping) else {}
     visual = [element for element in elements if not element.audio]
     joined: dict[int, list[Mapping[str, Any]]] = {id(element): [] for element in visual}
+    public_matches: set[int] = set()
     for layer in layers:
         clip_id = layer["clipId"]
         identity = identities.get(clip_id)
@@ -223,6 +226,7 @@ def _scene_boxes(
                           and identity.get("occurrence_id") == element.occurrence_id)
             if exact or mapped:
                 matches.append(element)
+                public_matches.add(id(element))
         if len(matches) == 1:
             joined[id(matches[0])].append(layer)
 
@@ -233,7 +237,7 @@ def _scene_boxes(
             unavailable.append(f"composition regions unavailable for {element.label} at frame {frame}: {reason}")
 
         candidates = joined[id(element)]
-        if not candidates and not element.start <= t < element.end:
+        if not candidates and id(element) not in public_matches and not element.start <= t < element.end:
             continue
         if len(candidates) != 1 or sum(layer["clipId"] == candidates[0]["clipId"] for layer in layers) != 1:
             missing("exact compiled clip identity is missing or ambiguous")
@@ -289,6 +293,7 @@ def composition(
     track_order: Sequence[str] = (), min_text_px: float | None = None,
     params: Mapping[str, Any] | None = None, tracks: Sequence[Any] = (),
     shared: Mapping[str, Any] | None = None,
+    scene_elements: Sequence[model.Element] | None = None,
 ) -> list[Finding]:
     """FACE / FRAME / SAFE / SMALL / COVER / EDGE for one cut.
 
@@ -297,10 +302,14 @@ def composition(
     are advisory. COVER retains its public .98 policy. Bundle-only callers
     without scene frames retain the unsupported private region path until their
     owner supplies admitted facts.
+
+    ``scene_elements`` is the complete frozen identity universe for public
+    joins, including incoming preroll. ``elements`` still selects samples.
     """
     index = int(cut["index"])
     min_text_px = float(min_text_px) if min_text_px is not None else _p(params, "min_text_px")
     face_fraction = _p(params, "face_fraction")
+    public_elements = scene_elements if scene_elements is not None else elements
     found: dict[tuple[str, str, str], Finding] = {}
 
     def add(code: str, key: str, t: float, message: str, severity: str = "warn", fix: dict | None = None) -> None:
@@ -309,7 +318,7 @@ def composition(
     for t in _sample_times(cut, elements, fps):
         public_regions = shared is not None and "scene_frames" in shared
         if public_regions:
-            boxes, text_regions, canvas, unavailable = _scene_boxes(elements, t, fps, shared)
+            boxes, text_regions, canvas, unavailable = _scene_boxes(public_elements, t, fps, shared)
             for message in unavailable:
                 add("REGION", message, t, message, "info")
             mx, my = canvas[0] * (1 - model.TITLE_SAFE) / 2, canvas[1] * (1 - model.TITLE_SAFE) / 2
@@ -364,7 +373,7 @@ def composition(
                     add("EDGE", box.element.id, t, f"{box.label} runs {over[worst]:.0f} px past the {worst} edge "
                         "(a crop; fine if intended)", "info")
         if shared is not None:
-            covers, unavailable = _scene_cover(elements, t, fps, shared)
+            covers, unavailable = _scene_cover(public_elements if public_regions else elements, t, fps, shared)
             for upper, lower in covers:
                 add("COVER", str((lower.occurrence_id, lower.id, upper.occurrence_id, upper.id)), t,
                     f"{upper.label} fully covers {lower.label}")
