@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T14:32:05Z | dispatcher heartbeat 9s | live 6 (sol 0, luna 6, other 0) | status age 0m -->
+<!-- app2 | 2026-10-20T14:32:55Z | dispatcher heartbeat 8s | live 7 (sol 0, luna 7, other 0) | status age 0m -->
 # app2 — 2026-10-20 14:32 UTC
 Milestone: M2 — seven handoffs ACK; refreshing native source units, no row retirement or exit.
 Integrated: App remote tl/integration41fff23a2; current root b1ef4b9b9 not integrated. No app2 product merge. Existing source review tests: bootstrap95, ordinary122, element/serializer49 PASS; duplicate runner-config failed before collection (__dirname).
