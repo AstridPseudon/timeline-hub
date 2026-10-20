@@ -1,3 +1,4 @@
+import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -138,6 +139,7 @@ interface ScheduledSave {
   session: PersistenceSession;
   generation: number;
   data: TimelineData;
+  authoredConfig: TimelineConfig;
   seq: number;
   draftOwnerId: string;
   draftRecoveryKey: string;
@@ -652,7 +654,7 @@ export function useTimelinePersistence({
             : headRevisionRef.current
               ? cloneAttemptValue(headRevisionRef.current)
               : undefined,
-          config: cloneAttemptValue(scheduledOrAttempt.data.config),
+          config: cloneAttemptValue(scheduledOrAttempt.authoredConfig),
           registry: cloneAttemptValue(scheduledOrAttempt.data.registry),
           stableSignature: scheduledOrAttempt.data.stableSignature,
         };
@@ -948,7 +950,8 @@ export function useTimelinePersistence({
 
   const createScheduledSave = useCallback((nextData: TimelineData, seq: number): ScheduledSave => {
     const draftOwnerId = generateUUID();
-    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.() ?? {};
+    let rawComposition: import('../data/shotCompositionAdapter.ts').PreparedShotComposition | undefined;
+    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.((composition) => { rawComposition = composition; }) ?? {};
     // Provider caches may contain a polled head. Only the editor's adopted
     // base (or its own acknowledged successor) belongs to this draft.
     const head = headRevisionRef.current;
@@ -967,8 +970,10 @@ export function useTimelinePersistence({
         }
       : cloneAttemptValue(loadedBundleRef.current);
     const wireBundle = effectiveBundle ?? undefined;
+    const authoredConfig = (recoveryConfig ?? createRecoveryConfig()).snapshot(
+      head, nextData.config, Boolean(nextData.editProjection), rawComposition);
     const draft = {
-      config: recoveryConfig?.snapshot(head, nextData.config) ?? cloneAttemptValue(nextData.config),
+      config: authoredConfig,
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
@@ -995,6 +1000,7 @@ export function useTimelinePersistence({
       session,
       generation: session.generation,
       data: nextData,
+      authoredConfig,
       seq,
       draftOwnerId,
       draftRecoveryKey,
@@ -1027,7 +1033,14 @@ export function useTimelinePersistence({
     // debounce, interaction gate, or network attempt. Draft writes are
     // serialized so an older IndexedDB transaction cannot land after a newer
     // mutation, and each receipt can compare-and-delete only its own slot.
-    const scheduledSave = createScheduledSave(nextData, editSeqRef.current);
+    let scheduledSave: ScheduledSave;
+    try { scheduledSave = createScheduledSave(nextData, editSeqRef.current); }
+    catch (error) {
+      setSaveStatus('error');
+      rejectFlushWaiters(error);
+      console.error('[TimelineSync] Draft retained in the editor: serialization refused', error);
+      return;
+    }
 
     if (reloadInProgressRef.current) {
       // A user edit made while canonical Reload is pending supersedes that
@@ -1120,7 +1133,7 @@ export function useTimelinePersistence({
       recordShotTimelinePhase(scheduledSave.traceId, 'debounce-fired');
       void doSave(scheduledSave);
     }, SAVE_DEBOUNCE_MS);
-  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, rejectFlushWaiters, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
 
   const resumeDeferredRecoverySave = useCallback(() => {
     if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;

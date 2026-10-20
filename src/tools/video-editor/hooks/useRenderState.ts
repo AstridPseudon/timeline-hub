@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
+import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
 import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { isLocalTestMode } from '@/app/localTestRuntime.ts';
 import { useClientRender } from '@/tools/video-editor/hooks/useClientRender.ts';
@@ -32,6 +33,9 @@ import type { PlannerBackedRenderRouteDecision } from '@/tools/video-editor/lib/
 import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
 import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+import { useVideoEditorPreviewComposition } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import type { BridgeTaskDetailPayload } from '@/tools/video-editor/data/bridgeContract.ts';
 import type {
   CapabilityFinding,
@@ -531,6 +535,7 @@ export function useRenderState(
   flushPendingSave?: () => Promise<number>,
   persistVisualSeamConfig?: PersistVisualSeamConfig,
   canPersistVisualSeamConfig = true,
+  timelineData?: TimelineData | null,
 ) {
   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle');
   const [renderLog, setRenderLog] = useState('');
@@ -566,7 +571,7 @@ export function useRenderState(
   }, [extensionRuntime]);
   const runtimeContext = useContext(VideoEditorRuntimeContext);
   const hasShotClips = Boolean(resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'));
-  const compositionResolution = useMemo(() => resolveCanonicalComposition({
+  const canonicalResolution = useMemo(() => resolveCanonicalComposition({
     userId: runtimeContext?.userId,
     hasShotClips,
     hasShotComposition: Boolean(runtimeContext?.shots?.shotComposition),
@@ -574,9 +579,24 @@ export function useRenderState(
     compositionError: runtimeContext?.userId === null ? runtimeContext.shots?.canonicalCompositionError : null,
     baseConfig: resolvedConfig,
   }), [hasShotClips, resolvedConfig, runtimeContext]);
+  const commandResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
+  const compositionResolution = timelineData?.editProjection ? commandResolution : canonicalResolution;
   const canonicalLane = compositionResolution.source === 'canonical';
   const renderConfig = compositionResolution.config;
   const renderProjectionError = compositionResolution.error;
+  const compiledTransitions = useMemo(() => canonicalLane && renderConfig
+    ? compilePlayerTransitions(renderConfig) : undefined, [canonicalLane, renderConfig]);
+  const effectiveRenderMetadata = useMemo(() => {
+    if (!renderConfig || !renderMetadata) return renderMetadata;
+    const fps = renderConfig.output.fps;
+    const { width, height } = parseResolution(renderConfig.output.resolution);
+    return {
+      fps,
+      durationInFrames: getTimelineDurationInFrames(projectOutputTimelineConfig(renderConfig).config, fps),
+      compositionWidth: Math.max(1, width),
+      compositionHeight: Math.max(1, height),
+    };
+  }, [renderConfig, renderMetadata]);
   const diagnosticCollection = runtimeContext?.diagnosticCollection;
   const processStatuses = runtimeContext?.processStatuses;
   const processResultAttachRecords = runtimeContext?.processResultAttachRecords;
@@ -620,7 +640,8 @@ export function useRenderState(
 
   const startClientRender = useClientRender({
     resolvedConfig: renderConfig,
-    metadata: renderMetadata,
+    compiledTransitions,
+    metadata: effectiveRenderMetadata,
     setRenderStatus,
     setRenderProgress,
     setRenderLog,
@@ -788,7 +809,7 @@ export function useRenderState(
       // executor-attempt projection.
       const progress = asDiagnosticRecord(task.progress)
         ?? (task.attempts?.at(-1)?.diagnostics.progress as Record<string, unknown> | undefined);
-      const total = Math.max(1, progressNumber(progress, 'total') ?? renderMetadata?.durationInFrames ?? 1);
+      const total = Math.max(1, progressNumber(progress, 'total') ?? effectiveRenderMetadata?.durationInFrames ?? 1);
       const reportedPercent = progressNumber(progress, 'percent');
       const current = Math.max(0, Math.min(
         total,
@@ -825,7 +846,7 @@ export function useRenderState(
         void pollAstridRender(client, taskId, generation);
       }, 3_000);
     }
-  }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.timelineId]);
+  }, [commitRenderResult, effectiveRenderMetadata?.durationInFrames, renderConfig?.output?.file, runtimeContext?.timelineId]);
 
   const startAstridRender = useCallback(async (): Promise<boolean> => {
     const projectId = runtimeContext?.project?.projectId;
@@ -865,7 +886,7 @@ export function useRenderState(
     setRenderStatus('rendering');
     setRenderProgress({
       current: 0,
-      total: renderMetadata?.durationInFrames ?? 1,
+      total: effectiveRenderMetadata?.durationInFrames ?? 1,
       percent: 0,
       phase: 'admitting',
     });
@@ -929,7 +950,7 @@ export function useRenderState(
     const generation = ++renderPollGenerationRef.current;
     await pollAstridRender(client, admission.task_id, generation);
     return true;
-  }, [flushPendingSave, pollAstridRender, renderConfig, renderDestination, renderMetadata?.durationInFrames, renderProjectionError, runtimeContext]);
+  }, [effectiveRenderMetadata?.durationInFrames, flushPendingSave, pollAstridRender, renderConfig, renderDestination, renderProjectionError, runtimeContext]);
 
   const eligibleSeamFrames = useMemo(() => {
     if (!visualSeamReport?.blocked || visualSeamReport.structuralIssues.length > 0 || !renderConfig || !persistVisualSeamConfig || !canPersistVisualSeamConfig
@@ -1137,7 +1158,7 @@ export function useRenderState(
       setRenderStatus('rendering');
       setRenderProgress({
         current: 0,
-        total: renderMetadata?.durationInFrames ?? 1,
+        total: effectiveRenderMetadata?.durationInFrames ?? 1,
         percent: 0,
         phase: 'validating',
       });
@@ -1164,8 +1185,8 @@ export function useRenderState(
         setRenderProgress(progress.progress == null
           ? null
           : {
-            current: Math.round((renderMetadata?.durationInFrames ?? 1) * progress.progress),
-            total: renderMetadata?.durationInFrames ?? 1,
+            current: Math.round((effectiveRenderMetadata?.durationInFrames ?? 1) * progress.progress),
+            total: effectiveRenderMetadata?.durationInFrames ?? 1,
             percent: Math.round(progress.progress * 100),
             phase: progress.phase,
           });
@@ -1198,7 +1219,7 @@ export function useRenderState(
     processResultAttachRecords,
     processStatuses,
     commitRenderResult,
-    renderMetadata?.durationInFrames,
+    effectiveRenderMetadata?.durationInFrames,
     renderConfig,
     startClientRender,
     startAstridRender,

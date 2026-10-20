@@ -1,3 +1,7 @@
+import fixture from '../data/shotComposition.fixture.json';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+import { serializeProjectedTimelineConfig } from './serialize.ts';
 import { describe, expect, it } from 'vitest';
 import { repairConfig } from '@/tools/video-editor/lib/migrate';
 import { serializeClipForDisk, serializeForDisk, serializeResolvedTimelineEdit, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
@@ -967,5 +971,70 @@ describe('resolved editor serialization', () => {
     const original = { output, clips: [], app: { removed: { value: 1 }, edited: { value: 2 } }, ...{ registry: null } };
     const resolved: ResolvedTimelineConfig = { output, tracks: [], clips: [], registry: {}, app: { edited: { value: 3 } } };
     expect(serializeResolvedTimelineEdit(resolved, undefined, original).app).toEqual({ edited: { value: 3 } });
+  });
+});
+
+
+describe('verified projection serialization', () => {
+  it.each([undefined, null, { storedOccurrenceDurationMs: null, ordered: [false, 0, null] },
+    JSON.parse('{"storedOccurrenceDurationMs":{"__proto__":[null,false]},"__proto__":{"keep":true}}')])(
+    'preserves raw opaque timing %j and removes only a newly derived cap', (rawTiming) => {
+      const graph = structuredClone(fixture);
+      const raw = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!
+        .internal_timeline_revision.timeline.clips[0] as Record<string, unknown>;
+      const app = JSON.parse('{"ordered":[0,false,null],"__proto__":{"keep":null},"canonical":null}');
+      if (rawTiming !== undefined) app.canonicalTiming = rawTiming;
+      raw.app = app;
+      const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+      const before = JSON.stringify(graph);
+      const config = projectCanonicalComposition(composition).config;
+      const projected = config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!;
+      expect(projected.app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
+      const pureRaw = { id: 'raw', at: 0, track: 'video', app };
+      expect(serializeClipForDisk(pureRaw).app).toStrictEqual(app);
+      expect(JSON.stringify(serializeClipForDisk(pureRaw).app)).toBe(JSON.stringify(app));
+      for (const serialized of [serializeClipForDisk(projected, raw),
+        serializeForDisk(config, undefined, undefined, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!,
+        serializeResolvedTimelineEdit(config, undefined, undefined, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!,
+        serializeProjectedTimelineConfig(config, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!]) {
+        expect(serialized.app?.ordered).toStrictEqual(app.ordered);
+        expect(Object.hasOwn(serialized.app!, '__proto__')).toBe(true);
+        expect(serialized.app?.canonical).toBeNull();
+        if (rawTiming !== undefined) {
+          expect(serialized.app?.canonicalTiming).toStrictEqual(rawTiming);
+          expect(JSON.stringify(serialized.app?.canonicalTiming)).toBe(JSON.stringify(rawTiming));
+        } else {
+          expect(serialized.app?.canonicalTiming).not.toHaveProperty('storedOccurrenceDurationMs');
+          expect(serialized.app?.canonicalTiming).toHaveProperty('occurrenceDurationMs', 2000);
+        }
+      }
+      expect(JSON.stringify(graph)).toBe(before);
+      expect(projected.app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
+    });
+
+  it('preserves same-shaped raw parent metadata in a mixed projected timeline and refuses ambiguous identities', () => {
+    const graph = structuredClone(fixture);
+    const raw = { id: 'raw-parent', at: 0, track: 'raw', hold: 1, app: {
+      canonicalTiming: { storedOccurrenceDurationMs: 1234, occurrenceDurationMs: 5000, occurrenceStartMs: 0 },
+    } };
+    Object.assign(graph.parent_composition, { clips: [raw] });
+    Object.assign(graph.parent_composition.config, { tracks: [{ id: 'raw', kind: 'audio' }] });
+    const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+    const config = projectCanonicalComposition(composition).config;
+    const clean = serializeProjectedTimelineConfig(config, composition);
+    expect(clean.clips.find((clip) => clip.id === raw.id)!.app).toStrictEqual(raw.app);
+    expect(() => serializeProjectedTimelineConfig({ ...config, clips: [...config.clips, config.clips[0]] }, composition))
+      .toThrow('unambiguous');
+  });
+
+  it('requires an explicit raw basis for a declared derived exit without changing the draft', () => {
+    const config = projectCanonicalComposition(createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture)).config;
+    const before = JSON.stringify(config);
+    expect(() => serializeProjectedTimelineConfig(config, null)).toThrow('verified raw');
+    expect(() => serializeForDisk(config, undefined, undefined, null)).toThrow('verified raw');
+    expect(() => serializeForDisk(config)).toThrow('verified raw');
+    expect(() => serializeResolvedTimelineEdit(config)).toThrow('verified raw');
+    expect(() => serializeClipForDisk(config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!, null)).toThrow('verified raw');
+    expect(JSON.stringify(config)).toBe(before);
   });
 });
