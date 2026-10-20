@@ -168,6 +168,7 @@ def _assert_refused_without_writes(service, request):
         f"admission refusal={type(refused).__name__ if refused else 'NONE'}; "
         f"changed={changed}"
     )
+    return refused
 
 
 @pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
