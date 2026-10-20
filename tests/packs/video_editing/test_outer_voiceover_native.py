@@ -23,9 +23,9 @@ from astrid.sdk.workspace_client import WorkspaceClient
 from astrid_runtime_client import contract_metadata
 from astrid_runtime_client.generated import ApiError
 from tests.packs.video_editing.test_draft_voiceover import fixture, synthesis
-from tests.packs.video_editing.test_runtime_publication_chain import SPEECH_RUNTIME_COMMIT
 
 OUTER = 'video_editing.sync_draft_voiceover'
+OUTER_RUNTIME_COMMIT = 'fcf4c3d5e9444bf9e221d05aa8fa8d203fb27bd3'
 
 
 class _MissingTargetCarrier(AssertionError):
@@ -69,8 +69,6 @@ def test_outer_fixture_provenance_can_be_captured_without_a_snapshot_writer():
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(strict=True, raises=_MissingTargetCarrier,
-    reason='WC5 requires admitted_target plus script custody without fictitious continuation children')
 def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(tmp_path, real_runtime, capsys):
     root = Path(__file__).resolve().parents[3]
     lock = json.loads((root / 'runtime.lock.json').read_text())
@@ -78,7 +76,9 @@ def test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority(t
     assert lock['producer_version'] == 'sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0'
     assert contract_metadata.CONTRACT_VERSION == '0.2.14'
     assert contract_metadata.SCHEMA_DIGEST == 'sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59'
-    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
+    # The current ordinary014-compatible Runtime admits the publication-only
+    # producer carrier; the earlier ad97 probe was before that fix.
+    daemon = real_runtime(commit=OUTER_RUNTIME_COMMIT)
     host = GenericPackHost(
         pack_roots=[root / 'astrid/packs/video_editing'],
         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
