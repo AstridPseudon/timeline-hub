@@ -58,7 +58,7 @@ export function rememberAgentModels(agent: typeof EXTERNAL_AGENT_IDS[number], mo
 const thoughtLevelsKey = (agent: LocalAgentId) => `astrid.app.modelThoughtLevels.${agent}`;
 export type ModelThoughtLevels = Record<string, AgentThoughtLevel | null>;
 
-/** Each response describes just its current model. Unseen models get no level submenu. */
+/** Each response describes just its current model. Unseen models get no level selector. */
 export function readModelThoughtLevels(agent: LocalAgentId): ModelThoughtLevels {
   try {
     const value: unknown = JSON.parse(globalThis.localStorage?.getItem(thoughtLevelsKey(agent)) ?? '{}');
@@ -76,5 +76,24 @@ export function rememberModelThoughtLevel(agent: LocalAgentId, model: string, le
   delete previous[model];
   const next = Object.fromEntries([...Object.entries(previous), [model, level ?? null]].slice(-MAX_CHATS));
   try { globalThis.localStorage?.setItem(thoughtLevelsKey(agent), JSON.stringify(next)); } catch { /* Display cache only. */ }
+  return next;
+}
+
+const thoughtSelectionsKey = (agent: LocalAgentId) => `astrid.app.modelThoughtSelections.${agent}`;
+
+/** Explicit New-menu choices stay separate from the current session's reported levels. */
+export function readModelThoughtSelections(agent: LocalAgentId): Record<string, string> {
+  try {
+    const value: unknown = JSON.parse(globalThis.localStorage?.getItem(thoughtSelectionsKey(agent)) ?? '{}');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+  } catch { return {}; }
+}
+
+export function rememberModelThoughtSelection(agent: LocalAgentId, model: string, value: string): Record<string, string> {
+  const previous = readModelThoughtSelections(agent);
+  delete previous[model];
+  const next = Object.fromEntries([...Object.entries(previous), [model, value]].slice(-MAX_CHATS));
+  try { globalThis.localStorage?.setItem(thoughtSelectionsKey(agent), JSON.stringify(next)); } catch { /* Keep the choice in memory when storage is unavailable. */ }
   return next;
 }

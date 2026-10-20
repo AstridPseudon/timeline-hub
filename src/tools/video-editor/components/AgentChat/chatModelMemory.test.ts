@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel, readModelThoughtLevels, rememberModelThoughtLevel } from './chatModelMemory.ts';
+import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel, readModelThoughtLevels, rememberModelThoughtLevel, readModelThoughtSelections, rememberModelThoughtSelection } from './chatModelMemory.ts';
 
 afterEach(() => localStorage.clear());
 
@@ -35,5 +35,26 @@ describe('chatModelMemory', () => {
     expect(readModelThoughtLevels('claude-code').opus).toBeNull();
     localStorage.setItem('astrid.app.modelThoughtLevels.astrid', '{"bad":42}');
     expect(readModelThoughtLevels('astrid')).toEqual({});
+  });
+
+  it('remembers explicit choices per agent and model independently of session reports', () => {
+    rememberModelThoughtSelection('claude-code', 'opus', 'low');
+    rememberModelThoughtSelection('claude-code', 'sonnet', 'high');
+    rememberModelThoughtSelection('codex', 'opus', 'xhigh');
+    rememberModelThoughtLevel('claude-code', 'opus', {
+      configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }],
+    });
+    expect(readModelThoughtSelections('claude-code')).toEqual({ opus: 'low', sonnet: 'high' });
+    expect(readModelThoughtSelections('codex')).toEqual({ opus: 'xhigh' });
+    expect(readModelThoughtSelections('astrid')).toEqual({});
+  });
+
+  it('ignores damaged selection storage', () => {
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '{');
+    expect(readModelThoughtSelections('codex')).toEqual({});
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '[]');
+    expect(readModelThoughtSelections('codex')).toEqual({});
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '{"sol":"high","broken":42}');
+    expect(readModelThoughtSelections('codex')).toEqual({ sol: 'high' });
   });
 });

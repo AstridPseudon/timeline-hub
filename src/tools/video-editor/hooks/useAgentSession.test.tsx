@@ -411,8 +411,11 @@ describe('timeline agent ACP chat', () => {
   });
 
   it.each([
-    ['codex:startup', 'reasoning_effort'], ['claude-code:startup', 'effort'], ['omp-startup', 'thinking'],
-  ])('configures %s model before applying its refreshed recommended effort', async (sessionId, configId) => {
+    { sessionId: 'codex:startup', configId: 'reasoning_effort', thoughtLevel: undefined },
+    { sessionId: 'claude-code:startup', configId: 'effort', thoughtLevel: undefined },
+    { sessionId: 'omp-startup', configId: 'thinking', thoughtLevel: undefined },
+    { sessionId: 'codex:chosen', configId: 'reasoning_effort', thoughtLevel: 'low' },
+  ])('configures $sessionId model before applying its chosen or recommended effort', async ({ sessionId, configId, thoughtLevel }) => {
     let currentModelId = 'a';
     let currentValue = 'low';
     const calls: string[] = [];
@@ -429,15 +432,15 @@ describe('timeline agent ACP chat', () => {
         calls.push('levels');
         return { models: { currentModelId, availableModels: [], thoughtLevel: { configId, name: 'Effort', currentValue,
           // Model a's levels intentionally do not include high.
-          options: currentModelId === 'b' ? [{ value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }], recommendedValue: currentModelId === 'b' ? 'high' : 'low' } } };
+          options: currentModelId === 'b' ? [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] : [{ value: 'low', name: 'Low' }], recommendedValue: currentModelId === 'b' ? 'high' : 'low' } } };
       }),
       setConfigOption: vi.fn(async (_connection: string, _session: string, _config: string, value: string) => { calls.push('effort'); currentValue = value; }),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
-    await store.configureSessionSelection(sessionId, 'project', 'b');
+    await store.configureSessionSelection(sessionId, 'project', 'b', thoughtLevel);
     expect(calls).toEqual(['model', 'levels', 'effort', 'levels']);
     expect(acp.setSessionModel).toHaveBeenCalledWith('connection', sessionId, 'b', 'project');
-    expect(acp.setConfigOption).toHaveBeenCalledWith('connection', sessionId, configId, 'high');
+    expect(acp.setConfigOption).toHaveBeenCalledWith('connection', sessionId, configId, thoughtLevel ?? 'high');
   });
 
   it.each(['hermes:no-levels', 'omp-no-levels'])('does not set effort when %s has no levels', async sessionId => {

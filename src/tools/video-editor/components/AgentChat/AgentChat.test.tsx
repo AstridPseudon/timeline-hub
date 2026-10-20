@@ -421,8 +421,11 @@ describe('AgentChat', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Choose a thinking level for Sol' }));
-    fireEvent.click(screen.getByRole('option', { name: /High/ }));
-    await waitFor(() => expect(selection).toHaveBeenCalledWith({ sessionId: newId, model: 'sol', thoughtLevel: 'high' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+    expect(selection).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Sol' })).toHaveTextContent('Low');
+    fireEvent.click(screen.getByRole('option', { name: /Sol/ }));
+    await waitFor(() => expect(selection).toHaveBeenCalledWith({ sessionId: newId, model: 'sol', thoughtLevel: 'low' }));
     expect(screen.getByRole('textbox')).toBeDisabled();
     await act(async () => { if (outcome === 'success') resolve(); else reject(new Error('Effort rejected')); });
     if (outcome === 'failure') {
