@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -45,6 +46,9 @@ from astrid.sdk.timeline_editing import (
 OLD = "sha256:" + "1" * 64
 NEW = "sha256:" + "2" * 64
 AUDIO = "sha256:" + "3" * 64
+OPAQUE_REMAP_FIXTURE = json.loads(
+    (Path(__file__).resolve().parents[1] / "editing_conformance/fixtures/opaque_remap.json").read_text()
+)
 
 
 def _digest(value):
@@ -265,13 +269,7 @@ def test_compile_materializes_shared_identity_and_keeps_untouched_content():
 def test_materialization_remaps_only_item_codec_and_declared_source_links(codec, descriptor_location):
     parent, shots, timelines = _closure(shared=True)
     payload = shots[0]["payload"]
-    opaque = {"org.example.notes/v1": {
-        "item_id": "item-1", "id": "item-1", "source_item_id": "item-1",
-        "source_item": "item-audio", "foreign_item_id": "item-audio",
-        "foreign_item_ids": ["item-audio", None, "item-1", "item-audio"],
-        "selected_item_id": "item-1", "parent_item_id": "item-audio",
-        "item-1": None, "literal": "item-1", "nested": [{"item_id": "item-1"}],
-    }}
+    opaque = copy.deepcopy(OPAQUE_REMAP_FIXTURE["opaque"])
     for field in ("data", "app", "opaque", "metadata", "provenance", "selected_variants",
                   "generation_inputs"):
         payload[field] = copy.deepcopy(opaque)
