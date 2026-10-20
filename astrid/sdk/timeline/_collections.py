@@ -1,0 +1,229 @@
+"""Scoped authored collection identities and verified historical order."""
+from __future__ import annotations
+
+from ._command_state import ABSENT, CommandError, State, equal, logical_address, present
+
+KINDS = {'collection.tracks': 'track', 'collection.clips': 'clip',
+         'collection.occurrences': 'occurrence', 'collection.shots': 'shot',
+         'track.create': 'track'}
+
+
+def member(ref):
+    if '/clip:' in ref or '/track:' in ref:
+        owner, entity = ref.rsplit('/', 1)
+        kind, identity = entity.split(':', 1)
+        return owner, kind, identity
+    return None
+
+
+def container(owner, kind):
+    if kind in ('occurrence', 'shot'):
+        return 'parent', (kind + 's',)
+    return owner, (
+        ('config' if owner == 'parent' else 'source', kind + 's'))
+
+
+def _identity(value):
+    return isinstance(value, str) and bool(value) and '/' not in value and '::' not in value
+
+
+def shape(state, owner, kind):
+    def tagged(obj, key):
+        if key not in obj:
+            return ABSENT.copy()
+        value = obj[key]
+        return present([] if isinstance(value, list) else {} if isinstance(value, dict) else value)
+
+    if kind in ('occurrence', 'shot'):
+        return {'container': 'array' if kind == 'occurrence' else 'object'}
+    config = state.config(owner)
+    result = {'members': tagged(config if isinstance(config, dict) else {}, kind + 's')}
+    if owner == 'parent':
+        parent = state.bundle['parent']
+        result['config'] = tagged(parent, 'config')
+        if kind == 'clip':
+            result['payload_members'] = tagged(parent, 'clips')
+    return result
+
+
+def rows(state, owner, kind, *, check_mirrors=True):
+    if kind in ('occurrence', 'shot'):
+        if owner != 'parent':
+            raise CommandError('aggregate collection requires parent ownership', ref=owner)
+        result = state.bundle['placements' if kind == 'occurrence' else 'shots']
+        if not isinstance(result, list if kind == 'occurrence' else dict):
+            raise CommandError('invalid aggregate collection', kind='identity_conflict', ref=owner)
+        return result
+    config = state.config(owner)
+    if not isinstance(config, dict):
+        raise CommandError('collection owner must be an object', kind='identity_conflict', ref=owner)
+    if kind == 'clip' and owner == 'parent':
+        parent = state.bundle['parent']
+        a, b = parent.get('clips'), config.get('clips')
+        if check_mirrors and isinstance(a, list) and isinstance(b, list) and not equal(a, b):
+            raise CommandError('divergent parent clip mirrors', kind='identity_conflict')
+        result = state.collection(owner, kind)
+        # Absence and null are not an empty authored list.
+        if not isinstance(a, list) and not isinstance(b, list):
+            raise CommandError('structural edit requires an authored entity collection', ref=owner)
+    else:
+        result = config.get(kind + 's')
+    if not isinstance(result, list):
+        raise CommandError('structural edit requires an authored entity collection', ref=owner)
+    return result
+
+
+def order(state, owner, kind, *, check_mirrors=True):
+    collection = rows(state, owner, kind, check_mirrors=check_mirrors)
+    if kind == 'shot':
+        identities = list(collection)
+        if any(not isinstance(row, dict) or row.get('shot_id') != identity
+               for identity, row in collection.items()):
+            raise CommandError('ambiguous shot ownership', kind='identity_conflict', ref=owner)
+    else:
+        key = 'occurrence_id' if kind == 'occurrence' else 'id'
+        identities = [row.get(key) if isinstance(row, dict) else None for row in collection]
+    if any(not _identity(identity) for identity in identities) or len(set(identities)) != len(identities):
+        raise CommandError('missing or ambiguous collection identity', kind='identity_conflict', ref=owner)
+    prefix = kind + ':' if kind in ('occurrence', 'shot') else owner + '/' + kind + ':'
+    return [prefix + identity for identity in identities]
+
+
+def arrange(state, owner, kind, expected):
+    current = order(state, owner, kind, check_mirrors=False)
+    if len(expected) != len(set(expected)) or set(current) != set(expected):
+        raise CommandError('restoration membership differs from historical order',
+                           kind='selection_changed', ref=owner)
+    collection = rows(state, owner, kind, check_mirrors=False)
+    indexed = dict(zip(current, collection.values() if isinstance(collection, dict) else collection))
+    if isinstance(collection, dict):
+        collection.clear()
+        collection.update((ref.removeprefix('shot:'), indexed[ref]) for ref in expected)
+    else:
+        collection[:] = [indexed[ref] for ref in expected]
+
+
+def selection_overlap(selected, write):
+    kind = KINDS.get(selected['key'])
+    if kind is None:
+        return False
+    if kind in ('occurrence', 'shot') and write['ref'].startswith(kind + ':'):
+        return not write['path'] or write['path'] == [kind + '_id']
+    ref, path = logical_address(write['ref'], write['path'])
+    owner, prefix = container(selected['owner'], kind)
+    if ref != owner:
+        return False
+    if prefix[:len(path)] == path:
+        return True
+    rest = path[len(prefix):] if path[:len(prefix)] == prefix else ()
+    return bool(rest and isinstance(rest[0], tuple) and
+                (len(rest) == 1 or rest[1:] == ('id',)))
+
+
+class AcceptedRecords(list):
+    """Accepted trace plus lazy verified boundaries; never rewritten recorder data."""
+
+    def __init__(self, entries, records, load_boundary):
+        super().__init__(records)
+        self.entries, self.load_boundary = entries, load_boundary
+
+    def boundary(self, record):
+        index = next(i for i, item in enumerate(self) if item is record)
+        offset = 0
+        for entry in self.entries:
+            commands = entry['records']['commands']
+            if index < offset + len(commands):
+                if (len(commands) != 1 or record['command']['op'] != 'timeline.inverse'
+                        or entry['records'].get('undo_of') != record['command']['args']['publications']):
+                    break
+                before, after = self.load_boundary(entry)
+                return State(before), State(after)
+            offset += len(commands)
+        raise CommandError('inverse collection boundary is unavailable', kind='history_unavailable')
+
+
+def _ordinary_append(record, writes, owner, kind):
+    """Trusted scoped create primitives append; inverse insertions need a boundary."""
+    if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
+        return False
+    created = {item['ref'] for item in record['created']
+               if item['owner'] == owner and item['kind'] == kind}
+    return created == {w['ref'] for w in writes} and all(
+        w['before'] == ABSENT and w['after']['state'] == 'present'
+        and isinstance(w['after']['value'], dict)
+        and w['after']['value'].get('id') == member(w['ref'])[2] for w in writes)
+
+
+def restoration_orders(records, *, only=None):
+    """Project only structural membership; inverse insert positions need a boundary."""
+    touched = {member(w['ref'])[:2] for record in records for w in record['writes']
+               if not w['path'] and member(w['ref']) is not None}
+    result = {}
+    for record in records:
+        if only is not None and record is not only:
+            continue
+        for owner, kind in sorted(touched):
+            writes = [w for w in record['writes'] if not w['path'] and
+                      member(w['ref']) is not None and member(w['ref'])[:2] == (owner, kind)]
+            if not writes:
+                continue
+            selected = [s for s in record['selections'] if s['owner'] == owner
+                        and KINDS.get(s['key']) == kind]
+            boundary = None
+            legacy_inverse = (record['command']['op'] == 'timeline.inverse'
+                              and not any(s['key'].startswith('collection.') for s in selected))
+            if legacy_inverse or not selected:
+                if not isinstance(records, AcceptedRecords):
+                    raise CommandError('original collection order is unavailable', kind='history_unavailable')
+                boundary = records.boundary(record)
+                original = order(boundary[0], owner, kind)
+            else:
+                original = list(selected[0]['order'])
+                if any(s['members'] != s['order']
+                       or s['boundaries'] != s['order'] or s['query_version'] != 1
+                       or s['policy'] != 'guard-membership' for s in selected):
+                    raise CommandError('inconsistent structural order proof', kind='history_unavailable')
+            if len(original) != len(set(original)) or any(
+                    member(ref) is None or member(ref)[:2] != (owner, kind) for ref in original):
+                raise CommandError('foreign or duplicate historical members', kind='history_unavailable')
+            prior = result.get((owner, kind))
+            if prior is not None and prior[1] != original:
+                raise CommandError('dependent structural stages require staged reversal', kind='history_unavailable')
+            final = list(original)
+            inserts = False
+            stages = [list(final)]
+            for write in writes:
+                ref = write['ref']
+                if write['before'] == ABSENT:
+                    if ref in final:
+                        raise CommandError('created identity is occupied', kind='identity_conflict', ref=ref)
+                    if write['after'] != ABSENT:
+                        final.append(ref)
+                        inserts = True
+                elif ref not in final:
+                    raise CommandError('historical member is missing', kind='history_unavailable', ref=ref)
+                elif write['after'] == ABSENT:
+                    final.remove(ref)
+                stages.append(list(final))
+            if not legacy_inverse and any(s['order'] != original for s in selected):
+                if not _ordinary_append(record, writes, owner, kind) or any(
+                        s['order'] not in stages for s in selected):
+                    raise CommandError('unrecoverable creation selection stage', kind='history_unavailable')
+            if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
+                                      or s['order'] not in stages for s in selected):
+                raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
+            # Ordinary recorded creates append through Recording.create. Inverse
+            # insertion is different: its exact position needs accepted order.
+            if inserts and not _ordinary_append(record, writes, owner, kind):
+                if not isinstance(records, AcceptedRecords):
+                    raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
+                boundary = boundary or records.boundary(record)
+            if boundary is not None:
+                if order(boundary[0], owner, kind) != original:
+                    raise CommandError('accepted input order differs from selection', kind='history_unavailable')
+                proven = order(boundary[1], owner, kind)
+                if set(proven) != set(final):
+                    raise CommandError('accepted boundary membership differs from writes', kind='history_unavailable')
+                final = proven
+            result[owner, kind] = (prior[0] if prior else original, final)
+    return result

@@ -32,12 +32,17 @@ class Operation:
 
 
 def operations():
-    """M1 native recipe entries; the full extensible registry belongs to M2."""
-    from ._track_commands import track_set
+    """Native recipe entries; the full extensible registry belongs to M2."""
+    from ._clip_commands import clip_add
+    from ._delete_commands import delete
+    from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
-            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True)}
+            'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
 
 
 @dataclass
@@ -61,12 +66,11 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'track.set',
-                             'timeline.inverse', 'timeline.restore'):
+    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
-        errors = list(Draft202012Validator(operation.parameters).iter_errors(command['args']))
+        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
     if command['op'] == 'track.create':
