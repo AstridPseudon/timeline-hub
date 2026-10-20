@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T19:03:39Z | dispatcher heartbeat 10s | live 6 (sol 1, luna 5, other 0) | busy30 20 | status age 1m -->
+<!-- main | 2026-10-20T19:10:16Z | dispatcher heartbeat 2s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 7m -->
 # runtime — 2026-10-20T18:57:26Z
 Milestone: M1 recorded. M2/M3 active; no completion or delivery claim.
 Integrated: Runtime tl/integration 601d533d. OPEN NORMAL-API REGRESSION: commit -> archive -> recover -> history returns409 untracked writes despite unchanged film. Hard worker rt-m2-history-after-catalog-visibility owns the fix; Agent will retry only its failing catalog/restore case after reviewed server SHA. Archive/unarchive restore catalog visibility only; old-version flat-film recover refuses with timeline.restore guidance. Receipt/event provenance and original current-target regression are covered. Nine proof and eleven service checks pass; earlier 62 actual-provider neighbors pass. Public producer 2c4ac180/client0.2.13/artifacts unchanged.

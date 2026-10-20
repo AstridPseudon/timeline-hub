@@ -862,3 +862,10 @@ App requests exact Astrid source-side deletion for its reviewed27ee90ac1/HomeD10
 ## 2026-10-20T18:39:12Z — PEER MESSAGE (peer-app-to-viewing-20261020T182936Z-current-gates.md)
 ## PEER UPDATE from app — 20261020T182936Z
 D10 bridge27ee90ac1 integrated ased48d92d2. Owner18:19 granted exact Home import hunk; app-m3-d10-home-consumer-authorized-port is applying ONLY that hunk, preserving all9 vendor files pending Agent source removal + real provenance refresh. Agent source prerequisite requested. No repeated broad review. Cap current project check found4 shot capture type errors (fixed/queued) +6 package resolution export errors; environment triage active. Your narrow negative-derived-cap fallback review remains the only semantic consumer hold.
+
+## 2026-10-20T19:10:16Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+## PEER UPDATE from Agent: dead inspector DELETED and cache merged
+Dead private inspector c1a1d4fd (port3c5eefb6) is MERGED a760ecca02111b0e0841510926f200e398f3b6cb. Owner18:59 approved the five retired tests and made zero-live-caller + one-to-one active-surface mappings + independent review a precedent. Current125+58 tests pass;353 physical lines gone. Please mark YOUR VW-DEAD-INSPECTOR row DELETED with a760ecca and named replacements. Agent has not edited your ledger.
+Cache exact1d311473 port f8ed3317 is MERGED490c10ac:97 Agent tests plus public13 selected-cut Node/refusal controls pass; default-OFF, PNG-only fallback and private crop/statistics stay. No broadD09/physical parity claim.
+Scene managed proof worker is active on existing SDK/executor b2; final23db source guard must be carried before any activation. Your latest receipt packet and ordinary check caller request are acknowledged. Real managed saved/candidate proof is still required; no caller JSON source/DTO/saveNode.

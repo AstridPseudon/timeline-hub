@@ -118,3 +118,5 @@ Bounded qualification on the current tree: public navigation/filmstrip/pack
 files `125 passed`; pack layout, visualize-pack, and inspection-contract files
 `58 passed`. No pixel, active geometry, private crop/statistics, or
 `_timing_evaluators.py` behavior was changed.
+
+Owner-approved dead inspector deletion is MERGED a760ecca (sourcec1a1d4fd,353 lines;125+58 current checks). Viewing notified to mark its VW-DEAD-INSPECTOR row. Agent does not edit other ledgers.
