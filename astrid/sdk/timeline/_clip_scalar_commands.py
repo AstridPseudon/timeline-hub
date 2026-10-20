@@ -106,3 +106,26 @@ def clip_set(ctx, command):
 def capture_clip_set(bundle, select, *, values=None, clear=()):
     """Capture source hold set/clear and explicit raw asset/transition removal."""
     return _capture(bundle, 'clip.set', select, values, clear)
+
+
+def clip_set_element(ctx, command):
+    ref = _target(ctx, command, 'clip')
+    element = command['args']['elementRef']
+    selected, alias = ctx.read(ref, ['elementRef']), ctx.read(ref, ['element_ref'])
+    before = selected if selected is not None else alias
+    if not isinstance(before, dict):
+        raise CommandError('clip.set-element requires an existing element ref', ref=ref)
+    if any(before.get(key) != element[key] for key in ('id', 'kind')):
+        raise CommandError('clip.set-element must keep the element id and kind', ref=ref)
+    ctx.write(ref, ['elementRef'], element)
+    if 'element_ref' in ctx.state.entity(ref):
+        ctx.clear(ref, ['element_ref'])
+
+
+def capture_clip_set_element(bundle, select, *, element):
+    """Capture a revision change of the clip's own element; the ref is never cleared."""
+    from .commands import execute
+
+    return execute(bundle, [{'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
+                             'select': select, 'args': {'elementRef': copy.deepcopy(element)}}]
+                   ).commands[0]

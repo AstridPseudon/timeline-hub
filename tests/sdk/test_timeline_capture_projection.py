@@ -11,6 +11,7 @@ import pytest
 
 from astrid.core.timeline.authoring_bundle import AuthoringBundleError, preview_authoring_candidate
 from astrid.sdk.timeline.commit import RuntimeCommitService, bundle_from_document
+from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 
@@ -218,7 +219,7 @@ def saved_closure(saved_runtime):
     payload["created_at"] = "authored parent"
     payload["dependency_manifest"] = {"opaque": {"created_at": [None, False, 0]}}
     payload["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": [30000, 1001]}}}
-    runtime.service.publish_parent_composition(project_id, "main", {
+    seed_trusted_parent(runtime.service, {
         "project_id": project_id, "timeline_id": "main", "expected_head": "parent-1",
         "parent_revision_id": "parent-golden", "parent_composition": payload,
         "shot_revisions": shots, "internal_timeline_revisions": internals,

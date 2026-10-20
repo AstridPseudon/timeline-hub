@@ -29,7 +29,7 @@ class Operation:
 def operations():
     """Native recipe entries; the full extensible registry belongs to M2."""
     from ._clip_commands import clip_add
-    from ._clip_scalar_commands import clip_set
+    from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
     from ._scalar_commands import clip_set_params, track_set
     from ._split_commands import clip_split
@@ -58,6 +58,7 @@ def operations():
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
+            'clip.set-element': Operation(_SCHEMA['$defs']['ClipSetElementArgs'], clip_set_element, {}, True),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),

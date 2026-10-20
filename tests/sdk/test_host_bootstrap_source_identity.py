@@ -138,7 +138,7 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
         "runtime_instance_id": "instance-1",
         "schema_digest": "schema-1",
     }
-    inventory = SimpleNamespace(identity="inventory-1", roots=(managed,), sources=(managed,))
+    inventory = SimpleNamespace(identity="inventory-1", roots=(managed,), sources=(SimpleNamespace(pack_root=managed),))
     inventory_calls: list[object] = []
 
     def active_inventory():

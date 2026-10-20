@@ -979,6 +979,7 @@ def _project_exact_parent_head(
         shot_rows.append({
             "shot_id": shot["shot_id"],
             "revision_id": shot["revision_id"],
+            "content_digest": shot["content_digest"],
             # Authoring shots store their human name on the payload itself
             # (``add_authoring_shot(name=...)``); metadata is the legacy spot.
             "name": str(

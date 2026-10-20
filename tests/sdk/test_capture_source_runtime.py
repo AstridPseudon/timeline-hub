@@ -214,10 +214,23 @@ def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_p
 
 
 @pytest.mark.parametrize("inline", [False, True])
-def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, inline):
+def test_missing_candidate_working_copy_is_admitted_uncertified(runtime, inline):
+    snapshot = runtime.snapshot(working_copy=True)
+    task = runtime.service.create_task(runtime.request(snapshot, inline=inline, forward_candidate=False))["task"]
+    claim = runtime.service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
+                                        "runtime_epoch": runtime.service.health()["runtime_epoch"]})
+    assert claim["task_id"] == task["id"]
+    assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
+
+
+@pytest.mark.parametrize("inline", [False, True])
+def test_missing_candidate_certificate_without_authority_refuses_before_admission_writes(runtime, inline):
     from runtime_protocol.errors import RuntimeErrorBase
 
     snapshot = runtime.snapshot(working_copy=True)
+    # The claimed candidate marker contradicts the capture's own authority.
+    marker = snapshot["metadata"]["working_copy"]
+    snapshot["metadata"]["working_copy"] = dict(marker, candidate_digest="sha256:" + "0" * 64)
     body = runtime.request(snapshot, inline=inline, forward_candidate=False)
     connection = runtime.service.store.conn
     before = list(connection.iterdump())
@@ -231,7 +244,6 @@ def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, 
             for directory in ("cas", "staging") for path in (root / directory).rglob("*")} == files
 
 
-@pytest.mark.xfail(strict=True, reason="needs the verified timeline source composition (435357ae)")
 @pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
 @pytest.mark.parametrize("inline", [False, True])
 @pytest.mark.parametrize("working_copy", [False, True])

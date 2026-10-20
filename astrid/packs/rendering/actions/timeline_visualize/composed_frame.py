@@ -7,6 +7,7 @@ frames.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -23,6 +24,82 @@ RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
+
+
+class CaptureSceneLabels:
+    """One capture's observer, supplied with frozen inputs by the source owner.
+
+    This does not admit sources. The owner must bind final Root props, the
+    canonical render basis and exact projected IDs/addresses to its retained
+    revision/candidate before passing ``observe`` to ``on_scene_props``. Call
+    ``retain`` only with that successful batch's fresh output, never PNG-cache
+    entries. No production source owner currently supplies this contract.
+    """
+
+    def __init__(self, *, source_identity: str, props: Mapping[str, Any],
+                 basis: Mapping[str, Any], addresses: Mapping[str, str]) -> None:
+        if not source_identity:
+            raise ValueError("capture source identity required")
+        self._source_identity = source_identity
+        self._props = copy.deepcopy(dict(props))
+        self._basis = copy.deepcopy(dict(basis))
+        self._addresses = dict(addresses)
+        self._answers: dict[int, dict[str, Any]] = {}
+        self._frames: tuple[int, ...] | None = None
+        self._retained = False
+
+    def observe(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        """Query the public host once, inside the existing capture lifetime."""
+        from astrid.core.timeline.scene_answers import (
+            SceneQueryUnavailable,
+            host_frames_at,
+        )
+
+        if self._frames is not None:
+            self._retained = False
+            self._answers.clear()
+            raise SceneQueryUnavailable("scene observer already used for a capture")
+        self._frames = tuple(frames)
+        if (props != self._props or not frames
+                or any(type(frame) is not int or frame < 0 for frame in frames)
+                or tuple(sorted(set(frames))) != self._frames):
+            raise SceneQueryUnavailable("capture props or selected frames mismatch")
+        clips = props.get("timeline", {}).get("clips", [])
+        ids = [clip["id"] for clip in clips]
+        if len(set(ids)) != len(ids) or set(ids) != set(self._addresses):
+            raise SceneQueryUnavailable("exact projected clip address mapping required")
+        answers = host_frames_at(props, self._basis, frames)
+        if ([answer.get("frame") for answer in answers] != list(frames)
+                or any(answer.get("width") != self._basis["width"]
+                       or answer.get("height") != self._basis["height"] for answer in answers)
+                or any(layer["clipId"] not in self._addresses
+                       for answer in answers for layer in answer["layers"])):
+            raise SceneQueryUnavailable("capture scene response mismatch")
+        self._answers = copy.deepcopy(dict(zip(frames, answers)))
+
+    def retain(self, produced: Mapping[int, Path]) -> None:
+        """Publish answers only after the same entire fresh capture succeeds."""
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if (self._retained or not self._answers or set(produced) != set(self._answers)
+                or any(not Path(path).is_file() for path in produced.values())):
+            self._retained = False
+            self._answers.clear()
+            raise SceneQueryUnavailable("scene requires the complete successful fresh capture")
+        self._retained = True
+
+    def frame(self, frame: int, *, source_identity: str) -> dict[str, Any]:
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if not self._retained or source_identity != self._source_identity or frame not in self._answers:
+            raise SceneQueryUnavailable("scene unavailable for this capture source/frame")
+        return copy.deepcopy(self._answers[frame])
+
+    def labels(self, frame: int, *, source_identity: str):
+        from .overlays.labels import labels_for_scene
+
+        answer = self.frame(frame, source_identity=source_identity)
+        return labels_for_scene(answer, self._addresses), {key: answer[key] for key in ("width", "height")}
 
 
 def _close_renderer(renderer: object, *, force: bool = False) -> None:
