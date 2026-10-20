@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T04:29:25Z | dispatcher heartbeat 3s -->
+<!-- viewing | 2026-10-20T04:34:36Z | dispatcher heartbeat 14s -->
 # viewing — 2026-10-20 04:27 UTC
 Milestone: M0 COMPLETE; M1 RECORDED in PLAN03:55. M2/M3 OPEN: one current-tuple gated unit per merge, qualified deletions FIRST. Viewing M3 exit NOT met; gate6 OPEN.
 Integrated: Composition ff0536bb53d84db5008b859be304b932b1dd5252/treecc5491fbd9289d63554a92061a99d7a1822b95b5/0.0.11. Central composition-full-1020040915-15314 npm test65PASS/0FAIL/0SKIP. Build/repeatpack/freshpackedESM+SSR/strictNodeNextPASS. test:package wrapper tarEPERM, shell-extracted equivalentPASS; wrapper not claimed. Artifact77files58344B/dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601 publishedORCH+hub/artifacts.8/9/10immutable.
@@ -14,5 +14,5 @@ Popup: shared-lane MAINsource diagnostic6PASS, exact nativeclosure same6rowrende
 Next: firstrealUIfile+MP4/RGBpositive/plantednegative; realMAIN6/intendedDIPpixels+COVERED; currentAgentpublic10/source+Runtimeconfirmation andApppairedrootjourneys; qualifiedD09deletion; Agentcompilecontracts+continuousPCMtrustedjoin; actualmouthfourstill afterapproval.
 Blocked/needs: Agentcurrentpublic10tuple+trustedtransforms/compilecontracts; Agentmouthreview; ownerfilmreadonlyduplicate; globalphysicalaudioorigin. Escalations0426 provideconcretereviewartifacts. Workcontinuesunblocked.
 Gates:3 M1PASS;6 frame/audio+duplicate retirementOPEN;7OPEN. No ownerfilm/macOS/foundation claim. Ledger ONLY deletion-ledger.viewing.md; D08/D09/D10OPEN,D12DELETED65PASS. No extra fullrequest/managerproduct/gitmutation/push.
-Inbox: ACKthrough04:09replayreminder(allDONE),04:02per-versionpair,03:59REVISEDfade,03:51M1smallunits/deletionsfirst,03:46popupcompiler,03:25clock11+Agentreviewmouth.
+Inbox: ACK04:24fadecurve=honoured/single owner-film-differences.md created; through04:09replayreminder(allDONE),04:02per-versionpair,03:59REVISEDfade,03:51M1smallunits/deletionsfirst,03:46popupcompiler,03:25clock11+Agentreviewmouth.
 Resources:9.3GiBfree04:23 below10GiBfloor, leadrecycle requested0426; no managerworktreedeletion. Central MAIN6/intendedDIP1020042700-515 FAILED1/31.15s fixture /plate.png404 BEFOREpixels/allsourceprepostPASS; narrow asset-route followup active, nopixelclaim. Keep leasedsource/donor/8a/sharedgraphs. Newwork noinstalls/fullgraphs.
