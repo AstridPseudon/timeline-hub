@@ -13,6 +13,7 @@ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, pres
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
 from tests.timeline.test_authoring_bundle import OLD, _closure, _digest
 
@@ -89,7 +90,7 @@ def test_original_app_journey_fields_exact_capture_roundtrip_and_portable_golden
                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
     assert replay(plan, original).records == plan.records
     compile_authoring_candidate(plan.bundle)
-    fixture = json.loads((FIXTURES / 'recipe_m2_app_clip_scalar_fields.json').read_text())
+    fixture = load_fixture(FIXTURES / 'recipe_m2_app_clip_scalar_fields.json')
     assert fixture == {'bundle': original, 'commands': plan.commands, 'records': plan.records,
                        'after_bundle': plan.bundle}
     assert execute(fixture['bundle'], fixture['commands']).bundle == fixture['after_bundle']

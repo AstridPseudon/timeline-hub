@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import copy
-import json
 from pathlib import Path
 
 import pytest
@@ -20,6 +19,7 @@ from astrid.sdk.timeline.native_occurrence_media_commands import (
     capture_occurrence_swap_media,
 )
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider import (
     CommitRejected,
@@ -100,7 +100,7 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
 def test_portable_goldens(operation):
-    golden = json.loads(FIXTURE.read_text())[operation]
+    golden = load_fixture(FIXTURE)[operation]
     document, bundle, command, verified = captured(operation, 'video')
     plan = execute(bundle, [command], verified_media=verified)
     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],

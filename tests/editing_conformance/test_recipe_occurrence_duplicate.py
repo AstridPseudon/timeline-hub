@@ -2,20 +2,23 @@
 from __future__ import annotations
 
 import copy
-import json
 from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 
 from astrid.core.timeline.authoring_bundle import _identity
-from astrid.core.timeline.shot_composition import stable_occurrence_deep_link, stable_output_identity
+from astrid.core.timeline.shot_composition import (
+    stable_occurrence_deep_link,
+    stable_output_identity,
+)
 from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import _SCHEMA, execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
@@ -226,7 +229,7 @@ def test_explicit_single_occurrence_identity_only(select):
 
 
 def test_portable_native_capture_golden_matches_fixture():
-    assert portable_golden() == json.loads(FIXTURE.read_text())
+    assert portable_golden() == load_fixture(FIXTURE)
 
 
 @pytest.mark.parametrize('field,value', [
