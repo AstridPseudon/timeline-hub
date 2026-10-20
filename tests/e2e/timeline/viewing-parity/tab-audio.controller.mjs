@@ -5,21 +5,23 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const APP13 = Object.freeze({
-  source: '30b8df2895536c471e270faf83ce710acd847065',
-  tree: '0bf9c9f7fb849cb0938bf29fc72eca069014f623',
-  status: 'pending-consumer-adoption',
+  source: 'ea38656fe62950440b36cafee780698cff2c3f9c',
+  tree: '8bd8f741f7c8b28b8682aa960a658417f70c8522',
+  status: 'adopted',
 });
 export const AGENT13 = Object.freeze({
-  source: 'd8749a9ce12a699672faf3ad96b4e4cbea9245c2',
-  tree: '75354d38c898729bac09619679f5421faba319ed',
+  source: '04f59c0c106c6a6e5bad95f4c56037d77229e8f7',
+  tree: 'bcc84e8f3965c81a11e09605bd5013ef4bfa9b47',
+  status: 'pending-normal13-owner-merge',
 });
 export const RUNTIME13 = Object.freeze({
   source: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   tree: '7ab412cc4bcbe517efcfa806e092336390312e18',
+  status: 'verified-one-root-host',
 });
 export const COMPOSITION13 = Object.freeze({
-  source: 'af98594dce80c0350a1fc21dfc44839b2279edf1',
-  artifact: '9412ae25',
+  source: '5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8',
+  artifact: '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
 });
 export const CHROME155 = Object.freeze({
   version: '155.0.8059.84',
@@ -44,8 +46,21 @@ export const CONTROL = Object.freeze({
   browserAndNodePinned: true,
   failClosedBeforeCapture: true,
   physicalMixClaim: false,
-  app13Consumer: 'pending',
+  app13Consumer: 'adopted',
 });
+
+// Flat owner-port status for this one frozen four-case + tab-audio tuple.
+// These are merge/readiness facts, not alternate source tuples.
+export const OWNER_PORTS = Object.freeze([
+  Object.freeze({ owner: 'App', port: 'stored-cap8488', status: 'integrated', source: APP13.source }),
+  Object.freeze({ owner: 'App', port: 'track-inspector-preservation', status: 'integrated', source: 'a04f90cf60eac69a5079f0ab03188abcbd1571fc6' }),
+  Object.freeze({ owner: 'Runtime', port: 'public13-one-root-host-catalog', status: 'verified', source: RUNTIME13.source }),
+  Object.freeze({ owner: 'App', port: 'native-frame-fixture', status: 'pending-owner-merge', source: 'e4c7a3792e879d22eada87a8cd3b7e9550c4a470' }),
+  Object.freeze({ owner: 'App', port: 'player-tab-audio-instrument', status: 'pending-owner-merge', source: '247bfce2721e4fd0804faf8313b394e94157c2ee' }),
+  Object.freeze({ owner: 'Agent', port: 'public13-normal-pin', status: 'pending-owner-merge', source: AGENT13.source }),
+]);
+
+export const MISSING_OWNER_PORTS = Object.freeze(OWNER_PORTS.filter(({ status }) => status === 'pending-owner-merge'));
 
 const OWN_LEAF = new Set([
   'tests/e2e/timeline/viewing-parity/cases.ts',
@@ -193,11 +208,19 @@ export function assertOwnedShortTemp() {
 
 export function assertCompletedAppConsumer(appRoot) {
   if (APP13.status !== 'adopted') {
-    throw new Error('App13 consumer adoption is pending; --ready remains refused');
+    throw new Error('App public13 consumer is not adopted; --ready remains refused');
   }
   if (git(appRoot, ['rev-parse', 'HEAD']) !== APP13.source || git(appRoot, ['rev-parse', 'HEAD^{tree}']) !== APP13.tree) {
-    throw new Error('App13 consumer source/tree is not the completed approved candidate');
+    throw new Error('App public13 consumer source/tree is not the integrated candidate');
   }
+}
+
+export function assertOwnerPorts() {
+  if (MISSING_OWNER_PORTS.length) {
+    const missing = MISSING_OWNER_PORTS.map(({ owner, port, source }) => `${owner}/${port} (${source})`).join(', ');
+    throw new Error(`readiness refused: missing owner ports: ${missing}`);
+  }
+  return OWNER_PORTS;
 }
 
 export function assertFreshGrantAndMarker(appRoot) {
@@ -274,8 +297,8 @@ export function discover(appRoot) {
 
 export function readControlReport(reportPath) {
   const report = JSON.parse(readFileSync(reportPath, 'utf8'));
-  if (report.physicalMixClaim === true || report.app13Consumer === 'adopted') {
-    throw new Error('controller report must not promote the pending App13 consumer or physical mix');
+  if (report.physicalMixClaim === true) {
+    throw new Error('controller report must not promote the unverified physical mix');
   }
   return report;
 }
@@ -287,6 +310,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   } else if (command === '--ready') {
     if (!agentRoot || !runtimeRoot) throw new Error('--ready requires app, agent, and runtime roots');
     assertCandidateTuple();
+    assertOwnerPorts();
     assertCompletedAppConsumer(appRoot);
     assertExactGraph({ appRoot, agentRoot, runtimeRoot });
     assertResources(appRoot);

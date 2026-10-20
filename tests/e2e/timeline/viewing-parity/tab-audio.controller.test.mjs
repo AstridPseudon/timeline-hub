@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   APP13, AGENT13, RUNTIME13, COMPOSITION13, CHROME155, CONTROL, NODE20,
-  assertCandidateTuple, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp,
+  MISSING_OWNER_PORTS, OWNER_PORTS,
+  assertCandidateTuple, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
 } from './tab-audio.controller.mjs';
 
-test('READY controller identifies the exact pending App13 candidate and matching Agent13 tuple', () => {
+test('READY controller identifies the integrated App13 and pending normal13 tuple', () => {
   assertCandidateTuple({ app: APP13, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 });
-  assert.equal(APP13.status, 'pending-consumer-adoption');
+  assert.equal(APP13.source, 'ea38656fe62950440b36cafee780698cff2c3f9c');
+  assert.equal(APP13.status, 'adopted');
+  assert.equal(AGENT13.status, 'pending-normal13-owner-merge');
+  assert.equal(RUNTIME13.status, 'verified-one-root-host');
   assert.equal(CONTROL.physicalMixClaim, false);
-  assert.equal(CONTROL.app13Consumer, 'pending');
+  assert.equal(CONTROL.app13Consumer, 'adopted');
   assert.equal(CONTROL.ownLeafOnly, true);
   assert.equal(CONTROL.all77BytesPinned, true);
 });
@@ -18,8 +22,20 @@ test('controller rejects a changed source tuple before capture', () => {
   assert.throws(() => assertCandidateTuple({ app: { ...APP13, tree: 'changed' }, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }), /app13 candidate tuple changed/);
 });
 
-test('readiness remains closed while App13 consumer adoption is pending', () => {
-  assert.throws(() => assertCompletedAppConsumer(process.cwd()), /App13 consumer adoption is pending/);
+test('readiness reports the current flat owner-port blockers', () => {
+  assert.deepEqual(MISSING_OWNER_PORTS.map(({ owner, port }) => `${owner}/${port}`), [
+    'App/native-frame-fixture',
+    'App/player-tab-audio-instrument',
+    'Agent/public13-normal-pin',
+  ]);
+  assert.equal(OWNER_PORTS.some(({ port }) => port === 'track-inspector-preservation'), true);
+  assert.throws(() => assertOwnerPorts(), /missing owner ports: App\/native-frame-fixture .* Agent\/public13-normal-pin/);
+});
+
+test('integrated App13 source remains a separate source guard', () => {
+  assert.equal(APP13.status, 'adopted');
+  assert.equal(APP13.source, 'ea38656fe62950440b36cafee780698cff2c3f9c');
+  assert.equal(APP13.tree, '8bd8f741f7c8b28b8682aa960a658417f70c8522');
 });
 
 test('Chrome155 identity uses the complete executable and tree pins', () => {
