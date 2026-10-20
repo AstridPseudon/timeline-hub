@@ -64,3 +64,15 @@ malicious raw Runtime capture-task admission that forges self-consistent snapsho
 content. Runtime owner must qualify/tighten that existing admission boundary
 before claiming that stronger end-to-end capture property. No requested revision
 or loaded file is stamped as newly verified by this Agent port.
+
+Source-port worker completion: final focused source/SDK/prepared-props 63PASS;
+validator/snapshot/import-fence batch149PASS; unchanged public compiler/carrier
+18PASS; selected scene-capture caller cases2PASS with exactfa94 artifact. Real
+host/action/service/backend subprocess transport is covered; real rendering is
+not claimed. Central neighbors377PASS/4actual-render-supportFAIL/2missing-public9-
+fixtureERROR (the latter subsequently2PASS with required artifact). No pins or
+installed bytes changed. Runtime raw-capture source-content trust limitation
+above remains open; canonical layer/slice derivations also unqualified and fail
+closed on different prepared paths. Full commands, failures and next steps:
+workers/agt-m3-verified-source-handoff/notes/report.md under this absolute orch
+root. Harness commit pending; PLAN M1 integration hold unchanged.

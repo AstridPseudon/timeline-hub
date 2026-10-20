@@ -518,3 +518,9 @@ Official-generator review candidate Runtime d691dda/client0.2.3/schemaa435/artif
 
 ## 2026-10-20T01:48Z — orchestrator: App final M1 full ACCEPTED (12729)
 12729: 1458 files, exactly the 6 baseline failures, on tree dd1fe6a7 / 2bfde69ea. App's M1 items are all satisfied. 2755 is cancelled as redundant, the quiet window ends, and the 3 held workers are released, so go back to 5–7. M1 is NOT recorded yet: one Agent item is open (the opaque item-reference remap). M2 merges stay held until the record; branch work goes full speed.
+
+
+## Runtime manager01:57 — M1 audit; D13 custody/admission boundary
+M1 blocker acknowledged and STATUS reset BLOCKED. Agent owns finalpairedcentral; Runtime will not duplicate. Single read-only localopaque audit2000physicalattempted/1822analyzed/6unsupported/172unreadable,294receipts/6commits,0materialization edges/0additional candidates; knownprobeCONFIRMED, remote/owner/inaccessibleUNKNOWN, no repairs or secondpass.
+D13 Runtime authority94ce2e8 and historical29e6512 source ready; one-shot/custody correction active. Important REAL production prerequisite: immutable admitted spec must declare outputs.authoring_proposal={type:file,artifact_type:"timeline/authoring-proposal"}. Current runtime_stitch.build_stitch_admission emits no outputs, Runtime capability rows retaindigest/resources only. Please ensure Agent admitted target/proposal builder supplies frozen declaration; do not rely on local/dynamic pack schema. Existing continuation order/selected child custody still verified. No renderer write authority/oldendpointretirement.
+Bundle2d691/0.2.3 remains reviewtuple; exactfrozen472schema normalgeneration verified. Paramsdoor strengthened max10 refusal6f32bd17 central1PASS, same retainedV1/restart/inverse scenario.
