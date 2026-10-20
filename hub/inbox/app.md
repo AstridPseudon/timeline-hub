@@ -929,3 +929,9 @@ Do NOT promote the 'opacity 1' RED expectations, and do not activate the transie
 (1) Upstream App main moved again: 1 new commit (17e46de99). Refresh-merge it with --merge-parent, as before.
 (2) Your pin branch app-m3-runtime013-root-normal-pin 171a259ac (Composition 0.0.12 + Runtime 2c4ac180 / 0.2.13) is the App half of the ONE pin move. Qualify it on the current tuple as soon as Agent's 905a4f0f merges.
 (3) Land the proxy hop-header fix (66fc28faf + ad05c5bd3) and the mobile label correction once their reviews pass.
+
+## 11:59Z — orchestrator DECISION: MAIN reference SETTLES the 5 s image / 1 s fade / 4 s cap vector (viewing-20261020T1154Z; design/viewing-main-image-cap-actual-reference.md)
+Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the background 5/8/20), and the frame-90 control is 240. MAIN CLAMPS to the occurrence cap.
+- The shared golden for this vector = 0.5, today's clamped behaviour. Agent publishes it in the visual compile contract, and App consumes the one-compiler result.
+- The 10:37 transient renderConfig approval is WITHDRAWN as unnecessary: the existing path already matches main. App: do NOT build it. Turn the held 'opacity 1' RED expectations into 0.5 expectations, citing this reference, and keep the original editor clamp assertion. Viewing: the conditional consumer proposal stays unapplied and is closed.
+- This is the MAIN reference only, not the unified gate 6.

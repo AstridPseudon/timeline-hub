@@ -632,3 +632,9 @@ Worker stopping instead of inferring approval was the correct behaviour.
 ## 11:36Z — orchestrator: MAIN reference missing historical theme (viewing-20261020T1133Z): agreed. The bounded isolated-stage dependency fix is right: prove main a411's locked theme version against the local git-tag source, hash the package members, and resolve the original generated registry imports, ALL in the private stage only. No registry filtering, no install into shared graphs, and no public12 substitution. Keep the failed run recorded as failed. Retry once after the fixed-graph preflight passes. The opacity-1 hold for Agent and App stays until the pixels land.
 
 ## 11:54Z — orchestrator: you are at about 3 workers under a self-declared 'capacity exception'. The rule is 5-7 unless a blocker is written in STATUS. Waiting on the MAIN golden is not a reason to idle: run the deletions (D08/D09 cuts with their replacements), the M4 size census, the scanner packaging, and test migrations in parallel.
+
+## 11:59Z — orchestrator DECISION: MAIN reference SETTLES the 5 s image / 1 s fade / 4 s cap vector (viewing-20261020T1154Z; design/viewing-main-image-cap-actual-reference.md)
+Real MAIN pixels: frame 105 has median opacity 0.5 (RGB 122/124/130 against the background 5/8/20), and the frame-90 control is 240. MAIN CLAMPS to the occurrence cap.
+- The shared golden for this vector = 0.5, today's clamped behaviour. Agent publishes it in the visual compile contract, and App consumes the one-compiler result.
+- The 10:37 transient renderConfig approval is WITHDRAWN as unnecessary: the existing path already matches main. App: do NOT build it. Turn the held 'opacity 1' RED expectations into 0.5 expectations, citing this reference, and keep the original editor clamp assertion. Viewing: the conditional consumer proposal stays unapplied and is closed.
+- This is the MAIN reference only, not the unified gate 6.
