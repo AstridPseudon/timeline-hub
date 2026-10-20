@@ -1772,6 +1772,7 @@ def execute_filmstrip(args, *, authority=None):
             snapshot,
             timeline_path=timeline_path,
             assets_path=assets_path,
+            theme_path=getattr(args, 'theme_path', None),
             project_dir=Path(os.environ.get('ASTRID_REMOTION_PROJECT_DIR') or (REPO_ROOT / 'remotion')),
             materialized_root=getattr(args, 'materialized_root', None),
             materialized_objects=getattr(args, 'materialized_objects', None),
@@ -1882,7 +1883,7 @@ def execute_filmstrip(args, *, authority=None):
                 surface['standalone_input_pages'] = [path.name for path in input_pages]
                 try:
                     persisted_index = compact_render_receipt(frame_index, snapshot, pack_root)
-                    attach_frame_addresses(persisted_index, snapshot, frame_index['cards'])
+                    attach_frame_addresses(persisted_index, snapshot, frame_index['cards'], frame_provider=frame_provider)
                 except (KeyError, TypeError, ValueError):
                     # Keep admission-focused/unit-test builders and historical
                     # minimal fixtures readable; real packs always satisfy the
@@ -1896,7 +1897,7 @@ def execute_filmstrip(args, *, authority=None):
         # they use the same bounded receipt contract.
         try:
             persisted_index = compact_render_receipt(result['frame_index'], snapshot, pack_root)
-            attach_frame_addresses(persisted_index, snapshot, result['frame_index']['cards'])
+            attach_frame_addresses(persisted_index, snapshot, result['frame_index']['cards'], frame_provider=frame_provider)
         except (KeyError, TypeError, ValueError):
             persisted_index = result['frame_index']
         (pack_root / 'frame-index.json').write_text(
