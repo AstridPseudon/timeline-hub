@@ -89,6 +89,79 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  const createRequest: OutboxRequest = { method: 'POST', path: '/v1/projects/project/timelines',
+    body: '{"timeline_id":"timeline","name":"Main"}', key: 'astrid-first-timeline-project' };
+
+  it('persists pre-create identity and defaults before sending, including a lost or unpersisted create ACK', async () => {
+    const env = environment();
+    const defaults = { name: 'Main', output: { background: null }, tracks: ['V1', 'A1'] };
+    let owner = '';
+    let original!: OutboxRequest;
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.reserveCreate(defaults, createRequest);
+      original = (await box.read()).pending!.request;
+      await box.dispatch(() => { throw new Error('No invented head'); }, async (request) => {
+        expect((await env.open().list(scope))[0].pending!.request).toEqual(request);
+        throw new Error('ACK lost');
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await expect(box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        env.fault.abortNextWrite = true;
+        return accepted(h0);
+      })).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(before);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const next = await box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted(h0);
+      });
+      expect(next.accepted).toMatchObject({ head: h0, creation: { request: original, payload: defaults } });
+      expect(next.pending).toBeUndefined();
+      expect(next.intents).toEqual([]);
+      const a = await box.append(move(5), { after: next.accepted!.intentId });
+      expect((await box.read()).intents[0]).toMatchObject({ id: a, readyBase: h0 });
+    });
+  });
+
+  it('does not send or lose earlier work if the pre-create reservation cannot persist', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      env.fault.abortNextWrite = true;
+      await expect(box.reserveCreate({ defaults: null }, createRequest)).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(original);
+      const transmit = vi.fn(async () => accepted(h0));
+      await expect(box.dispatch(build, transmit)).rejects.toThrow('empty');
+      expect(transmit).not.toHaveBeenCalled();
+      await box.reserveCreate({ defaults: null }, createRequest);
+      const reserved = await box.read();
+      await expect(box.reserveCreate({}, createRequest)).rejects.toThrow('unused');
+      await expect(box.cancel(reserved.pending!.intentId)).rejects.toThrow('uncertain');
+      expect(await box.read()).toEqual(reserved);
+    });
+  });
+
+  it('refuses cross-scope, changed-route, extra-wire-field and fabricated-head creation reservations', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      for (const request of [
+        { ...createRequest, path: '/v1/projects/other/timelines' },
+        { ...createRequest, method: 'PUT' },
+        { ...createRequest, key: 'invalid key' },
+        { ...createRequest, body: '{"timeline_id":"other"}' },
+        { ...createRequest, body: '{"timeline_id":"timeline","head_revision_id":"fake"}' },
+      ]) await expect(box.reserveCreate({}, request)).rejects.toThrow('Noncanonical');
+      await expect(box.append({}, { create: true })).rejects.toThrow('reserved');
+      expect(await box.read()).toEqual(original);
+    });
+  });
+
   it('never disposes an unknown flight, including before transmission completes', async () => {
     const env = environment();
     await env.open().create(scope, async (box) => {

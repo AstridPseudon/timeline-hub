@@ -13,7 +13,7 @@ export interface OutboxHead {
   publicationId: string;
 }
 
-export type OutboxBasis = { head: OutboxHead } | { after: string };
+export type OutboxBasis = { head: OutboxHead } | { after: string } | { create: true };
 
 export interface OutboxIntent {
   id: string;
@@ -43,7 +43,8 @@ export interface OutboxRecord {
   intents: OutboxIntent[];
   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
   // Only the last acknowledged prefix, also usable by a late dependent append.
-  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
+  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson;
+    creation?: { payload: OutboxJson; request: OutboxRequest } };
 }
 
 export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
@@ -55,6 +56,7 @@ export type OutboxRequestBuilder = (
 
 export interface ClaimedOutbox {
   read(): Promise<OutboxRecord>;
+  reserveCreate(payload: OutboxJson, request: OutboxRequest): Promise<string>;
   append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
   cancel(intentId: string): Promise<void>;
   resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
@@ -144,12 +146,15 @@ export function createCommitOutbox(options: {
     }
   }
 
-  async function list(scope: OutboxScope): Promise<OutboxRecord[]> {
-    const prefix = scopeKey(scope, '_');
+  async function list(scope: Omit<OutboxScope, 'timelineId'> & { timelineId?: string }): Promise<OutboxRecord[]> {
+    // A creation may crash before its randomly allocated timeline has a URL or server row.
+    const projectOnly = scope.timelineId === undefined;
+    const query = { ...scope, timelineId: projectOnly ? '_' : scope.timelineId! };
+    const prefix = scopeKey(query, '_');
     return transaction('readonly', (store, finish) => {
       const request = store.getAll();
       request.addEventListener('success', () => finish((request.result as OutboxRecord[])
-        .filter((record) => scopeKey(record.scope, '_') === prefix).map(detached)));
+        .filter((record) => scopeKey(projectOnly ? { ...record.scope, timelineId: '_' } : record.scope, '_') === prefix).map(detached)));
     });
   }
 
@@ -204,7 +209,23 @@ export function createCommitOutbox(options: {
 
       const outbox: ClaimedOutbox = {
         read: () => access('readonly', detached),
+        async reserveCreate(payload, request) {
+          const intent = newIntent(payload, { create: true });
+          const exact = detached(request);
+          return access('readwrite', (record) => {
+            const body = JSON.parse(exact.body) as Record<string, unknown>;
+            if (exact.method !== 'POST' || exact.path !== `/v1/projects/${encodeURIComponent(scope.projectId)}/timelines`
+              || typeof exact.key !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/.test(exact.key)
+              || body?.timeline_id !== scope.timelineId || Object.keys(body).some((key) => !['timeline_id', 'name'].includes(key))
+              || ('name' in body && typeof body.name !== 'string')) throw new Error('Noncanonical timeline create request');
+            if (record.intents.length || record.pending || record.accepted) throw new Error('Creation requires an unused outbox owner');
+            record.intents.push(intent);
+            record.pending = { intentId: intent.id, request: exact };
+            return intent.id;
+          });
+        },
         async append(payload, basis) {
+          if ('create' in basis) throw new Error('Creation requires an exact reserved request');
           const intent = newIntent(payload, basis);
           return access('readwrite', (record) => {
             const predecessor = record.intents[record.intents.length - 1];
@@ -283,7 +304,9 @@ export function createCommitOutbox(options: {
               if (record.pending?.request.key !== pending.request.key
                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
               if (outcome.kind === 'accepted') {
-                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
+                const intent = record.intents[0];
+                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value,
+                  ...('create' in intent.basis ? { creation: { payload: intent.payload, request: pending.request } } : {}) };
                 record.intents.shift();
                 delete record.pending;
                 const next = record.intents[0];
