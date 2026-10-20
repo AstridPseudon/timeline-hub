@@ -40,9 +40,16 @@ def _seed(daemon):
     parent, shots, internals = (_replace_values(part, replacements) for part in _closure(shared=False))
     for row in (parent, *shots, *internals):
         row["project_id"] = project
-    # The live host requires labels on audio tracks; keep this repair local to
+    # The live host requires labels on every track; keep this repair local to
     # the private Scene proof fixture rather than changing the shared fixture.
-    internals[0]["payload"]["tracks"][1]["label"] = "Voice"
+    internal = internals[0]["payload"]
+    internal["tracks"][0]["label"] = "Picture"
+    internal["tracks"][1]["label"] = "Voice"
+    internal["tracks"][0].pop("opaque_track", None)
+    for clip in internal["clips"]:
+        clip.pop("opaque_clip", None)
+        clip.pop("rect", None)
+    parent["payload"]["config"]["tracks"][0]["label"] = "Picture"
     shots[0]["payload"]["text_bindings"] = []
     for row in (parent, *shots, *internals):
         row["content_digest"] = _digest(row["payload"])
