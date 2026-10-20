@@ -4,6 +4,7 @@
 // Pure: no React, no DOM, no Math.random.
 import {LOGICAL_H, LOGICAL_W, clamp, finiteNumber, integerIn, narrowParams} from '../../_shared/am';
 import {
+  type Anchor,
   type Point,
   type PresenterFrame,
   type PresenterTiming,
@@ -13,6 +14,40 @@ import {
   mouthStateAt,
   presenterView,
 } from './presenter-core';
+
+export const anchorOr = (value: unknown, fallback: Anchor): Anchor => {
+  if (!value || typeof value !== 'object') return fallback;
+  const a = value as Record<string, unknown>;
+  return {
+    x: integerIn(a.x, 0, LOGICAL_W - 1, fallback.x),
+    y: integerIn(a.y, 0, LOGICAL_H - 1, fallback.y),
+    w: integerIn(a.w, 1, 40, fallback.w),
+  };
+};
+
+export const mouthAnchor = (raw: unknown): Anchor =>
+  anchorOr(narrowParams<{mouth?: Anchor}>(raw).mouth, {x: 151, y: 104, w: 19});
+
+export type PixelRect = {x: number; y: number; w: number; h: number};
+
+// The drawing erases this rectangle before the half/open mouth pixels.
+export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
+
+// Public inspection area around the actual drawing geometry, including closed
+// pose. It deliberately follows the same normalization as drawing, so default,
+// partial, fractional and raw-invalid anchors retain their known normalized
+// public region.
+export const mouthInspectionRect = (raw: unknown): PixelRect => {
+  const r = mouthEraseRect(mouthAnchor(raw));
+  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
+};
+
+export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
+  left: v.originX + r.x * v.scale,
+  top: v.originY + r.y * v.scale,
+  width: r.w * v.scale,
+  height: r.h * v.scale,
+});
 
 type MotionParams = {
   zoom?: number;
@@ -71,7 +106,9 @@ export const presenterAt = (raw: unknown, clipFrame: number, fps: number): {timi
   return {timing, view: presenterView(frame, timing, clipFrame)};
 };
 
-const MOUTH_LEVEL = {closed: 0, half: 0.5, open: 1} as const;
+// This codebook belongs only to the resolved astrid_motion/effects/am-presenter
+// source. Foreign motion.mouth scalars and values outside it have unknown labels.
+export const MOUTH_LEVEL = {closed: 0, half: 0.5, open: 1} as const;
 
 // What visualize charts: zoom, view offset (screen px), mouth level and blinks.
 export const motionAt = (raw: unknown, clipFrame: number, fps: number): Record<string, number> => {

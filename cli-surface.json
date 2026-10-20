@@ -2169,7 +2169,90 @@
           "positionals": [
             "ref"
           ],
-          "verbs": {}
+          "verbs": {
+            "commands-file": {
+              "flags": {
+                "--base-publication-id": {
+                  "required": true
+                },
+                "--base-revision-id": {
+                  "required": true
+                },
+                "--dry-run": {
+                  "required": false
+                },
+                "--idempotency-key": {
+                  "required": false
+                },
+                "--json": {
+                  "required": false
+                },
+                "--project": {
+                  "required": false
+                }
+              },
+              "positionals": [
+                "ref",
+                "commands_file"
+              ],
+              "verbs": {}
+            },
+            "move": {
+              "flags": {
+                "--clip": {
+                  "required": true
+                },
+                "--dry-run": {
+                  "required": false
+                },
+                "--idempotency-key": {
+                  "required": false
+                },
+                "--json": {
+                  "required": false
+                },
+                "--on": {
+                  "required": true
+                },
+                "--project": {
+                  "required": false
+                }
+              },
+              "positionals": [
+                "ref"
+              ],
+              "verbs": {}
+            },
+            "track-label": {
+              "flags": {
+                "--clear": {
+                  "required": false
+                },
+                "--dry-run": {
+                  "required": false
+                },
+                "--idempotency-key": {
+                  "required": false
+                },
+                "--json": {
+                  "required": false
+                },
+                "--project": {
+                  "required": false
+                },
+                "--set": {
+                  "required": false
+                },
+                "--track": {
+                  "required": true
+                }
+              },
+              "positionals": [
+                "ref"
+              ],
+              "verbs": {}
+            }
+          }
         },
         "elements": {
           "flags": {

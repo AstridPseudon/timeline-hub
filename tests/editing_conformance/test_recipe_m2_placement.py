@@ -160,12 +160,11 @@ def test_relevant_conflicts_refuse_atomically(damage):
     ('parent/clip:clip-a', ['app', 'on'], None),
     ('parent/registry', ['assets', 'picture', 'media_id'], 'sha256:' + '1' * 64),
 ])
-def test_aba_or_same_value_intervening_writes_block_rebase_and_undo(ref, path, value):
+def test_same_final_value_allows_rebase_but_intervening_writes_block_undo(ref, path, value):
     original = bundle_from_document(placement_document())
     plan = execute(original, [capture(original)])
     intervening = [later(ref, path, value)]
-    with pytest.raises(CommandError, match='intervening'):
-        replay(plan, original, intervening_records=intervening)
+    assert replay(plan, original, intervening_records=intervening).records == plan.records
     with pytest.raises(CommandError, match='intervening'):
         inverse(plan.bundle, plan.records, intervening)
 
@@ -246,21 +245,19 @@ def test_entire_existing_registry_selection_is_guarded_including_raw_path_aba(ow
     with pytest.raises(CommandError):
         replay(plan, head)
     intervening = [later('parent' if owner == 'parent' else owner + '/source', path, 'original-pin')]
-    with pytest.raises(CommandError, match='intervening'):
-        replay(plan, original, intervening_records=intervening)
+    assert replay(plan, original, intervening_records=intervening).records == plan.records
     with pytest.raises(CommandError, match='intervening'):
         inverse(plan.bundle, plan.records, intervening)
 
 
-def test_shared_owner_membership_aba_is_relevant_but_unrelated_owner_changes_are_disjoint():
+def test_equal_owner_membership_allows_rebase_but_aba_blocks_inverse():
     original = bundle_from_document(placement_document())
     plan = execute(original, [capture(original, 'occurrence:occ-a', on=12.012)])
     shot_id = original['placements'][0]['shot_id']
     for path in ([], ['shot_id']):
         value = {'occurrence_id': 'future', 'shot_id': shot_id} if not path else shot_id
         intervening = [later('occurrence:future', path, value)]
-        with pytest.raises(CommandError, match='intervening'):
-            replay(plan, original, intervening_records=intervening)
+        assert replay(plan, original, intervening_records=intervening).records == plan.records
         with pytest.raises(CommandError, match='intervening'):
             inverse(plan.bundle, plan.records, intervening)
     unrelated = later('occurrence:future', [], {'occurrence_id': 'future', 'shot_id': 'other'})

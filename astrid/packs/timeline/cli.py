@@ -3655,6 +3655,8 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.description = ("Use edit move TL --clip SCOPED_ID --on SECONDS or edit track-label TL "
                              "--track parent/track:ID --set LABEL (or --clear) for native commits. "
+                             "Use edit commands-file TL FILE --base-revision-id REV "
+                             "--base-publication-id PUB for a native batch. "
                              "The detached working-copy flags below are legacy.")
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
@@ -3868,9 +3870,18 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
     try:
         if undo and (parsed.steps_option is not None or parsed.steps != 1 or parsed.draft):
             raise TimelineEditError("--publication cannot be combined with local draft/step undo")
-        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
+        batch = None
+        base = {}
+        if getattr(parsed, "commands_file", None) is not None:
+            batch = json.loads(Path(parsed.commands_file).read_text(encoding="utf-8"))
+            if not isinstance(batch, list) or not batch:
+                raise TimelineEditError("commands file must contain a nonempty JSON array of EditCommands")
+            base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
+        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if command is not None:
+        if batch is not None:
+            result = session.commit_many(batch, **options)
+        elif command is not None:
             result = session.commit(command, **options)
         else:
             result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
@@ -4027,14 +4038,15 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
             "(product family); nested shots beneath 'timelines shots'."
         ),
     )
-    parser.move_parser = TimelinesParser(prog="astrid timelines edit move")
-    _configure_commit_move(parser.move_parser)
-    parser.move_parser.set_defaults(client=client)
-    from astrid.packs.timeline.cli_native import configure_track_label
+    from astrid.packs.timeline.cli_native import configure_commands_file, configure_track_label
 
-    parser.track_label_parser = TimelinesParser(prog="astrid timelines edit track-label")
-    configure_track_label(parser.track_label_parser)
-    parser.track_label_parser.set_defaults(client=client)
+    parser.native_edit_parsers = {}
+    for name, configure in (("move", _configure_commit_move), ("track-label", configure_track_label),
+                            ("commands-file", configure_commands_file)):
+        native = TimelinesParser(prog=f"astrid timelines edit {name}")
+        configure(native)
+        native.set_defaults(client=client)
+        parser.native_edit_parsers[name] = native
     subparsers = parser.add_subparsers(dest="command", required=True)
     register_product_commands(
         subparsers,

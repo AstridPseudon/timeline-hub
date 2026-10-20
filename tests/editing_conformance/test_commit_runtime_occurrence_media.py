@@ -18,16 +18,6 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 
 
-class AssetSchemaUnavailable(Exception):
-    """Only the observed old Runtime asset-reference schema qualifies as xfail."""
-
-
-ASSET_SCHEMA = pytest.mark.xfail(
-    strict=True, raises=AssetSchemaUnavailable,
-    reason='Requires normal Runtime generation from the composed scoped-asset command schema',
-)
-
-
 @pytest.fixture(params=['image', 'video'])
 def editing(request, tmp_path, monkeypatch, operation):
     runtime = use_runtime()
@@ -194,22 +184,10 @@ def body(editing, commands=None, *, dry_run=False):
 
 
 def commit(editing, request, key):
-    from runtime_protocol.errors import RuntimeErrorBase
-
-    try:
-        return editing.service.commit_timeline(
-            editing.project, 'film', request, idempotency_key=key, publisher='media-editor',
-            invocation_path=f'/v1/projects/{editing.project}/timelines/film/commit', authorize=editing.authorize,
-        )
-    except RuntimeErrorBase as exc:
-        cause = exc
-        while cause is not None:
-            message = str(cause)
-            if (exc.status == 422 and exc.details.get('reason') == 'invalid_prepared'
-                    and '/asset:' in message and 'does not match' in message and '(?:clip|track)' in message):
-                raise AssetSchemaUnavailable(message) from exc
-            cause = cause.__cause__ or cause.__context__
-        raise
+    return editing.service.commit_timeline(
+        editing.project, 'film', request, idempotency_key=key, publisher='media-editor',
+        invocation_path=f'/v1/projects/{editing.project}/timelines/film/commit', authorize=editing.authorize,
+    )
 
 
 def rows(editing):
@@ -244,7 +222,6 @@ def inverse(result):
             'args': {'publications': [result['receipt']['receipt_id']]}}
 
 
-@ASSET_SCHEMA
 def test_exact_capture_acceptance_inverse_redo_restart_and_retry(editing, monkeypatch):
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
@@ -372,7 +349,7 @@ def test_source_metadata_is_part_of_the_exact_selection_fingerprint(editing):
 
 
 @pytest.mark.parametrize('side', ['old_media', 'media'])
-@pytest.mark.parametrize('race', [pytest.param('lifecycle', marks=ASSET_SCHEMA), 'revocation'])
+@pytest.mark.parametrize('race', ['lifecycle', 'revocation'])
 def test_capture_to_accept_races_refuse_atomically(editing, side, race):
     from runtime_protocol.errors import RuntimeErrorBase
 

@@ -128,10 +128,13 @@ class TimelineSession:
         self.path = f"/v1/projects/{quote(project_id, safe='')}/timelines/{quote(timeline_id, safe='')}/commit"
 
     @classmethod
-    def open(cls, project, timeline, *, client, outbox_path=None):
+    def open(cls, project, timeline, *, client, outbox_path=None,
+             base_revision_id=None, base_publication_id=None):
         from astrid.sdk.storage_root import resolve_runtime_data_root
         from astrid.sdk.timeline.store import resolve_ids
 
+        base = None if base_revision_id is None and base_publication_id is None else _pin({
+            "revision_id": base_revision_id, "publication_id": base_publication_id})
         identity = _connection(client)
         project_id, timeline_id, _ = resolve_ids(project, timeline, client=client)
         scope = {**identity, "project_id": project_id, "timeline_id": timeline_id}
@@ -147,8 +150,10 @@ class TimelineSession:
                         raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
                     if state["pending"] or state["flight"] is not None:
                         session._state()
+                        if base is not None and state["base"] != base:
+                            raise TimelineEditError("pending intent belongs to a different original base")
                         return session
-            head = _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
+            head = base or _pin(_response(client.timelines.history(project_id, timeline_id, limit=1))["data"]["head"])
             with session.outbox.locked():
                 if _connection(client) != identity:
                     raise TimelineEditError("outbox identity changed while reading its head")
@@ -188,39 +193,60 @@ class TimelineSession:
 
         Supplied capture claims are verified by execute, never refreshed.
         """
+        return self.queue_many([command])[0]
+
+    def queue_many(self, commands):
+        """Atomically capture a batch on the original base, staging its own prefix.
+
+        Commands are registered EditCommands; supplied claims are never refreshed.
+        Missing capture inputs fail before any command is added to the outbox.
+        """
         from astrid.sdk.timeline.commands import execute
 
-        command = _native_command(command)
-        return self._queue(lambda state: execute(self._bundle(state), [command]).commands[0])
+        commands = [_native_command(command) for command in commands]
+        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
 
     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
         """Capture and flush one native command, or retry its original flight."""
+        return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
+    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python"):
+        """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
 
-        command = _native_command(command)
-        self._queue(lambda state: execute(self._bundle(state), [command]).commands[0],
-                    lambda pending: len(pending) == 1 and all(
-                        equal(pending[0].get(key), value) for key, value in command.items() if key != "intent")
-                    and all(equal(pending[0]["intent"].get(key), value)
-                            for key, value in command.get("intent", {}).items()))
+        commands = [_native_command(command) for command in commands]
+        self._stage(lambda state: execute(self._bundle(state), commands).commands,
+                    lambda pending: len(pending) == len(commands) and all(
+                        all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
+                        and all(equal(saved["intent"].get(key), value)
+                                for key, value in command.get("intent", {}).items())
+                        for saved, command in zip(pending, commands)))
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def _queue(self, capture, matches=None):
+        return self._stage(lambda state: [capture(state)], matches, retry_capture=True)[0]
+
+    def _stage(self, capture, matches=None, *, retry_capture=False):
+        from astrid.sdk.timeline._command_state import equal
+
         while True:
             with self.outbox.locked():
                 state = self._state()
                 if matches is not None and state["pending"]:
-                    if not matches(state["pending"]):
+                    prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
+                    if not matches(prefix):
                         raise TimelineEditError("pending intent differs; flush the original request before another edit")
-                    return copy.deepcopy(state["pending"][0])
-            command = capture(state)
+                    return copy.deepcopy(prefix)
+            commands = capture(state)
             with self.outbox.locked():
-                if self._state() != state:
-                    continue
-                state["pending"].append(copy.deepcopy(command))
+                if not equal(self._state(), state):
+                    if retry_capture:  # Preserve the existing move callback concurrency contract.
+                        continue
+                    raise TimelineEditError("outbox changed during capture; original intent was not queued")
+                state["pending"].extend(copy.deepcopy(commands))
                 self.outbox.write(state)
-                return copy.deepcopy(command)
+                return copy.deepcopy(commands)
 
     def move(self, select, on, *, idempotency_key=None, dry_run=False, via="python"):
         # A repeated one-shot CLI/SDK invocation retries original intent, never
@@ -313,13 +339,15 @@ class TimelineSession:
         return result
 
     def _flight_body(self, state, flight, key, dry_run):
+        from astrid.sdk.timeline._command_state import equal
+
         try:
             body = json.loads(flight["body"])
             count = flight["count"]
             valid = (type(count) is int and 0 < count <= len(state["pending"])
                      and isinstance(flight["key"], str) and bool(flight["key"])
                      and flight["path"] == self.path
-                     and body["commands"] == state["pending"][:count]
+                     and equal(body["commands"], state["pending"][:count])
                      and request_bytes(body).decode() == flight["body"]
                      and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
                      and body["base_revision_id"] == state["base"]["revision_id"]

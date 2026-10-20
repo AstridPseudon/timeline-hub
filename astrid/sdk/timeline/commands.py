@@ -29,23 +29,36 @@ class Operation:
 def operations():
     """Native recipe entries; the full extensible registry belongs to M2."""
     from ._clip_commands import clip_add
-    from ._clip_scalar_commands import clip_set
+    from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
     from ._scalar_commands import clip_set_params, track_set
     from ._split_commands import clip_split
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
-    from .native_occurrence_delete import OCCURRENCE_INTENT, occurrence_delete
+    from .native_occurrence_delete import occurrence_delete
+    from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
-    from .native_placement_commands import placement_move
+    from .native_placement_commands import (
+        PLACEMENT_INTENT,
+        placement_create,
+        placement_move,
+        placement_unplace,
+    )
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
+            'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
+                                          PLACEMENT_INTENT, True),
+            'placement.unplace': Operation(_SCHEMA['$defs']['PlacementUnplaceArgs'], placement_unplace,
+                                           PLACEMENT_INTENT, True),
+            'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
+                                              OCCURRENCE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
+            'clip.set-element': Operation(_SCHEMA['$defs']['ClipSetElementArgs'], clip_set_element, {}, True),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),

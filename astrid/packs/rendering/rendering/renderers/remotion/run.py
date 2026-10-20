@@ -25,7 +25,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from astrid.core import timeline
 from astrid.core.audit import AuditContext
@@ -1032,6 +1032,7 @@ def _execute_remotion_locked(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
     window: FrameWindow | None = None,
 ) -> _ExecutionDetails:
     """Execute one render while the caller owns the non-recursive outer lock."""
@@ -1165,6 +1166,8 @@ def _execute_remotion_locked(
             )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
+            if on_scene_props is not None and frame_numbers is not None:
+                on_scene_props(merged_props, frame_numbers)
             remotion_env_additions: dict[str, str] = {
                 # Keep Remotion's pre-encode files on the admitted attempt
                 # filesystem and let the lifecycle remove them on every exit.
@@ -1381,12 +1384,16 @@ def capture_remotion_frames(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
 ) -> dict[int, Path]:
     """Capture selected composition frames through the trusted Remotion path.
 
     This is deliberately a batch API: the caller supplies the exact frame set
     and Remotion renders one image sequence, avoiding a full video and keeping
     all media/effect/font staging on the existing renderer authority path.
+    The optional internal callback synchronously observes final serialized Root
+    props and those same frames before capture, while staged assets remain live.
+    It must treat the props as read-only; its exceptions abort capture.
     """
     numbers = tuple(sorted(set(frame_numbers)))
     if not numbers:
@@ -1415,6 +1422,7 @@ def capture_remotion_frames(
                 frame_resolution=frame_resolution,
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
+                **({"on_scene_props": on_scene_props} if on_scene_props is not None else {}),
             )
     finally:
         marker.unlink(missing_ok=True)

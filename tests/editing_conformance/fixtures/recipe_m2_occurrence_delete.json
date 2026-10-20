@@ -1809,6 +1809,7 @@
           "state": "present",
           "value": {
             "name": "Chapter One",
+            "internal_timeline_revision_id": "internal-1",
             "items": [
               {
                 "item_id": "item-1",
@@ -3696,6 +3697,7 @@
               "state": "present",
               "value": {
                 "name": "Chapter One",
+                "internal_timeline_revision_id": "internal-1",
                 "items": [
                   {
                     "item_id": "item-1",
@@ -4066,6 +4068,7 @@
             "state": "present",
             "value": {
               "name": "Chapter One",
+              "internal_timeline_revision_id": "internal-1",
               "items": [
                 {
                   "item_id": "item-1",

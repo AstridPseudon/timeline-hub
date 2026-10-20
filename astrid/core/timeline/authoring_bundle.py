@@ -228,6 +228,31 @@ def _authoring_shot_id(
     return _identity("shot-placement", project_id, timeline_id, occurrence_id, source_shot_id)
 
 
+def _rederive_root_identity(
+    placement: dict[str, Any], project_id: str, timeline_id: str, shot_revision_id: str
+) -> None:
+    """Re-derive a new occurrence's two derived root fields for its compiled destination.
+
+    Only fields the row already carries are rewritten. The parent document is the
+    row's own ``parent_document_id``, else the timeline id (migration's default).
+    """
+    from .shot_composition import stable_occurrence_deep_link, stable_output_identity
+
+    document_id = placement.get("parent_document_id") or timeline_id
+    if "stable_deep_link" in placement:
+        placement["stable_deep_link"] = stable_occurrence_deep_link(
+            project_id,
+            document_id,
+            placement["shot_id"],
+            shot_revision_id,
+            placement["occurrence_id"],
+        )
+    if "output_identity" in placement:
+        placement["output_identity"] = stable_output_identity(
+            project_id, document_id, placement["occurrence_id"]
+        )
+
+
 def _remap_known_item_references(
     payload: Mapping[str, Any], item_ids: Mapping[str, str]
 ) -> dict[str, Any]:
@@ -884,8 +909,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             )
         needs_materialization = (
             authoring_shot_id != source_shot_id
-            or candidate_shot != base_shot
-            or candidate_internal != base_internal
+            or _canonical_json(candidate_shot) != _canonical_json(base_shot)
+            or _canonical_json(candidate_internal) != _canonical_json(base_internal)
         )
         if needs_materialization:
             internal_payload = _copy(dict(candidate_internal))
@@ -1019,6 +1044,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         placement["shot_id"] = authoring_shot_id
         placement["shot_revision_id"] = compiled["revision_id"]
         placement.pop("revision_id", None)
+        if base_placement is None:
+            _rederive_root_identity(placement, project_id, timeline_id, compiled["revision_id"])
         compiled_occurrences.append(placement)
         identity_mapping["placements"][occurrence_id] = {
             "occurrence_id": occurrence_id,

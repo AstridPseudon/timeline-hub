@@ -103,8 +103,7 @@ def test_original_param_basis_refuses_new_admitted_schema(
     if change == 'revision':
         for history in ([later(ref, [field], old)],
                         [later(ref, [field], new), later(ref, [field], old)]):
-            with pytest.raises(CommandError, match='intervening'):
-                replay(plan, original, intervening_records=history, **inputs)
+            assert replay(plan, original, intervening_records=history, **inputs).records == plan.records
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None)])
@@ -132,8 +131,8 @@ def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(containe
             replay(plan, head)
         with pytest.raises(CommandError):
             inverse(head, plan.records)
-    with pytest.raises(CommandError, match='intervening'):
-        replay(plan, original, intervening_records=[later(REF, ['params', 'missing'], None)])
+    assert replay(plan, original, intervening_records=[
+        later(REF, ['params', 'missing'], None)]).records == plan.records
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None)])
@@ -175,8 +174,8 @@ def test_registered_sprite_strip_binding_refuses_selected_registry_retarget():
     State(unrelated).entity(registry_ref)['assets']['voice']['media_id'] = 'sha256:' + 'e' * 64
     assert replay(plan, unrelated).commands == plan.commands
     path = ['assets', 'old-picture', 'media_id']
-    with pytest.raises(CommandError, match='intervening'):
-        replay(plan, original, intervening_records=[later(registry_ref, path, None)])
+    assert replay(plan, original, intervening_records=[
+        later(registry_ref, path, None)]).records == plan.records
 
 
 def test_registry_and_label_after_move_preserves_move_inverse_redo():
@@ -268,7 +267,7 @@ def test_disjoint_same_owner_leaf_rebase_inverse_and_no_containing_revision_guar
     ('track.set', 'parent/track:picture', {'label': ''}, ['label']),
     ('clip.set-params', REF, {'x': None}, ['params', 'x']),
 ])
-def test_unchanged_intent_writes_and_aba_are_guarded(op, ref, values, path):
+def test_unchanged_intent_and_aba_allow_rebase_but_guard_inverse(op, ref, values, path):
     original = bundle()
     if op == 'track.set':
         State(original).entity(ref)['label'] = ''
@@ -281,8 +280,22 @@ def test_unchanged_intent_writes_and_aba_are_guarded(op, ref, values, path):
                     [later(ref, path, 'away'), later(ref, path, values[next(iter(values))])]):
         with pytest.raises(CommandError, match='intervening'):
             inverse(plan.bundle, plan.records, history)
-        with pytest.raises(CommandError, match='intervening'):
-            replay(plan, original, intervening_records=history)
+        assert replay(plan, original, intervening_records=history).records == plan.records
+
+
+@pytest.mark.parametrize('original,value,conflict', [(2, 2.0, False), (True, 1, True)])
+def test_ordinary_rebase_keeps_numeric_equivalence_and_boolean_distinction(original, value, conflict):
+    before = bundle()
+    clip(before, REF)['params'] = {'x': original}
+    plan = execute(before, [capture_clip_set_params(before, REF, values={'x': 'B'})])
+    head = copy.deepcopy(before)
+    clip(head, REF)['params']['x'] = value
+    history = [later(REF, ['params', 'x'], value)]
+    if conflict:
+        with pytest.raises(CommandError):
+            replay(plan, head, intervening_records=history)
+    else:
+        assert replay(plan, head, intervening_records=history).commands == plan.commands
 
 
 @pytest.mark.parametrize('change', ['delete', 'owner', 'source', 'value', 'type', 'asset'])

@@ -20,8 +20,7 @@ from tests.helpers.runtime import use_runtime
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.parametrize('nullable_speed', [False, pytest.param(True, marks=pytest.mark.xfail(
-    strict=True, reason='Runtime timeline_inspection must support main\'s explicit null speed default'))])
+@pytest.mark.parametrize('nullable_speed', [False, True])
 def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
     tmp_path, monkeypatch, real_runtime, nullable_speed,
 ):
