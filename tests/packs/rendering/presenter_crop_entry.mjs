@@ -2,7 +2,7 @@
 import {createElement as h} from 'react';
 import {Composition, registerRoot} from 'remotion';
 import {TimelineComposition, toRuntimeTheme} from '@banodoco/timeline-composition';
-import {resolveHostRegistries} from './src/host-registries';
+import {resolveHostRegistries} from './src/host-registries.ts';
 
 const HostTimeline = props => h(TimelineComposition, {...props,
   registries: resolveHostRegistries(toRuntimeTheme(props.theme))});
