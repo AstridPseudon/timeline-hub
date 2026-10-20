@@ -43,16 +43,22 @@ const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli }>({
-  seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
-  astrid: [async ({ harness, seed3 }, use) => {
+  astrid: [async ({ harness }, use) => {
     const astrid = await AstridCli.create(harness);
     journey.identity = await astrid.preflight();
+    await use(astrid);
+  }, { scope: 'worker', timeout: 240_000 }],
+  seed3: [async ({ harness, astrid }, use) => {
+    // The old selection must be a real immutable managed generation/variant before the
+    // authored bundle is published; the same public task path also supplies the marker case.
+    const placeholder = await astrid.seedManagedMarker(harness.seed.projectSlug, harness.seed.projectId, 'f2-placeholder-seed', 'f2-placeholder');
+    const seed3 = await harness.seedThreeProducts({ placeholder });
     // The seed must be something Astrid accepts as it is (a real finding otherwise): check a fresh working copy of it, then drop it.
     await astrid.astrid(['timelines', 'checkout', seed3.timelineId, '--project', seed3.projectSlug, '--fresh', '--json']);
     await astrid.astrid(['timelines', 'check', seed3.timelineId, '--project', seed3.projectSlug, '--no-sweep']);
     await astrid.astrid(['timelines', 'discard', seed3.timelineId, '--project', seed3.projectSlug]);
     journey.preflightCalls = [...astrid.calls];
-    await use(astrid);
+    await use(seed3);
   }, { scope: 'worker', timeout: 240_000 }],
 });
 
@@ -329,9 +335,6 @@ async function plantNoReloadFlag(page: Page) {
 // ---------------------------------------------------------------------------------------------
 // 1. agent -> open App
 
-// The task output is resolved through the native managed-output/provider path. The seeded
-// placeholder is an ingested object, not a managed generation/variant, so this case remains
-// a truthful red until S2 exposes an exact old-media selection for occurrence.swap-media.
 test('agent -> open App: an Astrid task and its publication appear in the open App without a reload', async ({ page, harness, astrid, seed3 }) => {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const agent = agentOf(astrid, seed3);
@@ -348,7 +351,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 
   // The agent registers an executor and admits a task. The page learns of it from the Runtime's event feed, not from a reload.
   await astrid.host({ register: true });
-  const created = await astrid.json<{ task_id: string }>(['tasks', 'create', '--project', seed3.projectSlug, '--capability', 'f2.marker', '--spec', '{}', '--json']);
+  const created = await astrid.createMarkerTask(seed3.projectSlug, harness.seed.projectId, 'f2-case1-marker');
   expect(created.ok, JSON.stringify(created)).toBe(true);
   const taskId = created.data!.task_id;
   const row = page.locator(`[data-activity-task-id="${taskId}"]`);
@@ -369,7 +372,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
   // The agent publishes the timeline with the task's output; the open page adopts that revision by itself.
   const before = await currentHead(harness);
   const published = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, (await history(harness, seed3)).head,
-    { kind: 'task-media-swap', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, taskId, output: 'marker', asset: seed3.markerAssetKey }, 'f2-case1');
+    { kind: 'task-media-swap', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, taskId, output: 'marker', oldTaskId: seed3.placeholderTaskId, oldOutput: 'marker', asset: seed3.markerAssetKey }, 'f2-case1');
   expect(published.data.previous_revision_id, 'the agent built on the head the App has').toBe(before);
   expect(published.data.accepted_revision_id).not.toBe(before);
   const publishedHead = published.data.accepted_revision_id;

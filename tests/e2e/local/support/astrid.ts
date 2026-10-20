@@ -46,6 +46,12 @@ export interface AstridHostResult {
   outputs?: Array<{ name: string; object_id: string; media_type: string; size: number }>;
 }
 
+export interface ManagedMarkerSeed {
+  taskId: string;
+  objectId: string;
+  selection: { generation_id: string; variant_id: string; catalog_digest: string };
+}
+
 /** One Astrid call, as recorded for the run summary. */
 export interface AstridCall {
   argv: string[];
@@ -190,6 +196,67 @@ export class AstridCli {
     return this.python(['-m', 'astrid', ...args], options);
   }
 
+  private markerIntent() {
+    return {
+      version: 1, modality: 'image', partial_success_policy: 'reject',
+      groups: [{ group_key: 'main', selectors: [{ selector: 'marker', ordinal: 0, variant_key: 'original', required: true }] }],
+    };
+  }
+
+  private markerEffect(projectId: string) {
+    return {
+      effect_type: 'generation.publish_v1', target_id: projectId,
+      payload: {
+        version: 1, modality: 'image', generation_type: 'f2.marker', metadata: {}, partial_success_policy: 'reject',
+        groups: [{ group_key: 'main', selectors: [{ selector: 'marker', ordinal: 0, variant_key: 'original', output_port: 'marker', required: true }] }],
+      },
+    };
+  }
+
+  /** Admit a real marker task using the installed test capability's normal public task API. */
+  async createMarkerTask(project: string, projectId: string, key: string): Promise<AstridEnvelope<{ task_id: string }>> {
+    return this.json(['tasks', 'create', '--project', project, '--capability', 'f2.marker', '--spec', '{}',
+      '--generation-intent', JSON.stringify(this.markerIntent()), '--settlement-effect', JSON.stringify(this.markerEffect(projectId)),
+      '--idempotency-key', key, '--json']);
+  }
+
+  /** Read one exact managed output through the generated Runtime SDK, then bind the requested authored alias. */
+  async readManagedMedia(taskId: string, output: string, asset: string): Promise<ManagedMarkerSeed> {
+    const program = `
+import json, os, sys
+from pathlib import Path
+from astrid.sdk.workspace_client import resolve_runtime_connection
+from astrid_runtime_client import WorkspaceClient
+task_id, output_name, asset, project_id = json.loads(sys.argv[1])
+endpoint, token = resolve_runtime_connection(os.environ['ASTRID_TIMELINE_EVAL_ENDPOINT'], Path(os.environ['ASTRID_TIMELINE_EVAL_CREDENTIAL']))
+client = WorkspaceClient(endpoint, token)
+rows, cursor = client.list_managed_outputs(task_id)
+assert cursor is None, 'managed output page exceeded bounded fixture read'
+row = next((item for item in rows if item.output_port == output_name and item.ordinal == 0), None)
+assert row is not None, (task_id, output_name)
+captured = client.get_project_media_selection(project_id, {
+    'association_id': row.association_id, 'object_id': row.object_id, 'version': row.version})
+selection = client.get_project_media_selection(project_id, {
+    'asset': asset, 'generation_id': captured['generation_id'], 'variant_id': captured['variant_id']})
+verified = client.get_project_verified_media(project_id, selection)
+assert verified['selection'] == selection
+print(json.dumps({'task_id': task_id, 'object_id': row.object_id, 'selection': selection, 'verified': verified}))
+`;
+    const run = await this.python(['-c', program, JSON.stringify([taskId, output, asset, this.harness.seed.projectId])]);
+    const result = JSON.parse(run.stdout.trim().split('\n').pop()!);
+    return { taskId, objectId: result.object_id, selection: result.selection };
+  }
+
+  /** Admit and execute one real f2.marker task, retaining its managed immutable selection for fixture seeding. */
+  async seedManagedMarker(project: string, projectId: string, key: string, asset: string): Promise<ManagedMarkerSeed> {
+    await this.host({ register: true });
+    const created = await this.createMarkerTask(project, projectId, key);
+    if (!created.ok || !created.data?.task_id) throw new Error(`managed marker admission failed: ${JSON.stringify(created)}`);
+    const ran = await this.host({ runOnce: true });
+    if (ran.task_id !== created.data.task_id || ran.state !== 'succeeded') throw new Error(`managed marker execution failed: ${JSON.stringify(ran)}`);
+    return this.readManagedMedia(created.data.task_id, 'marker', asset);
+  }
+
   /** Read the original pinned basis in Python, then capture and commit with this client's own credential. */
   async commitCaptured(projectId: string, timelineId: string, base: HeadPin, operation:
     { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }
@@ -198,15 +265,20 @@ export class AstridCli {
       { kind: 'hold'; select: string; delta: number }
       | { kind: 'clear-asset'; select: string }
     > }
-    | { kind: 'task-media-swap'; select: string; taskId: string; output: string; asset: string }, key: string): Promise<CommitAcceptedMutation> {
+    | { kind: 'task-media-swap'; select: string; taskId: string; output: string; oldTaskId: string; oldOutput: string; asset: string }, key: string): Promise<CommitAcceptedMutation> {
     const program = `
 import json, sys
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.workspace_client import resolve_runtime_connection
+from astrid_runtime_client import WorkspaceClient
+import os
+from pathlib import Path
 project, timeline, base, operation, key = json.loads(sys.argv[1])
 with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-products-command') as client:
     def read(operation, *args, expected):
@@ -261,15 +333,23 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-p
             commands.append(command)
         body_commands = commands
     elif operation['kind'] == 'task-media-swap':
-        # The task output is available as an immutable managed-output row, but
-        # frozen S2 exposes no public SDK media-selection/provider read. Do not
-        # bypass that boundary through the generated client or manufacture a pin.
-        outputs_result = client.tasks.list_managed_outputs(operation['taskId'])
-        assert outputs_result.ok, outputs_result.as_dict()
-        output_rows = outputs_result.data[0] if isinstance(outputs_result.data, list) and outputs_result.data and isinstance(outputs_result.data[0], list) else outputs_result.data
-        output = next((row for row in output_rows if row.get('output_port') == operation['output'] and row.get('ordinal') == 0), None)
-        assert output, ('managed task output is missing', operation)
-        raise ValueError('native task-media swap is unsupported: frozen S2 public SDK exposes no exact media-selection/provider read')
+        endpoint, token = resolve_runtime_connection(client.endpoint, Path(os.environ['ASTRID_TIMELINE_EVAL_CREDENTIAL']))
+        runtime = WorkspaceClient(endpoint, token)
+        def media(task_id, output, asset):
+            rows, cursor = runtime.list_managed_outputs(task_id)
+            assert cursor is None, 'managed output page exceeded bounded capture read'
+            row = next((item for item in rows if item.output_port == output and item.ordinal == 0), None)
+            assert row is not None, (task_id, output)
+            captured = runtime.get_project_media_selection(project, {'association_id': row.association_id, 'object_id': row.object_id, 'version': row.version})
+            pin = runtime.get_project_media_selection(project, {'asset': asset, 'generation_id': captured['generation_id'], 'variant_id': captured['variant_id']})
+            verified = runtime.get_project_verified_media(project, pin)
+            assert verified['selection'] == pin
+            return pin, verified
+        old_media, old_verified = media(operation['oldTaskId'], operation['oldOutput'], 'f2-placeholder')
+        new_media, new_verified = media(operation['taskId'], operation['output'], operation['asset'])
+        assert old_media['object_id'] != new_media['object_id'], 'swap fixture must use distinct immutable outputs'
+        command = capture_occurrence_swap_media(bundle, operation['select'], old_media, new_media, verified_media=[old_verified, new_verified])
+        body_commands = [command]
     else:
         command = capture_move(bundle, 'parent/clip:' + operation['clipId'], operation['on'])
         body_commands = [command]

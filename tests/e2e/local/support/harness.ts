@@ -256,6 +256,7 @@ function makeVideo(dir: string): { data: Buffer; mediaType: string; decodable: b
 export interface SeededObject { objectId: string; digest: string; size: number; mediaType: string }
 export interface Seed {
   projectId: string;
+  projectSlug: string;
   projectName: string;
   timelineId: string;
   headRevisionId: string;
@@ -334,6 +335,8 @@ export interface ThreeProductsSeed {
   occurrenceId: string;
   /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
   markerAssetKey: string;
+  /** The real managed task that supplies the initial old-media selection. */
+  placeholderTaskId: string;
   /** Opaque data neither client models; every later revision must carry both unchanged. */
   opaque: { config: Record<string, unknown>; clip: Record<string, unknown> };
 }
@@ -566,7 +569,7 @@ export class DirectHarness {
     const video = makeVideo(this.tmp);
     const big = randomBytes(BIG_DOWNLOAD_BYTES);
     return {
-      projectId, projectName, timelineId,
+      projectId, projectSlug: (project.body.data ?? project.body).slug, projectName, timelineId,
       headRevisionId: published.body.data.new_head,
       image: await ingest(makePng(), 'image/png', 'gradient.png'),
       video: { ...(await ingest(video.data, video.mediaType, `clip.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`)), decodable: video.decodable },
@@ -683,15 +686,21 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAtOrOptions: number | { placeholder: { taskId: string; objectId: string; selection: { generation_id: string; variant_id: string; catalog_digest: string } }; referenceAt?: number } = THREE_PRODUCTS_REFERENCE_AT): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
+    const referenceAt = typeof referenceAtOrOptions === 'number' ? referenceAtOrOptions : (referenceAtOrOptions.referenceAt ?? THREE_PRODUCTS_REFERENCE_AT);
+    const placeholder = typeof referenceAtOrOptions === 'number' ? undefined : referenceAtOrOptions.placeholder;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
     if (project.status !== 200) throw new Error(`seed three products project: ${project.status} ${JSON.stringify(project.body)}`);
     const ids = { appClipId: 'f2-app-clip', agentClipId: 'f2-agent-clip', transitionClipId: 'f2-transition-clip', agentClearClipId: 'f2-agent-clear-clip' };
     const markerAssetKey = 'f2-marker';
     const videoExtension = video.mediaType === 'video/webm' ? 'webm' : 'mp4';
     const imageAsset = (name: string) => ({ file: `${name}.png`, type: 'image/png', media_id: image.objectId, content_sha256: image.digest });
+    const managedPlaceholder = placeholder ? {
+      type: 'image', media_id: placeholder.objectId,
+      generationId: placeholder.selection.generation_id, variantId: placeholder.selection.variant_id,
+    } : imageAsset('f2-placeholder');
     const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
     // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
     // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
@@ -719,7 +728,7 @@ export class DirectHarness {
         payload: {
           tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
           clips: shotClips, effects: [], audio: [], layout: {},
-          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': imageAsset('f2-placeholder'), 'f2-clear': imageAsset('f2-clear') } },
+          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': managedPlaceholder, 'f2-clear': imageAsset('f2-clear') } },
           assets: [],
         },
       }],
@@ -738,7 +747,8 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
       projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
-      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, placeholderTaskId: placeholder?.taskId ?? '',
+      opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
     };
     return this.threeProductsSeed;
   }
