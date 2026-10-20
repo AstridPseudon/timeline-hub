@@ -17,6 +17,7 @@ import {
 import {
   assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
 } from './frames';
+import { captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
 
 import { ORIGINAL_640, readCanvasFrameMarker, type ParityCanvas } from './canvas';
 
@@ -269,6 +270,29 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
       const { comparisons, decodedFrames } = await compareAllFrames(page, exportPath, testInfo);
       await assertRenderUnchanged(harness, fixture, render);
       await completeResult(page, pageLogs, { ...render.result, decodedFrames, comparisons });
+      expect((await pageLogs.result()).failures).toEqual([]);
+    });
+
+    test('captures the actual Player page as one native-PTS VP8/Opus tab stream without a physical-mix claim', async ({ page, harness, fixture, pageLogs }, testInfo) => {
+      await installTabAudioObservation(page);
+      await openParityEditor(page, harness, fixture);
+      const render = await renderAndDownload(page, harness, fixture, testInfo);
+      await capturePlayerFrame(page, 0, testInfo, 'tab-audio-anchor', canvas);
+      const capture = await captureActualPlayerTab(page, testInfo);
+      expect(capture.probe.streams.filter(stream => stream.codec_type === 'video')).toHaveLength(1);
+      expect(capture.probe.streams.filter(stream => stream.codec_type === 'audio')).toHaveLength(1);
+      expect(capture.lifecycle.events.indexOf('recorder:start')).toBeLessThan(capture.lifecycle.events.indexOf('warm'));
+      expect(capture.lifecycle.events.indexOf('warm')).toBeLessThan(capture.lifecycle.events.indexOf('readiness'));
+      expect(capture.lifecycle.events.indexOf('readiness')).toBeLessThan(capture.lifecycle.events.indexOf('play'));
+      await assertRenderUnchanged(harness, fixture, render);
+      await saveEvidence(testInfo, 'tab-audio-capture', {
+        proof: 'actual managed Player page and one getDisplayMedia video+audio stream; packet bytes/native PTS only; physical tab mix remains unclaimed',
+        chromeProfile: testInfo.project.metadata.viewingParityBrowserProfile,
+        lifecycle: capture.lifecycle,
+        streams: capture.probe.streams,
+        format: capture.probe.format,
+      });
+      await completeResult(page, pageLogs, { ...render.result, decodedFrames: [{ frame: 0, decoded: await decodeExportFrame(render.exportPath, 0) }] });
       expect((await pageLogs.result()).failures).toEqual([]);
     });
 
