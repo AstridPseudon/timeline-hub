@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
 from astrid.packs.timeline.cli import build_parser
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
@@ -20,6 +22,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance import test_native_batch_ingress
 from tests.editing_conformance.test_native_batch_ingress import command, label
 from tests.editing_conformance.test_native_sheet_current import property_cell
+from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
 
 pytestmark = pytest.mark.integration
@@ -62,6 +65,53 @@ def raw():
     return [command('clip.move', REF, {'on': 3.017}),
             command('clip.set', REF, {'values': {'hold': 2.013}, 'clear': ['transition']}),
             command('clip.set-params', REF, {'values': {'text': ''}, 'clear': []}), label('')]
+
+
+def tiny_cut_parent(service, project):
+    """Build the saved cut-owned parent from the existing tiny sheet fixture."""
+    source = json.loads((Path(__file__).parents[1] / 'fixtures' / 'timeline_editing' / 'tiny.json').read_text())
+    timeline = source['shots']['B']['internal_timeline']
+    media_ids = {}
+    for asset in ('P', 'Q'):
+        result = service.ingest(
+            project, f'native-sheet-cut-{asset}'.encode(), media_type='application/octet-stream',
+            original_name=f'native-sheet-cut-{asset}', idempotency_key=f'native-sheet-cut-media-{asset}',
+        )
+        media_ids[asset] = result['data']['object_id']
+
+    clips = copy.deepcopy(timeline['clips'])
+    registry = copy.deepcopy(timeline['registry'])
+    for asset, entry in registry['assets'].items():
+        if asset in media_ids:
+            entry['media_id'] = media_ids[asset]
+    tracks = copy.deepcopy(timeline['tracks'])
+    payload = {
+        'config': {
+            'clips': copy.deepcopy(clips),
+            'tracks': tracks,
+            'output': {'fps': {'numerator': 30000, 'denominator': 1001}},
+        },
+        'clips': clips,
+        'occurrences': [],
+        'registry': registry,
+    }
+    return {
+        'project_id': project,
+        'timeline_id': 'film',
+        'parent_revision_id': 'native-sheet-cut-parent-v1',
+        'parent_composition': payload,
+        'shot_revisions': [],
+        'internal_timeline_revisions': [],
+        'expected_head': None,
+    }
+
+
+def seed_tiny_cut_parent(runtime):
+    document = tiny_cut_parent(runtime.service(), runtime.project)
+    target = copy.deepcopy(next(row for row in document['parent_composition']['clips']
+                               if row['id'] == 'b-type'))
+    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-cut-parent')
+    return document, target, receipt
 
 
 def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection(
@@ -138,6 +188,58 @@ def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed
     with pytest.raises(CommitConflict):
         selected_sheet.apply(remove_row(selected_sheet.text, target), session=selected, dry_run=False)
     assert runtime.history()['head'] == head and len(runtime.history()['items']) == count
+
+
+def test_http_cut_owned_native_sheet_hold_reloads_and_undoes(runtime):
+    document, original_target, setup = seed_tiny_cut_parent(runtime)
+
+    # The seed is setup-only. The edit starts after a normal Runtime restart and
+    # reads the accepted closure through the authenticated public client.
+    runtime.restart()
+    session = runtime.session(name='cut-owned-native')
+    admitted = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert admitted.ok
+    admitted_bundle = admitted.data['bundle']
+    assert State(admitted_bundle).entity('parent/clip:b-type') == original_target
+    assert admitted_bundle['parent']['config']['clips'] == document['parent_composition']['clips']
+    assert runtime.history()['head']['revision_id'] == setup['data']['accepted_revision_id']
+    assert len(runtime.history()['items']) == 2
+
+    sheet = NativeSheet.export(session)
+    target = 'parent/clip:b-type'
+    edited = property_cell(sheet.text, target, 'hold', '1.5')
+    plan = sheet.preview(edited)
+    assert plan.commands == [capture_clip_set(sheet._bundle, target, values={'hold': 1.5})]
+    assert State(plan.bundle).entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+
+    peer = runtime.session(name='cut-owned-peer')
+    peer.commit(label('Peer', track='type'))
+    result = sheet.apply(edited, session=session, dry_run=False)
+    assert result['data']['status'] == 'rebased'
+    assert json.loads(runtime.calls[-1][0])['commands'] == plan.commands
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    assert State(accepted).entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+    assert State(accepted).entity('parent/track:type')['label'] == 'Peer'
+
+    runtime.restart()
+    reloaded = runtime.session(name='cut-owned-native-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'])
+    assert stored.ok
+    stored_state = State(stored.data['bundle'])
+    assert stored_state.entity(target)['app'] == {
+        'cut': 'c2', 'layer': 'card', 'for': 1.5,
+    }
+    assert stored_state.entity('parent/track:type')['label'] == 'Peer'
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(target) == original_target
+    assert State(restored).entity('parent/track:type')['label'] == 'Peer'
 
 
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
