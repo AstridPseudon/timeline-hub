@@ -222,8 +222,11 @@ Good: `State` is `Running`.
 - Each agent shows one state: Ready (or its model name), **Sign in** or **Not installed**, with one line underneath
   when it isn't ready.
 - A ready agent answers within about 30 seconds.
-- A signed-out Claude Code or Codex shows **Sign in** and its matching `claude auth login` or `codex login` command. A signed-out Astrid
-  agent shows `Run astrid, then /login`. Clicking a sign-in line copies it and shows **Copied**; it doesn't start a chat.
+- A signed-out Claude Code or Codex shows **Sign in** and its matching `claude auth login` or `codex login` command.
+  A signed-out Astrid agent shows the absolute path of its launcher inside the program folder: `run-astrid` on
+  macOS/Linux or `run-astrid.cmd` on Windows. Run that copied invocation in a fresh terminal, then enter `/login`
+  inside Astrid. You should not need to change PATH or a shell profile. Clicking a sign-in line copies it and shows
+  **Copied**; it doesn't start a chat.
 - An agent you haven't installed shows **Not installed** and an install line.
 - After you sign back in, the agent shows Ready again.
 
@@ -234,7 +237,7 @@ Good: `State` is `Running`.
 - The chat panel says `Chat isn't running on this computer right now.` while the page is connected.
 - You see a raw error, an error code or "404" anywhere in chat.
 - A known signed-in provider or available model catalog does not show **Ready**; a known signed-out provider with no
-  usable models does not show **Sign in** with `Run astrid, then /login`; or an unknown/unavailable catalog shows
+  usable models does not show **Sign in** with its absolute launcher path and `/login` instruction; or an unknown/unavailable catalog shows
   **Sign in** instead of remaining **Ready**.
 
 ## 4. A GPU task, then idle
