@@ -112,6 +112,7 @@ class RequestCommitPort:
         self.__media = {}
         self.__takes = {}
         self.__documents = {}
+        self.__producers = {}
         self.__history_pins = []
         self.__preview = None
         self.__request = self.__context["request"]
@@ -318,9 +319,53 @@ class RequestCommitPort:
     def config_source(self, pin):
         return self._document(pin, False)
 
+    def producer_attempt(self, pin):
+        from .timeline_commit_producer import ProducerReads, request_pin, validate_pin
+        validate_pin(pin)
+        def read():
+            if request_pin(self.__request) != pin:
+                raise refused("producer_dependency_unavailable", "producer pin was not declared")
+            captured = ProducerReads(self.__service).capture(self.__context, pin)
+            key = canonical_json(pin)
+            if key in self.__producers and self.__producers[key] != captured:
+                raise refused("producer_attempt_mismatch", "captured producer authority changed")
+            self.__producers[key] = captured
+            return {"pin": captured["pin"]}
+        return self._read(read)
+
+    def _producer_captures(self, prepared):
+        from .timeline_commit_producer import ProducerReads, request_pin, value_equal
+        def read():
+            pin = request_pin(self.__request)
+            expected = [] if pin is None else [canonical_json(pin)]
+            records = [dependency for record in prepared["records"]["commands"]
+                       for dependency in record["dependencies"]
+                       if dependency.get("key", "").startswith("producer_attempt:")
+                       or (dependency.get("kind") == "authority"
+                           and "task_id" in dependency.get("pin", {}))]
+            wanted = [] if pin is None else [{"key": "producer_attempt:" + pin["task_id"],
+                                             "kind": "authority", "policy": "exact", "pin": pin}]
+            if sorted(self.__producers) != expected or canonical_json(records) != canonical_json(wanted):
+                raise refused("producer_dependency_unavailable", "producer capture and authority records disagree")
+            if pin is not None:
+                guard = prepared["records"]["commands"][0]
+                if (canonical_json(guard["command"]) != canonical_json(self.__request["commands"][0])
+                        or canonical_json(guard["dependencies"]) != canonical_json(wanted)
+                        or not value_equal([record["command"] for record in prepared["records"]["commands"]],
+                                           self.__request["commands"])
+                        or prepared["records"]["undo_of"] or prepared["records"]["restored_from"] is not None):
+                    raise refused("producer_dependency_unavailable", "producer authority requires its guard record")
+            for captured in self.__producers.values():
+                current = ProducerReads(self.__service).capture(self.__context, captured["pin"])
+                if current != captured:
+                    raise refused("producer_attempt_mismatch", "captured producer authority changed")
+            return list(self.__producers.values())
+        return self._read(read)
+
     def validate(self, prepared):
         from .timeline_commit_inputs import validate_captured_document_inputs
         self.__authorize()
+        self._producer_captures(prepared)
         for revision, captured in self.__closures.items():
             if self.__store.revision_closure(self.__project, self.__timeline, revision) != captured:
                 raise refused("dependency_unavailable", "captured revision changed")
