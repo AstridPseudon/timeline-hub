@@ -667,6 +667,8 @@ actions:
     - kind: schema
       path: actions/timeline_visualize/schemas/view-map.json
     - kind: implementation
+      path: actions/timeline_visualize/scene_only.py
+    - kind: implementation
       path: actions/timeline_visualize/scope.py
     - kind: implementation
       path: actions/timeline_visualize/scorer.py
