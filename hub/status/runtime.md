@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T08:24:57Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-20T08:26:18Z | dispatcher heartbeat 13s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
