@@ -26,6 +26,7 @@ from astrid.core.media import ffprobe_metadata_strict
 from astrid.core.pack.discovery import discover_pack_metadata
 from astrid.core.rendering.contracts import RenderProfile
 from astrid.core.rendering.profile import resolve_render_profile
+from astrid.core.rendering.verified_source import source_for_timeline
 from astrid.core.theme import builtin_theme, load_runtime_theme
 
 
@@ -54,9 +55,18 @@ def _serialize_timeline(
     *,
     default_theme: str = "banodoco-default",
 ) -> dict[str, Any]:
-    return (
-        timeline.Timeline.load(timeline_path).for_render(default_theme=default_theme).to_json_data()
-    )
+    if source_for_timeline(timeline_path) is not None:
+        # Keep authored transition declarations intact for the one public
+        # canonical compiler. Native Timeline's dump normalizations are not
+        # a canonical-to-compiled conversion.
+        from astrid.core.timeline.banodoco_composer import _exclude_source_tracks
+
+        data = json.loads(timeline_path.read_text(encoding="utf-8"))
+        timeline.validate_timeline(data, document_kind="canonical")
+        _exclude_source_tracks(data)
+        data.setdefault("theme", default_theme)
+        return data
+    return timeline.Timeline.load(timeline_path).for_render(default_theme=default_theme).to_json_data()
 
 
 def _resolve_theme_path(theme_path: Path) -> Path:
@@ -96,8 +106,10 @@ def _resolved_theme_for_render(
     to search a checkout or filesystem theme directory during a render.
     """
 
-    loaded = timeline.Timeline.load(timeline_path)
-    timeline_config = loaded.to_config()
+    if source_for_timeline(timeline_path) is not None:
+        timeline_config = _serialize_timeline(timeline_path)
+    else:
+        timeline_config = timeline.Timeline.load(timeline_path).to_config()
     merged = (
         _theme_for_props(runtime_theme_path)
         if runtime_theme_path is not None

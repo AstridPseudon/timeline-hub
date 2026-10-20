@@ -488,6 +488,8 @@ def render(
             "materialized_objects": dict(materialized_objects or {}),
         }
     )
+    if request.verified_source is not None and timeline_authority != request.verified_source.read()["authority"]:
+        raise ValueError("timeline authority differs from verified source")
     _report_progress("prepare_inputs", 5)
     _report_progress("render", 10)
     output = _default_service().render(

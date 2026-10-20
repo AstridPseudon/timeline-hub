@@ -177,6 +177,7 @@ def candidate_preview_snapshot(
         shot_rows.append({
             "shot_id": shot["shot_id"],
             "revision_id": shot["revision_id"],
+            "content_digest": shot["content_digest"],
             "name": str(metadata.get("name") or metadata.get("title") or shot["shot_id"]),
             "text_bindings": list(payload.get("text_bindings") or [])
             if isinstance(payload.get("text_bindings"), list) else [],

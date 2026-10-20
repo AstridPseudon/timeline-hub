@@ -349,6 +349,12 @@ class RenderService:
                 if isinstance(request, RenderRequest)
                 else RenderRequest.from_dict(request)
             )
+            from .verified_source import inherited_source
+
+            if parsed.verified_source != inherited_source(parsed.timeline_path, parsed.assets_registry_path):
+                raise ValueError("verified source authority is unavailable or replaced")
+            if parsed.verified_source is not None:
+                parsed.verified_source.validate(parsed.timeline_path, parsed.assets_registry_path)
             self._validate_output_name(parsed)
             localized = self._absolute_input_paths(parsed)
             # Keep the caller's absolute-but-unresolved spellings for the
