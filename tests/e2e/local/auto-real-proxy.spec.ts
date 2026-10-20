@@ -19,6 +19,8 @@ const TASK_PATH = `${OPERATION_PREFIX}/runtime/v1/tasks`;
 const COMMIT_PATH = new RegExp(`${OPERATION_PREFIX}/runtime/v1/projects/[^/]+/timelines/[^/]+/commit$`);
 const NATIVE_RUNTIME_COMMIT = /^\/api\/runtime\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const TASK_API_POST = /^\/api\/runtime\/v1\/(?:tasks(?:\/[^/]+\/(?:cancel|retry))?|managed-outputs\/[^/]+\/export)$/;
+// Runtime's generated handshake and inspectTimeline operations are POST-shaped reads.
+const READ_ONLY_RUNTIME_POST = /^\/api\/runtime\/v1\/(?:handshake|projects\/[^/]+\/timelines\/[^/]+\/inspect)$/;
 const LEGACY_POST = /^\/api\/runtime\/.*$/;
 const PLACEMENT_LANE = 'V2';
 const CEILING = { timeout: 60_000 };
@@ -36,12 +38,13 @@ const test = appTest.extend<{ workspace: Workspace }>({
 type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWorkspace };
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
 type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
-type RuntimePostKind = 'native-commit' | 'task-api' | 'legacy-writer' | 'other';
+type RuntimePostKind = 'native-commit' | 'task-api' | 'read-only' | 'legacy-writer' | 'other';
 
 function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
   if (method !== 'POST') return 'other';
   if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
   if (TASK_API_POST.test(pathname)) return 'task-api';
+  if (READ_ONLY_RUNTIME_POST.test(pathname)) return 'read-only';
   return LEGACY_POST.test(pathname) ? 'legacy-writer' : 'other';
 }
 

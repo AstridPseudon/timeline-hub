@@ -5,8 +5,8 @@ import { compileFunction } from 'node:vm';
 import ts from 'typescript';
 
 const source = readFileSync(new URL('../auto-real-proxy.spec.ts', import.meta.url), 'utf8');
-const constants = source.match(/^const (?:NATIVE_RUNTIME_COMMIT|TASK_API_POST|LEGACY_POST) = [^;]+;/gm);
-assert.equal(constants?.length, 3, 'traffic classifier constants must remain source-visible');
+const constants = source.match(/^const (?:NATIVE_RUNTIME_COMMIT|TASK_API_POST|READ_ONLY_RUNTIME_POST|LEGACY_POST) = [^;]+;/gm);
+assert.equal(constants?.length, 4, 'traffic classifier constants must remain source-visible');
 const helper = source.match(/^function classifyRuntimePost\([^]*?^}/m)?.[0];
 assert.ok(helper, 'traffic classifier helper must remain source-visible');
 const classifyRuntimePost = compileFunction(
@@ -91,8 +91,22 @@ test('pure: traffic controls classify native, task, and every retired publisher 
   ];
   for (const path of retiredPublishers) assert.equal(classifyRuntimePost('POST', path), 'legacy-writer', `retired publisher: ${path}`);
 
+  const readOnlyOperations = [
+    '/api/runtime/v1/handshake',
+    '/api/runtime/v1/projects/p/timelines/t/inspect',
+  ];
+  for (const path of readOnlyOperations) assert.equal(classifyRuntimePost('POST', path), 'read-only', `known Runtime read: ${path}`);
+
   for (const [method, path, expected] of [
     ['GET', nativeCommit, 'other'],
+    ['GET', '/api/runtime/v1/handshake', 'other'],
+    ['GET', '/api/runtime/v1/projects/p/timelines/t/inspect', 'other'],
+    ['PUT', '/api/runtime/v1/handshake', 'other'],
+    ['POST', '/api/runtime/v1/handshake/', 'legacy-writer'],
+    ['POST', '/api/runtime/v1/handshak', 'legacy-writer'],
+    ['POST', '/api/runtime/v1/projects/p/timelines/t/inspect/', 'legacy-writer'],
+    ['POST', '/api/runtime/v1/projects/p/timelines/t/inspect/extra', 'legacy-writer'],
+    ['POST', '/api/runtime/v1/projects/p/timelines/t/inspects', 'legacy-writer'],
     ['POST', `${nativeCommit}/extra`, 'legacy-writer'],
     ['POST', '/api/runtime/v1/projects/p/timelines/t/committ', 'legacy-writer'],
     ['POST', '/api/astrid/v1/projects/p/timelines/t/composition-revisions', 'other'],
