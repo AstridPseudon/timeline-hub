@@ -63,6 +63,7 @@ from astrid.core.rendering.remotion_runtime import (
 )
 from astrid.core.rendering.storage import h264_encoder_bitrates
 from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
+from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import prepare_normal_audio_sources
 from astrid.core.subprocess_env import build_child_subprocess_env
 from astrid.packs.rendering.shared import rendering_backend as _shared
 from astrid.packs.rendering.shared.rendering_backend import (
@@ -884,15 +885,42 @@ def _available_remotion_port() -> int:
         return int(probe.getsockname()[1])
 
 
+def _composition_duration_from_request(request: RenderRequest) -> int | None:
+    key = "astrid_composition_duration_frames"
+    if key not in request.metadata:
+        return None
+    value = request.metadata[key]
+    if (not isinstance(value, str) or len(value) > 16
+            or re.fullmatch(r"[1-9][0-9]*", value) is None
+            or int(value) > 9007199254740991):
+        raise ValueError("composition duration must be a positive safe integer")
+    return int(value)
+
+
 def _native_window_argument(
     window: FrameWindow | None,
     timeline_data: Mapping[str, Any],
     profile: RenderProfile,
+    *,
+    composition_duration_frames: int | None = None,
 ) -> str | None:
     """Select absolute frames of the untouched composition, with half-open input."""
+    metadata = timeline_data.get("metadata")
+    if composition_duration_frames is not None:
+        if (type(composition_duration_frames) is not int
+                or not 1 <= composition_duration_frames <= 9007199254740991):
+            raise ValueError("composition duration must be a positive safe integer")
+        layer = metadata.get("astrid_layer") if isinstance(metadata, Mapping) else None
+        if (window is None or not isinstance(layer, Mapping)
+                or type(layer.get("z")) is not int or layer["z"] < 0
+                or type(layer.get("alpha")) is not bool or layer["alpha"] != (layer["z"] > 0)):
+            raise ValueError("composition duration requires a native isolated layer window")
+        app = timeline_data.get("app")
+        if ((isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata)
+                or (isinstance(app, Mapping) and "astrid_render_clock" in app)):
+            raise ValueError("composition duration conflicts with an existing render clock")
     if window is None:
         return None
-    metadata = timeline_data.get("metadata")
     if (isinstance(metadata, Mapping)
             and "source_window_start_seconds" in metadata
             and type(metadata.get("duration_seconds")) in (int, float)):
@@ -906,6 +934,11 @@ def _native_window_argument(
     total = timeline.timeline_render_duration_frames(
         timeline_data, profile.fps_rational[0] / profile.fps_rational[1]
     )
+    if composition_duration_frames is not None:
+        if composition_duration_frames < total:
+            raise ValueError("composition duration is shorter than the isolated clip extent")
+        # This is the service's invocation fact, not authored/source authority.
+        total = composition_duration_frames
     if window.end_frame > total:
         raise ValueError("Remotion window extends beyond the full composition")
     return f"--frames={window.start_frame}-{window.end_frame - 1}"
@@ -934,6 +967,7 @@ def _execute_remotion(
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
     window: FrameWindow | None = None,
+    composition_duration_frames: int | None = None,
 ) -> _ExecutionDetails:
     """Render one private video and return the data needed for provenance."""
 
@@ -963,6 +997,7 @@ def _execute_remotion(
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
                 window=window,
+                composition_duration_frames=composition_duration_frames,
             )
 
     # Direct backend callers may pass the final output as the staging path.
@@ -1003,6 +1038,7 @@ def _execute_remotion(
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
                 window=window,
+                composition_duration_frames=composition_duration_frames,
             )
         os.replace(isolated_stage, final_path)
         return details
@@ -1034,17 +1070,19 @@ def _execute_remotion_locked(
     frame_session_identity: str | None = None,
     on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
     window: FrameWindow | None = None,
+    composition_duration_frames: int | None = None,
 ) -> _ExecutionDetails:
     """Execute one render while the caller owns the non-recursive outer lock."""
 
     if window is not None and frame_numbers is not None:
         raise ValueError("native render windows cannot be combined with frame_numbers")
     window_argument = None
-    if window is not None:
+    if window is not None or composition_duration_frames is not None:
         window_argument = _native_window_argument(
             window,
             _serialize_timeline(timeline_path),
             _canonical_profile(timeline_path, _load_registry_mapping(assets_path), theme_path),
+            composition_duration_frames=composition_duration_frames,
         )
     runtime_tools = _validate_project_dir(project_dir)
     _regenerate_element_registries(project_dir, theme_path)
@@ -1111,6 +1149,8 @@ def _execute_remotion_locked(
                 "theme": theme_for_props,
                 "review": review,
             }
+            if composition_duration_frames is not None:
+                merged_props["astridCompositionDurationInFrames"] = composition_duration_frames
             # Batch 4 (layer stack): the service stamps
             # ``metadata.astrid_layer.alpha = z > 0`` onto the materialized
             # timeline of z-layer segments.  When the stamp says alpha, emit
@@ -1164,6 +1204,20 @@ def _execute_remotion_locked(
                 composition_clip_types=composition_clip_types,
                 asset_registry=resolved_registry,
             )
+            if not frame_mode and composition_id == DEFAULT_COMPOSITION_ID:
+                audio_attempt = Path(asset_lifecycle.enter_context(TemporaryDirectory(
+                    prefix="normal-audio-attempt-",
+                    dir=materializer.serving_root if asset_server is not None else remotion_temp_root,
+                )))
+                audio_profile = _canonical_profile(
+                    timeline_path, _load_registry_mapping(assets_path), theme_path,
+                )
+                merged_props = prepare_normal_audio_sources(
+                    merged_props, materializer=materializer, asset_server=asset_server,
+                    attempt_directory=audio_attempt, project_dir=project_dir,
+                    runtime_tools=runtime_tools,
+                    fps=audio_profile.fps_rational[0] / audio_profile.fps_rational[1],
+                )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
             if on_scene_props is not None and frame_numbers is not None:
@@ -1593,7 +1647,10 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
             # has none) and always muxes at the 90 kHz timescale; support must
             # describe the same contract render() implements.
             try:
-                _native_window_argument(request.window, timeline_data, canonical)
+                _native_window_argument(
+                    request.window, timeline_data, canonical,
+                    composition_duration_frames=_composition_duration_from_request(request),
+                )
             except ValueError as exc:
                 reasons.append(str(exc))
             features["audio_ownership"] = AudioOwnership.RENDERED.value
@@ -1726,6 +1783,7 @@ def _protocol_render(request: RenderRequest, *, workspace: Path) -> RenderResult
                 staging_parent=workspace,
                 materialized_objects=request.materialized_objects,
                 window=request.window,
+                composition_duration_frames=_composition_duration_from_request(request),
                 encode_aac_at_stitch=True,
             )
             os.replace(staged_video, output_path)
