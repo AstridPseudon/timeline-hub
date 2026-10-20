@@ -1,11 +1,51 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 import type { Page, TestInfo } from '@playwright/test';
-import { capturePlayerFrame } from './frames';
+import { capturePlayerFrame, decodeExportFrame, decodePlayerCapture } from './frames';
+import { compareRgbFrames } from './compare';
+import { PARITY_HEIGHT, PARITY_WIDTH } from './media';
+
+const exec = promisify(execFile);
+const NATIVE_WIDTH = 1920;
+const NATIVE_HEIGHT = 1080;
 
 // Stop at the existing Player-ref inspection: these tests exercise capture
 // preparation only, without a browser, replacement pixels or decoder stubs.
 const playerInspection = new Error('actual Player-ref inspection reached');
+
+test('decodes generated native-size PNG and lossless video before comparator rejects oversized frames', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'frame-parity-native-decode-test-'));
+  const png = join(directory, 'native.png');
+  const video = join(directory, 'native-lossless.mkv');
+  try {
+    await exec('ffmpeg', [
+      '-v', 'error', '-y', '-f', 'lavfi', '-i', `testsrc2=size=${NATIVE_WIDTH}x${NATIVE_HEIGHT}:rate=1`,
+      '-frames:v', '1', png,
+    ]);
+    await exec('ffmpeg', [
+      '-v', 'error', '-y', '-loop', '1', '-i', png, '-frames:v', '1',
+      '-c:v', 'ffv1', '-pix_fmt', 'rgb24', video,
+    ]);
+
+    const player = await decodePlayerCapture(png);
+    const exported = await decodeExportFrame(video, 0);
+    assert.deepEqual({ width: player.width, height: player.height }, { width: NATIVE_WIDTH, height: NATIVE_HEIGHT });
+    assert.deepEqual({ width: exported.width, height: exported.height }, { width: NATIVE_WIDTH, height: NATIVE_HEIGHT });
+    assert.equal(player.bytes.length, NATIVE_WIDTH * NATIVE_HEIGHT * 3);
+    assert.deepEqual(player.bytes, exported.bytes);
+
+    const parityFrame = { width: PARITY_WIDTH, height: PARITY_HEIGHT, bytes: Buffer.alloc(PARITY_WIDTH * PARITY_HEIGHT * 3) };
+    assert.throws(() => compareRgbFrames(player, parityFrame, 0), /invalid Player RGB frame dimensions\/bytes/);
+    assert.throws(() => compareRgbFrames(parityFrame, exported, 0), /invalid export RGB frame dimensions\/bytes/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 function pageWithRenderResult({ open = true, closeFailure = false, lingeringBackdrop = false } = {}) {
   const events: string[] = [];

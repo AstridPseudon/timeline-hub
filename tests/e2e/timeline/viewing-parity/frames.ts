@@ -14,6 +14,9 @@ export { assertFrameWithinBound, compareRgbFrames, type FrameComparison, type Rg
 const execFileAsync = promisify(execFile);
 const PREVIEW_SURFACE = '[data-testid="video-editor-preview-surface"]';
 const PLAYER_COMPOSITION = `${PREVIEW_SURFACE} .__remotion-player`;
+const RGB_BYTES_PER_PIXEL = 3;
+const DECODE_BUFFER_OVERHEAD = 1024;
+const MAX_DECODE_BYTES = 256 * 1024 * 1024;
 
 async function ffprobeDimensions(path: string): Promise<{ width: number; height: number }> {
   const { stdout } = await execFileAsync('ffprobe', [
@@ -26,11 +29,19 @@ async function ffprobeDimensions(path: string): Promise<{ width: number; height:
 
 async function decodeRgb(path: string, args: string[]): Promise<RgbFrame> {
   const dimensions = await ffprobeDimensions(path);
+  if (!Number.isSafeInteger(dimensions.width) || !Number.isSafeInteger(dimensions.height)
+    || dimensions.width < 1 || dimensions.height < 1) {
+    throw new Error(`invalid decoded frame dimensions for ${path}: ${dimensions.width}x${dimensions.height}`);
+  }
+  const frameBytes = dimensions.width * dimensions.height * RGB_BYTES_PER_PIXEL;
+  if (!Number.isSafeInteger(frameBytes) || frameBytes > MAX_DECODE_BYTES) {
+    throw new Error(`decoded frame exceeds ${MAX_DECODE_BYTES} byte limit for ${path}: ${dimensions.width}x${dimensions.height}`);
+  }
   const { stdout } = await execFileAsync('ffmpeg', [
     '-v', 'error', '-i', path, ...args, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1',
-  ], { encoding: 'buffer', maxBuffer: PARITY_WIDTH * PARITY_HEIGHT * 3 + 1024 });
+  ], { encoding: 'buffer', maxBuffer: frameBytes + DECODE_BUFFER_OVERHEAD });
   const bytes = Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout);
-  expect(bytes).toHaveLength(dimensions.width * dimensions.height * 3);
+  expect(bytes).toHaveLength(frameBytes);
   return { ...dimensions, bytes };
 }
 
