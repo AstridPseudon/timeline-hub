@@ -427,6 +427,9 @@ def _reservation_refs(state):
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
     for owner in owners:
+        assets = state.config(owner).get('registry', {}).get('assets', {})
+        _require(isinstance(assets, dict), 'invalid asset identity collection')
+        refs.update(owner + '/asset:' + identity for identity in assets)
         for kind in ('clip', 'track'):
             collection = state.collection(owner, kind)
             if collection is None:
@@ -456,7 +459,7 @@ def _check_reservations(port, plan, current, rejected, base):
         if not _id(owner) or not (owner == 'parent' or (
                 root_identity(owner) is not None and root_identity(owner)[0] == 'occurrence')):
             return False
-        return (item['kind'] in ('track', 'clip')
+        return (item['kind'] in ('track', 'clip', 'asset')
                 and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
                                  item['ref']) is not None)
 
@@ -559,6 +562,14 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
+            verified_media = []
+            for call in calls:
+                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media'):
+                    from .commands import validate_command
+                    validate_command(call)
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
@@ -657,7 +668,8 @@ class RuntimeCommitService:
             if not closures:
                 _hydrate(port, bundle)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures)
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -673,7 +685,8 @@ class RuntimeCommitService:
                         _hydrate(port, head_bundle)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures)
+                                      entries, CommitRejected, base, current)], closures=closures,
+                                  verified_media=verified_media)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)

@@ -172,6 +172,21 @@ def _dependents(state, ref):
     return found
 
 
+def _asset_dependents(state, ref):
+    owner, identity = ref.rsplit('/asset:', 1)
+
+    def references(value, local):
+        if isinstance(value, dict):
+            return ((local and any(value.get(key) == identity for key in ('asset', 'asset_id')))
+                    or any(value.get(key) == ref for key in ('asset_ref', 'owner_ref'))
+                    or any(references(child, local) for child in value.values()))
+        return isinstance(value, list) and any(references(child, local) for child in value)
+
+    owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
+    return (any(references(state.config(other), other == owner) for other in owners)
+            or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
+
+
 def _legacy_inverse_sites(records, record):
     """Recover only known v1 inverse read/create sites from its verified input."""
     if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
@@ -239,6 +254,9 @@ def apply_inverse(ctx, records, intervening_records):
         for write in reversed(record['writes']):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:
+                if '/asset:' in write['ref'] and _asset_dependents(scratch, write['ref']):
+                    raise CommandError('created asset has surviving dependents', kind='surviving_dependents',
+                                       ref=write['ref'])
                 entity = member(write['ref'])
                 if entity is not None and entity[1] == 'track' and _dependents(scratch, write['ref']):
                     raise CommandError('created track has surviving dependents', kind='surviving_dependents',
@@ -271,6 +289,9 @@ def apply_inverse(ctx, records, intervening_records):
                 ctx.create_entity(write['ref'], kind=root[0],
                                   owner=None if root[0] == 'shot' else 'parent',
                                   value=write['before']['value'], restoring=True)
+            elif '/asset:' in write['ref']:
+                owner, identity = write['ref'].rsplit('/asset:', 1)
+                ctx.create_asset(owner, identity, write['before']['value'])
             else:
                 owner, entity = write['ref'].rsplit('/', 1)
                 ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)

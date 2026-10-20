@@ -40,11 +40,11 @@
     },
     "ScopedId": {
       "type": "string",
-      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
+      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
     },
     "EntityRef": {
       "type": "string",
-      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
+      "pattern": "^(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry))$"
     },
     "PropertyPath": {
       "type": "string",
@@ -53,12 +53,12 @@
     },
     "TargetKey": {
       "type": "string",
-      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
+      "pattern": "^(?:(?:(?:parent|(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|parent/shot-group:[A-Za-z0-9_-]+|occurrence:[^/]+/(?:source|registry)))::)?(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
       "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token."
     },
     "AnchorIdentity": {
       "type": "string",
-      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
+      "pattern": "^(?:(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)|word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
       "description": "R4 string binding values. Legacy word/beat indices are meaningful only against verified immutable source reads; not stable identities across republication. Exact source-word provenance is captured in reads/dependencies."
     },
     "AgentState": {
@@ -829,6 +829,76 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.add-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceAddMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.swap-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -866,6 +936,67 @@
         "type": "string"
       },
       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
+    },
+    "MediaSelection": {
+      "description": "Exact five-field selection from Runtime ABI 1 selected_media; metadata is supplied by the scoped provider port, never command arguments.",
+      "type": "object",
+      "properties": {
+        "asset": {
+          "$ref": "#/$defs/ID"
+        },
+        "generation_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "object_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "catalog_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "required": [
+        "asset",
+        "generation_id",
+        "variant_id",
+        "object_id",
+        "catalog_digest"
+      ],
+      "additionalProperties": false
+    },
+    "OccurrenceAddMediaArgs": {
+      "type": "object",
+      "required": [
+        "row",
+        "media"
+      ],
+      "properties": {
+        "row": {
+          "$ref": "#/$defs/ClipAddArgs/properties/row"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OccurrenceSwapMediaArgs": {
+      "type": "object",
+      "required": [
+        "old_media",
+        "media"
+      ],
+      "properties": {
+        "old_media": {
+          "$ref": "#/$defs/MediaSelection"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

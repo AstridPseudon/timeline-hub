@@ -36,8 +36,11 @@ def operations():
     from ._clip_commands import clip_add
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
+    from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
+            'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
@@ -115,7 +118,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None):
+            closures=None, verified_media=()):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -133,7 +136,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal, closures=closures)
+        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:

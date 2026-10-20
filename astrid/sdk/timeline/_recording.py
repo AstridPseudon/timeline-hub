@@ -35,8 +35,9 @@ def selection(state, key, owner, members=()):
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal, *, closures=None):
+    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=()):
         self.state = State(bundle, closures=closures)
+        self.verified_media = copy.deepcopy(verified_media)
         self.input_state = None
         parent = bundle['parent']
         config = parent.get('config')
@@ -140,6 +141,18 @@ class Recording:
         if kind == 'shot' and root[1] not in self.state.bundle['source_mapping']['shots']:
             self.state.bundle['shots'][root[1]]['_created'] = True
         self.record['created'].append({'ref': ref, 'kind': kind, 'owner': owner})
+        return ref
+
+    def create_asset(self, owner, identity, value):
+        ref = owner + '/asset:' + identity
+        if owner != 'parent':
+            self.read(owner, ['occurrence_id'])
+            self.read(owner + '/shot', ['shot_id'])
+        if self.state.get(ref, []) != ABSENT:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+        self.read(ref)
+        self.write(ref, [], value)
+        self.record['created'].append({'ref': ref, 'kind': 'asset', 'owner': owner})
         return ref
 
     def compile_inputs(self):

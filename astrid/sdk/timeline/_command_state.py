@@ -108,6 +108,9 @@ def address(key, resolved):
 
 def logical_address(ref, path):
     path = tuple(path)
+    if '/asset:' in ref:
+        owner, identity = ref.rsplit('/asset:', 1)
+        return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets', identity, *path)
     if '/collection:' in ref:
         owner, kind = ref.rsplit('/collection:', 1)
         from ._collections import container
@@ -181,6 +184,16 @@ class State:
         return config.get(kind + "s", [])
 
     def entity(self, ref, *, optional=False):
+        if '/asset:' in ref:
+            owner, identity = ref.rsplit('/asset:', 1)
+            assets = self.config(owner).get('registry', {}).get('assets', {})
+            if not isinstance(assets, dict):
+                raise CommandError('asset collection must be an object', ref=ref)
+            if identity not in assets and not optional:
+                raise CommandError('missing asset identity', kind='identity_conflict', ref=ref)
+            if identity in assets and not isinstance(assets[identity], dict):
+                raise CommandError('asset binding must be an object', ref=ref)
+            return assets.get(identity)
         if '/clip:' in ref or '/track:' in ref:
             owner, entity = ref.rsplit('/', 1)
             kind, identity = entity.split(':', 1)
@@ -294,6 +307,16 @@ class State:
         return False
 
     def set(self, ref, path, state):
+        if '/asset:' in ref and not path:
+            owner, identity = ref.rsplit('/asset:', 1)
+            assets = self.config(owner)['registry']['assets']
+            if state['state'] == 'absent':
+                assets.pop(identity, None)
+            elif isinstance(state['value'], dict):
+                assets[identity] = copy.deepcopy(state['value'])
+            else:
+                raise CommandError('asset binding must be an object', ref=ref)
+            return
         if ref == "timeline":
             pin = state.get('value', {})
             target = self.closures.get(pin.get('revision_id'))
