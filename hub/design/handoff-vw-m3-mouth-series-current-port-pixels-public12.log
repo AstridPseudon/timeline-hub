@@ -1,0 +1,21 @@
+ACTUAL_SELECTED_CUT={"changed_pixels": [336, 336, 336], "changes": 3, "cut": {"clip_id": "presenter", "end": 2.0, "index": 1, "occurrence_id": "", "shot_id": "", "start": 0.0, "track": "overlay"}, "denominator": 3, "finding": "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs", "fractions": [0.42052565707133915, 0.42052565707133915, 0.42052565707133915], "pairs": [[0, 3], [3, 4], [4, 5]], "reads": [0, 3, 4, 5], "selected": [0, 3, 4, 5]}
+...............
+=============================== warnings summary ===============================
+tests/packs/rendering/test_composition_package.py:116
+  /home/user/work/wt/vw-m3-mouth-series-current-port/tests/packs/rendering/test_composition_package.py:116: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/packs/rendering/test_presenter_scene_capability.py:18
+  /home/user/work/wt/vw-m3-mouth-series-current-port/tests/packs/rendering/test_presenter_scene_capability.py:18: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+tests/packs/rendering/test_presenter_crop_equivalence.py:22
+  /home/user/work/wt/vw-m3-mouth-series-current-port/tests/packs/rendering/test_presenter_crop_equivalence.py:22: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+.mouth-series-check-fbz9ei50/tests/packs/rendering/test_presenter_selected_cut_aggregate.py:28
+  /home/user/work/wt/vw-m3-mouth-series-current-port/.mouth-series-check-fbz9ei50/tests/packs/rendering/test_presenter_selected_cut_aggregate.py:28: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.integration
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+15 passed, 4 warnings in 3.69s
