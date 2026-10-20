@@ -7,15 +7,15 @@ Worker: `app-m3-postbebadd-current-full-prepare-execute`
 
 The manager marker
 `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/notes/postbebadd-full-READY`
-was absent during preparation. No central full suite has been requested. The
-marker must supply the exact App commit and tree; a later moving
-`/home/user/work/app` checkout will not be used as a test source.
+was absent during preparation. It was then published with the exact App
+commit/tree; the central run used that immutable tuple, not a later moving
+`/home/user/work/app` checkout.
 
 The current committed integration candidate is the qualified Native None merge
 `c57dcc26162642f503532f143ceb96bb185273aa`, tree
 `b02e5380cc664bf07e4703e9a388bce0442ff645`. An immutable App checkout was
-requested through `orch/bin/request-checkout`; its result is pending. If READY
-names a different commit, request and use that exact pin instead.
+requested through `orch/bin/request-checkout`; its result is
+`/home/user/work/wt/app-pin-c57dcc26`.
 
 READY subsequently named this exact candidate, and the detached checkout was
 created at `/home/user/work/wt/app-pin-c57dcc26`. The one central run submitted
@@ -82,8 +82,21 @@ package-lock.json
 runtime.lock.json
 `550de9dc3269380c79f44a6db4c87a5d5459058d550ae49e635a6dda809e76a2`.
 
-The run is now queued/running. Monitor that same result ID; do not retry it.
-Classify every terminal failure against
-the prior `full-main574-public13-8bd8f741` baseline and
-`design/app-full8bd8-current-classification.md`, preserving all behavior
-tests.
+Terminal result for the same run: PASS, 1,560 seconds, suite exit 0 and
+postflight exit 0. The central summary reports 1,488/1,488 test files passed
+and 19,103 passed tests plus 3 expected failures (19,106 total). The source
+and external tuple in the postflight log matches every declared SHA/tree,
+archive9412, private13, and the public browser bundle.
+
+Failure classification: zero actual new failures. The three expected failures
+are the unchanged audited `useClipDrag.test.tsx` markers at lines 774, 1120,
+and 1230; the quality audit reports three authorized and zero forbidden
+markers. Compared with the prior same-parent 8bd8f741 run (13 actual failures
+in the bootstrap/label identity tests), this c57 run has no actual failures;
+the repaired bootstrap and label projection contracts now pass. No tests were
+weakened or changed.
+
+The terminal result was classified against the prior
+`full-main574-public13-8bd8f741` baseline and
+`design/app-full8bd8-current-classification.md`; all behavior tests were
+preserved.
