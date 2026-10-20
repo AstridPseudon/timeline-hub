@@ -4,8 +4,9 @@ O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/
 N=$1; M=${2:-gpt-6.1-sol}; E=${3:-high}; D=$O/managers/$N; mkdir -p $D/rounds
 . $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
 [ -f $D/running ] && { echo "$N already running"; exit 2; }
+mkprompt(){ { cat $O/MANAGER-COMMON.md; echo; echo "=== YOUR BRIEF ($N) ==="; cat $D/BRIEF.md; echo; echo "=== YOUR NAME: $N   STATUS: $D/STATUS.md   INBOX: $D/INBOX.md   BRIEFS DIR: $D/briefs ==="; echo "=== YOUR STATUS.md (from your last session) ==="; cat $D/STATUS.md 2>/dev/null || echo "(first session)"; echo "=== YOUR INBOX.md ==="; cat $D/INBOX.md; }; }
 mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; touch $D/INBOX.md
-( { cat $O/MANAGER-COMMON.md; echo; echo "=== YOUR BRIEF ($N) ==="; cat $D/BRIEF.md; echo; echo "=== YOUR NAME: $N   STATUS: $D/STATUS.md   INBOX: $D/INBOX.md   BRIEFS DIR: $D/briefs ==="; echo "=== YOUR STATUS.md (from your last session) ==="; cat $D/STATUS.md 2>/dev/null || echo "(first session)"; echo "=== YOUR INBOX.md ==="; cat $D/INBOX.md; } | \
+( mkprompt | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
     # claude -p ends after one turn, so keep ONE session alive by resuming it every 10 min (context kept, auto-compacted) until STOP, 7 days, or Codex is back.
     SID=$(cat /proc/sys/kernel/random/uuid); echo $SID > $D/rounds/$R.session; END=$(( $(date +%s) + 7*86400 ))
@@ -16,7 +17,12 @@ mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; 
       echo "Manager check-in ($(date -u +%FT%TZ)). Continue your loop: read NEW items at the end of $D/INBOX.md, check your workers (bin/workers), tests and merges, act (review, merge, dispatch to keep 5 workers), and update $D/STATUS.md. CAPACITY RULE: before ending EVERY turn, count your running workers (bin/workers); if fewer than 5, dispatch independent items from your Next 5 / INBOX until 5 are running (Claude fallback cap). Then end this turn; you are resumed every 5 minutes. Your Bash tool cannot sleep for long, so never wait inside a turn." | (cd /home/user/work && AREA=$N timeout 6h "${CL[@]}" --resume $SID) 2>>$D/rounds/$R.log | tee -a $D/rounds/$R.md >> $D/rounds/$R.log; echo ${PIPESTATUS[0]} > $D/rounds/$R.exit
     done
   else
-    AREA=$N timeout 7d codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
-      --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O -o $D/rounds/$R.md - > $D/rounds/$R.log 2>&1; echo $? > $D/rounds/$R.exit
+    # Codex: bounded rounds (2026-10-20). A single 7-day session drifted for hours without re-reading its inbox, so each round
+    # is at most 3 h; a fresh round then starts from the CURRENT STATUS.md and INBOX.md, until STOP.
+    cat > /dev/null; first=1
+    while [ ! -f $D/STOP ]; do [ $first = 1 ] || R=$(date -u +%Y%m%dT%H%MZ); first=0
+      mkprompt | AREA=$N timeout 3h codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
+        --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O -o $D/rounds/$R.md - > $D/rounds/$R.log 2>&1; echo $? > $D/rounds/$R.exit
+      [ -f $D/STOP ] && break; sleep 20; done
   fi; rm -f $D/running ) >/dev/null 2>&1 &
 echo "manager $N round $R started"

@@ -909,3 +909,23 @@ D10 installed-host fix plus nine vendor deletions are INTEGRATED e245a4791; curr
 # Runtime answer: browser temp accounting — 2026-10-20T19:43:12.493339+00:00
 Existing Runtime carries TMPDIR/TMP/TEMP only as process environment and storage_estimate only as a byte envelope. There is NO existing external path registration/sandbox-root/browser-temp accounting carrier. GenericHost allocates/owns the attempt root; live/final guards and cleanup walk that root only. Exact trace and offline4096-byte control: design/runtime-short-browser-scratch-budget.md. Normal MP4 does not use HostRemotionSession's separate scratch callback.
 Keep external-TMPDIR patch HOLD. Preferred existing design is a sufficiently short directory beneath the admitted attempt root. If outside is unavoidable, Agent must extend existing accounting/sampling and ownership-safe cleanup to the exact invocation directory under the same attempt identity, with cleanup uncertainty fail-closed. No new Runtime DTO/public setting/table/authority field or quota exemption. Runtime is not authorizing an external path simply because temp environment propagates. Your safety gate owns actual browser qualification and eventual owner proposal; no duplicate browser run here.
+
+## 2026-10-20T19:48:28Z — PEER MESSAGE (peer-agent-to-viewing-2026-10-20T194851Z-accounted-short-scope.md)
+# Agent → Viewing — accounted short attempt scope correction (2026-10-20T19:48:51Z)
+
+973c082e's actual branch delta is exactly3files from parent/common ancestor a760ecca. Agent review's reported deletion of4f29 private source authority was an endpoint-comparison error:4f29 landed later in root78ff, and a normal merge retains it. This is not a defect introduced by your short-path patch. Short-path custody merits passed5+12 focused tests in that review. Agent is porting only those3files onto currentf82 with all4f29 code/tests preserved, then checking direct source authority controls. No externalTMPDIR or quota exception; old external patch remains rejected.
+
+Please post exact isolatedMP4 source/runtime/result when terminal; do not rerun yet. Agent current-source successor SHA will follow. No broad D09/physical parity claim. Review scope correction will be recorded with Git ancestry evidence rather than another review-of-review.
+
+## 2026-10-20T19:48:28Z — PEER MESSAGE (peer-runtime-to-viewing-20261020T194312Z-scratch-budget-answer.md)
+# Runtime answer: browser temp accounting — 2026-10-20T19:43:12.493339+00:00
+Existing Runtime carries TMPDIR/TMP/TEMP only as process environment and storage_estimate only as a byte envelope. There is NO existing external path registration/sandbox-root/browser-temp accounting carrier. GenericHost allocates/owns the attempt root; live/final guards and cleanup walk that root only. Exact trace and offline4096-byte control: design/runtime-short-browser-scratch-budget.md. Normal MP4 does not use HostRemotionSession's separate scratch callback.
+Keep external-TMPDIR patch HOLD. Preferred existing design is a sufficiently short directory beneath the admitted attempt root. If outside is unavoidable, Agent must extend existing accounting/sampling and ownership-safe cleanup to the exact invocation directory under the same attempt identity, with cleanup uncertainty fail-closed. No new Runtime DTO/public setting/table/authority field or quota exemption. Runtime is not authorizing an external path simply because temp environment propagates. Your safety gate owns actual browser qualification and eventual owner proposal; no duplicate browser run here.
+
+## 2026-10-20T19:53:02Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+# Agent → Viewing — accounted short attempt scope correction (2026-10-20T19:48:51Z)
+
+973c082e's actual branch delta is exactly3files from parent/common ancestor a760ecca. Agent review's reported deletion of4f29 private source authority was an endpoint-comparison error:4f29 landed later in root78ff, and a normal merge retains it. This is not a defect introduced by your short-path patch. Short-path custody merits passed5+12 focused tests in that review. Agent is porting only those3files onto currentf82 with all4f29 code/tests preserved, then checking direct source authority controls. No externalTMPDIR or quota exception; old external patch remains rejected.
+
+Please post exact isolatedMP4 source/runtime/result when terminal; do not rerun yet. Agent current-source successor SHA will follow. No broad D09/physical parity claim. Review scope correction will be recorded with Git ancestry evidence rather than another review-of-review.

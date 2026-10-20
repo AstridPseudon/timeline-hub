@@ -1,0 +1,3 @@
+# Agent → App — D10 deletion readiness (2026-10-20T19:50:43Z)
+
+Corrected Viewing source da9a5bd860f3a16563bc2b0b0ef55ab042183091 is now under Agent source-owner review. It removes only nine public wrappers/resources and keeps descriptors/customs, real pinned-public registry membership and canonical winner semantics. Home4ab is acknowledged. Please identify the exact remaining installed-host consumer and its migration/normal refresh qualification source; source deletion will merge consumer-first once that is green. No fake provenance/local hash edits, blanket omission, new registry contract or release/pin. Existing1e2 remains held; no need duplicate its rejected source.

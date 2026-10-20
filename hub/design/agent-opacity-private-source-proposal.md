@@ -114,3 +114,7 @@ top-level-`clip.opacity` contract before any private generation or native App
 consumer activation. This handoff does not claim whole-writer deletion or
 that the old App consumer is retired; those require the separately owned
 normal matched-native gate.
+
+## Reviewed current successor
+
+See agent-opacity-current-source-handoff.md:70652d26/tree63229ef2 is the reviewed current proposal, product-identicala536 with52 passing inventory controls. Earlier pending-harness and seven-failure text above records the original proposal state only; it is superseded, not relabeled.
