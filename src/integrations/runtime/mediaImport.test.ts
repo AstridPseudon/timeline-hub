@@ -173,6 +173,19 @@ describe('Runtime media import adapter', () => {
     expect(fixture.requests.filter((request) => request.path.includes('/generations') || request.path.includes('/variants'))).toHaveLength(0);
   });
 
+  it('leaves a legacy preparation unqualified without refreshing its selection', async () => {
+    const fixture = createTransport();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', transport: fixture.transport });
+
+    const prepared = await provider.prepareAsset(
+      new File(['bytes'], 'clip.mp4', { type: 'video/mp4' }),
+      { timelineId: 'timeline-import', userId: 'actor' },
+    );
+
+    expect(prepared.entry).not.toHaveProperty('catalog_digest');
+    expect(fixture.requests.some((request) => request.path.includes('/media-selection?'))).toBe(false);
+  });
+
   it('refuses a selection for the wrong imported object', async () => {
     const fixture = createTransport({ selection: { object_id: 'sha256:wrong-object' } });
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', transport: fixture.transport });
