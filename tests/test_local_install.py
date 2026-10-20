@@ -58,7 +58,9 @@ class FakeBackend:
 
     def backup(self, old, data, realm):
         self.step('backup')
-        return {'original': self.sentinel.read_text()}
+        backup_root = old.root.parent.parent / 'backups' / 'test-backup'
+        backup_root.mkdir(parents=True)
+        return {'root': str(backup_root), 'kind': 'runtime', 'original': self.sentinel.read_text()}
 
     def stage(self, manifest, root, data):
         self.step('stage')
