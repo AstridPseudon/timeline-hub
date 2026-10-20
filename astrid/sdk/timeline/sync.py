@@ -188,6 +188,32 @@ class TimelineSession:
 
         return self._queue(lambda state: capture_move(self._bundle(state), select, on))
 
+    def admit_assembly(self, child_outputs, *, replace_clips, assembler_digest, idempotency_key):
+        """Freeze original closure/selected children before registered assembler work.
+
+        Child outputs are ordered exact association/object/version selectors.
+        The worker receives detached data; this session retains commit authority.
+        """
+        from astrid.core.contracts.runtime_orchestration import build_assembler_admission
+        from astrid.sdk.timeline.assembly import capture_assembly
+
+        with self.outbox.locked():
+            state = self._state()
+            if state['pending'] or state['flight'] is not None:
+                raise TimelineEditError('flush pending intent before admitting assembly')
+        capture = capture_assembly(self, state, child_outputs, replace_clips=replace_clips)
+        admission = build_assembler_admission(capture=capture, assembler_digest=assembler_digest,
+                                             idempotency_key=idempotency_key)
+        with self.outbox.locked():
+            if self._state() != state:
+                raise TimelineEditError('outbox changed during assembly capture; nothing was admitted')
+        body = admission.body
+        return _response(self.client.tasks.create(
+            project_id=body['project'], capability=body['capability_id'],
+            capability_digest=body['capability_digest'], spec=body['spec'],
+            input_manifest=body['input_object_ids'], storage_estimate=body['storage_estimate'],
+            idempotency_key=admission.idempotency_key))
+
     def queue(self, command):
         """Capture native intent over the original base plus pending commands.
 

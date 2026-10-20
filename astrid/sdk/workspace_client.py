@@ -238,6 +238,7 @@ class WorkspaceClient:
                 "create_timeline_document", "update_timeline_document", "list_timelines",
                 "get_timeline", "get_project_timeline", "list_timeline_history",
                 "commit_timeline", "list_timeline_commits", "replace_timeline_clip",
+                "get_project_media_selection", "get_project_verified_media",
                 "diff_timeline", "archive_timeline",
                 "recover_timeline", "list_project_shots", "create_project_shot",
                 "inspect_timeline", "create_timeline_view",
@@ -1025,6 +1026,12 @@ class WorkspaceClient:
     def get_managed_output(self, association_id: str) -> Any:
         """Read one Runtime-owned managed output association by id."""
         return self._call_generated("get_managed_output", association_id)
+
+    def get_project_media_selection(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        return self._call_generated("get_project_media_selection", project_id, selection)
+
+    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        return self._call_generated("get_project_verified_media", project_id, selection)
 
     def cancel_task(self, task_id: str, *, idempotency_key: str) -> Any:
         return self._call_generated("cancel_task", task_id, idempotency_key=idempotency_key)

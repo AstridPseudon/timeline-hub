@@ -6627,6 +6627,13 @@ class GenericPackHost:
                 "edges": _json_safe(runtime_dependencies.get("edges", [])),
                 "aggregation": _json_safe(runtime_dependencies.get("aggregation", {})),
             }
+            capture = values.get("resolved_children")
+            if capture is not None:
+                publication = runtime_dependencies.get("publication", {})
+                if (not isinstance(capture, Mapping) or not isinstance(publication, Mapping)
+                        or capture.get("admitted_target") != publication.get("admitted_target")):
+                    raise HostError("assembler capture differs from immutable admitted target")
+                resolved_envelope["capture"] = _json_safe(capture)
             if continuation_id is None:
                 resolved_envelope.pop("continuation_id", None)
             resolved_path = Path(attempt).resolve() / "inputs" / "resolved-children.json"
