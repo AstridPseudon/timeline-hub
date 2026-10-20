@@ -1,0 +1,4 @@
+astrid/core/theme/_schema.py
+tests/core/test_default_theme.py
+tests/packs/rendering/test_composition_package.py
+tests/fixtures/themes/public-composition-default.json

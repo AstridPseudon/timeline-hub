@@ -1,0 +1,10 @@
+
+## Public Composition implicit default — Agent proposal pending owner port
+
+Orchestrator 2026-10-20 05:57: one implicit default is the public Composition `DEFAULT_THEME`; explicit film themes remain explicit. This supersedes the previous navy-preserving recommendation.
+
+| Change | MAIN export behavior | Proposed unified default | Films and exact references | Evidence and remaining proof |
+| --- | --- | --- | --- | --- |
+| Implicit theme | Agent navy `#050814`, near-white `#FAFAFA`, cyan `#67E8F9`; Arial heading/body, monospace mono; base/small/large 32/22/84, weight 400/600, line height 1.2, fadeMs 450 | Public10 black `#000000`, white foreground/accent `#ffffff`; Georgia, serif heading/body, no mono entry; 64/36/96, weight 400/700, line height 1.1, fadeMs 250. Id, normal weight and 1920×1080/30 canvas unchanged. | Owner reviews films without an explicit runtime theme or complete authored visual overrides; uncovered canvas/contain sidebands change navy→black. Theme-aware text/effects may change font, size, accent, weight, spacing and motion. Partial overrides preserve authored leaves; remaining defaults change. No owner films available or rewritten. | UNAPPLIED Agent owner-review patch only: red 10 failed/4 passed, proposed 26 passed; full-object comparison to actual cd83 public10 built exports on Node20.19.4. Explicit runtime style and complete authored visual overrides retained; pinned Hype golden unchanged. No pixels, browser, App paired run, normal export or gate6 parity claim. App must keep public default and paint ground from its resolved theme for explicit backgrounds; separately owner-reviewed. |
+
+No change to historical slug resolution: on Agent, a slug alone does not pin a theme or initiate filesystem discovery. Custom host theme transport and App recursive versus Agent shallow nested-override semantics remain separate existing limitations. The existing scanner is not claimed to identify this new implicit-theme category; add its owner-viewing instructions or extend it in its owning task.

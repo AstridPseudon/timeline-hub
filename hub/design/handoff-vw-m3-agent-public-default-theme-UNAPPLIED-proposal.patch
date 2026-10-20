@@ -1,0 +1,211 @@
+diff --git a/astrid/core/theme/_schema.py b/astrid/core/theme/_schema.py
+--- a/astrid/core/theme/_schema.py
++++ b/astrid/core/theme/_schema.py
+@@ -171,17 +171,19 @@
+ # not a theme-folder fallback: it is the schema-valid default used when a run
+ # does not pin a runtime theme document.  Keeping it beside the validator
+ # makes the default available in installed Astrid environments too.
++# This Python adapter matches Composition DEFAULT_THEME (public 0.0.10);
++# test_builtin_theme_matches_locked_public_export checks the complete object.
+ BUILTIN_DEFAULT_THEME: dict[str, Any] = {
+     "id": "banodoco-default",
+     "visual": {
+-        "color": {"fg": "#FAFAFA", "bg": "#050814", "accent": "#67E8F9"},
++        "color": {"fg": "#ffffff", "bg": "#000000", "accent": "#ffffff"},
+         "type": {
+-            "families": {"heading": "Arial", "body": "Arial", "mono": "monospace"},
+-            "size": {"base": 32, "small": 22, "large": 84},
+-            "weight": {"normal": 400, "bold": 600},
+-            "lineHeight": 1.2,
+-        },
+-        "motion": {"fadeMs": 450},
++            "families": {"heading": "Georgia, serif", "body": "Georgia, serif"},
++            "size": {"base": 64, "small": 36, "large": 96},
++            "weight": {"normal": 400, "bold": 700},
++            "lineHeight": 1.1,
++        },
++        "motion": {"fadeMs": 250},
+         "canvas": {"width": 1920, "height": 1080, "fps": 30},
+     },
+ }
+diff --git a/tests/core/test_default_theme.py b/tests/core/test_default_theme.py
+new file mode 100644
+--- /dev/null
++++ b/tests/core/test_default_theme.py
+@@ -0,0 +1,96 @@
++"""The implicit default follows Composition; explicit film styling stays authored."""
++from __future__ import annotations
++
++import copy
++import json
++from pathlib import Path
++
++import pytest
++
++from astrid.core.theme import ThemeValidationError, builtin_theme, validate_theme_document
++from astrid.packs.rendering.shared.rendering_backend import _resolved_theme_for_render
++
++ROOT = Path(__file__).resolve().parents[2]
++PUBLIC_DEFAULT = json.loads(
++    (ROOT / "tests/fixtures/themes/public-composition-default.json").read_text()
++)
++
++
++def _timeline(tmp_path: Path, **updates: object) -> Path:
++    path = tmp_path / "timeline.json"
++    path.write_text(json.dumps({"tracks": [], "clips": [], **updates}))
++    return path
++
++
++def _explicit_theme() -> dict:
++    # Keep the historical export style as a fully explicit film, not a default.
++    return json.loads((ROOT / "tests/golden/hype/merged_render_props.json").read_text())["theme"]
++
++
++def test_builtin_matches_complete_public_default_and_schema() -> None:
++    assert validate_theme_document(PUBLIC_DEFAULT) == PUBLIC_DEFAULT
++    assert builtin_theme() == PUBLIC_DEFAULT
++
++
++def test_builtin_returns_an_independent_copy() -> None:
++    theme = builtin_theme()
++    theme["visual"]["type"]["families"]["heading"] = "changed"
++    assert builtin_theme() == PUBLIC_DEFAULT
++
++
++@pytest.mark.parametrize("slug", [None, "banodoco-default", "2rp", "unknown-theme"])
++def test_unpinned_theme_uses_public_default_without_slug_lookup(tmp_path: Path, slug) -> None:
++    path = _timeline(tmp_path, **({"theme": slug} if slug is not None else {}))
++    before = path.read_bytes()
++    assert _resolved_theme_for_render(path, None) == PUBLIC_DEFAULT
++    assert path.read_bytes() == before
++
++
++def test_runtime_pin_preserves_full_explicit_theme(tmp_path: Path) -> None:
++    theme = _explicit_theme()
++    theme["id"] = "owner-film"
++    pin = tmp_path / "theme.json"
++    pin.write_text(json.dumps(theme))
++    before = pin.read_bytes()
++    assert _resolved_theme_for_render(_timeline(tmp_path, theme="2rp"), pin) == theme
++    assert pin.read_bytes() == before
++
++
++def test_complete_authored_visual_theme_is_preserved(tmp_path: Path) -> None:
++    theme = _explicit_theme()
++    path = _timeline(tmp_path, theme=theme["id"], theme_overrides={"visual": theme["visual"]})
++    before = path.read_bytes()
++    assert _resolved_theme_for_render(path, None) == theme
++    assert path.read_bytes() == before
++
++
++@pytest.mark.parametrize("pinned", [False, True])
++def test_partial_override_keeps_resolved_remainder(tmp_path: Path, pinned: bool) -> None:
++    base = _explicit_theme() if pinned else PUBLIC_DEFAULT
++    pin = tmp_path / "theme.json" if pinned else None
++    if pin is not None:
++        pin.write_text(json.dumps(base))
++    path = _timeline(tmp_path, theme_overrides={"visual": {"color": {"accent": "#abcdef"}}})
++    expected = copy.deepcopy(base)
++    expected["visual"]["color"]["accent"] = "#abcdef"
++    assert _resolved_theme_for_render(path, pin) == expected
++    assert builtin_theme() == PUBLIC_DEFAULT
++
++
++def test_nested_override_keeps_existing_shallow_merge_semantics(tmp_path: Path) -> None:
++    path = _timeline(tmp_path, theme_overrides={"visual": {"type": {"families": {"heading": "Owner"}}}})
++    expected = copy.deepcopy(PUBLIC_DEFAULT)
++    expected["visual"]["type"]["families"] = {"heading": "Owner"}
++    assert _resolved_theme_for_render(path, None) == expected
++
++
++def test_unknown_theme_fields_still_fail_validation() -> None:
++    theme = copy.deepcopy(PUBLIC_DEFAULT)
++    theme["visual"]["unknown"] = True
++    with pytest.raises(ThemeValidationError, match="Additional properties are not allowed"):
++        validate_theme_document(theme)
++
++
++def test_explicit_missing_runtime_pin_never_uses_default(tmp_path: Path) -> None:
++    with pytest.raises(FileNotFoundError, match="theme file not found or invalid"):
++        _resolved_theme_for_render(_timeline(tmp_path), tmp_path / "theme.json")
+diff --git a/tests/packs/rendering/test_composition_package.py b/tests/packs/rendering/test_composition_package.py
+--- a/tests/packs/rendering/test_composition_package.py
++++ b/tests/packs/rendering/test_composition_package.py
+@@ -142,3 +142,37 @@
+     after = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in package.rglob("*") if p.is_file()}
+     assert before == after
++
++
++@pytest.mark.integration
++def test_builtin_theme_matches_locked_public_export(tmp_path):
++    # Uses the provisioned host peers, never installs or loads package source.
++    from astrid.core.theme import builtin_theme
++
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
++    with tarfile.open(artifact) as archive:
++        assert len(archive.getnames()) == 77
++    package, _ = _stage_locked_package(tmp_path)
++    for name in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils"):
++        peer = (REMOTION / "node_modules" / name).resolve(strict=True)
++        link = tmp_path / "node_modules" / name
++        link.parent.mkdir(parents=True, exist_ok=True)
++        link.symlink_to(peer, target_is_directory=True)
++    script = package / "default-theme-parity.mjs"
++    script.write_text("""
++import assert from 'node:assert/strict';
++import {DEFAULT_THEME as rootDefault} from '@banodoco/timeline-composition';
++import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';
++assert.equal(process.version, 'v20.19.4');
++assert.strictEqual(rootDefault, DEFAULT_THEME);
++process.stdout.write(JSON.stringify(DEFAULT_THEME));
++""")
++    result = subprocess.run(
++        [os.environ.get("ASTRID_NODE_EXECUTABLE", "node"), str(script)],
++        check=True, capture_output=True, text=True, timeout=30,
++    )
++    public_default = json.loads(result.stdout)
++    reference = json.loads((ROOT / "tests/fixtures/themes/public-composition-default.json").read_text())
++    assert public_default == reference
++    assert builtin_theme() == public_default
+diff --git a/tests/fixtures/themes/public-composition-default.json b/tests/fixtures/themes/public-composition-default.json
+new file mode 100644
+--- /dev/null
++++ b/tests/fixtures/themes/public-composition-default.json
+@@ -0,0 +1,34 @@
++{
++  "id": "banodoco-default",
++  "visual": {
++    "color": {
++      "fg": "#ffffff",
++      "bg": "#000000",
++      "accent": "#ffffff"
++    },
++    "type": {
++      "families": {
++        "heading": "Georgia, serif",
++        "body": "Georgia, serif"
++      },
++      "size": {
++        "base": 64,
++        "small": 36,
++        "large": 96
++      },
++      "weight": {
++        "normal": 400,
++        "bold": 700
++      },
++      "lineHeight": 1.1
++    },
++    "motion": {
++      "fadeMs": 250
++    },
++    "canvas": {
++      "width": 1920,
++      "height": 1080,
++      "fps": 30
++    }
++  }
++}

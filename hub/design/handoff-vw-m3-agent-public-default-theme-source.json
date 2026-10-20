@@ -1,0 +1,40 @@
+{
+  "agent_head": "384918908aa8c75229c2b6ccdd8fda03b7ce24a1",
+  "artifact_sha256": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+  "members": 77,
+  "node": "v20.19.4",
+  "default": {
+    "id": "banodoco-default",
+    "visual": {
+      "color": {
+        "fg": "#ffffff",
+        "bg": "#000000",
+        "accent": "#ffffff"
+      },
+      "type": {
+        "families": {
+          "heading": "Georgia, serif",
+          "body": "Georgia, serif"
+        },
+        "size": {
+          "base": 64,
+          "small": 36,
+          "large": 96
+        },
+        "weight": {
+          "normal": 400,
+          "bold": 700
+        },
+        "lineHeight": 1.1
+      },
+      "motion": {
+        "fadeMs": 250
+      },
+      "canvas": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30
+      }
+    }
+  }
+}

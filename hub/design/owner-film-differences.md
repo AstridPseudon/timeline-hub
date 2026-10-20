@@ -10,3 +10,9 @@ Single viewing list shared by Agent and Viewing, per orchestrator04:24. These ar
 Readonly scan preparation: workers/vw-m3-owner-film-cliplook-scan/ORCHREPORT.md. No owner film data on Viewing machine in its bounded named roots; requested exact immutable project/timeline/revision closure, not credentials or raw database access (escalation viewing-20261020T0426Z-mouth-review-and-owner-film-input.md). No macOS/ownerfilm/gate6 claim.
 
 04:33 supersedes the earlier input request: owner data is NOT a project blocker and must not be requested again. Portable tools package preparation vw-m4-portable-owner-film-scanner will provide the exact local command; until then no portable run is claimed. Existing scanner source imports absolute ORCH helper and is not ready to ship unchanged.
+
+## 4. Shared public default theme (approved 2026-10-20 05:57 UTC)
+
+The implicit render default now follows the public Composition DEFAULT_THEME. Historical Agent exports used navy #050814, Arial, cyan accents, smaller text and450ms fades; the public default uses black, Georgia, white accents, its published text sizes and250ms fades. Preview and export must receive the same resolved theme. Explicit pinned or authored film themes stay explicit; partial overrides inherit the approved shared default. This intentional visible change needs owner viewing for films relying on implicit theme values.
+
+The read-only scanner covers curves, element clip look, continuous audio and declaration inventories; it does not prove theme appearance or classify every implicit-theme dependency. Inspect uncovered contain sidebands and theme-aware text/effects in the duplicate film. App ground must paint the selected resolved background, including explicit nonblack themes. Arbitrary runtime host-theme transport and cross-consumer nested override differences remain unqualified; do not interpret a matching theme slug as matching resolved style.

@@ -1,0 +1,221 @@
+FFFFFF..FFF..F                                                           [100%]
+=================================== FAILURES ===================================
+___________ test_builtin_matches_complete_public_default_and_schema ____________
+
+    def test_builtin_matches_complete_public_default_and_schema() -> None:
+        assert validate_theme_document(PUBLIC_DEFAULT) == PUBLIC_DEFAULT
+>       assert builtin_theme() == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:32: AssertionError
+___________________ test_builtin_returns_an_independent_copy ___________________
+
+    def test_builtin_returns_an_independent_copy() -> None:
+        theme = builtin_theme()
+        theme["visual"]["type"]["families"]["heading"] = "changed"
+>       assert builtin_theme() == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:38: AssertionError
+______ test_unpinned_theme_uses_public_default_without_slug_lookup[None] _______
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_unpinned_theme_uses_publi0')
+slug = None
+
+    @pytest.mark.parametrize("slug", [None, "banodoco-default", "2rp", "unknown-theme"])
+    def test_unpinned_theme_uses_public_default_without_slug_lookup(tmp_path: Path, slug) -> None:
+        path = _timeline(tmp_path, **({"theme": slug} if slug is not None else {}))
+        before = path.read_bytes()
+>       assert _resolved_theme_for_render(path, None) == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:45: AssertionError
+_ test_unpinned_theme_uses_public_default_without_slug_lookup[banodoco-default] _
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_unpinned_theme_uses_publi1')
+slug = 'banodoco-default'
+
+    @pytest.mark.parametrize("slug", [None, "banodoco-default", "2rp", "unknown-theme"])
+    def test_unpinned_theme_uses_public_default_without_slug_lookup(tmp_path: Path, slug) -> None:
+        path = _timeline(tmp_path, **({"theme": slug} if slug is not None else {}))
+        before = path.read_bytes()
+>       assert _resolved_theme_for_render(path, None) == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:45: AssertionError
+_______ test_unpinned_theme_uses_public_default_without_slug_lookup[2rp] _______
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_unpinned_theme_uses_publi2')
+slug = '2rp'
+
+    @pytest.mark.parametrize("slug", [None, "banodoco-default", "2rp", "unknown-theme"])
+    def test_unpinned_theme_uses_public_default_without_slug_lookup(tmp_path: Path, slug) -> None:
+        path = _timeline(tmp_path, **({"theme": slug} if slug is not None else {}))
+        before = path.read_bytes()
+>       assert _resolved_theme_for_render(path, None) == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:45: AssertionError
+__ test_unpinned_theme_uses_public_default_without_slug_lookup[unknown-theme] __
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_unpinned_theme_uses_publi3')
+slug = 'unknown-theme'
+
+    @pytest.mark.parametrize("slug", [None, "banodoco-default", "2rp", "unknown-theme"])
+    def test_unpinned_theme_uses_public_default_without_slug_lookup(tmp_path: Path, slug) -> None:
+        path = _timeline(tmp_path, **({"theme": slug} if slug is not None else {}))
+        before = path.read_bytes()
+>       assert _resolved_theme_for_render(path, None) == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:45: AssertionError
+____________ test_partial_override_keeps_resolved_remainder[False] _____________
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_partial_override_keeps_re0')
+pinned = False
+
+    @pytest.mark.parametrize("pinned", [False, True])
+    def test_partial_override_keeps_resolved_remainder(tmp_path: Path, pinned: bool) -> None:
+        base = _explicit_theme() if pinned else PUBLIC_DEFAULT
+        pin = tmp_path / "theme.json" if pinned else None
+        if pin is not None:
+            pin.write_text(json.dumps(base))
+        path = _timeline(tmp_path, theme_overrides={"visual": {"color": {"accent": "#abcdef"}}})
+        expected = copy.deepcopy(base)
+        expected["visual"]["color"]["accent"] = "#abcdef"
+>       assert _resolved_theme_for_render(path, pin) == expected
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#abcdef', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#abcdef', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:76: AssertionError
+_____________ test_partial_override_keeps_resolved_remainder[True] _____________
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_partial_override_keeps_re1')
+pinned = True
+
+    @pytest.mark.parametrize("pinned", [False, True])
+    def test_partial_override_keeps_resolved_remainder(tmp_path: Path, pinned: bool) -> None:
+        base = _explicit_theme() if pinned else PUBLIC_DEFAULT
+        pin = tmp_path / "theme.json" if pinned else None
+        if pin is not None:
+            pin.write_text(json.dumps(base))
+        path = _timeline(tmp_path, theme_overrides={"visual": {"color": {"accent": "#abcdef"}}})
+        expected = copy.deepcopy(base)
+        expected["visual"]["color"]["accent"] = "#abcdef"
+        assert _resolved_theme_for_render(path, pin) == expected
+>       assert builtin_theme() == PUBLIC_DEFAULT
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:77: AssertionError
+_________ test_nested_override_keeps_existing_shallow_merge_semantics __________
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_nested_override_keeps_exi0')
+
+    def test_nested_override_keeps_existing_shallow_merge_semantics(tmp_path: Path) -> None:
+        path = _timeline(tmp_path, theme_overrides={"visual": {"type": {"families": {"heading": "Owner"}}}})
+        expected = copy.deepcopy(PUBLIC_DEFAULT)
+        expected["visual"]["type"]["families"] = {"heading": "Owner"}
+>       assert _resolved_theme_for_render(path, None) == expected
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'... 'Owner'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'... 'Owner'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/core/test_default_theme.py:84: AssertionError
+_______________ test_builtin_theme_matches_locked_public_export ________________
+
+tmp_path = PosixPath('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-agent-public-default-theme/red-tmp/test_builtin_theme_matches_loc0')
+
+    @pytest.mark.integration
+    def test_builtin_theme_matches_locked_public_export(tmp_path):
+        # Uses the provisioned host peers, never installs or loads package source.
+        from astrid.core.theme import builtin_theme
+    
+        artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
+        assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+        with tarfile.open(artifact) as archive:
+            assert len(archive.getnames()) == 77
+        package, _ = _stage_locked_package(tmp_path)
+        for name in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils"):
+            peer = (REMOTION / "node_modules" / name).resolve(strict=True)
+            link = tmp_path / "node_modules" / name
+            link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(peer, target_is_directory=True)
+        script = package / "default-theme-parity.mjs"
+        script.write_text("""
+    import assert from 'node:assert/strict';
+    import {DEFAULT_THEME as rootDefault} from '@banodoco/timeline-composition';
+    import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';
+    assert.equal(process.version, 'v20.19.4');
+    assert.strictEqual(rootDefault, DEFAULT_THEME);
+    process.stdout.write(JSON.stringify(DEFAULT_THEME));
+    """)
+        result = subprocess.run(
+            [os.environ.get("ASTRID_NODE_EXECUTABLE", "node"), str(script)],
+            check=True, capture_output=True, text=True, timeout=30,
+        )
+        public_default = json.loads(result.stdout)
+        reference = json.loads((ROOT / "tests/fixtures/themes/public-composition-default.json").read_text())
+        assert public_default == reference
+>       assert builtin_theme() == public_default
+E       AssertionError: assert {'id': 'banod...rmal': 400}}}} == {'id': 'banod...rmal': 400}}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#67E8F9', 'bg': '#050814', 'fg'...nospace'}, 'lineHeight': 1.2, 'size': {'base': 32, 'large': 84, 'small': 22}, 'weight': {'bold': 600, 'normal': 400}}}} != {'visual': {'canvas': {'fps': 30, 'height': 1080, 'width': 1920}, 'color': {'accent': '#ffffff', 'bg': '#000000', 'fg'..., serif'}, 'lineHeight': 1.1, 'size': {'base': 64, 'large': 96, 'small': 36}, 'weight': {'bold': 700, 'normal': 400}}}}
+E         Use -v to get more diff
+
+tests/packs/rendering/test_composition_package.py:178: AssertionError
+=========================== short test summary info ============================
+FAILED tests/core/test_default_theme.py::test_builtin_matches_complete_public_default_and_schema
+FAILED tests/core/test_default_theme.py::test_builtin_returns_an_independent_copy
+FAILED tests/core/test_default_theme.py::test_unpinned_theme_uses_public_default_without_slug_lookup[None]
+FAILED tests/core/test_default_theme.py::test_unpinned_theme_uses_public_default_without_slug_lookup[banodoco-default]
+FAILED tests/core/test_default_theme.py::test_unpinned_theme_uses_public_default_without_slug_lookup[2rp]
+FAILED tests/core/test_default_theme.py::test_unpinned_theme_uses_public_default_without_slug_lookup[unknown-theme]
+FAILED tests/core/test_default_theme.py::test_partial_override_keeps_resolved_remainder[False]
+FAILED tests/core/test_default_theme.py::test_partial_override_keeps_resolved_remainder[True]
+FAILED tests/core/test_default_theme.py::test_nested_override_keeps_existing_shallow_merge_semantics
+FAILED tests/packs/rendering/test_composition_package.py::test_builtin_theme_matches_locked_public_export
+10 failed, 4 passed in 3.06s
