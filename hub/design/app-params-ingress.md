@@ -71,3 +71,7 @@ Multi-select/bulk params are not automatically one native operation: the native 
 ## Verification
 
 No tests were run: this task produced a source-trace/handoff only and explicitly prohibited tsc, full/browser suites, installs, and network access. The next implementation workers should run their targeted Vitest lanes with one worker/thread and request central service suites only after their final edits.
+
+## App-local next slice: discrete controls only
+Raw/hook clipParamsPort, ops optional clipParams; commands/clipParamsGesture.ts exports ClipParamsCapturePort, CapturedClipParamsEdit, captureClipParamsEdit(port,current,clipId), submitClipParamsEdit(captured,args). Port capture({clipId,current}):JsonObject freezes original raw scope/bundle; finish(basis,args:ClipParamsArgs):{command,previewParams:Record<string,JSON>}; submit({command,preview:TimelinePatch}):void. Finish derives guards only from the original captured closure, never newer display/ACK. Native params helper62a139 supplies wrapped-record parity.
+First UI conversion: asset-array select and optional JSON Clear click in SequenceParamEditor, one discrete gesture each. Continuous text/number/JSON typing and Astrid schema fields remain OPEN until lifecycle/preview grouping is explicit. No whole-map semantic guess or new Runtime DTO/schema.
