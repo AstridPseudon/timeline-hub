@@ -26,6 +26,7 @@ from astrid.sdk import AstridClient, timeline_filmstrip
 from astrid.sdk.pagination import paged_rows
 from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline_checkout import Checkout
 
 ROOT = Path(__file__).resolve().parents[2]
 REMOTION = Path("/home/user/work/runtimes/agent-remotion-0013").resolve()
@@ -288,4 +289,44 @@ def test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle(
             )
             assert stale_spans[0].cls == "UNAVAILABLE"
             assert stale_spans[0].findings
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "ordinary Checkout.check() has no retained managed Scene result handoff; "
+        "restore D09's public caller binding before enabling this proof"
+    ),
+)
+def test_public_checkout_check_uses_retained_managed_scene_result(
+    tmp_path: Path, real_runtime: Any
+) -> None:
+    """Current-clean-port probe for the ordinary public managed Scene handoff."""
+    daemon = real_runtime(authoring_profile="astrid")
+    with _connect(daemon) as client:
+        project_id, parent_revision = _publish(client, suffix="public-check")
+        host = _host(daemon, tmp_path)
+        checkout = Checkout.open(project_id, "main", client=client)
+
+        # Checkout.check() is the ordinary public zero-argument entry.  Do not
+        # pass private Scene inputs, a callback, or a fabricated source/result.
+        report = _run_one(host, checkout.check)
+        assert report.valid
+
+        scene, rows = _latest_scene_task(client, project_id)
+        assert scene.get("capability", scene.get("capability_id")) == "rendering.timeline_visualize"
+        bundle = _assert_managed_scene_bundle(client, rows)
+        assert bundle["row"]["digest"].startswith("sha256:")
+        assert bundle["manifest"]["entrypoints"]["scene"] == "scene-answers.json"
+        assert bundle["payload"]["scene_clips"]["title"]["address"] == "title"
+        assert bundle["payload"]["snapshot_label"] == {
+            "status": "committed",
+            "label": f"committed revision {parent_revision}",
+            "actual_revision_id": parent_revision,
+            "base_revision_id": None,
+        }
+        assert not any(
+            line.startswith("scene   UNKNOWN") or line.startswith("scene   UNAVAILABLE")
+            for line in report.problems
+        )
 
