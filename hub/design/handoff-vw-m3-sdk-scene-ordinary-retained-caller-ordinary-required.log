@@ -1,0 +1,13 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___ test_ordinary_check_activates_public_node_without_manual_handoff[False] ____
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-sdk-scene-ordinary-retained-caller/.qualification.YXHJFn/tests/sdk/test_retained_scene_check.py:233: in test_ordinary_check_activates_public_node_without_manual_handoff
+    assert observed, 'ordinary check never reached public Node; prior _scene_inputs setup is necessary'
+E   AssertionError: ordinary check never reached public Node; prior _scene_inputs setup is necessary
+E   assert []
+____ test_ordinary_check_activates_public_node_without_manual_handoff[True] ____
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-sdk-scene-ordinary-retained-caller/.qualification.YXHJFn/tests/sdk/test_retained_scene_check.py:233: in test_ordinary_check_activates_public_node_without_manual_handoff
+    assert observed, 'ordinary check never reached public Node; prior _scene_inputs setup is necessary'
+E   AssertionError: ordinary check never reached public Node; prior _scene_inputs setup is necessary
+E   assert []
+2 failed, 29 deselected in 3.56s

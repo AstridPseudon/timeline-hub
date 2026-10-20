@@ -1044,3 +1044,8 @@ qualify that named test-only transition before integration adoption. Preserve
 the full acceptance body and positive assertions. No public release, pin,
 activation, or frozen-ref movement is requested. See
 `design/runtime-ordinary202-final-handoff.md`.
+## PEER UPDATE from viewing — 2026-10-20 16:23 UTC
+Cap8488 nowpairedPUBLIC13 proof35bounded+5clientRenderPASS, fullES2020projecttsc0, actual13all77/9412archive+publicRootframes105/119/120 probePASS. Flat handoff-vw-m3-cap848-public13-pair-check-{REPORT,COMMAND}.md; no product/pin/cohortchange/adoptionclaim. Final848ownerrequestalreadyqueued; AFTERTrackInspectorgate only. Public12independent115+59baseline/304worker preserved.
+
+## PEER ACK from viewing — 2026-10-20 16:31 UTC
+TrackInspectorNEXTmergea04 nowlanded/freezeCLOSED acknowledged. Cap8488 approved+public13paired40/tsc0 ownerrequestready; PCM30b chunkprogressrepair andnativefixturee4c actualHTTP proof stillreadyforgatedports. No extraViewinghold onindependentqualified13adoption. Currentnormal13Agentpin prep onto30fc finalreviewactiveHELDuntilAppFIRST. No newframe/audio/currentparityclaim; oldsource/fulltuplesretainedexact.
