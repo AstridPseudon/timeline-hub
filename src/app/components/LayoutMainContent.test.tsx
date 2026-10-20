@@ -22,7 +22,6 @@ const useViewportResponsiveMock = vi.fn();
 const useVideoEditorRouteStateMock = vi.fn();
 const appHeaderMock = vi.fn();
 const globalProcessingWarningMock = vi.fn();
-const isDeferredCloudDataAuthorityMock = vi.fn();
 
 const defaultPanesState = {
   isTasksPaneLocked: true,
@@ -77,10 +76,6 @@ vi.mock('@/app/hooks/useVideoEditorRouteState', () => ({
   useVideoEditorRouteState: () => useVideoEditorRouteStateMock(),
 }));
 
-vi.mock('@/app/runtime/dataAuthority.ts', () => ({
-  isDeferredCloudDataAuthority: (search: string) => isDeferredCloudDataAuthorityMock(search),
-}));
-
 describe('LayoutMainContent', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -110,17 +105,15 @@ describe('LayoutMainContent', () => {
       isEditorRoute: false,
       isVideoEditorShellActive: false,
     });
-    isDeferredCloudDataAuthorityMock.mockReturnValue(true);
   });
 
   it('renders global layout pieces and applies pane offsets', () => {
-    const onOpenSettings = vi.fn();
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={onOpenSettings} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
-    expect(screen.getByTestId('processing-warning')).toBeInTheDocument();
+    expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
     expect(screen.getByTestId('tool-header')).toBeInTheDocument();
     expect(screen.getByTestId('layout-outlet')).toBeInTheDocument();
     expect(appHeaderMock).toHaveBeenCalledWith(
@@ -128,11 +121,7 @@ describe('LayoutMainContent', () => {
         navigationMode: 'home',
       })
     );
-    expect(globalProcessingWarningMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        onOpenSettings,
-      })
-    );
+    expect(globalProcessingWarningMock).not.toHaveBeenCalled();
 
     const contentContainer = container.querySelector('.content-container');
     expect(contentContainer).not.toBeNull();
@@ -146,26 +135,13 @@ describe('LayoutMainContent', () => {
   });
 
   it('does not mount the Supabase-backed warning in default Astrid authority', () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
 
     render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
     expect(globalProcessingWarningMock).not.toHaveBeenCalled();
-    expect(isDeferredCloudDataAuthorityMock).toHaveBeenCalledWith('');
-  });
-
-  it('mounts the legacy warning when cloud authority is explicitly deferred', () => {
-    isDeferredCloudDataAuthorityMock.mockReturnValue(true);
-
-    render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
-    );
-
-    expect(screen.getByTestId('processing-warning')).toBeInTheDocument();
-    expect(globalProcessingWarningMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the canonical app header on the editor fallback route', () => {
@@ -175,7 +151,7 @@ describe('LayoutMainContent', () => {
     });
 
     render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
@@ -189,34 +165,13 @@ describe('LayoutMainContent', () => {
     const projectControls = <div data-testid="editor-project-controls" />;
     useHeaderStateMock.mockReturnValue({ header: null, globalHeaderContent: projectControls });
 
-    render(<LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />);
+    render(<LayoutMainContent isMobileSplitView={false} />);
 
     expect(appHeaderMock).toHaveBeenCalledWith(expect.objectContaining({
       onNavigate: undefined,
       navigationControls: projectControls,
       showProjectControls: false,
     }));
-  });
-
-  it('removes tool navigation chrome in the local editor while preserving task pane space', () => {
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
-    locationPathname = '/tools/video-editor';
-
-    const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
-    );
-
-    expect(screen.queryByTestId('global-header')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('tool-header')).not.toBeInTheDocument();
-    const contentContainer = container.querySelector('.content-container');
-    expect(contentContainer).toHaveAttribute('data-astrid-editor-only-shell', 'true');
-    expect(contentContainer).toHaveClass('min-h-0', 'flex-1', 'overflow-hidden');
-    expect(contentContainer).toHaveStyle({
-      marginRight: '320px',
-      marginLeft: '0px',
-      paddingTop: '0px',
-      paddingBottom: '180px',
-    });
   });
 
   it('does not apply top padding when the editor pane is hidden', () => {
@@ -227,7 +182,7 @@ describe('LayoutMainContent', () => {
     };
 
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     const contentContainer = container.querySelector('.content-container');
@@ -245,7 +200,7 @@ describe('LayoutMainContent', () => {
     };
 
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     const contentContainer = container.querySelector('.content-container');
@@ -268,7 +223,7 @@ describe('LayoutMainContent', () => {
     };
 
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     const contentContainer = container.querySelector('.content-container');
@@ -291,7 +246,7 @@ describe('LayoutMainContent', () => {
     };
 
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     const contentContainer = container.querySelector('.content-container');
@@ -304,7 +259,7 @@ describe('LayoutMainContent', () => {
   it('does not reserve app-shell pane space on the image generation page', () => {
     locationPathname = '/tools/image-generation';
     const { container } = render(
-      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+      <LayoutMainContent isMobileSplitView={false} />
     );
 
     const contentContainer = container.querySelector('.content-container');

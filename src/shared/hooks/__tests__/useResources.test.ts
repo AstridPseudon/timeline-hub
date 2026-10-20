@@ -54,20 +54,7 @@ vi.mock('@/shared/lib/query/queryDefaults', () => ({
   },
 }));
 
-// This suite exercises the Supabase-backed resource hooks. Phase C defaults
-// the application to Astrid authority, so opt this test boundary into the
-// explicitly deferred cloud surface rather than depending on ambient env.
-vi.mock('@/app/runtime/dataAuthority', () => ({
-  isDeferredCloudDataAuthority: () => true,
-}));
-
-import {
-  useListPublicResources,
-  useListResources,
-  useCreateResource,
-  useDeleteResource,
-  usePublicLoras,
-} from '@/features/resources/hooks/useResources';
+import { useListPublicResources, useListResources, useCreateResource, useDeleteResource } from '@/features/resources/hooks/useResources';
 
 describe('useListPublicResources', () => {
   beforeEach(() => {
@@ -156,35 +143,5 @@ describe('useDeleteResource', () => {
 
     expect(typeof result.current.mutateAsync).toBe('function');
     expect(result.current.isPending).toBe(false);
-  });
-});
-
-describe('usePublicLoras', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSelect.mockResolvedValue({ data: [], error: null });
-  });
-
-  it('extracts metadata from resources', async () => {
-    mockSelect.mockResolvedValue({
-      data: [
-        {
-          id: 'r-1',
-          type: 'lora',
-          metadata: { Name: 'LoRA 1', 'Model ID': 'lora-1' },
-          is_public: true,
-        },
-      ],
-      error: null,
-    });
-
-    const { result } = renderHookWithProviders(() => usePublicLoras());
-
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
-
-    expect(result.current.data).toHaveLength(1);
-    expect(result.current.data[0]).toHaveProperty('Name', 'LoRA 1');
   });
 });

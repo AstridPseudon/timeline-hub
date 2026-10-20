@@ -168,7 +168,7 @@ export function ScenePhaseMarkersPanel({ ctx, playback, isConflictExhausted = fa
   }
 
   return (
-    <div className="flex h-9 flex-nowrap items-center gap-x-3 overflow-x-auto whitespace-nowrap border-t border-border bg-card/60 px-3 text-xs">
+    <div className="flex h-9 flex-nowrap items-center gap-x-2 overflow-x-auto whitespace-nowrap border-t border-border bg-card/60 px-2 text-xs">
       <span className="font-semibold text-foreground">Scene Markers</span>
       <span className="tabular-nums text-foreground" data-testid="scene-markers-playhead">
         Playhead {playback.currentTime.toFixed(2)}s

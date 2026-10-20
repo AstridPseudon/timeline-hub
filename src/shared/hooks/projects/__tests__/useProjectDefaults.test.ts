@@ -2,16 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 // Mock all dependencies
-vi.mock('@/shared/hooks/settings/usePrefetchToolSettings', () => ({
-  usePrefetchToolSettings: vi.fn(),
-}));
 
 vi.mock('@/shared/hooks/useMobileTimeoutFallback', () => ({
   useMobileTimeoutFallback: vi.fn(),
 }));
 
 import { useProjectDefaults } from '../useProjectDefaults';
-import { usePrefetchToolSettings } from '@/shared/hooks/settings/usePrefetchToolSettings';
 import { useMobileTimeoutFallback } from '@/shared/hooks/useMobileTimeoutFallback';
 
 describe('useProjectDefaults', () => {
@@ -22,26 +18,10 @@ describe('useProjectDefaults', () => {
     vi.clearAllMocks();
   });
 
-  it('prefetches tool settings for selected project', () => {
-    renderHook(() =>
-      useProjectDefaults({
-        userId: 'user-1',
-        selectedProjectId: 'project-1',
-        isLoadingProjects: false,
-        projects: [],
-        fetchProjects: mockFetchProjects,
-        applyCrossDeviceSync: mockApplyCrossDeviceSync,
-      })
-    );
-
-    expect(usePrefetchToolSettings).toHaveBeenCalledWith('project-1');
-  });
-
   it('fetches projects when userId is available', () => {
     renderHook(() =>
       useProjectDefaults({
         userId: 'user-1',
-        selectedProjectId: null,
         isLoadingProjects: true,
         projects: [],
         fetchProjects: mockFetchProjects,
@@ -56,7 +36,6 @@ describe('useProjectDefaults', () => {
     renderHook(() =>
       useProjectDefaults({
         userId: null,
-        selectedProjectId: null,
         isLoadingProjects: true,
         projects: [],
         fetchProjects: mockFetchProjects,
@@ -73,7 +52,6 @@ describe('useProjectDefaults', () => {
     renderHook(() =>
       useProjectDefaults({
         userId: 'user-1',
-        selectedProjectId: 'p1',
         isLoadingProjects: false,
         projects,
         fetchProjects: mockFetchProjects,
@@ -88,7 +66,6 @@ describe('useProjectDefaults', () => {
     renderHook(() =>
       useProjectDefaults({
         userId: 'user-1',
-        selectedProjectId: null,
         isLoadingProjects: true,
         projects: [],
         fetchProjects: mockFetchProjects,
@@ -103,7 +80,6 @@ describe('useProjectDefaults', () => {
     renderHook(() =>
       useProjectDefaults({
         userId: 'user-1',
-        selectedProjectId: null,
         isLoadingProjects: true,
         projects: [],
         fetchProjects: mockFetchProjects,

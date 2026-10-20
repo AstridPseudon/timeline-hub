@@ -2,21 +2,17 @@ import { expect, test, type BrowserContext } from '@playwright/test';
 import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline, showDataLanes } from './support';
 
 const EDITOR_URL = editorPath({
-  params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix', runawayTimelineProject: 'runaway-8085' },
+  params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix' },
 });
-const RUNAWAY_REQUEST = '**/api/astrid/v1/projects/runaway-8085/runaway-transitions?*';
 // Timeline hydration reads the head composition from the Runtime (`composition-revisions/<head>`, through the
-// Vite proxy at `/api/runtime`); the Runaway lane reads its rows from the Astrid bridge proxy.
+// Vite proxy at `/api/runtime`).
 const PROJECT_DATA_PATH = new RegExp(
   `^/api/runtime/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_SLUG}/composition-revisions/[^/]+$`,
 );
-const DATA_REQUEST_PATH = new RegExp(
-  `${PROJECT_DATA_PATH.source}|^/api/astrid/v1/projects/[^/]+/runaway-transitions$`,
-);
+const DATA_REQUEST_PATH = PROJECT_DATA_PATH;
 const CAPABILITY_PROBE_PATH = /^\/api\/astrid\/projects\/[^/]+\/media\/__astrid_capability_probe__\/content$/;
-const ABORTED_RUNAWAY_PATH = /^\/api\/astrid\/v1\/projects\/runaway-8085\/runaway-transitions$/;
 
-function collectIssues(page: import('@playwright/test').Page, options: { allowRunawayAbort?: boolean } = {}): string[] {
+function collectIssues(page: import('@playwright/test').Page): string[] {
   const issues: string[] = [];
   const expectedCapabilityProbe = (url: string, status: number) => (
     status === 404 && CAPABILITY_PROBE_PATH.test(new URL(url).pathname)
@@ -37,10 +33,7 @@ function collectIssues(page: import('@playwright/test').Page, options: { allowRu
   page.on('requestfailed', (request) => {
     const pathname = new URL(request.url()).pathname;
     const failure = request.failure()?.errorText ?? 'unknown';
-    const intentionalAbort = options.allowRunawayAbort
-      && ABORTED_RUNAWAY_PATH.test(pathname)
-      && /ERR_INTERNET_DISCONNECTED|internetdisconnected/i.test(failure);
-    if (!intentionalAbort && !CAPABILITY_PROBE_PATH.test(pathname)) {
+    if (!CAPABILITY_PROBE_PATH.test(pathname)) {
       issues.push(`[requestfailed] ${request.url()} — ${failure}`);
     }
   });
@@ -103,13 +96,6 @@ test.describe('extension performance and resource budgets', () => {
     const response = await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     expect(response?.ok()).toBe(true);
     await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator('[data-lane-kind="astrid.runaway.transitions"]')).toBeVisible();
-    // The lane announces its total through the accessible group name; the
-    // visible chip list is virtualized, so there is no standalone text node
-    // containing the total for `getByText` to match reliably.
-    await expect(page.getByRole('group', { name: /566 transitions/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Transcript actions' })).toBeVisible();
-    await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-total-items', '566');
     await expect.poll(() => projectDataBodies.length, {
       message: 'the Runtime must serve a serialized timeline payload',
       timeout: 5_000,
@@ -126,17 +112,9 @@ test.describe('extension performance and resource budgets', () => {
       scroller.scrollLeft = scroller.scrollWidth;
       scroller.dispatchEvent(new Event('scroll'));
     });
-    await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-window-end', '566');
 
     await page.getByRole('tab', { name: 'Extensions' }).click();
-    await expect(page.getByRole('button', { name: /^(Disable|Enable) haus\.astrid\./ })).toHaveCount(13);
-
-    await page.keyboard.press('ControlOrMeta+Shift+P');
-    const commandInput = page.getByPlaceholder('Type a command…');
-    await expect(commandInput).toBeVisible();
-    await commandInput.fill('Drop Foley Cue Scaffolds');
-    await expect(page.getByText('Drop Foley Cue Scaffolds', { exact: true })).toBeVisible();
-    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: /^(Disable|Enable) haus\.astrid\./ })).toHaveCount(2);
 
     // The manager's package-card data attribute is intentionally an internal
     // implementation hook; the rendered contribution badge is the stable
@@ -157,7 +135,6 @@ test.describe('extension performance and resource budgets', () => {
         scroller.dispatchEvent(new Event('scroll'));
       }
     });
-    await expect(page.getByTestId('runaway-timeline-lane')).toHaveAttribute('data-window-end', '566');
     const burstDataRequests = dataRequests.length - requestsBeforeBurst;
     expect(burstDataRequests).toBeLessThanOrEqual(BUDGET.burstDataRequests);
 
@@ -170,7 +147,6 @@ test.describe('extension performance and resource budgets', () => {
       nodes: document.getElementsByTagName('*').length,
       bodyWidth: document.body.scrollWidth,
       viewportWidth: window.innerWidth,
-      mountedRunaway: document.querySelectorAll('[data-testid="runaway-transition-chip"]').length,
     }));
     const heapAfterBytes = await readHeapBytes(cdp);
     const heapGrowthBytes = heapBeforeBytes === null || heapAfterBytes === null
@@ -189,7 +165,6 @@ test.describe('extension performance and resource budgets', () => {
         burstDataRequests,
         quietDataRequests,
         domNodes: dom.nodes,
-        mountedRunaway: dom.mountedRunaway,
         heapBytes: heapAfterBytes,
         heapGrowthBytes,
       },
@@ -201,7 +176,6 @@ test.describe('extension performance and resource budgets', () => {
     console.info(`[extension-performance] ${JSON.stringify(evidence.observed)}`);
 
     expect(dom.nodes, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.domNodes);
-    expect(dom.mountedRunaway).toBeLessThanOrEqual(128);
     expect(dom.bodyWidth).toBeLessThanOrEqual(dom.viewportWidth);
     if (heapAfterBytes !== null) {
       expect(heapAfterBytes, JSON.stringify(evidence)).toBeLessThanOrEqual(BUDGET.heapBytes);
@@ -209,22 +183,4 @@ test.describe('extension performance and resource budgets', () => {
     expect(issues).toEqual([]);
   });
 
-  test('bounds an aborted bridge load and exposes a recoverable degraded state', async ({ page }) => {
-    test.setTimeout(60_000);
-    let requests = 0;
-    const issues = collectIssues(page, { allowRunawayAbort: true });
-    await page.route(RUNAWAY_REQUEST, async (route) => {
-      requests += 1;
-      await route.abort('internetdisconnected');
-    });
-    await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
-    await showDataLanes(page);
-    await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-
-    const state = page.getByTestId('runaway-load-state');
-    await expect(state).toHaveAttribute('data-status', 'error', { timeout: 20_000 });
-    await expect(page.getByTestId('runaway-retry')).toBeVisible();
-    expect(requests).toBe(1);
-    expect(issues).toEqual([]);
-  });
 });

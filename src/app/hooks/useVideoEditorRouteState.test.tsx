@@ -42,15 +42,6 @@ describe('useVideoEditorRouteState', () => {
     expect(state.timelineId).toBeNull();
   });
 
-  it('fills the local Astrid editor shell before the first timeline exists', () => {
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
-    const state = stateFor('/tools/video-editor?project=project-1');
-
-    expect(state.isEditorRoute).toBe(true);
-    expect(state.isVideoEditorShellActive).toBe(true);
-    expect(state.timelineId).toBeNull();
-  });
-
   it('activates the shell for an app-mode timeline', () => {
     const state = stateFor('/tools/video-editor?timeline=app-timeline');
     expect(state.isVideoEditorShellActive).toBe(true);

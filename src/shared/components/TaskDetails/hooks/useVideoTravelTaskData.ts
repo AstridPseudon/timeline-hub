@@ -88,7 +88,6 @@ interface VideoTravelTaskData {
   styleImage: string | undefined;
   styleStrength: number | undefined;
   presetId: string | undefined;
-  isDbPreset: boolean;
   modelName: string | undefined;
   resolution: string | undefined;
   frames: number | undefined;
@@ -174,8 +173,6 @@ export function useVideoTravelTaskData({
       individualSegmentParams.selected_phase_preset_id,
       travelContractData.selectedPhasePresetId,
     );
-    const isDbPreset = Boolean(presetId && !presetId.startsWith('__builtin_'));
-
     const modelName = pickString(travelContractData.modelName);
     const resolution = pickString(
       travelContractData.resolution,
@@ -209,7 +206,6 @@ export function useVideoTravelTaskData({
       styleImage,
       styleStrength,
       presetId,
-      isDbPreset,
       modelName,
       resolution,
       frames,

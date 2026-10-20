@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
-import { AppEnv } from '@/types/env';
 
 import { isHomeToolPathActive, resolveHomeToolPath } from './homeNavigation';
 
@@ -10,9 +9,6 @@ describe('resolveHomeToolPath', () => {
     expect(
       resolveHomeToolPath({
         preferredToolId: TOOL_IDS.IMAGE_GENERATION,
-        currentEnv: AppEnv.WEB,
-        isCloudGenerationEnabled: true,
-        isLoadingGenerationMethods: false,
       }),
     ).toBe('/tools/image-generation');
   });
@@ -21,21 +17,15 @@ describe('resolveHomeToolPath', () => {
     expect(
       resolveHomeToolPath({
         preferredToolId: TOOL_IDS.VIDEO_EDITOR,
-        currentEnv: AppEnv.WEB,
-        isCloudGenerationEnabled: true,
-        isLoadingGenerationMethods: false,
         videoEditorTimelineId: 'timeline-123',
       }),
     ).toBe('/tools/video-editor?timeline=timeline-123');
   });
 
-  it('falls back to the Video Editor when the preferred tool is ineligible', () => {
+  it('falls back to the Video Editor when the preferred tool is unavailable', () => {
     expect(
       resolveHomeToolPath({
-        preferredToolId: TOOL_IDS.CHARACTER_ANIMATE,
-        currentEnv: AppEnv.WEB,
-        isCloudGenerationEnabled: false,
-        isLoadingGenerationMethods: false,
+        preferredToolId: 'missing-tool',
       }),
     ).toBe('/tools/video-editor');
   });

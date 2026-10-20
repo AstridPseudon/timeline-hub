@@ -3,13 +3,6 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
-const { isDeferredCloudDataAuthorityMock } = vi.hoisted(() => ({
-  isDeferredCloudDataAuthorityMock: vi.fn(() => false),
-}));
-
-vi.mock('@/app/runtime/dataAuthority', () => ({
-  isDeferredCloudDataAuthority: isDeferredCloudDataAuthorityMock,
-}));
 
 // Mock supabase
 vi.mock('@/integrations/supabase/client', () => {
@@ -73,7 +66,6 @@ function createWrapper() {
 describe('useProjectVideoCountsCache', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    isDeferredCloudDataAuthorityMock.mockReturnValue(false);
   });
 
   it('returns null values when projectId is null', () => {

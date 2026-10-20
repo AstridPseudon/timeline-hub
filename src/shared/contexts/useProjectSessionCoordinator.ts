@@ -36,7 +36,6 @@ export function useProjectSessionCoordinator() {
 
   useProjectDefaults({
     userId: sessionUserId,
-    selectedProjectId: selection.selectedProjectId,
     isLoadingProjects: crud.isLoadingProjects,
     projects: crud.projects,
     fetchProjects: crud.fetchProjects,

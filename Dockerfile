@@ -24,20 +24,15 @@ COPY . .
 
 # Vite inlines ordinary browser client config into the JS bundle.
 # The hosted editor reaches each visitor’s existing Runtime through the local
-# authenticated gateway. Compile its origin without enabling the standalone
-# editor-only shell: this image also serves the public site and other app routes.
+# authenticated gateway. The same app serves the public site and all tool routes.
 # Runtime credentials stay outside the image; visitor identity binds at connection.
-# Extension rollout controls are intentionally absent here; the runtime stage writes
-# those from non-VITE service variables whenever the container starts.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_API_TARGET_URL
-ARG VITE_APP_ENV
 RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
     VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
     VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
-    VITE_APP_ENV="$VITE_APP_ENV" \
     VITE_RUNTIME_ORIGIN="http://127.0.0.1:17340" \
     VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID="" \
     VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID="" \
@@ -65,14 +60,10 @@ COPY --chown=node:node config ./config
 # whole; vendor/ also keeps node_modules' file: links valid.
 COPY --chown=node:node src ./src
 COPY --chown=node:node vendor ./vendor
-COPY scripts/runtime ./scripts/runtime
 COPY --chown=node:node --from=build /app/dist ./dist
 
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/runtime-config/v1/extensions.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(String(r.status))})"
-# Generate the public rollout document from runtime-only (non-VITE) variables
-# immediately before preview starts. The writer uses same-directory rename, so
-# the server can never observe a partial JSON file.
+  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(String(r.status))})"
 USER node
-CMD ["sh", "-c", "node scripts/runtime/write-extension-release-config.mjs && exec npm run serve"]
+CMD ["npm", "run", "serve"]

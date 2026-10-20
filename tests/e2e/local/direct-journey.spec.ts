@@ -847,9 +847,8 @@ async function openExtensionsTimeline(page: Page, harness: DirectHarness) {
 
 test.describe('pack extensions (App)', () => {
   test('extensions: the transcript lane renders its words from the door', async ({ page, harness }) => {
-    harness.extensionsConfig = 'on';
     const { seed } = await openExtensionsTimeline(page, harness);
-    // The lane is the bundled transcript extension's (config on): one chip per segment of the bundle read from the Runtime.
+    // The lane is the bundled transcript extension's: one chip per segment of the bundle read from the Runtime.
     const lane = page.locator('[data-lane-kind="astrid.transcript"]');
     await expect(lane).toBeVisible();
     const chips = lane.getByTestId('transcript-lane-occurrence');
@@ -863,7 +862,6 @@ test.describe('pack extensions (App)', () => {
   });
 
   test('extensions: a live scene previews from a Runtime object in its sandboxed iframe', async ({ page, harness }) => {
-    harness.extensionsConfig = 'on';
     const { seed } = await openExtensionsTimeline(page, harness);
     // The clip's package is a Runtime project object: the Runtime holds those exact bytes under the object id the clip names.
     const stored = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(seed.scenePackage.objectId)}`);
@@ -893,25 +891,15 @@ test.describe('pack extensions (App)', () => {
     expect(harness.audit().filter((entry) => entry.origin === 'null'), 'the scene frame sent nothing to the door').toEqual([]);
   });
 
-  test('extensions: with the config missing, the editor still loads and extensions are off', async ({ page, harness }) => {
-    harness.extensionsConfig = 'missing';
-    try {
-      const configResponses: number[] = [];
-      page.on('response', (response) => { if (new URL(response.url()).pathname === '/runtime-config/v1/extensions.json') configResponses.push(response.status()); });
-      const { seed } = await openExtensionsTimeline(page, harness);
-      // The page asked for the config and got nothing, the closed posture: no pack UI is drawn, and nothing else is hurt.
-      expect(configResponses).toEqual([404]);
-      // Wait until the editor has drawn the seeded clips (the ordinary ones, which need no extension), so the absences below are not just "not yet".
-      await expect(page.locator(`[data-clip-id="${seed.sceneClipId}"]`).first()).toBeVisible();
-      await expect(page.locator(`[data-clip-id="${seed.speechClipId}"]`).first()).toBeVisible();
-      await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toHaveCount(0);
-      await expect(page.getByTestId('astrid-live-scene-entry')).toHaveCount(0);
-      await expect(page.locator('iframe[title^="Live scene"]')).toHaveCount(0);
-      // The timeline itself is intact: the same composition was read through the door, so it is the extensions that are off.
-      const reads = await waitForAudit(harness, (entry) => entry.method === 'GET' && entry.path.includes(`/timelines/${seed.timelineId}/composition-revisions`) && entry.status === 200);
-      expect(reads.length).toBeGreaterThan(0);
-      await expectConnected(page);
-    } finally { harness.extensionsConfig = 'on'; }
+  test('extensions ship without fetching a deployment config', async ({ page, harness }) => {
+    const configRequests: string[] = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/runtime-config/v1/extensions.json') configRequests.push(request.url());
+    });
+    await openExtensionsTimeline(page, harness);
+    await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible();
+    await expect(page.getByTestId('astrid-live-scene-entry')).toHaveAttribute('data-phase', 'ready');
+    expect(configRequests).toEqual([]);
   });
 });
 

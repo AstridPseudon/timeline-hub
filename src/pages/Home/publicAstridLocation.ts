@@ -43,12 +43,6 @@ const ZONES: Record<string, readonly [string, number, number]> = {
   'Australia/Hobart': ['Hobart', -42.88, 147.33], 'Pacific/Auckland': ['Auckland', -36.85, 174.76], 'Pacific/Fiji': ['Suva', -18.14, 178.44],
 };
 
-/** Places offered in the sky review panel, for previewing other skies. */
-export const PUBLIC_ASTRID_REVIEW_PLACES: readonly string[] = [
-  'Europe/London', 'Europe/Madrid', 'Europe/Oslo', 'Atlantic/Reykjavik', 'America/New_York', 'America/Los_Angeles',
-  'America/Sao_Paulo', 'Africa/Nairobi', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland',
-];
-
 /** Hours ahead of UTC in `timeZone` at `at` (e.g. 1 for London in summer). */
 export function utcOffsetHours(at: Date, timeZone: string): number {
   try {

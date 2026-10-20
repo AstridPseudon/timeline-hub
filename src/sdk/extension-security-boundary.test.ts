@@ -11,12 +11,10 @@ import {
 import { creativeLabExtensions } from '@/tools/video-editor/examples/extensions/creative-lab';
 import { scenePhaseMarkersExtension } from '@/tools/video-editor/dev/scene-phase-markers/extension';
 import { transcriptLaneExtension } from '@/tools/video-editor/dev/transcript-lane/extension';
-import { runawayTimelineExtension } from '@/tools/video-editor/dev/runaway-timeline/extension';
 
 const bundledExtensions = [
   scenePhaseMarkersExtension,
   transcriptLaneExtension,
-  runawayTimelineExtension,
   ...creativeLabExtensions,
 ];
 
@@ -57,9 +55,9 @@ function installedPack(overrides: Partial<InstalledExtensionPackage> = {}): Inst
 }
 
 describe('extension security boundary', () => {
-  it('keeps the 13 reviewed bundled extensions valid and least-privileged', () => {
-    expect(bundledExtensions).toHaveLength(13);
-    expect(new Set(bundledExtensions.map((extension) => extension.manifest.id)).size).toBe(13);
+  it('keeps the 12 reviewed bundled extensions valid and least-privileged', () => {
+    expect(bundledExtensions).toHaveLength(12);
+    expect(new Set(bundledExtensions.map((extension) => extension.manifest.id)).size).toBe(12);
 
     for (const extension of bundledExtensions) {
       const result = validateManifest(extension.manifest);

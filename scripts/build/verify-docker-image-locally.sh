@@ -98,7 +98,7 @@ LOG_NAME=verify
 
 step 'build production bundle'
 LOG_NAME=build
-(cd "$BUILD" && VITE_APP_ENV=production NODE_OPTIONS=--max-old-space-size=4096 npm run build) > "$WORK/build.log" 2>&1
+(cd "$BUILD" && NODE_OPTIONS=--max-old-space-size=4096 npm run build) > "$WORK/build.log" 2>&1
 
 step 'stage runtime Docker COPY instructions'
 awk '/^FROM .* AS runtime/{runtime=1; next} runtime && /^COPY /{print}' "$SOURCE/Dockerfile" > "$WORK/runtime-copies.txt"
@@ -123,19 +123,18 @@ while IFS= read -r line; do
   done
 done < "$WORK/runtime-copies.txt"
 
-step 'write runtime release config and start preview server'
+step 'start preview server'
 LOG_NAME=serve
-(cd "$RUNTIME" && node scripts/runtime/write-extension-release-config.mjs) > "$WORK/serve.log" 2>&1
 (cd "$RUNTIME" && PORT="$PORT" NODE_ENV=production npm run serve >> "$WORK/serve.log" 2>&1) &
 SERVER_PID=$!
 
-step 'wait for runtime config health check'
+step 'wait for served page health check'
 healthy=0
 for _ in $(seq 1 60); do
-  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/runtime-config/v1/extensions.json" -o /dev/null 2>/dev/null; then healthy=1; break; fi
+  if curl -fsS --max-time 2 "http://127.0.0.1:$PORT/" -o /dev/null 2>/dev/null; then healthy=1; break; fi
   if ! kill -0 "$SERVER_PID" 2>/dev/null; then break; fi
   sleep 2
 done
-[[ "$healthy" == 1 ]] || { echo 'runtime config health check did not pass' >&2; false; }
+[[ "$healthy" == 1 ]] || { echo 'served page health check did not pass' >&2; false; }
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/" -o /dev/null
 printf 'Health checks passed on port %s\n' "$PORT"
