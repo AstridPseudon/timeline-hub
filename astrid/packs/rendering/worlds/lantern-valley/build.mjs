@@ -1,14 +1,117 @@
-// Bundles three + the scene into one self-contained HTML entry and writes the prepared
-// live-scene package, world.json (explore, cameras, events), and the World Explorer's
-// generated module, which the explorer imports lazily as worlds/sample.
-//   node build.mjs      (see deps.mjs for where three and esbuild come from)
+// Bundles three + a world's source into one self-contained HTML entry and wraps it as a
+// prepared live-scene package (.scene.json).
+//
+//   node build.mjs                                  Lantern Valley: writes prepared/, world.json and the
+//                                                   World Explorer's generated module worlds/sample
+//   node build.mjs --src <world.ts> --out <file>.scene.json [--name "My World"] [--duration 10] [--fps 30] [--minify]
+//                                                   any world: bundles the source and writes just that package
+//
+// --duration must equal the DURATION constant in the world source. When the source declares
+// `const DURATION = <number>` it is read from there (and --duration, if given, must agree).
+// three and esbuild come from deps.mjs.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { build, NODE_PATHS, THREE_VERSION } from './deps.mjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
+const MAX_ENTRY_BYTES = 8_388_608;
+
+const { values: opts } = parseArgs({
+  options: {
+    src: { type: 'string' },
+    out: { type: 'string' },
+    name: { type: 'string' },
+    duration: { type: 'string' },
+    fps: { type: 'string', default: '30' },
+    minify: { type: 'boolean', default: false },
+  },
+});
+if (Boolean(opts.src) !== Boolean(opts.out)) throw Error('--src and --out go together: node build.mjs --src <world.ts> --out <file>.scene.json');
+const custom = Boolean(opts.src);
+
+const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+async function packageWorld({ entryPoint, title, entryName, duration, authoredFps, minify, credit }) {
+  const result = await build({
+    entryPoints: [entryPoint],
+    bundle: true,
+    format: 'iife',
+    platform: 'browser',
+    target: ['chrome110'],
+    minify,
+    legalComments: 'none',
+    nodePaths: NODE_PATHS,
+    write: false,
+    logLevel: 'warning',
+  });
+  let js = result.outputFiles[0].text;
+  // keep the inline script from closing early or entering HTML comment parsing
+  js = js.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05080f}canvas{display:block;width:100vw;height:100vh}</style>
+</head>
+<body>
+<script>${credit ? `/* ${credit} */\n` : ''}${js}</script>
+</body>
+</html>
+`;
+
+  // The host injects its CSP after the first <head ...> and its bridge before the
+  // first </body>; neither may appear earlier inside the script.
+  const firstHead = html.search(/<head([^>]*)>/i);
+  const firstBodyClose = html.search(/<\/body>/i);
+  if (firstHead !== html.indexOf('<head>')) throw Error('unexpected <head match');
+  if (firstBodyClose !== html.lastIndexOf('</body>')) throw Error('script contains </body>');
+
+  const bytes = Buffer.from(html, 'utf8');
+  if (bytes.length > MAX_ENTRY_BYTES) throw Error(`entry too large: ${bytes.length}`);
+  const digest = 'sha256:' + createHash('sha256').update(bytes).digest('hex');
+  const pkg = {
+    manifest: { formatVersion: 1, entry: entryName, duration, authoredFps },
+    entry: { digest, filename: entryName, media_type: 'text/html', size: bytes.length },
+    assets: [],
+    html,
+  };
+  const packageJson = JSON.stringify(pkg);
+  return { html, bytes, digest, packageJson };
+}
+
+if (custom) {
+  const entryPoint = resolve(opts.src);
+  const out = resolve(opts.out);
+  const declared = /\bDURATION\s*(?::\s*number\s*)?=\s*(\d+(?:\.\d+)?)\b/.exec(readFileSync(entryPoint, 'utf8'));
+  const given = opts.duration === undefined ? undefined : Number(opts.duration);
+  if (given !== undefined && !(given > 0)) throw Error(`--duration must be a positive number of seconds, got ${opts.duration}`);
+  if (declared && given !== undefined && Number(declared[1]) !== given) {
+    throw Error(`--duration ${given} but ${basename(entryPoint)} declares DURATION = ${declared[1]}; they must be equal`);
+  }
+  const duration = given ?? (declared ? Number(declared[1]) : undefined);
+  if (duration === undefined) throw Error(`no DURATION found in ${basename(entryPoint)}; pass --duration <seconds> equal to it`);
+  const stem = basename(entryPoint, extname(entryPoint));
+  const { bytes, digest, packageJson } = await packageWorld({
+    entryPoint,
+    title: opts.name ?? stem,
+    entryName: `${stem}.html`,
+    duration,
+    authoredFps: Number(opts.fps),
+    minify: opts.minify,
+    credit: `three.js r${THREE_VERSION.split('.')[1]} (${THREE_VERSION}), MIT License, Copyright 2010-2026 three.js authors.`,
+  });
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, packageJson);
+  console.log(JSON.stringify({ out, duration, entryBytes: bytes.length, packageChars: packageJson.length, digest }, null, 2));
+  process.exit(0);
+}
+
 const prepared = join(root, 'prepared');
 const cache = join(root, '.cache');
 // The explorer's module lives in the extension's ui/ folder; this folder stays out of ui/
@@ -20,49 +123,16 @@ mkdirSync(cache, { recursive: true });
 const ENTRY_NAME = 'lantern-valley.html';
 const DURATION = 75;
 const AUTHORED_FPS = 30;
-const MAX_ENTRY_BYTES = 8_388_608;
 
-const result = await build({
-  entryPoints: [join(root, 'src/main.ts')],
-  bundle: true,
-  format: 'iife',
-  platform: 'browser',
-  target: ['chrome110'],
+const { html, bytes, digest, packageJson } = await packageWorld({
+  entryPoint: join(root, 'src/main.ts'),
+  title: 'Lantern Valley',
+  entryName: ENTRY_NAME,
+  duration: DURATION,
+  authoredFps: AUTHORED_FPS,
   minify: true,
-  legalComments: 'none',
-  nodePaths: NODE_PATHS,
-  write: false,
-  logLevel: 'warning',
+  credit: `Lantern Valley, an Astrid sample world. three.js r${THREE_VERSION.split('.')[1]} (${THREE_VERSION}), MIT License, Copyright 2010-2026 three.js authors.`,
 });
-let js = result.outputFiles[0].text;
-// keep the inline script from closing early or entering HTML comment parsing
-js = js.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
-
-const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lantern Valley</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05080f}canvas{display:block;width:100vw;height:100vh}</style>
-</head>
-<body>
-<script>/* Lantern Valley, an Astrid sample world. three.js r${THREE_VERSION.split('.')[1]} (${THREE_VERSION}), MIT License, Copyright 2010-2026 three.js authors. */
-${js}</script>
-</body>
-</html>
-`;
-
-// The host injects its CSP after the first <head ...> and its bridge before the
-// first </body>; neither may appear earlier inside the script.
-const firstHead = html.search(/<head([^>]*)>/i);
-const firstBodyClose = html.search(/<\/body>/i);
-if (firstHead !== html.indexOf('<head>')) throw Error('unexpected <head match');
-if (firstBodyClose !== html.lastIndexOf('</body>')) throw Error('script contains </body>');
-
-const bytes = Buffer.from(html, 'utf8');
-if (bytes.length > MAX_ENTRY_BYTES) throw Error(`entry too large: ${bytes.length}`);
-const digest = 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 
 // The world description comes from the scene source itself, so world.json and
 // what the entry reports at runtime always agree.
@@ -83,13 +153,6 @@ const mod = await import('data:text/javascript;base64,' + Buffer.from(describe.o
 if (mod.DURATION !== DURATION) throw Error(`cameras span ${mod.DURATION}s but the manifest says ${DURATION}s`);
 const description = { explore: mod.EXPLORE, cameras: mod.CAMERAS, events: mod.EVENTS };
 
-const pkg = {
-  manifest: { formatVersion: 1, entry: ENTRY_NAME, duration: DURATION, authoredFps: AUTHORED_FPS },
-  entry: { digest, filename: ENTRY_NAME, media_type: 'text/html', size: bytes.length },
-  assets: [],
-  html,
-};
-const packageJson = JSON.stringify(pkg);
 writeFileSync(join(prepared, 'lantern-valley.scene.json'), packageJson);
 writeFileSync(join(cache, ENTRY_NAME), html);
 writeFileSync(join(prepared, 'world.json'), JSON.stringify(description, null, 2) + '\n');

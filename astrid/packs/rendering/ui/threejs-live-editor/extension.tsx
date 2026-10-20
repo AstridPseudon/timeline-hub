@@ -77,7 +77,7 @@ const LiveSceneClip: FC<LiveSceneClipProps> = ({
         placeItems: 'center',
       },
     }, 'Loading live scene…'),
-  }, createElement(LazySceneSurface, { source: source?.liveScene, sourceTime, width, height }));
+  }, createElement(LazySceneSurface, { source: source?.liveScene, sourceTime, width, height, showStatus: false }));
 };
 
 const LazyWorldExplorerPanel = lazy(() =>

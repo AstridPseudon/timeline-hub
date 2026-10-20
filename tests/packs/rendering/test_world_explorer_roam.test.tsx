@@ -425,20 +425,30 @@ describe('World Explorer free roam', () => {
 
     press(viewer, 'w');
     stepAck(10);
+    // Speed eases in, so the camera is still short of its top speed after 160 ms.
+    const earlyDistance = start[2] - latest().view!.position[2];
+    expect(earlyDistance).toBeGreaterThan(0);
+    expect(earlyDistance).toBeLessThan(EXPLORE.speed * 0.16);
+    release(viewer, 'w');
+    // ...and it glides to rest after release instead of stopping dead.
+    stepAck(2);
+    const gliding = latest().view!.position[2];
+    expect(gliding).toBeLessThan(start[2] - earlyDistance);
+    runFor(1500, 16);
     const walked = [...latest().view!.position];
-    expect(walked[2]).toBeLessThan(start[2]);
+    expect(walked[2]).toBeLessThan(start[2] - earlyDistance);
     expect(walked[0]).toBeCloseTo(start[0], 9);
     expect(walked[1]).toBeCloseTo(start[1], 9);
+    stepAck(5);
+    expect(latest().view!.position[2]).toBeCloseTo(walked[2], 9);
     const walkDistance = start[2] - walked[2];
 
-    release(viewer, 'w');
-    stepAck(10);
-    expect(latest().view!.position[2]).toBeCloseTo(walked[2], 9);
-
+    // From rest again, the same hold with Shift travels three times as far.
     press(viewer, 'W', { shiftKey: true });
     stepAck(10);
-    const runDistance = walked[2] - latest().view!.position[2];
     release(viewer, 'W', { shiftKey: true });
+    runFor(1500, 16);
+    const runDistance = walked[2] - latest().view!.position[2];
     expect(runDistance / walkDistance).toBeCloseTo(3, 5);
   });
 
@@ -453,16 +463,18 @@ describe('World Explorer free roam', () => {
     press(viewer, 'w');
     runFor(480, 16);
     release(viewer, 'w');
+    runFor(1504, 16);
     const shortSteps = start - latest().view!.position[2];
     expect(shortSteps).toBeGreaterThan(0.5);
 
     press(viewer, 'r');
-    ack();
+    runFor(500, 16);
     expect(latest().view!.position[2]).toBeCloseTo(start, 9);
 
     press(viewer, 'w');
     runFor(480, 32);
     release(viewer, 'w');
+    runFor(1504, 32);
     const longSteps = start - latest().view!.position[2];
     expect(longSteps).toBeCloseTo(shortSteps, 6);
   });
@@ -502,8 +514,8 @@ describe('World Explorer free roam', () => {
     release(viewer, 'w');
     expect(latest().view!.position[2]).toBeLessThan(START_POSITION[2]);
     press(viewer, 'r');
-    ack();
-    expect([...latest().view!.position]).toEqual([...START_POSITION]);
+    runFor(500, 16);
+    latest().view!.position.forEach((value, axis) => expect(value).toBeCloseTo(START_POSITION[axis], 9));
   });
 
   it('never leaves the explore box, however long a key is held', async () => {
@@ -548,7 +560,7 @@ describe('World Explorer free roam', () => {
     pointer(viewer, 'pointerdown', 100, 100);
     pointer(viewer, 'pointermove', 160, 100);
     pointer(viewer, 'pointerup', 160, 100);
-    stepAck(1);
+    runFor(400, 16);
     expect([...latest().view!.quaternion]).not.toEqual(startQuaternion);
     expect(quatRotate(latest().view!.quaternion, [0, 0, -1])[0]).toBeGreaterThan(0.1);
 
@@ -556,7 +568,7 @@ describe('World Explorer free roam', () => {
     pointer(viewer, 'pointerdown', 100, 100);
     for (let y = 200; y <= 4000; y += 200) pointer(viewer, 'pointermove', 100, y);
     pointer(viewer, 'pointerup', 100, 4000);
-    stepAck(1);
+    runFor(400, 16);
     const down = quatRotate(latest().view!.quaternion, [0, 0, -1]);
     expect(Math.abs(down[1])).toBeLessThanOrEqual(limit + 1e-9);
     expect(down[1]).toBeCloseTo(-limit, 4);
@@ -564,9 +576,22 @@ describe('World Explorer free roam', () => {
     pointer(viewer, 'pointerdown', 100, 100);
     for (let y = 100; y >= -4000; y -= 200) pointer(viewer, 'pointermove', 100, y);
     pointer(viewer, 'pointerup', 100, -4000);
-    stepAck(1);
+    runFor(400, 16);
     const up = quatRotate(latest().view!.quaternion, [0, 0, -1]);
     expect(up[1]).toBeCloseTo(limit, 4);
+  });
+
+  it('uses a 50 degree field of view and a crosshair that hides while dragging', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE);
+    const viewer = viewerOf(view);
+    expect(latest().view!.fov).toBe(50);
+    expect(viewer.style.cursor).toBe('crosshair');
+    pointer(viewer, 'pointerdown', 100, 100);
+    expect(viewer.style.cursor).toBe('none');
+    pointer(viewer, 'pointerup', 100, 100);
+    expect(viewer.style.cursor).toBe('crosshair');
   });
 
   it('the wheel changes the speed chip, scales walking, and is consumed by the viewer', async () => {
@@ -628,7 +653,12 @@ describe('World Explorer free roam', () => {
 
     fireEvent.click(view.getByRole('button', { name: 'Reset view' }));
     ack();
-    expect([...latest().view!.position]).toEqual([...START_POSITION]);
+    // It glides back rather than snapping.
+    advance(1, 16);
+    ack();
+    expect([...latest().view!.position]).not.toEqual([...START_POSITION]);
+    runFor(500, 16);
+    latest().view!.position.forEach((value, axis) => expect(value).toBeCloseTo(START_POSITION[axis], 9));
   });
 
   it('Cameras mode sends no view or world time, and Explore sends both again', async () => {

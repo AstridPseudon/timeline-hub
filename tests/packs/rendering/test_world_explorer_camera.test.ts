@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe,expect,it} from 'vitest';
 import {
-  MAX_PITCH,clampPitch,clampToBounds,defaultExploreSpeed,forwardFromYawPitch,FreeCamera,
+  LOOK_SETTLE,MAX_PITCH,MOVE_EASE_IN,MOVE_EASE_OUT,RESET_DURATION,clampPitch,clampToBounds,defaultExploreSpeed,forwardFromYawPitch,FreeCamera,
   quatFromYawPitch,quatRotate,vadd,vcross,vdot,vlength,vnormalize,vscale,vsub,yawPitchFromDirection,yawPitchLookAt,
   type Bounds,
 } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/camera';
@@ -226,5 +226,124 @@ describe('FreeCamera',()=>{
     expect(pose.position).toEqual([1,2,3]);
     expect(pose.fov).toBe(60);
     expectVecClose(quatRotate(pose.quaternion,[0,0,-1]),[-1,0,0]);
+  });
+});
+
+describe('eased motion',()=>{
+  const FWD={forward:1,right:0,up:0};
+  const NONE={forward:0,right:0,up:0};
+  const run=(cam:FreeCamera,input:typeof FWD,speed:number,seconds:number,dt=1/60)=>{
+    for(let t=0;t<seconds-1e-9;t+=dt)cam.advance(input,speed,dt);
+  };
+  const zOf=(cam:FreeCamera)=>cam.position[2];
+
+  it('eases velocity in: not instant, about 95% of top speed after the ease-in time',()=>{
+    const cam=new FreeCamera(LOOK_NEG_Z);
+    cam.advance(FWD,10,1/60);
+    expect(-zOf(cam)).toBeGreaterThan(0);
+    expect(-zOf(cam)).toBeLessThan(10/60*0.5);
+    run(cam,FWD,10,MOVE_EASE_IN-1/60);
+    const before=zOf(cam);
+    cam.advance(FWD,10,1/60);
+    const speed=(before-zOf(cam))*60;
+    expect(speed).toBeGreaterThan(9.0);
+    expect(speed).toBeLessThanOrEqual(10);
+  });
+
+  it('glides out after release and settles to a stop without reversing',()=>{
+    const cam=new FreeCamera(LOOK_NEG_Z);
+    run(cam,FWD,10,1);
+    let last=zOf(cam);
+    cam.advance(NONE,10,1/60);
+    expect(last-zOf(cam)).toBeGreaterThan(0); // still gliding
+    expect(cam.moving).toBe(true);
+    for(let i=0;i<600&&cam.moving;i++){
+      last=zOf(cam);
+      cam.advance(NONE,10,1/60);
+      expect(zOf(cam)).toBeLessThanOrEqual(last); // never back up
+    }
+    expect(cam.moving).toBe(false);
+    // stopping distance of a first-order glide is v * tau = 10 * (3/rate)... close to speed * out-time / 3
+    run(cam,NONE,10,0.5);
+    const rest=zOf(cam);
+    run(cam,NONE,10,0.5);
+    expect(zOf(cam)).toBe(rest);
+    expect(MOVE_EASE_OUT).toBeGreaterThan(MOVE_EASE_IN);
+  });
+
+  it('covers the same distance whatever the frame length',()=>{
+    const a=new FreeCamera(LOOK_NEG_Z);
+    const b=new FreeCamera(LOOK_NEG_Z);
+    run(a,FWD,10,0.5,1/60);run(a,NONE,10,1,1/60);
+    run(b,FWD,10,0.5,1/30);run(b,NONE,10,1,1/30);
+    expect(zOf(a)).toBeCloseTo(zOf(b),6);
+  });
+
+  it('never overshoots the bounds, however long or fast it pushes',()=>{
+    const cam=new FreeCamera({position:[0,1,0],target:[0,1,-1]},BOX);
+    for(let i=0;i<600;i++){
+      cam.advance({forward:1,right:-1,up:1},500,1/30);
+      expect(cam.position[0]).toBeGreaterThanOrEqual(BOX.min[0]);
+      expect(cam.position[1]).toBeLessThanOrEqual(BOX.max[1]);
+      expect(cam.position[2]).toBeGreaterThanOrEqual(BOX.min[2]);
+    }
+    for(let i=0;i<600;i++){
+      cam.advance(NONE,500,1/30);
+      cam.position.forEach((v,k)=>{expect(v).toBeGreaterThanOrEqual(BOX.min[k]);expect(v).toBeLessThanOrEqual(BOX.max[k]);});
+    }
+  });
+
+  it('smooths look: lags the drag, then settles on exactly the dragged angle without overshoot',()=>{
+    const cam=new FreeCamera(LOOK_NEG_Z);
+    cam.lookBy(0.5,0.2);
+    cam.advance(NONE,1,1/60);
+    expect(cam.yaw).toBeGreaterThan(0);
+    expect(cam.yaw).toBeLessThan(0.5);
+    let steps=0;
+    while(cam.yaw<0.5*0.95){cam.advance(NONE,1,1/60);steps++;expect(cam.yaw).toBeLessThanOrEqual(0.5+1e-9);expect(cam.pitch).toBeLessThanOrEqual(0.2+1e-9);}
+    expect((steps+1)/60).toBeLessThanOrEqual(LOOK_SETTLE+1/30);
+    run(cam,NONE,1,1);
+    expect(cam.yaw).toBeCloseTo(0.5,6);
+    expect(cam.pitch).toBeCloseTo(0.2,6);
+    expect(cam.moving).toBe(false);
+  });
+
+  it('keeps pitch inside the limit under repeated drags',()=>{
+    const cam=new FreeCamera(LOOK_NEG_Z);
+    for(let i=0;i<50;i++){cam.lookBy(0,0.3);cam.advance(NONE,1,1/60);expect(cam.pitch).toBeLessThanOrEqual(MAX_PITCH);}
+    run(cam,NONE,1,1);
+    expect(cam.pitch).toBeCloseTo(MAX_PITCH,6);
+  });
+
+  it('eases back to the start view on reset over RESET_DURATION, and input interrupts it',()=>{
+    const cam=new FreeCamera({position:[1,1,1],target:[1,1,-5]},BOX);
+    run(cam,FWD,6,0.5);cam.lookBy(1,0.3);run(cam,NONE,6,1);
+    const start=new FreeCamera({position:[1,1,1],target:[1,1,-5]},BOX);
+    cam.resetSmooth();
+    cam.advance(NONE,6,1/60);
+    expect(cam.position).not.toEqual(start.position); // not a snap
+    run(cam,NONE,6,RESET_DURATION/2);
+    const mid=zOf(cam);
+    expect(mid).not.toBeCloseTo(start.position[2],3);
+    run(cam,NONE,6,RESET_DURATION);
+    expect(cam.moving).toBe(false);
+    cam.position.forEach((v,i)=>expect(v).toBeCloseTo(start.position[i],9));
+    expect(cam.yaw).toBeCloseTo(start.yaw,9);
+    expect(cam.pitch).toBeCloseTo(start.pitch,9);
+    // pressing a key mid-glide hands control back
+    cam.lookBy(1,0);run(cam,NONE,1,0.5);cam.resetSmooth();cam.advance(NONE,6,1/60);
+    const yawNow=cam.yaw;cam.advance(FWD,6,1/60);cam.advance(FWD,6,1/60);
+    expect(cam.moving).toBe(true);
+    expect(Math.abs(cam.yaw-yawNow)).toBeLessThan(0.05);
+  });
+
+  it('turns the short way round on reset',()=>{
+    const cam=new FreeCamera({position:[0,0,0],target:[0,0,-1]});
+    cam.look(Math.PI*0.9,0);cam.look(Math.PI*0.2,0); // wraps past PI
+    cam.resetSmooth();
+    let widest=0;
+    for(let i=0;i<60;i++){cam.advance(NONE,1,1/60);widest=Math.max(widest,Math.abs(cam.yaw));}
+    expect(widest).toBeLessThan(Math.PI*1.2);
+    expect(cam.yaw).toBeCloseTo(0,9);
   });
 });

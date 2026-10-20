@@ -121,7 +121,7 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
   });
 }
 
-export function SceneSurface({ source, sourceTime, width, height, view, worldTime, onStatus, onReady, showStatus = true }: {
+export function SceneSurface({ source, sourceTime, width, height, view, worldTime, onStatus, onReady, showStatus = false }: {
   source: unknown; sourceTime: number; width: number; height: number;
   /** The explorer's free view. Never set by the timeline preview or exports: the scene then draws its authored camera. */
   view?: SceneView;

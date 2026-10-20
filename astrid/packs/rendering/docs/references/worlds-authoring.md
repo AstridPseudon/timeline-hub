@@ -128,7 +128,11 @@ explorer shows it).
 - **`explore`**: `start.position` and `start.target` are finite `[x, y, z]`
   and not equal. `speed`, if given, is `> 0` and `<= 10000`; without it the
   explorer moves at the largest bounds extent divided by 8 per second (4
-  without bounds), and the user can scale it. `bounds.min` must be below
+  without bounds), and the user can scale it. Pick `speed` so a walk to the
+  far side of the area you want visitors to see takes about 5 to 6 seconds
+  at 1x (Lantern Valley's village is about 320 m from its start, so it uses
+  60). Too slow reads as stuck, and the user can only scale by a few steps.
+  Movement eases in and out, so the speed is a top speed. `bounds.min` must be below
   `bounds.max` on every axis. A start position outside the bounds is clamped
   into them. If any part is invalid, the whole declaration is dropped and the
   world counts as not explorable: the explorer opens it in Cameras mode only.
@@ -379,7 +383,10 @@ Manifest-only changes therefore publish a new package revision. Do not spread
 another mutable `manifest`, `entry` or `assets` object beside this envelope.
 
 Limits: an entry of at most 8,388,608 UTF-8 bytes, a package body of at most
-65,536 characters, at most 16 assets and at most 16,777,216 total asset bytes.
+65,536 characters (the 64 KB limit: it counts only the small JSON `manifest`,
+`entry` metadata and `assets` list shown above, not the HTML, so a normal
+world is a few hundred characters and a multi-megabyte `.scene.json` file is
+fine), at most 16 assets and at most 16,777,216 total asset bytes.
 The prepared import below accepts only `"assets": []`, and listing an asset
 object does not create a browser URL for the entry. Bundle code, fonts,
 textures and models into the HTML. The implementation is in
@@ -389,28 +396,48 @@ and [`shared/live_scenes/package.py`](../../shared/live_scenes/package.py).
 
 ## Bring a world into a project
 
-Bundle the TypeScript source with the repository-pinned `three` from the
-Remotion workspace, then put the result in one self-contained HTML entry:
+Run every command below **from the repository root**. First type-check the
+source (optional but quick), then bundle and package it with one command:
 
 ```bash
 remotion/node_modules/.bin/tsc --noEmit --strict --skipLibCheck \
   --target ES2022 --module ESNext --moduleResolution Bundler \
   --baseUrl remotion --typeRoots remotion/node_modules/@types \
   astrid/packs/rendering/docs/templates/world-template.ts
-remotion/node_modules/.bin/esbuild \
-  astrid/packs/rendering/docs/templates/world-template.ts \
-  --bundle --format=iife --platform=browser --target=es2022 \
-  --alias:three=./remotion/node_modules/three \
-  --outfile=/private/tmp/world.bundle.js
+
+mkdir -p output/worlds
+node astrid/packs/rendering/worlds/lantern-valley/build.mjs \
+  --src astrid/packs/rendering/docs/templates/world-template.ts \
+  --out output/worlds/world-template.scene.json
 ```
+
+`build.mjs` needs `three` and `esbuild` together in one `node_modules` folder:
+`remotion/node_modules` (the repository-pinned `three`; run `npm install` in
+`remotion` if it is missing), or any other folder you name with
+`LANTERN_VALLEY_DEPS=/abs/path/to/node_modules`. It bundles the source, wraps the
+bundle in the HTML entry below, computes the entry's SHA-256 digest and UTF-8
+size, and writes the prepared package. Options: `--name "My World"` (the page
+title; defaults to the file name), `--duration <s>`, `--fps <n>` (default 30)
+and `--minify`. It prints the output path, duration, entry size and digest.
+`--src` and `--out` take relative or absolute paths, and `--out` creates its
+folders, so `mkdir` is optional. `output/worlds/` is just a scratch folder.
+Failures (missing dependency, duration mismatch, a missing `</body>`, an
+entry over 8 MiB) stop the build with a one-line error and write nothing.
+The `packageChars` it prints is the length of the whole file, which is not
+the 64 KB package-body limit described under "Package and entry contract" above.
+
+**`DURATION` must equal `manifest.duration`.** Declare it once in the source as
+`const DURATION = 10;`; `build.mjs` reads it from there and writes the same
+number into the manifest. `--duration` is needed only when the source has no such line; if you
+pass it as well, it must match the source or the build stops. Every time and clip range is measured against it.
 
 The entry is `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <script>…bundle…</script></body></html>`. It needs both a `<head>` and a
 `</body>` tag, because the host injects its CSP into the head and its bridge
-before `</body>`. Leave the bundle unminified unless you are near the size
-limit. The agent route edits exact text spans, and readable `EVENTS`,
-`CAMERAS` and `EXPLORE` blocks with unique names can be found and changed in
-one step.
+before `</body>`; the build checks this. The bundle stays unminified unless you
+pass `--minify`, so use that only if you are near the 8 MiB entry limit. The
+agent route edits exact text spans, and readable `EVENTS`, `CAMERAS` and
+`EXPLORE` blocks with unique names can be found and changed in one step.
 
 The prepared handoff is JSON with the exact manifest, entry
 `{digest, media_type: "text/html", size, filename}` (SHA-256 `digest` and

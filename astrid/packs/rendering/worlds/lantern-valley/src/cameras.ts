@@ -204,8 +204,8 @@ export function moveSamples(): { name: string; t: number; worldTime: number; pos
 
 export const EXPLORE = {
   start: { position: [52, 26, 238] as [number, number, number], target: [4, 12, 118] as [number, number, number] },
-  /** metres per second; the valley is about a kilometre long */
-  speed: 6,
+  /** metres per second; the valley is about a kilometre long. The village is ~320 m from the start: ~5.5 s of W at 1x. */
+  speed: 60,
   bounds: { min: [-360, 0, -660] as [number, number, number], max: [360, 180, 440] as [number, number, number] },
 };
 

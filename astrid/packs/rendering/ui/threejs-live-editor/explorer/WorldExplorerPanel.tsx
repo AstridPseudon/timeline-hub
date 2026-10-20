@@ -60,7 +60,8 @@ const WIDE_REM = 38;
 const SIDE_COLUMN = '13rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
 const CONTROLS_MIN_HEIGHT = '10rem';
-const VIEW_FOV = 60;
+/** Wide enough to see the world, narrow enough that a big view does not stretch its edges. */
+const VIEW_FOV = 50;
 /** Radians of turn per dragged pixel. */
 const LOOK_PER_PIXEL = 0.0035;
 /** Touch pans and pinches move this many seconds of travel per 120 px. */
@@ -157,6 +158,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const worldClock = useRef<TravelClock | null>(null);
   const travelClock = useRef<TravelClock | null>(null);
   const roam = useRef<FreeCamera | null>(null);
+  // Dragging turns the head rather than grabbing the world, so the cursor is a crosshair (hidden mid-drag).
+  const [dragging, setDragging] = useState(false);
   const baseSpeed = useRef(1);
   const scaleRef = useRef(1);
   const shiftRef = useRef(false);
@@ -360,9 +363,10 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         }
         const held = heldKeys.current;
         const view = roam.current;
-        if (view && held.size) {
+        // Always advance (not only while keys are held): velocity and look ease out after release.
+        if (view && (held.size || view.moving)) {
           const axis = (plus: string, minus: string) => (held.has(plus) ? 1 : 0) - (held.has(minus) ? 1 : 0);
-          view.move(
+          view.advance(
             { forward: axis('forward+', 'forward-'), right: axis('right+', 'right-'), up: axis('up+', 'up-') },
             baseSpeed.current * scaleRef.current * (shiftRef.current ? SHIFT_BOOST : 1),
             dt,
@@ -731,7 +735,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }
 
   function resetView() {
-    roam.current?.reset();
+    roam.current?.resetSmooth();
     pump();
   }
 
@@ -771,6 +775,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     heldKeys.current.clear();
     shiftRef.current = false;
     pointers.current.clear();
+    setDragging(false);
   }
 
   function onViewerPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -781,6 +786,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (effectiveMode() !== 'explore' || !roam.current) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    setDragging(true);
   }
 
   function onViewerPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -792,7 +798,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (!Number.isFinite(x) || !Number.isFinite(y)) return;
     if (pointers.current.size === 1) {
       // One pointer looks: dragging right turns the view right, dragging down looks down.
-      view.look(-(x - previous.x) * LOOK_PER_PIXEL, -(y - previous.y) * LOOK_PER_PIXEL);
+      view.lookBy(-(x - previous.x) * LOOK_PER_PIXEL, -(y - previous.y) * LOOK_PER_PIXEL);
       dragPixels.current += Math.hypot(x - previous.x, y - previous.y);
       if (dragPixels.current >= LOOKED_PIXELS) noteHint('looked');
     } else if (pointers.current.size === 2) {
@@ -811,6 +817,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function onViewerPointerUp(event: PointerEvent<HTMLDivElement>) {
     pointers.current.delete(event.pointerId);
+    if (!pointers.current.size) setDragging(false);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   }
 
@@ -1182,7 +1189,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             data-autofocus
             data-mode={mode}
             className="relative touch-none select-none overflow-hidden rounded-md border border-border/70 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
-            style={{ ...VIEWER_STYLE, width: viewSize.width, height: viewSize.height, cursor: exploring ? 'grab' : undefined }}
+            style={{ ...VIEWER_STYLE, width: viewSize.width, height: viewSize.height, cursor: exploring ? (dragging ? 'none' : 'crosshair') : undefined }}
             onKeyDown={onViewerKeyDown}
             onKeyUp={onViewerKeyUp}
             onBlur={onViewerBlur}

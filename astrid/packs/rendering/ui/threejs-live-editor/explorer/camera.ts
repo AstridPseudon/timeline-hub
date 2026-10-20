@@ -8,6 +8,22 @@ export const MAX_PITCH = (89 * Math.PI) / 180;
 const TWO_PI = Math.PI * 2;
 const MAX_DT = 0.1;
 
+// ---- motion feel ----------------------------------------------------------
+// Settle times are to within 5% of the target.
+/** Velocity eases in (seconds to reach 95% of the held speed) ... */
+export const MOVE_EASE_IN = 0.12;
+/** ... and glides out after release. */
+export const MOVE_EASE_OUT = 0.2;
+/** Dragging aims a target; the view follows it, critically damped, settled within this. */
+export const LOOK_SETTLE = 0.08;
+/** R glides back to the start view over this long (smoothstep). */
+export const RESET_DURATION = 0.4;
+// A critically damped response 95% settled at 4.74 / w; a first-order one at 3 / w.
+const DAMPED_95 = 4.74;
+const FIRST_ORDER_95 = 3;
+/** Below this speed (units/s, per axis) a gliding camera counts as stopped. */
+const REST = 1e-7;
+
 export type Bounds = { readonly min: Vec3; readonly max: Vec3 };
 export type MoveInput = { forward: number; right: number; up: number };
 export type ViewPose = {
@@ -137,7 +153,25 @@ function sanitizeAxis(n: number): number {
   return finite(n) ? Math.min(1, Math.max(-1, n)) : 0;
 }
 
+// Exact critically damped step of `x` toward 0 (x is the remaining distance, v its rate of change).
+function dampStep(x: number, v: number, w: number, dt: number): [number, number] {
+  const e = Math.exp(-w * dt);
+  const c = v + w * x;
+  return [(x + c * dt) * e, (v - w * c * dt) * e];
+}
+
+const smoothstep = (t: number) => {
+  const c = Math.min(1, Math.max(0, t));
+  return c * c * (3 - 2 * c);
+};
+
 export class FreeCamera {
+  // Eased motion state: velocity in the camera's own (right, up, forward) axes, the look still to apply
+  // (and how fast it is closing), and a reset glide when R was pressed.
+  private vel: [number, number, number] = [0, 0, 0];
+  private lookLeft: [number, number] = [0, 0];
+  private lookRate: [number, number] = [0, 0];
+  private glide: { t: number; from: { position: [number, number, number]; yaw: number; pitch: number } } | null = null;
   private _position: [number, number, number];
   private _yaw: number;
   private _pitch: number;
@@ -172,11 +206,13 @@ export class FreeCamera {
   }
 
   reset(): void {
+    this.settleMotion();
     this.setState(this.start.position, this.start.yaw, this.start.pitch);
   }
 
   look(dYaw: number, dPitch: number): void {
     if (!finite(dYaw) || !finite(dPitch)) return;
+    this.glide = null;
     this.setState(this._position, wrapYaw(this._yaw + dYaw), clampPitch(this._pitch + dPitch));
   }
 
@@ -195,8 +231,105 @@ export class FreeCamera {
     this.translate(r * distance, u * distance, f * distance);
   }
 
+  /** Aim the view by this much; `advance` closes the gap smoothly. */
+  lookBy(dYaw: number, dPitch: number): void {
+    if (!finite(dYaw) || !finite(dPitch)) return;
+    this.glide = null;
+    const pending = this._pitch + this.lookLeft[1];
+    const wanted = clampPitch(pending + dPitch);
+    this.lookLeft[0] += dYaw;
+    this.lookLeft[1] += wanted - pending;
+  }
+
+  private settleMotion(): void {
+    this.vel = [0, 0, 0];
+    this.lookLeft = [0, 0];
+    this.lookRate = [0, 0];
+    this.glide = null;
+  }
+
+  /** Glide back to the start view (R); any input takes over again. */
+  resetSmooth(): void {
+    this.settleMotion();
+    this.glide = { t: 0, from: { position: [...this._position], yaw: this._yaw, pitch: this._pitch } };
+  }
+
+  /** True while velocity, look or a reset is still settling. */
+  get moving(): boolean {
+    return this.glide !== null || this.vel.some((v) => v !== 0) || this.lookLeft.some((v) => v !== 0) || this.lookRate.some((v) => v !== 0);
+  }
+
+  /** One frame of eased motion: velocity follows the held input, look follows what was dragged. */
+  advance(input: MoveInput, speed: number, dt: number): void {
+    const step = finite(dt) ? Math.min(MAX_DT, Math.max(0, dt)) : 0;
+    if (step === 0) return;
+    let f = sanitizeAxis(input.forward);
+    let r = sanitizeAxis(input.right);
+    let u = sanitizeAxis(input.up);
+    const len = Math.hypot(f, r, u);
+    if (len > 1) {
+      f /= len;
+      r /= len;
+      u /= len;
+    }
+    if (this.glide) {
+      if (len === 0) return this.advanceGlide(step);
+      this.glide = null;
+    }
+    // Velocity follows the held direction, first-order: monotone, so it can neither overshoot the
+    // target speed nor reverse by itself. Starting is quicker than stopping.
+    const top = finite(speed) ? speed : 0;
+    const want = [r * top, u * top, f * top];
+    const rate = FIRST_ORDER_95 / (len > 0 ? MOVE_EASE_IN : MOVE_EASE_OUT);
+    const e = Math.exp(-rate * step);
+    const travel = [0, 0, 0];
+    for (let i = 0; i < 3; i++) {
+      const gap = this.vel[i] - want[i];
+      // Exact integral of the exponential approach, so distance does not depend on the frame length.
+      travel[i] = want[i] * step + (gap * (1 - e)) / rate;
+      const next = want[i] + gap * e;
+      this.vel[i] = len === 0 && Math.abs(next) < REST ? 0 : next;
+    }
+    // Bounds clamp the position every step, so pressing against an edge can never push through it.
+    if (travel.some((d) => d !== 0)) this.translate(travel[0], travel[1], travel[2]);
+    // Look: close the remaining angle, critically damped, so it follows a drag within LOOK_SETTLE.
+    const w = DAMPED_95 / LOOK_SETTLE;
+    let dYaw = 0;
+    let dPitch = 0;
+    for (let i = 0; i < 2; i++) {
+      const before = this.lookLeft[i];
+      if (before === 0 && this.lookRate[i] === 0) continue;
+      const [left, v] = dampStep(before, this.lookRate[i], w, step);
+      const done = Math.abs(left) < 1e-7 && Math.abs(v) < 1e-5;
+      this.lookLeft[i] = done ? 0 : left;
+      this.lookRate[i] = done ? 0 : v;
+      if (i === 0) dYaw = before - this.lookLeft[i];
+      else dPitch = before - this.lookLeft[i];
+    }
+    if (dYaw !== 0 || dPitch !== 0) {
+      this.setState(this._position, wrapYaw(this._yaw + dYaw), clampPitch(this._pitch + dPitch));
+    }
+  }
+
+  private advanceGlide(step: number): void {
+    const glide = this.glide!;
+    glide.t += step;
+    const k = smoothstep(glide.t / RESET_DURATION);
+    const { from } = glide;
+    const to = this.start;
+    // Both ends are inside the bounds, so every point between them is too. Turn the short way round.
+    const mix = (a: number, b: number) => a + (b - a) * k;
+    this.setState(
+      [mix(from.position[0], to.position[0]), mix(from.position[1], to.position[1]), mix(from.position[2], to.position[2])],
+      wrapYaw(from.yaw + wrapYaw(to.yaw - from.yaw) * k),
+      mix(from.pitch, to.pitch),
+    );
+    if (glide.t >= RESET_DURATION) this.glide = null;
+  }
+
   translate(right: number, up: number, forward: number): void {
     if (!finite(right) || !finite(up) || !finite(forward)) return;
+    this.glide = null;
     const fwd = forwardFromYawPitch(this._yaw, this._pitch);
     const rightVec: Vec3 = [Math.cos(this._yaw), 0, -Math.sin(this._yaw)];
     const delta = vadd(
