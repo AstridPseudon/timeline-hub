@@ -1,0 +1,566 @@
+#!/usr/bin/env python3
+"""Build the Timeline delivery ZIP.
+
+For each repo: one squashed patch that turns origin/main into tl/integration's tree, and a git
+bundle of tl/integration. The patch is a single commit on origin/main whose message lists the
+first-parent commits of the range. Verification re-applies the patch with git am to a fresh
+repository holding only origin/main, checks the bundle, and compares both resulting trees with
+tl/integration's tree. Work repos are only read; all writes go to delivery/ (staging, tmp-verify,
+the ZIP).
+
+  delivery-build [--dry-run] [--repos "agent runtime"]
+
+The ZIP is not written if any repo fails verification.
+"""
+import argparse
+import datetime
+import glob
+import hashlib
+import os
+import shutil
+import stat
+import subprocess
+import tempfile
+import time
+import zipfile
+from pathlib import PurePosixPath
+
+ORCH = "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
+DELIVERY = os.path.join(ORCH, "delivery")
+TEMPLATE = os.path.join(DELIVERY, "README.template.md")
+GATE_RESULTS = os.path.join(DELIVERY, "gate-results.md")
+WORK = "/home/user/work"
+ALL_REPOS = ["agent", "runtime", "app", "composition"]
+BRANCH = "tl/integration"
+BASE = "origin/main"
+TEST_DIRS = {"tests", "test", "__tests__", "e2e", "spec"}
+# Work repos are only read (no index locks). Commits are made only in temp clones.
+GIT_ENV = {
+    **os.environ,
+    "GIT_OPTIONAL_LOCKS": "0",
+    "GIT_AUTHOR_NAME": "delivery-build",
+    "GIT_AUTHOR_EMAIL": "delivery-build@localhost",
+    "GIT_COMMITTER_NAME": "delivery-build",
+    "GIT_COMMITTER_EMAIL": "delivery-build@localhost",
+}
+
+
+def git(repo, *args):
+    proc = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, env=GIT_ENV)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args[:2])}: {(proc.stderr or proc.stdout).strip()[-600:]}")
+    return proc.stdout.strip()
+
+
+def git_ok(repo, *args):
+    return subprocess.run(["git", "-C", repo, *args], capture_output=True, env=GIT_ENV).returncode == 0
+
+
+def attempt(problems, label, fn, *args):
+    """Run fn. A git failure becomes a problem for the README rather than an abort."""
+    try:
+        return fn(*args)
+    except RuntimeError as e:
+        problems.append(f"{label}: {e}")
+        return None
+
+
+def fresh_repo(path):
+    os.makedirs(path)
+    git(path, "init", "-q")
+    return path
+
+
+def private_source_view(name, repo, base, tip, tmp):
+    """Return a read-only object view when a source repo hides real parents.
+
+    The App checkout is shallow at a commit whose parent object is present in its
+    object store.  Bundle creation honors the shallow boundary, so use a private
+    repository with an alternates file and pinned refs instead.  The source
+    repository and its metadata remain untouched; all writes are under tmp.
+    """
+    if name != "app" or git(repo, "rev-parse", "--is-shallow-repository") != "true":
+        return repo
+
+    view = os.path.join(tmp, name, "source-view")
+    fresh_repo(view)
+    objects = git(repo, "rev-parse", "--git-path", "objects")
+    if not os.path.isabs(objects):
+        objects = os.path.join(repo, objects)
+    objects = os.path.realpath(objects)
+    if not os.path.isdir(objects):
+        raise RuntimeError(f"source object store is not a directory: {objects}")
+    alternates = os.path.join(view, ".git", "objects", "info", "alternates")
+    with open(alternates, "w") as f:
+        f.write(objects + "\n")
+    git(view, "update-ref", "refs/heads/main", base)
+    git(view, "update-ref", f"refs/heads/{BRANCH}", tip)
+
+    if git(view, "rev-parse", "--is-shallow-repository") != "false":
+        raise RuntimeError("private App source view unexpectedly has shallow metadata")
+    shallow = git(view, "rev-parse", "--git-path", "shallow")
+    if not os.path.isabs(shallow):
+        shallow = os.path.join(view, shallow)
+    if os.path.exists(shallow):
+        raise RuntimeError(f"private App source view has shallow file: {shallow}")
+    missing = git(view, "rev-list", "--objects", "--missing=print", base, tip)
+    missing = [line for line in missing.splitlines() if line.startswith("?")]
+    if missing:
+        raise RuntimeError(f"private App source view has {len(missing)} missing reachable object(s)")
+    if git(view, "rev-parse", f"{BRANCH}^{{commit}}") != tip:
+        raise RuntimeError("private App source view changed the pinned tip")
+    if git(view, "rev-parse", f"{BRANCH}^{{tree}}") != git(repo, "rev-parse", f"{tip}^{{tree}}"):
+        raise RuntimeError("private App source view changed the pinned tip tree")
+    return view
+
+
+def is_test(path):
+    parts = path.split("/")
+    name = parts[-1]
+    return (any(p in TEST_DIRS for p in parts[:-1])
+            or name.startswith("test_") or name.endswith("_test.py")
+            or ".test." in name or ".spec." in name)
+
+
+def line_split(repo, base, tip):
+    """{'product': [files, added, deleted], 'tests': [...]} for origin/main -> tl/integration."""
+    totals = {"product": [0, 0, 0], "tests": [0, 0, 0]}
+    for line in git(repo, "diff", "--numstat", "--no-renames", base, tip).splitlines():
+        added, deleted, path = line.split("\t", 2)
+        total = totals["tests" if is_test(path) else "product"]
+        total[0] += 1
+        total[1] += 0 if added == "-" else int(added)
+        total[2] += 0 if deleted == "-" else int(deleted)
+    return totals
+
+
+def squash(name, repo, base, tip, ranged, ahead, patches, tmp):
+    """Write one patch: a commit on origin/main with tl/integration's tree.
+
+    Works whether or not the two share history, because it compares trees. Returns the
+    first-parent subjects of the range, which the commit message lists.
+    """
+    build = fresh_repo(os.path.join(tmp, name, "build"))
+    # Fetch immutable object IDs into real local refs.  Ref names from a linked
+    # worktree are not guaranteed to be advertised by every local transport.
+    fetch = ["fetch", "-q", "--no-tags"]
+    if ranged:
+        # App's checked-out source is shallow.  Fetch exactly through the
+        # pinned base, retaining every intervening commit without rebuilding
+        # unrelated history in the private verifier.
+        fetch += [f"--depth={ahead + 1}"]
+    fetch += [repo, f"{base}:refs/heads/main", f"{tip}:refs/delivery/tip"]
+    git(build, *fetch)
+    subjects = git(build, "log", "--first-parent", "--reverse", "--format=%s",
+                   "main..refs/delivery/tip").splitlines()
+    message = os.path.join(tmp, name, "MESSAGE")
+    with open(message, "w") as f:
+        f.write(f"Squash {BRANCH} of {name} onto {BASE}\n\n" + "".join(f"- {s}\n" for s in subjects))
+    tree = git(build, "rev-parse", "refs/delivery/tip^{tree}")
+    commit = git(build, "commit-tree", tree, "-p", "refs/heads/main", "-F", message)
+    git(build, "format-patch", "-q", "--binary", "-o", patches, f"main..{commit}")
+    return subjects
+
+
+def verify(name, repo, base, tip, bundle, patches, ranged, tmp, problems):
+    """Re-apply the patch to a fresh repo holding origin/main, and check the bundle.
+
+    Both resulting trees must equal tl/integration's tree. Problems are appended to `problems`,
+    so the README can say what failed.
+    """
+    want = git(repo, "rev-parse", f"{tip}^{{tree}}")
+
+    main = fresh_repo(os.path.join(tmp, name, "main"))
+    # Keep the prerequisite as a local branch, just as a fresh checkout does.
+    # The immutable base ID also makes this independent of source ref layout.
+    # Keep the source's real base ancestry: merged side branches can make an
+    # older ancestor another bundle prerequisite.  Accept existing shallow
+    # boundaries from the source without inventing a new depth-1 boundary.
+    fetch = ["fetch", "-q", "--no-tags", "--update-shallow"]
+    fetch += [repo, f"{base}:refs/heads/main"]
+    attempt(problems, "fetch origin/main", git, main, *fetch)
+    attempt(problems, "checkout main", git, main, "checkout", "-q", "main")
+
+    # A ranged bundle needs origin/main as a prerequisite, so it is checked in the main clone.
+    # A full bundle is checked in an empty repo, which proves it stands alone.
+    bundle_dir = main if ranged else fresh_repo(os.path.join(tmp, name, "bundle-only"))
+    attempt(problems, "bundle verify", git, bundle_dir, "bundle", "verify", bundle)
+    attempt(problems, "bundle fetch", git, bundle_dir,
+            "fetch", "-q", "--no-tags", bundle, f"refs/heads/{BRANCH}:refs/delivery/tip")
+    bundle_tip = attempt(problems, "bundle tip", git, bundle_dir, "rev-parse", "refs/delivery/tip^{commit}")
+    if bundle_tip is not None and bundle_tip != tip:
+        problems.append(f"bundle tip {bundle_tip} != pinned {BRANCH} {tip}")
+    bundle_tree = attempt(problems, "bundle tree", git, bundle_dir, "rev-parse", "refs/delivery/tip^{tree}")
+
+    series = sorted(glob.glob(os.path.join(patches, "*.patch")))
+    if series:
+        attempt(problems, "git am", git, main, "am", "-q", *series)
+    else:
+        problems.append("no patch to apply")
+    applied_tree = attempt(problems, "applied tree", git, main, "rev-parse", "HEAD^{tree}")
+
+    if applied_tree is not None and applied_tree != want:
+        problems.append(f"applied tree {applied_tree} != {BRANCH} tree {want}")
+    if bundle_tree is not None and bundle_tree != want:
+        problems.append(f"bundle tree {bundle_tree} != {BRANCH} tree {want}")
+    return {
+        "status": "PASS" if not problems else "FAIL",
+        "want_tree": want,
+        "applied_tree": applied_tree,
+        "bundle_tree": bundle_tree,
+        "bundle_tip": bundle_tip,
+        "applied": len(series),
+    }
+
+
+def build_repo(name, staging, tmp):
+    repo = os.path.join(WORK, name)
+    base = git(repo, "rev-parse", f"{BASE}^{{commit}}")
+    tip = git(repo, "rev-parse", f"{BRANCH}^{{commit}}")
+    source = private_source_view(name, repo, base, tip, tmp)
+    ranged = git_ok(source, "merge-base", "--is-ancestor", base, tip)
+    result = {
+        "name": name,
+        "tip": tip,
+        "base": base,
+        "ahead": int(git(source, "rev-list", "--count", f"{base}..{tip}")),
+        "ranged": ranged,
+        "shortstat": git(source, "diff", "--shortstat", base, tip),
+        "split": line_split(source, base, tip),
+    }
+    problems = []
+
+    patches = os.path.join(staging, "patches", name)
+    os.makedirs(patches)
+    attempt(problems, "squash", squash, name, source, base, tip, ranged, result["ahead"], patches, tmp)
+
+    bundle = os.path.join(staging, "bundles", f"{name}.bundle")
+    os.makedirs(os.path.dirname(bundle), exist_ok=True)
+    # Keep the advertised integration ref as the bundle endpoint; git bundle
+    # requires a ref endpoint for this ranged form.  The exclusion is pinned.
+    bundle_args = ["bundle", "create", bundle, BRANCH, *([f"^{base}"] if ranged else [])]
+    attempt(problems, "bundle create", git, source, *bundle_args)
+
+    result.update(verify(name, repo, base, tip, bundle, patches, ranged, tmp, problems))
+    for ref, pinned in ((BASE, base), (BRANCH, tip)):
+        current = attempt(problems, f"recheck {ref}", git, repo, "rev-parse", f"{ref}^{{commit}}")
+        if current is not None and current != pinned:
+            problems.append(f"{ref} moved from pinned {pinned} to {current}")
+    result["status"] = "PASS" if not problems else "FAIL"
+    result["problems"] = problems
+    return result
+
+
+def short(sha):
+    return sha[:12] if sha else "(missing)"
+
+
+def summary_row(r):
+    p, t = r["split"]["product"], r["split"]["tests"]
+    kind = "ranged" if r["ranged"] else "full"
+    return (f"| {r['name']} | {r['ahead']} | {kind} | {r['applied']} "
+            f"| {p[0]} files, +{p[1]} / -{p[2]} | {t[0]} files, +{t[1]} / -{t[2]} "
+            f"| **{r['status']}** | {r['seconds']:.0f} |")
+
+
+def repo_section(r):
+    name = r["name"]
+    lines = [
+        f"### {name}",
+        "",
+        f"- `{BRANCH}`: `{r['tip']}`",
+        f"- `{BASE}`: `{r['base']}`",
+        f"- Diff (`git diff --shortstat {BASE}..{BRANCH}`): {r['shortstat'] or 'no changes'}",
+        f"- Product: {r['split']['product'][0]} files, +{r['split']['product'][1]} / -{r['split']['product'][2]}. "
+        f"Tests: {r['split']['tests'][0]} files, +{r['split']['tests'][1]} / -{r['split']['tests'][2]}.",
+    ]
+    if r["ranged"]:
+        lines.append(f"- Bundle: `bundles/{name}.bundle`, ranged: {r['ahead']} commits after `{BASE}`. "
+                     f"It needs `{BASE}` present.")
+    else:
+        lines.append(f"- **Note:** `{BRANCH}` shares no history with `{BASE}`. The patch still applies, because it "
+                     f"carries the tree rather than the history. The full bundle, `bundles/{name}.bundle`, holds "
+                     f"all {r['ahead']} commits.")
+    lines.append(f"- Patches: {r['applied']} in `patches/{name}/`.")
+    lines.append(f"- Verify: **{r['status']}** ({r['seconds']:.0f}s)")
+    lines.append(f"  - tree from `git am` on `{BASE}`: `{short(r['applied_tree'])}`")
+    lines.append(f"  - tree from the bundle: `{short(r['bundle_tree'])}`")
+    lines.append(f"  - `{BRANCH}` tree: `{short(r['want_tree'])}`")
+    for problem in r["problems"]:
+        lines.append(f"  - problem: {problem}")
+    if r["ranged"]:
+        lines.append(f"- Apply: `git switch -c {BRANCH} origin/main` then "
+                     f"`git am patches/{name}/*.patch`, or fetch the bundle as described under Applying.")
+    else:
+        lines.append(f"- Apply: `git clone -b {BRANCH} bundles/{name}.bundle {name}`.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_readme(results):
+    with open(TEMPLATE) as f:
+        template = f.read()
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    summary = "\n".join([
+        "| Repo | Commits | Bundle | Patches | Product | Tests | Verify | Seconds |",
+        "|---|---|---|---|---|---|---|---|",
+        *[summary_row(r) for r in results],
+    ])
+    if os.path.exists(GATE_RESULTS):
+        with open(GATE_RESULTS) as f:
+            gates = f.read().strip()
+    else:
+        gates = (f"_Not recorded yet. Paste the gate results here before handing over, or put them in "
+                 f"`{GATE_RESULTS}` and rebuild._")
+    return (template
+            .replace("{{UTC}}", now)
+            .replace("{{REPO_SUMMARY}}", summary)
+            .replace("{{REPO_SECTIONS}}", "\n".join(repo_section(r) for r in results))
+            .replace("{{GATE_RESULTS}}", gates))
+
+
+def write_checksums(staging):
+    lines = []
+    for root, _, files in os.walk(staging):
+        for name in files:
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, staging)
+            if rel == "SHA256SUMS":
+                continue
+            with open(path, "rb") as f:
+                lines.append(f"{hashlib.sha256(f.read()).hexdigest()}  {rel}")
+    with open(os.path.join(staging, "SHA256SUMS"), "w") as f:
+        f.write("\n".join(sorted(lines)) + "\n")
+
+
+def staged_files(staging):
+    return sorted(os.path.relpath(os.path.join(root, name), staging)
+                  for root, _, files in os.walk(staging) for name in files)
+
+
+class ExtraError(ValueError):
+    """A requested extra cannot be safely added to the delivery staging tree."""
+
+
+def parse_extra(value):
+    """Parse one destination=source input for an existing delivery staging tree."""
+    destination, separator, source = value.partition("=")
+    if not separator or not destination or not source:
+        raise ExtraError("--extra must be DESTINATION=SOURCE")
+    if "\\" in destination or "\x00" in destination:
+        raise ExtraError("--extra destination must use POSIX separators")
+    parts = destination.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        raise ExtraError("--extra destination must stay below the delivery root")
+    path = PurePosixPath(destination)
+    if path.is_absolute():
+        raise ExtraError("--extra destination must stay below the delivery root")
+    source_path = os.path.expanduser(source)
+    if "\x00" in source_path or os.path.islink(source_path) or not os.path.isfile(source_path):
+        raise ExtraError(f"--extra source must be a regular non-symlink file: {source}")
+    return path.as_posix(), source_path
+
+
+def _open_extra_source(source):
+    try:
+        fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+    except OSError as e:
+        raise ExtraError(f"--extra source must be a regular non-symlink file: {source}") from e
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise ExtraError(f"--extra source must be a regular non-symlink file: {source}")
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _preflight_extra_destinations(staging, extras):
+    destinations = [destination for destination, _ in extras]
+    if len(destinations) != len(set(destinations)):
+        raise ExtraError("--extra destinations must be unique")
+    if {"README.md", "SHA256SUMS"}.intersection(destinations):
+        raise ExtraError("--extra destination is reserved by the delivery packer")
+
+    destination_set = set(destinations)
+    for destination in destinations:
+        parts = destination.split("/")
+        for index in range(1, len(parts)):
+            parent = "/".join(parts[:index])
+            if parent in destination_set:
+                raise ExtraError(f"--extra destination parent collides with another extra: {parent}")
+
+        for index in range(1, len(parts)):
+            parent = os.path.join(staging, *parts[:index])
+            try:
+                mode = os.lstat(parent).st_mode
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(mode) or not stat.S_ISDIR(mode):
+                raise ExtraError(f"--extra destination parent is not a directory: {destination}")
+
+        target = os.path.join(staging, *parts)
+        if os.path.lexists(target):
+            raise ExtraError(f"--extra destination already exists: {destination}")
+
+
+def _open_extra_parent(staging, parts):
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(staging, flags)
+    try:
+        for part in parts[:-1]:
+            try:
+                child = os.open(part, flags, dir_fd=fd)
+            except FileNotFoundError:
+                try:
+                    os.mkdir(part, 0o755, dir_fd=fd)
+                except FileExistsError:
+                    pass
+                child = os.open(part, flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _copy_extra(source_fd, staging, destination):
+    parts = destination.split("/")
+    parent_fd = _open_extra_parent(staging, parts)
+    destination_fd = None
+    try:
+        destination_fd = os.open(
+            parts[-1],
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o644,
+            dir_fd=parent_fd,
+        )
+        os.lseek(source_fd, 0, os.SEEK_SET)
+        while True:
+            block = os.read(source_fd, 1024 * 1024)
+            if not block:
+                break
+            view = memoryview(block)
+            while view:
+                written = os.write(destination_fd, view)
+                view = view[written:]
+    finally:
+        if destination_fd is not None:
+            os.close(destination_fd)
+        os.close(parent_fd)
+
+
+def add_extras(staging, values):
+    """Copy explicitly named, regular files into the normal delivery staging tree."""
+    extras = [parse_extra(value) for value in values]
+    _preflight_extra_destinations(staging, extras)
+    source_fds = []
+    try:
+        for _, source in extras:
+            source_fds.append(_open_extra_source(source))
+        for (destination, source), source_fd in zip(extras, source_fds):
+            try:
+                _copy_extra(source_fd, staging, destination)
+            except OSError as e:
+                detail = e.strerror or str(e)
+                raise ExtraError(f"--extra copy failed for {destination}: {detail}") from e
+    finally:
+        for source_fd in source_fds:
+            os.close(source_fd)
+
+
+def mib(n):
+    return f"{n / 1048576:.1f} MiB"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--dry-run", action="store_true",
+                        help="build and verify everything, print sizes, do not write the ZIP")
+    parser.add_argument("--repos", default=" ".join(ALL_REPOS),
+                        help='space-separated subset of: %(default)s')
+    parser.add_argument("--extra", action="append", default=[], metavar="DESTINATION=SOURCE",
+                        help="copy an existing regular file into the delivery ZIP (repeatable)")
+    args = parser.parse_args()
+    expected_sha = os.environ.get("TIMELINE_DELIVERY_SCRIPT_SHA")
+    if expected_sha:
+        with open(__file__, "rb") as f:
+            actual_sha = hashlib.sha256(f.read()).hexdigest()
+        if actual_sha != expected_sha:
+            parser.error(f"delivery script SHA {actual_sha} != expected {expected_sha}")
+    names = args.repos.split()
+    unknown = [n for n in names if n not in ALL_REPOS]
+    if unknown:
+        parser.error(f"unknown repo(s): {', '.join(unknown)}")
+
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    staging = os.path.join(DELIVERY, f"build-{stamp}")
+    tmp_root = os.path.join(DELIVERY, "tmp-verify", stamp)
+    os.makedirs(staging)
+    os.makedirs(tmp_root)
+
+    results = []
+    try:
+        for name in names:
+            started = time.monotonic()
+            try:
+                result = build_repo(name, staging, tmp_root)
+            finally:
+                shutil.rmtree(os.path.join(tmp_root, name), ignore_errors=True)
+            result["seconds"] = time.monotonic() - started
+            results.append(result)
+            print(f"{name}: {result['status']} in {result['seconds']:.0f}s; "
+                  f"{result['applied']} patch(es); trees "
+                  f"{short(result['applied_tree'])} / {short(result['bundle_tree'])} / "
+                  f"{short(result['want_tree'])}", flush=True)
+            for problem in result["problems"]:
+                print(f"  problem: {problem}", flush=True)
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+    with open(os.path.join(staging, "README.md"), "w") as f:
+        f.write(render_readme(results))
+    try:
+        add_extras(staging, args.extra)
+    except (ExtraError, OSError) as e:
+        shutil.rmtree(staging)
+        parser.error(str(e))
+    write_checksums(staging)
+
+    failed = [r["name"] for r in results if r["status"] != "PASS"]
+    files = staged_files(staging)
+    total = sum(os.path.getsize(os.path.join(staging, f)) for f in files)
+    print(f"staging: {staging} ({len(files)} files, {mib(total)} uncompressed)")
+    for f in files:
+        if f.startswith("bundles/"):
+            print(f"  {f}: {mib(os.path.getsize(os.path.join(staging, f)))}")
+
+    if args.dry_run:
+        print("dry run: ZIP not written")
+        return 1 if failed else 0
+    if failed:
+        print(f"not writing ZIP: verification failed for {', '.join(failed)}; staging kept at {staging}")
+        return 1
+
+    zip_path = os.path.join(DELIVERY, f"timeline-delivery-{stamp}.zip")
+    zip_fd, zip_tmp = tempfile.mkstemp(dir=DELIVERY, prefix=".timeline-delivery-", suffix=".tmp")
+    os.close(zip_fd)
+    try:
+        with zipfile.ZipFile(zip_tmp, "w", zipfile.ZIP_DEFLATED) as z:
+            for f in files:
+                z.write(os.path.join(staging, f), arcname=f)
+        os.replace(zip_tmp, zip_path)
+    except BaseException:
+        try:
+            os.unlink(zip_tmp)
+        except FileNotFoundError:
+            pass
+        raise
+    shutil.rmtree(staging)
+    print(f"wrote {zip_path} ({mib(os.path.getsize(zip_path))})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
