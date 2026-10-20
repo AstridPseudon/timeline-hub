@@ -474,16 +474,17 @@ export function useTimelineOps({
     return Object.freeze({ version: await barrier() });
   }, [dataRef]);
 
-  return useMemo<TimelineOps>(
-    () => ({
-      validate,
-      preview,
-      apply,
-      flush,
-      checkpoint,
-      rollback,
-      setAllTracksMuted,
-    }),
-    [validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted],
-  );
+  // Extensions retain this adapter for their activation lifetime. Dispatch
+  // through current callbacks as command ports and edit authority change.
+  const currentOps = useRef<TimelineOps>({ validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted });
+  currentOps.current = { validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted };
+  return useMemo<TimelineOps>(() => ({
+    validate: (patch) => currentOps.current.validate(patch),
+    preview: (patch) => currentOps.current.preview(patch),
+    apply: (patch) => currentOps.current.apply(patch),
+    flush: () => currentOps.current.flush(),
+    checkpoint: (label) => currentOps.current.checkpoint(label),
+    rollback: (id) => currentOps.current.rollback(id),
+    setAllTracksMuted: (muted) => currentOps.current.setAllTracksMuted(muted),
+  }), []);
 }
