@@ -51,7 +51,7 @@ print(json.dumps(m.build_fixture(),indent=2))
 """
         output = subprocess.check_output([PYTHON, "-B", "-c", emit, str(PREFIX) + "fixture.py"], env=env)
         Path(str(PREFIX) + "fixture.json").write_bytes(output)
-        print("INPUT ONLY: canonical fixture emitted; no realm/helper/provider/capture executed", flush=True)
+        print("INPUT ONLY: fixture and pure Agent projector/compiler checked; no realm/private persistence/capture task executed", flush=True)
     return 0
 
 

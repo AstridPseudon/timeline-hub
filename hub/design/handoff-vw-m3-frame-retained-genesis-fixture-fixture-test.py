@@ -1,4 +1,4 @@
-"""Pure input witnesses. No realm, provider, acceptance, capture or renderer."""
+"""Pure input/projector witnesses. No realm, acceptance, capture task or renderer."""
 import base64
 import copy
 import hashlib
@@ -76,6 +76,14 @@ def test_published_agent_pure_capture_projector_consumes_this_canonical_input():
     assert asset["media_id"] == document["dependency_manifest"]["media"][0]["media_id"]
     assert document == before
     assert document["internal_timeline_revisions"][0]["payload"]["clips"][0]["hold"] == 5
+
+
+def test_published_agent_restore_compiler_preserves_retained_source():
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+
+    document = fixture.build_fixture()["canonical_document"]
+    result = document_from_bundle(bundle_from_document(document))
+    assert result == document
 
 
 @pytest.mark.parametrize("field", ["track", "duration_ms"])
