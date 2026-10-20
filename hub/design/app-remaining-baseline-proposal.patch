@@ -1,0 +1,43 @@
+diff --git a/src/shared/lib/media/mediaCrossOrigin.ts b/src/shared/lib/media/mediaCrossOrigin.ts
+--- a/src/shared/lib/media/mediaCrossOrigin.ts
++++ b/src/shared/lib/media/mediaCrossOrigin.ts
+@@ -1,18 +1,20 @@
++import { isGatewayUrl } from '@/integrations/runtime/connection';
+ import { isManagedObjectUrl } from '@astrid/packs/rendering/shared/managed-media-policy';
+ 
+ /**
+  * `crossOrigin` attribute value for an `<img>`, `<video>` or canvas source.
+  *
+- * Managed object routes get `'anonymous'`: the gateway authorizes media by the
+- * `Origin` header, which a cross-origin element sends only in CORS mode, and
+- * it also lets the canvas stay untainted. Relative object routes use the same
+- * policy through the dev proxy; other URLs retain their existing media mode.
++ * Gateway URLs and managed object routes get `'anonymous'`: the door requires
++ * the `Origin` header for browser admission, before authorizing the route with
++ * its product credential. CORS mode also keeps the canvas untainted. Relative
++ * object routes use the same policy through the dev proxy; other URLs retain
++ * their existing media mode.
+  */
+ export function mediaCrossOrigin(url: string | null | undefined): 'anonymous' | undefined {
+-  return isManagedObjectUrl(url) ? 'anonymous' : undefined;
++  return isGatewayUrl(url) || isManagedObjectUrl(url) ? 'anonymous' : undefined;
+ }
+ 
+ /** The gateway injects Runtime credentials itself and refuses browser cookies and authorization. */
+ export function mediaFetchCredentials(url: string, otherwise: RequestCredentials = 'same-origin'): RequestCredentials {
+-  return isManagedObjectUrl(url) ? 'omit' : otherwise;
++  return isGatewayUrl(url) || isManagedObjectUrl(url) ? 'omit' : otherwise;
+ }
+diff --git a/src/integrations/runtime/RuntimeConnectionProvider.tsx b/src/integrations/runtime/RuntimeConnectionProvider.tsx
+--- a/src/integrations/runtime/RuntimeConnectionProvider.tsx
++++ b/src/integrations/runtime/RuntimeConnectionProvider.tsx
+@@ -308,7 +308,8 @@
+     if (failedReadings >= 2) {
+       return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
+     }
+-    return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
++    // Boot ends after the first answer; the second reading only decides which recovery panel to show.
++    return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
+   }, [gated, outcome, permission, isChecking, connectedBefore, connect, failedReadings, gatewayAnswered]);
+ 
+   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
