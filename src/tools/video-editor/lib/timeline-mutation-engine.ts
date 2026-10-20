@@ -210,6 +210,7 @@ export const previewTimelineMutation = (
       serializeResolvedTimelineEdit(
         mutation.resolvedConfig,
         mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
+        current.config,
       ),
     );
 

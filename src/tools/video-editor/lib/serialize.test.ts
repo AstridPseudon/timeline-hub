@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { repairConfig } from '@/tools/video-editor/lib/migrate';
-import { serializeClipForDisk, serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
+import { serializeClipForDisk, serializeForDisk, serializeResolvedTimelineEdit, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
 import {
   TIMELINE_POSTPROCESS_SHADER_APP_KEY,
   TimelineDomainError,
@@ -931,5 +931,41 @@ describe('video-editor serialization', () => {
     ]);
     expect(pair.registry.assets['asset-dur']).toEqual({ file: 'video.mp4', duration: 6 });
     expect(pair.issues.every((i) => i.severity !== 'error')).toBe(true);
+  });
+});
+
+describe('resolved editor serialization', () => {
+  it.each([null, JSON.parse('{"assets":{"legacy":{"opaque":[null,false,0]}},"__proto__":{"literal":true}}')])('preserves only the original authored registry root without reviving removed known fields', (registry) => {
+    const original: TimelineConfig = {
+      output: { width: 1280, height: 720, fps: 30 },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [],
+      theme: 'removed-theme',
+      theme_overrides: { visual: { removed: true } },
+      generation_defaults: { removed: true },
+      app: { removedNamespace: { keep: false } },
+      ...{ registry },
+    };
+    const resolved: ResolvedTimelineConfig = {
+      output: original.output,
+      tracks: original.tracks!,
+      clips: [],
+      registry: { preview: { file: 'preview.mp4', src: 'https://example.com/preview.mp4' } },
+    };
+    const serialized = serializeResolvedTimelineEdit(resolved, undefined, original);
+    expect(Object.hasOwn(serialized, 'registry')).toBe(true);
+    expect(Reflect.get(serialized, 'registry')).toEqual(registry);
+    for (const key of ['app', 'theme', 'theme_overrides', 'generation_defaults']) {
+      expect(Object.hasOwn(serialized, key), key).toBe(false);
+    }
+    expect(() => validateSerializedConfig(serialized)).toThrow("unexpected top-level key 'registry'");
+    expect(Object.hasOwn(serializeResolvedTimelineEdit(resolved), 'registry')).toBe(false);
+  });
+
+  it('keeps an edited app namespace without reviving deleted namespaces from the original snapshot', () => {
+    const output = { width: 1280, height: 720, fps: 30 };
+    const original = { output, clips: [], app: { removed: { value: 1 }, edited: { value: 2 } }, ...{ registry: null } };
+    const resolved: ResolvedTimelineConfig = { output, tracks: [], clips: [], registry: {}, app: { edited: { value: 3 } } };
+    expect(serializeResolvedTimelineEdit(resolved, undefined, original).app).toEqual({ edited: { value: 3 } });
   });
 });
