@@ -4,6 +4,15 @@ import { dirname, isAbsolute, join, win32 } from 'node:path';
 export const localAgentIdSchema = z.enum(['astrid', 'claude-code', 'codex']);
 export type LocalAgentId = z.infer<typeof localAgentIdSchema>;
 
+export function formatAstridSignInLine(root: string, platform = process.platform): string {
+  if (platform === 'win32') {
+    const launcher = win32.join(root, 'run-astrid.cmd').replaceAll("'", "''");
+    return `Run \`& '${launcher}'\`, then enter \`/login\` in Astrid.`;
+  }
+  const launcher = join(root, 'run-astrid').replaceAll("'", "'\"'\"'");
+  return `Run \`'${launcher}'\`, then enter \`/login\` in Astrid.`;
+}
+
 function astridSignInLine(): string {
   const configuredRoot = process.env.ASTRID_INSTALL_PROGRAM_ROOT;
   const servicePython = process.env.ASTRID_SERVICE_PYTHON;
@@ -16,12 +25,7 @@ function astridSignInLine(): string {
     : join(process.env.XDG_DATA_HOME || join(home, '.local', 'share'), 'astrid');
   const root = configuredRoot && isAbsolute(configuredRoot) ? configuredRoot
     : fromService || defaultRoot;
-  if (process.platform === 'win32') {
-    const launcher = win32.join(root, 'run-astrid.cmd').replaceAll("'", "''");
-    return `Run \`& '${launcher}'\`, then enter \`/login\` in Astrid.`;
-  }
-  const launcher = join(root, 'run-astrid').replaceAll("'", "'\"'\"'");
-  return `Run \`'${launcher}'\`, then enter \`/login\` in Astrid.`;
+  return formatAstridSignInLine(root);
 }
 
 /** One shared table for the service's agent names and the exact recovery lines shown in the menu. */

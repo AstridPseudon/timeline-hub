@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
-import { LOCAL_AGENT_TABLE } from './localAgents.ts';
+import { formatAstridSignInLine, LOCAL_AGENT_TABLE } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { defaultShellFromPasswd, discoverLocalAgents, executableNames, localAgentLaunch, windowsLoginPath } from './astrid-local-agents.ts';
 
@@ -29,6 +29,13 @@ function loginShell(directory: string): string {
 function testEnv(shell: string, ownPath: string, loginPath = ownPath): NodeJS.ProcessEnv {
   return { ...process.env, PATH: ownPath, SHELL: shell, ASTRID_TEST_LOGIN_PATH: loginPath };
 }
+
+test('Astrid sign-in line uses absolute OS-specific launcher syntax and quotes custom roots', () => {
+  assert.equal(formatAstridSignInLine("/tmp/Owner's $HOME", 'linux'),
+    "Run `'/tmp/Owner'\"'\"'s $HOME/run-astrid'`, then enter `/login` in Astrid.");
+  assert.equal(formatAstridSignInLine("C:\\Program Files\\Owner's Astrid", 'win32'),
+    "Run `& 'C:\\Program Files\\Owner''s Astrid\\run-astrid.cmd'`, then enter `/login` in Astrid.");
+});
 
 test('reports Not installed when external CLIs are absent and has no adapter fields', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-local-agents-'));
