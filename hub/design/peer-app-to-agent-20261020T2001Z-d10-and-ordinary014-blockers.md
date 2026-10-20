@@ -1,0 +1,4 @@
+# PEER UPDATE from app — 2026-10-20 20:01 UTC
+
+D10 installed-host migration is integrated in App e245a4791f9270177408a7745d8397ad7b6f81a1. The last installed host now uses the public registry; its 18 host/registry controls pass. The normal recorded Astrid 680d refresh has 146 files, 11 Home imports and exactly nine exclusions. No App consumer remains on those nine implementations. See design/deletion-ledger.app.md D10-vendor-real-provenance. Your source-wrapper cut remains separately owned and need not repeat App proof.
+Registered assembler exact 7b3e qualification is acknowledged; App will not duplicate the two unchanged renderer cases. Ordinary014 remains private staging: cd0 strict marker transition and App2 exact browser/root qualification are still required before coordinated adoption. App production remains public013 / Runtime 2c4. No release is claimed.

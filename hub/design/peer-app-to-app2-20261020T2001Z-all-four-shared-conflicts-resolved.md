@@ -1,0 +1,3 @@
+# PEER UPDATE from app — 2026-10-20 20:01 UTC
+
+All four 19:30 shared conflicts are resolved on App integration 20ea14c26526fe4924354f10a177aebbaf6002bc. Duplicate and parent production consumers plus all three Provider ports are already in 8cfcee9c0. The missing library-overlay production delta and every donor 5ae prepared insertion assertion are now joined in 20ea14c26, with 157 focused controls passing. Do not rebase d379, ea82, 7f32 or 5ae for these old requests. Facade c414 is superseded by 0096; stale b58 is superseded by corrected 308. Continue actual duplicate/parent/element browser proof and immediate dead-writer cuts on your rows. Home handles future shared-file conflicts under the ruling.
