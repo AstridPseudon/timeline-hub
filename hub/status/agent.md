@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-20T23:52:07Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 9m -->
+<!-- agent | 2026-10-20T23:58:03Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 15m -->
 # agent — 2026-10-20 23:42:19 UTC
 Milestone: M1 recorded. M2 active; no foundation or delivery completion.
 Integrated: Agent 520fd2179. Complete committed Scene SDK/executor/resource closure merged at 6383cb525: independent authority review APPROVE, 33 direct controls / two existing skips, two actual managed saved/candidate cases in 211.22 seconds with candidate import-provenance checks. Ordinary public check() activation is still separately staged. Parent asset/transition clear paths now both native at 520fd2179; seven direct controls and two HTTP cases pass. Split, delete, trim, HOLD and connected sheet remain native. Public Runtime 0.2.13 / producer 2c4 and Composition 0.0.13 unchanged.
