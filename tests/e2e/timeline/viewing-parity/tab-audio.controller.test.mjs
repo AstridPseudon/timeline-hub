@@ -1,12 +1,62 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import path from 'node:path';
 import { test } from 'node:test';
 import {
   APP13, AGENT13, RUNTIME13, RUNTIME13_ARTIFACT, AGENT13_RUNTIME, COMPOSITION13, CHROME155, CONTROL, NODE20,
   VIEWING_QUALIFICATIONS,
   MISSING_OWNER_PORTS, OWNER_PORTS,
   assertAppOwnerBase, assertAppOwnLeaf, assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
-  assertRuntimeArtifact, readAppSourceSelection,
+  assertExactGraph, assertRuntimeArtifact, readAppSourceSelection,
 } from './tab-audio.controller.mjs';
+
+const CURRENT_APP_SOURCE = '20ea14c26526fe4924354f10a177aebbaf6002bc';
+const CURRENT_APP_TREE = '83cfad527f8b2264085571316cede1c6ae482b5f';
+
+function git(root, args) {
+  try {
+    return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
+  } catch (error) {
+    if (error.status === 0 && typeof error.stdout === 'string') return error.stdout.trim();
+    throw error;
+  }
+}
+
+function initFixture(root, source, commit) {
+  git(process.cwd(), ['init', '--quiet', root]);
+  git(root, ['fetch', '--quiet', source, commit]);
+  git(root, ['checkout', '--quiet', '--detach', commit]);
+}
+
+function createExactGraphFixtures() {
+  const directory = mkdtempSync('/tmp/timeline-controller-test-');
+  const appRoot = path.join(directory, 'app');
+  const agentRoot = path.join(directory, 'agent');
+  const runtimeRoot = path.join(directory, 'runtime');
+  try {
+    initFixture(appRoot, process.cwd(), CURRENT_APP_SOURCE);
+    const integration = git(process.cwd(), ['rev-parse', 'refs/heads/tl/integration']);
+    git(appRoot, ['fetch', '--quiet', process.cwd(), integration]);
+    git(appRoot, ['update-ref', 'refs/heads/tl/integration', integration]);
+    for (const file of [
+      'tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs',
+      'tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs',
+    ]) cpSync(path.join(process.cwd(), file), path.join(appRoot, file));
+    git(appRoot, ['add', '--', 'tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs', 'tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs']);
+    const tree = git(appRoot, ['write-tree']);
+    const fixtureCommit = git(appRoot, ['-c', 'user.name=Timeline Tests', '-c', 'user.email=timeline-tests@example.invalid', 'commit-tree', tree, '-p', CURRENT_APP_SOURCE, '-m', 'test exact graph fixture']);
+    git(appRoot, ['update-ref', 'HEAD', fixtureCommit]);
+
+    for (const [root, source] of [[agentRoot, '/home/user/work/agent'], [runtimeRoot, '/home/user/work/runtime']]) {
+      initFixture(root, source, source === '/home/user/work/agent' ? AGENT13.source : RUNTIME13.source);
+    }
+    return { directory, appRoot, agentRoot, runtimeRoot };
+  } catch (error) {
+    rmSync(directory, { recursive: true, force: true });
+    throw error;
+  }
+}
 
 test('READY controller identifies the integrated App13 and verified normal13 tuple', () => {
   assertCandidateTuple({ app: APP13, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 });
@@ -56,6 +106,20 @@ test('controller refuses empty, whitespace-only, and partial current App selecti
 test('leaf refuses a candidate that self-selects as its owner base', () => {
   assert.throws(() => assertAppOwnLeaf(process.cwd(), '05de08cecabeaea2d0d955475e6190acc685111a'),
     /not an actual App integration ancestor/);
+});
+
+test('exact graph rejects a supplied App tree mismatch before leaf diff validation', () => {
+  const fixtures = createExactGraphFixtures();
+  try {
+    assert.throws(() => assertExactGraph({
+      appRoot: fixtures.appRoot,
+      agentRoot: fixtures.agentRoot,
+      runtimeRoot: fixtures.runtimeRoot,
+      app: { source: CURRENT_APP_SOURCE, tree: `${CURRENT_APP_TREE.slice(0, -1)}0` },
+    }), /selected App source\/tree does not name the selected commit/);
+  } finally {
+    rmSync(fixtures.directory, { recursive: true, force: true });
+  }
 });
 
 test('leaf accepts the actual current App owner base lineage and tree', () => {

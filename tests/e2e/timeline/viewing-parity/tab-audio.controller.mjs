@@ -279,7 +279,7 @@ export function assertExactGraph({ appRoot, agentRoot, runtimeRoot, app = readAp
   for (const [name, root] of Object.entries({ app: appRoot, agent: agentRoot, runtime: runtimeRoot })) {
     if (git(root, ['status', '--porcelain'])) throw new Error(`${name} source must be clean before capture`);
   }
-  assertAppOwnLeaf(appRoot, app.source);
+  assertAppOwnLeaf(appRoot, app);
   return { app: git(appRoot, ['rev-parse', 'HEAD']), agent: AGENT13.source, runtime: RUNTIME13.source };
 }
 
