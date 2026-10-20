@@ -60,3 +60,32 @@ The current public 0.2.13 producer remains immutable: Runtime producer commit `2
 For qualification, Agent consumer source must compose current Agent `8130a401` (P1/WC4/Scene and its current extractions) over the frozen `310e5484` source/schema. The private carrier is excluded. App and Agent must qualify their normal-owned branch pins as **one cohort** against the exact Runtime candidate above, with generated-client byte identity, package/version/digest guards, and consumer behavior proof. Do not create an integration pin, publish 0.2.14, or bump Runtime consumers until all required gates pass and the owner confirms release.
 
 The already-active `agt-review-ordinary014-corrected-exports` review is the coordination point; do not duplicate that review. This tuple is a review handoff, not release authorization.
+
+## Approval record copied with provenance
+
+Source: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m2-ordinary014-corrected-final-review/report.md`.
+
+> ## Verdict: APPROVE
+>
+> Verified committed candidate:
+>
+> - Commit: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`
+> - Tree: `4b7dd0fe44be973c344bab3de568eaf0bdd28476`
+> - Parent: rejected `806636baf42e9ed1e4c7f9fe76c3e14d7330fcc1`
+> - Worktree clean; no product edits made.
+>
+> Checks passed:
+>
+> - All seven DTOs publicly exported with identity and `__all__` coherence.
+> - Frozen Agent schema byte match: `6ba7b51e…768f2d`; exact 55 definitions/29 operations.
+> - Metadata: schema wire `ce3781c2…30d59`, artifact version `f021e771…f20fa0`, 75 artifacts, 133 unique HTTP operations.
+> - S2 floor unchanged: `a6f1aaa9…a190ef`.
+> - Generator/artifact/TypeScript reproducibility checks passed.
+> - `tests/test_timeline_current_union_contract.py`: 64 passed.
+> - Central `test_generated_client.py`: 73 passed, covering the five local sandbox socket failures.
+> - Central commit lane: 9 passed.
+> - Central TypeScript lane: 61 passed.
+> - Frozen Agent native cohort: 11 passed.
+> - Direct import/export, floor, metadata, forbidden-surface, and diff checks passed.
+>
+> No full suite, merge, pin, publication, or release activation was performed.
