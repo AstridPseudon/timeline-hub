@@ -213,7 +213,7 @@ def test_run_foreground_stops_only_when_handler_event_is_set(tmp_path, monkeypat
     assert boundary.stops == 1
 
 
-def test_run_foreground_treats_stop_during_startup_as_orderly(tmp_path, monkeypatch, capsys):
+def test_run_foreground_treats_stop_during_startup_as_failure(tmp_path, monkeypatch, capsys):
     paths = RuntimePaths.sandbox(tmp_path / "support")
     boundary = _Boundary()
     registration = {}
@@ -230,9 +230,11 @@ def test_run_foreground_treats_stop_during_startup_as_orderly(tmp_path, monkeypa
 
     monkeypatch.setattr(cli, "bootstrap", stop_during_bootstrap)
     monkeypatch.setattr(cli, "_wait_for_door", lambda *_: pytest.fail("startup continued after a stop request"))
-    assert cli._run_foreground(paths, cli.BootstrapConfig(door=DoorSettings(ORIGIN, 17340)), json_mode=True) == 0
+    assert cli._run_foreground(paths, cli.BootstrapConfig(door=DoorSettings(ORIGIN, 17340)), json_mode=True) == 1
     assert boundary.stops == 1
-    assert capsys.readouterr().out == ""
+    output = json.loads(capsys.readouterr().out)
+    assert output["ok"] is False
+    assert "cancelled" in output["error"]
 
 
 def test_run_foreground_treats_stop_after_readiness_as_orderly(tmp_path, monkeypatch, capsys):
