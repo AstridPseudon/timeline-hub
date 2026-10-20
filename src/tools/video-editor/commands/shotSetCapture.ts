@@ -15,6 +15,7 @@ type ObjectValue = { [key: string]: JSON };
 type NameArgs = { values: { name: string }; clear: [] };
 export type ExistingShotSetArgs = ShotSetArgs;
 export type ShotSetBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
+type ShotSetResult = { command: EditCommand; bundle: AuthoredBundle; record: CommandRecord };
 
 const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const;
 const SETTING_KEYS = new Set([
@@ -53,12 +54,28 @@ function occurrence(bundle: AuthoredBundle, owner: string): ObjectValue {
   return matches[0];
 }
 
+function isAuthoredBundle(value: unknown): value is AuthoredBundle {
+  if (!object(value) || !object(value.parent) || !Array.isArray(value.placements)
+    || !value.placements.every((placement) => object(placement)) || !object(value.shots)) return false;
+  return Object.values(value.shots).every((authored) => object(authored) && object(authored.internal_timeline));
+}
+
+function isEditCommand(value: unknown): value is EditCommand {
+  return object(value) && value.schema_version === 1 && typeof value.op === 'string'
+    && typeof value.version === 'string' && (value.select === null || typeof value.select === 'string')
+    && object(value.args);
+}
+
 function shot(bundle: AuthoredBundle, owner: string): { occurrence: ObjectValue; shot: ObjectValue; payload: ObjectValue; source: ObjectValue } {
   const placement = occurrence(bundle, owner);
   if (typeof placement.shot_id !== 'string') throw new ClipMoveError('shot.set occurrence has no authored shot owner', 'identity_conflict');
   const authored = bundle.shots[placement.shot_id];
   if (!authored || !object(authored.payload)) throw new ClipMoveError('shot.set authored shot payload is unavailable', 'identity_conflict');
-  const source = bundle.source_mapping.shots[placement.shot_id];
+  const sourceMapping = bundle.source_mapping;
+  if (!object(sourceMapping) || !object(sourceMapping.shots)) {
+    throw new ClipMoveError('shot.set source pin is unavailable', 'identity_conflict');
+  }
+  const source = sourceMapping.shots[placement.shot_id];
   if (!source || !object(source)) throw new ClipMoveError('shot.set source pin is unavailable', 'identity_conflict');
   return { occurrence: placement, shot: authored, payload: authored.payload, source };
 }
@@ -114,7 +131,7 @@ function addRead(reads: AgentRead[], ref: string, path: string[], value: AgentSt
   if (!reads.some((candidate) => equal(candidate, read))) reads.push(copy(read));
 }
 
-function apply(bundle: AuthoredBundle, supplied: EditCommand) {
+function apply(bundle: AuthoredBundle, supplied: EditCommand): ShotSetResult {
   assertSelect(supplied.select);
   if (supplied.schema_version !== 1 || supplied.op !== 'shot.set' || supplied.version !== '1'
     || !equal(supplied.intent ?? {}, { ownership: 'occurrence' })) {
@@ -124,6 +141,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
   const owner = supplied.select.slice(0, -'/shot'.length);
   const selected = shot(bundle, owner);
   const sourceId = selected.source.shot_id;
+  if (typeof sourceId !== 'string') throw new ClipMoveError('shot.set source pin has no shot owner', 'identity_conflict');
   const command: EditCommand = {
     ...copy(supplied),
     resolved: [supplied.select], reads: [], selections: [], expect: {}, authorship: {},
@@ -190,11 +208,14 @@ export function captureShotSet(bundle: AuthoredBundle, select: string, args: Exi
   return freezeJson({ bundle: original, command });
 }
 
-export function finishShotSet(basis: unknown, args: ExistingShotSetArgs) {
-  if (!object(basis) || !object(basis.bundle) || !object(basis.command)
-    || !CLAIMS.every((key) => has(basis.command, key))) throw new ClipMoveError('incomplete shot.set capture basis');
+export function finishShotSet(basis: unknown, args: ExistingShotSetArgs): ShotSetResult {
+  if (!object(basis)) throw new ClipMoveError('incomplete shot.set capture basis');
+  const bundle = basis.bundle;
+  const command = basis.command;
+  if (!isAuthoredBundle(bundle) || !isEditCommand(command)
+    || !CLAIMS.every((key) => has(command, key))) throw new ClipMoveError('incomplete shot.set capture basis');
   assertArgs(args);
-  return apply(basis.bundle as AuthoredBundle, { ...copy(basis.command as EditCommand), args: copy(args) });
+  return apply(bundle, { ...copy(command), args: copy(args) });
 }
 
 export function executeShotSet(bundle: AuthoredBundle, command: EditCommand) {
