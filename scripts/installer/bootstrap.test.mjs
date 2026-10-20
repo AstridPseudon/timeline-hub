@@ -144,7 +144,7 @@ test('POSIX terminal Ctrl+C reaches the installer and waits for cooperative reco
   const receipt = path.join(context.root, 'interrupted');
   const result = await context.run('python3', ['-c', terminalInterrupt, '/bin/sh', path.join(repo, 'public/install')], {
     MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt,
-  });
+  }, 120_000);
   assert.equal(result.code, 0, result.stderr);
   const terminal = JSON.parse(result.stdout);
   assert.equal(terminal.interrupted, true);
@@ -159,7 +159,7 @@ test('POSIX piped bootstrap preserves terminal stdin for uv cancellation', () =>
   const receipt = path.join(context.root, 'interrupted');
   const result = await context.run('python3', ['-c', terminalInterrupt, '/bin/bash', '--noprofile', '--norc', '-i', '-c', 'cat "$1" | sh', 'piped-installer', path.join(repo, 'public/install')], {
     MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt, MOCK_REQUIRE_TTY: '1',
-  });
+  }, 120_000);
   assert.equal(result.code, 0, result.stderr);
   const terminal = JSON.parse(result.stdout);
   assert.equal(terminal.interrupted, true);

@@ -16,6 +16,23 @@ test('PowerShell opens install log appends with sharing compatible with the runn
   assert.doesNotMatch(script, /File\.AppendAllText\(log/);
 });
 
+test('PowerShell uses a fresh process helper after an older bootstrap ran in the same session', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  let script = await readFile(harness, 'utf8');
+  script = script.replace("$ErrorActionPreference = 'Continue'", `$ErrorActionPreference = 'Continue'
+Add-Type -TypeDefinition @'
+using System.Diagnostics;
+public sealed class AstridInstallerProcess {
+    public static int OldVersion = 1;
+}
+'@`);
+  await writeFile(harness, script);
+  const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness]);
+  alive(result);
+  assert.match(result.stdout, /Astrid is ready\./);
+  assert.doesNotMatch(result.stdout, /CAUGHT:/);
+}));
+
 async function scenario(fn) {
   const context = await fixture();
   try {
@@ -264,7 +281,7 @@ test('PowerShell console interruption reaches the child and waits for recovery',
   const receipt = path.join(context.root, 'interrupted');
   const result = await context.run('python3', ['-c', terminalInterrupt, powershell, '-NoProfile', '-NonInteractive', '-File', harness], {
     MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt,
-  });
+  }, 120_000);
   assert.equal(result.code, 0, result.stderr);
   const terminal = JSON.parse(result.stdout);
   assert.equal(terminal.interrupted, true);

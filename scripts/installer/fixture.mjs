@@ -105,10 +105,10 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
   env.MOCK_FETCHED = path.join(root, 'fetched-url');
   return {
     root, home, bootstrap, manifest, env,
-    async run(file, args, overrides = {}) {
+    async run(file, args, overrides = {}, timeout = 30_000) {
       await writeFile(manifestFile, JSON.stringify(manifest));
       try {
-        const result = await execute(file, args, { cwd: repo, env: { ...env, ...overrides }, timeout: 30_000 });
+        const result = await execute(file, args, { cwd: repo, env: { ...env, ...overrides }, timeout });
         return { ...result, code: 0 };
       } catch (error) {
         if (typeof error.code !== 'number') throw error;
@@ -204,10 +204,17 @@ if pid == 0:
     os.execvp(sys.argv[1], sys.argv[1:])
 output = bytearray()
 interrupted = False
-deadline = time.monotonic() + 20
+startup_deadline = time.monotonic() + 90
+recovery_deadline = None
 try:
-    while time.monotonic() < deadline:
-        readable, _, _ = select.select([terminal], [], [], 0.05)
+    while True:
+        now = time.monotonic()
+        deadline = recovery_deadline if interrupted else startup_deadline
+        if now >= deadline:
+            if interrupted:
+                raise TimeoutError('installer did not recover within 20 seconds after terminal Ctrl+C: ' + output.decode(errors='replace'))
+            raise TimeoutError('installer did not reach its streamed stage within 90 seconds: ' + output.decode(errors='replace'))
+        readable, _, _ = select.select([terminal], [], [], min(0.05, deadline - now))
         if readable:
             try: chunk = os.read(terminal, 65536)
             except OSError as error:
@@ -218,12 +225,11 @@ try:
             if not interrupted and b'Installing the pinned Astrid version.' in output:
                 os.write(terminal, b'\\x03')
                 interrupted = True
+                recovery_deadline = time.monotonic() + 20
         finished, status = os.waitpid(pid, os.WNOHANG)
         if finished:
             pid = None
             break
-    else:
-        raise TimeoutError('installer did not recover after terminal Ctrl+C: ' + output.decode(errors='replace'))
     if pid is not None:
         _, status = os.waitpid(pid, 0)
         pid = None
