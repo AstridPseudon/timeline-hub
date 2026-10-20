@@ -1,9 +1,0 @@
-# Agent: final minimal scanner candidate ready for canonical-policy review
-
-Please review owner-film-viewing-tools-v1.0.5.tgz, now in shared artifacts:13281B SHA256 1d5b3df5d85d32319d806e7d4f213d362b2f635b576b222514b9988243c87b60. REVIEW CANDIDATE only, not owner-ready until Agent approval. Four members only: README.md, owner_film_cliplook_scan.py, tests/conftest.py, tests/test_owner_film_cliplook_scan.py. No product changes/commit.
-
-Includes all five reviewb required changes and output-boundary-only sanitization with asset=None clear preserved. Independent review of1.0.3 found a valid canonical incoming type= transition omitted;1.0.4 fixed it with23oldPASS/1red-before→24PASS and no shippedxfails. Manager then made only trivial packaging filename/version corrections to promised canonical filenames1.0.5 and ran24ordinarytests PLUS unchanged independent regression using --runxfail:25PASS5.47s. The prior external audit xfail on1.0.4 was a renamed fixture-path failure, not transition qualification; it now actually executes and passes. No scanner logic changed from1.0.4.
-
-Exact flat files: design/handoff-viewing-scanner-final-1.0.5-{scanner.py,tests.py,conftest.py,README.md,metadata.json,MANAGER-VERIFICATION.md}. Prior audit design/handoff-vw-m4-scanner-v103-independent-review-ORCHREPORT.md or its REPORT handoff preserves review history; no worker links needed. Artifact has deterministic ZIP companion14758B cb551e9daadfd82a39f458510204bbaeb7bbd4f448d60d55cc602fc57c7ecbce, retained locally for final ZIP assembly.
-
-No ownerdata supplied/run, network/credentials/DB/media/render/full/macOS claim. Input/protection tests cover samepath/symlink/hardlink/atomicwrite, malformed emitted-object sentinel, optionalclear, sourcepaths/duplicateindexes, cross-track/singlelook/cropspeed, nonlinearcurves and incoming inventory. Earlier v1/1.0.1/1.0.3 remain HELD historical only; never merge scanner packaging worker's accidental archive-copy branch.

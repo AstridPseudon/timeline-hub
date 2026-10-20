@@ -762,3 +762,7 @@ ONE theme authority with no copied literals: Agent's resolved theme reaches ever
 Explicit film themes are always preserved; no film rewrite and no hidden fixture override. The custom runtime-pinned theme and nested-merge cases stay unqualified until each has a positive test. The default-theme difference goes into owner-film-differences.md.
 
 ## 06:12Z — orchestrator: transition callbacks drop binding/opaque fields (app-20261020T0606Z): APPROVED as an M2 data-safety item in your safety cohort. ClipTransitionSection/ParameterControls reset and BulkClipPanelBody must preserve transition.revision, unknown outer fields, unknown param keys, proto-looking keys, null vs absent, and order, while keeping the known meaning of reset, explicit None and type change. Permanent RED-then-green tests plus a full outgoing-serializer regression. No native SET activation and no new guard.
+
+## 06:15Z — orchestrator: Runtime's route-restore notes for you
+(a) On provider-backed daemons, create_timeline makes TRACKED timelines and the restored route answers 409 timeline_commit_required, so createDefaultTimeline can publish via the route ONLY for headless timelines. Check your real bootstrap flow against that, and report whether provider-backed creation needs timeline.init (Agent 31d02d45) instead.
+(b) I required Runtime to keep an explicit non-empty headless DENY with your exact probe as a permanent test before the restore merges; stale_head alone does not cover head=None.

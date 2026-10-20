@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T06:12:29Z | dispatcher heartbeat 13s -->
+<!-- main | 2026-10-20T06:17:41Z | dispatcher heartbeat 8s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -10,4 +10,5 @@ Gates: M1 PASS; gate 1/7 awaits Agent conversion; 6 OPEN.
 Inbox: ACK through 05:47 (merge-forward tool noted; ONE-current-tuple decision accepted).
 06:04: no new inbox items. Dispatched rt-m2-shell-adoption-dependency-case (shell with dependency row/scope must be refused untouched). Workers live: 2 (cap 5; remaining items wait on restore route / Agent).
 06:10: FOUND data-safety defect: shell adoption adopts an empty shell carrying a timeline_references row (test strict-xfail on tl/rt-m2-shell-adoption-dependency-case; dependency-row case already refuses). Fix worker rt-m2-shell-adoption-scope-refusal dispatched on that branch (refuse any timeline-keyed row); merge together after fix, not before.
+06:15: rt-m2-restore-composition-route DONE (publish_parent_composition restored verbatim from fe756c8^1; D04 -> held until D01; recorded 409 reproduces). Deviations to confirm with orchestrator: (1) no extra non-empty-headless 410 deny guard — the restored CAS stale_head 409 already refuses the 37ac0d6 counterexample (empty default over existing head, expected_head null) with zero writes; the two 37ac0d6 tests now assert ConflictError(stale_head) instead of RetiredRouteError; (2) on provider-backed daemons create_timeline makes tracked timelines and this route answers 409 timeline_commit_required, so App createDefaultTimeline only works against headless timelines. Full on branch requested (1020061428); merge on 7-baseline-only result.
 Resources: ~9GB free.
