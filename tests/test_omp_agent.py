@@ -9,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from astrid import _process, omp_agent
+from astrid import omp_agent
+from astrid.core.util import process as _process
 
 
 def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -> None:

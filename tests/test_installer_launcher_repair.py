@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from runtime_protocol.door import DEFAULT_DOOR_PORT
 
-from astrid import _process
+from astrid.core.util import process as _process
 from astrid.installer.backend import Backend
 from astrid.installer.core import Installer, VerificationError, Version, write_json
 from astrid.installer.launcher import install
@@ -134,6 +134,7 @@ def test_generated_runner_supports_selected_older_package_under_isolation(tmp_pa
     (package / "__init__.py").write_text("", encoding="utf-8")
     # The selected version predates this installer and has no process helper.
     assert not (package / "_process.py").exists()
+    assert not (package / "core" / "util" / "process.py").exists()
     (package / "omp_agent.py").write_text(
         "import json, os, sys\n"
         "print(json.dumps({'args': sys.argv[1:], 'isolated': sys.flags.isolated, "
@@ -181,6 +182,7 @@ def test_generated_runner_supports_selected_older_package_under_isolation(tmp_pa
         "args": arguments, "isolated": 1, "managed": "selected version", "root": str(root),
     }
     assert not (package / "_process.py").exists()
+    assert not (package / "core" / "util" / "process.py").exists()
 
 
 @pytest.mark.parametrize("service_state,raises", [("running", False), ("failed", True)])

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from astrid import _process
+from astrid.core.util import process as _process
 
 
 @pytest.mark.parametrize("env", [None, {}, {"PATH": "/selected/bin", "MANAGED": "yes"}])

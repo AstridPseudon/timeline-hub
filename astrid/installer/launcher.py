@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from .. import _process
+from ..core.util import process as _process
 
 _RUNNER = '''import json, os, re, sys
 from pathlib import Path

@@ -18,8 +18,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ._process import replace_process
 from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
+from .core.util.process import replace_process
 from .version import ASTRID_VERSION
 
 DEFAULT_AGENT = "astrid"
