@@ -57,12 +57,12 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monke
     assert 'navigation' not in index
     assert result['outputs']['pages']
     assert all(Path(page).name.startswith('filmstrip-') for page in result['outputs']['pages'])
-    assert result['snapshot_label']['label'] == 'committed revision R1'
+    assert result['snapshot_label']['label'] == 'UNCERTIFIED preview (claimed revision R1)'
     assert index['provenance']['revision'] == result['snapshot_label']
     markdown = (manifest_path.parent / 'filmstrip.md').read_text()
-    assert '# Input filmstrip · committed revision R1' in markdown
-    assert 'Revision: `committed revision R1`' in markdown
-    assert any('committed revision R1' in text for text in drawn_text)
+    assert '# Input filmstrip · UNCERTIFIED preview (claimed revision R1)' in markdown
+    assert 'Revision: `UNCERTIFIED preview (claimed revision R1)`' in markdown
+    assert any('UNCERTIFIED preview (claimed revision R1)' in text for text in drawn_text)
     assert (manifest_path.parent / 'render-snapshot.json').is_file()
     assert len(json.dumps(index, separators=(',', ':')).encode()) < 8192
 
