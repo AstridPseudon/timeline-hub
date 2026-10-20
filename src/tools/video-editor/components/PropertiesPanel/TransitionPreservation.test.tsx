@@ -199,11 +199,16 @@ async function nativeEditor(bulk: boolean) {
       if (!compiled.nextData) throw new Error('invalid native clear preview');
       current = compiled.nextData;
     },
-    project: async (basis) => {
+    project: async (basis, previews) => {
       const payload = basis.canonicalDocument.parent_revision.payload;
       current = await buildTimelineData({ ...payload.config as object, clips: payload.clips } as never,
         { assets: {} }, undefined, 1, undefined, { projectId: scope.projectId, timelineId: scope.timelineId,
           headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
+      for (const preview of previews) {
+        const compiled = compileTimelinePatch(preview, current);
+        if (!compiled.nextData) throw new Error('invalid recovered native clear preview');
+        current = compiled.nextData;
+      }
     }, changed: () => {},
   });
   const session = await mount();
@@ -396,6 +401,7 @@ describe('native None publication (unit transport; no Runtime registry acceptanc
 
   it('retains an entire refused batch and exact request through restart and retry', async () => {
     const host = await nativeEditor(true);
+    const rawBefore = structuredClone([host.predecessor, ...host.clips]);
     host.env.setFault('validation');
     fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
     await waitFor(() => expect(host.session.getState().status).toBe('error'));
@@ -408,6 +414,13 @@ describe('native None publication (unit transport; no Runtime registry acceptanc
     const recovered = await host.mount();
     expect(recovered.getState().status).toBe('recovery');
     await recovered.recover(original.ownerId);
+    for (const clips of [host.current().config.clips, host.current().resolvedConfig.clips]) {
+      expect(clips.slice(1).every((clip) => !Object.hasOwn(clip, 'transition'))).toBe(true);
+    }
+    const refused = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    const refusedPayload = refused.canonicalDocument.parent_revision.payload;
+    expect(refusedPayload.clips).toEqual(rawBefore);
+    expect((refusedPayload.config as { clips: unknown }).clips).toEqual(rawBefore);
     expect((await host.env.outboxes.list(scope))[0].pending!.request).toEqual(request);
     expect((await host.env.outboxes.list(scope))[0].intents).toEqual(original.intents);
     // A definitive rejection remains retained until explicit resolution.
@@ -442,6 +455,51 @@ describe('native None publication (unit transport; no Runtime registry acceptanc
     expect(host.current().config.clips.slice(1).every((clip) => !Object.hasOwn(clip, 'transition'))).toBe(true);
     expect(host.snapshots).not.toHaveBeenCalled();
     await host.session.dispose();
+  });
+
+  it('recovers a lost batch ACK with an exact retry before a newer move suffix', async () => {
+    const host = await nativeEditor(true);
+    host.env.setFault('lost');
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
+    await waitFor(() => expect(host.session.getState().status).toBe('retry'));
+    const [original] = await host.env.outboxes.list(scope);
+    const request = original.pending!.request;
+    submitClipMove(captureClipMove(host.session.port, host.current(), 'b'), 14);
+    await host.session.dispose();
+
+    expect(host.env.commits()).toHaveLength(1);
+    const [queued] = await host.env.outboxes.list(scope);
+    const suffix = queued.intents[1];
+    expect(queued.pending!.request).toEqual(request);
+    expect(queued.intents[0]).toEqual(original.intents[0]);
+
+    const recovered = await host.mount();
+    expect(recovered.getState().status).toBe('recovery');
+    await recovered.recover(original.ownerId);
+    const commits = host.env.commits();
+    expect(commits).toHaveLength(3);
+    expect(commits[1].path).toBe(request.path);
+    expect(commits[1].key).toBe(request.key);
+    expect(commits[1].bodyBytes).toEqual(commits[0].bodyBytes);
+    expect(JSON.stringify(commits[1].body)).toBe(request.body);
+    expect(commits[1].body!.commands).toEqual((original.intents[0].payload as { commands: EditCommand[] }).commands);
+    expect(commits[2].key).not.toBe(request.key);
+    expect(commits[2].path).toBe(request.path);
+    expect(commits[2].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1' });
+    expect(commits[2].body!.commands).toEqual((suffix.payload as { commands: EditCommand[] }).commands);
+
+    const accepted = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    const payload = accepted.canonicalDocument.parent_revision.payload;
+    const finalClips = payload.clips as TimelineClip[];
+    expect(finalClips.find((clip) => clip.id === 'a')).not.toHaveProperty('transition');
+    expect(finalClips.find((clip) => clip.id === 'b')).toMatchObject({ at: 14 });
+    expect((payload.config as { clips: TimelineClip[] }).clips).toEqual(finalClips);
+    expect(host.current().config.clips.find((clip) => clip.id === 'a')).not.toHaveProperty('transition');
+    expect(host.current().resolvedConfig.clips.find((clip) => clip.id === 'a')).not.toHaveProperty('transition');
+    expect(host.current().config.clips.find((clip) => clip.id === 'b')).toMatchObject({ at: 14 });
+    expect(host.current().resolvedConfig.clips.find((clip) => clip.id === 'b')).toMatchObject({ at: 14 });
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await recovered.dispose();
   });
 
   it('refuses a batch containing a missing raw target atomically and keeps the existing draft', async () => {
