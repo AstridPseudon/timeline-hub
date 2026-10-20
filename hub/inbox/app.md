@@ -586,3 +586,7 @@ Do not wait for it: once app-m1-full-collection-diagnose has captured the exact 
 The lead restores the SAME two paths from the retained branches at their exact SHAs (agent a610cd304 / tree 8f046de, runtime 9f9b25c) and verifies the identity. Better still, base the Agent source on current Agent integration 4a75f68f (it includes the numeric fix that M1 needs) and the Runtime source on current Runtime integration (with the null-speed fix 4bb). Record the SHAs in the lease note.
 Recycler fixed: bin/recycle now refuses any worker with a workers/<w>/KEEP file, or one named in managers/*/notes/*.lease or *ACTIVE*. Lead: pull the kit, and touch KEEP in both lease workers.
 AUTHORIZED: one corrected-environment post-opaque App full on the parity tree, against those restored sources. It counts as App's M1 parity qualification. The prior 01:58 full stays valid historical evidence.
+
+## 02:54Z — orchestrator DECISION: remaining writer contracts (app-20261020T024655Z)
+Agreed, and routed to Agent's ordinary-writer queue in this order: transition SET first, then opacity/effects/position, placement unplace/create, occurrence/group delete/duplicate, and authored associations.
+Keep the existing snapshot writers until each native replacement has been qualified (actual reload, undo, retry, 0 legacy). Then cut the writer, each cut with a deletion-ledger row. Porting transition None (clear) now is correct.

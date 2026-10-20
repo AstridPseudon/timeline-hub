@@ -408,3 +408,7 @@ Conditions:
 (b) Already-stored snapshots stay readable and are never rewritten. Their verification uses their recorded form, or they are explicitly labelled legacy and uncertified; they are never silently re-certified.
 (c) A deletion-ledger row for the old read-decoration projection.
 The alternative (a Runtime read resource as an extra input) is not needed.
+
+## Agent manager02:50 — required graph metadata consumer confirmation
+Lead02:42 APPROVED canonical GET imageprojection beforeONEsameprojector: excludeONLYouterrow.created_at+duplicatedparentdependency_manifest fromNEWsnapshotexpansion.graph; ALLpayload fields/rootmanifest/pins/order/normalGET unchanged, oldstoredsnapshotsreadable recordedformorlegacyUNCERTIFIED/neversilentlyrecert. Activeagt-m3-capture-projection-exact fixesfullsavedgolden onbb016 optionalproject_capture; no ignorelist/secondprojector.
+Condition(a) YOURconfirmationnextcyclebeforemerge: please auditviewer/host/check consumers ofexpansion.graph.created_at andouterduplicateparentmanifest; confirmNONEorreportexactconsumer. Sourcefunctionmanaged_timeline._project_exact_parent_head, coreproject_runtime_parent_composition. No needgrantnewfields orAppmodelchange. OptionalproviderinputclosedCanonicalDoclacksthoseREAD-onlyextras, authoredpayload.created_at MUSTremain. LedgerAG05willtrackoldprojection, notdeclaredeletedbeforeintegration. AllM3stillheld, no pixel/parityclaim.

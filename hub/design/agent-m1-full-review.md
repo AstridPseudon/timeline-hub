@@ -199,3 +199,80 @@ changed or rerun by this audit. This classification makes no full-green or
 M1-complete claim. Recommended next steps: Viewing correct the hidden
 `remotion_runtime.py` inventory entry and close its three consumer failures;
 Agent handles the `render_status` fixture; then re-audit the structure node.
+
+## a610 environment-triage classification — 2026-10-20
+
+Authoritative run `agent-full-remotion-integration-1020015823-24749` tested
+exact tree `8f046de1844963feab3732cb4ffda7064c49f64e`, not current integration
+commit `4a75f68f`. It reported **11,723 passed, 79 failed, 453 skipped, 30
+errors, 563 subtests passed, 75 warnings, 2,809.29s**. Exact parsing gives
+109 current non-passing nodes: 62 of the old baseline 63 plus 47 additional
+nodes. The one old node absent is
+`tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process`.
+Compared with previous post-restore 67, five nodes are absent (that node plus
+the four already-proven consumer corrections), and 47 are current-only.
+
+The 47 current-only nodes partition exactly as follows:
+
+| cluster | count | classification |
+|---|---:|---|
+| pixel geometry/blink under pinned Node 20 | 11 | valid supported-environment fixture problem |
+| RunPod owned host | 1 | UNKNOWN |
+| host bootstrap source identity | 16 | valid supported-environment fixture problem |
+| stage interpreter identity | 4 | valid supported-environment fixture problem |
+| host recovery | 14 errors | valid supported-environment fixture problem |
+| admission recovery | 1 error | valid supported-environment fixture problem |
+
+Pixel tracebacks are all Node `ERR_UNKNOWN_FILE_EXTENSION` for direct `.ts`
+imports. A read-only probe reproduced this with Node `v20.19.4`; Node
+`v22.22.0` imported the same module. Pixel source/test blobs are unchanged
+from previous tree `36d86ed3`, so this is an environment/fixture contract
+issue, not a geometry assertion failure. The 16 bootstrap nodes split into
+three fake-inventory `.pack_root` shape failures and thirteen unsupported
+loader/interpreter validation failures. All 14 recovery errors have the same
+unsupported-loader validation cause. The four stage failures reject a fake
+prior host without the required Remotion launch-validation marker. Admission
+recovery fails while loading the current Runtime generated client under a
+synthetic module name because its relative `timeline_commit_types` import has
+no package context.
+
+The RunPod owned-host node remains UNKNOWN. The pinned-environment central
+targeted run reproduced `WorkerOwnerConflict: host did not acquire physical pod
+ownership`, but the child launch discards stderr. `worker_process.py` and its
+test are unchanged in `e475f212`, `36d86ed3`, and `8f046`; without the exact
+same-environment baseline and child exit cause, this is not called either a
+product regression or a fixture problem.
+
+Persisted nodes remain strict-preexisting by their baseline tracebacks:
+15 external VibeComfy setup errors, 7 uninstalled-source H3 child probes, 1
+xdist PosixPath serialization error, 34 RunPod `executors` path mismatches, 3
+worker-process test `signal` import errors, 1 generic-host cleanup contract
+mismatch, and 1 structure-gate node. The structure node still stops first on
+the inherited `generic_host.py` 13,598-vs-13,798 rationale drift; the hidden
+a610-era `remotion_runtime.py` rationale is separately stale at 1,247 vs
+1,353 and remains owner follow-up.
+
+Central targeted evidence was collected without running socket/process-host
+tests in this sandbox:
+
+```text
+request-test agt-m1-full-a610-triage remotion-env-nodes --files "tests/packs/astrid_motion/test_pixel_shape_geometry.py tests/sdk/test_host_recovery.py tests/sdk/test_host_bootstrap_source_identity.py tests/stage1/test_pack_host_interpreter_identity.py tests/packs/runpod/test_worker_process.py"
+wait-test agt-m1-full-a610-triage-remotion-env-nodes-1020025059-8756
+```
+
+Result: **35 failed, 112 passed, 2 skipped, 14 errors in 36.96s** under the
+pinned environment. This used worker tree `d8ee74e07ad86e9f5ceb15546804c17be9aaaead`;
+the relevant cluster blobs match a610. A second central targeted run for
+`tests/sdk/test_admission_recovery.py` reproduced its collection error in
+2.71s (`1 error`) with the same relative-import traceback. The requested new named
+`a610-env-triage-integration` suite is not registered, and the central service
+cannot snapshot an alternate baseline tree from this worker. Therefore exact
+same-environment baseline proof remains UNKNOWN and is not claimed here.
+
+The complete node-level machine-readable inventory is at
+`/home/user/work/wt/agt-m1-full-a610-triage/notes/full-a610-classification.json`
+(SHA-256
+`4ecca988d42f2ff302a47c68779d27402ba3b042c53104735e19686400ea360d`). No
+product or test edits were made. M1 remains **HOLD** pending the UNKNOWN
+RunPod cause, exact same-environment baseline evidence, and owner-approved
+fixture corrections. Pixel corrections require Viewing ownership/grant.
