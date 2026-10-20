@@ -70,9 +70,17 @@ class Generated:
             for publication in body["commands"][0]["args"]["publications"]:
                 inverse_records.extend(self.records[publication])
         try:
-            plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
-            if self.head["revision_id"] != body["base_revision_id"]:
-                plan = replay(plan, self.bundles[self.head["revision_id"]])
+            if body["commands"][0]["op"] == "timeline.restore":
+                target = body["commands"][0]["args"]["revision_id"]
+                plan = SimpleNamespace(
+                    bundle=copy.deepcopy(self.bundles[target]),
+                    commands=copy.deepcopy(body["commands"]),
+                    records=[],
+                )
+            else:
+                plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
+                if self.head["revision_id"] != body["base_revision_id"]:
+                    plan = replay(plan, self.bundles[self.head["revision_id"]])
         except TimelineEditError as exc:
             raise ApiError(409, "conflict", str(exc), details={"status": "conflict", "reason": "guard_changed"}) from exc
         ordinal = len(self.accepted) + 1
@@ -190,6 +198,38 @@ def test_capture_and_same_value_write_are_sent_even_without_a_diff(connected):
     assert "show_command" not in result["receipt"]["result"]
     assert json.loads(path.read_bytes())["pending"] == []
     assert client.reads == ["r0"]
+
+
+def test_restore_sends_exact_revision_and_digest_through_native_commit(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    digest = initial_bundle()["base_parent"]["content_digest"]
+    result = session.restore("r0", digest, idempotency_key="restore-r0")
+    body = json.loads(generated.calls[0][0])
+    assert body["commands"] == [{
+        "schema_version": 1,
+        "op": "timeline.restore",
+        "version": "1",
+        "select": None,
+        "args": {"revision_id": "r0", "content_digest": digest},
+    }]
+    assert result["data"]["status"] == "accepted"
+    assert json.loads(path.read_bytes())["pending"] == []
+    assert generated.head["revision_id"] == "r1"
+
+
+def test_restore_lost_ack_retries_exact_request_after_reload(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    digest = initial_bundle()["base_parent"]["content_digest"]
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.restore("r0", digest, idempotency_key="restore-r0")
+    flight = json.loads(path.read_bytes())["flight"]
+    open_session(connected).flush()
+    assert generated.calls[0] == generated.calls[1]
+    assert generated.calls[1] == (flight["body"].encode(), "restore-r0")
+    assert json.loads(path.read_bytes())["pending"] == []
 
 
 @pytest.mark.parametrize("target", ["parent/clip:a", "parent/clip:b"])
