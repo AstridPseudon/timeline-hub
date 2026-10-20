@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
 from astrid.core.timeline.shot_composition_projection import (
     project_runtime_parent_composition,
     project_shot_composition,
@@ -80,14 +80,18 @@ def test_audio_vector(vector):
             assert _lookup(clip, key) == pytest.approx(want)
 
 
-def _native_projection():
+def _projection(closure='native'):
     # The native ADD closure, projected by main's runtime parent path (shot_composition_projection.py, identical to main e51595c6).
+    # The overhang closure is the same parent with only its occurrence list replaced.
     native = VISUAL['native_add_output']
+    payload = native['parent_revision']['payload']
+    if closure == 'overhang':
+        payload = dict(payload, occurrences=VISUAL['overhang_closure']['occurrences'])
     parent = {
         'project_id': native['project_id'],
         'timeline_id': native['timeline_id'],
         'revision_id': native['parent_revision']['revision_id'],
-        'payload': native['parent_revision']['payload'],
+        'payload': payload,
     }
     return project_runtime_parent_composition(
         parent,
@@ -112,7 +116,7 @@ def _clock():
 @pytest.mark.parametrize('vector', _marked(VISUAL['vectors']))
 def test_visual_vector(vector):
     fps = _clock()
-    clip = _source_clip(_native_projection(), vector['occurrence_id'], vector['source_clip_id'])
+    clip = _source_clip(_projection(vector.get('closure', 'native')), vector['occurrence_id'], vector['source_clip_id'])
     start = clip_start_frame(clip, fps)
     end = clip_end_frame(clip, fps)
     rows = {'start_frame': start, 'end_frame': end, 'duration_frames': end - start}
@@ -120,7 +124,7 @@ def test_visual_vector(vector):
 
 
 def test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane():
-    projection = _native_projection()
+    projection = _projection()
     placed = {o['occurrence_id']: (o['at'], o['hold']) for o in projection.occurrences}
     expected = {row['occurrence_id']: (row['at_ms'] / 1000, row['duration_ms'] / 1000) for row in VISUAL['closure']['occurrences']}
     assert placed == expected
@@ -130,7 +134,7 @@ def test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane
 def test_popup_closure_source_windows_are_half_open_on_the_shared_lane():
     # Occurrence spans overlap (A 8-18 s, B 10-20 s). The source-window children do not: A's child ends where B's begins.
     fps = _clock()
-    projection = _native_projection()
+    projection = _projection()
     first, second = VISUAL['closure']['occurrences']
     earlier = _source_clip(projection, first['occurrence_id'], first['source_clip_id'])
     later = _source_clip(projection, second['occurrence_id'], second['source_clip_id'])
@@ -138,9 +142,17 @@ def test_popup_closure_source_windows_are_half_open_on_the_shared_lane():
 
 
 def test_native_child_keeps_its_opaque_and_null_params_fields():
-    clip = _source_clip(_native_projection(), 'occ-a', 'reserved-child')
+    clip = _source_clip(_projection(), 'occ-a', 'reserved-child')
     assert clip['opaque'] == [None, False, {}]
     assert clip['params'] is None
+
+
+def test_overhang_child_is_clamped_to_its_occurrence_end():
+    # Clamp on, the one policy: the child is absolute [3, 5) s but occ-c ends at 3.5 s, so only 0.5 s is visible.
+    clip = _source_clip(_projection('overhang'), 'occ-c', 'clip-a')
+    assert clip['at'] == pytest.approx(3.0)
+    assert clip_timeline_duration(clip) == pytest.approx(0.5)
+    assert clip['at'] + clip_timeline_duration(clip) == pytest.approx(3.5)
 
 
 def test_render_pin_gives_element_clips_the_clip_look():
