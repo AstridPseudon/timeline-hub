@@ -6,7 +6,9 @@ before any write.
 """
 from __future__ import annotations
 
+import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -14,6 +16,7 @@ from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest
+from runtime_protocol.util import canonical_json
 
 AUTHORED = {
     "config": {"fps": 24, "extension": {"keep": [None, False, {"__proto__": 1}]}},
@@ -99,6 +102,47 @@ def test_empty_default_on_a_fresh_timeline_is_accepted_and_replays(service):
     before = _dump(runtime)
     assert _publish_empty(runtime, project, "empty-default") == accepted
     assert _dump(runtime) == before
+
+
+def _hide_content(runtime, project, content):
+    with runtime.store.conn:
+        runtime.store.conn.execute(
+            "INSERT INTO project_documents VALUES (?, ?, ?, ?, 1, ?, ?)",
+            ("timeline:main", project, "timeline", canonical_json(content), "2026-10-20T00:00:00Z", "2026-10-20T00:00:00Z"))
+
+
+def test_empty_parent_over_hidden_nonempty_content_of_a_headless_timeline_is_refused_untouched(service):
+    """App's probe: head is None publicly while project_documents holds authored content."""
+    runtime, project = service
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "headless_hidden_content_candidate.json").read_text())
+    content = {"slug": "edited", "config": fixture["hiddenAuthored"], "registry": {"assets": {}}}
+    _hide_content(runtime, project, content)
+    assert runtime.get_project_timeline(project, "main")["head_revision_id"] is None
+    body = {**copy.deepcopy(fixture["submitted"]), "project_id": project, "timeline_id": "main"}
+    before = _dump(runtime)
+    for key in ("repair-shell", "repair-shell"):  # the retry is refused the same way
+        with pytest.raises(ConflictError) as error:
+            runtime.publish_parent_composition(project, "main", body, idempotency_key=key)
+        assert error.value.details["reason"] == "headless_content_not_empty"
+        assert _dump(runtime) == before
+    stored = runtime.store.conn.execute("SELECT content_json FROM project_documents WHERE id='timeline:main'").fetchone()[0]
+    assert json.loads(stored) == content
+
+
+def test_genuinely_empty_headless_timeline_still_accepts_expected_head_null(service):
+    runtime, project = service
+    _hide_content(runtime, project, {"config": {}, "registry": {"assets": {}}, "clips": []})
+    assert _publish_empty(runtime, project, "empty-default")["data"]["revision_id"] == "empty-default"
+
+
+def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
+    runtime, project = service
+    _publish_empty(runtime, project, "empty-default")
+    again = runtime.publish_parent_composition(project, "main", {
+        "project_id": project, "timeline_id": "main", "expected_head": "empty-default",
+        "parent_revision_id": "second", "parent_composition": AUTHORED,
+    }, idempotency_key="second")
+    assert again["data"]["revision_id"] == "second" and again["data"]["old_head"] == "empty-default"
 
 
 def test_fresh_creation_is_unchanged(service):

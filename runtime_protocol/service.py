@@ -2726,6 +2726,14 @@ class RuntimeService:
                 found.update(self._collect_digest_media(item))
         return found
 
+    @classmethod
+    def _has_authored_content(cls, value):
+        if isinstance(value, dict):
+            return any(cls._has_authored_content(item) for item in value.values())
+        if isinstance(value, list):
+            return any(cls._has_authored_content(item) for item in value)
+        return value is not None
+
     @_durable_mutation
     def publish_parent_composition(self, project_id, timeline_id, body, *, idempotency_key=None):
         idempotency_key = require_idempotency_key(idempotency_key)
@@ -2762,6 +2770,12 @@ class RuntimeService:
             # head race (publish and restore); the message wording is not a contract.
             # Not added to the openapi text: that would change the pinned schema digest.
             raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head, "actual_head": current_head})
+        if current_head is None:
+            # expected_head null matches a headless shell, so the head guard cannot see authored
+            # shell content that the public resource hides; refuse before any write.
+            hidden = self.store.conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", project["id"])).fetchone()
+            if hidden is not None and self._has_authored_content(json.loads(hidden["content_json"])):
+                raise ConflictError("headless timeline holds authored content", details={"status": "refused", "reason": "headless_content_not_empty"})
 
         raw_internal = body.get("internal_timeline_revisions", body.get("timelines", []))
         raw_shots = body.get("shot_revisions", body.get("shots", []))
