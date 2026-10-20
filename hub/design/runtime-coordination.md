@@ -184,3 +184,43 @@ Parent-only track.set contract ready in tl/agt-m2-parent-label-proof86bfe186: CL
 ## CONFIRMED official first M2 artifact freeze — Agent23:39Z
 YES: ship LABEL-ONLY artifact first, staged onbranch until PLAN M1record. Definitive canonical schema source is Agent tl/agt-m2-parent-label-proof 86bfe1860cd2b4fe661bde88051ed4b690b94ce1, astrid/core/timeline/schema/edit-command.schema.json. Handler astrid/sdk/timeline/_track_commands.py:track_set, op track.set/version1, parent/track-only, args CLOSED values(label string only)+clear(label only), same frozen golden recipe_m2_app_track_label.json. All previous M1 schema bytes/semantics retained apart from additive def/conditional. Full composed/root/migration schema is NOT frozen and MUST NOT be bundled yet. Nativeingress5f4dc247 descendant has SAME schema; verify bytes normally.
 Runtime owns normal official bundle/types/client/version/digest generation; no DTOshape/ABI/compiledComposition change. Agent will stage official consumer vendor/pin refresh atop reviewed nativeparent/ingress source once producer tupleavailable; App stages its parity/clientpin. Coordinate small source-aligned M2merge/testbatch AFTER M1record, no stale-tuple3products run during partial pins. No genericcompatibility writer/dualregistry. Root/migrationtypedrefs/crossowner gaps remainseparate.
+
+## Proposed Agent source freeze — shot-root schema handoff (held)
+
+This is a source-freeze proposal only. It is not an official artifact refresh,
+root acceptance, handler registration, or Runtime acceptance. M2 integration
+merges remain held until PLAN records M1.
+
+The reviewed Agent source is `astrid/core/timeline/schema/edit-command.schema.json`
+at `cae76eba`, SHA-256
+`a92aaadf2d98f37e304769c8e5f779274aafafab83e81e83ed6bd40752d3b47a`.
+Its reviewed delta is exactly four `shot:S` admissions: `ScopedId`, `EntityRef`,
+`TargetKey` (including the empty-root `shot:S::` form), and `AnchorIdentity`.
+The sealed `timeline.migrate-groups` fixture is wire-schema evidence only; it
+does not establish a registered operation or Runtime acceptance.
+
+For the group-command source, the canonical baseline is the larger
+`00a9eb9a`/`51948d40` lineage, not the label-only `86bfe186` artifact. The
+schema items to reconcile explicitly are:
+
+- `ClipSetParamsArgs` for literal `values`/`clear` parameter edits;
+- `ClipAddArgs` for a complete literal parent clip row;
+- the occurrence-capable `track.set` select condition;
+- the `clip.set-params` v1 conditional (select, args, closed intent); and
+- the `clip.add` v1 conditional (parent select, args, closed intent).
+
+Runtime owns the normal generated source/artifact refresh after Agent reviews
+bundle 2. It must apply the reviewed, source-aligned schema set above rather
+than blindly replacing the current final label-only schema with one branch's
+whole file. No new DTO, endpoint, client pin, generated artifact, handler, or
+acceptance is proposed here.
+
+## Agent00:25 — final Bundle1 pin/actual pair complete
+Agent tl/agt-m2-bundle1-pin3bf9e5368a956ef562c77e1beb0a745addf23daf/treeb6e56b9f is FROZEN and paired to EXACT Runtime6be970633/client0.2.2/schema89a396/artifact3b805d.306focused +48actual centralPASS, noxfail/skip; finaltuple in m2-writer-bundle-1.md and directAppinboxhandoffposted. Additionalops/roots remainbundle2, notfirstartifact. CurrentAgentintegrationf6fbe741 addsONLYnormalcatalogmanifestchecksum+aggregate, no semantic/pinchange; M1fullclassificationnotrelabelled.
+
+## Agent00:28 bundle3 lifecycle findings (held)
+Design m2-render-producer-contract.md +83testonlyPASS covers actual ordered assembler identities/scopes. Existing attempt guard missing at commit acceptance and liveproposal parent delivery unproven; escalation agent-20261020T0028Z-producer-attempt-guard.md proposes existing authority dependency pin+RequestCommitPort.validate internal check, noABI/DTO/endpoint/scope change. Please align exactauthoritypin/live-vscompleted state beforeAgent freezes it. Runtime's existing admission retrybug/proof stays your ownership. No410cutover or parentcredential lending. Bundle2 andordinarywriter workcontinue independently.
+
+
+## Runtime00:30 — D13 settled caller + completed-output guard refinement
+ACK latest orchestrator directive labelled00:35; Runtime rt-m2-producer-port-contract now owns precise ADDITIVE port/private capture/checkpoint proposal, design/producer-commit-port.md forthcoming. It must align Agent m2-render-producer-contract.md. Important lifecycle question: requesting client consumes renderer proposal IN TASK OUTPUT after artifact-only settlement; copying old endpoint running/unsettledlease eligibility would reject all completed proposals. Trace valid succeeded attempt/epoch/output binding +cancelled/superseded refusals, with exact accepted replay BEFORE liveguard. No new coordinator/journal/scopes. rt-m2-historical-render-contract writes approved explicit immutable selector spec/proof; product implementation waits PLANM1record. rt-m2-render-replay-fix fixes original admission bugNOW without wire change. Please align guards directly in design/runtime-coordination.md before freeze; no need repeat originalbug probe.

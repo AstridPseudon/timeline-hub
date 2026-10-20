@@ -1,8 +1,11 @@
-# D13: producer commit, fence and render handoff (recommendation; not implemented)
+# D13: producer commit, fence and render handoff (source audit; implementation pending)
 
 2026-10-20. Read-only Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316`, Agent `fc324e838fd668fc06cae906e8bcfccace86ad62`; held Runtime cohort `5ef5c5640b9c14dfcf867c1193123e9a38a35394` store inspected, not qualified. PLAN + Runtime INBOX render-producer-authority decision govern. Old endpoint 410 remains HELD; no implementation/migration acceptance claimed.
 
-## Actual actor chain and missing coordinator
+## Orchestrator decision (INBOX labelled 2026-10-20 00:35Z)
+Historical immutable selector APPROVED additive on existing admission spec. Renderer returns proposal in task output; REQUESTING existing App/CLI session commits it through its normal authority/outbox. No new coordinator/journal/renderer write scope. Additive Runtime guard port + existing authority dependency/publication checkpoint; guards after exact receipt lookup. Historical/producer implementation waits M1 record; retry bug fix proceeds now. Earlier missing-coordinator recommendation below is superseded by this caller binding. Exact selector refinement: design/render-historical-admission.md; port/checkpoint refinement: design/producer-commit-port.md (workers drafting).
+
+## Actual actor chain and earlier coordinator audit
 
 - Agent `astrid/core/execution/generic_host.py:9631` invokes `_publish_assembled_timeline:8401` before settlement; it reads the typed proposal, admitted `runtime_dependencies.publication`, timeline/version and render settings, then calls `RuntimeProtocolClient.publish_timeline_render:4902` with the **same worker credential** and task-derived key `timeline-publication-<authoring_task_id>`.
 - `RuntimeProtocolClient.WORKER_SCOPES:4412`: `handshake`, `worker:register`, `worker:execute`, `projects:read`, `tasks:read`, `objects:read`, `objects:write`; no `projects:write` or `tasks:write`. Credential actor is the executor, not a user/coordinator. Keep this boundary.

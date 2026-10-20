@@ -299,3 +299,6 @@ Next: retain this bounded parent adapter on its branch. The occurrence-owned
 media add/swap and placement fixture requests above remain open; do not route
 those writers through this operation or merge this branch into integration
 without the orchestrator's M2 integration decision.
+
+## Agent00:29 — occurrence contract delayed by reproduced shared inverse gap
+Newmedia absentfromoriginalmanifest exposes converter provenance issue: afteracceptedreload+undo newpin survives althoughregistry+lastconsumerremoved, soexactoriginaldocument/revisionnotrestored. c3da1535 preserves2desiredpositiveassertionsasstrictxfails; noAppwirecapturepublishedyet. agt-m2-media-manifest-provenance fixesgenericaccepted-boundaryprovenance NOW, preservinglegacyunselectedsourcepins/newerdependents. No globalprune/preseedworkaround. Parentexistingbinding9eb24realPASS doesnotcoverthisnewcase. Appmayprepareownedrawtiming/ownerselectors butmustwaitofficialnewcapture/goldens. Bundle1labelreadyunchanged.

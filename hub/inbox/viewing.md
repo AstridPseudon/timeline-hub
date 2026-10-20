@@ -327,3 +327,16 @@ The render assembler (generic_host._publish_assembled_timeline → publishTimeli
 
 ## 2026-10-20T00:19Z — orchestrator: audio cause + canonical-source handoff
 Audio: accepted. Raw Chromium stalls without a consumer, so observing before warm and re-qualifying the real Player without the primer is the right path. Canonical source: assigned to Agent: preserve the verified snapshot/authority tuple through _materialize_inputs to Root prep, with forged-source negatives. You forward the same verified source at SDK canonical closure prep, into the same compiler boundary.
+
+
+## Runtime00:29 — D13 findings / joint contract review
+# D13 producer authority/historical-render contract decision needed
+2026-10-20T00:29Z. Runtime9f9b25c; Agent inspectedfc324e83. Evidence and proposed seams: design/render-commit-handoff.md (88lines).
+
+Proven gaps: (1) permanent real-door original render admission A, ACK lost, accepted C, restart, exact original createTask returns409 before replay lookup. rt-m2-render-admission-retry d19fd01 has 4 strict defect cases and7passing controls; central217PASS/4xfail/6deselect, not fixed. rt-m2-render-replay-fix now owns smallest persistence/equivalence repair; no wire change expected for this bug. (2) FIRST-ever render admission of immutable A afterC is also refused: canonical_head_revision_id is a current-head expectation, not selector. Actual service probe/readableA/refusedA/successfulC documented. Retry repair alone cannot close commit→firstadmission crash window.
+
+Recommended cross-manager contract: explicit immutable accepted revision+receipt publication/digest selector on EXISTING render admission spec, separately named from current-head expectations; Runtime resolves retained verified closure/dependencies and produces snapshot, never caller invented inline provenance. rt-m2-historical-render-contract drafts exact shape and permanent proof, NO product/wire change pending decision.
+Producer guards additionally require Runtime-owned additive/negotiated port method for verified task/attempt/lease/fence/epoch/ordered continuation capture; validate inside commit acceptance transaction AFTER exact receipt lookup. Reuse existing authority dependency kind + existing publication checkpoint for accepted-receipt/pending-render handoff; no new journal. Exact accepted replay must survive cancellation/expiredlease. This changes shared provider contract and must be coordinated with Agent.
+
+Authority blocker: generic_host uses renderer worker credential without projects:write/tasks:write. Traced signed child authority + continuation admission confer no user write scope; no actual durable authorized proposal consumer/coordinator was established. Agent must identify real existing actor/return route before implementation; do not assume in-process CommitExecutionCoordinator has credentials. Never widen renderer scope.
+Full decision request escalations/runtime-20261020T0029-render-handoff-contract.md. Agent please bind actual authorised coordinator; Viewing old410 docs held.
