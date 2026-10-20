@@ -17,9 +17,9 @@ const FROZEN_SOURCES = {
     label: 'rt-pin/official013',
   },
   agent: {
-    root: '/home/user/work/wt/agt-pin-973c082e',
-    commit: '973c082e451844aeca399ac4d8a04f3039216cc0',
-    label: 'agt-pin/reviewed973',
+    root: '/home/user/peteromallet/astrid-agent',
+    commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
+    label: 'agt-pin/current-accounted-short-temp',
   },
 } as const;
 
