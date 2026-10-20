@@ -1,4 +1,4 @@
-"""Reference writers retire before lookup/replay in historical and empty realms.
+"""Project catalogs stay writable; timeline reference writers stay retired.
 
 Existing reference/association pins and accepted retry keys come from the genuine
 pre-cut archive. Run the whole file centrally for real authenticated HTTP.
@@ -12,18 +12,22 @@ import pytest
 
 from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import RetiredRouteError
+from runtime_protocol.errors import ConflictError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from precut_realm_fixture import load_precut_realm_fixture
 from test_shot_composition_runtime import restore_provider as actual_provider  # noqa: F401 (fixture)
 
 
-FAMILIES = (
+CATALOG_FAMILIES = (
     "create_project_reference", "update_project_reference", "archive_project_reference",
     "recover_project_reference", "associate_reference", "set_primary_reference",
-    "link_references", "create_reference", "update_reference", "archive_reference",
+    "link_references",
+)
+TIMELINE_FAMILIES = (
+    "create_reference", "update_reference", "archive_reference",
     "recover_reference",
 )
+FAMILIES = CATALOG_FAMILIES + TIMELINE_FAMILIES
 STATES = ("fresh", "unused", "existing")
 
 
@@ -131,7 +135,7 @@ def call_service(service, case, family, body, key):
     return getattr(service, family)(*args, **kwargs)
 
 
-@pytest.mark.parametrize("family", FAMILIES)
+@pytest.mark.parametrize("family", TIMELINE_FAMILIES)
 @pytest.mark.parametrize("state", STATES)
 def test_service_reference_writers_refuse_before_lookup_or_replay(service_case, monkeypatch, family, state):
     service, case = service_case.service, service_case.cases[state]
@@ -161,7 +165,7 @@ def test_service_private_reference_state_writer_is_also_retired(service_case, ar
 
 @pytest.mark.parametrize("family", FAMILIES)
 @pytest.mark.parametrize("state", STATES)
-def test_http_reference_writers_preserve_auth_and_refuse_without_writes(http_case, monkeypatch, family, state):
+def test_http_reference_writers_preserve_auth_without_writes(http_case, family, state):
     case = http_case
     method, path, body = reference_request(case.cases[state], family)
     reader_token, _ = case.daemon.credentials.provision("reader", ["projects:read"])
@@ -173,6 +177,14 @@ def test_http_reference_writers_preserve_auth_and_refuse_without_writes(http_cas
                             headers={"Content-Type": "application/json", "Idempotency-Key": "reference-request"})
         assert error.value.status == 401
         assert snapshot(case.service) == before
+
+
+@pytest.mark.parametrize("family", TIMELINE_FAMILIES)
+@pytest.mark.parametrize("state", STATES)
+def test_http_timeline_reference_writers_refuse_without_writes(http_case, monkeypatch, family, state):
+    case = http_case
+    method, path, body = reference_request(case.cases[state], family)
+    before = snapshot(case.service)
 
     def replay(*args, **kwargs):
         pytest.fail("retired HTTP reference writer consulted legacy retries")
@@ -230,23 +242,151 @@ def captured_retry(service, case, family):
 
 
 @pytest.mark.parametrize("family", ["create_project_reference", "associate_reference"])
-def test_service_genuine_accepted_reference_retry_cannot_replay(service_case, family):
+def test_service_genuine_accepted_catalog_retry_replays_without_writes(service_case, family):
     service, case = service_case.service, service_case.cases["existing"]
     body, key = captured_retry(service, case, family)
     before = snapshot(service)
-    with pytest.raises(RetiredRouteError):
-        call_service(service, case, family, body, key)
+    result = call_service(service, case, family, body, key)
+    receipt = service.committed_receipt(
+        "reference.create" if family == "create_project_reference" else "reference.associate",
+        case.project if family == "create_project_reference" else case.reference,
+        key, project_id=case.project,
+    )
+    assert result == {"data": receipt["result"], "receipt": receipt}
     assert snapshot(service) == before
 
 
 @pytest.mark.parametrize("family", ["create_project_reference", "associate_reference"])
-def test_http_genuine_accepted_reference_retry_cannot_replay(http_case, family):
+def test_http_genuine_accepted_catalog_retry_replays_without_writes(http_case, family):
     case = http_case.cases["existing"]
     body, key = captured_retry(http_case.service, case, family)
     method, path, _ = reference_request(case, family)
     before = snapshot(http_case.service)
-    with pytest.raises(ApiError) as error:
-        http_case.client._request(method, path, body=json.dumps(body).encode(),
-                                  headers={"Content-Type": "application/json", "Idempotency-Key": key})
-    assert error.value.status == 410 and error.value.code == "retired_route"
+    _, _, raw = http_case.client._request(method, path, body=json.dumps(body).encode(),
+                                          headers={"Content-Type": "application/json", "Idempotency-Key": key},
+                                          expected=(200, 201))
+    receipt = http_case.service.committed_receipt(
+        "reference.create" if family == "create_project_reference" else "reference.associate",
+        case.project if family == "create_project_reference" else case.reference,
+        key, project_id=case.project,
+    )
+    assert json.loads(raw) == {"data": receipt["result"], "receipt": receipt}
     assert snapshot(http_case.service) == before
+
+
+def film_snapshot(service, case):
+    head = service.get_project_timeline(case.project, case.timeline)
+    # Neutral startup need not install a legacy publication identity. Read the
+    # existing history rows without manufacturing one for a catalog operation.
+    history = (service.list_project_parent_composition_revisions(case.project, case.timeline),
+               service.list_timeline_history(case.timeline),
+               tuple(tuple(row) for row in service.store.conn.execute(
+                   "SELECT * FROM timeline_commit_history WHERE project_id=? AND timeline_id=? ORDER BY project_seq",
+                   (case.project, case.timeline))),
+               tuple(tuple(row) for row in service.store.conn.execute(
+                   "SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id", (case.timeline,))))
+    document = service._timeline_commits()[0].revision_closure(
+        case.project, case.timeline, head["head_revision_id"],
+    )
+    objects = {str(path.relative_to(service.store.cas_root)): path.read_bytes()
+               for path in service.store.cas_root.rglob("*") if path.is_file()}
+    return head, history, document, objects
+
+
+def catalog_request(service, case, family):
+    case = SimpleNamespace(**vars(case))
+    case.kind = "character"
+    if family == "create_project_reference":
+        case.reference += "-new"
+    else:
+        if case.reference == "uncreated-reference":
+            service.create_project_reference(case.project, {
+                "reference_id": case.reference, "kind": "character", "name": "Character", "media_id": case.media,
+            }, idempotency_key="catalog-setup")
+        current = service.get_project_reference(case.project, case.reference)
+        case.kind = current["kind"]
+        if family == "recover_project_reference":
+            current = service.update_project_reference(
+                case.project, case.reference, {"expected_version": current["version"]},
+                archived=True, idempotency_key="catalog-setup-archive",
+            )["data"]
+        case.version = current["version"]
+        case.association = current["media_references"][0]["association_id"]
+        if family == "associate_reference":
+            case.association = "catalog-new-association"
+    method, path, body = reference_request(case, family)
+    if family == "associate_reference":
+        body["role"] = "inspired_by"
+    if family == "link_references":
+        service.create_project_reference(case.project, {
+            "reference_id": "catalog-target", "kind": "object", "name": "Prop", "media_id": case.media,
+        }, idempotency_key="catalog-target")
+        body["to_reference_id"] = "catalog-target"
+    return case, method, path, body
+
+
+def assert_catalog_result(service, case, family, result):
+    data = result["data"]
+    assert result["receipt"]["result"] == data
+    assert result["receipt"]["project_id"] == case.project
+    if family == "link_references":
+        assert data == {"from_reference_id": case.reference, "to_reference_id": "catalog-target", "kind": "related_to"}
+        assert service.get_project_reference(case.project, case.reference)["links"]
+    else:
+        assert service.get_project_reference(case.project, case.reference) == data
+        assert data["reference_id"] == case.reference and data["kind"] == case.kind
+        if family == "create_project_reference":
+            assert data["version"] == 1 and data["name"] == "Character"
+        else:
+            assert data["version"] == case.version + 1
+        if family == "update_project_reference":
+            assert data["name"] == "Renamed"
+        if family in ("archive_project_reference", "recover_project_reference"):
+            assert data["archived"] == (family == "archive_project_reference")
+        if family == "associate_reference":
+            assert data["media_references"][-1]["association_id"] == case.association
+        if family == "set_primary_reference":
+            primary = [item for item in data["media_references"] if item["is_primary"]]
+            assert len(primary) == 1 and primary[0]["association_id"] == case.association
+
+
+@pytest.mark.parametrize("family", CATALOG_FAMILIES)
+@pytest.mark.parametrize("state", STATES)
+def test_service_project_catalog_keep_crud_and_exact_retry(service_case, family, state):
+    service = service_case.service
+    case, _, _, body = catalog_request(service, service_case.cases[state], family)
+    before = film_snapshot(service, service_case.cases["existing"])
+    result = call_service(service, case, family, body, "catalog-request")
+    assert_catalog_result(service, case, family, result)
+    assert film_snapshot(service, service_case.cases["existing"]) == before
+    unchanged = snapshot(service)
+    assert call_service(service, case, family, body, "catalog-request") == result
+    assert snapshot(service) == unchanged
+    with pytest.raises(ConflictError):
+        call_service(service, case, family, {**body, "metadata": {"changed": True}}, "catalog-request")
+    assert snapshot(service) == unchanged
+
+
+@pytest.mark.parametrize("family", CATALOG_FAMILIES)
+@pytest.mark.parametrize("state", STATES)
+def test_http_project_catalog_keep_crud_and_exact_retry(http_case, family, state):
+    case, method, path, body = catalog_request(http_case.service, http_case.cases[state], family)
+    before = film_snapshot(http_case.service, http_case.cases["existing"])
+
+    def request(value):
+        _, _, raw = http_case.client._request(
+            method, path, body=json.dumps(value).encode(), expected=(200, 201),
+            headers={"Content-Type": "application/json", "Idempotency-Key": "catalog-request"},
+        )
+        return json.loads(raw)
+
+    result = request(body)
+    assert_catalog_result(http_case.service, case, family, result)
+    assert film_snapshot(http_case.service, http_case.cases["existing"]) == before
+    unchanged = snapshot(http_case.service)
+    assert request(body) == result
+    assert snapshot(http_case.service) == unchanged
+    with pytest.raises(ApiError) as error:
+        request({**body, "metadata": {"changed": True}})
+    assert error.value.status == 409
+    assert snapshot(http_case.service) == unchanged

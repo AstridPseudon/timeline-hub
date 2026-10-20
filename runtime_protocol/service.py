@@ -2620,7 +2620,38 @@ class RuntimeService:
 
     @_durable_mutation
     def create_project_reference(self, project_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        kind, name = str(body.get("kind") or ""), str(body.get("name") or "")
+        if kind not in {"character", "place", "object", "clothing", "other"}:
+            raise ValidationError("invalid reference kind")
+        if not name.strip():
+            raise ValidationError("name is required")
+        if "object_id" in body:
+            raise ValidationError("object_id is not supported; use media_id")
+        media_id = str(body.get("media_id") or "").removeprefix("sha256:")
+        reference_id = str(body.get("reference_id") or "")
+        if not media_id:
+            raise ValidationError("media_id is required")
+        if not reference_id:
+            reference_id = new_id()
+        metadata = body.get("metadata", {})
+        if not isinstance(metadata, dict):
+            raise ValidationError("metadata must be an object")
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        with self.store._mutex:
+            replay = self._command_replay("reference.create", project["id"], idempotency_key, request_hash, project_id=project["id"])
+            if replay is not None:
+                return replay
+            if self.store.conn.execute("SELECT 1 FROM project_references WHERE id=?", (reference_id,)).fetchone():
+                raise ConflictError("reference already exists", details={"reference_id": reference_id})
+            if not self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project["id"], media_id)).fetchone():
+                raise NotFoundError("media is not owned by project")
+            timestamp = now()
+            self.store.conn.execute("INSERT INTO project_references(id, project_id, kind, name, description, metadata_json, version, created_at, updated_at, archived_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, NULL)", (reference_id, project["id"], kind, name, str(body.get("description") or ""), canonical_json(metadata), timestamp, timestamp))
+            self.store.conn.execute("INSERT INTO media_references(id, reference_id, media_id, role, ordinal, is_primary, metadata_json, created_at) VALUES (?, ?, ?, 'canonical', 0, 1, '{}', ?)", (new_id(), reference_id, media_id, timestamp))
+            result = self._project_reference_resource(self.store.conn.execute("SELECT * FROM project_references WHERE id=?", (reference_id,)).fetchone())
+            return self._command_record("reference.create", project["id"], idempotency_key, request_hash, result, project_id=project["id"])
 
     def get_project_shot(self, project_id, shot_id):
         project = self.store.get_project(project_id)
@@ -2788,19 +2819,64 @@ class RuntimeService:
 
     @_durable_mutation
     def update_project_reference(self, project_id, reference_id, body, *, idempotency_key=None, archived=None):
-        self._require_timeline_command()
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id); expected = self._expected_version(body); action = "update" if archived is None else "archive" if archived else "recover"; request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        with self.store._mutex:
+            replay = self._command_replay(f"reference.{action}", reference_id, idempotency_key, request_hash, project_id=project["id"])
+            if replay is not None: return replay
+            row = self.store.conn.execute("SELECT * FROM project_references WHERE id=? AND project_id=?", (reference_id, project["id"])).fetchone()
+            if not row: raise NotFoundError("reference not found")
+            if int(row["version"]) != expected: raise ConflictError("reference version conflict", details={"expected": expected, "actual": int(row["version"])})
+            name = str(body.get("name", row["name"])); metadata = body.get("metadata", json.loads(row["metadata_json"]));
+            if not name.strip() or not isinstance(metadata, dict): raise ValidationError("invalid reference name or metadata")
+            self.store.conn.execute("UPDATE project_references SET name=?, description=?, metadata_json=?, version=version+1, updated_at=?, archived_at=? WHERE id=?", (name, str(body.get("description", row["description"])), canonical_json(metadata), now(), now() if archived is True else None if archived is False else row["archived_at"], reference_id))
+            result = self._project_reference_resource(self.store.conn.execute("SELECT * FROM project_references WHERE id=?", (reference_id,)).fetchone()); return self._command_record(f"reference.{action}", reference_id, idempotency_key, request_hash, result, project_id=project["id"])
 
     @_durable_mutation
     def associate_reference(self, project_id, reference_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        project = self.store.get_project(project_id); media_id = str(body.get("media_id") or "").removeprefix("sha256:"); role = body.get("role") or "depicts"
+        if role not in {"canonical", "used_as_input", "depicts", "inspired_by"}: raise ValidationError("invalid reference role")
+        self.get_project_reference(project["id"], reference_id)
+        if not self.store.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project["id"], media_id)).fetchone(): raise NotFoundError("media is not owned by project")
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        with self.store._mutex:
+            replay = self._command_replay("reference.associate", reference_id, idempotency_key, request_hash, project_id=project["id"])
+            if replay is not None: return replay
+            if not isinstance(body.get("metadata", {}), dict): raise ValidationError("metadata must be an object")
+            association_id = str(body.get("association_id") or new_id()); stamp = now()
+            if role == "canonical": self.store.conn.execute("UPDATE media_references SET is_primary=0 WHERE reference_id=?", (reference_id,))
+            self.store.conn.execute("INSERT INTO media_references(id, reference_id, media_id, role, ordinal, is_primary, metadata_json, created_at) VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(ordinal)+1,0) FROM media_references WHERE reference_id=?), ?, ?, ?)", (association_id, reference_id, media_id, role, reference_id, 1 if role == "canonical" else 0, canonical_json(body.get("metadata", {})), stamp))
+            self.store.conn.execute("UPDATE project_references SET version=version+1, updated_at=? WHERE id=?", (stamp, reference_id)); result = self._project_reference_resource(self.store.conn.execute("SELECT * FROM project_references WHERE id=?", (reference_id,)).fetchone()); return self._command_record("reference.associate", reference_id, idempotency_key, request_hash, result, project_id=project["id"])
 
     @_durable_mutation
     def link_references(self, project_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        project = self.store.get_project(project_id); source, target, kind = body.get("from_reference_id"), body.get("to_reference_id"), body.get("kind")
+        if kind not in {"belongs_to", "wears", "located_in", "associated_with", "related_to"}: raise ValidationError("invalid reference link kind")
+        self.get_project_reference(project["id"], source); self.get_project_reference(project["id"], target)
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        with self.store._mutex:
+            replay = self._command_replay("reference.link", source, idempotency_key, request_hash, project_id=project["id"])
+            if replay is not None: return replay
+            stamp = now(); metadata = canonical_json(body.get("metadata", {}))
+            self.store.conn.execute("INSERT OR IGNORE INTO reference_links VALUES (?, ?, ?, ?, ?)", (source, target, kind, metadata, stamp))
+            if kind == "related_to": self.store.conn.execute("INSERT OR IGNORE INTO reference_links VALUES (?, ?, ?, ?, ?)", (target, source, kind, metadata, stamp))
+            result = {"from_reference_id": source, "to_reference_id": target, "kind": kind}; return self._command_record("reference.link", source, idempotency_key, request_hash, result, project_id=project["id"])
 
     @_durable_mutation
     def set_primary_reference(self, project_id, reference_id, association_id, body, *, idempotency_key=None):
-        self._require_timeline_command()
+        self._require_object_body(body)
+        project = self.store.get_project(project_id); self.get_project_reference(project["id"], reference_id); expected = self._expected_version(body); request_hash = hashlib.sha256(canonical_json({"association_id": association_id, **body}).encode()).hexdigest()
+        with self.store._mutex:
+            replay = self._command_replay("reference.primary", reference_id, idempotency_key, request_hash, project_id=project["id"])
+            if replay is not None: return replay
+            row = self.store.conn.execute("SELECT * FROM project_references WHERE id=?", (reference_id,)).fetchone()
+            if int(row["version"]) != expected: raise ConflictError("reference version conflict", details={"expected": expected, "actual": int(row["version"])})
+            assoc = self.store.conn.execute("SELECT * FROM media_references WHERE id=? AND reference_id=?", (association_id, reference_id)).fetchone()
+            if not assoc: raise NotFoundError("media association not found")
+            self.store.conn.execute("UPDATE media_references SET is_primary=0 WHERE reference_id=?", (reference_id,)); self.store.conn.execute("UPDATE media_references SET is_primary=1, role='canonical' WHERE id=?", (association_id,)); self.store.conn.execute("UPDATE project_references SET version=version+1, updated_at=? WHERE id=?", (now(), reference_id)); result = self._project_reference_resource(self.store.conn.execute("SELECT * FROM project_references WHERE id=?", (reference_id,)).fetchone()); return self._command_record("reference.primary", reference_id, idempotency_key, request_hash, result, project_id=project["id"])
 
     def list_timeline_history(self, timeline_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
         self._timeline_resource(timeline_id)

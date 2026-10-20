@@ -25,6 +25,7 @@ def _seed(client):
     return project
 
 
+@pytest.mark.xfail(strict=True, reason="RT02 held: UTF-8 text first-use capability is KEPT; its shot-bound writer is retired (410), restored by the text-source seam")
 def test_set_is_deterministic_project_scoped_and_replays(daemon):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     project = _seed(client)
@@ -40,6 +41,7 @@ def test_set_is_deterministic_project_scoped_and_replays(daemon):
         client.set_project_shot_text_binding(project.project_id, {"shot_id": "opening", "kind": "prompt", "slot": "hero", "text": "changed", "expected_head": 0}, idempotency_key="set")
 
 
+@pytest.mark.xfail(strict=True, reason="RT02 held: UTF-8 text first-use capability is KEPT; its shot-bound writer is retired (410), restored by the text-source seam")
 def test_set_rebind_and_event_order(daemon):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     project = _seed(client)
@@ -51,6 +53,7 @@ def test_set_rebind_and_event_order(daemon):
     assert [tuple(row) for row in rows] == [(1, "shot.text_binding.created"), (2, "shot.text_binding.rebound"), (3, "shot.text_binding.rebound")]
 
 
+@pytest.mark.xfail(strict=True, reason="RT02 held: UTF-8 text first-use capability is KEPT; its shot-bound writer is retired (410), restored by the text-source seam")
 def test_invalid_utf8_and_size_are_zero_write(daemon):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     project = _seed(client)
@@ -63,6 +66,7 @@ def test_invalid_utf8_and_size_are_zero_write(daemon):
     assert after == before
 
 
+@pytest.mark.xfail(strict=True, reason="RT02 held: UTF-8 text first-use capability is KEPT; its shot-bound writer is retired (410), restored by the text-source seam")
 def test_identity_digest_is_sha256(daemon):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     project = _seed(client)
