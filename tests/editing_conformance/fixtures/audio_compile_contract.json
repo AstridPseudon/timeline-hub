@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "contract": "design/audio-compile-contract.md",
+  "contract": "docs/design/audio-compile-contract.md",
   "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py (occurrence -> clip) and Composition 0.0.6 AudioTrack (docs/reference/timeline-composition-v0.0.6/AudioTrack.tsx)",
   "base": {
     "graph": "tests/fixtures/timeline/shot_composition.json",

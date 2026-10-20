@@ -1,7 +1,7 @@
 """Shared compile-contract vectors: occurrence -> clip, as main's projection emits them.
 
 The vectors are fixtures/audio_compile_contract.json and fixtures/visual_compile_contract.json;
-the design is design/audio-compile-contract.md and design/visual-compile-contract.md.
+the design is docs/design/audio-compile-contract.md and docs/design/visual-compile-contract.md.
 """
 from __future__ import annotations
 

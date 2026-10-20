@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "contract": "design/visual-compile-contract.md",
+  "contract": "docs/design/visual-compile-contract.md",
   "reference": "origin/main e51595c6: astrid/core/timeline/shot_composition_projection.py (identical to this tree) and astrid/core/timeline/duration.py",
   "source": {
     "repo": "app",

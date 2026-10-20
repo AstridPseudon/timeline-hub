@@ -12,7 +12,7 @@ Reference for "audible today": `origin/main` e51595c6. The Python compiler is `a
 2. **Gain is multiplicative**: `child x occurrence`. Examples: 0.8 x 0.5 = 0.4; 1.5 x 2 = 3.
 3. **`source_offset` and occurrence `speed` follow main's audible playback**, not App's adapter. Main ignores both on the playback path, so the compiler keeps them as metadata. Metadata-only is acceptable here only because main does not change what is heard.
 4. **Fades use one continuous, source-time envelope** for App preview and Agent export. The public Composition `applyAudioEnvelope` is the policy (03:20). Until the prepared-source join exists, non-Player fades refuse `ENVELOPE_UNRENDERED`.
-5. **Fade `curve=` is HONOURED in the unified path** (orchestrator 04:24Z). The author's `curve=NAME` is kept as `params.fadeInCurve` / `params.fadeOutCurve` and the envelope applies it. Main's playback ignores it, so main's audible fades are always linear. This is a deliberate change for films that use `curve=`; they are listed in `design/owner-film-differences.md`.
+5. **Fade `curve=` is HONOURED in the unified path** (orchestrator 04:24Z). The author's `curve=NAME` is kept as `params.fadeInCurve` / `params.fadeOutCurve` and the envelope applies it. Main's playback ignores it, so main's audible fades are always linear. This is a deliberate change for films that use `curve=`; they are listed in `docs/design/owner-film-differences.md`.
 
 ## What main actually does (evidence)
 
@@ -122,7 +122,7 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 
 ## Open items for the orchestrator (not decided here)
 
-1. **`curve=` on audio fades: RESOLVED, honoured** (decision 5, orchestrator 04:24Z). Owner visibility: the films that use `curve=` are listed in `design/owner-film-differences.md`. That scan found no owner film in reach, so the list is open.
+1. **`curve=` on audio fades: RESOLVED, honoured** (decision 5, orchestrator 04:24Z). Owner visibility: the films that use `curve=` are listed in `docs/design/owner-film-differences.md`. That scan found no owner film in reach, so the list is open.
 2. **Viewing's 11.** Reconciled above; the unit question is closed (milliseconds).
 
 ## Not verified
