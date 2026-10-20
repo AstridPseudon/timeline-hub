@@ -24,6 +24,8 @@ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import { captureTrackCreate, executeTrackCreate, finishTrackCreate, type TrackCreateArgs } from './trackCreateCapture.ts';
 import { trackCreatePreview, type TrackCreateCapturePort } from './trackCreateGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+import { capturePlacement, finishPlacement } from './placementCapture.ts';
+import type { PlacementCapturePort } from './placementGesture.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
 export type CommandSessionState = {
@@ -448,6 +450,58 @@ export async function createTimelineCommandSession(options: Options) {
     }
     return select;
   }
+  const placementPort: PlacementCapturePort = {
+    capture({ clipId, ownerRef, ownership, on, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1 || !ownerRef || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
+        throw new Error('Placement requires one explicit raw clip owner');
+      }
+      const select = resolveOwnedClipRef(clipId, matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined,
+        ownerRef, 'Placement requires an explicit matching raw clip owner');
+      const basis = capturePlacement(bundle, ownerRef, select.slice(select.lastIndexOf('/clip:') + 6), on, ownership);
+      // Re-placement consumes the retained source binding, never a gallery selection.
+      if (!basis.command.reads?.some((read) => read.path.includes('assets') && read.state.state === 'present'
+        && object(read.state.value) && typeof read.state.value.media_id === 'string' && read.state.value.media_id.length > 0)) {
+        throw new Error('Placement requires an existing pinned media binding');
+      }
+      return freezeJson(json({ ...basis, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<PlacementCapturePort['capture']>;
+    },
+    finish(basis, on) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during placement');
+      const original = finishPlacement(basis, on);
+      // Replay the original native claims on current bytes; an ACK cannot recapture them.
+      const result = finishPlacement({ bundle, command: original.command }, on);
+      const preview: TimelinePatch = { version: 1, operations: [
+        { op: 'clip.move', target: basis.clipId as string, payload: { at: result.previewAt } },
+      ] };
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'placement.move' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Placement was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Placement requires its exact same-clip move preview');
+      prepared.delete(key);
+      const localPreview = freezeJson(copy(preview));
+      enqueue({ ...entry.payload, preview: localPreview }, localPreview, entry.basis);
+    },
+  };
   const trackCreatePort: TrackCreateCapturePort = {
     capture({ row, current }) {
       assertReady();
@@ -749,6 +803,7 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    placementPort,
     trackLabelPort,
     clipTrimPort,
     clipScalarPort,

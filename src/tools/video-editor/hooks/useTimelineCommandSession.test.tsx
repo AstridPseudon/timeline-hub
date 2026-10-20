@@ -102,6 +102,30 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it('exposes explicit placement and fences capture, finish and submit behind earlier saves', async () => {
+    const raw = commandDocument();
+    raw.parent_revision.payload.clips[0].asset = 'picture';
+    raw.parent_revision.payload.registry = { assets: { picture: { type: 'image', media_id: 'sha256:' + '1'.repeat(64) } } };
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const { env, hook, setLegacyClean } = await scoped(await environment(raw));
+    const port = hook.result.current.commands.placementPort!;
+    const current = hook.result.current.commit.data!;
+    const input = { clipId: 'x', ownerRef: 'parent' as const, ownership: 'parent' as const, on: 5, current };
+    setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture(input);
+    setLegacyClean(false);
+    expect(() => port.finish(basis, 5)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(basis, 5);
+    expect(prepared.command.op).toBe('placement.move');
+    setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
   it('exposes only explicit parent deletion and fences capture, finish and submit behind earlier saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipDeletePort!;

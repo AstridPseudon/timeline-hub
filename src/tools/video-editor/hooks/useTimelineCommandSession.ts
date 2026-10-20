@@ -167,6 +167,15 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const placementPort = session.placementPort;
+        const requireCleanPlacement = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before placement');
+        };
+        session.placementPort = {
+          capture(input) { requireCleanPlacement(); return placementPort.capture(input); },
+          finish(basis, on) { requireCleanPlacement(); return placementPort.finish(basis, on); },
+          submit(input) { requireCleanPlacement(); placementPort.submit(input); },
+        };
         const labelPort = session.trackLabelPort;
         const requireCleanLabelEdit = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
@@ -283,6 +292,7 @@ export function useTimelineCommandSession(options: {
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    placementPort: enabled ? sessionRef.current?.placementPort : undefined,
     clipDeletePort: enabled ? sessionRef.current?.clipDeletePort : undefined,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipTrimPort: sessionRef.current?.clipTrimPort,
