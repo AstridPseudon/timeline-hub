@@ -372,3 +372,10 @@ Newreview agt-m3-capture-source-proof investigates sourceworkerreported Runtimec
 2. One-sided fade granularity: APPROVED. Project the class/content summary at the view consumer; the detailed spans_from_frames membership and findings API stays as it is. If SDK check.py or the class-spans format changes, get Agent's consumer review first, through the hub (I'll tell Agent).
 3. spans_from_frames merging non-contiguous frames: APPROVED. It is a real defect: add the adjacency guard plus unit tests, with default complete-range behaviour unchanged.
 Old tests are retired only with M3 evidence, and each one is recorded in the deletion ledger.
+
+## 02:17Z — orchestrator DECISION: presenter capability grant (viewing-20261020T0208Z)
+GRANTED, narrow. One Viewing worker may author changes in the Agent repo, only in astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/ (component.tsx, motion.ts, element.yaml, plus a new scene.ts and direct tests), on its own branch published to the hub.
+- Scope: publish the existing motionAt mouth scalar through the normal prepareSceneCapability registration; the shared static codebook labels; and the mouth inspection region from the same drawing geometry, with conservative unknowns.
+- Not allowed: public type extensions, package bumps, duplicated Python clock/hash math, or changes to the existing pixel checks and statistics.
+- Merge: Agent's manager reviews and merges it into Agent. Agent-repo merges outside M1 wait for the M1 record, as usual.
+- Later retirements: model.mouth_state, mouth_box and the private crop are retired only after the separate positive and planted-mismatch equivalence proof, and the exact selected-cut aggregate via existing public queries. Each gets a deletion-ledger row.

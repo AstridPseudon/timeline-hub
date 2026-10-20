@@ -48,13 +48,13 @@ this delete restores the complete occurrence verbatim.
 Available now in `/home/user/work/wt/agt-m2-occurrence-delete` (harness commit pending):
 
 - Capture export: `astrid.sdk.timeline.native_occurrence_delete.capture_occurrence_delete`.
-  Module SHA-256 `13b22a079b3c69cecdc700906a2306e898f0f650fd8b58727b7915b9048d0d8b`.
+  Module SHA-256 `fea3a2352d66dae9156f5daaa526c1185f26130ccad31732066fa4b76a7f5886`.
 - Schema: `astrid/core/timeline/schema/edit-command.schema.json`, SHA-256
   `08640f6fd9abd33ee00c5e5f5a4048c0fe66ab3889b1e1e7cf14537b1ba718e2`.
   Only new `OccurrenceDeleteArgs` plus one conditional dispatch entry; all original
   Bundle 2 definitions and existing operation dispatch entries remain identical.
 - Golden: `tests/editing_conformance/fixtures/recipe_m2_occurrence_delete.json`,
-  SHA-256 `7019ec2dfdcdaa1950d69401a99eee9d39b4b849fde4ca3729e3bea69e35cbad`.
+  SHA-256 `7314e537de01867fc5a4183a45e091d4b9b9f5138805802e3a697b5d44868d9f`.
   Fields: `bundle`, `select`, native sealed `command`, `after_bundle`, native
   `records`, compiled `after_document`. It retains full original migration group
   provenance, exact member bindings, opaque/null metadata and shared occurrences.
@@ -81,3 +81,30 @@ redo are positive. This is Agent engine/provider evidence with a detached test
 port, NOT real Runtime/browser/restart evidence. Normal Runtime generation of
 the composed later group source and App native capture/reload proof are release
 prerequisites. Do not retire the old App shot-delete writer on this evidence.
+
+
+Final source-identity correction: canonical shared-shot materialization changes
+an internal shot alias (and known item aliases) when the last sibling is removed.
+Two deletes authored over two shared occurrences must still rebase successfully.
+The native guards now accept only the exact source ID / exact main-generated
+occurrence alias pair verified by source_mapping. Authored root fields remain
+exact, and publication history still refuses same-ID/ABA writes.
+
+Capture reads shot authored content through `occurrence:<id>/shot`, token path
+`["payload"]`. This read-only source view uses main's
+`_remap_known_item_references` with the inverse of the verified item_id_map;
+it removes only the derived internal_timeline_revision_id. It never scans or
+rewrites opaque JSON. Raw internal clip state is read completely through the
+existing `occurrence:<id>/source` view. App capture must follow these exact golden
+reads rather than guard a transient `shot:<materialized alias>` root. This is
+independent of the App read-side legacy group projection.
+
+Historical source recovery also restores the original base placement/source
+mapping as compiler input, so existing nonliteral source_offset/rational-speed
+metadata is restored exactly rather than validated as a newly invented map.
+No authored source or physical table is edited. The original single-parent and
+scalar goldens are unchanged. Product size exceeds the requested 80-line target
+because existing generic root guards, inverse ordering, and last-consumer source
+input recovery all needed corrections; the new operation/capture itself is 31
+lines. Final exact test results and remaining release limits are in this worker's
+`notes/report.md`.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T02:17:24Z | dispatcher heartbeat 6s -->
+<!-- main | 2026-10-20T02:22:40Z | dispatcher heartbeat 2s -->
 # runtime — 2026-10-20T02:05Z
 Milestone: M1 close-out: Agent opaque fix integrated/qualified; authorized Runtime null-speed preservation in flight. Prior Runtime M1 acceptance retained; global M1 NOT RECORDED. M0 COMPLETE. All M2 merges HELD; all M2 implementation INCLUDING D13 authorized on branches.
 Integrated: Runtime tl/integration9f9b25c/tree5c3a7e71/client0.2.1 unchanged; Agenta610cd30/tree8f046de1, App2bfde69ea, Composition2ac77f4. Final Runtime full command `env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3`:3790PASS/7 exact main failures/18SKIP,0new. Original CLI/browser/restore/mixed exact-tuple proofs retained, not clearance of new opaque blocker. No full-green/macOS/owner-film/parity claim.

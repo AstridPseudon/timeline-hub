@@ -76,3 +76,7 @@ above remains open; canonical layer/slice derivations also unqualified and fail
 closed on different prepared paths. Full commands, failures and next steps:
 workers/agt-m3-verified-source-handoff/notes/report.md under this absolute orch
 root. Harness commit pending; PLAN M1 integration hold unchanged.
+
+
+## agt-m3-capture-source-final — capture source proof now actually run (supersedes "not validated")
+tests/sdk/test_capture_source_runtime.py runs against real Runtime 9f: 4 saved/working-copy x inline/ref positives, duplicate-ref refusal, native-compiled-no-source PASS; 12 changed config/registry/shot-digest captures are admitted and receive canonical source -> strict xfail (Runtime certification gap, see runtime-coordination.md). Agent fix: VerifiedTimelineSource.validate_snapshot now compares canonical JSON, so True/1 and 2.0/2 caller replacement is refused (test_verified_source.py). Raw-capture source-content trust limitation stays OPEN (M3 gate 6); actual pixels/public9 pin/launch-render support failures remain separate. No pins changed.
