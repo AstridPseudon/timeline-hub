@@ -142,8 +142,8 @@ class ContentAddressedStore:
                 with wave.open(stream, "rb") as reader:
                     frames = reader.getnframes()
                     rate = reader.getframerate()
-                duration = frames / rate
-            except (EOFError, OSError, ValueError, wave.Error):
+                duration = None if rate <= 0 else frames / rate
+            except (EOFError, OSError, ValueError, ZeroDivisionError, wave.Error):
                 duration = None
             final = os.fstat(stream.fileno())
             if file_identity(initial) != file_identity(final):

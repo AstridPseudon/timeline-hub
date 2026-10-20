@@ -131,6 +131,12 @@ def _wav_bytes(*, frames=8000, rate=8000):
     return stream.getvalue()
 
 
+def _zero_rate_wav():
+    wav = bytearray(_wav_bytes())
+    wav[24:28] = (0).to_bytes(4, "little")
+    return bytes(wav)
+
+
 def _settle(service, attempt, outputs, *, effect, key="settle", fence=None):
     return service.settle_attempt(
         attempt["attempt_id"],
@@ -569,6 +575,80 @@ def test_speech_settlement_invalid_wav_keeps_duration_unknown_and_selection_refu
             )],
             effect=effect,
             key="speech-invalid-wav-settle",
+        )
+        association = service.managed_outputs(task["task"]["id"])[0]
+        variant = service.list_variants(association["generation_id"])["items"][0]
+        assert "duration_seconds" not in variant["metadata"]
+        with pytest.raises(ValidationError, match="invalid selected media metadata"):
+            service.get_project_media_selection(project["id"], {
+                "association_id": association["association_id"],
+                "object_id": association["object_id"],
+                "version": association["lifecycle"]["version"],
+            }, authorize=lambda: None)
+    finally:
+        service.close()
+
+
+def test_speech_settlement_preserves_explicit_null_duration_and_refuses_selection(tmp_path):
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-null-duration",
+        capability="generation.generate_speech",
+    )
+    try:
+        settled = _settle(
+            service,
+            attempt,
+            [_output(
+                _wav_bytes(),
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+                duration_seconds=None,
+            )],
+            effect=effect,
+            key="speech-null-duration-settle",
+        )
+        association = service.managed_outputs(task["task"]["id"])[0]
+        variant = service.list_variants(association["generation_id"])["items"][0]
+        assert variant["metadata"]["duration_seconds"] is None
+        assert "duration_seconds" not in settled["data"]["result"]["outputs"][0]
+        with pytest.raises(ValidationError, match="invalid selected media metadata"):
+            service.get_project_media_selection(project["id"], {
+                "association_id": association["association_id"],
+                "object_id": association["object_id"],
+                "version": association["lifecycle"]["version"],
+            }, authorize=lambda: None)
+    finally:
+        service.close()
+
+
+def test_speech_settlement_zero_rate_wav_keeps_duration_unknown_and_selection_refused(tmp_path):
+    service, project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-zero-rate-wav",
+        capability="generation.generate_speech",
+    )
+    try:
+        _settle(
+            service,
+            attempt,
+            [_output(
+                _zero_rate_wav(),
+                output_port="audio",
+                group_key="main",
+                variant_key="original",
+                ordinal=0,
+                filename="speech.wav",
+                media_type="audio/wav",
+            )],
+            effect=effect,
+            key="speech-zero-rate-wav-settle",
         )
         association = service.managed_outputs(task["task"]["id"])[0]
         variant = service.list_variants(association["generation_id"])["items"][0]
