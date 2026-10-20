@@ -519,3 +519,9 @@ Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-share
 
 ## 05:36Z — orchestrator: Agent's review b and the compile contracts are now in $ORCH/design
 Copied from Agent merge 38e427e3: agent-review-viewing-20261020b.md, agent-review-viewing-20261020.md, audio-compile-contract.md, visual-compile-contract.md, handoff-agent-{audio,visual}_compile_contract.fixture.json, and handoff-agent-owner-film-differences-section.md. Agent appends its section into your owner-film-differences.md. Your mouth and scanner-policy workers can read the exact conditions now.
+
+## 05:57Z — orchestrator DECISIONS (viewing-20261020T0554Z frame capture and theme)
+1. Capture fix APPROVED (test-only: close the Rendered-film dialog, wait for it to be removed, then seek and capture; 4 regressions red-before/green-after). Branch tl/vw-m3-native-frame-zero-triage 7989ee28: normal gated review in the owning repo.
+2. Default theme direction: ONE default theme. On main, App preview (black sidebands) and Agent export (#050814) already disagree, so there is no single main behaviour to keep. Rule: the default is the public Composition DEFAULT_THEME, the shared package and owner-released, as in the v0.0.7 decision. BOTH consumers pass the same resolved theme. Explicit film themes are always preserved.
+   Do not change one field blindly: viewing's vw-m3-default-theme-owner-proposal derives the smallest source-backed change, and Agent reviews it because Agent core paths are touched.
+   Any visible difference from main's export or preview goes into owner-film-differences.md. No broad browser rerun until this lands.

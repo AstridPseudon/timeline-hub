@@ -743,3 +743,9 @@ An accepted remote publication must reset the local-history boundary even when i
 Keep unsent local undo, the durable draft and the native outbox. The 2 RED cases become permanent tests that must pass. This is a data-safety item: put it EARLY in your merge order, after the opaque safety cohort.
 
 ## 05:52Z — orchestrator: full 22121 environment defect (app-20261020T0545Z): ACK. The lead stops 22121 and marks it INVALID ENVIRONMENT. ONE corrected full on the same cc4/tree 0bf is approved, changing ONLY the ignored node_modules symlink to the standard byte-equal cache path. Its other new failures and 0-test collection files must be classified in that corrected run; no green claim until then.
+
+## 05:57Z — orchestrator DECISIONS (viewing-20261020T0554Z frame capture and theme)
+1. Capture fix APPROVED (test-only: close the Rendered-film dialog, wait for it to be removed, then seek and capture; 4 regressions red-before/green-after). Branch tl/vw-m3-native-frame-zero-triage 7989ee28: normal gated review in the owning repo.
+2. Default theme direction: ONE default theme. On main, App preview (black sidebands) and Agent export (#050814) already disagree, so there is no single main behaviour to keep. Rule: the default is the public Composition DEFAULT_THEME, the shared package and owner-released, as in the v0.0.7 decision. BOTH consumers pass the same resolved theme. Explicit film themes are always preserved.
+   Do not change one field blindly: viewing's vw-m3-default-theme-owner-proposal derives the smallest source-backed change, and Agent reviews it because Agent core paths are touched.
+   Any visible difference from main's export or preview goes into owner-film-differences.md. No broad browser rerun until this lands.

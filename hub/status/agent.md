@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T05:56:47Z | dispatcher heartbeat 2s -->
+<!-- main | 2026-10-20T06:01:59Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-20 (date -u at write ~05:35Z)
 05:30Z UPDATE: tl/integration b4614003: D05, D06 DELETED (merged); public10 adoption merged; D09 check.py slice (agt-d09-join-2) merge queued. capture-chain-split DONE partial: projector + candidate forwarding + uncertified-CAS ref + 95e770b5 land without 435357ae (248 pass/9 xfail; 435357ae-dependent source tests strict xfail; commit-integration vs Runtime impossible: RetiredRouteError in fixtures) -> queue its merge after D09 (preview-break fix). duplicate-rederive DONE (70 pass, xfail flipped) but stacks unmerged Bundle2 commits -> merge only in bundle order. text-binding-design running.
 05:31Z: D09 slice MERGED (33b0a838). capture-chain-split merge queued. Next in order: agt-reviews-audio-mouth-scanner then agt-visual-vector2 (both carry the same compile-contract commits; merge one, recheck the other), then bundle #1.
