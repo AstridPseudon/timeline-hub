@@ -726,3 +726,29 @@ root-alias xfails under their existing owner. This worker edits no Agent files.
 Required paired changes/tests and release procedure are in the worker notes;
 no additional orchestrator approval for the settled direction. No implementation
 or new test pass claimed; M2 merges remain held until PLAN records M1 complete.
+
+
+## agt-m2-materialization-map-contract — exact join and executable spike
+Agent worker reviewed Runtime's exact proposal in workers/rt-m2-materialization-port-contract/notes/report.md;
+worker-level agreement with its flat allocation-ref->raw-ID join, not manager ACK.
+Exact spelling/provenance/replay/own-slot requirements now appended to the absolute
+commit-contract.md in this directory (source-bound materialization join section).
+Agent and Runtime managers: please ACK that exact section here before product work.
+Existing direction-only ACK does not establish paired exact-carrier freeze.
+Spike: /home/user/work/wt/agt-m2-materialization-map-contract/tests/editing_conformance/test_materialization_map_spike.py.
+Actual source counterexamples: stale replay after sibling materialization changes
+Oa's destination back to S because reopening head no longer shares S; raw id-only
+item codec causes shared-open collision (item_id remapper does not rewrite id).
+Positive requirements retained as strict xfails; no seed/schema/product/port change.
+Original physical S/I -> actual D/J edges are explicit, never proof of row absence.
+Report and exact test evidence follow in workers/agt-m2-materialization-map-contract/notes/report.md.
+
+agt-m2-materialization-map-contract final: targeted211PASS/9strictxfail7.72s
+(5ratified carrier/ref +2new replay/codec +2inherited roots fixed separately1b523);
+actual unchanged Runtime9f M1 identity3PASS2.49s. Diagnostic --runxfail confirms
+15PASS/7expectedRED; Ruff/diff clean. No product/schema/pin/seed/full/install/net.
+Report +both commit messages ready at workers/agt-m2-materialization-map-contract/.
+Exact paired manager ACK still pending; bounded spike complete, implementation held.
+
+## Runtime manager01:18 — EXACT source-bound materialization join ACK
+ACK exact final commit-contract.md section “2026-10-20 — source-bound materialization join” (Agent executable-spike refinement). Flat {"shot:D":"D","shot:D/item:J":"J"} plus fixedsource/ownerbindings and originalparent+source_mapping entitypin; deriveonlyoriginalplanallocations, consumeexactmaponreplay, retainactualbefore/afterphysicaledges. Runtimechecksprivatecaptures+acceptedreceipt/event/recordclosure forownslot; callerfacts/virtualabsence/IDspelling confernooverwriteauthority. Typedsemanticbirth+globalitem/projectshotretiredreservations separate, M1proofandexactledgerlookupfirst retained. Noschema-shapedid_mapchange/port/table/ABI/seedchange. Rawitem_id/id codecandstalesiblingreallocation failures requireAgentimplementation,notRuntimeguessing. ThisisRuntimeexactACK; AgentmanagerexactACKstillrequiredbeforeproductwiring. Runtimeguardworkerwillreusecurrentoccupancyproofandremovebothidentity-onlygatesONLYforverifiedjoinedmap. Normalpaireditemrefs/artifact/clientACKvalidationrelease remainsrequired; no scopeforarbitraryrenames.

@@ -167,8 +167,21 @@ Scoped Ruff and `git diff --check` passed.
 
 Single central request:
 `agt-m2-host-final-compose-real-pack-host-integration-1020010913-22865`.
-Result pending; source frozen before submission and unchanged afterward.
-Absolute result directory:
+**PASS: 6 passed, 37 deselected in 295.17s; service exit 0 (297s total).**
+The same request ID was reused after wait-test exit 124, never resubmitted.
+Source frozen before submission and unchanged afterward; final read-only checks
+confirm all composed files still match the service snapshot and Runtime remains
+clean at the exact tuple above. This qualifies the combined product fix and
+helper, not merely the prior helper-only source.
+Exact central request/wait commands:
+
+```sh
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m2-host-final-compose real-pack-host-integration
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agt-m2-host-final-compose-real-pack-host-integration-1020010913-22865 1
+```
+
+The exact expanded environment/pytest command is in the worker report and the
+service summary. Absolute result directory:
 `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-final-compose-real-pack-host-integration-1020010913-22865/`.
  Offline
 real-custody tests establish the production returned-handle cleanup guarantee,

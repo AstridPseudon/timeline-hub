@@ -397,3 +397,30 @@ Release Agent schema/parser/recorder/compiler/provider and Runtime port/store
 validation together; generate refs/clients normally and refresh Agent/App pins and
 ACK validators together. Keep interface_version=1; exact contract digest fails
 closed on mismatched pairs. M2 merges wait for PLAN's M1 completion record.
+
+
+## 2026-10-20 — source-bound materialization join (exact proposal; manager ACKs pending)
+Agent spike adopts the preceding physical-materialization proposal's EXACT
+id_map/binding/dependency spellings; worker agreement is not both managers' ACK.
+That new release supersedes only identity-only/materialization-as-birth wording;
+old artifacts/legacy identity pairs and frozen Bundle1 remain unchanged.
+Physical S/I -> D/J edges above are explicit closure identities, NOT assertions
+that SQL rows are absent. Head absence after restore never proves slot absence.
+No args.materialization, physical State root, fabricated absence or new namespace
+with caller-granted authority is needed. Runtime authenticates own-slot history.
+Acceptance cases: capture/JSON recovery/exact replay; stale disjoint parent AND
+sibling-first materialization; undo/redo/restore retaining the original map;
+second occurrence's distinct D/J; fake/missing/extra pair, wrong source/owner/pin/
+scope refusal; existing own row after restore requires accepted history; unrelated
+same/foreign/retired/global-item occupants refuse atomically; exact retry first.
+Executable spike uses actual compiler closures, not Runtime admission authority.
+Native stale sibling replay currently changes Oa back to S: head no longer shares
+S. It must consume captured D/J. No allocator seed change addresses that gap.
+Raw codec is item_id with id fallback (Runtime store validates/persists either).
+Shared-open with id-only currently collides: remapper changes item_id, not id.
+Preserve that positive case; no State item accessor is claimed before codec proof.
+Five previous requirements now assert derived map/no false birth plus four item
+refs; two added strict xfails expose sibling replay and id-codec gaps. Existing
+new-semantic-root typed birth tests remain; compose separate root fix 1b523.
+After exact paired manager freeze, report ready for separately assigned product
+implementation and normal coordinated generation, including both ACK validators.
