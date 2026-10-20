@@ -1,0 +1,15 @@
+# Proposal only; not applied to any App shared file.
+#
+# The smallest future wiring is an App-owned adapter at the existing parent
+# media producer boundary. It should call the already-landed pure helper with
+# the original authored row, the exact five-field MediaSelection, and the
+# detached VerifiedMedia response, then pass finishParentClipAddMedia(basis)
+# into the existing commit session/outbox. No changes to commitSession,
+# useTimelineCommandSession, useTimelineOps, the Runtime door, or outbox are
+# required. Keep manual recovery ADD/popup/automatic placement and the legacy
+# producer until the actual reload/undo/retry/zero-traffic gate passes.
+#
+# Deliberately no applyable product hunk is included: the current
+# ParentClipAddCapturePort is non-media-only and choosing a consumer adapter
+# before the verified-selection read is wired would claim a UI qualification
+# that this source-only row does not prove.
