@@ -1,0 +1,79 @@
+{
+  "worker": "vw-m3-mouth697-frozen-clean-gate",
+  "verdict": "approve-source-controller; rehydrate-before-central-run",
+  "source": {
+    "repo": "agent",
+    "branch": "tl/vw-m3-mouth697-clean-source-descendant",
+    "base_revision": "ee71010a0947edcbbacbf8178e5fee11ab6bab3d",
+    "final_revision": "ef4ebb23ded522c41569eb2355ee7f4a465aa4cd",
+    "final_tree": "604e4c1b808e395bde56b1068f4460774942425e",
+    "composition_integration_revision": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "dedicated_worktree": "/home/user/work/wt/vw-m3-mouth697-clean-source-descendant",
+    "dedicated_worktree_present": false,
+    "agent_checkout_git_status_clean": true,
+    "changed_files": [
+      "tests/packs/rendering/presenter_crop_capture.mjs",
+      "tests/packs/rendering/presenter_crop_capture.py",
+      "tests/packs/rendering/presenter_crop_entry.mjs",
+      "tests/packs/rendering/presenter_crop_partial_capture.mjs",
+      "tests/packs/rendering/test_presenter_crop_partial_physical.py"
+    ],
+    "product_source_hashes_match_manifest": true,
+    "new_files_present_in_final_commit": true
+  },
+  "artifacts": {
+    "controller": {
+      "path": "design/handoff-vw-m3-mouth697-clean-source-descendant-controller.py",
+      "sha256": "005b01bc3ed95a7da5ee5f6e5035fda27db30d66357d90ee5eafd38c813a84fb"
+    },
+    "manifest": {
+      "path": "design/handoff-vw-m3-mouth697-clean-source-descendant-manifest.json",
+      "sha256": "8d3d3d2842b88516725a799ea5a8a10f4c178f86ffaf205857769686eea9694a"
+    },
+    "patch": {
+      "path": "design/handoff-vw-m3-mouth697-clean-source-descendant.patch",
+      "sha256": "9624922e36ff9668d2458704368a16ea87d4e82551959e46d9e0b197ca122d5c",
+      "git_diff_binary_matches": true
+    }
+  },
+  "runtime": {
+    "node_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node",
+    "node_version": "v20.19.4",
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "dependency_graph_revision": "f8164bef73215272562c4d6974acadbd82c2898a",
+    "dependency_graph_entries": 21488,
+    "dependency_graph_tree_sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "six_peer_hashes_match": true,
+    "public12_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "public12_regular_files": 77,
+    "chrome_version": "155.0.8059.84-1",
+    "chrome_tree_entries": 255,
+    "chrome_tree_sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+    "tmp_free_bytes_observed": 12265742336,
+    "required_free_bytes": 11274289152,
+    "temporary_budget_bytes": 536870912,
+    "quiet_marker_absent": true,
+    "browser_flock_path": "/tmp/timeline-viewing-browser.lock",
+    "private_temp_mode_checked_by_controller": "0700",
+    "prepost_one_shot_checked_by_controller": true
+  },
+  "qualification": {
+    "partial_raw_mouth": {"x": 151, "y": 104, "width": "omitted"},
+    "partial_frames": [0, 3],
+    "partial_crop": [298, 202, 339, 219],
+    "partial_area": 697,
+    "partial_negative_pixels": 20,
+    "strict_threshold": "> 0.02",
+    "explicit_frames": [0, 3, 4, 5],
+    "explicit_area": 799,
+    "explicit_erase_area": 387,
+    "default_and_malformed": "unknown/no-inspection",
+    "scope": "component-level; no runtime admission or stale-root bypass"
+  },
+  "execution": {
+    "browser_render_run": false,
+    "grant_created": false,
+    "full_suite_run": false,
+    "central_execution_pending_rehydrate": true
+  }
+}

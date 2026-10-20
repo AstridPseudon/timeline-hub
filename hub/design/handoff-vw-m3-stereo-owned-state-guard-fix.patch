@@ -1,0 +1,384 @@
+diff --git a/tests/e2e/timeline/setup-tab-audio-capture.sh b/tests/e2e/timeline/setup-tab-audio-capture.sh
+index 15fb463cc..9effe706e 100644
+--- a/tests/e2e/timeline/setup-tab-audio-capture.sh
++++ b/tests/e2e/timeline/setup-tab-audio-capture.sh
+@@ -6,11 +6,18 @@ set -Eeuo pipefail
+ # getDisplayMedia tab capture; private PulseAudio is a fallback only.
+ ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
+ CONTROLLER="$ROOT/tests/e2e/timeline/tab-audio-capture.controller.mjs"
+-NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
++NODE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node
++NODE_SHA256=43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490
+ [[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
+ [[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
++[[ "$(sha256sum "$NODE" | cut -d' ' -f1)" == "$NODE_SHA256" ]] || { echo "Pinned Node executable hash is not admitted" >&2; exit 2; }
++[[ -z "${TAB_AUDIO_NODE_EXECUTABLE:-}" || "$(realpath -- "${TAB_AUDIO_NODE_EXECUTABLE}")" == "$NODE" ]] \
++  || { echo "TAB_AUDIO_NODE_EXECUTABLE cannot replace the admitted Node path" >&2; exit 2; }
++[[ -z "${TAB_AUDIO_RUN_MODE:-}" || "${TAB_AUDIO_RUN_MODE:-}" == stereo ]] \
++  || { echo "TAB_AUDIO_RUN_MODE must be stereo" >&2; exit 2; }
++export TAB_AUDIO_RUN_MODE=stereo
+ export PATH="$(dirname "$NODE"):$PATH"
+-STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix
++STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-stereo-owned-state-guard-fix
+ export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config"
+ export PWTEST_CACHE_DIR="$STATE/playwright-transform"
+ export NODE_PATH=''
+@@ -34,6 +41,7 @@ cleanup_task_tmpdir() {
+ 
+ unset TAB_AUDIO_TASK_TMPDIR
+ TASK_TMPDIR=$(mktemp -d /tmp/timeline-tab-audio-XXXXXX)
++chmod 700 "$TASK_TMPDIR"
+ TASK_TMPDIR_ID=$(stat -c '%d:%i' -- "$TASK_TMPDIR")
+ export TAB_AUDIO_TASK_TMPDIR="$TASK_TMPDIR" TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
+ 
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+index b63329ae1..a0585ba84 100644
+--- a/tests/e2e/timeline/tab-audio-capture.analysis.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+@@ -19,6 +19,15 @@ export const CONTROLLED_AUDIO = Object.freeze({
+   channelAmplitude: 0.12,
+ });
+ 
++export function nativeAudioChannelDiagnostic(channels) {
++  const actualChannels = Number(channels);
++  return {
++    channels: actualChannels,
++    status: actualChannels === 2 ? 'supported' : 'unsupported',
++    requirement: 'native ffprobe audiochannels=2',
++  };
++}
++
+ function writeAscii(bytes, offset, value) {
+   for (let index = 0; index < value.length; index += 1) bytes[offset + index] = value.charCodeAt(index);
+ }
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+index c67584022..4b87bd040 100644
+--- a/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+@@ -10,6 +10,7 @@ import {
+   CONTROLLED_AUDIO,
+   createSyntheticPcmWav,
+   diagnoseVisualEvent,
++  nativeAudioChannelDiagnostic,
+ } from './tab-audio-capture.analysis.mjs';
+ 
+ const capabilities = assertCaptureCapabilities([
+@@ -100,6 +101,19 @@ test('tone check observes decoded channels without resampling or level normaliza
+   }), /not present/);
+ });
+ 
++test('native ffprobe channel diagnostic marks mono unsupported before decode', () => {
++  assert.deepEqual(nativeAudioChannelDiagnostic(2), {
++    channels: 2,
++    status: 'supported',
++    requirement: 'native ffprobe audiochannels=2',
++  });
++  assert.deepEqual(nativeAudioChannelDiagnostic(1), {
++    channels: 1,
++    status: 'unsupported',
++    requirement: 'native ffprobe audiochannels=2',
++  });
++});
++
+ test('left/right detector rejects mono and swapped channels', () => {
+   const sampleRate = CONTROLLED_AUDIO.sampleRate;
+   const samples = new Float32Array(sampleRate * 2);
+diff --git a/tests/e2e/timeline/tab-audio-capture.config.ts b/tests/e2e/timeline/tab-audio-capture.config.ts
+index 796ed4d6d..b0d22183d 100644
+--- a/tests/e2e/timeline/tab-audio-capture.config.ts
++++ b/tests/e2e/timeline/tab-audio-capture.config.ts
+@@ -1,9 +1,10 @@
+ import { createRequire } from 'node:module';
+ import { join } from 'node:path';
+-import { isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
++import { assertRunMode, isolatedEnvironment, privateGraphRoot } from './tab-audio-capture.controller.mjs';
+ import { fileURLToPath } from 'node:url';
+ 
+ const graphRoot = privateGraphRoot();
++assertRunMode();
+ const isolated = isolatedEnvironment();
+ const require = createRequire(join(graphRoot, '../package.json'));
+ const { defineConfig } = require('@playwright/test');
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.mjs b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+index 26cefd2b2..a3830a52b 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+@@ -21,8 +21,10 @@ import { dirname, join, resolve } from 'node:path';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ 
+ export const PROFILE = 'native-codec-chrome155-clean-install-public12';
++export const RUN_MODE = 'stereo';
++export const RUN_MODE_ENV = 'TAB_AUDIO_RUN_MODE';
+ export const BASE_SOURCE_SHA = '0ea988bdd2907c876b82fd2620820e3fb6d6ea84';
+-export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix';
++export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-stereo-owned-state-guard-fix';
+ export const TASK_TEMP_ROOT = '/tmp';
+ export const TASK_TEMP_PREFIX = 'timeline-tab-audio-';
+ export const UNIX_SOCKET_PATH_LIMIT = 108;
+@@ -39,7 +41,8 @@ const FROZEN_COMPOSITION = {
+   fileCount: 77,
+ };
+ export const NODE_VERSION = 'v20.19.4';
+-export const NODE_EXECUTABLE = '/tmp/vw-m3-agent-gate-node20.19.4/bin/node';
++export const NODE_EXECUTABLE = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node';
++export const NODE_EXECUTABLE_SHA256 = '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490';
+ export const BROWSER_EXECUTABLE = '/opt/google/chrome/chrome';
+ export const BROWSER_VERSION = '155.0.8059.84';
+ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+@@ -174,6 +177,7 @@ export function isolatedEnvironment(taskTempDir = process.env.TAB_AUDIO_TASK_TMP
+     XDG_CONFIG_HOME: join(WORKER_STATE_ROOT, 'config'),
+     PWTEST_CACHE_DIR: join(WORKER_STATE_ROOT, 'playwright-transform'),
+     PLAYWRIGHT_OUTPUT_DIR: process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(WORKER_STATE_ROOT, 'playwright-output'),
++    [RUN_MODE_ENV]: RUN_MODE,
+   };
+   for (const path of [paths.XDG_CACHE_HOME, paths.XDG_CONFIG_HOME, paths.PWTEST_CACHE_DIR, paths.PLAYWRIGHT_OUTPUT_DIR]) {
+     if (!resolve(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state must stay inside its own worker folder');
+@@ -344,7 +348,8 @@ export function sourceFingerprint() {
+   const sourceSha = git('rev-parse', 'HEAD');
+   const sourceTree = git('rev-parse', 'HEAD^{tree}');
+   const packages = packageGraphFingerprint();
+-  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)) {
++  if (process.version !== NODE_VERSION || realpathSync(process.execPath) !== realpathSync(NODE_EXECUTABLE)
++    || sha256(readFileSync(process.execPath)) !== NODE_EXECUTABLE_SHA256) {
+     throw new Error(`Probe must run with pinned Node ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
+   }
+   if (packages.packages['playwright-core'].version !== FROZEN_PLAYWRIGHT_CORE.version
+@@ -358,6 +363,7 @@ export function sourceFingerprint() {
+   return {
+     sourceSha,
+     sourceTree,
++    runMode: RUN_MODE,
+     fullTrackedHash: fullTracked.sha256,
+     trackedFileCount: fullTracked.fileCount,
+     inputHash: inputs.sha256,
+@@ -389,14 +395,20 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
+   if (grant.backendOrder?.join(',') !== 'tab,private-pulse') {
+     throw new Error('Tab-audio grant must preserve tab capture before private PulseAudio fallback');
+   }
++  if (grant.runMode !== RUN_MODE || fingerprint.runMode !== RUN_MODE) {
++    throw new Error('Tab-audio grant is not bound to the stereo run mode');
++  }
+   for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'packageGraphHash']) {
+     assertFingerprintField(grant, fingerprint, field);
+   }
+   if (grant.finalSha !== fingerprint.sourceSha || finalSha !== fingerprint.sourceSha) {
+     throw new Error('Tab-audio grant final SHA does not match the committed source SHA');
+   }
+-  if (fingerprint.node.version !== NODE_VERSION) throw new Error(`Unsupported Node version: ${fingerprint.node.version}`);
+-  if (grant.nodeVersion !== fingerprint.node.version || grant.nodeExecutableSha256 !== fingerprint.node.executableSha256) {
++  if (fingerprint.node.version !== NODE_VERSION || fingerprint.node.executableSha256 !== NODE_EXECUTABLE_SHA256) {
++    throw new Error(`Unsupported Node identity: expected ${NODE_VERSION} at ${NODE_EXECUTABLE}`);
++  }
++  if (grant.nodeExecutable !== fingerprint.node.executable
++    || grant.nodeVersion !== fingerprint.node.version || grant.nodeExecutableSha256 !== fingerprint.node.executableSha256) {
+     throw new Error('Tab-audio grant Node identity is stale');
+   }
+   if (grant.browserTreeSha256 !== fingerprint.browser.tree.sha256
+@@ -426,7 +438,7 @@ export function assertGrant(grant, fingerprint, finalSha = process.env.TAB_AUDIO
+ }
+ 
+ export function assertFingerprintUnchanged(before, after) {
+-  for (const field of ['sourceSha', 'sourceTree', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes', 'privateGraph', 'discovery']) {
++  for (const field of ['sourceSha', 'sourceTree', 'runMode', 'fullTrackedHash', 'inputHash', 'node', 'browser', 'packages', 'packageGraphHash', 'renderGraphHashes', 'privateGraph', 'discovery']) {
+     if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
+       throw new Error(`Probe dependency identity changed during capture: ${field}`);
+     }
+@@ -449,6 +461,12 @@ function requiredEnv(name) {
+   return value;
+ }
+ 
++export function assertRunMode() {
++  if (process.env[RUN_MODE_ENV] !== RUN_MODE) {
++    throw new Error(`Playwright environment must declare ${RUN_MODE_ENV}=${RUN_MODE}`);
++  }
++}
++
+ export function discover() {
+   const fingerprint = sourceFingerprint();
+   const root = FROZEN_PRIVATE_GRAPH.root;
+@@ -510,6 +528,7 @@ function ensureFlock() {
+ 
+ function prepare() {
+   assertQuietAbsent();
++  assertRunMode();
+   ensureFlock();
+   assertCleanSource();
+   return {status: 'READY_FOR_MANAGER_REVIEW', fingerprint: discover()};
+@@ -517,6 +536,7 @@ function prepare() {
+ 
+ function preflight() {
+   assertQuietAbsent();
++  assertRunMode();
+   ensureFlock();
+   assertCleanSource();
+   const {grant, fingerprint} = readGrant();
+@@ -527,6 +547,7 @@ function preflight() {
+ 
+ function claim() {
+   assertQuietAbsent();
++  assertRunMode();
+   ensureFlock();
+   assertCleanSource();
+   const markerPath = requiredEnv('TAB_AUDIO_RUN_MARKER');
+@@ -540,6 +561,7 @@ function claim() {
+ 
+ function postflight() {
+   assertQuietAbsent();
++  assertRunMode();
+   ensureFlock();
+   const state = JSON.parse(readFileSync(requiredEnv('TAB_AUDIO_PREFLIGHT_PATH'), 'utf8'));
+   assertCleanSource();
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+index 80513cf69..a22d16d82 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+@@ -11,6 +11,7 @@ import {
+   allocateTaskTempDir,
+   BROWSER_EXECUTABLE,
+   BROWSER_VERSION,
++  assertRunMode,
+   cleanupTaskTempDir,
+   hashTree,
+   isolatedEnvironment,
+@@ -18,15 +19,19 @@ import {
+   TASK_TEMP_ROOT,
+   WORKER_STATE_ROOT,
+   PROFILE,
++  RUN_MODE,
++  NODE_EXECUTABLE,
++  NODE_EXECUTABLE_SHA256,
+ } from './tab-audio-capture.controller.mjs';
+ 
+ const fingerprint = {
+   sourceSha: 'a'.repeat(40),
+   sourceTree: 'b'.repeat(40),
++  runMode: RUN_MODE,
+   fullTrackedHash: 'c'.repeat(64),
+   inputHash: 'd'.repeat(64),
+   packageGraphHash: 'e'.repeat(64),
+-  node: {version: 'v20.19.4', executableSha256: 'f'.repeat(64)},
++  node: {version: 'v20.19.4', executable: NODE_EXECUTABLE, executableSha256: NODE_EXECUTABLE_SHA256},
+   browser: {tree: {sha256: '1'.repeat(64)}, executableSha256: '2'.repeat(64)},
+   privateGraph: {root: '/private/fixture/node_modules', tree: {sha256: 'a'.repeat(64), fileCount: 123}},
+   discovery: {testCount: 1, sha256: 'b'.repeat(64)},
+@@ -62,11 +67,13 @@ function grant() {
+     backendOrder: ['tab', 'private-pulse'],
+     sourceSha: fingerprint.sourceSha,
+     sourceTree: fingerprint.sourceTree,
++    runMode: RUN_MODE,
+     fullTrackedHash: fingerprint.fullTrackedHash,
+     inputHash: fingerprint.inputHash,
+     packageGraphHash: fingerprint.packageGraphHash,
+     finalSha: fingerprint.sourceSha,
+     nodeVersion: fingerprint.node.version,
++    nodeExecutable: NODE_EXECUTABLE,
+     nodeExecutableSha256: fingerprint.node.executableSha256,
+     browserTreeSha256: fingerprint.browser.tree.sha256,
+     browserExecutableSha256: fingerprint.browser.executableSha256,
+@@ -84,6 +91,25 @@ test('grant requires final SHA to match the actual committed source, not only an
+   assert.throws(() => assertGrant(grant(), fingerprint, '9'.repeat(40)), /committed source SHA/);
+ });
+ 
++test('grant binds the actual stereo run mode and retained Node executable', () => {
++  assert.doesNotThrow(() => assertGrant(grant(), fingerprint, fingerprint.sourceSha));
++  assert.throws(() => assertGrant({...grant(), runMode: 'mono'}, fingerprint, fingerprint.sourceSha), /stereo run mode/);
++  assert.throws(() => assertGrant({...grant(), nodeExecutable: '/tmp/old-node'}, fingerprint, fingerprint.sourceSha), /Node identity/);
++});
++
++test('Playwright environment refuses a mono run for the stereo probe', () => {
++  const previous = process.env.TAB_AUDIO_RUN_MODE;
++  try {
++    process.env.TAB_AUDIO_RUN_MODE = 'mono';
++    assert.throws(() => assertRunMode(), /TAB_AUDIO_RUN_MODE=stereo/);
++    process.env.TAB_AUDIO_RUN_MODE = RUN_MODE;
++    assert.doesNotThrow(() => assertRunMode());
++  } finally {
++    if (previous === undefined) delete process.env.TAB_AUDIO_RUN_MODE;
++    else process.env.TAB_AUDIO_RUN_MODE = previous;
++  }
++});
++
+ test('grant rejects changed full source, selected input, browser, or package identity', () => {
+   for (const field of ['sourceTree', 'fullTrackedHash', 'inputHash', 'packageGraphHash']) {
+     assert.throws(() => assertGrant({...grant(), [field]: '9'.repeat(field.includes('Tree') ? 40 : 64)}, fingerprint, fingerprint.sourceSha), new RegExp(field));
+@@ -183,16 +209,16 @@ test('Chrome gets one short owned temp while caches and output stay in this work
+     assert.equal(isolated.TMP, taskTempDir);
+     assert.equal(isolated.TEMP, taskTempDir);
+     assert.ok(isolated.TMPDIR.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`));
+-    assert.deepEqual(assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir), {
+-      oldPath: `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`,
+-      oldLength: 175,
+-      newPath: `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`,
+-      newLength: 85,
+-    });
++    const socketBudget = assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir);
++    assert.equal(socketBudget.oldPath, `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`);
++    assert.equal(socketBudget.newPath, `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`);
++    assert.ok(socketBudget.oldLength > 108);
++    assert.ok(socketBudget.newLength < 108);
+     for (const key of ['XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
+       assert.ok(isolated[key].startsWith(`${WORKER_STATE_ROOT}/`));
+     }
+     assert.equal(isolated.NODE_PATH, '');
++    assert.equal(isolated.TAB_AUDIO_RUN_MODE, RUN_MODE);
+     process.env.PLAYWRIGHT_OUTPUT_DIR = '/outside-worker/output';
+     assert.throws(() => isolatedEnvironment(), /own worker folder/);
+     assert.throws(() => cleanupTaskTempDir(preexistingTempDir), /not allocated by this process/);
+diff --git a/tests/e2e/timeline/tab-audio-capture.environment.test.mjs b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+index 692e014f6..3369df4af 100644
+--- a/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+@@ -3,7 +3,7 @@ import {test} from 'node:test';
+ import {readFileSync} from 'node:fs';
+ import {dirname, join} from 'node:path';
+ import {createRequire} from 'node:module';
+-import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, REPO_ROOT, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
++import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, NODE_EXECUTABLE, NODE_EXECUTABLE_SHA256, REPO_ROOT, RUN_MODE, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, WORKER_STATE_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
+ 
+ test('package graph fingerprint collects every package with an expected version', () => {
+   const {packages} = packageGraphFingerprint();
+@@ -50,4 +50,9 @@ test('launcher binds one fresh short task temp and cleans it after every attempt
+   assert.match(setup, /TAB_AUDIO_TASK_TMPDIR=\"\$TASK_TMPDIR\"/);
+   assert.match(setup, /TMPDIR=\"\$TASK_TMPDIR\" TMP=\"\$TASK_TMPDIR\" TEMP=\"\$TASK_TMPDIR\"/);
+   assert.doesNotMatch(setup, /export HOME=|PULSE_SERVER=|PULSE_RUNTIME_PATH=/);
++  assert.match(setup, new RegExp(`NODE=${NODE_EXECUTABLE.replaceAll('/', '\\/')}`));
++  assert.match(setup, new RegExp(NODE_EXECUTABLE_SHA256));
++  assert.match(setup, new RegExp(`STATE=${WORKER_STATE_ROOT.replaceAll('/', '\\/')}`));
++  assert.match(setup, new RegExp(`TAB_AUDIO_RUN_MODE=stereo`));
++  assert.equal(RUN_MODE, 'stereo');
+ });
+diff --git a/tests/e2e/timeline/tab-audio-capture.probe.ts b/tests/e2e/timeline/tab-audio-capture.probe.ts
+index 822348d34..7ce0f0c4a 100644
+--- a/tests/e2e/timeline/tab-audio-capture.probe.ts
++++ b/tests/e2e/timeline/tab-audio-capture.probe.ts
+@@ -11,6 +11,7 @@ import {
+   CONTROLLED_AUDIO,
+   createSyntheticPcmWav,
+   diagnoseVisualEvent,
++  nativeAudioChannelDiagnostic,
+ } from './tab-audio-capture.analysis.mjs';
+ 
+ const exec = promisify(execFile);
+@@ -251,6 +252,14 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
+   const audioStream = (ffprobe.streams as Array<{ codec_type?: string; index: number; sample_rate: string; channels: number }>)
+     .find((stream) => stream.codec_type === 'audio');
+   if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
++  const channelDiagnostic = nativeAudioChannelDiagnostic(audioStream.channels);
++  await testInfo.attach('native-ffprobe-audio-channel-diagnostic', {
++    body: JSON.stringify(channelDiagnostic, null, 2),
++    contentType: 'application/json',
++  });
++  if (channelDiagnostic.status !== 'supported') {
++    throw new Error(`Unsupported native ffprobe audio channel count: ${channelDiagnostic.channels}; stereo capture requires 2`);
++  }
+   const decodedAudio = await readDecodedAudio(output, audioStream);
+   const stereoTones = assertStereoTones(decodedAudio, {
+     sampleRate: Number(audioStream.sample_rate),
+@@ -290,6 +299,7 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
+       outcome,
+       tones,
+       stereoTones,
++      channelDiagnostic,
+       visualMarkerDiagnostic,
+       rawPtsOnly: true,
+       note: 'Qualified capability is one live video track plus one live tab-audio track, presence of both declared source tones, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',

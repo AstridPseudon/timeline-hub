@@ -1,0 +1,21 @@
+# Future central command: corrected mouth697 component test
+#
+# REHYDRATE first: this exact clean source checkout is currently absent.
+# The manager must materialize branch tl/vw-m3-mouth697-clean-source-descendant
+# at ef4ebb23ded522c41569eb2355ee7f4a465aa4cd, verify clean status, and issue
+# an independent REVIEW.md + READY_GRANTED for that exact SHA. This command
+# intentionally names the clean branch checkout/source, not a placeholder.
+
+ASTRID_CHECKOUT=/home/user/work/wt/vw-m3-mouth697-clean-source-descendant \
+VIEWING_CROP_REVISION=ef4ebb23ded522c41569eb2355ee7f4a465aa4cd \
+VIEWING_CROP_ARTIFACT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz \
+env -u PYTHONOPTIMIZE PYTHONDONTWRITEBYTECODE=1 VIEWING_CROP_CENTRAL=1 \
+VIEWING_BROWSER_FLOCK_HELD=1 \
+ASTRID_REMOTION_BROWSER_EXECUTABLE=/opt/google/chrome/chrome \
+flock -x /tmp/timeline-viewing-browser.lock \
+python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-clean-source-descendant-controller.py
+
+# The corrected controller above is the only controller referenced. It runs
+# only tests/packs/rendering/test_presenter_crop_partial_physical.py.
+# Do not substitute the historical wrong-Node-path controller, regenerate a
+# root artifact, or treat this component run as runtime admission.

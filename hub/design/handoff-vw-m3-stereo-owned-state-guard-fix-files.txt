@@ -1,0 +1,8 @@
+tests/e2e/timeline/setup-tab-audio-capture.sh
+tests/e2e/timeline/tab-audio-capture.analysis.mjs
+tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+tests/e2e/timeline/tab-audio-capture.config.ts
+tests/e2e/timeline/tab-audio-capture.controller.mjs
+tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+tests/e2e/timeline/tab-audio-capture.probe.ts
