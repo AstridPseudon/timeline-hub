@@ -12,14 +12,14 @@ import type {
   LiveSceneCapture,
 } from '@astrid/editor-sdk';
 import type { SceneManifest } from './runtime';
-import { LIVE_SCENE_CLIP_TYPE_ID, LIVE_SCENE_EXTENSION_ID } from './identity';
+import { LIVE_SCENE_CLIP_TYPE_ID, THREEJS_LIVE_EDITOR_EXTENSION_ID } from './identity';
 
 const SHA256_DIGEST = /^sha256:[0-9a-f]{64}$/;
 const ENTRY_NAME = /^[\w./-]+\.html$/;
 const PACKAGE_FILENAME = 'scene.package.json';
 const PACKAGE_MEDIA_TYPE = 'application/json';
 
-export { LIVE_SCENE_EXTENSION_ID, LIVE_SCENE_CLIP_TYPE_ID };
+export { THREEJS_LIVE_EDITOR_EXTENSION_ID, LIVE_SCENE_CLIP_TYPE_ID };
 
 export type LiveSceneObjectInput = {
   readonly bytes: Uint8Array;
@@ -157,7 +157,7 @@ export async function importPreparedSceneFile(
     const result = await importPreparedScene(ctx, parsed, [placement]);
     ctx.services.diagnostics.report({
       severity: 'info',
-      code: 'live-scenes/authoring-published',
+      code: 'threejs-live-editor/authoring-published',
       message: `Imported ${result.revision} to ${result.affectedPlacements.join(', ')}; timeline version ${result.acknowledgedTimelineVersion}.`,
       detail: result,
     });
@@ -173,7 +173,7 @@ export async function importPreparedSceneFile(
     const message = error instanceof Error ? error.message : String(error);
     ctx.services.diagnostics.report({
       severity: 'error',
-      code: 'live-scenes/authoring-failed',
+      code: 'threejs-live-editor/authoring-failed',
       message: `Import prepared scene failed: ${message}`,
       detail: { stage: 'import-prepared-scene', error: message },
     });
@@ -421,7 +421,7 @@ function capturedPlacement(
   if (clip.clipType !== LIVE_SCENE_CLIP_TYPE_ID) fail(`Live-scene placement ${id} has the wrong clip type`);
   const track = snapshot.tracks.find((candidate) => candidate.id === clip.track);
   if (!track || track.kind !== 'visual') fail(`Live-scene placement ${id} is not on a visual track`);
-  const sources = clip.sourceRefs?.filter((candidate) => candidate.extensionId === LIVE_SCENE_EXTENSION_ID) ?? [];
+  const sources = clip.sourceRefs?.filter((candidate) => candidate.extensionId === THREEJS_LIVE_EDITOR_EXTENSION_ID) ?? [];
   const source = sources[0];
   const liveScene = clip.app?.liveScene;
   if (sources.length !== 1 || !source || source.clipId !== id || !source.sourceObjectId
@@ -596,7 +596,7 @@ function validatePlacements(
 function liveScenePatch(
   version: number,
   operations: readonly TimelinePatchOperation[],
-  source = LIVE_SCENE_EXTENSION_ID,
+  source = THREEJS_LIVE_EDITOR_EXTENSION_ID,
 ): TimelinePatch {
   return { version, operations, source };
 }

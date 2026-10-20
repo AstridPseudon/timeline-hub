@@ -23,7 +23,7 @@ import {
   type LiveScenePublicationCapture,
   type PreparedScenePlacement,
   type PreparedMaplePlacement,
-} from '../../../astrid/packs/rendering/editor/live-scenes/authoring';
+} from '../../../astrid/packs/rendering/ui/threejs-live-editor/authoring';
 import type { LiveSceneRequest, LiveSceneExecution } from '@astrid/editor-sdk';
 
 describe('pack-owned ACP source authoring', () => {
@@ -144,7 +144,7 @@ describe('pack-owned ACP source authoring', () => {
   });
 });
 
-const EXTENSION_ID = 'haus.astrid.live-scenes';
+const EXTENSION_ID = 'haus.astrid.threejs-live-editor';
 const CLIP_TYPE = 'haus.astrid.liveScene';
 const PLACEMENTS: readonly PreparedMaplePlacement[] = [
   { id: 'maple-acceptance-position-2', track: 'V1', at: 2, from: 55, to: 75, rate: 1 },
@@ -412,7 +412,7 @@ describe('prepared scene command orchestration', () => {
     expect(f.testHarness.patch.current).toBeDefined();
     expect(f.testHarness.calls).toContain('flush');
     expect(f.diagnostics.report).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'info', code: 'live-scenes/authoring-published',
+      severity: 'info', code: 'threejs-live-editor/authoring-published',
     }));
     expect(f.toast).toHaveBeenCalledWith('Prepared scene imported (1 placements, timeline 8).', 'info');
   });
@@ -441,7 +441,7 @@ describe('prepared scene command orchestration', () => {
 
     expect(f.testHarness.patch.current).toBeUndefined();
     expect(f.diagnostics.report).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'error', code: 'live-scenes/authoring-failed',
+      severity: 'error', code: 'threejs-live-editor/authoring-failed',
       detail: { stage: 'import-prepared-scene', error: expect.stringContaining('assets: []') },
     }));
     expect(f.toast).toHaveBeenCalledWith(expect.stringContaining('Prepared scene import failed:'), 'error');
@@ -458,7 +458,7 @@ describe('prepared scene command orchestration', () => {
 
     expect(f.testHarness.calls).toContain('flush');
     expect(f.diagnostics.report).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'error', code: 'live-scenes/authoring-failed',
+      severity: 'error', code: 'threejs-live-editor/authoring-failed',
       detail: { stage: 'import-prepared-scene', error: expect.stringContaining('durable timeline persistence unavailable') },
     }));
     expect(f.toast).toHaveBeenCalledWith(expect.stringContaining('durable timeline persistence unavailable'), 'error');

@@ -1334,23 +1334,23 @@ ui:
       path: ui/transcript/TranscriptPanel.tsx
     - kind: support
       path: ui/transcript-lane/TranscriptLane.tsx
-  live-scenes:
+  threejs-live-editor:
     type: editor
-    entry: ui/live-scenes/extension.tsx
+    entry: ui/threejs-live-editor/extension.tsx
     target: video-editor
     compatibility:
       sdk: '1'
     resources:
     - kind: support
-      path: ui/live-scenes/SceneSurface.tsx
+      path: ui/threejs-live-editor/SceneSurface.tsx
     - kind: support
-      path: ui/live-scenes/authoring.ts
+      path: ui/threejs-live-editor/authoring.ts
     - kind: support
-      path: ui/live-scenes/diagnostics.ts
+      path: ui/threejs-live-editor/diagnostics.ts
     - kind: support
-      path: ui/live-scenes/identity.ts
+      path: ui/threejs-live-editor/identity.ts
     - kind: support
-      path: ui/live-scenes/runtime.ts
+      path: ui/threejs-live-editor/runtime.ts
 resources:
 - kind: support
   path: shared/element_contracts.ts
