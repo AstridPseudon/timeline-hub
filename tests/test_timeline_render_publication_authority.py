@@ -1,15 +1,23 @@
 """Legacy publication cannot overwrite tracked history or choose its own target."""
 from __future__ import annotations
 
+import base64
 import hashlib
+from types import SimpleNamespace
 
 import pytest
 
-from runtime_protocol.errors import ConflictError, RetiredRouteError
+from runtime_protocol.errors import ConflictError, RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.util import canonical_json
 from test_timeline_render_publication import _publication_body, _ready_authoring_attempt
+from test_timeline_producer_guards import _body as _producer_body
+from test_timeline_producer_guards import _bytes as _producer_bytes
+from test_timeline_producer_guards import _digest as _producer_digest
+from test_timeline_producer_guards import _settle as _settle_proposal
 
 
 @pytest.fixture
@@ -42,6 +50,167 @@ def _refused(service, attempt, body, reason):
 def _track(service, project):
     commits = service._timeline_commits()[0]
     return commits.bootstrap(project, "main", authorize=lambda: None)
+
+
+def _settle_json_child(service, attempt, key, value):
+    raw = value.encode()
+    return service.settle_attempt(
+        attempt["attempt_id"],
+        {**{field: attempt[field] for field in ("lease_id", "fence", "runtime_epoch")},
+         "outputs": [{"name": "primary", "output_port": "primary", "kind": "object",
+                      "filename": "primary.json", "digest": _producer_digest(raw),
+                      "size": len(raw), "media_type": "application/json", "durability": "durable",
+                      "data_base64": base64.b64encode(raw).decode()}]},
+        idempotency_key=key,
+    )
+
+
+@pytest.fixture
+def native_target_isolation(tmp_path, astrid_importable):
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    try:
+        project = service.create_project({"slug": "target-isolation", "name": "Target isolation"})["id"]
+        service.create_timeline(project, "timelineA", idempotency_key="timeline-a")
+        service.create_timeline(project, "timelineB", idempotency_key="timeline-b")
+
+        # Establish the tracked canonical A state through the native provider.
+        a_head = service.get_project_timeline(project, "timelineA")
+        a_document = service._timeline_commits()[0].revision_closure(
+            project, "timelineA", a_head["head_revision_id"],
+        )
+        a_command = capture_track_create(
+            bundle_from_document(a_document), "parent", {"id": "tracked-a", "kind": "visual"},
+        )
+        service.commit_timeline(
+            project, "timelineA",
+            {"api_version": 1, "project_id": project, "timeline_id": "timelineA",
+             "base_revision_id": a_head["head_revision_id"],
+             "base_publication_id": a_head["head_publication_id"], "commands": [a_command]},
+            idempotency_key="track-a", publisher="editor",
+            invocation_path=route_path(project, "timelineA"), authorize=lambda: None,
+        )
+        a_head = service.get_project_timeline(project, "timelineA")
+        a_history = service.list_timeline_commits(project, "timelineA", authorize=lambda: None)
+        a_closure = service._timeline_commits()[0].revision_closure(
+            project, "timelineA", a_head["head_revision_id"],
+        )
+
+        b_head = service.get_project_timeline(project, "timelineB")
+        target = {"project_id": project, "timeline_id": "timelineB",
+                  "base_revision_id": b_head["head_revision_id"],
+                  "base_publication_id": b_head["head_publication_id"]}
+        proposal_capability = "fixture.target-isolation-producer"
+        child_capability = "fixture.target-isolation-input"
+        proposal_digest = _producer_digest(proposal_capability.encode())
+        child_digest = _producer_digest(child_capability.encode())
+        for capability, digest in ((proposal_capability, proposal_digest),
+                                    (child_capability, child_digest)):
+            service.register_capability({"capability_id": capability, "definition_digest": digest})
+        render_capability = "rendering.render"
+        render_digest = _producer_digest(render_capability.encode())
+        service.register_capability({"capability_id": render_capability,
+                                      "definition_digest": render_digest})
+        service.register_executor(
+            {"executor_id": "target-isolation-worker",
+             "capabilities": [proposal_capability, child_capability, render_capability]},
+            idempotency_key="target-isolation-worker",
+        )
+
+        children = []
+        for index in range(2):
+            child = service.create_task({
+                "project": project, "capability_id": child_capability,
+                "capability_digest": child_digest, "input_object_ids": [],
+                "spec": {"index": index}, "idempotency_key": f"target-input-{index}",
+            })
+            claim = service.claim_next({
+                "executor_id": "target-isolation-worker", "capability_ids": [child_capability],
+                "runtime_epoch": service.health()["runtime_epoch"],
+            }, idempotency_key=f"claim-target-input-{index}")
+            _settle_json_child(service, claim, f"settle-target-input-{index}", f"input-{index}")
+            children.append(child["task"]["id"])
+
+        producer_spec = {
+            "runtime_dependencies": {
+                "publication": {"admitted_target": target},
+                "edges": [{"from_task_id": child, "to": "self", "requires_event": "task.succeeded",
+                            "fence": "runtime_task"} for child in children],
+                "aggregation": {"kind": "ordered_cas_inputs"},
+            },
+            "outputs": {"authoring_proposal": {
+                "type": "file", "artifact_type": "timeline/authoring-proposal",
+            }},
+        }
+        producer_task = service.create_task({
+            "project": project, "capability_id": proposal_capability,
+            "capability_digest": proposal_digest, "input_object_ids": [],
+            "spec": producer_spec, "idempotency_key": "target-isolation-producer",
+        })
+        attempt = service.claim_next({
+            "executor_id": "target-isolation-worker", "capability_ids": [proposal_capability],
+            "runtime_epoch": service.health()["runtime_epoch"],
+        }, idempotency_key="claim-target-isolation-producer")
+
+        b_document = service._timeline_commits()[0].revision_closure(
+            project, "timelineB", target["base_revision_id"],
+        )
+        proposal_command = capture_track_create(
+            bundle_from_document(b_document), "parent",
+            {"id": "proposed-b", "kind": "visual", "opaque": [1.0, -0.0, False]},
+        )
+        proposal = {
+            "schema_version": 1,
+            "producer": {"task_id": attempt["task_id"], "attempt_id": attempt["attempt_id"],
+                         "executor_id": "target-isolation-worker", "fence": attempt["fence"],
+                         "runtime_epoch": attempt["runtime_epoch"]},
+            "admitted_target": target,
+            "rationale": "Reviewed target-isolated proposal",
+            "commands": [proposal_command],
+        }
+        proposal["proposal_digest"] = _producer_digest(_producer_bytes(proposal))
+        case = SimpleNamespace(
+            service=service, project=project, target=target, proposal=proposal,
+            task=producer_task["task"]["id"], attempt=attempt,
+            pin={**proposal["producer"], "admitted_target": target,
+                 "proposal_digest": proposal["proposal_digest"]},
+            a_head=a_head, a_history=a_history, a_closure=a_closure,
+        )
+        _settle_proposal(case)
+        yield case
+    finally:
+        service.close()
+
+
+def _submit_native_producer(case, *, body=None, timeline_id="timelineB", key="target-isolation-commit"):
+    body = _producer_body(case) if body is None else body
+    return case.service.commit_timeline(
+        case.project, timeline_id, body, idempotency_key=key, publisher="requester",
+        invocation_path=route_path(case.project, timeline_id), authorize=lambda: None,
+    )
+
+
+def _historical_render_request(case, accepted, *, timeline_id="timelineB", key="target-isolation-render"):
+    parent = accepted["data"]["canonical_document"]["parent_revision"]
+    return {
+        "project": case.project, "capability_id": "rendering.render",
+        "capability_digest": _producer_digest(b"rendering.render"), "input_object_ids": [],
+        "idempotency_key": key,
+        "spec": {"family": "render", "params": {
+            "timeline_ref": timeline_id, "selector": "rendering.remotion",
+            "canonical_revision": {
+                "project_id": case.project, "timeline_id": timeline_id,
+                "revision_id": accepted["data"]["accepted_revision_id"],
+                "publication_id": accepted["receipt"]["receipt_id"],
+                "content_digest": parent["content_digest"],
+            },
+        }},
+    }
 
 
 def _publication_checkpoint(service, author, attempt, body, *, state, result=None):
@@ -213,14 +382,41 @@ def test_exact_published_checkpoint_replays_before_live_target_changes(service):
     assert service.store.conn.total_changes == changes
 
 
-def test_tracking_is_scoped_to_the_publication_target(service):
-    project, _, attempt, render_digest = _ready_authoring_attempt(service)
-    service.create_timeline(project["id"], "other", idempotency_key="other")
-    service._timeline_commits()[0].bootstrap(project["id"], "other", authorize=lambda: None)
-    result = service.publish_timeline_render(attempt["attempt_id"], _publication_body(attempt, render_digest),
-                                            idempotency_key="publish")
-    assert result["timeline_id"] == "main"
-    assert result["timeline_version"] == 2
+@pytest.mark.integration
+def test_tracking_is_scoped_to_the_publication_target(native_target_isolation):
+    case = native_target_isolation
+    accepted = _submit_native_producer(case)
+    admitted = case.service.create_task(_historical_render_request(case, accepted))
+    authority = admitted["task"]["spec"]["spec"]["inputs"]["timeline_authority"]
+
+    # The original target-scope assertions map to the native receipt and the
+    # historical admission: B succeeds while A remains fully intact.
+    assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"] == [
+        {"id": "proposed-b", "kind": "visual", "opaque": [1.0, -0.0, False]},
+    ]
+    assert authority["project_id"] == case.project
+    assert authority["timeline_id"] == "timelineB"
+    assert authority["parent_revision_id"] == accepted["data"]["accepted_revision_id"]
+    assert authority["publication_id"] == accepted["receipt"]["receipt_id"]
+    assert case.service.get_project_timeline(case.project, "timelineA") == case.a_head
+    assert case.service.list_timeline_commits(case.project, "timelineA", authorize=lambda: None) == case.a_history
+    assert case.service._timeline_commits()[0].revision_closure(
+        case.project, "timelineA", case.a_head["head_revision_id"],
+    ) == case.a_closure
+
+
+@pytest.mark.integration
+def test_native_target_substitution_refuses_without_writes(native_target_isolation):
+    case = native_target_isolation
+    body = _producer_body(case)
+    body["timeline_id"] = "timelineA"
+    before = _state(case.service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        _submit_native_producer(case, body=body, timeline_id="timelineA", key="wrong-target")
+    assert error.value.details["reason"] in {
+        "producer_attempt_mismatch", "producer_dependency_unavailable",
+    }
+    assert _state(case.service) == before
 
 
 def test_legacy_head_without_canonical_publication_remains_publishable(service):
