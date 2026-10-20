@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T15:03:23Z | dispatcher heartbeat 7s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 3m -->
+<!-- app | 2026-10-20T15:08:56Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 2m -->
 # app — 2026-10-20 14:59 UTC
 Milestone: M1 RECORDED; M2/M3 active, no exits. FIRST current root release, then bounded writer cuts. Automatic placement TOP writer.
 Integrated: App41fff23a29f13bd9aede6343592ffba8adebe1a3/tree3340e128 (root8/client021), true MAIN17 ancestry, D03/safety/history/proxy/CORS/Viewing701 retained. No merge this round; root release held on fresh-path gate.
@@ -19,3 +19,5 @@ Gates: current5 near (cold1+label3 PASS, native3 pending onnewfix), allwriters/a
 Inbox: ACK14:56 capacity audit (1worker14:52, now7live), status refreshed;14:35Viewingrequests ported;14:11app2 no-doublework DONE;13:59AgentoriginalPARAMpin atB neverHA (app2 owns route);13:45Lunahigh/proportionate/localdecisions/M4fixturecleanup.
 Decided locally: reversible candidate None/delete browser tests may proceed parallel to Root; LANDING/retirement remains held. Fixed malformed40SHA runner/cache environment without droppingguards. Reused internal raw context for cap serialization. Invalid sparse PCM typecheck rerun oncompletefrozen source passed; no source/lib weakening.
 Resources:~11GiB free; allshareddeps/runtime/venvs/caches READONLY, private12/standard8 assets+frozenkeepers protected. No new full/install; bounded tscchecks terminal. Older details notes/resume-1316.md,resume-1356.md,resume-1422.md. No manager productcode/gitmutations/push.
+
+Decided locally15:06: freeze already-integrated Agent8130a401 for NEXT safety-current tests, normal Runtime/client/schema/artifact/S2/public12 all unchanged; this is a test-source selection, not a new release/pin. d874 proofs stay exact and separate. Source keeper leased; no wait for an unnecessary version decision.

@@ -20,7 +20,7 @@ The future official Agent checkout/commit is intentionally not guessed here. The
 
 Wrapper: [`notes/app-root-full-environment.sh`](/home/user/work/wt/app-m3-root-full-environment-prep/notes/app-root-full-environment.sh)
 
-SHA256: `aa84ce78d512a24ae358bfd33472dd5b88cfdd4fbbf12ed942b314d1ccedf463`
+SHA256: `ff8f75f430ea3cba403e4634d623a5c3f4f00d30342874e1a42b6190de186af2`
 
 The wrapper is a test-service snapshot helper, not product code and not `bin/test-run`. It:
 
@@ -37,7 +37,7 @@ There is no sparse checkout or source symlink mutation. The preflight used the e
 Exact command (from the candidate root):
 
 ```sh
-LOG=/tmp/app-root-full-preflight3.TBQivN
+LOG=/tmp/app-root-full-preflight4.mGxC6G
 TIMELINE_ROOT_FULL_LOG_DIR="$LOG" \
 TMPDIR="$LOG/tmp" \
 npm_config_cache="$LOG/npm-cache" \
