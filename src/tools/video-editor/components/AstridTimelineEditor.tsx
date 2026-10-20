@@ -183,10 +183,12 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     applyEdit,
     prepareGenerationAsset,
     registerGenerationAsset,
+    parentClipSwapMedia,
   } = useTimelineOpsSelector((ops) => ({
     applyEdit: ops.applyEdit,
     prepareGenerationAsset: ops.prepareGenerationAsset,
     registerGenerationAsset: ops.registerGenerationAsset,
+    parentClipSwapMedia: ops.parentClipSwapMedia,
   }), shallow);
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
@@ -499,6 +501,9 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     dataRef,
     finalVideoMap,
     commands,
+    prepareGenerationAsset,
+    prepareMediaImport: runtime.provider.prepareMediaImport?.bind(runtime.provider),
+    parentClipSwapMedia,
   });
   const {
     shotGroupClipIds,

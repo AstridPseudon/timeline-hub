@@ -641,6 +641,153 @@ describe('useSwitchToFinalVideo', () => {
     })]);
   });
 
+  it('routes an eligible final-video update through one native parent replacement with the exact prepared selection', async () => {
+    const applyEdit = vi.fn();
+    const mediaSelection = {
+      asset: 'asset-new',
+      generation_id: 'generation-new',
+      variant_id: 'variant-new',
+      object_id: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const preparedImport = {
+      provider: 'runtime',
+      project: 'project-1',
+      importOperationId: 'import-1',
+      generationId: 'generation-new',
+      variantId: 'variant-new',
+      assetId: 'asset-new',
+      entry: { file: 'https://runtime.test/new.mp4', type: 'video/mp4', duration: 6 },
+      mediaSelection,
+    };
+    const preparedAsset = {
+      assetKey: 'asset-new',
+      mediaType: 'video' as const,
+      durationSeconds: 6,
+      entry: preparedImport.entry,
+      source: 'registered' as const,
+      mediaSelection,
+    };
+    const prepareGenerationAsset = vi.fn(() => preparedAsset);
+    const prepareMediaImport = vi.fn(async () => preparedImport);
+    const addClip = vi.fn().mockResolvedValue({ ok: true, data: { clipId: 'clip-3', trackId: 'V1' } });
+    const preparationEvents: string[] = [];
+    const parentClipSwapMedia = {
+      prepare: vi.fn(() => {
+        preparationEvents.push('prepare');
+        return {} as never;
+      }),
+      assertPreparationCurrent: vi.fn(() => undefined),
+    };
+    const dataRef = {
+      current: makeConfigTimelineData(
+        {
+          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+          clips: [
+            { id: 'clip-3', at: 7, track: 'V1', clipType: 'media', asset: 'asset-video', from: 2, to: 10, speed: 1.25, opacity: 0.4 },
+          ],
+          pinnedShotGroups: [makePinnedGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-3'], mode: 'video', videoAssetKey: 'asset-video' })],
+        },
+        { assets: { 'asset-video': { file: 'video-old.mp4', type: 'video/mp4', generationId: 'final-old' } } },
+      ),
+    };
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      blob: async () => new Blob(['video'], { type: 'video/mp4' }),
+    })));
+
+    const { result } = renderHook(() => useSwitchToFinalVideo({
+      applyEdit,
+      dataRef,
+      finalVideoMap: new Map([['shot-1', { id: 'final-new', location: 'https://example.com/final-new.mp4', thumbnailUrl: null, durationSeconds: 6 }]]),
+      commands: { addClip },
+      prepareGenerationAsset,
+      prepareMediaImport: async (...args) => {
+        preparationEvents.push('import');
+        return prepareMediaImport(...args);
+      },
+      parentClipSwapMedia,
+    }));
+
+    await act(async () => {
+      await result.current.updateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' });
+    });
+    vi.unstubAllGlobals();
+
+    expect(preparationEvents).toEqual(['prepare', 'import']);
+    expect(parentClipSwapMedia.assertPreparationCurrent).toHaveBeenCalledTimes(1);
+    expect(addClip).toHaveBeenCalledTimes(1);
+    expect(addClip).toHaveBeenCalledWith(expect.objectContaining({ replaceClipId: 'clip-3' }));
+    expect(addClip.mock.calls[0][0].preparedAsset.mediaSelection).toEqual(mediaSelection);
+    expect(prepareGenerationAsset).toHaveBeenCalledWith(expect.objectContaining({
+      generationId: 'generation-new',
+      variantId: 'variant-new',
+      mediaImport: expect.objectContaining({ mediaSelection }),
+    }));
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('refuses a native parent replacement when the captured session epoch changes during preparation', async () => {
+    const applyEdit = vi.fn();
+    const mediaSelection = {
+      asset: 'asset-new',
+      generation_id: 'generation-new',
+      variant_id: 'variant-new',
+      object_id: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      catalog_digest: 'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    };
+    const preparedImport = {
+      provider: 'runtime', project: 'project-1', importOperationId: 'import-2',
+      generationId: 'generation-new', variantId: 'variant-new', assetId: 'asset-new',
+      entry: { file: 'https://runtime.test/new.mp4', type: 'video/mp4', duration: 6 }, mediaSelection,
+    };
+    const prepareGenerationAsset = vi.fn(() => ({
+      assetKey: 'asset-new', mediaType: 'video' as const, durationSeconds: 6,
+      entry: preparedImport.entry, source: 'registered' as const, mediaSelection,
+    }));
+    const prepareMediaImport = vi.fn(async () => preparedImport);
+    const addClip = vi.fn();
+    const parentClipSwapMedia = {
+      prepare: vi.fn(() => ({}) as never),
+      assertPreparationCurrent: vi.fn(() => {
+        throw new Error('Timeline changed during parent clip.swap-media preparation');
+      }),
+    };
+    const dataRef = {
+      current: makeConfigTimelineData(
+        {
+          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+          clips: [{ id: 'clip-3', at: 7, track: 'V1', clipType: 'media', asset: 'asset-video', from: 0, to: 10, speed: 1 }],
+          pinnedShotGroups: [makePinnedGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-3'], mode: 'video', videoAssetKey: 'asset-video' })],
+        },
+        { assets: { 'asset-video': { file: 'video-old.mp4', type: 'video/mp4', generationId: 'final-old' } } },
+      ),
+    };
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      blob: async () => new Blob(['video'], { type: 'video/mp4' }),
+    })));
+
+    const { result } = renderHook(() => useSwitchToFinalVideo({
+      applyEdit,
+      dataRef,
+      finalVideoMap: new Map([['shot-1', { id: 'final-new', location: 'https://example.com/final-new.mp4', thumbnailUrl: null, durationSeconds: 6 }]]),
+      commands: { addClip },
+      prepareGenerationAsset,
+      prepareMediaImport,
+      parentClipSwapMedia,
+    }));
+
+    await expect(result.current.updateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }))
+      .rejects.toThrow('Timeline changed during parent clip.swap-media preparation');
+    vi.unstubAllGlobals();
+
+    expect(addClip).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
   it('prefers an already-registered final-video duration before fetching fresh metadata', async () => {
     mockedExtractVideoMetadataFromUrl.mockReset();
     const applyEdit = vi.fn();

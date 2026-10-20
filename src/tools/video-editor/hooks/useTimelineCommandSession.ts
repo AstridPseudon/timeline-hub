@@ -177,6 +177,11 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before swapping parent media');
         };
         session.parentClipSwapMediaPort = {
+          prepare() { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.prepare(); },
+          assertPreparationCurrent(preparation) {
+            requireCleanParentClipSwapMedia();
+            parentClipSwapMediaPort.assertPreparationCurrent(preparation);
+          },
           capture(input) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.capture(input); },
           finish(basis, verifiedMedia) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.finish(basis, verifiedMedia); },
           submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
