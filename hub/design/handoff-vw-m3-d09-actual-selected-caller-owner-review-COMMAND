@@ -1,0 +1,32 @@
+```sh
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-actual-selected-caller-owner-review
+P=/home/user/work/venv-agent/bin/python
+N=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+PEERS=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b/node_modules
+REGISTRY_PROJECT=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+ARTIFACT="$PWD/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" env -u NODE_OPTIONS -u NODE_PATH \
+  ASTRID_NODE_EXECUTABLE="$N" \
+  ASTRID_REMOTION_PROJECT_DIR="$REGISTRY_PROJECT" \
+  ASTRID_COMPOSITION_TEST_NODE_MODULES="$PEERS" \
+  ASTRID_TEST_NODE_MODULES="$PEERS" \
+  ASTRID_COMPOSITION_TEST_ARTIFACT="$ARTIFACT" \
+  TMPDIR="$W/tmp" \
+  "$P" -m pytest -q -o addopts= -p no:cacheprovider --tb=short \
+  tests/packs/rendering/test_presenter_selected_cut_aggregate.py \
+  tests/packs/rendering/test_presenter_scene_capability.py \
+  tests/packs/rendering/test_presenter_crop_equivalence.py
+# 40 passed in 11.31s
+
+git diff --check b43cd95717a5018940f5ffa4123d2db3ff34b8f0..HEAD
+PYTHONDONTWRITEBYTECODE=1 "$P" - <<'PY'
+import ast
+from pathlib import Path
+for name in ('astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py',
+             'tests/packs/rendering/test_presenter_selected_cut_aggregate.py'):
+    ast.parse(Path(name).read_text())
+PY
+"$N" --check tests/packs/rendering/presenter_selected_cut_query.mjs
+git status --short --untracked-files=all
+# all passed; status clean
+```

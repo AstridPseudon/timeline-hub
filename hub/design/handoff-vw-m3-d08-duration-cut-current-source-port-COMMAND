@@ -1,0 +1,11 @@
+Focused tests:
+./node_modules/.bin/vitest run --no-cache --config config/testing/vitest.config.ts src/tools/video-editor/lib/config-utils.test.ts src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx src/tools/video-editor/components/TimelineEditorShellCore.test.tsx src/tools/video-editor/hooks/useRenderState.test.tsx src/tools/travel-between-images/components/ShotTimelinePreview.test.ts
+
+Compatibility-export neighbor:
+./node_modules/.bin/vitest run --no-cache --config config/testing/vitest.config.ts src/tools/video-editor/testing.test.ts
+
+Scoped lint:
+./node_modules/.bin/eslint src/tools/travel-between-images/components/ShotTimelinePreview.tsx src/tools/video-editor/components/CompactPreview.tsx src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx src/tools/video-editor/components/TimelineEditorShellCore.tsx src/tools/video-editor/compositions/TimelineRenderer.tsx src/tools/video-editor/hooks/useDerivedTimeline.ts src/tools/video-editor/hooks/useRenderState.ts src/tools/video-editor/lib/config-utils.test.ts src/tools/video-editor/lib/config-utils.ts --report-unused-disable-directives --max-warnings 0
+
+Typecheck:
+./node_modules/.bin/tsc -p tsconfig.app.json --noEmit
