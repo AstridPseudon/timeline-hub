@@ -174,6 +174,26 @@ class _PublishMixin:
                 changed[sid] = text
         return changed
 
+    def _matching_binding(self, client: Any, sid: str, text: str, bound: Mapping[str, Any] | None) -> dict[str, Any] | None:
+        """The runtime's voiceover_script binding for ``sid`` iff its content hash is exactly ``text``'s (and it is the
+        document's own binding when the document carries one); None otherwise, so the conflict is reported."""
+        import hashlib
+
+        from astrid.sdk.pagination import page_pair
+
+        listed = client.shots.list_text_bindings(self.bundle["project_id"], shot_id=sid, kind="voiceover_script")
+        page = page_pair(getattr(listed, "data", None)) if getattr(listed, "ok", False) else None
+        if page is None or page[1] is not None:
+            return None
+        digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+        for row in page[0]:
+            if (isinstance(row, Mapping) and row.get("shot_id") == sid and row.get("kind") == "voiceover_script"
+                    and row.get("content_hash") == digest
+                    and (not bound or not bound.get("binding_id") or row.get("binding_id") == bound.get("binding_id"))
+                    and row.get("slot") == (bound or {}).get("slot")):
+                return dict(row)
+        return None
+
     def pin_narration(self, client: Any, *, idempotency_key: str) -> list[str]:
         """Register the changed narration per shot and pin it in the document (publish does this)."""
         pinned = []
@@ -184,6 +204,13 @@ class _PublishMixin:
             result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
                                                     expected_head=expected,
                                                     idempotency_key=f"{idempotency_key}-narration-{sid}"[:120])
+            err = getattr(result, "error", None)
+            if getattr(result, "ok", True) is False and getattr(err, "code", None) == "conflict":
+                # Adopt (never overwrite) a binding the document does not carry when the runtime already holds
+                # exactly this text for this shot (an earlier pin whose document write was lost).
+                adopted = self._matching_binding(client, sid, text, bound)
+                if adopted is not None:
+                    result = adopted
             pin = getattr(result, "data", result)
             if getattr(result, "ok", True) is False or not isinstance(pin, Mapping):
                 raise TimelineEditError(f"could not register the narration for shot {sid}: {getattr(result, 'error', result)}")
