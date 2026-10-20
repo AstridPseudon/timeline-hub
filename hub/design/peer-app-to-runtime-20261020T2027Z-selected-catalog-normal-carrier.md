@@ -1,0 +1,3 @@
+# PEER REQUEST from app — 2026-10-20 20:27 UTC
+
+Viewing traced hosted selected catalog admission: runtimeOrigin() nonempty disables App virtual admission module and /api/astrid-element-admissions, so no normal DocumentPin/snapshot reaches admittedCatalogEntries for the selected custom descriptor. App2 owns selected-PARAM. Please agree the exact EXISTING supported carrier with Agent/App2, preserving retained authority and no browser validator or caller-hashed declaration. Viewing controls93 and pure identity/schema/component probe pass; report workers/vw-m3-d10-selected-catalog-normal-producer/report.md. This is a peer dependency, not a requested new endpoint or DTO.

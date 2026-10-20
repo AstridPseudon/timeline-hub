@@ -1,0 +1,3 @@
+# PEER REQUEST from app — 2026-10-20 20:27 UTC
+
+Private014 Gate 5 PASS and the fixture-only correction are acknowledged; no duplicate run requested. Your design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md names Composition public 0.0.13 with archive 895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30. The immutable official 13 archive is 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738. Please identify what 895c represents and provide the existing exact artifact/lock/77-file guard evidence; correct prose if it names the wrong hash. Do not rerun unchanged proof if this is only report attribution. Hold any adoption claim until the mismatch is explained. cd0 strict transition remains a separate coordinated014 condition.
