@@ -14,8 +14,8 @@ const FROZEN_SOURCES = {
   },
   agent: {
     root: '/home/user/peteromallet/astrid-agent',
-    commit: 'd8749a9ce12a699672faf3ad96b4e4cbea9245c2',
-    label: 'official013/S2',
+    commit: '8130a401bf44a518d5a40ae274d398b8c560be55',
+    label: 'official013/current-compatible',
   },
 } as const;
 
@@ -89,7 +89,8 @@ test('native retained frame fixture restores through /v1 with no legacy seed or 
     process.env.ASTRID_PYTHON = agentPython;
     const moduleProof = pythonSourceProof(runtimePython, archived.runtime.root, archived.agent.root);
     const { DirectHarness } = await import('../../local/support/harness');
-    const { nativeFrameParitySetup, prepareFrameParityFixture, prepareNativeFrameParityRealm, readRuntimeJson, timelineBase } = await import('./fixture');
+    const { assertCanonicalNativeMedia, nativeFrameParitySetup, prepareFrameParityFixture,
+      prepareNativeFrameParityRealm, readRuntimeJson, timelineBase } = await import('./fixture');
     const { ORIGINAL_640 } = await import('./canvas');
     const before = {
       app: { source: 'App test source is the central snapshot; no App source archive is substituted' },
@@ -113,8 +114,12 @@ test('native retained frame fixture restores through /v1 with no legacy seed or 
 
     const fixture = await prepareFrameParityFixture(harness, ORIGINAL_640, setup);
     assert.equal(fixture.media.length, 3);
-    assert.equal(fixture.sourceVideoMediaId, fixture.media[1].objectId);
+    assert.deepEqual(fixture.media.map(pin => pin.name), ['image', 'video', 'audio']);
+    assert.equal(fixture.sourceVideoMediaId, fixture.media.find(pin => pin.name === 'video')!.objectId);
     assert.deepEqual(fixture.parent.payload.config, setup.document.parent_revision.payload.config);
+    assert.deepEqual(setup.document.dependency_manifest.media,
+      fixture.media.map(pin => ({ media_id: pin.objectId, content_digest: pin.digest })).sort((a, b) => a.media_id.localeCompare(b.media_id)));
+    assertCanonicalNativeMedia(fixture, ORIGINAL_640);
     assert.equal(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/composition-revisions')).length, 0);
 
     const objectsBefore = (await readRuntimeJson<{ items: unknown[] }>(harness,

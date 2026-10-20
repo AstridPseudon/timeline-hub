@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
 import { compositionPublication, makePng, REPO_ROOT, RUNTIME_CHECKOUT, runtimePython, type DirectHarness } from '../../local/support/harness';
-import { generatePlayableVideo, mediaHash, PARITY_FPS } from './media';
+import { generatePlayableVideo, mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
 import { ORIGINAL_640, type ParityCanvas } from './canvas';
 
 export { PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';
@@ -30,9 +30,14 @@ export interface NativeFrameParitySetup {
     parent_revision: Revision;
     shot_revisions: Revision[];
     internal_timeline_revisions: Revision[];
+    dependency_manifest: { media: Array<{ media_id: string; content_digest: string }> };
   };
   media: Array<MediaPin & { name: string }>;
   sourceVideoMetadata: Awaited<ReturnType<typeof generatePlayableVideo>>['metadata'];
+  sourceAudioMetadata: {
+    streams: Array<{ codec_type?: string; codec_name?: string; sample_rate?: string; channels?: number; channel_layout?: string }>;
+    format: { duration?: string };
+  };
 }
 const nativeSetupByHarness = new WeakMap<DirectHarness, NativeFrameParitySetup>();
 export interface FrameParityFixture {
@@ -46,9 +51,10 @@ export interface FrameParityFixture {
   parent: Revision;
   shot: Revision;
   internal: Revision;
-  media: MediaPin[];
+  media: Array<MediaPin & { name?: string }>;
   sourceVideoMediaId: string;
   sourceVideoMetadata: Awaited<ReturnType<typeof generatePlayableVideo>>['metadata'];
+  sourceAudioMetadata?: NativeFrameParitySetup['sourceAudioMetadata'];
 }
 
 export async function readRuntimeJson<T>(harness: DirectHarness, path: string): Promise<T> {
@@ -72,6 +78,16 @@ export async function prepareNativeFrameParityRealm(harness: DirectHarness, canv
   await exec('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=44100:duration=1',
     '-ac', '2', '-c:a', 'pcm_s16le', '-threads', '1', audioPath]);
   const audio = await readFile(audioPath);
+  const { stdout: audioProbe } = await exec('ffprobe', [
+    '-v', 'error', '-show_streams', '-show_format', '-of', 'json', audioPath,
+  ]);
+  const sourceAudioMetadata = JSON.parse(audioProbe) as NativeFrameParitySetup['sourceAudioMetadata'];
+  assert.equal(sourceAudioMetadata.streams.length, 1);
+  assert.equal(sourceAudioMetadata.streams[0]?.codec_name, 'pcm_s16le');
+  assert.equal(sourceAudioMetadata.streams[0]?.codec_type, 'audio');
+  assert.equal(sourceAudioMetadata.streams[0]?.sample_rate, '44100');
+  assert.equal(sourceAudioMetadata.streams[0]?.channels, 2);
+  assert.equal(Number(sourceAudioMetadata.format.duration), 1);
   const media = [
     { name: 'image', path: imagePath, media_type: 'image/png', original_name: 'gradient.png', bytes: image },
     { name: 'video', path: source.path, media_type: 'video/webm', original_name: 'frame-marked.webm', bytes: source.bytes },
@@ -103,8 +119,8 @@ export async function prepareNativeFrameParityRealm(harness: DirectHarness, canv
       PYTHONPATH: [RUNTIME_CHECKOUT, agent, process.env.PYTHONPATH].filter(Boolean).join(delimiter) },
     maxBuffer: 8 * 1024 * 1024,
   });
-  const prepared = JSON.parse(stdout.trim()) as Omit<NativeFrameParitySetup, 'sourceVideoMetadata'>;
-  const result = { ...prepared, sourceVideoMetadata: source.metadata };
+  const prepared = JSON.parse(stdout.trim()) as Omit<NativeFrameParitySetup, 'sourceVideoMetadata' | 'sourceAudioMetadata'>;
+  const result = { ...prepared, sourceVideoMetadata: source.metadata, sourceAudioMetadata };
   nativeSetupByHarness.set(harness, result);
   return result;
 }
@@ -166,7 +182,8 @@ export async function prepareFrameParityFixture(harness: DirectHarness, canvas: 
     const closure = await readClosure(harness, pins);
     const fixture = { ...pins, ...closure, media: nativeSetup.media,
       sourceVideoMediaId: nativeSetup.media.find(pin => pin.name === 'video')!.objectId,
-      sourceVideoMetadata: nativeSetup.sourceVideoMetadata };
+      sourceVideoMetadata: nativeSetup.sourceVideoMetadata,
+      sourceAudioMetadata: nativeSetup.sourceAudioMetadata };
     await assertPinnedFrameParityFixture(harness, fixture);
     return fixture;
   }
@@ -238,12 +255,63 @@ export async function prepareFrameParityFixture(harness: DirectHarness, canvas: 
     assert.equal(closure.shot.content_digest, response.body.data.content_digests[shotRevisionId]);
     assert.equal(closure.internal.content_digest, response.body.data.content_digests[internalRevisionId]);
     assert.deepEqual(closure.parent.payload.occurrences, publication.parent_composition.occurrences);
-    const fixture = { ...pins, ...closure, media: [image, video, audio], sourceVideoMediaId: video.objectId, sourceVideoMetadata: source.metadata };
+    const fixture = { ...pins, ...closure, media: [image, video, audio], sourceVideoMediaId: video.objectId,
+      sourceVideoMetadata: source.metadata };
     await assertPinnedFrameParityFixture(harness, fixture);
     return fixture;
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+}
+
+/** Prove the three retained media pins are the canonical closure's actual clips, not just named objects. */
+export function assertCanonicalNativeMedia(fixture: FrameParityFixture, canvas: ParityCanvas = ORIGINAL_640): void {
+  const internal = fixture.internal.payload as {
+    clips: Array<Record<string, unknown>>;
+    registry: { assets: Record<string, Record<string, unknown>> };
+  };
+  const parent = fixture.parent.payload as {
+    config: { output: Record<string, unknown> };
+    occurrences: Array<Record<string, unknown>>;
+  };
+  const aliases = internal.registry.assets;
+  assert.deepEqual(Object.keys(aliases).sort(), ['audio', 'still', 'video']);
+  const pinByName = Object.fromEntries(fixture.media.map(pin => [pin.name, pin]));
+  for (const [alias, name, type] of [
+    ['still', 'image', 'image/png'], ['video', 'video', 'video/webm'], ['audio', 'audio', 'audio/wav'],
+  ] as const) {
+    assert.equal(aliases[alias].media_id, pinByName[name].objectId, `${alias} alias media pin`);
+    assert.equal(aliases[alias].content_sha256, pinByName[name].digest, `${alias} alias digest`);
+    assert.equal(aliases[alias].type, type, `${alias} alias type`);
+  }
+  const clips = Object.fromEntries(internal.clips.map(clip => [String(clip.id), clip]));
+  assert.equal(clips['parity-image'].asset, 'still');
+  assert.equal(clips['parity-image'].track, 'V1');
+  assert.equal(clips['parity-image'].hold, 4);
+  assert.equal(clips['parity-video'].asset, 'video');
+  assert.equal(clips['parity-video'].from, 0);
+  assert.equal(clips['parity-video'].to, 1.5);
+  assert.equal(clips['parity-video'].hold, 1.5);
+  assert.equal(clips['parity-audio'].asset, 'audio');
+  assert.equal(clips['parity-audio'].track, 'A1');
+  assert.equal(clips['parity-audio'].from, 0.05);
+  assert.equal(clips['parity-audio'].to, 0.55);
+  const sourceAudioMetadata = fixture.sourceAudioMetadata;
+  assert.ok(sourceAudioMetadata, 'native fixture must retain probed audio source metadata');
+  assert.equal(parent.config.output.resolution,
+    `${canvas.width}x${canvas.height}`);
+  assert.equal(parent.config.output.fps, PARITY_FPS);
+  const occurrence = parent.occurrences[0];
+  assert.equal(occurrence.duration_ms, 5500);
+  assert.equal(Number(occurrence.duration_ms) * PARITY_FPS / 1000, 165, 'canonical occurrence is 165 frames');
+  assert.equal(fixture.sourceVideoMetadata.streams[0]?.width, PARITY_WIDTH);
+  assert.equal(fixture.sourceVideoMetadata.streams[0]?.height, PARITY_HEIGHT);
+  assert.equal(fixture.sourceVideoMetadata.streams[0]?.nb_read_frames, '45');
+  assert.equal(Number(fixture.sourceVideoMetadata.format.duration), 1.5);
+  assert.equal(sourceAudioMetadata.streams[0]?.codec_type, 'audio');
+  assert.equal(sourceAudioMetadata.streams[0]?.channels, 2);
+  assert.equal(sourceAudioMetadata.streams[0]?.sample_rate, '44100');
+  assert.equal(Number(sourceAudioMetadata.format.duration), 1);
 }
 
 export async function assertPinnedFrameParityFixture(harness: DirectHarness, fixture: FrameParityFixture): Promise<void> {
