@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T11:29:07Z | dispatcher heartbeat 10s -->
+<!-- viewing | 2026-10-20T11:34:22Z | dispatcher heartbeat 9s -->
 # viewing — 2026-10-20 11:05 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates6/7 OPEN; no actual parity claim.
 Integrated: Compositione80c46baf historyjoin67b8aa3/tree23a994 unchanged, lead drymergeclean; full1020091054-4980 69PASS/0FAIL/0SKIP. Actualbuild+pack+defaultconsumerPASS; immutablepublic12 77files/58444B SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3. FullDEFAULT navy/Arial/cyan equalityPASS; old11immutable.

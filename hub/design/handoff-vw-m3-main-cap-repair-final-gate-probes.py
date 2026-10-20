@@ -1,5 +1,6 @@
 """Independent offline probes: no capture, service, source extraction, or renderer."""
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -32,6 +33,21 @@ def refused(function, fragment):
         assert fragment in str(exc), str(exc)
     else:
         raise AssertionError('accepted: ' + fragment)
+
+
+if sys.argv[1] == 'final-checks':
+    new = json.loads(Path(str(PREFIX) + 'reviewed-sha256.json').read_text())
+    old = json.loads((ORCH / 'design/handoff-vw-m3-main-cap-controller-final-gate-reviewed-sha256.json').read_text())
+    for name, digest in new.items():
+        assert hashlib.sha256(Path(str(TARGET_PREFIX) + name).read_bytes()).hexdigest() == digest
+    for name, digest in old.items():
+        assert hashlib.sha256((ORCH / 'design' / name).read_bytes()).hexdigest() == digest
+    worker = ORCH / 'workers/vw-m3-main-cap-controller-repair'
+    assert all(not (worker / name).exists() for name in ('CAPTURE-GRANT.txt', 'capture-stage', 'CAPTURE-STARTED'))
+    assert all(not Path(str(TARGET_PREFIX) + f'frame-{frame}.png').exists() for frame in (90, 105, 119))
+    assert not list(OWN.glob('offline-calibration-*'))
+    print('PASS: repaired frozen hashes stable; old rejected artifacts/instrument unchanged; actual grant/stage/attempt/PNGs absent; private temporary fixtures cleaned')
+    raise SystemExit(0)
 
 
 if sys.argv[1] == 'preflight':

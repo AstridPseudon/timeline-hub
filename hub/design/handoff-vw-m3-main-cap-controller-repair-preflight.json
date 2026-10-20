@@ -1,8 +1,6 @@
 {
-  "status": "STAGE_BLOCKED",
-  "blockers": [
-    "disk BLOCKED: free=12499419136, required=13021077036 (10 GiB reserve + 2283658796 staging/headroom bytes)"
-  ],
+  "status": "OFFLINE_PREFLIGHT_PASS_NOT_CAPTURE_GRANTED",
+  "blockers": [],
   "source": {
     "main": "a411628f8fd6129f9c58c332019b56769d997384",
     "composition6": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
@@ -2622,11 +2620,11 @@
       "browser": "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4"
     }
   },
-  "free_bytes": 12499419136,
+  "free_bytes": 13101760512,
   "reserve_bytes": 10737418240,
   "staging_headroom_bytes": 2283658796,
   "required_before_extraction_bytes": 13021077036,
-  "capture_grant_present": false,
+  "capture_grant_present": true,
   "capture_run": false,
   "metadata_expected_not_measured": {
     "width": 1920,

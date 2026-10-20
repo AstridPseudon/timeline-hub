@@ -1,0 +1,12 @@
+{
+  "byte_equal": true,
+  "outputs": {
+    "main-projected-config.json": "c14d9597b5101a5d9698204efea38511c3cc6da861b8fd69f5f1fa90b194eecd",
+    "main-managed-registry.json": "54e2fa9b192641447bf60acf52ffdb373264285b0a11e5209e7716aed4bde0b4",
+    "main-materialized-timeline.json": "4cfba948ad5ba4599a151ea010d512034979195964465201d9c2e508c256fb85",
+    "main-serialized-timeline.json": "485261ff7d355303ee458468e00ee98c555cd99932058845a37130b5f80aebe0",
+    "main-props-template.json": "1ff6ddcdac75f661054395b96ba5148cdeaec7a2445802d1b3719a504752634e",
+    "main-props-static-analog.json": "eb477822c1f6054b9f978039c1e64bd0035ec504084f7c4732c39683ce462ef5",
+    "trace.json": "5a2f092189863dcfdfac1faf54c8165bc3fba18b8ac3668cc4d150cfa4896eb9"
+  }
+}

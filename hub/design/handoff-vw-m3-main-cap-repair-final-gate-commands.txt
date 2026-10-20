@@ -1,0 +1,36 @@
+All commands ran from /home/user/work/wt/vw-m3-main-cap-repair-final-gate.
+Final successful commands and logs follow. No capture/service/source extraction/product suite ran.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-old-repro.py self-check > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-old-repro.log 2>&1
+RESULT: exit0; seven old guards pass; old refused-stage deletion defect reproduced with rmtree mocked and sentinel intact.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py --self-test > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-pixel-self-test.log 2>&1
+RESULT: exit0; independent synthetic fractions and wrong-color/control/dimensions/background negatives pass.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-probes.py calibrations > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-calibrations.log 2>&1
+RESULT: exit0; floor/headroom boundaries, QUIET, actual both-script tampering before main/preflight/log/child, absent/path-only grants, blocked extraction, pre-existing directory/file/symlink sentinels, partial-stage/postflight-failure cleanup, late tamper and no-retry marker pass. Actual analyzer synthetic RGB/alpha/control/dimension calibration passes. All service/source/renderer routes in lifecycle tests mocked.
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-node-grant-probe.mjs > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-node-grant-probe.log 2>&1
+RESULT: exit0; pure renderer grant-block exact positive and controller/render tamper plus path-only negatives. In-memory grant/files; no renderer import.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-probes.py preflight > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-preflight.log 2>&1
+RESULT: exit0; actual source/29-member locked6/full graph/six peers/tools/resources pass. Only OWN/PREFIX redirected for reviewer output and disk query; REPO remains durable /home/user/work/agent. Free13231099904 >= required13021077036; no extraction or grant.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-probes.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-ruff.log 2>&1
+RESULT: final exit0, All checks passed. Initial check found one unused import in reviewer helper only; corrected before final pass.
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-render.mjs > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-node-check.log 2>&1
+RESULT: exit0; parse only, no module execution.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-probes.py postflight > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-offline-postflight.log 2>&1
+RESULT: exit0; MAIN source/fixtures/full physical graph/all six peer and tool hashes equal preflight after all independent calibrations. Free13224796160; grant absent.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-probes.py final-checks > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-final-checks.log 2>&1
+RESULT: exit0; repaired controller/render/COMMAND/REPORT/creator-probe hashes unchanged; old rejected artifacts and pixel instrument unchanged; actual grant/stage/marker/PNGs absent; private calibration temporary directories removed.
+
+git status --porcelain=v1 --untracked-files=all
+git diff --check
+RESULT: exit0 / empty for both. No repository changes or build output.
+
+Snapshot hashes are in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-repair-final-gate-reviewed-sha256.json; probes.py final-checks independently verifies them against current bytes.
+Old-repro.py is the prior read-only probe with only OWN/PREFIX redirected to this reviewer. It never modifies the rejected target.

@@ -1,0 +1,36 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: Module not found: Error: Can't resolve '@banodoco/timeline-theme-2rp/src/effects/art-card/component' in '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/typescript/src'
+resolve '@banodoco/timeline-theme-2rp/src/effects/art-card/component' in '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/typescript/src'
+  Parsed request is a module
+  using description file: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/package.json (relative path: ./typescript/src)
+    Field 'browser' doesn't contain a valid alias configuration
+    resolve as module
+      looking for modules in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules
+        /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-theme-2rp doesn't exist
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/typescript/src/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/typescript/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-composition/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/node_modules doesn't exist or is not a directory
+      looking for modules in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules
+        /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/remotion/node_modules/@banodoco/timeline-theme-2rp doesn't exist
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/main/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/capture-stage/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/-home-user-repo/node_modules doesn't exist or is not a directory
+      /tmp/claude-0/node_modules doesn't exist or is not a directory
+      /tmp/node_modules doesn't exist or is not a directory
+      /node_modules doesn't exist or is not a directory
+    at runWebpack (/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/bundler/dist/bundle.js:236:23)
+    at async internalBundle (/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/bundler/dist/bundle.js:240:13)
+    at async bundle (/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@remotion/bundler/dist/bundle.js:354:20)
+    at async file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-render.mjs:82:20
+
+Node.js v20.19.4
