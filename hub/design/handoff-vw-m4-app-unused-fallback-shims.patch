@@ -1,0 +1,270 @@
+diff --git a/src/tools/video-editor/compositions/fallback/registry.generated.tsx b/src/tools/video-editor/compositions/fallback/registry.generated.tsx
+deleted file mode 100644
+index 476e7c0bb..000000000
+--- a/src/tools/video-editor/compositions/fallback/registry.generated.tsx
++++ /dev/null
+@@ -1,55 +0,0 @@
+-import type { FC } from 'react';
+-import { AbsoluteFill } from 'remotion';
+-import type { RuntimeTheme } from '@/tools/video-editor/compositions/fallback/theme-api.tsx';
+-import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+-
+-type RegisteredSequenceComponent = FC<{
+-  clip: ResolvedTimelineClip;
+-  params: unknown;
+-  theme: RuntimeTheme;
+-  fps: number;
+-}>;
+-
+-const ThemedSequenceStub: RegisteredSequenceComponent = ({ clip, theme }) => {
+-  return (
+-    <AbsoluteFill
+-      data-testid="fallback-themed-sequence"
+-      data-clip-type={clip.clipType ?? ''}
+-      style={{
+-        alignItems: 'center',
+-        background: theme.color.bg,
+-        color: theme.color.fg,
+-        display: 'flex',
+-        fontFamily: theme.type.families.body,
+-        justifyContent: 'center',
+-      }}
+-    >
+-      {clip.clipType ?? 'unknown-sequence'}
+-    </AbsoluteFill>
+-  );
+-};
+-
+-export const THEME_PACKAGE_REGISTRY = {
+-  'section-hook': {
+-    component: ThemedSequenceStub,
+-    themeId: '2rp',
+-    source: 'fallback:@banodoco/timeline-theme-2rp',
+-  },
+-  'art-card': {
+-    component: ThemedSequenceStub,
+-    themeId: '2rp',
+-    source: 'fallback:@banodoco/timeline-theme-2rp',
+-  },
+-  'resource-card': {
+-    component: ThemedSequenceStub,
+-    themeId: '2rp',
+-    source: 'fallback:@banodoco/timeline-theme-2rp',
+-  },
+-  'cta-card': {
+-    component: ThemedSequenceStub,
+-    themeId: '2rp',
+-    source: 'fallback:@banodoco/timeline-theme-2rp',
+-  },
+-} as const;
+-
+-export type ThemePackageClipType = keyof typeof THEME_PACKAGE_REGISTRY;
+diff --git a/src/tools/video-editor/compositions/fallback/theme-api.tsx b/src/tools/video-editor/compositions/fallback/theme-api.tsx
+deleted file mode 100644
+index 9cf362895..000000000
+--- a/src/tools/video-editor/compositions/fallback/theme-api.tsx
++++ /dev/null
+@@ -1,91 +0,0 @@
+-import {
+-  createContext,
+-  useContext,
+-  type PropsWithChildren,
+-  type ReactElement,
+-} from 'react';
+-
+-export type Theme = {
+-  id: string;
+-  color: {
+-    fg: string;
+-    bg: string;
+-    accent: string;
+-  };
+-  type: {
+-    families: {
+-      heading: string;
+-      body: string;
+-      mono: string;
+-    };
+-    size: {
+-      base: number;
+-      small: number;
+-      large: number;
+-    };
+-    weight: {
+-      normal: number;
+-      bold: number;
+-    };
+-    lineHeight: number;
+-  };
+-  visual?: {
+-    canvas?: {
+-      width?: number;
+-      height?: number;
+-      fps?: number;
+-    };
+-  };
+-};
+-
+-export type RuntimeTheme = Theme;
+-
+-export const DEFAULT_THEME: Theme = {
+-  id: 'fallback',
+-  color: {
+-    fg: '#ffffff',
+-    bg: '#111111',
+-    accent: '#fde68a',
+-  },
+-  type: {
+-    families: {
+-      heading: 'Inter, sans-serif',
+-      body: 'Inter, sans-serif',
+-      mono: 'JetBrains Mono, monospace',
+-    },
+-    size: {
+-      base: 56,
+-      small: 32,
+-      large: 128,
+-    },
+-    weight: {
+-      normal: 400,
+-      bold: 700,
+-    },
+-    lineHeight: 1.1,
+-  },
+-  visual: {
+-    canvas: {
+-      width: 1920,
+-      height: 1080,
+-      fps: 30,
+-    },
+-  },
+-};
+-
+-const ThemeContext = createContext<RuntimeTheme>(DEFAULT_THEME);
+-
+-export function ThemeProvider({
+-  children,
+-  value,
+-}: PropsWithChildren<{ value: RuntimeTheme }>): ReactElement {
+-  return (
+-    <ThemeContext.Provider value={value}>
+-      {children}
+-    </ThemeContext.Provider>
+-  );
+-}
+-
+-export function useTheme(): RuntimeTheme {
+-  return useContext(ThemeContext);
+-}
+diff --git a/src/tools/video-editor/lib/registry.generated.fallback.ts b/src/tools/video-editor/lib/registry.generated.fallback.ts
+deleted file mode 100644
+index 229b7cbbe..000000000
+--- a/src/tools/video-editor/lib/registry.generated.fallback.ts
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const THEME_PACKAGE_REGISTRY = {} as const;
+-export const THEME_PACKAGE_CLIP_TYPES = [] as const;
+-
+-export type ThemePackageClipType = string;
+diff --git a/src/tools/video-editor/lib/theme-api.fallback.tsx b/src/tools/video-editor/lib/theme-api.fallback.tsx
+deleted file mode 100644
+index f9fe0899b..000000000
+--- a/src/tools/video-editor/lib/theme-api.fallback.tsx
++++ /dev/null
+@@ -1,96 +0,0 @@
+-import {
+-  createContext,
+-  useContext,
+-  type PropsWithChildren,
+-} from 'react';
+-
+-export type RuntimeTheme = {
+-  color: {
+-    fg: string;
+-    bg: string;
+-    accent: string;
+-  };
+-  type: {
+-    families: {
+-      heading: string;
+-      body: string;
+-      mono: string;
+-    };
+-    size: {
+-      base: number;
+-      small: number;
+-      large: number;
+-    };
+-    weight: {
+-      normal: number;
+-      bold: number;
+-    };
+-    lineHeight: number;
+-  };
+-  motion: {
+-    fadeMs: number;
+-  };
+-  canvas: {
+-    width: number;
+-    height: number;
+-    fps: number;
+-  };
+-};
+-
+-export type Theme = {
+-  id: string;
+-  visual: RuntimeTheme;
+-};
+-
+-export const DEFAULT_THEME: Theme = {
+-  id: 'default',
+-  visual: {
+-    color: {
+-      fg: '#ffffff',
+-      bg: '#000000',
+-      accent: '#ffffff',
+-    },
+-    type: {
+-      families: {
+-        heading: 'Georgia, serif',
+-        body: 'Georgia, serif',
+-        mono: 'ui-monospace, monospace',
+-      },
+-      size: {
+-        base: 56,
+-        small: 32,
+-        large: 128,
+-      },
+-      weight: {
+-        normal: 400,
+-        bold: 700,
+-      },
+-      lineHeight: 1.1,
+-    },
+-    motion: {
+-      fadeMs: 500,
+-    },
+-    canvas: {
+-      width: 1920,
+-      height: 1080,
+-      fps: 30,
+-    },
+-  },
+-};
+-
+-const ThemeContext = createContext<RuntimeTheme>(DEFAULT_THEME.visual);
+-
+-export function ThemeProvider({
+-  children,
+-  value,
+-}: PropsWithChildren<{ value: Theme }>) {
+-  return (
+-    <ThemeContext.Provider value={value.visual}>
+-      {children}
+-    </ThemeContext.Provider>
+-  );
+-}
+-
+-export function useTheme(): RuntimeTheme {
+-  return useContext(ThemeContext);
+-}

@@ -1,0 +1,301 @@
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py b/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+new file mode 100644
+--- /dev/null
++++ b/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+@@ -0,0 +1,78 @@
++"""Inactive asset-stage adapter; the caller owns verified source admission.
++
++Call only inside the existing render lock and asset lifecycle, after validating
++the exact prepared pair and compiling Root props. This does not mint authority.
++"""
++
++from __future__ import annotations
++
++import copy
++import json
++import os
++import subprocess
++import sys
++from pathlib import Path
++from typing import Any, Mapping
++
++from astrid.core.rendering.assets import AssetMaterializer, AssetURLResolver
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools, probe_context
++
++
++def prepare_normal_audio_sources(
++    props: Mapping[str, Any], *, materializer: AssetMaterializer,
++    asset_server: AssetURLResolver, attempt_directory: Path,
++    project_dir: Path, runtime_tools: RemotionRuntimeTools,
++) -> dict[str, Any]:
++    """Prepare full-source envelopes; attach only disposable render-props URLs."""
++    expected = materializer.resolved_registry(asset_server)
++    def encode(value: Any) -> str:
++        return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
++
++    if encode(props["assets"]) != encode(expected):
++        raise ValueError("audio Root registry differs from materialized source")
++    tracks = {row["id"] for row in props["timeline"]["tracks"] if row["kind"] == "audio"}
++    indexed = []
++    for index, clip in enumerate(props["timeline"]["clips"]):
++        if "render_source" in (clip.get("audio") or {}):
++            raise ValueError("audio source already prepared")
++        if clip.get("track") in tracks:
++            indexed.append((index, clip))
++    if not indexed:
++        return copy.deepcopy(dict(props))
++    project = project_dir.resolve(strict=True)
++    helper = (project / "normal-audio-sources.mjs").resolve(strict=True)
++    helper.relative_to(project)
++    attempt = attempt_directory.resolve(strict=True)
++    attempt.relative_to(materializer.serving_root)
++    clips = []
++    for _, clip in indexed:
++        asset = materializer.assets[clip["asset"]]
++        if asset.local_path is None:
++            raise ValueError("audio source has no verified materialized path")
++        clips.append({"clip": clip, "source": str(asset.local_path)})
++    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
++    result = subprocess.run(
++        [str(runtime_tools.node_executable), str(helper)],
++        input=json.dumps({"clips": clips, "fps": props["compiledTransitions"]["fps"],
++                          "attemptDirectory": str(attempt)}, allow_nan=False),
++        cwd=project, env=environment, capture_output=True, text=True, timeout=30, check=False,
++    )
++    if result.returncode:
++        raise RuntimeError(result.stderr.strip() or "audio PCM preparation unavailable")
++    prepared = json.loads(result.stdout)
++    if not isinstance(prepared, list) or len(prepared) != len(indexed):
++        raise ValueError("invalid audio PCM preparation response")
++    output = copy.deepcopy(dict(props))
++    for (index, _), row in zip(indexed, prepared):
++        if row is None:
++            continue
++        if set(row) != {"path", "envelope_key", "source_from", "playback_rate"}:
++            raise ValueError("invalid audio PCM preparation fields")
++        path = Path(row["path"]).resolve(strict=True)
++        path.relative_to(attempt)
++        clip = output["timeline"]["clips"][index]
++        clip.setdefault("audio", {})["render_source"] = {
++            "file": asset_server.local_url(path),
++            **{key: row[key] for key in ("envelope_key", "source_from", "playback_rate")},
++        }
++    return output
+diff --git a/remotion/normal-audio-sources.mjs b/remotion/normal-audio-sources.mjs
+new file mode 100644
+--- /dev/null
++++ b/remotion/normal-audio-sources.mjs
+@@ -0,0 +1,23 @@
++import {readFileSync} from 'node:fs';
++import path from 'node:path';
++import {fileURLToPath} from 'node:url';
++import {prepareAttemptEnvelopePcm} from './attempt-envelope-pcm.mjs';
++import {compiledAudioSourceClock} from './compiled-audio-source-clock.mjs';
++
++// Private subprocess adapter, not source admission. Only the owned asset stage
++// supplies these clips and verified local paths; no caller-provided clocks.
++export const prepareNormalAudioSources = ({clips, fps, attemptDirectory}) => clips.map(
++  ({clip, source}) => prepareAttemptEnvelopePcm({
++    clip, fps, source, attemptDirectory,
++    sourceClock: compiledAudioSourceClock(clip, fps),
++  }) ?? null,
++);
++
++if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  try {
++    process.stdout.write(JSON.stringify(prepareNormalAudioSources(JSON.parse(readFileSync(0, 'utf8')))));
++  } catch (error) {
++    process.stderr.write(`${error.message}\n`);
++    process.exitCode = 1;
++  }
++}
+diff --git a/tests/packs/rendering/test_normal_audio_sources.py b/tests/packs/rendering/test_normal_audio_sources.py
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/test_normal_audio_sources.py
+@@ -0,0 +1,122 @@
++"""Asset-stage proposal tests. No source authority or HTTP service is mocked in.
++
++The URL resolver exercises containment only; these are not normal-render or
++trusted-producer positives. The original ENVELOPE_UNRENDERED requirement stays.
++"""
++
++import copy
++import hashlib
++import io
++import json
++import os
++import shutil
++import struct
++import wave
++from pathlib import Path
++
++import pytest
++
++from astrid.core.rendering.assets import AssetMaterializer
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
++from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
++    prepare_normal_audio_sources,
++)
++
++
++class ContainedURLs:
++    def __init__(self, root):
++        self.root = root
++
++    def local_url(self, path):
++        relative = Path(path).resolve(strict=True).relative_to(self.root)
++        return "http://attempt.invalid/" + relative.as_posix()
++
++
++@pytest.fixture
++def stage(tmp_path):
++    pcm = io.BytesIO()
++    with wave.open(pcm, "wb") as writer:
++        writer.setparams((2, 2, 30000, 0, "NONE", "not compressed"))
++        writer.writeframes(struct.pack("<hh", 8192, -4096) * 30000)
++    payload = pcm.getvalue()
++    registry = tmp_path / "assets.json"
++    registry.write_text(json.dumps({"assets": {"sound": {
++        "object_id": "object-sound", "digest": hashlib.sha256(payload).hexdigest(),
++        "type": "audio/wav",
++    }}}))
++    with AssetMaterializer(registry, materialized_objects={"object-sound": payload}) as materializer:
++        urls = ContainedURLs(materializer.serving_root)
++        attempt = materializer.serving_root / "envelopes"
++        attempt.mkdir()
++        project = Path(os.environ.get("AUDIO_PROPOSAL_PROJECT", "remotion")).resolve()
++        tools = RemotionRuntimeTools(Path(shutil.which("node")), "test-only", project / "unused-cli")
++        props = {
++            "timeline": {"tracks": [{"id": "A1", "kind": "audio", "volume": 0.5}], "clips": [{
++                "id": "sound", "track": "A1", "asset": "sound", "at": 0.25,
++                "from": 0.05, "to": 0.55, "speed": 1.5, "volume": 3,
++                "params": {"fadeIn": 0.1, "fadeOut": 0.1, "fadeInCurve": "equal-power"},
++                "app": {"astrid_shot_composition": {"source_offset": 350, "speed": 2}},
++            }]},
++            "assets": materializer.resolved_registry(urls),
++            "compiledTransitions": {"fps": 30, "tracks": []},
++        }
++
++        def prepare(value):
++            return prepare_normal_audio_sources(
++                value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
++                project_dir=project, runtime_tools=tools,
++            )
++
++        yield props, prepare, attempt, registry, payload
++
++
++@pytest.mark.parametrize("fps,origin", [(30, 2 / 30), (30000 / 1001, 1 / (30000 / 1001))])
++def test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes(stage, fps, origin):
++    props, prepare, attempt, registry, payload = stage
++    props["compiledTransitions"]["fps"] = fps
++    before = copy.deepcopy(props)
++    registry_before = registry.read_bytes()
++    output = prepare(props)
++    prepared = output["timeline"]["clips"][0]["audio"]["render_source"]
++    assert prepared["source_from"] == origin
++    assert prepared["playback_rate"] == 1.5
++    assert json.loads(prepared["envelope_key"])["multiply"]
++    wav = next(attempt.glob("envelope-*/source.wav")).read_bytes()
++    assert wav[:4] == b"RIFF"
++    assert struct.unpack_from("<HHI", wav, 20) == (3, 2, 30000)
++    assert len(wav) == 44 + 30000 * 2 * 4
++    assert struct.unpack_from("<ff", wav, 44 + 8000 * 8) == (0.25, -0.125)
++    assert struct.unpack_from("<ff", wav, 44) == (0, 0)
++    assert props == before
++    assert registry.read_bytes() == registry_before
++    assert hashlib.sha256(payload).hexdigest() in registry_before.decode()
++    del output["timeline"]["clips"][0]["audio"]
++    assert output == props  # includes scalar gain, metadata, at/from/to/speed and full registry
++
++
++def test_wrong_root_asset_url_is_rejected_before_pcm(stage):
++    props, prepare, attempt, _, _ = stage
++    props["assets"]["assets"]["sound"]["file"] = "http://foreign.invalid/same-clock.wav"
++    with pytest.raises(ValueError, match="registry differs"):
++        prepare(props)
++    assert list(attempt.iterdir()) == []
++
++
++def test_wrong_bytes_under_right_managed_asset_identity_are_rejected(stage):
++    _, _, _, registry, payload = stage
++    with pytest.raises(ValueError, match="integrity check"):
++        AssetMaterializer(registry, materialized_objects={"object-sound": payload[:-4] + b"nope"})
++
++
++def test_prepared_output_cannot_be_applied_twice(stage):
++    props, prepare, _, _, _ = stage
++    output = prepare(props)
++    with pytest.raises(ValueError, match="already prepared"):
++        prepare(output)
++
++
++def test_no_envelope_does_not_create_render_source_or_pcm(stage):
++    props, prepare, attempt, _, _ = stage
++    props["timeline"]["clips"][0].pop("params")
++    assert prepare(props) == props
++    assert list(attempt.iterdir()) == []
+diff --git a/remotion/tests/normal-audio-sources.test.mjs b/remotion/tests/normal-audio-sources.test.mjs
+new file mode 100644
+--- /dev/null
++++ b/remotion/tests/normal-audio-sources.test.mjs
+@@ -0,0 +1,58 @@
++import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import {createElement} from 'react';
++import {renderToStaticMarkup} from 'react-dom/server';
++import {afterEach, beforeEach, expect, it, vi} from 'vitest';
++import {TimelineComposition, compileCanonicalTransitions, DEFAULT_THEME} from '@banodoco/timeline-composition';
++import {audioEnvelopeWav} from '@banodoco/timeline-composition/evaluation';
++import {prepareNormalAudioSources} from '../normal-audio-sources.mjs';
++
++const host = vi.hoisted(() => ({endpoints: []}));
++vi.mock('remotion', async importOriginal => ({
++  ...await importOriginal(),
++  AbsoluteFill: ({children}) => children,
++  Sequence: ({children}) => children,
++  useCurrentFrame: () => 0,
++  useVideoConfig: () => ({fps: 30, width: 32, height: 32}),
++  getRemotionEnvironment: () => ({isPlayer: false, isRendering: true}),
++  useBufferState: () => ({}),
++  Audio: props => { host.endpoints.push(props); return null; },
++}));
++
++let attemptDirectory, prepared;
++const clip = {id: 'sound', asset: 'sound', track: 'A1', at: 0.25, from: 0.05,
++  to: 0.55, speed: 1.5, volume: 3, params: {fadeIn: 0.1, fadeOut: 0.1}};
++beforeEach(() => {
++  attemptDirectory = mkdtempSync(path.join(os.tmpdir(), 'normal-audio-proposal-'));
++  const source = path.join(attemptDirectory, 'original.wav');
++  writeFileSync(source, Buffer.from(audioEnvelopeWav([new Float32Array(30000).fill(0.25)], 30000)));
++  [prepared] = prepareNormalAudioSources({clips: [{clip, source}], fps: 30, attemptDirectory});
++  host.endpoints.length = 0;
++});
++afterEach(() => rmSync(attemptDirectory, {recursive: true, force: true}));
++
++const render = source => renderToStaticMarkup(createElement(TimelineComposition, {
++  timeline: {tracks: [{id: 'A1', kind: 'audio', volume: 0.5}],
++    clips: [{...clip, audio: {render_source: source}}]},
++  assets: {assets: {sound: {type: 'audio/wav', file: 'http://attempt.invalid/original.wav'}}},
++  compiledTransitions: compileCanonicalTransitions([], 30, DEFAULT_THEME),
++}));
++const metadata = () => ({file: 'http://attempt.invalid/envelope/source.wav',
++  envelope_key: prepared.envelope_key, source_from: prepared.source_from,
++  playback_rate: prepared.playback_rate});
++
++it('hands actual generated WAV metadata to public AudioTrack; gain/trim/rate stay downstream', () => {
++  render(metadata());
++  expect(host.endpoints).toHaveLength(1);
++  expect(host.endpoints[0]).toMatchObject({src: metadata().file,
++    trimBefore: 2, trimAfter: 17, playbackRate: 1.5, volume: 1.5});
++});
++it.each([
++  ['raw unrounded origin', {source_from: 0.05}],
++  ['forged rate', {playback_rate: 2}],
++  ['forged envelope', {envelope_key: '{"keyframes":[{"at":0,"value":1}]}'}],
++])('rejects %s at the actual public consumer', (_, forged) => {
++  expect(() => render({...metadata(), ...forged})).toThrow('ENVELOPE_UNRENDERED');
++  expect(host.endpoints).toHaveLength(0);
++});

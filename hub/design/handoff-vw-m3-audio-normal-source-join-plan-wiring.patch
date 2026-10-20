@@ -1,0 +1,24 @@
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/run.py b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+--- a/astrid/packs/rendering/rendering/renderers/remotion/run.py
++++ b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+@@ -1175,6 +1175,20 @@
+                 merged_props = compile_canonical_root_props(
+                     merged_props, project_dir=project_dir, runtime_tools=runtime_tools,
+                 )
++                if not frame_mode:
++                    from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
++                        prepare_normal_audio_sources,
++                    )
++
++                    envelope_directory = Path(asset_lifecycle.enter_context(TemporaryDirectory(
++                        prefix=".audio-envelope-", dir=str(materializer.serving_root),
++                    )))
++                    merged_props = prepare_normal_audio_sources(
++                        merged_props, materializer=materializer, asset_server=asset_server,
++                        attempt_directory=envelope_directory, project_dir=project_dir,
++                        runtime_tools=runtime_tools,
++                    )
++                    source.validate(timeline_path, assets_path)
+             staged_video.parent.mkdir(parents=True, exist_ok=True)
+             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
+             if on_scene_props is not None and frame_mode:
