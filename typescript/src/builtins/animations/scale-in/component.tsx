@@ -1,22 +1,16 @@
 import type {ReactElement} from 'react';
-import {interpolate, spring} from 'remotion';
 import type {WrapperAnimationProps} from '../../../effects-types';
+import {builtinClipLookStyle} from '../../../lib/clip-look';
 
 export const ScaleIn = ({
   children,
   fps,
   durationFrames,
   elapsedFrames,
-  progress: explicitProgress,
+  progress: suppliedProgress,
+  easing,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = explicitProgress ?? spring({
-    frame: elapsedFrames,
-    fps,
-    from: 0,
-    to: 1,
-    durationInFrames: durationFrames,
-    config: {damping: 14, stiffness: 110},
-  });
+  const style = builtinClipLookStyle('scale-in', elapsedFrames, durationFrames, fps, easing, suppliedProgress);
   return (
     <div
       style={{
@@ -25,8 +19,8 @@ export const ScaleIn = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: progress,
-        transform: `scale(${explicitProgress === undefined ? interpolate(progress, [0, 1], [0.85, 1]) : 0.85 + 0.15 * progress})`,
+        opacity: style.opacity,
+        transform: style.transform,
         transformOrigin: 'center center',
       }}
     >
