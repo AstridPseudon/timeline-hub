@@ -484,6 +484,11 @@ timeline semantic or adapter source change, so no Gate1/Gate3 replay was
 needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `812a609ee`,
 Composition `e7ef7a0`.
 
+At 2026-10-20T23:29:35Z App advanced to `a6fa6ff8c` with physical PCM parity
+comparison tests only. The related speech-audio intent review is App/source
+scope and remains unqualified against the known Runtime health-digest
+mismatch; it does not touch Agent Gate1/Gate3 nodes, so no replay was needed.
+
 The pending `agt-m2-sheet-documented-client-preserve` candidate proposes
 restoring the documented detached `apply_sheet(..., client=None)` keyword and
 Runtime-history fallback removed by `1a7349eb9`; its local sheet/history lane
