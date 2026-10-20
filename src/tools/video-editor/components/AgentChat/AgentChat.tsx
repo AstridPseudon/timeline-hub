@@ -521,7 +521,9 @@ function AvailableAgentChatPanel({
     if (isFollower || startingAgent) voiceRef.current.cancelRecording();
   }, [isFollower, startingAgent]);
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
-  const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
+  // A saved row waiting for "Send now" is paused (`pausedQueuedIdsRef`): it never auto-sends, so it does not make the
+  // composer look busy. Only a row that will be sent when the running turn ends is a real queue.
+  const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(item.id));
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
@@ -854,7 +856,8 @@ function AvailableAgentChatPanel({
       || isProcessing
       || sendMessage.isPending
       || optimisticMessage
-      || queue.some((item) => item.sessionId === activeSessionId)
+      // Paused rows are waiting on the person, not on a turn: a new message sends now, ahead of them, and they stay put.
+      || queue.some((row) => row.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(row.id))
     ) {
       setQueue((prev) => [...prev, item]);
       return;
@@ -895,6 +898,11 @@ function AvailableAgentChatPanel({
       }
     })();
   }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
+
+  /** A saved row that is waiting for the person: not the one in flight, and never auto-sent. */
+  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
+    && optimisticMessage?.id !== item.id
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
 
   const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string): Promise<string | null> => {
     if (!projectId) return null;
@@ -961,7 +969,7 @@ function AvailableAgentChatPanel({
 
   // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
   // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
-  const agentWorking = isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId);
+  const agentWorking = isProcessing || sendMessage.isPending || hasQueuedMessages;
 
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
@@ -1218,6 +1226,12 @@ function AvailableAgentChatPanel({
       <div className="border-t border-border/70 px-3 py-3">
         {activeQueue.length > 0 && (
           <div className="mb-2 flex flex-col gap-2">
+            {draftSaveError && (
+              <p className="text-[11px] text-muted-foreground">
+                Couldn't save the queue.{' '}
+                <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
+              </p>
+            )}
             {activeQueue.map((item, index) => (
               <div
                 key={item.id}
@@ -1226,18 +1240,28 @@ function AvailableAgentChatPanel({
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
                   {sessionControl?.active && item.id === sessionControl.activeRequestId && <div className="text-muted-foreground">{isFollower ? 'In progress in another tab' : 'In progress'}</div>}
-                  {item.id === pausedQueueHeadId && !isFollower && !activeSession.isLoading && !sessionControl?.active && <div className="text-muted-foreground">Delivery not confirmed. Retry checks saved history first; it may send this message again.</div>}
+                  {notSent(item) && <div className="text-muted-foreground">Not sent{item.id === pausedQueueHeadId && !isFollower ? '. Delivery not confirmed: Send now checks saved history first, and may send this message again.' : ''}</div>}
                 </div>
                 {item.attachments.length > 0 && (
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
                     {`📎 ${item.attachments.length}`}
                   </span>
                 )}
-                {item.id === pausedQueueHeadId && !isFollower && !sessionControl?.active && !activeSession.isLoading && (
-                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}>
-                    Retry saved message
-                  </button>
-                )}
+                {notSent(item) && (isFollower ? (
+                  <Button type="button" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={takeOverSession.isPending || !activeSessionId || !projectId} onClick={() => takeOverSession.mutate()}>
+                    Take over to send
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-7 shrink-0 px-2 text-xs"
+                    disabled={Boolean(sessionControl?.active) || activeSession.isLoading || sendMessage.isPending || Boolean(optimisticMessage)}
+                    onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}
+                  >
+                    Send now
+                  </Button>
+                ))}
                 <Button
                   type="button"
                   size="icon"

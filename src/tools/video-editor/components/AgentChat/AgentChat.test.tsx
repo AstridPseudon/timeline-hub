@@ -1093,7 +1093,7 @@ describe('AgentChat', () => {
     expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
     expect(screen.getByPlaceholderText('Type to queue next message...')).toBeDisabled();
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Retry saved message' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
     expect(screen.queryByTitle('Stop agent')).toBeNull();
     expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeDisabled();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
@@ -1125,7 +1125,7 @@ describe('AgentChat', () => {
     rerenderAgentChat(view.rerender);
     expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
     expect(screen.getByRole('textbox')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Retry saved message' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
     expect(screen.getByTitle('Remove queued message')).toBeDisabled();
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
   });
