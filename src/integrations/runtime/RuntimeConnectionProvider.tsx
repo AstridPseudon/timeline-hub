@@ -147,6 +147,13 @@ export interface RuntimeConnectionValue {
   realmName: string | null;
   /** The health digest seen by the provider's existing probe, when the Runtime reports one. */
   schemaDigest: string | null;
+  /**
+   * A local Astrid service (chat) answered with something this page can't read, so Astrid on this computer is older
+   * than the page. Settings shows the same Update Astrid status as an incompatible Runtime; the app is never gated on
+   * it (only `state` gates), so the person keeps their work. Cleared by `setLocalServiceOutOfDate(false)`.
+   */
+  localServiceOutOfDate: boolean;
+  setLocalServiceOutOfDate: (outOfDate: boolean) => void;
   /** Probes now without a timeout, so Chrome's permission prompt can stay open. No-op when connected, denied or checking. */
   connect: () => void;
 }
@@ -177,6 +184,7 @@ export function RuntimeConnectionProvider({
   const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(null);
   const [outcome, setOutcome] = useState<RuntimeProbeOutcome | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [localServiceOutOfDate, setLocalServiceOutOfDate] = useState(false);
   const [failedReadings, setFailedReadings] = useState(0);
   const [gatewayAnswered, setGatewayAnswered] = useState(false);
   const [connectedBefore, setConnectedBefore] = useState(() => gated && readConnectedBefore());
@@ -308,10 +316,12 @@ export function RuntimeConnectionProvider({
         awaitingConnect: false,
         realmName: null,
         schemaDigest: null,
+        localServiceOutOfDate,
+        setLocalServiceOutOfDate,
         connect,
       };
     }
-    const base = { gated: true, isChecking, connect, connectedBefore: connectedBeforeAtMount } as const;
+    const base = { gated: true, isChecking, connect, connectedBefore: connectedBeforeAtMount, localServiceOutOfDate, setLocalServiceOutOfDate } as const;
     if (outcome?.kind === 'connected') {
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, awaitingConnect: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
@@ -330,7 +340,7 @@ export function RuntimeConnectionProvider({
       return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
-  }, [gated, outcome, permission, isChecking, connectedBeforeAtMount, connectedBefore, connect, failedReadings, gatewayAnswered]);
+  }, [gated, outcome, permission, isChecking, connectedBeforeAtMount, connectedBefore, connect, failedReadings, gatewayAnswered, localServiceOutOfDate]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

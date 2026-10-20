@@ -3,9 +3,12 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'react';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { AgentChatPanel } from './AgentChat';
+import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
+import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
 
 const mocks = vi.hoisted(() => ({
   useAgentChatBridge: vi.fn(),
@@ -246,6 +249,11 @@ function mockFromState(state: ReturnType<typeof createState>) {
     summary: state.timelineClips.length > 0 ? `attaching ${state.timelineClips.length} image` : '',
   }));
   mocks.useAgentVoice.mockImplementation(() => state.voice);
+}
+
+// The chat reads the runtime connection context, so every render mounts it (same component identity across rerenders).
+function AgentChatPanel(props: ComponentProps<typeof AgentChatPanelWithoutProvider>) {
+  return <RuntimeConnectionProvider gated={false}><AgentChatPanelWithoutProvider {...props} /></RuntimeConnectionProvider>;
 }
 
 function renderAgentChat(isExpanded = false) {
@@ -1329,5 +1337,40 @@ describe('project draft consumer ownership', () => {
     expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
     expect(composer).toHaveValue('Still my draft');
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('local Astrid update flag', () => {
+  function OutOfDateProbe() {
+    const { localServiceOutOfDate } = useRuntimeConnection();
+    return <span data-testid="out-of-date">{String(localServiceOutOfDate)}</span>;
+  }
+  const page = () => (
+    <RuntimeConnectionProvider gated={false}>
+      <AgentChatPanelWithoutProvider isExpanded />
+      <OutOfDateProbe />
+    </RuntimeConnectionProvider>
+  );
+
+  it('turns on when the local chat service is out of date, and off again once a chat read succeeds', async () => {
+    mocks.useLocalAgents.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isSuccess: false,
+      error: new BridgeContractError('List local agents', 'agents.0.models: Invalid input'),
+      refetch: vi.fn(),
+    });
+    const view = render(page());
+    await waitFor(() => expect(screen.getByTestId('out-of-date')).toHaveTextContent('true'));
+
+    mocks.useLocalAgents.mockReturnValue({
+      data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [{ modelId: 'openai/gpt-5', name: 'GPT 5' }], defaultModel: 'openai/gpt-5' }], defaultAgent: 'astrid' },
+      isLoading: false,
+      isSuccess: true,
+      error: null,
+      refetch: vi.fn(),
+    });
+    view.rerender(page());
+    await waitFor(() => expect(screen.getByTestId('out-of-date')).toHaveTextContent('false'));
   });
 });

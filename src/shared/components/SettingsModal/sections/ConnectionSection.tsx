@@ -10,6 +10,8 @@ interface ConnectionStatus {
   readonly checks?: SetupChecks;
   /** The one step this page can take itself: asking the browser for permission. */
   readonly connect?: boolean;
+  /** Astrid on this computer is older than this page: the Update Astrid command belongs under the status. */
+  readonly updateNeeded?: boolean;
 }
 
 const REACHED: SetupChecks = { runtime: 'pass', workspace: 'pass', ready: true };
@@ -26,8 +28,8 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
   const { state } = connection;
   switch (state.status) {
     case 'connected':
-      if (needsUpdate(connection.schemaDigest)) {
-        return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: REACHED };
+      if (needsUpdate(connection.schemaDigest) || connection.localServiceOutOfDate) {
+        return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: REACHED, updateNeeded: true };
       }
       return {
         title: COPY.connected.sentence,
@@ -46,7 +48,7 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
     case 'set_up':
       return { title: COPY.setUp.title, detail: COPY.setUp.sentence, checks: LOOKING };
     case 'update_needed':
-      return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING };
+      return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING, updateNeeded: true };
     case 'not_running':
       return { title: COPY.notRunning.title, detail: COPY.notRunning.sentence, checks: LOOKING };
   }

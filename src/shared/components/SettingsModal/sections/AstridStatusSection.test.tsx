@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   connection: {
     state: { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } },
-    awaitingConnect: false, isChecking: false, schemaDigest: null, connect: () => {},
-  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; awaitingConnect: boolean; isChecking: boolean; schemaDigest: string | null; connect: () => void },
+    awaitingConnect: false, isChecking: false, schemaDigest: null, localServiceOutOfDate: false, connect: () => {},
+  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; awaitingConnect: boolean; isChecking: boolean; schemaDigest: string | null; localServiceOutOfDate: boolean; connect: () => void },
 }));
 
 vi.mock('@/integrations/runtime/client.ts', () => ({
@@ -33,6 +33,7 @@ describe('AstridStatusSection', () => {
     mocks.connection.state = { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } };
     mocks.connection.awaitingConnect = false;
     mocks.connection.isChecking = false;
+    mocks.connection.localServiceOutOfDate = false;
     mocks.connection.connect = mocks.connect.mockReset();
     mocks.clipboard.mockReset().mockResolvedValue(true);
     mocks.readStatus.mockReset().mockResolvedValue({
@@ -150,6 +151,35 @@ describe('AstridStatusSection', () => {
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('install')));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('shows Needs an update with the update command when Astrid on this computer is older than this page', async () => {
+    mocks.connection.localServiceOutOfDate = true;
+    mocks.readStatus.mockResolvedValue({
+      health: {
+        status: 'ok',
+        protocol: 'workspace.v1',
+        schema_digest: `sha256:${'a'.repeat(64)}`,
+        services: [{ name: 'pack-host', state: 'running', last_exit: null, restart_count: 0 }],
+      },
+      realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
+    });
+    render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByText('Needs an update')).toBeInTheDocument();
+    expect(screen.getByText(/Astrid on this computer needs an update/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('update')));
+    expect(mocks.clipboard).not.toHaveBeenCalledWith(installCommand('install'));
+  });
+
+  it('does not show the update status while the local service is up to date', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByText('Studio')).toBeInTheDocument();
+    expect(screen.queryByText('Needs an update')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Astrid on this computer needs an update/)).not.toBeInTheDocument();
   });
 
   it('shows the connection state without requesting details while offline', () => {

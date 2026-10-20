@@ -752,6 +752,50 @@ describe('same-origin build', () => {
   });
 });
 
+describe('gate: incompatible Runtime and local-service update flag', () => {
+  const marker = ({ state }: RuntimeConnectionValue) => <p data-testid="custom-panel">{state.status}</p>;
+
+  it('an incompatible health digest still shows the gate panel, not the app', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime' });
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+        <RuntimeConnectionGate panel={marker}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('update_needed'));
+    expect(screen.queryByTestId('app')).toBeNull();
+  });
+
+  it('a local-service update flag keeps the connected state and the app, and clears again', async () => {
+    const gateway = fakeGateway();
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+        <Probe />
+        <RuntimeConnectionGate panel={marker}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.localServiceOutOfDate).toBe(false);
+
+    act(() => latest.setLocalServiceOutOfDate(true));
+    expect(latest.localServiceOutOfDate).toBe(true);
+    expect(status()).toBe('connected');
+    expect(screen.getByTestId('app')).toBeInTheDocument();
+    expect(screen.queryByTestId('custom-panel')).toBeNull();
+
+    act(() => latest.setLocalServiceOutOfDate(false));
+    expect(latest.localServiceOutOfDate).toBe(false);
+    expect(status()).toBe('connected');
+  });
+});
+
 describe('useRuntimeConnection', () => {
   it('throws outside its provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});

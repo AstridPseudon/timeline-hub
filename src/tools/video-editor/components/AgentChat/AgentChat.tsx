@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
@@ -264,6 +265,7 @@ function AvailableAgentChatPanel({
   const projectId = editorContext?.projectId ?? null;
   const sessions = useAgentSessions(timelineId, projectId);
   const localAgents = useLocalAgents();
+  const { setLocalServiceOutOfDate } = useRuntimeConnection();
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
@@ -539,6 +541,15 @@ function AvailableAgentChatPanel({
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
   const showEmptyState = !startingAgent && !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
   const turnFailure = chatFailures.find(Boolean);
+  // One update flow: a reply from the local chat service this page can't read also puts Settings on Update Astrid
+  // (it never gates the app). The next chat read that comes back readable clears it.
+  const chatServiceOutOfDate = startFailure?.updateNeeded === true
+    || [localAgents.error, ...chatFailures].some(isChatUpdateError);
+  const chatReadSucceeded = localAgents.isSuccess || sessions.isSuccess;
+  useEffect(() => {
+    if (chatServiceOutOfDate) setLocalServiceOutOfDate(true);
+    else if (chatReadSucceeded) setLocalServiceOutOfDate(false);
+  }, [chatServiceOutOfDate, chatReadSucceeded, setLocalServiceOutOfDate]);
   const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
   const handleAttachmentPreviewClick = useCallback(async (attachment: AgentChatAttachmentPreviewItem) => {

@@ -141,10 +141,16 @@ class HostTransport {
 }
 let fixture: HostTransport;
 let clients: QueryClient[] = [];
-let Panel: typeof import('./AgentChat')['AgentChatPanel'];
+let RealPanel: typeof import('./AgentChat')['AgentChatPanel'];
+let RuntimeProvider: typeof import('@/integrations/runtime/RuntimeConnectionProvider.tsx')['RuntimeConnectionProvider'];
+// The chat reads the runtime connection context: mount the real provider (ungated) around the real panel.
+function Panel() {
+  return <RuntimeProvider gated={false}><RealPanel /></RuntimeProvider>;
+}
 async function freshModules() {
   vi.resetModules();
-  Panel = (await import('./AgentChat')).AgentChatPanel;
+  RealPanel = (await import('./AgentChat')).AgentChatPanel;
+  RuntimeProvider = (await import('@/integrations/runtime/RuntimeConnectionProvider.tsx')).RuntimeConnectionProvider;
   const { usePanesStoreApi } = await import('@/shared/state/panesStore');
   usePanesStoreApi().setState({ isTasksPaneLocked: true });
 }

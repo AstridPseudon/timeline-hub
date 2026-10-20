@@ -20,8 +20,14 @@ vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
   useAgentVoice: () => ({ isRecording: false, isProcessing: false, cancelRecording: () => {} }),
 }));
 
-import { AgentChatPanel } from './AgentChat.tsx';
+import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat.tsx';
+import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { isTimelineAgentSessionsAvailable, useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession.ts';
+
+// The chat reads the runtime connection context; mount the real provider (ungated) around the real panel.
+function AgentChatPanel(props: React.ComponentProps<typeof AgentChatPanelWithoutProvider>) {
+  return <RuntimeConnectionProvider gated={false}><AgentChatPanelWithoutProvider {...props} /></RuntimeConnectionProvider>;
+}
 
 const GATEWAY = 'http://127.0.0.1:17340';
 const chat = {
