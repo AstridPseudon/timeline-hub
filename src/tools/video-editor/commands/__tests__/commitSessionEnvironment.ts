@@ -143,7 +143,7 @@ export async function environment(initialDocument = document()) {
     }, changed: () => {},
   });
   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
-  return { provider, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
+  return { provider, transport, initial, outboxes, factory, current: () => current, calls, projected, mount, move, previews,
     setFault: (value: typeof fault) => { fault = value; },
     pause: () => { pause = deferred(); return pause; },
     external: async (change: (document: CanonicalDocument) => void) => {
