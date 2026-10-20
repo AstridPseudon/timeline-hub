@@ -97,6 +97,11 @@ def _patch(state, path, replacement, *, insertion_order=None, append_text=False)
     return present(value)
 
 
+def _set_recorded(state, write, replacement):
+    state.set(write['ref'], write['path'], replacement,
+              insertion_order=write.get('insertion_order'))
+
+
 def _root_addresses(records, state=None):
     """Resolve aliases by authored owner, never a shared source shot identity."""
     owners = {}
@@ -421,7 +426,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
         staged_orders = restoration_orders(records, only=record)
         for write in reversed(caches.get(id(record), [])):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
-            scratch.set(write['ref'], write['path'], write['before'])
+            _set_recorded(scratch, write, write['before'])
         for write in reversed(record['writes']):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:
@@ -439,7 +444,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                      owner=None if root[0] == 'shot' else 'parent',
                                      value=write['before']['value'], restoring=True)
             else:
-                scratch.set(write['ref'], write['path'], write['before'])
+                _set_recorded(scratch, write, write['before'])
         for (owner, kind), (original, _) in staged_orders.items():
             arrange(scratch, owner, kind, original)
         arrange_restored(scratch, record, root_orders.get(id(record)))
@@ -470,7 +475,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                   owner=None if root[0] == 'shot' else 'parent',
                                   value=write['before']['value'], restoring=True)
             elif '/text-binding:' in write['ref']:
-                ctx.assign(write['ref'], write['path'], write['before'])
+                ctx.assign(write['ref'], write['path'], write['before'],
+                           insertion_order=write.get('insertion_order'))
             elif '/asset:' in write['ref']:
                 owner, identity = write['ref'].rsplit('/asset:', 1)
                 ctx.create_asset(owner, identity, write['before']['value'])
@@ -478,7 +484,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                 owner, entity = write['ref'].rsplit('/', 1)
                 ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
         else:
-            ctx.assign(write['ref'], write['path'], write['before'])
+            ctx.assign(write['ref'], write['path'], write['before'],
+                       insertion_order=write.get('insertion_order'))
     for (owner, kind), (original, _) in orders.items():
         if ctx.state.entity(owner, optional=True) is None and any(
                 write['ref'] == owner and not write['path'] and write['before'] == ABSENT

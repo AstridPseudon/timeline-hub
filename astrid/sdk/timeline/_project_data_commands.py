@@ -111,15 +111,17 @@ def project_data_write(ctx, command):
     # Main treats null/empty namespaces as empty and removes the namespace.
     # A non-empty namespace removes only the declared leaf; clear() records an
     # absent leaf as absent, retaining the same-key guard for a no-op delete.
+    app_path = ["config", "app"]
+    app = ctx.state.get(ref, app_path)
+    app_order = list(app["value"]) if app["state"] == "present" and isinstance(app["value"], dict) else None
     if namespace["value"] is None or not namespace["value"]:
-        ctx.clear(ref, target_path)
+        ctx.clear(ref, target_path, insertion_order=app_order)
     else:
         ctx.clear(ref, [*target_path, key])
         current = ctx.state.get(ref, target_path)
         if current["state"] == "present" and not current["value"]:
-            ctx.clear(ref, target_path)
+            ctx.clear(ref, target_path, insertion_order=app_order)
 
-    app_path = ["config", "app"]
     app = ctx.state.get(ref, app_path)
     if app["state"] == "present" and isinstance(app["value"], dict) and not app["value"]:
         ctx.clear(ref, app_path)

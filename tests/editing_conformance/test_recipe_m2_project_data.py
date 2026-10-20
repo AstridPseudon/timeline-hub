@@ -40,6 +40,10 @@ def project_data(value):
     return State(value).config("parent").get("app", {})
 
 
+def reload_bundle(value):
+    return json.loads(json.dumps(value))
+
+
 def test_compiler_canary_source_and_source_map_are_one_ordered_native_batch():
     original = bundle()
     source = command("__dsl__:dsl://com.example.compiler-canary/main.json", {"version": 1})
@@ -151,6 +155,29 @@ def test_remove_last_key_prunes_only_empty_namespace_and_app():
 
     assert project_data(plan.bundle) == {"sibling": {"keep": 1}}
     assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_remove_pruned_namespace_restores_exact_order_after_reload_and_redo():
+    original = bundle()
+    original["parent"]["config"]["app"] = {
+        "before": {"keep": True},
+        TARGET: {"gone": False},
+        "after": {"opaque": [None, 0]},
+    }
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+    removed = reload_bundle(plan.bundle)
+    records = json.loads(json.dumps(plan.records))
+    assert list(project_data(removed)) == ["before", "after"]
+
+    undone = inverse(removed, records)
+    assert list(project_data(undone.bundle)) == ["before", TARGET, "after"]
+    assert undone.bundle == before
+
+    redone = inverse(reload_bundle(undone.bundle), json.loads(json.dumps(undone.records)))
+    assert list(project_data(redone.bundle)) == ["before", "after"]
+    assert redone.bundle == removed
 
 
 def test_remove_distinguishes_absent_target_from_null_namespace():

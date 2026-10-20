@@ -380,7 +380,7 @@ class State:
                     or expected['value'] == occurrence['shot_id'] == materialized(actual['value']))
         return False
 
-    def set(self, ref, path, state):
+    def set(self, ref, path, state, *, insertion_order=None):
         if '/text-binding:' in ref:
             from .native_text_binding import binding_key, binding_rows
             if path:
@@ -534,3 +534,24 @@ class State:
             value.pop(path[-1], None)
         else:
             value[path[-1]] = copy.deepcopy(state["value"])
+            if insertion_order is not None:
+                if path[-1] not in insertion_order:
+                    raise CommandError("historical object order differs from state",
+                                       kind="history_unavailable", ref=ref, path=path)
+                target = path[-1]
+                current = list(value)
+                value.pop(target)
+                target_index = insertion_order.index(target)
+                following = next((key for key in insertion_order[target_index + 1:]
+                                  if key in value), None)
+                if following is not None:
+                    index = current.index(following)
+                else:
+                    previous = next((key for key in reversed(insertion_order[:target_index])
+                                     if key in value), None)
+                    index = current.index(previous) + 1 if previous is not None else 0
+                current.insert(index, target)
+                values = {key: value[key] for key in current if key != target}
+                values[target] = state["value"]
+                value.clear()
+                value.update((key, values[key]) for key in current)
