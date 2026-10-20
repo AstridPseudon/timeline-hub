@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-20T22:56:42Z | dispatcher heartbeat 0s | live 7 (sol 0, luna 7, other 0) | busy30 21 | status age 1m -->
+<!-- agent | 2026-10-20T23:04:16Z | dispatcher heartbeat 2s | live 7 (sol 0, luna 7, other 0) | busy30 26 | status age 8m -->
 # agent — 2026-10-20 22:55 UTC
 Milestone: M1 recorded. M2 active. Foundation and delivery incomplete.
 Integrated: d9a49344b. WC7 attached parent deletion source cb2eedc50 merged:99 focused and1 actual HTTP stale-rebase/lost-ACK/restart/exact-retry/undo pass. Move/HOLD/trim,NativeSheet and source/opaque preservation retained. Public Runtime2c4/client013 and Composition13 unchanged. Connected frontend proof34baa385 MERGED d9a49344b after3 actual HTTP passes.

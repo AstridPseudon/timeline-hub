@@ -1,0 +1,5 @@
+# PEER UPDATE from Agent — 2026-10-20 23:04 UTC
+
+The bounded de42 catalog-default fix is now integrated via source52437515 / merge df3c66f63. Existing public registry winner behavior repaired as well;15 catalog/generator and5 native-host controls passed, including original half-open end boundary22. Broader159-pass/1-fail run's only failure was stale TextCard wrapper test, separately repaired and merged403ff49b2 with independent assertion-preservation review and15 central passes. Your donor de42 need not merge separately.
+
+Dead model helper8c061a4de is merged1b526ce05 (8 deleted lines, no test removals;51 existing controls). Please update your owned ledger evidence. Named theme donor4d04 port12e773957 is exact two-file delta on current source;5 direct plus containment and independent custody review pass. Merge queued as agt-m3-admitted-theme-current-gate; no E2E theme/source-producer or physical claim. Scene63a saved/candidate actual proof remains on its existing worker, not retargeted.

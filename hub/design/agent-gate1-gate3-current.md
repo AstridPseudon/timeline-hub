@@ -271,3 +271,63 @@ Successful named central check:
 Live heads at the successful check: Agent `d9a49344b`, Runtime `a6bce81`, App
 `e9d04f4bf`, Composition `ac918bb`. No full/full* suite or unchanged prior
 Gate1/Gate3 qualification was run.
+
+At 2026-10-20T22:58:18Z the attached-parent split worker completed its
+candidate (`feat(sdk): publish attached parent splits`) with 91 focused tests
+and a 2-pass central HTTP lane, plus Ruff and `git diff --check`. It is not
+merged into `tl/integration` and remains pending independent data-loss review;
+therefore it is not current Gate1/Gate3 evidence and no split replay was
+requested. The live Agent head remained `d9a49344b`.
+
+At 2026-10-20T22:59:35Z Runtime advanced to `9d1c43c` from `a6bce81` with
+catalog custody/project-scope regressions (`runtime_protocol/service.py` and
+catalog/domain tests). The diff does not change the Runtime timeline-door
+acceptance path exercised by the current Agent Gate1/Gate3 nodes, so no Agent
+node replay was needed. Current heads are Agent `d9a49344b`, Runtime
+`9d1c43c`, App `e9d04f4bf`, and Composition `ac918bb`.
+
+The completed `agt-m4-full4555-fixture-repairs` worker reported 15 targeted
+Remotion fixture/layer-tail tests passing against the public 0.0.13 package.
+Those changes are in Agent rendering test fixtures and current public
+TypeScript compatibility probes, not the Agent save/commit path or the
+renderer-independence nodes listed above; no Gate1/Gate3 Agent replay was
+needed, and the candidate is not merged into Agent integration.
+
+The independent data-loss review for the pending attached-parent split
+candidate then returned **APPROVE** at 2026-10-20T23:01:19Z (candidate
+`404422aa3` against `b43cd9571`). This changes no integration head or current
+Gate evidence; the split-specific replay remains queued behind the actual
+merge.
+
+## Incremental watch: attached parent split merge
+
+Date: 2026-10-20T23:02:29Z
+
+The approved split candidate merged into Agent integration as `8c12f559e`
+(`404422aa3`). This is a new semantic/adapter path: attached parent
+`Clip.split(on, *, id=...)` now uses native `clip.split` capture and the
+durable owned outbox/retry/inverse path.
+
+Bounded central replay on the actual integration branch:
+
+- Suite: `current-owned-parent-delete-http`, invoked as `integration:agent`
+  with the split node file override
+- Run: `agent-current-owned-parent-delete-http-1020230207-9436`
+- Agent source tree: `54c3c093d3df404d601c0efafe29cf70ce44dfa1`
+- Result: **2 passed in 8.56s**, exit 0
+- Nodes: existing parent-delete control and
+  `tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo`
+- The split node covers stale rebase, lost acknowledgement, restart, exact
+  retry, stable created ID, preserved source/opaque data, and guarded inverse.
+
+Live heads at this replay: Agent `8c12f559e`, Runtime `9d1c43c`, App
+`e9d04f4bf`, Composition `ac918bb`. No full/full* suite or unrelated Gate1/
+Gate3 qualification was run.
+
+By 2026-10-20T23:03:30Z Agent had also advanced to `1b526ce05` through
+three non-editing merges: public Remotion fixture/registry test repairs and a
+dead-leaf deletion in `astrid/packs/rendering/actions/timeline_visualize/model.py`.
+These do not touch the Agent commit/undo/rebase implementation or the current
+renderer-independent save nodes, so no additional Gate1/Gate3 replay was
+needed. Current heads: Agent `1b526ce05`, Runtime `9d1c43c`, App `e9d04f4bf`,
+Composition `ac918bb`.
