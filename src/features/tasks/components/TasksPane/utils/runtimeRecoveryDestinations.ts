@@ -100,10 +100,14 @@ export async function loadRuntimeRecoveryDestinations(
     for (const track of tracks(internal[0].payload.tracks)) {
       if (track.kind !== 'visual' || track.enabled === false || track.disabled === true || track.hidden === true) continue;
       const childTrackId = identity(track.id);
+      const optionNumber = bindings.length + 1;
       bindings.push({
         // This key belongs only to the chooser. It never becomes a canonical identity.
         id: String(bindings.length),
-        name: `${typeof shot.payload.name === 'string' ? shot.payload.name : shotId} · ${occurrenceId} · ${typeof track.label === 'string' ? track.label : childTrackId}`,
+        // ShotSelector uses name as cmdk's selection value. Keep the raw labels
+        // readable, but make that local value unique without encoding authority
+        // into the display name or parsing it back later.
+        name: `${optionNumber} · ${typeof shot.payload.name === 'string' ? shot.payload.name : shotId} · ${occurrenceId} · ${typeof track.label === 'string' ? track.label : childTrackId}`,
         owner: { kind: 'occurrence', occurrenceId }, shotId, shotRevisionId,
         internalTimelineId: internal[0].timeline_id, internalRevisionId: internal[0].revision_id,
         parentTrackId, childTrackId,

@@ -91,7 +91,7 @@ function element(props: Partial<RuntimeRecoveryChooserProps> = {}, video = false
 async function choose() {
   await screen.findByText('Choose a destination and explicit timing.');
   fireEvent.click(screen.getByRole('combobox'));
-  fireEvent.click(await screen.findByText('Shared shot · raw occurrence B · Child picture'));
+  fireEvent.click(await screen.findByText(/Shared shot · raw occurrence B · Child picture$/));
   fireEvent.change(screen.getByLabelText('Timeline start (seconds)'), { target: { value: '3.25' } });
   fireEvent.change(screen.getByLabelText('Source from (seconds)'), { target: { value: '1' } });
   fireEvent.change(screen.getByLabelText('Source to (seconds)'), { target: { value: '2.5' } });
@@ -164,6 +164,54 @@ describe('existing lightbox and ShotSelector recovery draft', () => {
     expect(draft.source.mediaTuple.generation_id).not.toBe(output.object_id);
     expect(screen.queryByText(/success|placed successfully/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Source to (seconds)')).toHaveValue(2.5);
+  });
+
+  it('keyboard selection of duplicate child labels retains the selected raw track binding', async () => {
+    document.internal_timeline_revisions[0].payload.tracks = [
+      { id: 'raw-child-track', label: 'Picture', kind: 'visual' },
+      { id: 'alternate-child-track', label: 'Picture', kind: 'visual' },
+    ];
+    render(element({ onRequestPlacement: callback }));
+    await screen.findByText('Choose a destination and explicit timing.');
+    fireEvent.click(screen.getByRole('combobox'));
+    const search = await screen.findByPlaceholderText('Search shots...');
+    await waitFor(() => expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    fireEvent.change(screen.getByLabelText('Timeline start (seconds)'), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText('Source from (seconds)'), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText('Source to (seconds)'), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Request placement' }));
+    await waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
+    expect(callback.mock.calls[0][0].destination.childTrackId).toBe('alternate-child-track');
+  });
+
+  it('keyboard selection of duplicate cross-occurrence names retains the selected raw occurrence binding', async () => {
+    const occurrences = document.parent_revision.payload.occurrences as Record<string, unknown>[];
+    occurrences[0].occurrence_id = 'Scene';
+    occurrences[1].occurrence_id = 'Scene · Main';
+    document.internal_timeline_revisions[0].payload.tracks = [
+      { id: 'raw-child-track', label: 'Main · Detail', kind: 'visual' },
+      { id: 'alternate-child-track', label: 'Detail', kind: 'visual' },
+    ];
+    render(element({ onRequestPlacement: callback }));
+    await screen.findByText('Choose a destination and explicit timing.');
+    fireEvent.click(screen.getByRole('combobox'));
+    const options = await screen.findAllByRole('option');
+    expect(options).toHaveLength(4);
+    expect(options[0]).toHaveTextContent('Scene · Main · Detail');
+    expect(options[3]).toHaveTextContent('Scene · Main · Detail');
+    const search = await screen.findByPlaceholderText('Search shots...');
+    await waitFor(() => expect(options[0]).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.keyDown(search, { key: 'End' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    fireEvent.change(screen.getByLabelText('Timeline start (seconds)'), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText('Source from (seconds)'), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText('Source to (seconds)'), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Request placement' }));
+    await waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
+    expect(callback.mock.calls[0][0].destination.owner.occurrenceId).toBe('Scene · Main');
+    expect(callback.mock.calls[0][0].destination.childTrackId).toBe('alternate-child-track');
   });
 
   it.each([null, ''])('asks for explicit timeline selection without reading a default (%s)', async (missing) => {
