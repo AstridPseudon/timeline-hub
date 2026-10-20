@@ -167,13 +167,11 @@ describe('mounted command projection delivery', () => {
     h.update(savingEdit, 'saving');
     advance();
     label('Unsaved local · based on R');
-    const deliveredEdit = player.config;
-
     const closure = projectCanonicalComposition(canonical('A', 500)).config;
     const pinnedMedia = closure.clips.find((clip) => clip.asset)!.assetEntry;
     const acceptedClosure = accepted(closure);
     h.update(acceptedClosure, 'saved');
-    expect(player.config).toBe(deliveredEdit);
+    expect(player.config).toBe(savingEdit.resolvedConfig);
     label('Unsaved local · based on R');
     advance();
     expect(player.config).toBe(acceptedClosure.resolvedConfig);
@@ -294,9 +292,8 @@ describe('mounted command projection delivery', () => {
     const config = projectCanonicalComposition(canonical('R')).config;
     const initial = accepted(config);
     const h = mount(initial);
-    const deliveredInitial = player.config;
     h.observe(canonical('C'), Object.assign(new Error('Cannot read D'), { targetRevisionId: 'D' }));
-    expect(player.config).toBe(deliveredInitial);
+    expect(player.config).toBe(initial.resolvedConfig);
     label('Committed A');
     expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of D unavailable');
     h.observe(canonical('C'));
