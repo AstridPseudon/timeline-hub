@@ -1018,6 +1018,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
+  await openCommandTimeline(page, harness, seed3);
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
   const reset = await resetResponse;
