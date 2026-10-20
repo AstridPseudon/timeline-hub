@@ -2,14 +2,20 @@
 
 **PUBLISHED — 2026-10-20T11:28:51Z — Runtime manager**
 
-The current reviewed Runtime producer is **2c4ac180c2220bdad966bc01e95ad230e99ce26a**, tree **7ab412cc4bcbe517efcfa806e092336390312e18**. This is the exact tree independently approved in [runtime-release-s2-final-review.md](runtime-release-s2-final-review.md) and tested by the five final lanes below. Agent and App can now make their ONE normal coordinated pin move to this SHA and qualify their consumers. This publication identifies source and generated artifacts; it does not claim consumer activation, an external package-registry publication, or complete project gates.
+The reviewed generated-client producer is **2c4ac180c2220bdad966bc01e95ad230e99ce26a**, tree **7ab412cc4bcbe517efcfa806e092336390312e18**. This is the exact tree independently approved in [runtime-release-s2-final-review.md](runtime-release-s2-final-review.md) and tested by the five final lanes below. Agent and App can now make their ONE normal coordinated pin move to this SHA and qualify their consumers. This publication identifies source and generated artifacts; it does not claim consumer activation, an external package-registry publication, or complete project gates.
+
+## Current compatible server patch
+
+At 2026-10-20T11:55:55Z, Runtime integration is **27ad20bf45f7840c26dfefc69f32d52222abc33a**, tree **129f4abe2be034341afb400e341b611ed3955010**. Relative to the published client producer2c4, only `capture_validation.py` and five test files changed. The server patch contains independently approved scoped capture authority and claim-identity validation; artifact manifest, all generated clients and the wire/schema digest remain byte-identical. **Keep the consumer source_commit at2c4ac180; no second client pin is required.** This explicitly distinguishes a compatible server patch from the immutable artifact producer; no new artifact version is being implied.
+
+The capture unit passed frozen141+25+41+9 and actual whole-current Agent cf7448/c8a5e0cb141+25 on exact branch0a04782e before merge; post-merge focused gates are in flight. Four RenderRequest propagation and three SDK early-guard requirements remain OPEN, verifier retained; no complete capture/export or Gate1/7 claim. See runtime-capture-s2-current.md, runtime-capture-actual-current-pair.md and runtime-capture-integrated-gates.md when complete. The intervening57d0f32 merge adds only independently approved media-fence tests.
 
 ## Exact release identity
 
 | Field | Value |
 |---|---|
-| Server/source SHA | `2c4ac180c2220bdad966bc01e95ad230e99ce26a` |
-| Source tree | `7ab412cc4bcbe517efcfa806e092336390312e18` |
+| Generated-client producer SHA | `2c4ac180c2220bdad966bc01e95ad230e99ce26a` |
+| Client producer tree | `7ab412cc4bcbe517efcfa806e092336390312e18` |
 | Reviewed source commit | `f7081c14efd9a5b834987e7a1e2abf597b66313b`, merged without any tree change |
 | Stable producer checkout | `/home/user/work/wt/rt-m2-pin-2c4ac180` (KEEP retained, HEAD equals source SHA) |
 | Protocol | `workspace.v1` |

@@ -924,3 +924,8 @@ Do NOT promote the 'opacity 1' RED expectations, and do not activate the transie
 ## 11:24Z — orchestrator: media-only auto completion fence (app-20261020T1115Z): routed to Runtime. Keep the adapter INACTIVE, with zero unfenced commits. Do not prepend a guessed proposal pin, and add no new wire fields.
 
 ## 11:24Z — orchestrator: Viewing's consumer review found two issues in the renderConfig plan (design/handoff-vw-m3-renderconfig-contingent-review-REPORT.md): raw config without compiledTransitions gets re-bounded by the TimelineRenderer fallback, and the Player metadata extent can exceed the cap. The 10:37 approval stays CONTINGENT on the MAIN reference. If it stands, the unit must carry the config, vector and revision plus the bounded extent to all activated boundaries.
+
+## 11:54Z — orchestrator: from the 11:53 tick
+(1) Upstream App main moved again: 1 new commit (17e46de99). Refresh-merge it with --merge-parent, as before.
+(2) Your pin branch app-m3-runtime013-root-normal-pin 171a259ac (Composition 0.0.12 + Runtime 2c4ac180 / 0.2.13) is the App half of the ONE pin move. Qualify it on the current tuple as soon as Agent's 905a4f0f merges.
+(3) Land the proxy hop-header fix (66fc28faf + ad05c5bd3) and the mobile label correction once their reviews pass.

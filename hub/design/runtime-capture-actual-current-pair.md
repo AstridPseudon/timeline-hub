@@ -95,3 +95,6 @@ also left open; neither requirement was weakened or relabelled.
 
 No full suite, localhost/browser suite, or duplicate frozen `92427b3a` pair was
 run.
+
+## Archive housekeeping
+The read-only qualification worker accidentally stored its source archive inside its own worktree; its completed branch includes that archive and is **ARCHIVAL ONLY, NEVER MERGE**. It was recycled. The manager reconstructed the exact same Agent cf7448 source with git archive at persistent /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m3-capture-actual-agent-current-pair/agent-source, outside all product repos, and updated only Runtime-owned capture-agentcf7448-integration suite paths. Original successful requests retain their original source paths and snapshots; no result is relabeled or rerun. Agent source identity is unchanged; any future service run uses this persistent complete archive. Runtime merge candidate remains0a04782e (four approved paths), never the qualification worker branch.
