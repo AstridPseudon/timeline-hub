@@ -10,7 +10,11 @@ def _association(record, select):
     from .commit import _document_pin
 
     command = record['command']
-    if command['select'] != select:
+    if command['op'] == 'clip.add':
+        row = command['args'].get('row', {})
+        if 'parent/clip:' + row.get('id', '') != select:
+            return None
+    elif command['select'] != select:
         return None
     schemas = [d for d in record['dependencies'] if d['key'] == 'params.schema']
     snapshots = [d for d in record['dependencies'] if d['key'] == 'params.snapshot']
@@ -19,14 +23,18 @@ def _association(record, select):
             'key': 'params.element', 'ref': select, 'policy': 'fixed',
             'dependencies': ['params.schema', 'params.snapshot']}]:
         return None
-    owner = select.rsplit('/', 1)[0]
-    required = [{'key': 'scalar.target', 'ref': select, 'policy': 'fixed',
-                 'dependencies': ['scalar.images']}]
-    if owner != 'parent':
-        required.append({'key': 'scalar.owner', 'ref': owner, 'policy': 'fixed', 'dependencies': []})
-    if any([b for b in record['bindings'] if b['key'] == expected['key']] != [expected]
-           for expected in required):
-        return None
+    if command['op'] == 'clip.add':
+        if len([b for b in record['bindings'] if b['key'] == 'add.track']) != 1:
+            return None
+    else:
+        owner = select.rsplit('/', 1)[0]
+        required = [{'key': 'scalar.target', 'ref': select, 'policy': 'fixed',
+                     'dependencies': ['scalar.images']}]
+        if owner != 'parent':
+            required.append({'key': 'scalar.owner', 'ref': owner, 'policy': 'fixed', 'dependencies': []})
+        if any([b for b in record['bindings'] if b['key'] == expected['key']] != [expected]
+               for expected in required):
+            return None
     schema, snapshot = schemas[0], snapshots[0]
     pin = snapshot['pin']
     if (schema['kind'] != 'source' or schema['policy'] != 'exact'
@@ -37,7 +45,10 @@ def _association(record, select):
             or set(pin['element']) != {'packId', 'id', 'kind', 'revision'}):
         return None
     _document_pin(pin['source'])
-    if command['op'] == 'clip.set-params':
+    if command['op'] == 'clip.add':
+        if command['args']['row'].get('elementRef') != pin['element']:
+            return None
+    elif command['op'] == 'clip.set-params':
         reads = {r['path'][0]: r['state'].get('value') for r in record['reads']
                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
         if (reads.get('elementRef') or reads.get('element_ref')) != pin['element']:
@@ -83,6 +94,9 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
                         if current.entity(owner, optional=True) is not None else None)
                 if shot and ref == 'shot:' + shot['shot_id']:
                     return True
+        if record['command']['op'] == 'clip.add':
+            row = record['command']['args'].get('row', {})
+            return 'parent/clip:' + row.get('id', '') == select
         return record['command']['select'] == select and record['command']['op'] in (
             'clip.set-element', 'clip.set-params')
 
@@ -90,7 +104,7 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
         if not relevant(record, index):
             return value
         command = record['command']
-        if command['op'] in ('clip.set-element', 'clip.set-params'):
+        if command['op'] in ('clip.add', 'clip.set-element', 'clip.set-params'):
             association = _association(record, select)
             if association is None:
                 return None

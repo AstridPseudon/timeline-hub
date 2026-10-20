@@ -65,6 +65,9 @@ def test_only_reviewed_producer_and_consumed_additions_change_current_schema():
         if item['if']['properties']['op']['const'] != 'producer.guard']
     for definition in ('OccurrenceAddMediaArgs', 'PlacementCreateArgs'):
         del candidate['$defs'][definition]['properties']['consumed']
+    # This private successor's only additional schema surface is the closed
+    # optional source pin used by owner-pinned overlay creation.
+    candidate['$defs']['ClipAddArgs']['properties'].pop('schema_source')
     candidate['$defs']['ClipSetElementArgs'] = previous['$defs']['ClipSetElementArgs']
     assert candidate == previous
 
@@ -81,6 +84,7 @@ def test_s2_only_adds_the_reviewed_optional_element_source_to_frozen_s1():
         'schema_source declaration pin. The retired element_ref alias is removed. '
         'There is no clear: a clip keeps its element.')
     element['description'] = previous['$defs']['ClipSetElementArgs']['description']
+    candidate['$defs']['ClipAddArgs']['properties'].pop('schema_source')
     assert candidate == previous
     assert len(_SCHEMA['$defs']) == 48
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 22
@@ -93,10 +97,25 @@ def test_existing_argument_narrowing_still_fails(name):
     assert compatibility_errors(baseline(name), candidate)
 
 
-def test_canonical_schema_is_byte_identical_to_approved_s2():
+def test_canonical_schema_is_byte_identical_to_private_overlay_successor():
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
+        '6036021b58306c958691b925f6b1421c7b9773a697e2e43dd0d630ab2f550148')
+
+
+def test_private_overlay_successor_preserves_public013_and_private392_carrier_floors():
+    """Only the new add pin differs from both frozen carrier definitions."""
+    expected = {
+        'ClipAddArgs': '293f026201f1c4ef3d0042ac8df721904b6a95b7f969b4ce1c249a2834143661',
+        'ClipSetParamsArgs': 'e51347da39ba10097989dd9cb9e1bc977420671b5b4961f8e1ccd31dc6db3f6c',
+        'ClipSetElementArgs': 'd7184b37aaa607f8c3dd5f1e40c239dc6d7b91ecc812b0e0f3f9a03a2a04302d',
+    }
+    for name, digest in expected.items():
+        definition = copy.deepcopy(_SCHEMA['$defs'][name])
+        if name == 'ClipAddArgs':
+            definition['properties'].pop('schema_source')
+        assert hashlib.sha256(json.dumps(
+            definition, sort_keys=True, separators=(',', ':')).encode()).hexdigest() == digest
 
 
 def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
