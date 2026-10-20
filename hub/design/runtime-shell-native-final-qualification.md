@@ -44,21 +44,21 @@ publication, ZIP, merge, or full suite was performed.
 
 ## Central test evidence
 
-The final central snapshot tree was `beed2563247497702dcf46da7146d216d6432647`.
+The final central snapshot tree was `2a0d8a9eeb4547bc6c3da684457c9c6b6fe0c243`.
 
-- Exact native/init cohort: request
-  `rt-m2-shell-native-final-qualification-targeted-1020125840-9634`;
-  wrapper passed and its private child suite reported **23 passed in 18.88s**.
+- Exact native/init cohort: final request
+  `rt-m2-shell-native-final-qualification-targeted-1020130245-10500`;
+  wrapper passed and its private child suite reported **23 passed in 44.72s**.
   This includes all 15 original init cases with `--runxfail`, the formerly
   missing genuinely-empty NO-HEAD same-ID success, absent/null-head repair,
   restart, undo, retry, later edit/undo guards, strict hidden/corrupt refusal,
   complete authored App defaults/order/name/slug, the authenticated generated
   client Door case, and the historical-slot provider neighbor.
-- Separate nine-case commit lane: request
-  `rt-m2-shell-native-final-qualification-commit-integration-1020125919-4513`;
-  **9 passed in 12.50s**. These were not duplicated in the native/init launcher.
-- Current `129493b` transport neighbor: request
-  `rt-m2-shell-native-final-qualification-targeted-1020125806-22068`;
+- Separate nine-case commit lane: final request
+  `rt-m2-shell-native-final-qualification-commit-integration-1020130549-3286`;
+  **9 passed in 14.86s**. These were not duplicated in the native/init launcher.
+- Current `129493b` transport neighbor: final request
+  `rt-m2-shell-native-final-qualification-targeted-1020130107-523`;
   wrapper passed. Its underlying `test_operation_handle_integration.py`
   contains and ran the three integration cases (two lost-ack wait modes and
   credential/scope refusal).

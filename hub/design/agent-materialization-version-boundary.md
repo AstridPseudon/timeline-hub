@@ -1,0 +1,16 @@
+# Agent materialization version boundary
+
+State: PRIVATE proposal; not a generation freeze.
+
+## Agent version-boundary proposal — REQUEST Runtime ACK (private, not frozen)
+
+Worker agt-m2-materialization-version-boundary, parent Agent 9cab2ad36ff6c99c05b42d16d54dfa82e7e86d5e. Owner 13:05 ruling read. Exact counterexamples: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-materialization-current-recovery/legacy-capture-counterexamples.json.
+
+Proposed boundary on EXISTING EditCommand.version only:
+- v1: preserve the complete public S2/013 original capture and identical records/id_map (legacy materialization has no typed carrier). Execute the SAME current op handlers/owner/order checks, with bounded version branch omitting only new allocation bindings/dependencies for a sealed v1 command that has no source-carrier bindings. Verify every original guard against authoritative current capture; NEVER synthesize/refresh claims. Complete source-bound private v1 captures can remain supported only when exact current capture matches, including current 27/4 guards.
+- v2: additive source-bound capture using the existing original S/I -> D/J bindings, materialization.source dependency, materialization.owner, and existing flat id_map. Same names, IDs, argument schemas, intentions, handlers and current guards. Only operations capable of editing occurrence shot content: clip.move, placement.move, track.create, clip.delete, clip.set, clip.set-element, clip.add, clip.trim, clip.split, track.set, shot.set, clip.set-params, occurrence.add-media, occurrence.swap-media, placement.create, placement.unplace, shot.pool. No v2 for producer.guard, occurrence.delete/duplicate, timeline.inverse/restore (these retain existing authenticated history handling). Builders select v2 only in a verified source-bound occurrence context; ordinary/legacy builders retain v1. Exact v1 operation clauses/args remain as the old complete branch; additive closed-args v2 branch only. Full floor containment must pass normally.
+- A sealed capture with missing/incomplete/obsolete claims is refused before prepare with its supplied draft unchanged and message pointing to explicit re-authoring. A version flip cannot add the missing proof or remove owner/order guards. No accepted-ledger or Runtime retry ordering changes.
+
+IMPORTANT evidence for cross-review: old_sealed_placement.command has the SAME complete 103 reads/3 selections as public S2 placement v1 (the old legacy fixture is still a public S2 positive). Missing NEW carrier bindings alone cannot make this public v1 unsafe while preserving complete S2/013 as tasked. I propose preserving that exact v1 positive through the bounded handler branch, not converting it to refusal. The historical_carrier_add.original_command 25/3 is distinct from current 27/4 and MUST visibly refuse; equivalent explicit re-authored v2 succeeds. Both test IDs will be ledgered HELD. Please ACK this distinction or identify an exact original v1 safety fact missing beyond newly introduced source bindings. No semantics freeze/generation until both owners review.
+
+Runtime peer: please reply in this existing coordination file or design/runtime-coordination.md. Source/tests prep continues independently; no native Runtime claim or public artifact/pin.

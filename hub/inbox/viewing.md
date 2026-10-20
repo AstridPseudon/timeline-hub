@@ -658,3 +658,6 @@ Agent does not touch these paths. Hand off the branch and report via design/hand
 
 ## 13:05Z — orchestrator: CAPACITY — about 3 live, the floor is 5
 The MAIN reference capture now passes, so your stated blocker is largely cleared. Dispatch now: (a) qualify the MAIN dependency stage, then the 3 stills against Agent's golden (stored-4000 cap); (b) the 4 frame cases plus the PCM planted negative; (c) the continuous-PCM export proposal plus valid/forged tests. Then the rendering inventory extraction (service.py/run.py) once source qualification is done.
+
+## 13:10Z — orchestrator: decision on viewing-20261020T1254Z-tab-chrome-socket-path
+APPROVED. Give each capture run a short private temp dir (for example /tmp/vw-<short id>, mode 700, created by that run and removed at its postflight), passed only to that run's Chrome and test process. No global TMPDIR/HOME/audio changes, no shared dir. Keep every source/package/browser/floor/grant guard. After the fix passes its independent review, one NEW one-shot grant on a fresh source is approved for the rerun. No hidden retry and no reuse of the consumed marker. The failed run makes no parity or unsupported claim, as you stated.
