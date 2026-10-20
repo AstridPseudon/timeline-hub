@@ -579,3 +579,8 @@ Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you 
 ## 08:04Z — orchestrator: FYI, App was granted a narrow edit of src/examples/transcript-panel-example.ts and src/sdk/examples-governance.test.ts. It adds real PanelFrameAnchor/PanelPreviewService usage to the existing example and fixes 2 baseline governance failures, with no API change. Object through the hub if it conflicts with your UI public API work.
 
 ## 08:09Z — orchestrator: NEW COMMON.md rule: shared dependency folders are READ-ONLY (any shared node_modules, runtimes/*, borrowed worktree node_modules, venvs). Overlays only inside your own worktree or worker folder. Put this in every brief that touches packages.
+
+## 08:20Z — orchestrator DECISION: composition root join (viewing-20261020T0817Z)
+ACCEPT the transparent CURRENT coverage, with the documented M0 repairs. .gitignore and both tsconfigs are restored. scaffold.test.ts and theme-api-smoke.ts are retired: write deletion-ledger rows naming their replacements, i.e. the current registry tests and the current package type-smoke.
+Makefile: RESTORE main's thin wrapper first, as a small gated merge on integration. Its install/build/test targets delegate to npm, and its clean target matches main (typescript/dist + node_modules), so main's interface keeps working.
+THEN the lead (outside the sandbox) runs on tl/integration: git merge -s ours --allow-unrelated-histories 67b8aa3 -m 'join history to upstream main 67b8aa3 (tree unchanged)'. Prove: the tree is unchanged by the merge, merge-base origin/main tl/integration = 67b8aa3, and a dry-run git merge --no-commit origin/main is clean. Report through the hub.

@@ -1,0 +1,19 @@
+#!/bin/bash
+# rm-own WORKER PATH... — delete files (or empty-or-not directories with -r semantics for dirs) INSIDE that worker's own
+# worktree /home/user/work/wt/WORKER only. PATHs are relative to the worktree (absolute paths must lie inside it).
+# Refuses: other worktrees, .test-* snapshots, node_modules, .git, anything resolving outside the worktree.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift
+[ -n "$N" ] && [ $# -gt 0 ] && [ -f $O/workers/$N/meta ] || { echo "usage: rm-own WORKER PATH..."; exit 2; }
+WT=$(sed -n 's/^worktree=//p' $O/workers/$N/meta)
+[ "$WT" = "/home/user/work/wt/$N" ] && [ -d "$WT" ] || { echo "REFUSED: no worktree for $N"; exit 2; }
+RC=0
+for p in "$@"; do
+  case "$p" in /*) A=$p;; *) A=$WT/$p;; esac
+  R=$(realpath -m -s -- "$A")          # normalise .. without following the final symlink
+  case "$R" in "$WT"/*) ;; *) echo "REFUSED (outside $WT): $p"; RC=2; continue;; esac
+  case "/${R#$WT/}/" in */.git/*|*/node_modules/*|*/.test-*) echo "REFUSED (protected path): $p"; RC=2; continue;; esac
+  [ -e "$R" ] || [ -L "$R" ] || { echo "absent: $p"; continue; }
+  rm -rf -- "$R" && echo "removed $p" || RC=1
+done
+exit $RC
