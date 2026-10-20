@@ -1013,7 +1013,25 @@ export function compileTimelinePatch(
   patch: TimelinePatch,
   data: TimelineData,
 ): TimelinePatchCompileResult {
-  const validation = validateTimelinePatch(patch);
+  let validation = validateTimelinePatch(patch);
+  // Native trim writes source seconds and an exact app state. Row serialization
+  // drops source windows on held clips, so retain these authored leaves here.
+  const nativeTrim = patch.source === 'clip.trim';
+  if (nativeTrim && validation.valid) {
+    const [op] = patch.operations;
+    const payload = op?.payload;
+    if (patch.operations.length !== 1 || op.op !== 'clip.update' || op.order !== undefined || !payload
+      || !['from', 'to', 'hold'].every((key) => typeof payload[key] === 'number' && Number.isFinite(payload[key]))
+      || !Object.keys(payload).every((key) => ['from', 'to', 'hold', 'speed', 'app'].includes(key))
+      || (Object.prototype.hasOwnProperty.call(payload, 'speed') && payload.speed !== null
+        && (typeof payload.speed !== 'number' || !Number.isFinite(payload.speed) || payload.speed <= 0))
+      || (Object.prototype.hasOwnProperty.call(payload, 'app')
+        && (payload.app === null || typeof payload.app !== 'object' || Array.isArray(payload.app)))
+      || data.config.clips.filter((clip) => clip.id === op.target).length !== 1) {
+      validation = { valid: false, diagnostics: [...validation.diagnostics,
+        diag('error', 'timeline-patch/invalid-payload', 'Invalid native clip.trim preview')] };
+    }
+  }
 
   // If validation produced errors, refuse to compile.
   if (!validation.valid) {
@@ -1031,7 +1049,7 @@ export function compileTimelinePatch(
   }
 
   // ── Clone mutable working copies ──────────────────────────────────────
-  const clips: TimelineClip[] = data.config.clips.map((c) => ({ ...c, app: c.app ? { ...c.app } : undefined }));
+  const clips: TimelineClip[] = data.config.clips.map((c) => nativeTrim ? { ...c } : ({ ...c, app: c.app ? { ...c.app } : undefined }));
   let tracks: TrackDefinition[] = (data.config.tracks ?? data.tracks).map((t) => ({ ...t, app: t.app ? { ...t.app } : undefined }));
   const meta: Record<string, ClipMeta> = {};
   for (const [id, m] of Object.entries(data.meta)) {
@@ -1265,6 +1283,8 @@ export function compileTimelinePatch(
             (existingClip as Record<string, unknown>)[key] = value;
           }
         }
+
+        if (nativeTrim && !Object.prototype.hasOwnProperty.call(payload, 'app')) delete existingClip.app;
 
         // Sync to meta for downstream serialization
         const existingMeta = meta[op.target];
@@ -1927,7 +1947,7 @@ export function compileTimelinePatch(
   // Merge rowData.meta (built by configToRows from working clips) with
   // the compiler's working meta (which carries track updates, etc.).
   const mergedMeta = { ...data.meta, ...rowData.meta, ...meta };
-  const nextConfig = rowsToConfig(
+  const nextConfig = nativeTrim ? { ...data.config, clips } : rowsToConfig(
     rowData.rows,
     mergedMeta,
     data.output,
@@ -1950,7 +1970,7 @@ export function compileTimelinePatch(
     }
     return t;
   });
-  nextConfig.tracks = nextTracksWithApp;
+  if (!nativeTrim) nextConfig.tracks = nextTracksWithApp;
 
   // Build full TimelineData through assembleTimelineData (via buildDataFromCurrentRegistry)
   const nextData = buildDataFromCurrentRegistry(nextConfig, data);
@@ -1973,7 +1993,7 @@ export function compileTimelinePatch(
   return {
     valid: true,
     nextData,
-    mutation,
+    mutation: nativeTrim ? null : mutation,
     diff,
     diagnostics: compileDiags,
   };

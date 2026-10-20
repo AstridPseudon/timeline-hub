@@ -139,6 +139,7 @@ export interface TimelineEditorDataContextValue {
 export interface TimelineEditorOpsContextValue {
   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
   clipMove?: ClipMoveCapturePort;
+  clipTrim?: import('../commands/clipTrimGesture.ts').ClipTrimCapturePort;
   trackLabel?: TrackLabelCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;

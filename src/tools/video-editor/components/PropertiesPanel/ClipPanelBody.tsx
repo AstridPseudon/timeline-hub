@@ -19,7 +19,9 @@ import {
 import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineClipType.ts';
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipTrimCapturePort } from '../../commands/clipTrimGesture.ts';
+import { ClipSourceWindowFields } from './ClipSourceWindowFields.tsx';
+import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
@@ -41,6 +43,8 @@ export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-
 
 export interface ClipPanelProps {
   readOnly?: boolean;
+  current?: TimelineData;
+  clipTrimPort?: ClipTrimCapturePort;
   clip: ResolvedTimelineClip | null;
   track: TrackDefinition | null;
   deviceClass: TimelineDeviceClass;
@@ -86,6 +90,8 @@ export interface ClipPanelBodyProps extends ClipPanelProps {
 
 export function ClipPanelBody({
   readOnly = false,
+  current,
+  clipTrimPort,
   effectResources,
   VariantPicker,
   EffectCreator,
@@ -350,6 +356,10 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
                     />
                   </div>
+                  {current || clipTrimPort ? (
+                    <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
+                  ) : (
+                    <>
                   <div className="space-y-2">
                     <FieldLabel>Source In</FieldLabel>
                     <NumberInput
@@ -370,6 +380,8 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
                     />
                   </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

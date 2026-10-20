@@ -167,6 +167,15 @@ export function useTimelineCommandSession(options: {
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
         };
+        const trimPort = session.clipTrimPort;
+        const requireCleanTrim = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before trimming');
+        };
+        session.clipTrimPort = {
+          capture(input) { requireCleanTrim(); return trimPort.capture(input); },
+          finish(basis, args) { requireCleanTrim(); return trimPort.finish(basis, args); },
+          submit(input) { requireCleanTrim(); trimPort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -238,6 +247,7 @@ export function useTimelineCommandSession(options: {
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipTrimPort: sessionRef.current?.clipTrimPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
