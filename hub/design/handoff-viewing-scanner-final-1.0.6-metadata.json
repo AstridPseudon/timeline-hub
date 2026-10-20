@@ -1,0 +1,37 @@
+{
+  "version": "1.0.6",
+  "status": "UNPUBLISHED_REVIEW_CANDIDATE",
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/owner-film-viewing-tools-v1.0.5.tgz",
+  "source_sha256": "1d5b3df5d85d32319d806e7d4f213d362b2f635b576b222514b9988243c87b60",
+  "members": {
+    "README.md": {
+      "bytes": 5347,
+      "sha256": "fb77b4f2afccd556885bf5be3574430bd105b353f11063637fa913475da9bc90"
+    },
+    "owner_film_cliplook_scan.py": {
+      "bytes": 32861,
+      "sha256": "e241041756cd5eb4657fa37bd5631eff08276eb3fb457973e162a35b65d49f9e"
+    },
+    "tests/conftest.py": {
+      "bytes": 385,
+      "sha256": "ea7d84927b97d78e2eb17fa87180ce2b7591f2c53645d1799b99f2c34197e430"
+    },
+    "tests/test_owner_film_cliplook_scan.py": {
+      "bytes": 24188,
+      "sha256": "d643cac596c42e8591a0c213aee78fa3675be797625fb8426afb89bca88daae8"
+    }
+  },
+  "archives": {
+    "zip": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-scanner-agent-required-fix/archives/owner-film-viewing-tools-v1.0.6.zip",
+      "bytes": 16038,
+      "sha256": "f07cb7b3df199244b7284c4a7a4e280a016e75312561d03f1e8a005057b82192"
+    },
+    "tgz": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-scanner-agent-required-fix/archives/owner-film-viewing-tools-v1.0.6.tgz",
+      "bytes": 14659,
+      "sha256": "1df2ee0a64709b1a275fcd8aa0a8937979f7fbe6b99e341aa309ae0cb48cefa3"
+    }
+  },
+  "deterministic_repeat": true
+}

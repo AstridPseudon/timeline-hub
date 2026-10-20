@@ -1,0 +1,114 @@
+{
+  "base": "ef6eec5572c5c0def7ca8a22c14caa12f24f0b82",
+  "files": [
+    {
+      "path": "astrid/packs/astrid_motion/pack.yaml",
+      "added": 4,
+      "deleted": 0,
+      "lines": 521,
+      "sha256": "064d7450d0ce3f2c6eac73c3d0ac2517a0ea6bdca4993134dd672f8ad5c556e1"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "added": 11,
+      "deleted": 27,
+      "lines": 293,
+      "sha256": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml",
+      "added": 8,
+      "deleted": 0,
+      "lines": 183,
+      "sha256": "bb6f21efe17d85189647bf67c5937475b161154656e470f4e47ccd1632bb270f"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+      "added": 38,
+      "deleted": 1,
+      "lines": 124,
+      "sha256": "d2145b11e3b5369236221bbe1f88bdc2e17e52e53dcc828babf1b0ce564ac2c3"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts",
+      "added": 32,
+      "deleted": 0,
+      "lines": 32,
+      "sha256": "bb1374c5e7d4a15dae83fe5ba0618eb3b9a887a3c72d7e3d446be350a1a71c7a"
+    },
+    {
+      "path": "tests/packs/rendering/presenter_crop_geometry.mjs",
+      "added": 56,
+      "deleted": 0,
+      "lines": 56,
+      "sha256": "9fbe7a98b6a3d8c9646435e4c6f07d7729dddcf4db21c76d9199e7fe82058293"
+    },
+    {
+      "path": "tests/packs/rendering/presenter_scene_capability.mjs",
+      "added": 286,
+      "deleted": 0,
+      "lines": 286,
+      "sha256": "9f9cc8395fb9488edd01d4589c063bc3172e7b88e537947a0a7a97a0f39ef81b"
+    },
+    {
+      "path": "tests/packs/rendering/presenter_ssr_before.json",
+      "added": 332,
+      "deleted": 0,
+      "lines": 332,
+      "sha256": "917bdd4676ae57a400e236457aa0292ec8e5c32f2761f466d6e2577af87a13f9"
+    },
+    {
+      "path": "tests/packs/rendering/test_presenter_crop_equivalence.py",
+      "added": 160,
+      "deleted": 0,
+      "lines": 160,
+      "sha256": "39a87697c7070eaae472f85af904f6303287e000c821a901f0bc3591911b5a16"
+    },
+    {
+      "path": "tests/packs/rendering/test_presenter_scene_capability.py",
+      "added": 141,
+      "deleted": 0,
+      "lines": 141,
+      "sha256": "c9190d631a4de079b7b076d10ab8574ab3b19d0be900ea91a0cab2e641d8f971"
+    }
+  ],
+  "product_totals": {
+    "files": 5,
+    "added": 93,
+    "deleted": 28
+  },
+  "all_totals": {
+    "files": 10,
+    "added": 1068,
+    "deleted": 28
+  },
+  "lineage": [
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+      "head_equals_origin_main_and_donor_prechange": true,
+      "sha256": "3943547265a7e169a7f59c94d7f1a079c7581c51a8daf448a8337c858f386168"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+      "head_equals_origin_main_and_donor_prechange": true,
+      "sha256": "3b9af4f75685029d2a194c525837481ee6befe77c5f5c7f5b8b71f659925668e"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts",
+      "head_equals_origin_main_and_donor_prechange": true,
+      "sha256": "6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx",
+      "head_equals_origin_main_and_donor_prechange": true,
+      "sha256": "b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618"
+    },
+    {
+      "path": "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx",
+      "head_equals_origin_main_and_donor_prechange": true,
+      "sha256": "78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646"
+    }
+  ],
+  "patch_sha256": "af4641755679de175752c69f2300ba69b82adc3b15176d1d576d39369acf7567",
+  "product_patch_sha256": "2b6540b11e84b8275e8a3eb5abc548838163b7a2823ba65e2ff0a2dbe2881d88"
+}

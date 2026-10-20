@@ -1,0 +1,3 @@
+Base ef6eec5572c5c0def7ca8a22c14caa12f24f0b82
+Full patch: git apply --check --whitespace=error-all PASS
+Actual apply against base file copies: PASS; all 10 resulting files byte-identical to worker.
