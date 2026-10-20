@@ -1,6 +1,6 @@
 # Runtime text-binding clear (10:31 approval)
 
-Representation ACKed by Agent at 2026-10-20 10:58 UTC (runtime-coordination.md, Agent ACK section); Runtime candidate bfec49af is under independent review. Native schema/pair and legacy-MIME inverse are still open:
+Representation ACKed by Agent at 2026-10-20 10:58 UTC (runtime-coordination.md, Agent ACK section); Runtime candidate bfec49af was independently rejected for legacy-MIME clear/inverse; the bounded custody correction is in rt-m2-text-clear-legacy-custody-fix. Native schema/pair remains open:
 - Keep `shot_text_bindings` as the existing stream anchor: identity, non-null
   `media_digest` = last present media, monotonically increasing `head_seq`.
 - Append existing kind `shot.text_binding.rebound` for clear and resurrection;
@@ -37,3 +37,27 @@ a destructive GC run or a new retention store.
 Qualification: existing real Runtime acceptance fixture (`bind`/`accept`) is
 approved for projection proof; native Agent command+inverse pair only if its
 source/schema is ready and ACKed. No fake provider/native end-to-end claim.
+
+Legacy custody correction (same representation):
+- NEW first-use `text_selection` remains exactly `text/plain; charset=utf-8`.
+  No inline text, caller flag or claimed inverse grants media authority.
+- For retained `text/plain` only, projection checks the existing binding's
+  complete hash-covered event chain for a PRESENT event with exact binding ID,
+  media ID and content hash. It checks every scope/size/MIME field recorded in
+  that event; compact main events derive omitted metadata from their binding
+  identity and immutable objects row. An absent event alone is insufficient.
+- This proof stays within the same project/shot/kind/slot stream. Both current
+  before and desired after descriptors retain exact managed-project ownership,
+  stored size/MIME, digest-verified CAS bytes, UTF-8 and 1 MiB checks. Missing or
+  foreign objects, another binding's media, altered metadata or corrupt event
+  history refuse in the existing acceptance transaction. No MIME or byte edits.
+- Accepted history/closures supply the Agent's exact inverse descriptor and list
+  position; the port's captured closure still supplies manifest media authority.
+  Runtime binding-event custody permits projection of that retained descriptor,
+  not new text selection. Direct coordination and Agent's actual failing pair
+  are recorded in runtime-coordination.md and
+  workers/agt-m2-text-clear-retained-pair/notes/report.md.
+
+Qualification still requires independent correction review and the normal
+full-schema native Agent pair; this Runtime acceptance fixture does not complete
+those gates, publish an artifact, retire a writer or qualify destructive GC.

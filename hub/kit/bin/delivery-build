@@ -88,7 +88,7 @@ def line_split(repo, base):
     return totals
 
 
-def squash(name, repo, base, tip, patches, tmp):
+def squash(name, repo, base, tip, ranged, ahead, patches, tmp):
     """Write one patch: a commit on origin/main with tl/integration's tree.
 
     Works whether or not the two share history, because it compares trees. Returns the
@@ -97,8 +97,14 @@ def squash(name, repo, base, tip, patches, tmp):
     build = fresh_repo(os.path.join(tmp, name, "build"))
     # Fetch immutable object IDs into real local refs.  Ref names from a linked
     # worktree are not guaranteed to be advertised by every local transport.
-    git(build, "fetch", "-q", "--no-tags", repo,
-        f"{base}:refs/heads/main", f"{tip}:refs/delivery/tip")
+    fetch = ["fetch", "-q", "--no-tags"]
+    if ranged:
+        # App's checked-out source is shallow.  Fetch exactly through the
+        # pinned base, retaining every intervening commit without rebuilding
+        # unrelated history in the private verifier.
+        fetch += [f"--depth={ahead + 1}"]
+    fetch += [repo, f"{base}:refs/heads/main", f"{tip}:refs/delivery/tip"]
+    git(build, *fetch)
     subjects = git(build, "log", "--first-parent", "--reverse", "--format=%s",
                    "main..refs/delivery/tip").splitlines()
     message = os.path.join(tmp, name, "MESSAGE")
@@ -121,8 +127,11 @@ def verify(name, repo, base, bundle, patches, ranged, tmp, problems):
     main = fresh_repo(os.path.join(tmp, name, "main"))
     # Keep the prerequisite as a local branch, just as a fresh checkout does.
     # The immutable base ID also makes this independent of source ref layout.
-    attempt(problems, "fetch origin/main", git, main,
-            "fetch", "-q", "--no-tags", repo, f"{base}:refs/heads/main")
+    fetch = ["fetch", "-q", "--no-tags"]
+    if ranged:
+        fetch += ["--depth=1"]
+    fetch += [repo, f"{base}:refs/heads/main"]
+    attempt(problems, "fetch origin/main", git, main, *fetch)
     attempt(problems, "checkout main", git, main, "checkout", "-q", "main")
 
     # A ranged bundle needs origin/main as a prerequisite, so it is checked in the main clone.
@@ -171,7 +180,7 @@ def build_repo(name, staging, tmp):
 
     patches = os.path.join(staging, "patches", name)
     os.makedirs(patches)
-    attempt(problems, "squash", squash, name, repo, base, tip, patches, tmp)
+    attempt(problems, "squash", squash, name, repo, base, tip, ranged, result["ahead"], patches, tmp)
 
     bundle = os.path.join(staging, "bundles", f"{name}.bundle")
     os.makedirs(os.path.dirname(bundle), exist_ok=True)

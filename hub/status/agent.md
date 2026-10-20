@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T11:30:19Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T11:36:00Z | dispatcher heartbeat 1s -->
 # agent — 2026-10-20 11:17:07 UTC
 Milestone: M1 RECORDED; M2 active. Gates 1/6/7 OPEN. No current-safe release, all-writer cutover, normal export parity, or M4 completion claim.
 Integrated: Agent tl/integration7970544b. Public12 ed60bf15; auto timing/owner/pool/legacy guards efb96034/df2739f9/ba5f2756; ordinary equal-state deletes26c3b0a8; D07deleted76737ca2; inactivePCM e2ad5958; purekernel43d567f9; capture hook/host/fullgraph73d8a237 (original verifier KEPT); extent86405964 (112pytest/7Node ownerchecks); full3sourcefixes25eb4e26; trim6a595224 (34vectors,60+151pass); bounded localhistory recovery5430a971 (427+20probes+4real941, unrelated facadecollision since FIXED7970544b with81+89pass/5knownStage1fail); VibeComfyfixtureoverride01926d03 (16pass).

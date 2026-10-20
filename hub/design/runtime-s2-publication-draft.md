@@ -1,3 +1,5 @@
+> Historical worker draft, superseded by PUBLISHED design/runtime-current-tuple.md at11:28:51Z. Its proposed consumer-before-source-publication order was not adopted: consumers need the exact published source in order to qualify. Exact-tree passing results are reusable; no repeat of all five unchanged lanes or external package-registry publication is required.
+
 # Runtime S2 publication draft
 
 Status: draft only. This document is not the published Runtime tuple and does not authorize a pin, merge, activation, or package publication.
