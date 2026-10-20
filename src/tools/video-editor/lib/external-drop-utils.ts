@@ -370,7 +370,7 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(
+        const placed = await dropAsset(
           result.assetId,
           compatibleTrackId ?? targetTrackId,
           dropPosition.time + timeOffset,
@@ -476,7 +476,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
@@ -494,7 +494,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
@@ -518,7 +518,7 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+        const placed = await dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
         if (!placed) {
           removeSkeleton();
         }
@@ -541,7 +541,7 @@ export async function handleFileDrop({
   return true;
 }
 
-export function handleMultiGenerationDrop({
+export async function handleMultiGenerationDrop({
   generationItems,
   dataRef,
   dropPosition,
@@ -559,7 +559,7 @@ export function handleMultiGenerationDrop({
   prepareGenerationAsset?: UseAssetManagementResult['prepareGenerationAsset'];
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!generationItems.length || !dataRef.current) {
     return false;
   }
@@ -627,7 +627,7 @@ export function handleMultiGenerationDrop({
       continue;
     }
 
-    dropAsset(
+    const placed = await dropAsset(
       preparedAsset.assetKey,
       targetTrackId,
       dropPosition.time + timeOffset,
@@ -635,6 +635,9 @@ export function handleMultiGenerationDrop({
       forceNewTrack ? insertAtTop : false,
       preparedAsset,
     );
+    if (!placed) {
+      return false;
+    }
 
     timeOffset += previewEdit.duration;
 
@@ -653,7 +656,7 @@ export function handleMultiGenerationDrop({
   return true;
 }
 
-export function handleSingleGenerationDrop({
+export async function handleSingleGenerationDrop({
   generationData,
   dataRef,
   dropPosition,
@@ -671,7 +674,7 @@ export function handleSingleGenerationDrop({
   prepareGenerationAsset?: UseAssetManagementResult['prepareGenerationAsset'];
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!dataRef.current) {
     return false;
   }
@@ -731,7 +734,7 @@ export function handleSingleGenerationDrop({
     return true;
   }
 
-  dropAsset(
+  return dropAsset(
     preparedAsset.assetKey,
     dropPosition.isNewTrack ? undefined : dropPosition.trackId,
     dropPosition.time,
@@ -739,10 +742,9 @@ export function handleSingleGenerationDrop({
     insertAtTop,
     preparedAsset,
   );
-  return true;
 }
 
-export function handleAssetDrop({
+export async function handleAssetDrop({
   assetKey,
   assetKind,
   dataRef,
@@ -758,14 +760,13 @@ export function handleAssetDrop({
   insertAtTop: boolean;
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!assetKey || !dataRef.current) {
     return false;
   }
 
   if (dropPosition.isNewTrack) {
-    dropAsset(assetKey, undefined, dropPosition.time, true, insertAtTop);
-    return true;
+    return dropAsset(assetKey, undefined, dropPosition.time, true, insertAtTop);
   }
 
   const compatibleTrackId = getCompatibleTrackId(
@@ -778,8 +779,7 @@ export function handleAssetDrop({
     return true;
   }
 
-  dropAsset(assetKey, compatibleTrackId, dropPosition.time);
-  return true;
+  return dropAsset(assetKey, compatibleTrackId, dropPosition.time);
 }
 
 export function finalizeExternalDrop({
