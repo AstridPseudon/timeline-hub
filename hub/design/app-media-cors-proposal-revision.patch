@@ -20,8 +20,8 @@ index 76004857a..ae079675e 100644
   * `crossOrigin` attribute value for an `<img>`, `<video>` or canvas source.
   *
 - * Managed object routes get `'anonymous'`: the gateway authorizes media by the
-- * `Origin` header, which a cross-origin element sends only in CORS mode, and it
-- * also lets the canvas stay untainted. Relative object routes use the same
+- * `Origin` header, which a cross-origin element sends only in CORS mode, and
+- * it also lets the canvas stay untainted. Relative object routes use the same
 - * policy through the dev proxy; other URLs retain their existing media mode.
 + * Configured HTTP(S) gateway URLs and managed object routes get `'anonymous'`:
 + * the gateway authorizes media by the `Origin` header, which a cross-origin
