@@ -1,5 +1,3 @@
-import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
-import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
 import type { ReactPortal } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -37,15 +35,12 @@ export function useVideoEditorPreviewSurface({
   const saveStatus = useTimelineChromeSelector((chrome) => chrome.saveStatus);
   const runtime = useOptionalVideoEditorRuntime();
   const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
-  const sourceConfig = compositionResolution.config;
-  const previewConfig = useMemo(() => compositionResolution.source === 'canonical' && sourceConfig
-    ? boundCanonicalRenderConfig(sourceConfig) : sourceConfig, [sourceConfig, compositionResolution.source]);
+  const previewConfig = compositionResolution.config;
   const previewSource = compositionResolution.source;
-  const compiledTransitions = useMemo(() => previewSource === 'canonical' && previewConfig
-    ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
+  const compiledTransitions = compositionResolution.compiledTransitions;
   const previewRevision = useMemo<PreviewRevision>(() => {
     const fact = timelineData?.editProjection;
-    const paired = fact && sourceConfig === timelineData.resolvedConfig;
+    const paired = fact && previewConfig !== null && previewConfig === compositionResolution.pairedConfig;
     const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
     const unavailableTarget = fact && !paired
       ? {
@@ -108,7 +103,7 @@ export function useVideoEditorPreviewSurface({
     return unavailableTarget
       ? { kind: 'unavailable', unavailableTarget }
       : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
-  }, [compositionResolution.error?.message, sourceConfig, previewSource, runtime?.shots?.canonicalComposition,
+  }, [compositionResolution.error?.message, compositionResolution.pairedConfig, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
     runtime?.shots?.canonicalCompositionError, runtime?.shots?.canonicalDraft, runtime?.userId,
     saveStatus, timelineData]);
   const {
