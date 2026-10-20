@@ -12,19 +12,26 @@ export const PEER_FILES = [
 
 export interface SourcePin { root: string; commit: string; tree: string }
 export interface FrameSourceTuple {
-  schema: 'timeline.viewing.next-four-case/v1';
+  schema: 'timeline.viewing.next-five-case/v1';
   frozen: true;
   sources: Record<'app' | 'agent' | 'runtime' | 'composition', SourcePin>;
   appSource: { files: number; sha256: string };
   remotionProject: string;
   peers: Record<'app' | 'agent', Record<string, string>>;
-  client: { official: true; runtimeCommit: string; files: Record<string, string> };
+  client: {
+    official: true;
+    producerCommit: string;
+    producerTree: string;
+    producerVersion: string;
+    artifactCount: number;
+    files: Record<string, string>;
+  };
 }
 
 /** Release owners supply pins; never derive expected hashes from a selected install. */
 export function assertFrameSourceTuple(value: unknown): asserts value is FrameSourceTuple {
   const tuple = value as FrameSourceTuple | undefined;
-  assert.equal(tuple?.schema, 'timeline.viewing.next-four-case/v1', 'final source tuple is owner-pending');
+  assert.equal(tuple?.schema, 'timeline.viewing.next-five-case/v1', 'final source tuple is owner-pending');
   assert.equal(tuple.frozen, true, 'manager source freeze is pending');
   for (const name of ['app', 'agent', 'runtime', 'composition'] as const) {
     const source = tuple.sources?.[name];
@@ -41,7 +48,11 @@ export function assertFrameSourceTuple(value: unknown): asserts value is FrameSo
     for (const hash of Object.values(files ?? {})) assert.match(hash, /^sha256:[a-f0-9]{64}$/);
   }
   assert.equal(tuple.client?.official, true, 'official generated client is pending');
-  assert.equal(tuple.client.runtimeCommit, tuple.sources.runtime.commit, 'Runtime/client pins must match');
+  assert.match(tuple.client.producerCommit, /^[a-f0-9]{40}$/, 'official artifact producer source pending');
+  assert.match(tuple.client.producerTree, /^[a-f0-9]{40}$/, 'official artifact producer tree pending');
+  assert.match(tuple.client.producerVersion, /^sha256:[a-f0-9]{64}$/, 'official artifact version pending');
+  assert.ok(Number.isSafeInteger(tuple.client.artifactCount) && tuple.client.artifactCount > 0,
+    'official artifact count pending');
   assert.ok(Object.hasOwn(tuple.client.files ?? {}, 'src/integrations/runtime/generated.ts'), 'official generated client byte pin pending');
   for (const [path, hash] of Object.entries(tuple.client.files)) {
     assert.ok(path && !path.startsWith('/') && !path.split('/').includes('..'), 'unsafe client pin path');
