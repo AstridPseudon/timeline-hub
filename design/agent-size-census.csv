@@ -1,0 +1,13 @@
+category,path_or_fragment,baseline_physical,baseline_nonblank,current_physical,current_nonblank,staged_physical,staged_nonblank
+read_edit_core,astrid/sdk/timeline/**/*.py,7415,6484,13909,12285,13909,12284
+read_edit_core,astrid/sdk/timeline_*.py minus timeline_filmstrip.py,6304,5583,6557,5829,6557,5829
+read_edit_core,astrid/packs/timeline/**/*.py minus cli_visualize.py,5775,5127,6190,5497,6190,5497
+read_edit_core,astrid/core/timeline/**/*.py minus scene_answers.py onscreen.py shot_composition_projection.py,14342,12453,13537,11764,13537,11764
+read_edit_core,SDK adapter files: _remote_timeline.py and authoring_bundle.py authoring_remote.py authoring_revision_diff.py,448,403,635,579,635,579
+agent_see_adapter,astrid/sdk/timeline_filmstrip.py,1251,1190,1298,1234,1298,1234
+agent_see_adapter,astrid/packs/timeline/cli_visualize.py,973,890,1011,924,1011,924
+agent_see_adapter,astrid/core/timeline/scene_answers.py,0,0,116,95,116,95
+agent_see_adapter,astrid/core/timeline/onscreen.py,452,375,452,375,452,375
+agent_see_adapter,astrid/core/timeline/shot_composition_projection.py,686,624,686,624,686,624
+mixed_sdk_transport,astrid/sdk/remote.py: RemoteTimelines and RemoteShots classes,1266,1216,1188,1141,1188,1141
+mixed_sdk_transport,astrid/sdk/workspace_client.py: selected timeline/shot/text-binding methods,197,196,243,241,243,241
