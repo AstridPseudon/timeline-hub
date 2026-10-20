@@ -122,7 +122,60 @@ def hub_merges(repo):
 log_rows = [r for r in parse_merges_log() if r["t"].strftime("%Y-%m-%d") == TODAY]
 hub_rows = {repo: [r for r in hub_merges(repo) if r["t"].strftime("%Y-%m-%d") == TODAY] for repo in ("app", "composition")}
 
-# ---------------------------------------------------------------- 1. M1 exit items
+# ---------------------------------------------------------------- 0. milestone status from the PLAN.md "## Gate record"
+# A line starting "- M<n> " that contains **RECORDED** marks that milestone done; "Checkpoint A ... APPROVED" marks M0 done.
+# The current milestone is the first one that is not recorded.
+order = ["M0", "M1", "M2", "M3", "M4"]
+gate_rec = section(PLAN, r"^## Gate record.*$", r"\Z")
+cpa = None
+cpa_line = re.search(r"^-\s*Checkpoint A[^\n]*APPROVED[^\n]*", gate_rec, re.M)
+if cpa_line:
+    cpa = re.search(r"APPROVED\**\s+(\d{4}-\d{2}-\d{2})\s*~?\s*(\d{2}:\d{2}Z)", cpa_line.group(0)) or True
+recorded = {}  # "M1" -> "2026-10-20 ~03:55Z" (or "" when the line has no stamp)
+for ln in gate_rec.splitlines():
+    m = re.match(r"-\s*(M\d)\b", ln)
+    if m and re.search(r"\*\*RECORDED\b", ln):
+        t = re.search(r"RECORDED\**\s+(\d{4}-\d{2}-\d{2})\s*~?\s*(\d{2}:\d{2}Z)", ln)
+        recorded[m.group(1)] = f"{t.group(1)} ~{t.group(2)}" if t else ""
+hard = re.search(r"Hard stop[^\n]*?:\s*\*{0,2}\s*([A-Z][A-Z ]+)", gate_rec)
+done = {k: k in recorded for k in order}
+done["M0"] = bool(cpa)
+if hard and hard.group(1).strip().upper().startswith("DONE"):
+    done["M4"] = True
+CURRENT = next((k for k in order if not done[k]), None)
+
+# ---------------------------------------------------------------- deletion ledger rows (exit items from M2 on)
+def ledger_rows():
+    """Rows of design/deletion-ledger.<area>.md (these hold every row; the generated combined view lists only D-prefixed ids).
+    Falls back to the combined view when no per-area file exists."""
+    files = sorted(glob.glob(f"{ORCH}/design/deletion-ledger.*.md"))
+    per = [f for f in files if os.path.basename(f) != "deletion-ledger.md"]
+    rows, seen_ids = [], set()
+    for f in (per or files):
+        for ln in rd(f).splitlines():
+            if not ln.startswith("|"):
+                continue
+            c = [x.strip() for x in ln.strip().strip("|").split("|")]
+            if len(c) < 7 or c[0].lower() == "id" or set(c[0]) <= set("-: ") or c[0] in seen_ids:
+                continue
+            seen_ids.add(c[0])
+            rows.append({"id": c[0], "what": c[1], "owner": c[4], "ms": c[5], "status": c[6]})
+    return rows
+
+def ledger_exit(ms):
+    out = []
+    for r in ledger_rows():
+        if ms not in re.findall(r"M\d", r["ms"]):
+            continue
+        stl = re.sub(r"[^A-Za-z-]", "", r["status"]).lower()
+        if stl == "keep":  # retention decisions are not deletions, so they are not exit items
+            continue
+        st = "done" if stl == "deleted" else ("partial" if stl == "in-progress" else "pending")
+        what = re.sub(r"\s+", " ", r["what"])
+        out.append({"item": f"{r['id']}: {what}"[:140], "status": st, "owner": r["owner"] or "unassigned"})
+    return out
+
+# ---------------------------------------------------------------- 1. exit items of the CURRENT milestone (dataset file name stays m1_exit.json)
 DEC = re.search(r"M1 exit\s*=\s*(.+)", PLAN)
 def split_top(s):
     parts, depth, cur = [], 0, ""
@@ -174,14 +227,15 @@ PLAIN = {
     "audit": "Deep audit finds nothing that blocks",
 }
 m1_exit = []
-for i, t in enumerate(items_txt):
-    st, owner = exit_state(i, t)
-    label = next((v for k, v in PLAIN.items() if k in t.lower()), t)
-    if "restore preservation" in t.lower():
-        label = "Restore keeps earlier work intact" + (" (App fix still pending)" if st != "done" else "")
-    m1_exit.append({"item": label[:200], "status": st, "owner": owner})
-if not m1_exit:
-    m1_exit = []
+if CURRENT == "M1":
+    for i, t in enumerate(items_txt):
+        st, owner = exit_state(i, t)
+        label = next((v for k, v in PLAIN.items() if k in t.lower()), t)
+        if "restore preservation" in t.lower():
+            label = "Restore keeps earlier work intact" + (" (App fix still pending)" if st != "done" else "")
+        m1_exit.append({"item": label[:200], "status": st, "owner": owner})
+elif CURRENT:
+    m1_exit = ledger_exit(CURRENT)
 write("m1_exit.json", m1_exit)
 exit_total = len(m1_exit)
 exit_done = sum(1 for r in m1_exit if r["status"] == "done")
@@ -191,38 +245,46 @@ exit_partial = sum(1 for r in m1_exit if r["status"] == "partial")
 names = {}
 for m in re.finditer(r"^\|\s*\*\*(M\d)\*\*\s*\|\s*\*\*(.+?)\*\*", section(PLAN, r"^## 5\. Milestones"), re.M):
     names[m.group(1)] = m.group(2).strip()
-gate_rec = section(PLAN, r"^## Gate record.*$", r"\Z")
-cpa = re.search(r"Checkpoint A[^\n]*?APPROVED\s+(\d{4}-\d{2}-\d{2})\s*~?\s*(\d{2}:\d{2}Z)", gate_rec)
-hard = re.search(r"Hard stop[^\n]*?:\s*\*{0,2}\s*([A-Z][A-Z ]+)", gate_rec)
-order = ["M0", "M1", "M2", "M3", "M4"]
-done = {"M0": bool(cpa), "M1": bool(cpa) and exit_total > 0 and exit_done == exit_total}
-for k in ("M2", "M3", "M4"):
-    done[k] = False
-if hard and hard.group(1).strip().upper().startswith("DONE"):
-    done["M4"] = True
 status = {}
-seen_active = False; seen_next = False
+seen_next = False
 for k in order:
     if done[k]: status[k] = "done"
-    elif not seen_active: status[k] = "active"; seen_active = True
+    elif k == CURRENT: status[k] = "active"
     elif not seen_next: status[k] = "next"; seen_next = True
     else: status[k] = "later"
 status["M5"] = "later"
 CHIP = {"done": "Done", "active": "In progress", "next": "Next", "later": "Later"}
 notes = {}
-notes["M0"] = (f"Checkpoint A approved {cpa.group(1)} ~{cpa.group(2)}" if cpa else "Design checkpoint not yet approved")
-notes["M1"] = (f"{exit_done} of {exit_total} exit items done" + (f", {exit_partial} partly done" if exit_partial else "")) if exit_total else "Exit list not found in the plan"
-m2_held = bool(re.search(r"M2\s*MERGE\s*HELD|MERGES?\s*HELD|merges\s*wait", STATUS["runtime"] + STATUS["agent"], re.I))
-notes["M2"] = ("Being built on side branches; merging waits until M1 is closed" if m2_held and status["M1"] != "done"
-               else ("In progress" if status["M2"] == "active" else "Not started"))
+def rec_note(k, label):
+    return f"{label} {recorded[k]}".strip() if recorded.get(k) is not None else ""
+if isinstance(cpa, re.Match):
+    notes["M0"] = f"Checkpoint A approved {cpa.group(1)} ~{cpa.group(2)}"
+else:
+    notes["M0"] = "Checkpoint A approved" if cpa else "Design checkpoint not yet approved"
+exit_text = (f"{exit_done} of {exit_total} exit items done" + (f", {exit_partial} partly done" if exit_partial else "")) if exit_total else "Exit list not found"
+if CURRENT == "M2":
+    exit_text = f"{exit_done} of {exit_total} deletion rows deleted" + (f", {exit_partial} in progress" if exit_partial else "")
 m3_run = bool(re.search(r"M3\s*active", STATUS["viewing"], re.I))
-notes["M3"] = "Viewing is already building the shared package; closes after M2" if m3_run else "Not started"
-notes["M4"] = "Ends at the owner hard stop" + (f" (status: {hard.group(1).strip().lower()})" if hard else "")
+for k in ("M1", "M2", "M3", "M4"):
+    if done[k]:
+        notes[k] = rec_note(k, "Recorded") or "Recorded"
+    elif k == CURRENT:
+        notes[k] = exit_text
+    elif k == "M3":
+        notes[k] = "Viewing is already building the shared package; closes after M2" if m3_run else "Not started"
+    else:
+        notes[k] = "Not started"
+if not done["M4"]:
+    notes["M4"] = "Ends at the owner hard stop" + (f" (status: {hard.group(1).strip().lower()})" if hard else "")
 notes["M5"] = "After owner go-ahead; nothing starts before the hard stop"
 milestones = []
 for k in order + ["M5"]:
+    cur = (k == CURRENT)
+    # exit_done/exit_total describe the exit dataset (m1_exit.json), i.e. the CURRENT (active) milestone's items;
+    # other milestones carry null (their own counts are not kept once they are recorded).
+    show = cur
     r = {"id": k, "name": names.get(k, k), "status": status[k], "chip": "After owner go-ahead" if k == "M5" else CHIP[status[k]],
-         "exit_done": exit_done if k == "M1" else None, "exit_total": exit_total if k == "M1" else None, "note": notes[k]}
+         "exit_done": exit_done if show else None, "exit_total": exit_total if show else None, "note": notes[k]}
     milestones.append(r)
 write("milestones.json", milestones)
 
@@ -279,8 +341,49 @@ for n in range(1, 8):
 write("gates.json", gates)
 
 # ---------------------------------------------------------------- 4. areas
+def live_main_worktrees():
+    """Worktree paths of live main-machine workers: `codex exec` command lines (-C <worktree>) and the cwd of live `claude` processes."""
+    cmds, cwds = [], []
+    for pd in glob.glob("/proc/[0-9]*"):
+        try:
+            argv = [x for x in open(pd + "/cmdline", "rb").read().decode("utf-8", "replace").split("\0") if x]
+        except OSError:
+            continue
+        if not argv:
+            continue
+        names_ = [os.path.basename(x) for x in argv[:2]]
+        if "codex" in names_ and "exec" in argv[1:3]:
+            cmds.append(" ".join(argv))
+        elif names_[0] == "claude":
+            try:
+                cwds.append(os.readlink(pd + "/cwd"))
+            except OSError:
+                pass
+    return cmds, cwds
+
+LIVE_CMDS, LIVE_CWDS = live_main_worktrees()
+
+def worktree_of(d):
+    for ln in rd(os.path.join(d, "meta")).splitlines():
+        if ln.startswith("worktree="):
+            return ln.split("=", 1)[1].strip()
+    return ""
+
+def worker_live(d):
+    wt = worktree_of(d).rstrip("/")
+    if not wt:
+        return False
+    pat = re.compile(re.escape(wt) + r"(?![\w./-])")
+    return any(pat.search(c) for c in LIVE_CMDS) or any(c == wt or c.startswith(wt + "/") for c in LIVE_CWDS)
+
+def running_dirs(prefix):
+    return [d for d in glob.glob(f"{ORCH}/workers/{prefix}-*") if os.path.isfile(os.path.join(d, "running"))]
+
 def running_workers(prefix):
-    return sum(1 for d in glob.glob(f"{ORCH}/workers/{prefix}-*") if os.path.isfile(os.path.join(d, "running")))
+    return len(running_dirs(prefix))
+
+def live_workers(prefix):
+    return sum(1 for d in running_dirs(prefix) if worker_live(d))
 
 def in_flight_count(a):
     for ln in STATUS[a].splitlines():
@@ -303,13 +406,17 @@ for a, machine, prefix, repo in AREAS:
         if ln.startswith("Milestone:"):
             ml = ln.strip(); break
     ml = ml[:160]
-    wd = running_workers(prefix)
-    basis = "worker folders"
-    w = wd
-    if a in ("app", "viewing"):
+    if os.path.exists(f"{ORCH}/managers/{a}/REMOTE"):
+        # REMOTE area: workers run on another machine, so only the synced folders and the status line are visible. Approximate.
+        w = wd = running_workers(prefix)
+        basis = "worker folders, approximate"
         fl = in_flight_count(a)
         if fl > wd:
-            w, basis = fl, "status report"
+            w, basis = fl, "status line, approximate"
+    else:
+        # main machine: a worker counts only if its worktree is held by a live `codex exec` or `claude` process
+        w = live_workers(prefix)
+        basis = "live processes"
     if a in ("runtime", "agent"):
         merges = sum(1 for r in log_rows if r["repo"] == repo)
     else:
