@@ -230,15 +230,21 @@ def test_last_write_clear_undo_restore_and_restore_inverse(recipe):
     assert authored(bundle(case))[KEY] == b["args"]
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError,
-                   reason="Authored stable references fix the 437a4b6a revision collision")
-def test_equal_text_revision_only_restore_is_an_executable_counterexample(recipe):
-    # Keep the original collision assertions from 437a4b6a as pre-fix evidence.
-    # The obsolete provenance fold is deleted; positive restore is tested below.
+def test_equal_text_references_produce_distinct_canonical_revisions(recipe):
+    # A and B deliberately share the same text echo but bind different words.
+    # Their authored references, and therefore their canonical revisions, must
+    # remain distinct without consulting or folding accepted history.
     case = recipe
-    a = case.submit(case.request([pick(case)]), "a")
-    b = case.submit(case.request([pick(case, 1)]), "b")
-    assert a["data"]["canonical_document"] == b["data"]["canonical_document"]
+    command_a = pick(case)
+    a = case.submit(case.request([command_a]), "a")
+    command_b = pick(case, 1)
+    b = case.submit(case.request([command_b]), "b")
+    assert command_a["args"]["declaration"] == command_b["args"]["declaration"] == '"again"'
+    assert command_a["args"]["choice"]["word_ids"] != command_b["args"]["choice"]["word_ids"]
+    assert a["data"]["canonical_document"] != b["data"]["canonical_document"]
+    for name in ("revision_id", "content_digest"):
+        assert (a["data"]["canonical_document"]["parent_revision"][name]
+                != b["data"]["canonical_document"]["parent_revision"][name])
     assert a["receipt"]["receipt_id"] != b["receipt"]["receipt_id"]
 
 
