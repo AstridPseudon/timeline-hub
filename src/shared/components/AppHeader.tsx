@@ -9,7 +9,6 @@ import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
 import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
 import { ProjectHeaderActions } from '@/shared/components/ProjectHeaderActions.tsx';
 import { useRuntimeEditorDiscovery } from '@/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts';
-import { isAstridEditorOnlyWorkspace } from '@/app/localWorkspaceShell';
 
 export type AppHeaderNavigationMode = 'home' | 'tools';
 
@@ -89,7 +88,6 @@ export function AppHeader({
   timelineName,
   showProjectControls = false,
 }: AppHeaderProps) {
-  const isEditorOnlyWorkspace = isAstridEditorOnlyWorkspace();
   const isToolsNavigation = navigationMode === 'tools';
   const navigationLabel = isToolsNavigation ? 'Tools' : 'Home';
   const NavigationIcon = isToolsNavigation ? LayoutGrid : Home;
@@ -101,13 +99,11 @@ export function AppHeader({
     <header
       className={cn(
         'relative z-10 flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
-        isEditorOnlyWorkspace
-          ? 'px-3 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
-          : 'min-h-10 border-b border-border bg-background px-3 py-1.5',
+        'min-h-10 border-b border-border bg-background px-3 py-1.5',
       )}
       data-testid="video-editor-header"
     >
-      {!isEditorOnlyWorkspace && onNavigate && (
+      {onNavigate && (
         <Button
           type="button"
           variant="ghost"
@@ -147,8 +143,8 @@ export function AppHeader({
         size="icon"
         className={cn('ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground', COARSE_TOUCH_TARGET)}
         onClick={() => dispatchAppEvent('openSettings', {})}
-        title={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
-        aria-label={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
+        title="Settings"
+        aria-label="Settings"
       >
         <Settings className="h-3.5 w-3.5" />
       </Button>

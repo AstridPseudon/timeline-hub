@@ -8,15 +8,8 @@ import { GenerationRow } from '@/domains/generation/types';
 import { mapShotGenerationToRow } from './mappers';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { queryKeys } from '@/shared/lib/queryKeys';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
-import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import { assertDeferredCloudShotOperation } from './shotAuthority';
 
-function canReadCloudShots(): boolean {
-  return isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
-}
 // ============================================================================
 // LIST SHOTS
 // ============================================================================
@@ -130,7 +123,7 @@ export const useListShots = (
         };
       });
     },
-    enabled: !!projectId && canReadCloudShots(),
+    enabled: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: (previousData) => previousData,
   });
@@ -172,7 +165,7 @@ export const useProjectImageStats = (projectId?: string | null) => {
         noShotCount: noShotCount || 0,
       };
     },
-    enabled: !!projectId && canReadCloudShots(),
+    enabled: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

@@ -41,7 +41,6 @@ export const modelCatalogSchema = z.strictObject({
   })),
   currentModel: z.string().nullable(),
 });
-const modelSelectionSchema = z.strictObject({ currentModel: z.string() });
 const localModelResponseSchema = z.object({ models: localAgentModelsSchema.nullable() });
 export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
 
@@ -158,10 +157,6 @@ export class AstridLocalAcpRoutes {
     return this.transport.requestJson('/acp/models', { method: 'GET' }, modelCatalogSchema, 'List ACP models');
   }
 
-  async setModel(model: string): Promise<{ currentModel: string }> {
-    return this.transport.requestJson('/acp/model', { method: 'POST', body: { model } }, modelSelectionSchema, 'Set ACP model');
-  }
-
   async sessionModels(connectionId: string, sessionId: string) {
     return this.transport.requestJson(`/acp/${encodeURIComponent(connectionId)}/models?sessionId=${encodeURIComponent(sessionId)}`,
       { method: 'GET' }, localModelResponseSchema, 'List local agent models');
@@ -213,7 +208,7 @@ export class AstridLocalAcpRoutes {
   async setConfigOption<T = unknown>(
     connectionId: string,
     sessionId: string,
-    configId: 'model' | 'thinking',
+    configId: string,
     value: string,
   ): Promise<T> {
     return this.rpc<T>(connectionId, 'session/set_config_option', { sessionId, configId, value });

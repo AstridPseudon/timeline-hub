@@ -1,5 +1,4 @@
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { isAstridEditorOnlyShellPath } from '@/app/localWorkspaceShell';
 
 const VIDEO_EDITOR_ROUTE = '/tools/video-editor';
 
@@ -9,7 +8,6 @@ export function isVideoEditorRoute(pathname: string): boolean {
 
 export function isVideoEditorShellActiveForLocation(pathname: string, search: string): boolean {
   if (!isVideoEditorRoute(pathname)) return false;
-  if (isAstridEditorOnlyShellPath(pathname)) return true;
   const searchParams = new URLSearchParams(search);
   return Boolean(
     searchParams.get('timeline'),

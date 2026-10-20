@@ -33,7 +33,6 @@ import { useTextCase } from '@/shared/hooks/useTextCase';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
-import { astridEditorOnlyRedirectTarget, isAstridEditorOnlyWorkspace } from './localWorkspaceShell';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -52,9 +51,6 @@ function ScrollToTop() {
 export const Layout: React.FC = () => <LayoutShell />;
 
 const LayoutShell: React.FC = () => {
-  const { pathname, search } = useLocation();
-  const editorOnlyRedirectTarget = astridEditorOnlyRedirectTarget(pathname, search);
-  const isAstridEditorOnlyApp = isAstridEditorOnlyWorkspace();
   const { isVideoEditorShellActive } = useVideoEditorRouteState();
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
   const tasksPaneWidth = usePanesStore((state) => state.tasksPaneWidth);
@@ -88,25 +84,10 @@ const LayoutShell: React.FC = () => {
     );
   }
 
-  // A local Astrid launch is the Video Editor product surface. Redirect stale
-  // bookmarks and direct visits to the retired tool routes back into that
-  // editor, retaining only its project/timeline selection.
-  if (editorOnlyRedirectTarget) {
-    return <Navigate to={editorOnlyRedirectTarget} replace />;
-  }
-
   // Redirect unauthenticated users to home page (same-origin builds only: on the hosted
   // build `RuntimeConnectionGate` above has already held the shell until the Runtime
   // answered, and a connected gate is an authenticated session, so this never fires there).
-  // Use /home instead of / to avoid redirect loops in non-WEB environments
-  // where / is inside Layout.
-  //
-  // Auth is decided by the bridge probe alone (`useAuth`): a healthy
-  // bridge (`astridBase()`) resolves the fixed local user, so this gate passes on the
-  // probe and never depends on URL params or stored credentials. When the
-  // probe fails the user is sent to the public home page — one hop, no loop:
-  // `/` outside Layout does not re-enter this gate (and in WEB env `/` is
-  // `HomeWithAuthRedirect`, which renders HomePage directly).
+  // /home is always the public landing page.
   //
   // Someone who installed Astrid or chose to use it in the browser never lands back on the
   // landing page: they go to the local editor, which this gate lets through.
@@ -134,7 +115,6 @@ const LayoutShell: React.FC = () => {
   const mainContent = (
     <LayoutMainContent
       isMobileSplitView={isMobileSplitView}
-      onOpenSettings={handleOpenSettings}
     />
   );
 
@@ -158,12 +138,12 @@ const LayoutShell: React.FC = () => {
         <>
           <EditorPane />
           <TasksPane onOpenSettings={handleOpenSettings} />
-          {!isAstridEditorOnlyApp && <ToolsPane />}
+          <ToolsPane />
           <GenerationsPane />
         </>
 
         {/* Social Icons Footer */}
-        {!isVideoEditorShellActive && !isAstridEditorOnlyApp && (
+        {!isVideoEditorShellActive && (
           <div
             className="relative transition-[margin] duration-300 ease-smooth"
             style={footerStyle}

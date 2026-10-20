@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton.tsx';
@@ -7,7 +8,7 @@ import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewC
 beforeAll(() => {
   Element.prototype.scrollIntoView ??= vi.fn();
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); localStorage.clear(); });
 const plainLine = (line: string) => line.replaceAll('`', '');
 
 const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
@@ -138,14 +139,14 @@ describe('AgentChatNewChatButton', () => {
     const { onBrowseAgent } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
     fireEvent.keyDown(document.querySelector('[cmdk-root]') as HTMLElement, { key: 'ArrowRight' });
     expect(onBrowseAgent).not.toHaveBeenCalledWith('hermes');
-    expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull();
+    expect(screen.queryByPlaceholderText('Search Hermes models…')).toBeNull();
   });
 
   it('closes the Hermes model picker when a session reports an empty list', async () => {
     const { onNewChat, onBrowseAgent, view } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Hermes model' }));
     view.rerender(<AgentChatNewChatButton defaultAgent="hermes" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentCanBrowse={{ hermes: true }} agentModels={{ agent: 'hermes', models: [], loading: false }} />);
-    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull());
+    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models…')).toBeNull());
     expect(onBrowseAgent).toHaveBeenLastCalledWith(null);
   });
 
@@ -173,7 +174,7 @@ describe('AgentChatNewChatButton', () => {
     const { onBrowseAgent, view } = openMenu();
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={claudeModels} />);
-    const search = screen.getByPlaceholderText('Search Claude Code models...');
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
     fireEvent.change(search, { target: { value: 'complex' } });
     expect(screen.getByRole('option', { name: /Opus/ })).toBeTruthy();
     expect(screen.queryByRole('option', { name: /Sonnet/ })).toBeNull();
@@ -203,5 +204,176 @@ describe('AgentChatNewChatButton', () => {
     openMenu({ attachExisting: { open: false, toggle } });
     fireEvent.click(screen.getByRole('option', { name: /Attach an existing chat/ }));
     expect(toggle).toHaveBeenCalledOnce();
+  });
+
+  const effortModels = {
+    agent: 'claude-code' as const, defaultModel: 'opus', loading: false,
+    models: [{ id: 'opus', name: 'Opus', thoughtLevel: { configId: 'effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high',
+      options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }],
+  };
+
+  it('keeps the compact, borderless selector on the name line with the description underneath', () => {
+    openMenu({ agentModels: { ...effortModels, models: [{ ...effortModels.models[0], detail: 'For complex work with a description that can wrap across the full row' }] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const row = screen.getByRole('option', { name: /Opus/ });
+    const selector = within(row).getByRole('button', { name: 'Choose a thinking level for Opus' });
+    const name = within(row).getByText('Opus');
+    const detail = within(row).getByText(/For complex work/);
+    expect(selector.parentElement).toBe(name.parentElement);
+    expect(name.parentElement).toHaveClass('flex');
+    expect(name.parentElement?.nextElementSibling).toBe(detail);
+    expect(detail.parentElement).toHaveClass('flex-1', 'flex-col');
+    expect(detail).not.toHaveClass('truncate');
+    expect(selector).toHaveTextContent('High');
+    expect(selector).toHaveClass('ml-auto', 'self-start', 'h-6', 'px-1.5', 'rounded', '[@media(pointer:coarse)]:min-h-[44px]');
+    expect(selector.className.split(/\s+/).some(token => token === 'border' || token.startsWith('border-'))).toBe(false);
+    expect(selector).not.toHaveClass('min-h-[44px]', 'min-w-[44px]');
+    expect(screen.getByPlaceholderText('Search Claude Code models…')).toHaveClass('normal-case');
+  });
+
+  it('highlights the selector while its level popover is open', () => {
+    openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const selector = screen.getByRole('button', { name: 'Choose a thinking level for Opus' });
+    expect(selector).toHaveClass('aria-expanded:bg-accent', 'aria-expanded:text-foreground');
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(selector);
+    expect(selector).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('starts immediately from a model with the recommended effort', async () => {
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.keyDown(document.querySelector('[cmdk-root]')!, { key: 'Enter' });
+    expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'high');
+  });
+
+  it('opens levels above the selector without starting a chat or replacing the model list', async () => {
+    const user = userEvent.setup();
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
+    fireEvent.change(search, { target: { value: 'Opus' } });
+    await user.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+    const high = within(screen.getByRole('group', { name: 'Thinking level' })).getByRole('option', { name: /High/ });
+    expect(high).toHaveAttribute('aria-current', 'true');
+    expect(high).toHaveTextContent('Recommended');
+    expect(high).toHaveClass('min-h-8', '[@media(pointer:coarse)]:min-h-[44px]');
+    expect(high).not.toHaveClass('min-h-[44px]');
+    expect(high.closest('[data-side]')).toHaveAttribute('data-side', 'top');
+    expect(search).toHaveValue('Opus');
+    expect(screen.getByRole('option', { name: /Opus/ })).toBeInTheDocument();
+    expect(screen.getAllByText('Claude Code')).toHaveLength(1); // Only the agent back row remains.
+    expect(screen.queryByText('A chat keeps its model and thinking level.')).toBeNull();
+    expect(screen.queryByText(/Press → to pick its thinking level/)).toBeNull();
+    expect(onNewChat).not.toHaveBeenCalled();
+  });
+
+  it('updates the row without starting, remembers the choice after remount, and starts on the row click', async () => {
+    const { onNewChat, view } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
+    expect(screen.getByPlaceholderText('Search Claude Code models…')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Thinking level')).toBeNull());
+    view.unmount();
+
+    const reopened = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+    expect(screen.getByRole('option', { name: 'Low' })).toHaveAttribute('aria-current', 'true');
+    fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
+    fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(reopened.onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+  });
+
+  it.each(['ArrowRight', ' '])('opens with %j, navigates levels, selects without starting, and returns with Esc', async key => {
+    const user = userEvent.setup();
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
+    const row = screen.getByRole('option', { name: /Opus/ });
+    await waitFor(() => expect(row).toHaveAttribute('aria-selected', 'true'));
+    search.focus();
+    await user.keyboard(key === ' ' ? ' ' : '{ArrowRight}');
+    const high = within(screen.getByRole('group', { name: 'Thinking level' })).getByRole('option', { name: /High/ });
+    expect(high).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getByRole('option', { name: 'Low' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowDown}{ArrowUp}{Enter}');
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
+    await waitFor(() => expect(search).toHaveFocus());
+    expect(row).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('option', { name: 'Low' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowDown}{Escape}');
+    await waitFor(() => expect(search).toHaveFocus());
+    expect(row).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{Enter}');
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+  });
+
+  it('keeps model ↑/↓ navigation and Enter while giving each model its own level', async () => {
+    const user = userEvent.setup();
+    const { onNewChat } = openMenu({ agentModels: { ...effortModels, models: [
+      effortModels.models[0], { ...effortModels.models[0], id: 'sonnet', name: 'Sonnet' },
+    ] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Low' }));
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus());
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('option', { name: /Sonnet/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Sonnet' })).toHaveTextContent('High');
+    await user.keyboard('{ArrowUp}{Enter}');
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+  });
+
+  it('shows Codex descriptions and sentence-case option names', () => {
+    openMenu({ agentModels: { ...effortModels, agent: 'codex', models: [{ id: 'sol', name: 'Sol', thoughtLevel: {
+      configId: 'reasoning_effort', name: 'Effort', currentValue: 'high', options: [
+        { value: 'high', name: 'High', description: 'Greater reasoning effort.' },
+        { value: 'xhigh', name: 'Extra high', description: 'The most reasoning effort.' },
+      ],
+    } }] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a thinking level for Sol' }));
+    expect(screen.getByRole('option', { name: /Extra high/ })).toHaveTextContent('The most reasoning effort.');
+    expect(within(screen.getByRole('group', { name: 'Thinking level' })).getByRole('option', { name: /^High/ })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('falls back to the recommendation if a remembered level is no longer offered', () => {
+    localStorage.setItem('astrid.app.modelThoughtSelections.claude-code', JSON.stringify({ opus: 'removed' }));
+    openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('High');
+  });
+
+  it('defaults to the reported Default row without a recommendation', () => {
+    const { onNewChat } = openMenu({ agentModels: { ...effortModels, models: [{ id: 'opus', name: 'Opus', thoughtLevel: {
+      configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'default', name: 'Default' }, { value: 'high', name: 'High' }],
+    } }] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'default');
+  });
+
+  it.each(['hermes', 'astrid', 'codex'] as const)('shows no selector for %s models without known levels', agent => {
+    const { onNewChat } = openMenu({ agentModels: { agent, loading: false, models: [
+      { id: 'a', name: 'Model A' },
+      { id: 'b', name: 'Model B', thoughtLevel: { configId: 'effort', name: 'Effort', currentValue: 'high', options: [] } },
+    ] } });
+    fireEvent.click(screen.getByRole('button', { name: `Choose a ${LOCAL_AGENT_TABLE[agent].name} model` }));
+    expect(screen.queryByRole('button', { name: /Choose a thinking level/ })).toBeNull();
+    fireEvent.click(screen.getByRole('option', { name: 'Model A' }));
+    expect(onNewChat).toHaveBeenCalledWith(agent, 'a');
   });
 });

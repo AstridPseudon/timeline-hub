@@ -33,14 +33,13 @@ const COUNT_BUCKETS = new Set(['0', '1-10', '11-100', '101-1000', '1001-10000', 
 const BROWSERS = new Set(['chrome', 'edge', 'firefox', 'safari', 'other']);
 const VERSION_TOKEN = /^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}(?:-[0-9A-Za-z.-]{1,32})?$/;
 const REVISION_TOKEN = /^[A-Za-z0-9._-]{1,64}$/;
-const EXTENSION_ID_TOKEN = /^(?:haus\.astrid\.[a-z0-9.-]{1,100}|haus\.astrid-runaway-timeline)$/;
+const EXTENSION_ID_TOKEN = /^haus\.astrid\.[a-z0-9.-]{1,100}$/;
 
 // This is deliberately an allowlist of the reviewed production namespace. It
 // prevents an arbitrary extension from becoming a dashboard dimension.
 export const REVIEWED_EXTENSION_IDS = new Set([
   'haus.astrid.scene-phase-markers',
   'haus.astrid.transcript-lane',
-  'haus.astrid-runaway-timeline',
   'haus.astrid.live-scenes',
   'haus.astrid.creative-lab.pulse-map',
   'haus.astrid.creative-lab.soundtrack-cartographer',

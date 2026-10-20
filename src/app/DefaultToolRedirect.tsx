@@ -2,10 +2,8 @@ import { Navigate } from 'react-router-dom';
 
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { useUserUIState } from '@/shared/hooks/useUserUIState';
-import { isToolEligible } from '@/shared/lib/tooling/toolEligibility';
 import { toolsUIManifest } from '@/shared/lib/tooling/toolManifest';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
-import { AppEnv, type AppEnvValue } from '@/types/env';
 
 const FALLBACK_TOOL_ID = TOOL_IDS.VIDEO_EDITOR;
 
@@ -14,20 +12,12 @@ export function DefaultToolRedirect() {
     toolId: FALLBACK_TOOL_ID,
   });
 
-  let env = import.meta.env.VITE_APP_ENV?.toLowerCase() || AppEnv.WEB;
-  if (env === 'production' || env === 'prod') env = AppEnv.WEB;
-  const currentEnv = env as AppEnvValue;
-
   if (isLoadingDefaultTool) {
     return <AstridLoading />;
   }
 
   const selectedTool = toolsUIManifest.find((tool) => tool.id === defaultTool.toolId);
-  const resolvedToolId = selectedTool && isToolEligible(selectedTool, {
-    currentEnv,
-    isCloudGenerationEnabled: true,
-    isLoadingGenerationMethods: false,
-  })
+  const resolvedToolId = selectedTool
     ? selectedTool.id
     : FALLBACK_TOOL_ID;
 

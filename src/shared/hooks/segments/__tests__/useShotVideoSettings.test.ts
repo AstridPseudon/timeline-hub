@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { waitFor } from '@testing-library/react';
+
 import { renderHookWithProviders } from '@/test/test-utils';
 
 const mockSingle = vi.fn();
@@ -14,10 +14,6 @@ vi.mock('@/integrations/supabase/client', () => ({
       })),
     })),
   }),
-}));
-
-vi.mock('@/app/runtime/dataAuthority.ts', () => ({
-  isDeferredCloudDataAuthority: mockIsDeferredCloudDataAuthority,
 }));
 
 vi.mock('@/shared/lib/settingsMigration', () => ({
@@ -38,7 +34,6 @@ import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeErro
 describe('useShotVideoSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsDeferredCloudDataAuthority.mockReturnValue(true);
   });
 
   it('returns null data when shotId is null', () => {
@@ -48,42 +43,9 @@ describe('useShotVideoSettings', () => {
   });
 
   it('does not start a Supabase read in Astrid authority', () => {
-    mockIsDeferredCloudDataAuthority.mockReturnValue(false);
     const { result } = renderHookWithProviders(() => useShotVideoSettings('shot-1'));
     expect(result.current.isLoading).toBe(false);
     expect(mockSingle).not.toHaveBeenCalled();
-  });
-
-  it('fetches settings when shotId is provided', async () => {
-    mockSingle.mockResolvedValue({
-      data: {
-        settings: {
-          'travel-between-images': { numFrames: 25, prompt: 'test' },
-        },
-      },
-      error: null,
-    });
-
-    const { result } = renderHookWithProviders(() => useShotVideoSettings('shot-1'));
-
-    await waitFor(() => {
-      expect(result.current.data).toBeDefined();
-    });
-  });
-
-  it('surfaces query errors consistently', async () => {
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: { message: 'Not found' },
-    });
-
-    const { result } = renderHookWithProviders(() => useShotVideoSettings('shot-1'));
-
-    await waitFor(() => {
-      expect(result.current.error).toBeTruthy();
-    });
-    expect(result.current.data).toBeUndefined();
-    expect(normalizeAndPresentError).toHaveBeenCalledTimes(1);
   });
 
   it('provides refetch function', () => {

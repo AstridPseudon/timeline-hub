@@ -17,7 +17,6 @@ const commonEnv = {
   ...process.env,
   ASTRID_CHECKOUT: '/Users/hannahomalley/Documents/Codex/astrid/.otto/sources/astrid-landing-source-v1',
   ASTRID_PUBLIC_CHECKOUT: '/Users/hannahomalley/Documents/Codex/astrid/.otto/sources/astrid-public-source-v1',
-  VITE_APP_ENV: 'WEB',
   VITE_DISABLE_REMOTE_FONTS: '1',
 };
 
@@ -378,7 +377,6 @@ try {
       ASTRID_CHECKOUT: commonEnv.ASTRID_CHECKOUT,
       ASTRID_PUBLIC_CHECKOUT: commonEnv.ASTRID_PUBLIC_CHECKOUT,
       PLAYWRIGHT_BROWSERS_PATH: commonEnv.PLAYWRIGHT_BROWSERS_PATH ?? null,
-      VITE_APP_ENV: commonEnv.VITE_APP_ENV,
       VITE_DISABLE_REMOTE_FONTS: commonEnv.VITE_DISABLE_REMOTE_FONTS,
     },
     exitCode: server.exitCode,

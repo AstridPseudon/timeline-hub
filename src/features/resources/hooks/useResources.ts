@@ -11,14 +11,7 @@ import type { VideoMetadata } from '@/shared/lib/media/videoUploader';
 import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { resourceQueryKeys } from '@/shared/lib/queryKeys/resources';
 import type { ParameterSchema } from '@/tools/video-editor';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
-import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 
-function canReadCloudResources(): boolean {
-    return isDeferredCloudDataAuthority() && !hasRuntimeDocumentIdentity(
-        typeof window === 'undefined' ? '' : window.location.search,
-    );
-}
 
 export interface PhaseConfigMetadata {
     name: string;
@@ -447,7 +440,7 @@ export const useDeleteResource = () => {
 
 /** Fetch all public LoRAs with metadata extracted */
 export const usePublicLoras = () => {
-    const query = useListPublicResources('lora', { enabled: isDeferredCloudDataAuthority() });
+    const query = useListPublicResources('lora', { enabled: false });
     const data = useMemo(
         () => (query.data || []).map(r => r.metadata || {}) as LoraModel[],
         [query.data]
@@ -457,7 +450,7 @@ export const usePublicLoras = () => {
 
 /** Fetch all public style references with metadata extracted */
 export const usePublicStyleReferences = () => {
-    const query = useListPublicResources('style-reference', { enabled: canReadCloudResources() });
+    const query = useListPublicResources('style-reference', { enabled: false });
     const data = useMemo(
         () => (query.data || []).map(r => r.metadata || {}) as StyleReferenceMetadata[],
         [query.data]
@@ -467,7 +460,7 @@ export const usePublicStyleReferences = () => {
 
 /** Fetch current user's style references with metadata extracted */
 export const useMyStyleReferences = () => {
-    const query = useListResources('style-reference', { enabled: canReadCloudResources() });
+    const query = useListResources('style-reference', { enabled: false });
     const data = useMemo(
         () => (query.data || []).map(r => r.metadata || {}) as StyleReferenceMetadata[],
         [query.data]

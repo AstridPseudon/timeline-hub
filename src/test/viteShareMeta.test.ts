@@ -24,7 +24,7 @@ describe("share-card meta", () => {
   });
 
   it("serves the Vision card for /vision in dev", () => {
-    const html = createShareMetaPlugin(ORIGIN).transformIndexHtml(indexHtml, { originalUrl: "/vision?sky-review", server: {} });
+    const html = createShareMetaPlugin(ORIGIN).transformIndexHtml(indexHtml, { originalUrl: "/vision?source=review", server: {} });
 
     expect(html).toContain("<title>Vision &amp; Issues · Astrid</title>");
     expect(metaContent(html, "og:image")).toBe(`${ORIGIN}/astrid-share-vision.png`);

@@ -22,14 +22,14 @@ setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY });
 // A <video poster> is fetched in the video's own CORS mode, so a gateway poster only carries Origin when the video says so.
 describe('HoverScrubVideo with gateway media', () => {
   it('asks for CORS when only the poster is a gateway URL, even before the video has a src', () => {
-    const poster = `${GATEWAY}/api/runtime/v1/objects/p/content`;
+    const poster = `${GATEWAY}/api/runtime/v1/objects/p`;
     const video = render(<HoverScrubVideo src="" poster={poster} />).container.querySelector('video');
     expect(video?.getAttribute('crossorigin')).toBe('anonymous');
     expect(video?.getAttribute('poster')).toBe(poster);
   });
 
   it('asks for CORS for a gateway video, and leaves other media without the attribute', () => {
-    const gateway = render(<HoverScrubVideo src={`${GATEWAY}/api/runtime/v1/objects/v/content`} />);
+    const gateway = render(<HoverScrubVideo src={`${GATEWAY}/api/runtime/v1/objects/v`} />);
     expect(gateway.container.querySelector('video')?.getAttribute('crossorigin')).toBe('anonymous');
     const other = render(<HoverScrubVideo src="https://example.com/video.mp4" poster="https://example.com/poster.jpg" />);
     expect(other.container.querySelector('video')?.hasAttribute('crossorigin')).toBe(false);

@@ -3,8 +3,7 @@ SHELL := /bin/sh
 PUBLIC_VITE_ENV := \
 	VITE_SUPABASE_URL=https://example.supabase.co \
 	VITE_SUPABASE_ANON_KEY=dummy-anon-key \
-	VITE_API_TARGET_URL=https://example.com \
-	VITE_APP_ENV=web
+	VITE_API_TARGET_URL=https://example.com
 
 .PHONY: help install-hooks dockerfile-check build-context-check build docker-build deploy-check quality test extensions-check extensions-production-smoke slot-first-unit slot-first-edge slot-first-db slot-first-e2e slot-first-health slot-first-schema-drift slot-first-test-fixture-legacy slot-first-audit release-check ci
 
@@ -52,7 +51,6 @@ docker-build:
 		--build-arg VITE_SUPABASE_URL=https://example.supabase.co \
 		--build-arg VITE_SUPABASE_ANON_KEY=dummy-anon-key \
 		--build-arg VITE_API_TARGET_URL=https://example.com \
-		--build-arg VITE_APP_ENV=web \
 		.
 
 # Real Railway-equivalent build (Dockerfile + npm ci + vite build). Run before

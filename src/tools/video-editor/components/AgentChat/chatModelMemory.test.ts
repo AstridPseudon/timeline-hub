@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel } from './chatModelMemory.ts';
+import { readAgentModels, readChatModels, rememberAgentModels, rememberChatModel, readModelThoughtLevels, rememberModelThoughtLevel, readModelThoughtSelections, rememberModelThoughtSelection } from './chatModelMemory.ts';
 
 afterEach(() => localStorage.clear());
 
@@ -23,5 +23,38 @@ describe('chatModelMemory', () => {
     rememberAgentModels('codex', [{ id: 'gpt-6-sol', name: '6 Sol', description: 'Workhorse' }, { id: 'gpt-6-luna', name: '6 Luna' }]);
     expect(readAgentModels('codex')).toEqual([{ id: 'gpt-6-sol', name: '6 Sol', description: 'Workhorse' }, { id: 'gpt-6-luna', name: '6 Luna', description: null }]);
     expect(readAgentModels('claude-code')).toEqual([]);
+  });
+
+  it('keeps levels per agent and model, clears removed support and ignores damaged storage', () => {
+    const level = { configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'high', name: 'High' }], recommendedValue: 'high' };
+    rememberModelThoughtLevel('claude-code', 'opus', level);
+    rememberModelThoughtLevel('claude-code', 'sonnet');
+    expect(readModelThoughtLevels('claude-code')).toEqual({ opus: level, sonnet: null });
+    expect(readModelThoughtLevels('codex')).toEqual({});
+    rememberModelThoughtLevel('claude-code', 'opus');
+    expect(readModelThoughtLevels('claude-code').opus).toBeNull();
+    localStorage.setItem('astrid.app.modelThoughtLevels.astrid', '{"bad":42}');
+    expect(readModelThoughtLevels('astrid')).toEqual({});
+  });
+
+  it('remembers explicit choices per agent and model independently of session reports', () => {
+    rememberModelThoughtSelection('claude-code', 'opus', 'low');
+    rememberModelThoughtSelection('claude-code', 'sonnet', 'high');
+    rememberModelThoughtSelection('codex', 'opus', 'xhigh');
+    rememberModelThoughtLevel('claude-code', 'opus', {
+      configId: 'effort', name: 'Effort', currentValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }],
+    });
+    expect(readModelThoughtSelections('claude-code')).toEqual({ opus: 'low', sonnet: 'high' });
+    expect(readModelThoughtSelections('codex')).toEqual({ opus: 'xhigh' });
+    expect(readModelThoughtSelections('astrid')).toEqual({});
+  });
+
+  it('ignores damaged selection storage', () => {
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '{');
+    expect(readModelThoughtSelections('codex')).toEqual({});
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '[]');
+    expect(readModelThoughtSelections('codex')).toEqual({});
+    localStorage.setItem('astrid.app.modelThoughtSelections.codex', '{"sol":"high","broken":42}');
+    expect(readModelThoughtSelections('codex')).toEqual({ sol: 'high' });
   });
 });

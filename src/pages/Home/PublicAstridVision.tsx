@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { PublicAstridSocialLinks } from './PublicAstridSocialLinks.tsx';
-import { PublicAstridSky, PublicAstridSkyReview, usePublicAstridSkyControls, wantsPublicAstridSkyReview } from './PublicAstridSky.tsx';
+import { PublicAstridSky, usePublicAstridSkyControls } from './PublicAstridSky.tsx';
 import type { PublicAstridSkySession } from './publicAstridSkySession';
 import { usePublicAstridSkySession } from './usePublicAstridSkySession';
 import { followInPage, REPOSITORY_URL } from './publicAstridLinks';
@@ -334,8 +334,6 @@ export function PublicAstridVision({ onGoHome, environment: suppliedEnvironment,
   const skyControls = usePublicAstridSkyControls(skySession, visible);
   const palette = skyControls.palette;
   const pageRef = useScrollReveal(visible, reducedMotion);
-  // With ?sky-review, the same sky controls as the home page, to check the sky behind this page's text.
-  const [skyReview] = useState(wantsPublicAstridSkyReview);
   useLayoutEffect(() => {
     if (!visible) return undefined;
     return skySession.registerPaletteTarget(pageRef.current, 'vision');
@@ -390,7 +388,6 @@ export function PublicAstridVision({ onGoHome, environment: suppliedEnvironment,
         reducedMotion={reducedMotion}
         quietBehind={VISION_QUIET_TEXT}
       />}
-      {skyReview && visible && <PublicAstridSkyReview session={skySession} active={visible} />}
       <header className="astrid-vision-bar">
         <a className="astrid-vision-brand" href="/home" aria-label="Astrid home" onClick={(event) => followInPage(event, onGoHome)}>
           <img src="/astrid-mink-provisional.webp" alt="" />
