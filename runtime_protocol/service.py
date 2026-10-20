@@ -3161,12 +3161,14 @@ class RuntimeService:
             raise ValidationError("metadata must be an object")
         shot_id = str(body.get("shot_id") or new_id())
         existing = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
-        if existing is not None and existing["project_id"] == project["id"]:
-            self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        if existing is not None and existing["project_id"] != project["id"]:
+            raise NotFoundError("shot not found")
         request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
         replay = self._command_replay("shot.create", project["id"], idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        if existing is not None:
+            self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         if existing is not None:
             raise ConflictError("shot already exists", details={"shot_id": shot_id})
         timestamp = now()
@@ -3187,10 +3189,11 @@ class RuntimeService:
         expected = self._expected_version(body)
         action = "update" if archived is None else "archive" if archived else "recover"
         request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        self._require_project_shot_scope(project["id"], shot_id)
         replay = self._command_replay(f"shot.{action}", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         row = self.store.conn.execute(
             "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
         ).fetchone()
@@ -3222,12 +3225,12 @@ class RuntimeService:
         metadata = body.get("metadata", {})
         if not isinstance(metadata, dict):
             raise ValidationError("metadata must be an object")
-        self.get_project_shot(project["id"], shot_id)
+        self._require_project_shot_scope(project["id"], shot_id)
         request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         replay = self._command_replay("shot.item.add", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         if not self.store.conn.execute(
             "SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project["id"], media_id)
         ).fetchone():
@@ -3271,10 +3274,11 @@ class RuntimeService:
         project = self.store.get_project(project_id)
         expected = self._expected_version(body)
         request_hash = hashlib.sha256(canonical_json({"item_id": item_id, **body}).encode()).hexdigest()
-        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        self._require_project_shot_scope(project["id"], shot_id)
         replay = self._command_replay("shot.item.remove", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         row = self.store.conn.execute(
             "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
         ).fetchone()
@@ -3302,10 +3306,11 @@ class RuntimeService:
         if not isinstance(item_ids, list) or any(not isinstance(item_id, str) for item_id in item_ids) or len(item_ids) != len(set(item_ids)):
             raise ValidationError("items must be a unique complete permutation")
         request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
-        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        self._require_project_shot_scope(project["id"], shot_id)
         replay = self._command_replay("shot.item.reorder", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
         row = self.store.conn.execute(
             "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
         ).fetchone()
@@ -3492,6 +3497,13 @@ class RuntimeService:
         identity = {"schema": TEXT_BINDING_IDENTITY_SCHEMA, "project_id": str(project_id), "shot_id": str(shot_id), "kind": kind, "slot": slot}
         return str(uuid.uuid5(uuid.NAMESPACE_URL, canonical_json(identity)))
 
+    def _require_project_shot_scope(self, project_id, shot_id):
+        """Reject a foreign catalog row without disclosing its existence."""
+        row = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (shot_id,)).fetchone()
+        if row is not None and row["project_id"] != project_id:
+            raise NotFoundError("shot not found")
+        return row
+
     def _require_unplaced_project_shot(self, project_id, shot_id, *, operation="direct text binding"):
         """Return a project-library shot that is absent from accepted film history."""
         shot = self.store.conn.execute(
@@ -3505,6 +3517,21 @@ class RuntimeService:
             "WHERE occurrence.project_id=? AND occurrence.shot_id=? AND parent.project_id=? LIMIT 1",
             (project_id, shot_id, project_id),
         ).fetchone()
+        legacy = self.store.conn.execute(
+            "SELECT 1 FROM timeline_shots shot "
+            "JOIN timelines timeline ON timeline.id=shot.timeline_id "
+            "WHERE shot.id=? AND timeline.project_id=? "
+            "UNION ALL "
+            "SELECT 1 FROM timeline_revisions revision "
+            "JOIN timelines timeline ON timeline.id=revision.timeline_id "
+            "JOIN json_each(revision.shots_json) snapshot "
+            "WHERE timeline.project_id=? "
+            "AND (json_extract(snapshot.value, '$.id')=? OR json_extract(snapshot.value, '$.shot_id')=?) "
+            "LIMIT 1",
+            (shot_id, project_id, project_id, shot_id, shot_id),
+        ).fetchone()
+        if legacy is not None:
+            placed = legacy
         if placed is not None:
             details = {
                 "reason": "shot_in_film_history",
