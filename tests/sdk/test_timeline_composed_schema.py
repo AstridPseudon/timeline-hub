@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator, ValidationError
 
+from astrid.sdk.timeline._materialization import SOURCE_BOUND_OPERATIONS
 from astrid.sdk.timeline.commands import _SCHEMA, operations
 
 
@@ -28,18 +29,20 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
-    conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
+    conditions = {condition['if']['properties']['op']['const']: condition['then'].get('anyOf', [condition['then']])[0]['properties']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     assert set(conditions) == set(operations()) | {'timeline.inverse', 'timeline.restore'}
     for op, operation in operations().items():
         ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
         assert operation.parameters['additionalProperties'] is False
-        validator.validate(commands[op])
-        unknown = copy.deepcopy(commands[op])
-        unknown['args']['unsupported_argument'] = None
-        with pytest.raises(ValidationError):
-            validator.validate(unknown)
+        for version in (('1', '2') if op in SOURCE_BOUND_OPERATIONS else ('1',)):
+            command = {**commands[op], 'version': version}
+            validator.validate(command)
+            unknown = copy.deepcopy(command)
+            unknown['args']['unsupported_argument'] = None
+            with pytest.raises(ValidationError):
+                validator.validate(unknown)
 
 
 @pytest.mark.parametrize('ref', ['shot:raw-shot', 'occurrence:raw-occurrence',

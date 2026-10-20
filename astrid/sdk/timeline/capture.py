@@ -8,6 +8,7 @@ from fractions import Fraction
 from astrid.core.timeline.duration import clip_start_frame, clip_timeline_duration
 
 from ._command_state import CommandError
+from ._materialization import capture_version
 
 MOVE_INTENT = {"ripple": "none", "anchor": "fixed", "position": "absolute"}
 CLIP_FIELDS = ('id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
@@ -240,13 +241,13 @@ def move_intent(select):
 
 def capture_move(bundle, select, on):
     """Capture on the original authored bundle; `on` is absolute global seconds."""
-    return _capture(bundle, {'schema_version': 1, 'op': 'clip.move', 'version': '1',
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.move', 'version': capture_version(bundle, select),
                              'select': select, 'args': {'on': on}, 'intent': move_intent(select)})
 
 
 def capture_track_create(bundle, owner, row):
     """Small structural proof: caller allocates the row ID once, before sending."""
-    return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': '1',
+    return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': capture_version(bundle, owner),
                              'select': owner, 'args': {'row': copy.deepcopy(row)}, 'intent': {}})
 
 

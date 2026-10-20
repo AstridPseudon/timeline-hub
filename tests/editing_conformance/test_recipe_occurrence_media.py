@@ -101,18 +101,18 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
 
 @pytest.mark.parametrize(('operation', 'fixture_path'), [
     ('add', FIXTURE), ('swap', FIXTURE), ('swap', MATERIALIZATION_FIXTURE),
-    # Restore the historical v1 capture through an explicit capture-version
-    # policy; current placement owner/order guards must remain authoritative.
-    pytest.param('add', MATERIALIZATION_FIXTURE, marks=pytest.mark.xfail(
-        strict=True, reason='historical carrier add needs the legacy placement capture version')),
 ])
 def test_portable_goldens(operation, fixture_path):
     golden = load_fixture(fixture_path)[operation]
     document, bundle, command, verified = captured(
         operation, 'video', capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
+    assert command == {**golden['commands'][0], 'version': command['version']}
+    expected_records = copy.deepcopy(golden['records'])
+    expected_records[0]['command']['version'] = command['version']
     plan = execute(bundle, [command], verified_media=verified)
-    assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
-                      'records': plan.records, 'output': document_from_bundle(plan.bundle)}
+    assert golden['input'] == document and golden['verified_media'] == verified
+    assert plan.records == expected_records
+    assert document_from_bundle(plan.bundle) == golden['output']
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
@@ -285,3 +285,42 @@ def test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary
     plain['args']['row']['at'] = 7.001
     with pytest.raises(CommandError, match='exceeds occurrence'):
         execute(bundle, [plain], verified_media=verified)
+
+
+def test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept():
+    # legacy-capture-counterexamples.json: historical_carrier_add.original_command.
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['add']
+    command = copy.deepcopy(golden['commands'][0])
+    before = copy.deepcopy(command)
+    bundle = bundle_from_document(golden['input'])
+    original = copy.deepcopy(bundle)
+    assert (len(command['reads']), len(command['selections'])) == (25, 3)
+    for version in ('1', '2'):
+        supplied = {**command, 'version': version}
+        with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
+            execute(bundle, [supplied], verified_media=golden['verified_media'])
+    assert command == before and bundle == original
+
+
+def test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds():
+    # One-to-one replacement for test_portable_goldens[add-fixture_path3].
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['add']
+    document, bundle, command, verified = captured('add', 'video')
+    assert document == golden['input'] and command['version'] == '2'
+    assert command['args'] == golden['commands'][0]['args']
+    assert (len(command['reads']), len(command['selections'])) == (27, 4)
+    original = copy.deepcopy(command)
+    plan = execute(bundle, [command], verified_media=verified)
+    assert document_from_bundle(plan.bundle) == golden['output']
+    assert plan.commands == [original] and command == original
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == bundle
+
+
+def test_private_carrier_swap_v1_refuses_without_refreshing_original_claims():
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['swap']
+    command = copy.deepcopy(golden['commands'][0])
+    original = copy.deepcopy(command)
+    with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
+        execute(bundle_from_document(golden['input']), [command], verified_media=golden['verified_media'])
+    assert command == original

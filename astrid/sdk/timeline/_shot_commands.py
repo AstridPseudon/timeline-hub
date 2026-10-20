@@ -5,6 +5,7 @@ import copy
 import re
 
 from ._command_state import CommandError
+from ._materialization import capture_version
 
 SHOT_INTENT = {'ownership': 'occurrence'}
 
@@ -46,5 +47,5 @@ def capture_shot_set(bundle, select, *, values=None, clear=()):
     from .commands import execute
 
     args = {'values': copy.deepcopy({} if values is None else values), 'clear': list(clear)}
-    return execute(bundle, [{'schema_version': 1, 'op': 'shot.set', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'shot.set', 'version': capture_version(bundle, select),
                              'select': select, 'args': args, 'intent': dict(SHOT_INTENT)}]).commands[0]

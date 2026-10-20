@@ -17,6 +17,7 @@ from astrid.core.timeline.duration import clip_start_frame
 
 from ._command_state import CommandError
 from ._delete_commands import _unreferenced
+from ._materialization import capture_version
 from ._media_inputs import _verified
 from .capture import _duration, move, move_intent, number, occurrence_start, rate
 from .native_occurrence_media_commands import _exclusive, _owner, add_media
@@ -57,7 +58,7 @@ def capture_placement(bundle, owner, clip_id, on, *, ownership):
     owner is parent or occurrence:<raw ID>; clip_id is the raw child ID.
     ownership must explicitly match that scope. Shared authoring, pooling,
     automatic positioning, track changes and media selection are unsupported.
-    The result is placement.move v1, with its authoritative capture.
+    The result pins the operation version and its authoritative capture.
     """
     if ownership == 'shared':
         raise CommandError('shared placement is unsupported', kind='unsupported_ownership')
@@ -73,7 +74,7 @@ def capture_placement(bundle, owner, clip_id, on, *, ownership):
     from .commands import execute
 
     ref = owner + '/clip:' + clip_id
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.move', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'placement.move', 'version': capture_version(bundle, ref),
                              'select': ref, 'args': {'on': on},
                              'intent': move_intent(ref)}]).commands[0]
 
@@ -138,7 +139,7 @@ def capture_placement_create(bundle, owner, clip_id, media, on, hold, *, ownersh
     args = {'id': _raw_clip_id(clip_id), 'on': on, 'hold': hold, 'media': copy.deepcopy(media)}
     if consumed:
         args['consumed'] = list(consumed)
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.create', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'placement.create', 'version': capture_version(bundle, owner),
                              'select': owner, 'args': args, 'intent': dict(PLACEMENT_INTENT)}], verified_media=verified_media).commands[0]
 
 
@@ -146,6 +147,6 @@ def capture_placement_unplace(bundle, owner, clip_id, *, ownership):
     from .commands import execute
 
     _explicit_occurrence(owner, ownership)
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.unplace', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'placement.unplace', 'version': capture_version(bundle, owner),
                              'select': owner + '/clip:' + _raw_clip_id(clip_id), 'args': {},
                              'intent': dict(PLACEMENT_INTENT)}]).commands[0]

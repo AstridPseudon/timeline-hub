@@ -816,22 +816,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/TrackSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/TrackSetArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/track:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/TrackSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -846,27 +868,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
-              },
-              "args": {
-                "$ref": "#/$defs/ShotSetArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -881,22 +930,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetParamsArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetParamsArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetParamsArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -911,22 +982,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetElementArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetElementArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetElementArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1003,37 +1096,74 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipMoveArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ripple": {
-                    "const": "none"
+                  "version": {
+                    "const": "1"
                   },
-                  "anchor": {
-                    "const": "fixed"
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
                   },
-                  "position": {
-                    "const": "absolute"
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
                   },
-                  "ownership": {
-                    "const": "occurrence"
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   }
-                },
-                "required": [],
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1077,27 +1207,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceAddMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceAddMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceAddMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1112,27 +1269,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1147,37 +1331,74 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipMoveArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ripple": {
-                    "const": "none"
+                  "version": {
+                    "const": "1"
                   },
-                  "anchor": {
-                    "const": "fixed"
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
                   },
-                  "position": {
-                    "const": "absolute"
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
                   },
-                  "ownership": {
-                    "const": "occurrence"
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
                   }
-                },
-                "required": [],
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipMoveArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ripple": {
+                        "const": "none"
+                      },
+                      "anchor": {
+                        "const": "fixed"
+                      },
+                      "position": {
+                        "const": "absolute"
+                      },
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1192,27 +1413,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/PlacementCreateArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementCreateArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementCreateArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1227,27 +1475,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/PlacementUnplaceArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementUnplaceArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/PlacementUnplaceArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1262,27 +1537,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^occurrence:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ShotPoolArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "occurrence"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotPoolArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ShotPoolArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1316,22 +1618,44 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/ClipSetArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/ClipSetArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {

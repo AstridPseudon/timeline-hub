@@ -42,14 +42,18 @@ def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo(fixture
         original = bundle_from_document(case['input'], capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
         before = copy.deepcopy(original)
         command = capture_placement(original, **case['request'])
-        assert command == case['command']
+        assert command == {**case['command'], 'version': command['version']}
+        expected_records = copy.deepcopy(case['records'])
+        if command['version'] == '2':
+            # Explicit v2 equivalent of the retired private carrier v1 golden.
+            expected_records[0]['command']['version'] = '2'
         ordinary = execute(original, [capture_move(original, command['select'], command['args']['on'])])
         validate_command(command)
         assert json.loads(json.dumps(command, allow_nan=False)) == command
         plan = execute(original, [command])
         assert plan.bundle == ordinary.bundle
         assert plan.records[0]['writes'] == ordinary.records[0]['writes']
-        assert plan.records == case['records']
+        assert plan.records == expected_records
         assert document_from_bundle(plan.bundle) == case['output']
         assert replay(plan, original).records == plan.records
         assert original == before
@@ -295,7 +299,7 @@ def test_equal_owner_membership_allows_rebase_but_aba_blocks_inverse():
 def test_schema_and_authoritative_recorder_refuse_forged_claims_and_intent():
     original = bundle_from_document(placement_document())
     command = capture(original, 'occurrence:occ-a', on=12.012)
-    for field, replacement in [('intent', {'ownership': 'shared'}), ('version', '2'),
+    for field, replacement in [('intent', {'ownership': 'shared'}), ('version', '3'),
                                ('args', {'on': 12.012, 'timeline_frame': 360}),
                                ('created', ['occurrence:occ-a/clip:made-up']),
                                ('selections', []), ('reads', []), ('bindings', {})]:
@@ -329,7 +333,6 @@ def test_existing_move_limits_are_enforced_through_placement(damage):
     assert original == before
 
 
-@pytest.mark.xfail(strict=True, reason='NEW old sealed submission needs an explicit legacy capture version')
 def test_legacy_sealed_new_submission_preserves_original_claims(monkeypatch):
     from tests.sdk.test_timeline_commit_provider import DetachedRealm, runtime_abi
 
@@ -339,5 +342,18 @@ def test_legacy_sealed_new_submission_preserves_original_claims(monkeypatch):
     realm = DetachedRealm(case['input'])
     accepted = realm.call([copy.deepcopy(case['command'])])
     assert accepted['data']['commands'] == [case['command']]
+    assert accepted['data']['id_map'] == {}
     assert accepted['data']['canonical_document'] == case['output']
     assert realm.entries[-1]['records']['commands'] == case['records']
+
+
+def test_private_carrier_placement_v1_refuses_without_refreshing_original_claims():
+    # Retired private carrier: public S2 v1 (FIXTURE) is separately preserved.
+    for case in load_fixture(MATERIALIZATION_FIXTURE)['cases']:
+        if not case['command']['select'].startswith('occurrence:'):
+            continue
+        command = copy.deepcopy(case['command'])
+        original = copy.deepcopy(command)
+        with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
+            execute(bundle_from_document(case['input']), [command])
+        assert command == original

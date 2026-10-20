@@ -72,8 +72,11 @@ def test_exact_encoded_child_change_captures_its_physical_allocation(monkeypatch
     registered = commands.operations()
     monkeypatch.setattr(commands, 'operations', lambda: {
         **registered, 'test.encoded-child': commands.Operation({'type': 'object'}, write, {})})
+    from astrid.sdk.timeline import _materialization
+    monkeypatch.setattr(_materialization, 'SOURCE_BOUND_OPERATIONS',
+                        _materialization.SOURCE_BOUND_OPERATIONS | {'test.encoded-child'})
     plan = commands.execute(original, [{'schema_version': 1, 'op': 'test.encoded-child',
-                                      'version': '1', 'select': ref, 'args': {}}])
+                                      'version': '2', 'select': ref, 'args': {}}])
     output = document_from_bundle(plan.bundle)
     assert plan.id_map == allocation(original, output)[0]
     assert plan.id_map[owner] == owner[5:]

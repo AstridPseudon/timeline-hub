@@ -33,6 +33,13 @@ def ordinary_schema():
 
     previous = published('runtime-0.2.13')
     candidate = copy.deepcopy(_SCHEMA)
+    for clause in candidate['$defs']['EditCommand']['allOf']:
+        if 'anyOf' in clause['then']:
+            old, new = clause['then']['anyOf']
+            expected = copy.deepcopy(old)
+            expected['properties']['version']['const'] = '2'
+            assert new == expected
+            clause['then'] = old
     for name in ('ScopedId', 'EntityRef', 'AnchorIdentity', 'TargetKey'):
         old = previous['$defs'][name]['pattern']
         assert candidate['$defs'][name]['pattern'].startswith(f'(?:{old})|(?:^')
@@ -108,12 +115,9 @@ def test_existing_argument_narrowing_still_fails(name):
 
 
 def test_reversing_only_item_unions_is_byte_identical_to_approved_s2():
-    path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
-    raw = path.read_bytes()
-    for name, definition in ordinary_schema()['$defs'].items():
-        if definition != _SCHEMA['$defs'][name]:
-            raw = raw.replace(json.dumps(_SCHEMA['$defs'][name]['pattern']).encode(),
-                              json.dumps(definition['pattern']).encode(), 1)
+    from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema_bytes
+
+    raw = ordinary_schema_bytes()
     assert hashlib.sha256(raw).hexdigest() == (
         'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')
 

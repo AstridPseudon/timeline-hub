@@ -16,15 +16,31 @@ from tests.sdk.test_timeline_schema_superset import FIXTURES, baseline
 REFERENCES = ('ScopedId', 'EntityRef', 'AnchorIdentity', 'TargetKey')
 
 
-def test_reversing_only_the_four_patterns_recovers_exact_ordinary_schema_bytes():
+def ordinary_schema_bytes():
+    """Reverse only the exact additive branches; preserve original formatting."""
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
     raw = path.read_bytes()
+    for clause in _SCHEMA['$defs']['EditCommand']['allOf']:
+        if 'anyOf' in clause['then']:
+            old, new = clause['then']['anyOf']
+            expected = copy.deepcopy(old)
+            expected['properties']['version']['const'] = '2'
+            assert new == expected
+            wrapped = json.dumps(clause['then'], indent=2).replace('\n', '\n          ').encode()
+            original = json.dumps(old, indent=2).replace('\n', '\n          ').encode()
+            assert raw.count(wrapped) == 1
+            raw = raw.replace(wrapped, original, 1)
     for name in REFERENCES:
         old = baseline('runtime-0.2.13')['$defs'][name]['pattern']
         new = _SCHEMA['$defs'][name]['pattern']
         assert new.startswith(f'(?:{old})|(?:^') and new.endswith('$)')
         assert raw.count(json.dumps(new).encode()) == 1
         raw = raw.replace(json.dumps(new).encode(), json.dumps(old).encode(), 1)
+    return raw
+
+
+def test_reversing_only_the_four_patterns_recovers_exact_ordinary_schema_bytes():
+    raw = ordinary_schema_bytes()
     assert raw == (FIXTURES / 'runtime-0.2.13.json').read_bytes()
     assert hashlib.sha256(raw).hexdigest() == (
         'a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef')

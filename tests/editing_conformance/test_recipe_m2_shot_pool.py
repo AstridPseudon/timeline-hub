@@ -48,9 +48,9 @@ def pool(bundle):
     return State(bundle).config(OWNER)['app']['astrid']['pool']
 
 
-def build(name):
+def build(name, *, capture_sources=True):
     document, _, [a, b, c], verified = pins()
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     if name == 'add-first':
         return document, bundle, 'add', a, verified
     for pin in (a, b, c)[:3 if name == 'remove-middle' else 1]:
@@ -65,7 +65,7 @@ CASES = ['add-first', 'add-second', 'remove-middle']
 
 @pytest.mark.parametrize('name', CASES)
 def test_portable_goldens(name):
-    _, bundle, action, pin, verified = build(name)
+    _, bundle, action, pin, verified = build(name, capture_sources=False)
     command, plan = step(bundle, action, pin, verified)
     assert load_fixture(FIXTURE)[name] == {
         'commands': [command], 'records': plan.records, 'pool': pool(plan.bundle)}
@@ -184,7 +184,7 @@ def test_args_are_closed_and_the_selector_must_be_an_explicit_occurrence():
     assert not list(validator.iter_errors(plain))
     for changes in ({'args': {**plain['args'], 'extra': 1}}, {'args': {'action': 'add'}},
                     {'args': {**plain['args'], 'action': 'toggle'}}, {'select': 'parent'},
-                    {'select': OWNER + '/clip:clip-a'}, {'version': '2'}, {'intent': {'ownership': 'shared'}}):
+                    {'select': OWNER + '/clip:clip-a'}, {'version': '3'}, {'intent': {'ownership': 'shared'}}):
         assert list(validator.iter_errors({**plain, **changes}))
         with pytest.raises(CommandError):
             validate_command({**plain, **changes})
@@ -294,7 +294,10 @@ def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one(kind):
 
 def test_promotion_and_keep_as_pooled_round_trip_through_the_provider():
     _, pooled, a, verified = pooled_case()
-    realm = MediaRealm(document_from_bundle(pooled), verified)
+    # Complete fixture publication before authoring the source-bound request.
+    document = document_from_bundle(pooled)
+    pooled = bundle_from_document(document)
+    realm = MediaRealm(document, verified)
     promoted = realm.call(auto_place_shared(pooled, OWNER, 'placed', a, ownership='occurrence',
                                             verified_media=verified)['commands'])
     placed = bundle_from_document(promoted['data']['canonical_document'])

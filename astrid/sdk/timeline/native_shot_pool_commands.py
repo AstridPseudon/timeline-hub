@@ -14,6 +14,7 @@ from __future__ import annotations
 import copy
 
 from ._command_state import ABSENT, CommandError
+from ._materialization import capture_version
 from ._media_inputs import _verified
 from .native_occurrence_media_commands import _registry
 from .native_placement_commands import _exclusive, _explicit_occurrence
@@ -74,6 +75,6 @@ def capture_shot_pool(bundle, owner, action, media, *, ownership, verified_media
     from .commands import execute
 
     _explicit_occurrence(owner, ownership)
-    return execute(bundle, [{'schema_version': 1, 'op': 'shot.pool', 'version': '1', 'select': owner,
+    return execute(bundle, [{'schema_version': 1, 'op': 'shot.pool', 'version': capture_version(bundle, owner), 'select': owner,
                              'args': {'action': action, 'media': copy.deepcopy(media)},
                              'intent': dict(POOL_INTENT)}], verified_media=verified_media).commands[0]

@@ -92,7 +92,10 @@ def validate_command(command):
     errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
     if errors:
         raise CommandError(errors[0].message)
-    if command['version'] != '1':
+    from ._materialization import SOURCE_BOUND_OPERATIONS
+
+    if command['version'] != '1' and not (
+            command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS):
         raise CommandError("unsupported operation version", kind='unsupported_version')
     if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
@@ -169,6 +172,13 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
+        if command['version'] == '2':
+            if '_source_closure' not in candidate['source_mapping']:
+                raise CommandError('source-bound v2 requires the verified original closure', kind='capture_mismatch')
+            fields = {'resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'}
+            if fields.intersection(command) and not fields.issubset(command):
+                raise CommandError('incomplete v2 capture; keep the draft and explicitly re-author it',
+                                   kind='capture_mismatch')
         if command['op'] == 'timeline.inverse':
             from ._materialization import consume
             candidate = consume(candidate, inverse_records, closures=closures)
@@ -201,7 +211,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.compile_inputs()
         ctx.compile_mirrors()
         from ._materialization import capture, verify_sources
-        capture(ctx, inverse_records if command['op'] == 'timeline.inverse' else materializations)
+        # Complete public S2 v1 captures retain their original record format.
+        # Inverses carry original facts from authenticated accepted history.
+        if command['version'] == '2' or command['op'] == 'timeline.inverse':
+            capture(ctx, inverse_records if command['op'] == 'timeline.inverse' else materializations)
         verify_sources(ctx.state, [ctx.record])
         record = ctx.finish(capture=True)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
@@ -219,7 +232,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 matches = all(ctx.command_input.matches(*address(key, command.get('resolved', [])), expected)
                               for key, expected in command[field].items())
             if not matches:
-                raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+                raise CommandError(
+                    f"submitted {field} does not match authoritative v{command['version']} capture; "
+                    "keep the draft and explicitly re-author it against the current timeline",
+                    kind='capture_mismatch')
         # Keep original claims and metadata after they have been verified.
         record['command'].update({k: v for k, v in command.items() if k != 'intent'})
         records.append(record)

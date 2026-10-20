@@ -5,6 +5,26 @@ import copy
 
 from ._command_state import CommandError, State, equal, item_identity, root_identity
 
+SOURCE_BOUND_OPERATIONS = frozenset({
+    'clip.move', 'placement.move', 'track.create', 'clip.set',
+    'clip.set-element', 'track.set',
+    'shot.set', 'clip.set-params', 'occurrence.add-media', 'occurrence.swap-media',
+    'placement.create', 'placement.unplace', 'shot.pool',
+})
+
+
+def capture_version(bundle, select):
+    """Choose the source-bound format only while authoring a virtual shot slot."""
+    if '_source_closure' in bundle['source_mapping'] and isinstance(select, str):
+        owner = select.split('/', 1)[0]
+        for row in bundle['placements']:
+            if owner == 'occurrence:' + row['occurrence_id']:
+                shot = row['shot_id']
+                source = bundle['source_mapping']['shots'].get(shot)
+                if source is not None and shot != source['shot_id']:
+                    return '2'
+    return '1'
+
 
 def allocations(bundle):
     """Return only virtual aggregates whose authored content will materialize."""
