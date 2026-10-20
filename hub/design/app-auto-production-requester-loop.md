@@ -6,13 +6,13 @@ Status: production call path installed; targeted unit evidence passes. **Automat
 
 - Worktree: `/home/user/work/wt/app-m2-auto-production-requester-loop`, branch `tl/app-m2-auto-production-requester-loop`.
 - Base commit: `13c0934b46277524c4b6947f1803947f0184f0af`; base tree: `b80b1dfb15523160b6501e3b4b8e5c1b70dfe0cf`.
-- Prospective complete source tree, including both new files: `7c66978606c36a5b3a0d217c650640063a31ff67`.
+- Prospective complete source tree, including both new files: `9e8e48c32808d052f2ee79e7fbac65029993af9c`.
 - Computed without writing Git objects/index/refs; the tree-hash calculation was checked against the base tree. `workers/app-m2-auto-production-requester-loop/notes/source-tree.json` contains each changed/new file's SHA256. The harness still owns the commit.
 - No integration worktree, shared dependency, branch/ref or production wire schema was changed.
 
 ## Installed production callers
 
-1. `clientLocalAdapter.ts:createEditorImagePlacementHost` now exposes the already-bound Runtime operation alongside the unchanged local task client. `VideoEditorProvider.tsx` installs `subscribeRuntimeTaskUpdates` and acquires a reference to the existing shared Runtime task-event poller. Closing the task pane therefore does not remove completion discovery. Cached task data only wakes the continuation; authoritative reads still use the bound operation.
+1. `clientLocalAdapter.ts:createEditorImagePlacementHost` now exposes the already-bound Runtime operation alongside the unchanged local task client. `VideoEditorProvider.tsx` installs `subscribeRuntimeTaskUpdates` and acquires a reference to the existing shared Runtime task-event poller. Admission awaits the existing `readyRuntimeTaskEvents` cursor barrier and rechecks retirement afterward, closing the fast-settlement startup gap. Closing the task pane therefore does not remove completion discovery. Cached task data only wakes the continuation; authoritative reads still use the bound operation.
 2. `commitSession.ts:99` instantiates the requester through the 30-line `sessionPlacement.ts` adapter. Its installed capture callback invokes the existing **`readNativePlacementCapture`** API, retaining the native returned authored bundle plus the original display closure in the normal session payload. It restricts this production caller to occurrence images. The commands-only `createNativePlacementCapture` API remains unchanged for its existing direct consumers.
 3. The durable admission reservation calls the session's `reserved` callback only after the original reservation transaction and lifecycle checks. This wakes the same pump. The requester resumes the claimed outbox at `commitSession.ts:175`, using saved task body/key/locator, managed outputs, exact five-field media selection, verified-media lookup, original approval/owner/lane/anchor/read closure and reserved IDs. It does not load today's basis to recapture commands.
 4. Requester `deferCommit: true` is additive; existing direct requester request/resume/recover contracts still behave as before. In the editor it stops after linking the captured intent. `commitSession.ts:192` dispatches it through the **existing same outbox and normal command pump**, with the unchanged commit envelope. Placement transmission uses the original operation's exact-byte `transmit`; ordinary commands retain `options.send(request, key)`.
@@ -35,19 +35,41 @@ Run from the worktree above. The private configuration preserves the repository'
 
 ```sh
 W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-auto-production-requester-loop
-node --import "$W/notes/preload.mjs" node_modules/vitest/vitest.mjs run   --config "$W/notes/vitest.config.mjs" --configLoader=runner --no-cache   src/tools/video-editor/commands/commitSession.placement.test.ts   src/tools/video-editor/commands/commitSession.test.ts   src/tools/video-editor/commands/commitOutbox.test.ts   src/tools/video-editor/commands/nativePlacementCapture.test.ts   src/tools/video-editor/commands/placementRequester.test.ts   src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx   src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx   src/integrations/runtime/clientLocalAdapter.test.ts   src/integrations/runtime/operationHost.test.ts   src/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.test.tsx   src/tools/video-editor/components/EditorImageGeneration.test.tsx   src/tools/video-editor/contexts/VideoEditorProvider.test.tsx
+node --import "$W/notes/preload.mjs" node_modules/vitest/vitest.mjs run \
+  --config "$W/notes/vitest.config.mjs" --configLoader=runner --no-cache \
+  src/tools/video-editor/commands/commitSession.placement.test.ts \
+  src/tools/video-editor/commands/commitSession.test.ts \
+  src/tools/video-editor/commands/commitOutbox.test.ts \
+  src/tools/video-editor/commands/nativePlacementCapture.test.ts \
+  src/tools/video-editor/commands/placementRequester.test.ts \
+  src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx \
+  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx \
+  src/integrations/runtime/clientLocalAdapter.test.ts \
+  src/integrations/runtime/operationHost.test.ts \
+  src/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.test.tsx \
+  src/tools/video-editor/components/EditorImageGeneration.test.tsx \
+  src/tools/video-editor/contexts/VideoEditorProvider.test.tsx
 ```
 
-**PASS: 12 files, 425 tests, exit 0, 44.25s.** Log: `workers/app-m2-auto-production-requester-loop/notes/targeted-final.log`.
+**PASS: 12 files, 426 tests, exit 0, 56.61s.** Log: `workers/app-m2-auto-production-requester-loop/notes/targeted-final.log`.
 
 ```sh
-node_modules/.bin/eslint --no-cache   src/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts   src/integrations/runtime/clientLocalAdapter.ts   src/tools/video-editor/commands/commitSession.ts   src/tools/video-editor/commands/sessionPlacement.ts   src/tools/video-editor/commands/commitSession.placement.test.ts   src/tools/video-editor/commands/editorImagePlacement.ts   src/tools/video-editor/commands/placementRequester.ts   src/tools/video-editor/commands/nativePlacementCapture.ts   src/tools/video-editor/contexts/VideoEditorProvider.tsx
+node_modules/.bin/eslint --no-cache \
+  src/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts \
+  src/integrations/runtime/clientLocalAdapter.ts \
+  src/tools/video-editor/commands/commitSession.ts \
+  src/tools/video-editor/commands/sessionPlacement.ts \
+  src/tools/video-editor/commands/commitSession.placement.test.ts \
+  src/tools/video-editor/commands/editorImagePlacement.ts \
+  src/tools/video-editor/commands/placementRequester.ts \
+  src/tools/video-editor/commands/nativePlacementCapture.ts \
+  src/tools/video-editor/contexts/VideoEditorProvider.tsx
 git diff --check
 ```
 
 **Both PASS, exit 0.** ESLint log: `workers/app-m2-auto-production-requester-loop/notes/lint-final.log`.
 
-The 8 added tests exercise production RuntimeOperationHost negotiation and exact-byte transport, local admission adapter, the installed Runtime task-cache subscription, native verified capture, the claimed session pump, normal acceptance projection/Undo registration, lost admission ACK and commit ACK across repeated reopenings, original capture after a newer initial head, retired task/verified-media callbacks with teardown before network completion, cancelled/failed tasks, and a true clash retained across retry/reopen. Existing ingress tests were neither rewritten nor weakened.
+The 9 added tests exercise production RuntimeOperationHost negotiation and exact-byte transport, local admission adapter, the installed Runtime task-cache subscription, native verified capture, the claimed session pump, normal acceptance projection/Undo registration, lost admission ACK and commit ACK across repeated reopenings, original capture after a newer initial head, retired task/verified-media callbacks with teardown before network completion, cancelled/failed tasks, a true clash retained across retry/reopen, and the startup-cursor barrier with retirement during its wait. Existing ingress tests were neither rewritten nor weakened.
 
 **Evidence boundary:** these are production-call-path unit tests. HTTP Runtime responses/acceptance are fabricated; fake IndexedDB is not browser crash-durability proof. Native parity/requester tests likewise remain unit evidence. No full suite, project tsc, build, browser, socket, install or central test request was run.
 
