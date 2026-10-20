@@ -33,6 +33,8 @@ def test_current_canonical_schema_preserves_latest_ordinary_publication():
 @pytest.mark.parametrize('name', ['runtime-0.2.2', 'runtime-0.2.3'])
 def test_exact_unchanged_published_artifacts_pass(name):
     assert compatibility_errors(baseline(name), baseline(name)) == []
+    if name == 'runtime-0.2.2':
+        assert legacy_022_compatibility_errors(baseline(name), baseline(name)) == []
 
 
 def test_withdrawn_exact_10c_schema_reports_every_lost_definition_and_operation():
@@ -140,6 +142,16 @@ def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_revie
     assert compatibility_errors(previous, baseline())
 
 
+@pytest.mark.parametrize('check', [compatibility_errors, legacy_022_compatibility_errors])
+@pytest.mark.parametrize('side', ['previous', 'current'])
+def test_unknown_null_keyword_presence_requires_review(check, side):
+    previous = baseline('runtime-0.2.2')
+    current = copy.deepcopy(previous)
+    schema = previous if side == 'previous' else current
+    schema['$defs']['ID']['unrecognizedValidationKeyword'] = None
+    assert check(previous, current)
+
+
 def test_equivalent_refs_pass_but_unproductive_ref_cycles_require_review():
     current = baseline()
     current['$defs']['Alias'] = copy.deepcopy(current['$defs']['ClipMoveArgs'])
@@ -243,12 +255,14 @@ def test_normal_generation_refuses_actual_withdrawn_schema_before_any_write(tmp_
     assert file_bytes(tmp_path) == before
 
 
-def test_normal_generation_refuses_a_modified_floor_before_any_write(tmp_path):
+@pytest.mark.parametrize('name', ['runtime-0.2.2', 'runtime-0.2.3', 'agent-26ef2bbb'])
+@pytest.mark.parametrize('check', [False, True], ids=['regenerate', 'check'])
+def test_normal_generation_refuses_a_modified_floor_before_any_write(tmp_path, name, check):
     generator_checkout(tmp_path)
-    with (tmp_path / 'tests/fixtures/published-command-schemas/runtime-0.2.3.json').open('ab') as floor:
+    with (tmp_path / 'tests/fixtures/published-command-schemas' / (name + '.json')).open('ab') as floor:
         floor.write(b'\n')
     before = file_bytes(tmp_path)
-    result = run_generator(tmp_path, False)
+    result = run_generator(tmp_path, check)
     assert result.returncode != 0
     assert 'published command schema floor digest mismatch' in result.stderr
     assert file_bytes(tmp_path) == before
@@ -277,6 +291,88 @@ def test_legacy_regex_proof_does_not_hide_track_selection_narrowing():
                      if c['if']['properties']['op']['const'] == 'track.set')
     condition['then']['properties']['select']['pattern'] = '^parent/track:only$'
     assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+
+
+def retained_historical_branches():
+    current = baseline('agent-26ef2bbb')
+    for name in ('ScopedId', 'EntityRef', 'TargetKey', 'AnchorIdentity'):
+        old = current['$defs'][name]['pattern']
+        current['$defs'][name]['pattern'] = f'(?:{old})|(?:^future-id$)'
+    # The carrier versions these twelve operations while retaining the entire v1 clause.
+    for condition in current['$defs']['EditCommand']['allOf']:
+        if condition['if']['properties']['op']['const'] in {
+                'track.set', 'shot.set', 'clip.set-params', 'clip.set-element', 'clip.move',
+                'occurrence.add-media', 'occurrence.swap-media', 'placement.move',
+                'placement.create', 'placement.unplace', 'shot.pool', 'clip.set'}:
+            old = condition['then']
+            new = copy.deepcopy(old)
+            new['properties']['version']['const'] = '2'
+            condition['then'] = {'anyOf': [old, new]}
+    return current
+
+
+@pytest.mark.parametrize('name', ['runtime-0.2.2', 'runtime-0.2.3', 'runtime-0.2.10',
+                                 'agent-0a0ac7ba', 'agent-26ef2bbb'])
+def test_retained_historical_branches_preserve_each_complete_floor(name):
+    previous, current = baseline(name), retained_historical_branches()
+    before = copy.deepcopy((previous, current))
+    check = legacy_022_compatibility_errors if name == 'runtime-0.2.2' else compatibility_errors
+    assert check(previous, current) == []
+    assert (previous, current) == before
+
+
+@pytest.mark.parametrize('name', ['ScopedId', 'EntityRef', 'TargetKey', 'AnchorIdentity'])
+@pytest.mark.parametrize('change', ['remove', 'narrow', 'sibling'])
+def test_legacy_transitivity_requires_the_complete_historical_pattern(name, change):
+    current = retained_historical_branches()
+    node = current['$defs'][name]
+    if change == 'remove':
+        node['pattern'] = '^future-id$'
+    elif change == 'narrow':
+        old = baseline('agent-26ef2bbb')['$defs'][name]['pattern']
+        node['pattern'] = f'(?:{old.replace("(?:clip|track|asset)", "(?:track|asset)")})|(?:^future-id$)'
+    else:
+        node['maxLength'] = 1
+    assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+
+
+@pytest.mark.parametrize('change', ['remove', 'version', 'select', 'args', 'closed-args',
+                                  'sibling', 'inventory'])
+def test_legacy_transitivity_requires_the_complete_v1_operation(change):
+    current = retained_historical_branches()
+    condition = next(c for c in current['$defs']['EditCommand']['allOf']
+                     if c['if']['properties']['op']['const'] == 'track.set')
+    union = condition['then']
+    old = union['anyOf'][0]
+    if change == 'remove':
+        del union['anyOf'][0]
+    elif change == 'version':
+        old['properties']['version']['const'] = '2'
+    elif change == 'select':
+        old['properties']['select']['pattern'] = '^parent/track:only$'
+    elif change == 'args':
+        current['$defs']['NarrowTrackSetArgs'] = copy.deepcopy(current['$defs']['TrackSetArgs'])
+        current['$defs']['NarrowTrackSetArgs']['required'] = ['new_required_argument']
+        old['properties']['args'] = {'$ref': '#/$defs/NarrowTrackSetArgs'}
+    elif change == 'closed-args':
+        del current['$defs']['TrackSetArgs']['properties']['values']['properties']['label']
+    elif change == 'sibling':
+        union['unrecognizedValidationKeyword'] = None
+    else:
+        current['$defs']['EditCommand']['allOf'].remove(condition)
+    assert legacy_022_compatibility_errors(baseline('runtime-0.2.2'), current)
+
+
+def test_normal_generation_accepts_retained_historical_branches(tmp_path):
+    generator_checkout(tmp_path)
+    (tmp_path / 'contract/schemas/edit-command.json').write_text(
+        json.dumps(retained_historical_branches(), indent=2) + '\n')
+    result = run_generator(tmp_path, False)
+    assert result.returncode == 0, result.stdout + result.stderr
+    before = file_bytes(tmp_path)
+    result = run_generator(tmp_path, True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert file_bytes(tmp_path) == before
 
 
 @pytest.mark.parametrize('name', list(baseline('agent-0a0ac7ba')['$defs']))
