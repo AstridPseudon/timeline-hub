@@ -1705,10 +1705,28 @@ class RealmStore:
         if not isinstance(spec, dict):
             raise ValidationError("task spec must be an object")
         params = spec.get("params")
+        if isinstance(params, dict) and "canonical_revision" in params and "timeline_ref" not in params:
+            raise ValidationError("render canonical_revision requires timeline_ref")
         if not isinstance(params, dict) or "timeline_ref" not in params:
             return spec, supplied_input_object_ids, None
         frozen = json.loads(canonical_json(spec))
         params = frozen["params"]
+        historical = params.get("canonical_revision")
+        if "canonical_revision" in params:
+            fields = {"project_id", "timeline_id", "revision_id", "publication_id", "content_digest"}
+            if (not isinstance(historical, dict) or set(historical) != fields
+                    or any(not isinstance(value, str) or not value.strip() for value in historical.values())
+                    or re.fullmatch(r"sha256:[0-9a-f]{64}", historical["content_digest"]) is None):
+                raise ValidationError("render canonical_revision must be a closed five-field revision selector")
+
+        def revision_mismatch(field):
+            raise ConflictError("render revision does not match the selected publication",
+                                details={"reason": "render_revision_mismatch", "field": field})
+
+        def revision_integrity(dependency_id):
+            raise ConflictError("retained render revision input is missing or corrupt",
+                                details={"reason": "render_revision_integrity", "dependency_id": dependency_id})
+
         timeline_ref = params.get("timeline_ref")
         if not isinstance(timeline_ref, str) or not timeline_ref.strip():
             raise ValidationError("rendering.render timeline_ref must be a non-empty project-scoped selector")
@@ -1722,6 +1740,13 @@ class RealmStore:
             frozen["inputs"] = inputs
         if not isinstance(inputs, dict):
             raise ValidationError("rendering.render inputs must be an object")
+        if historical is not None:
+            context = frozen.get("authority_context")
+            if (any("timeline_snapshot_ref" in location for location in (frozen, params, inputs))
+                    or isinstance(context, dict) and any(key in context for key in (
+                        "filmstrip_snapshot", "input_snapshot", "capture_snapshot",
+                        "filmstrip_snapshot_ref", "input_snapshot_ref", "capture_snapshot_ref"))):
+                raise ValidationError("historical render snapshot provenance is Runtime-owned")
         for field, message in (
             ("timeline", "managed rendering does not accept a caller-supplied timeline path"),
             ("assets_registry", "managed rendering does not accept a caller-supplied assets registry path"),
@@ -1788,6 +1813,106 @@ class RealmStore:
                 "SELECT revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
                 (project_id, row["id"]),
             ).fetchone()
+        publication_id = None
+        if historical is not None:
+            from .errors import RuntimeErrorBase
+            from .timeline_commit import CommitRejected
+            from .timeline_commit_store import TimelineCommitStore
+            from .timeline_commit_validation import validate_commit_value
+
+            for field, actual in (("project_id", project_id), ("timeline_id", row["id"])):
+                if historical[field] != actual:
+                    revision_mismatch(field)
+            # Mutable expectations still guard CURRENT state on first admission.
+            # An exact retry retains the original admission's frozen expectations.
+            if replay_authority is None:
+                current = self.conn.execute(
+                    "SELECT payload_json FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
+                    (head["revision_id"] if head else None, project_id, row["id"]),
+                ).fetchone() if "canonical_occurrence_ids" in params else None
+                expectations = {
+                    "canonical_project_id": project_id,
+                    "canonical_parent_document_id": row["id"],
+                    "canonical_head_revision_id": head["revision_id"] if head else None,
+                    "canonical_occurrence_ids": [item.get("occurrence_id") for item in
+                        json.loads(current["payload_json"])["occurrences"]] if current else [],
+                }
+                for key, actual in expectations.items():
+                    if key in params and params[key] != actual:
+                        raise ConflictError(f"render {key} does not match the canonical timeline",
+                                            details={"expected": params[key], "actual": actual})
+            commits = TimelineCommitStore(self, validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"))
+            try:
+                entry = commits.history_entry(project_id, row["id"], historical["publication_id"])
+            except (CommitRejected, RuntimeErrorBase, KeyError, TypeError, ValueError):
+                revision_mismatch("publication_id")
+            if entry["revision_id"] != historical["revision_id"]:
+                selected = self.conn.execute(
+                    "SELECT content_digest FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
+                    (historical["revision_id"], project_id, row["id"]),
+                ).fetchone()
+                if selected is not None and selected["content_digest"] == historical["content_digest"]:
+                    revision_mismatch("publication_id")
+                revision_mismatch("revision_id")
+            accepted = entry["receipt"]["result"]
+            if entry["intent"] != "recorded" and (
+                    entry["receipt"]["command_kind"] != "parent_composition.publish"
+                    or accepted.get("project_id") != project_id or accepted.get("timeline_id") != row["id"]
+                    or accepted.get("parent_revision_id") != historical["revision_id"]
+                    or entry["receipt"]["event_ids"] != [str(accepted.get("event_id"))]):
+                revision_mismatch("publication_id")
+            accepted_document = accepted.get("canonical_document")
+            accepted_parent = accepted_document["parent_revision"] if accepted_document is not None else accepted
+            if accepted_parent["content_digest"] != historical["content_digest"]:
+                revision_mismatch("content_digest")
+            # Check bytes and project custody before loading the closure, which
+            # also verifies retained Document pins and all revision images.
+            manifest = accepted_document["dependency_manifest"] if accepted_document is not None else accepted["dependency_manifest"]
+            def verify_media(object_id):
+                bare = object_id.removeprefix("sha256:")
+                media = self.conn.execute(
+                    "SELECT o.size FROM objects o JOIN project_objects p ON p.digest=o.digest "
+                    "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, bare),
+                ).fetchone()
+                try:
+                    if (media is None or self._cas_size(bare) != media["size"] or self._cas_digest(bare) != bare):
+                        revision_integrity(object_id)
+                except (OSError, ValueError):
+                    revision_integrity(object_id)
+
+            for pin in manifest["media"]:
+                if pin["content_digest"] != pin["media_id"]:
+                    revision_integrity(pin["media_id"])
+                verify_media(pin["media_id"])
+            try:
+                retained = commits.revision_closure(project_id, row["id"], historical["revision_id"])
+                if (retained["parent_revision"]["content_digest"] != historical["content_digest"]
+                        or (accepted_document is not None and retained != accepted_document)):
+                    revision_integrity(historical["revision_id"])
+            except (CommitRejected, RuntimeErrorBase, KeyError, TypeError, ValueError, OSError):
+                revision_integrity(historical["revision_id"])
+            from .timeline_commit_inputs import (
+                PROJECT_PACK_KIND,
+                pack_snapshot_objects,
+                validate_pack_snapshot_objects,
+            )
+            for pin in retained["dependency_manifest"]["documents"]:
+                source = self.conn.execute(
+                    "SELECT c.content_json, b.kind FROM timeline_document_input_contents c "
+                    "JOIN timeline_document_input_bindings b ON b.content_digest=c.content_digest "
+                    "WHERE b.project_id=? AND b.document_id=? AND b.document_version=? AND b.content_digest=?",
+                    (project_id, pin["document_id"], pin["version"], pin["content_digest"]),
+                ).fetchone()
+                try:
+                    if source["kind"] == PROJECT_PACK_KIND:
+                        pack_content = json.loads(source["content_json"])
+                        validate_pack_snapshot_objects(self.conn, project_id, pack_content)
+                        for descriptor in pack_snapshot_objects(pack_content):
+                            verify_media(descriptor["object_id"])
+                except (RuntimeErrorBase, KeyError, TypeError, ValueError):
+                    revision_integrity(pin["document_id"])
+            publication_id = historical["publication_id"]
+            head = {"revision_id": historical["revision_id"]}
         parent = None
         seam_report = None
         seam_metadata = None
@@ -1823,7 +1948,7 @@ class RealmStore:
             "canonical_occurrence_ids": [item.get("occurrence_id") for item in occurrences],
         }
         for key, actual in expectations.items():
-            if key in params and params[key] != actual:
+            if historical is None and key in params and params[key] != actual:
                 raise ConflictError(f"render {key} does not match the canonical timeline", details={"expected": params[key], "actual": actual})
         if not isinstance(content, dict) or not isinstance(content.get("config"), dict) or not isinstance(content.get("registry"), dict):
             raise ValidationError("canonical timeline config and registry must be objects")
@@ -1920,7 +2045,15 @@ class RealmStore:
                     f"canonical render registry contains conflicting digests for media_id {media_id!r}"
                 )
             managed_media[media_id] = normalized
-        scene_objects = self._freeze_prepared_scene_objects(project_id, expanded_config, ordered_input_ids)
+        try:
+            scene_objects = self._freeze_prepared_scene_objects(project_id, expanded_config, ordered_input_ids)
+        except ConflictError as exc:
+            if historical is None:
+                raise
+            revision_integrity((exc.details or {}).get("object_id", historical["revision_id"]))
+        if historical is not None:
+            for object_id in ordered_input_ids:
+                verify_media(object_id)
         supplied = list(supplied_input_object_ids or [])
         if supplied:
             normalized_supplied = []
@@ -1943,9 +2076,11 @@ class RealmStore:
             )
         config_hash = hashlib.sha256(canonical_json(config).encode()).hexdigest()
         registry_hash = hashlib.sha256(canonical_json(registry).encode()).hexdigest()
-        expanded_config_hash = hashlib.sha256(canonical_json(expanded_config).encode()).hexdigest()
         materialized_registry_hash = hashlib.sha256(canonical_json(expanded_registry).encode()).hexdigest()
         event = self.conn.execute(
+            "SELECT id, event_hash FROM timeline_events WHERE timeline_id=? AND id=?",
+            (row["id"], entry["receipt"]["event_ids"][-1]),
+        ).fetchone() if historical is not None else self.conn.execute(
             "SELECT id, event_hash FROM timeline_events WHERE timeline_id=? ORDER BY id DESC LIMIT 1",
             (row["id"],),
         ).fetchone()
@@ -1974,6 +2109,8 @@ class RealmStore:
                 "scene_objects": scene_objects,
                 "visual_seam_report": seam_report,
             })
+        if publication_id is not None:
+            authority["publication_id"] = publication_id
         if replay_authority is not None:
             authority = copy.deepcopy(replay_authority)
             authority.pop("storage_estimate", None)
@@ -2235,6 +2372,13 @@ class RealmStore:
             spec["required_facts"] = normalize_execution_facts(spec["required_facts"], field="required_facts")
         with self._mutex, (self._transaction() if capability == "rendering.render" else nullcontext()):
             project_id = self._project(project)["id"] if project else None
+            from .timeline_commit_producer_checkpoint import complete_pending_render, validate_pending_render
+            checkpoint = validate_pending_render(self, project_id, capability, spec, idempotency_key,
+                                                 expected_effect, capability_digest, execution_request)
+
+            def finish(value):
+                return complete_pending_render(self, checkpoint, value, idempotency_key)
+
             if expected_effect is not None and expected_effect != {}:
                 # Key existence permits only read-only preparation. Persisted
                 # identity below must prove replay before any publication or
@@ -2264,8 +2408,13 @@ class RealmStore:
                     # through ordinary freezing; never infer a missing derived floor.
 
             render_admission = None
+            historical_admission = False
             if capability == "rendering.render":
                 admitted_spec = spec.get("spec") if isinstance(spec, dict) else None
+                params = admitted_spec.get("params") if isinstance(admitted_spec, dict) else None
+                historical_admission = isinstance(params, dict) and "canonical_revision" in params
+                if historical_admission and not idempotency_key:
+                    raise ValidationError("historical render admission requires an idempotency key")
                 admitted_spec, frozen_inputs, frozen_snapshot = self._freeze_managed_render_inputs(
                     project_id, admitted_spec, spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
                     replay_spec["spec"]["inputs"]["timeline_authority"] if replay_spec is not None else None,
@@ -2388,9 +2537,10 @@ class RealmStore:
                 if old is None and receipt is None:
                     if expected_effect is not None and expected_effect != {}:
                         self._settlement_effect_kind(expected_effect)
-                for snapshot, ref in publications:
-                    self._publish_spec_snapshot(snapshot, ref, project_id)
-                self._validate_spec_snapshot_refs(spec, project_id)
+                if not historical_admission:
+                    for snapshot, ref in publications:
+                        self._publish_spec_snapshot(snapshot, ref, project_id)
+                    self._validate_spec_snapshot_refs(spec, project_id)
                 if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
                     # The typed GEN publication plan is admitted against the task
                     # project before any durable task/run rows are created. Its
@@ -2405,7 +2555,21 @@ class RealmStore:
                         project_id=project_id,
                         input_object_ids=spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
                     )
-                self._validate_task_inputs(project_id, spec)
+                if historical_admission:
+                    # The Runtime-built snapshot is not published until every
+                    # admission check has passed. Its retained inputs already exist.
+                    input_spec = {**spec, "input_object_ids": frozen_inputs}
+                    self._validate_task_inputs(project_id, input_spec)
+                    if replay_spec is not None:
+                        try:
+                            self._validate_spec_snapshot_refs(spec, project_id)
+                        except (ConflictError, NotFoundError) as exc:
+                            raise ConflictError("retained render snapshot is missing or corrupt", details={
+                                "reason": "render_revision_integrity",
+                                "dependency_id": spec["spec"]["timeline_snapshot_ref"]["digest"],
+                            }) from exc
+                else:
+                    self._validate_task_inputs(project_id, spec)
                 if idempotency_key:
                     if receipt and receipt["txn_id"] is not None:
                         if receipt["request_hash"] == request_hash:
@@ -2413,7 +2577,7 @@ class RealmStore:
                                 old_task["status"] in {"queued", "running", "cancel_requested"}
                                 or (replay_spec is not None and old_task["status"] == "cancelled")
                             ):
-                                return self._task_result(old, old_task)
+                                return finish(self._task_result(old, old_task))
                             if old is None and receipt["primary_stream_id"]:
                                 attached_run = self.conn.execute("SELECT * FROM runs WHERE id=?", (receipt["primary_stream_id"],)).fetchone()
                                 attached_task = self.conn.execute("SELECT * FROM tasks WHERE run_id=?", (receipt["primary_stream_id"],)).fetchone()
@@ -2421,8 +2585,8 @@ class RealmStore:
                                     attached_task["status"] in {"queued", "running", "cancel_requested"}
                                     or (replay_spec is not None and attached_task["status"] == "cancelled")
                                 ):
-                                    return self._task_result(attached_run, attached_task)
-                            return command_result(receipt["result_json"], kind="task.create", created_at=receipt["created_at"], connection=self.conn)
+                                    return finish(self._task_result(attached_run, attached_task))
+                            return finish(command_result(receipt["result_json"], kind="task.create", created_at=receipt["created_at"], connection=self.conn))
                         if old is None:
                             raise ConflictError("idempotency key was already used with different input")
                         # A pre-correction receipt hashed the nested legacy
@@ -2434,7 +2598,7 @@ class RealmStore:
                             "UPDATE command_idempotency SET request_hash=?, result_json=? WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
                             (request_hash, canonical_json(result), aggregate_id, idempotency_key),
                         )
-                        return result
+                        return finish(result)
                 if old:
                     result = self._task_result(old, old_task)
                     # An absent or legacy partial receipt needs the complete
@@ -2454,7 +2618,7 @@ class RealmStore:
                         result, project_id=project_id or "unscoped", event_ids=(),
                         primary_stream_id=old["id"], resulting_stream_seq=stream_seq,
                     )
-                    return result
+                    return finish(result)
                 if receipt:
                     raise ConflictError("persisted task admission identity is unavailable")
                 toolchain = None
@@ -2511,7 +2675,7 @@ class RealmStore:
                                 project_id=project_id or "unscoped", event_ids=(),
                                 primary_stream_id=candidate["id"], resulting_stream_seq=stream_seq,
                             )
-                            return result
+                            return finish(result)
                 registered = self.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
                 if registered:
                     registered_digest = registered["definition_digest"]
@@ -2563,6 +2727,10 @@ class RealmStore:
                 if predecessors:
                     self._validate_continuation_predecessors(predecessors, project_id)
                     waiting_reason = "waiting_for_dependencies"
+                if historical_admission:
+                    for snapshot, ref in publications:
+                        self._publish_spec_snapshot(snapshot, ref, project_id)
+                    self._validate_spec_snapshot_refs(spec, project_id)
                 retention_days = configured_spec_retention_days()
                 retention_cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat(timespec="milliseconds")
                 if self.conn.execute(
@@ -2620,7 +2788,7 @@ class RealmStore:
                         result, project_id=project_id or "unscoped", event_ids=event_ids,
                         primary_stream_id=run_id, resulting_stream_seq=len(event_ids), created_at=timestamp,
                     )
-                return result
+                return finish(result)
 
     @staticmethod
     def _continuation_predecessors(spec):
