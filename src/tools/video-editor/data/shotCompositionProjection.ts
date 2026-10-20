@@ -1,4 +1,5 @@
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
+import { cloneTimelineExtras } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type {
   ResolvedAssetRegistryEntry,
   ResolvedTimelineConfig,
@@ -565,6 +566,7 @@ export function projectCanonicalComposition(
   const output = outputBaseConfig?.output ?? { resolution: '1920x1080', fps: 30, file: `timeline-${composition.parentDocumentId}.mp4` };
   const baseApp = record(outputBaseConfig?.app) ?? {};
   const configBase: ResolvedTimelineConfig = {
+    ...(outputBaseConfig ? cloneTimelineExtras(outputBaseConfig) : {}),
     output,
     tracks: tracksFor(composition, outputBaseConfig, outputOccurrences),
     clips: projectedClips,
