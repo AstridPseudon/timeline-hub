@@ -92,13 +92,9 @@ export function withDefaultTimelineOutput(
   };
 
   return {
+    ...config,
     output,
     clips: config.clips ?? [],
     tracks: config.tracks ?? DEFAULT_VIDEO_TRACKS.map((track) => ({ ...track })),
-    ...('theme' in config ? { theme: config.theme } : {}),
-    ...('theme_overrides' in config ? { theme_overrides: config.theme_overrides } : {}),
-    ...('generation_defaults' in config ? { generation_defaults: config.generation_defaults } : {}),
-    ...('pinnedShotGroups' in config ? { pinnedShotGroups: config.pinnedShotGroups } : {}),
-    ...('app' in config ? { app: config.app } : {}),
   };
 }
