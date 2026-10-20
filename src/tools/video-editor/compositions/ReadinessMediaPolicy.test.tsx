@@ -4,10 +4,11 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {ReadinessImage} from '@astrid/packs/rendering/shared/readiness-image';
 import {ReadinessVideo} from './ReadinessVideo.tsx';
 
-const state = vi.hoisted(() => ({environment: {isRendering: false, isClientSideRendering: false}, imageProps: {} as any,
+const state = vi.hoisted(() => ({environment: {isRendering: false, isClientSideRendering: false}, timelineFrame: 0, imageProps: {} as any,
   videoProps: {} as any, unmounted: vi.fn(), throwVideo: false}));
 vi.mock('remotion', () => ({
   useRemotionEnvironment: () => state.environment,
+  Internals: {useTimelinePosition: () => state.timelineFrame},
   Img: (props: any) => {state.imageProps = props; return <img alt="owned still" src={props.src} onError={props.onError} />;},
 }));
 vi.mock('@remotion/media', () => ({Video: (props: any) => {
@@ -17,7 +18,7 @@ vi.mock('@remotion/media', () => ({Video: (props: any) => {
   return <div data-testid="native-video"><button onClick={() => props.fallbackOffthreadVideoProps?.onError?.(new Error('404'))}>Fail native fallback</button></div>;
 }}));
 beforeEach(() => {vi.useFakeTimers();});
-afterEach(() => {cleanup(); state.environment = {isRendering: false, isClientSideRendering: false}; state.throwVideo = false; vi.clearAllMocks(); vi.useRealTimers();});
+afterEach(() => {cleanup(); state.environment = {isRendering: false, isClientSideRendering: false}; state.timelineFrame = 0; state.throwVideo = false; vi.clearAllMocks(); vi.useRealTimers();});
 
 describe('owned media preview and export policy', () => {
   it('reports readiness only after a decoded frame, resets it on source change, and forwards the callback', () => {
@@ -32,6 +33,24 @@ describe('owned media preview and export policy', () => {
     expect(view.container.querySelector('[data-preview-decoded-frame="true"]')).toBeNull();
     fireEvent.click(screen.getByText('Fail native fallback'));
     expect(view.container.querySelector('[data-preview-decoded-frame="true"]')).toBeNull();
+  });
+
+  it('reports the player frame that was current when the decoder drew, and clears it with the frame on a failure', () => {
+    const view = render(<ReadinessVideo clipId="video" src="/movie.mp4" />);
+    const presented = () => view.container.querySelector('[data-preview-media-src="/movie.mp4"]')?.getAttribute('data-preview-presented-frame') ?? null;
+    expect(presented()).toBeNull();
+    state.timelineFrame = 90;
+    view.rerender(<ReadinessVideo clipId="video" src="/movie.mp4" />);
+    expect(presented(), 'the playhead moving alone presents nothing').toBeNull();
+    act(() => state.videoProps.onVideoFrame({}));
+    expect(presented()).toBe('90');
+    state.timelineFrame = 150;
+    view.rerender(<ReadinessVideo clipId="video" src="/movie.mp4" />);
+    expect(presented(), 'the frame on screen stays 90 until the decoder draws the next one').toBe('90');
+    act(() => state.videoProps.onVideoFrame({}));
+    expect(presented()).toBe('150');
+    fireEvent.click(screen.getByText('Fail native fallback'));
+    expect(view.container.querySelector('[data-preview-presented-frame]')).toBeNull();
   });
 
   it.each(['isRendering', 'isClientSideRendering'] as const)('retains strict native image/video errors during %s', (environmentKey) => {
