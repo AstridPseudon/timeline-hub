@@ -138,10 +138,12 @@ class TimelineSession:
         identity = _connection(client)
         project_id, timeline_id, _ = resolve_ids(project, timeline, client=client)
         scope = {**identity, "project_id": project_id, "timeline_id": timeline_id}
+        explicit_outbox = outbox_path is not None
         if outbox_path is None:
             name = hashlib.sha256(request_bytes(scope)).hexdigest() + ".json"
             outbox_path = resolve_runtime_data_root() / "timeline-outbox" / name
         session = cls(client, Outbox(outbox_path), identity, project_id, timeline_id)
+        session._explicit_outbox = explicit_outbox
         while True:
             with session.outbox.locked():
                 state = session.outbox.read()
@@ -305,8 +307,13 @@ class TimelineSession:
 
     def flush(self, *, idempotency_key=None, dry_run=False, via="python"):
         """Send/retry exactly one prefix; leave newer local commands untouched."""
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
         with self.outbox.locked():
             state = self._state()
+            if prepare is not None:
+                prepare(state)
             flight = state["flight"]
             if flight is None:
                 if not state["pending"]:

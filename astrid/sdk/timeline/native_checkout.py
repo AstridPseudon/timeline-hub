@@ -99,6 +99,41 @@ class AttachedCheckout(Checkout):
         self._read_pending()
         return result
 
+    def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
+        """Publish one captured parent move from an explicitly selected outbox.
+
+        The outbox path is this draft's recovery identity. Reattach that same
+        session after a restart; detached checkouts never discover its intent.
+        Other attached verbs continue to use ``flush()``.
+        """
+        if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
+                or (client is not None and client is not self.session.client)):
+            _held()
+        self._unchanged_preview()
+
+        def prepare(state):
+            self._unchanged_basis(state)
+            commands = state['pending']
+            if (len(commands) != 1 or commands[0]['op'] != 'clip.move'
+                    or not commands[0]['select'].startswith('parent/clip:')):
+                _held()
+            # Rationale and request are sealed in one existing outbox write.
+            # A retry may omit the message, but cannot replace the original.
+            rationale = state.get('rationale', '')
+            if state['flight'] is not None:
+                if message and message != rationale:
+                    raise TimelineEditError('in-flight publish rationale is immutable; retry its original message')
+            elif message:
+                state['rationale'] = message
+
+        result = self.session._flush(idempotency_key=idempotency_key, prepare=prepare)
+        self._read_pending()
+        data = result['data']
+        return {'old_head': data['previous_revision_id'], 'new_head': data['accepted_revision_id'],
+                'structure': 'changed', 'receipt': result['receipt'],
+                'idempotency_key': result['receipt']['idempotency_key'],
+                'narration_pinned': [], 'transcripts': [], 'message': data.get('rationale', '')}
+
     def undo(self, publications, **options):
         """Reverse accepted publications through the session's guarded inverse."""
         self._unchanged_preview()
@@ -106,7 +141,7 @@ class AttachedCheckout(Checkout):
         self._read_pending()
         return result
 
-    save = publish = edit = step = redo = discard = adopt = _held
+    save = edit = step = redo = discard = adopt = _held
     cut = cut_picture = voice = sequence = pin_narration = _held
     add = add_cut = set_cut_note = ripple_delete = close_gap = insert_time = _held
     insert_line = remove_line = apply_script = fill_slot = fill_standins = _held
