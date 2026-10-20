@@ -51,7 +51,7 @@ tee -i "$tmp/core.out" <"$tmp/progress" &
 progress_pid=$!
 # This only resolves manifest pins and hands off; the package owns every step.
 if "$uv" run --no-project --python "$PYTHON_VERSION" python -u -I -c '
-import json, os, re, shutil, subprocess, sys
+import json, os, re, subprocess, sys
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
@@ -79,26 +79,10 @@ def git_requirement(name):
     # uv reads the committed Git tree, never the mutable checkout.
     return "git+" + path.as_uri() + "@" + sha
 uv = os.environ["ASTRID_INSTALL_UV"]
-agent = pins["agent"]
 agent_requirement = git_requirement("agent")
-lock = Path(manifest).with_name("runtime.lock")
-if "repo" in agent:
-    repo = agent["repo"]
-    if repo.startswith("file://"):
-        parsed = urlsplit(repo)
-        repo = url2pathname(parsed.path)
-    lock_result = subprocess.run(["git", "-C", repo, "show", agent["sha"] + ":requirements/runtime.lock"], stdout=subprocess.PIPE, check=True)
-    lock.write_bytes(lock_result.stdout)
-else:
-    url = "https://raw.githubusercontent.com/banodoco/astrid-agent/" + agent["sha"] + "/requirements/runtime.lock"
-    downloader = shutil.which("curl") or shutil.which("wget")
-    if not downloader: raise SystemExit("curl or wget is required to fetch the pinned dependency lock")
-    download = [downloader, "--fail", "--silent", "--show-error", "--location", url, "--output", str(lock)] if downloader.endswith("curl") else [downloader, "-q", url, "-O", str(lock)]
-    subprocess.run(download, check=True)
 venv = Path(manifest).with_name("bootstrap-venv")
 subprocess.run([uv, "venv", str(venv), "--python", pins["tools"]["python"]["version"]], check=True)
 python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-subprocess.run([uv, "pip", "install", "--python", str(python), "--require-hashes", "-r", str(lock)], check=True)
 runtime = git_requirement("runtime")
 client = runtime + "#subdirectory=packages/python"
 subprocess.run([uv, "pip", "install", "--python", str(python), "--no-deps", runtime, client, agent_requirement], check=True)

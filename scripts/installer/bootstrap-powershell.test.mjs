@@ -188,10 +188,9 @@ function alive(result) {
 test('PowerShell tolerates native stderr, forwards arguments and avoids Python shims/registry', () => scenario(async (context, run) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
   context.manifest.runtime.repo = pathToFileURL(path.join(context.root, 'runtime source')).href;
-  const committedLock = '# pinned lock content\n';
-  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
-  await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
-  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
+  const committedSource = '# committed source\n';
+  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
+  await writeFile(path.join(context.manifest.agent.repo, 'source-marker.txt'), '# changed checkout source\n');
   const flags = ['--update', '--data-root', '/a path/with spaces', 'embedded"quote', 'trailing slash\\'];
   const result = await run(flags);
   alive(result);
@@ -202,8 +201,8 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin', '--no-registry']);
   const core = calls.at(-1);
   assert.deepEqual(core.slice(-flags.length), flags);
-  const lockInstall = calls.find((args) => args[0] === 'pip' && args.includes('--require-hashes'));
-  assert.ok(lockInstall, 'third-party dependencies must be installed with the hashed lock');
+  assert.equal(calls.filter((args) => args[0] === 'pip').length, 1, 'bootstrap installs first-party packages once');
+  assert.ok(calls.every((args) => !args.includes('--require-hashes')), 'bootstrap must not install third-party dependencies');
   const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
   assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
   for (const name of ['runtime', 'agent']) {
@@ -366,10 +365,9 @@ shutil.copy2(os.environ['MOCK_SOURCE_UV'], pathlib.Path(os.environ['UV_UNMANAGED
 for (const coreExit of ['0', '23']) {
   test(`PowerShell -File fetches real HTTP manifest and reports core status ${coreExit}`, () => scenario(async (context) => {
     context.manifest.agent.repo = path.join(context.root, 'http source');
-    const committedLock = '# pinned HTTP lock\n';
-    context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
-    await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
-    context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
+    const committedSource = '# committed HTTP source\n';
+    context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
+    await writeFile(path.join(context.manifest.agent.repo, 'source-marker.txt'), '# changed checkout source\n');
     const server = createServer((_request, response) => {
       response.writeHead(200, { 'Content-Type': 'application/json' });
       response.end(JSON.stringify(context.manifest));
@@ -410,10 +408,9 @@ test('PowerShell accepts localhost file URLs as local pinned repositories', () =
   const repoPath = path.join(context.root, 'local source with spaces');
   const local = pathToFileURL(repoPath).href;
   context.manifest.agent.repo = local.replace('file:///', 'file://localhost/');
-  const committedLock = '# pinned localhost lock\n';
-  context.manifest.agent.sha = await createPinnedRepo(repoPath, committedLock);
-  await writeFile(path.join(repoPath, 'requirements/runtime.lock'), '# changed checkout lock\n');
-  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
+  const committedSource = '# committed local source\n';
+  context.manifest.agent.sha = await createPinnedRepo(repoPath, committedSource);
+  await writeFile(path.join(repoPath, 'source-marker.txt'), '# changed checkout source\n');
   const result = await run();
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);

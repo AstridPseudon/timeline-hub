@@ -25,10 +25,9 @@ test('POSIX explains first-run preparation before Python setup completes', () =>
 test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Python without external shims', () => scenario(async (context) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
   context.manifest.runtime.repo = pathToFileURL(path.join(context.root, 'runtime source')).href;
-  const committedLock = '# pinned lock content\n';
-  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedLock);
-  await writeFile(path.join(context.manifest.agent.repo, 'requirements/runtime.lock'), '# changed checkout lock\n');
-  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
+  const committedSource = '# committed source\n';
+  context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
+  await writeFile(path.join(context.manifest.agent.repo, 'source-marker.txt'), '# changed checkout source\n');
   const result = await run(context, ['--update', '--data-root', '/a path/with spaces']);
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);
@@ -37,8 +36,8 @@ test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Pyth
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin']);
   const core = calls.at(-1);
   assert.deepEqual(core.slice(-3), ['--update', '--data-root', '/a path/with spaces']);
-  const lockInstall = calls.find((args) => args[0] === 'pip' && args.includes('--require-hashes'));
-  assert.ok(lockInstall, 'third-party dependencies must be installed with the hashed lock');
+  assert.equal(calls.filter((args) => args[0] === 'pip').length, 1, 'bootstrap installs first-party packages once');
+  assert.ok(calls.every((args) => !args.includes('--require-hashes')), 'bootstrap must not install third-party dependencies');
   const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
   assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
   for (const name of ['runtime', 'agent']) {
@@ -118,10 +117,9 @@ test('POSIX also accepts uv version output without build metadata', () => scenar
 test('POSIX accepts localhost file URLs as local pinned repositories', () => scenario(async (context) => {
   const local = pathToFileURL(path.join(context.root, 'local source with spaces')).href;
   context.manifest.agent.repo = local.replace('file:///', 'file://localhost/');
-  const committedLock = '# pinned localhost lock\n';
-  context.manifest.agent.sha = await createPinnedRepo(path.join(context.root, 'local source with spaces'), committedLock);
-  await writeFile(path.join(context.root, 'local source with spaces/requirements/runtime.lock'), '# changed checkout lock\n');
-  context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
+  const committedSource = '# committed local source\n';
+  context.manifest.agent.sha = await createPinnedRepo(path.join(context.root, 'local source with spaces'), committedSource);
+  await writeFile(path.join(context.root, 'local source with spaces/source-marker.txt'), '# changed checkout source\n');
   const result = await run(context);
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);

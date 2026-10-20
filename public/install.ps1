@@ -243,34 +243,10 @@ public sealed class AstridInstallerProcessV3 {
             return 'git+' + $RepoUrl.AbsoluteUri + '@' + $Sha
         }
         $AgentRequirement = Get-GitRequirement 'agent'
-        $Lock = Join-Path $Temp 'runtime.lock'
-        if ($null -ne $Pins.agent.PSObject.Properties['repo']) {
-            $RepoValue = $Pins.agent.repo
-            if ($RepoValue.StartsWith('file://')) {
-                $RepoUrl = [Uri]$RepoValue
-                $RepoAuthority = ($RepoValue.Substring(7) -split '/', 2)[0]
-                if (-not $RepoUrl.IsFile -or $RepoAuthority -cnotin @('', 'localhost') -or $RepoUrl.Query -or $RepoUrl.Fragment -or $RepoValue.IndexOf('/', 7) -lt 0) {
-                    throw 'Source file URL must refer to this computer.'
-                }
-                $LocalRepoUrl = [UriBuilder]::new($RepoUrl)
-                $LocalRepoUrl.Host = ''
-                $AgentRepoPath = $LocalRepoUrl.Uri.LocalPath
-            } else {
-                $AgentRepoPath = $RepoValue
-            }
-            $LockResult = Invoke-InstallerCommand 'git' @('-C',$AgentRepoPath,'show',"$($Pins.agent.sha):requirements/runtime.lock")
-            if ($LockResult.ExitCode -ne 0) { throw 'The pinned agent has no requirements/runtime.lock.' }
-            [IO.File]::WriteAllText($Lock, $LockResult.Output, [Text.UTF8Encoding]::new($false))
-        } else {
-            $LockUrl = "https://raw.githubusercontent.com/banodoco/astrid-agent/$($Pins.agent.sha)/requirements/runtime.lock"
-            Invoke-WebRequest -UseBasicParsing $LockUrl -OutFile $Lock
-        }
         $Venv = Join-Path $Temp 'venv'
         $Result = Invoke-InstallerCommand $Uv @('venv',$Venv,'--python',$PythonVersion) -LogOutput
         if ($Result.ExitCode -ne 0) { throw 'The installer environment could not be prepared.' }
         $VenvPython = Join-Path $Venv 'Scripts/python.exe'
-        $Result = Invoke-InstallerCommand $Uv @('pip','install','--python',$VenvPython,'--require-hashes','-r',$Lock) -LogOutput
-        if ($Result.ExitCode -ne 0) { throw 'The pinned dependency lock could not be installed.' }
         $RuntimeRequirement = Get-GitRequirement 'runtime'
         $ClientRequirement = $RuntimeRequirement + '#subdirectory=packages/python'
         $Result = Invoke-InstallerCommand $Uv @('pip','install','--python',$VenvPython,'--no-deps',$RuntimeRequirement,$ClientRequirement,$AgentRequirement) -LogOutput
