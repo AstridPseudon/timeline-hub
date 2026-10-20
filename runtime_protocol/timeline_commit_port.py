@@ -889,14 +889,26 @@ class MediaReads:
         ).fetchone()
         if row is None:
             raise NotFoundError("raw media is not a managed project object")
-        self.service._verify_child_object_bytes(bare, row["size"], label="raw media CAS object")
         value = {"object_id": pin["media_id"], "media_type": row["media_type"], "size": row["size"]}
         try:
             with self.cas.open(bare) as stream:
-                with wave.open(stream, "rb") as wav:
-                    frames = wav.getnframes()
-                    rate = wav.getframerate()
-                    duration = frames / rate
+                self.service._verify_open_file(
+                    stream.fileno(), bare, row["size"], label="raw media CAS object",
+                )
+                stream.seek(0)
+                try:
+                    with wave.open(stream, "rb") as wav:
+                        frames = wav.getnframes()
+                        rate = wav.getframerate()
+                        duration = frames / rate
+                finally:
+                    # Recheck the same descriptor after parsing. A path
+                    # replacement may change the old inode's ctime, but cannot
+                    # change its bytes; an in-place mutation is refused before
+                    # its metadata escapes, including when parsing failed.
+                    self.service._verify_open_file(
+                        stream.fileno(), bare, row["size"], label="raw media CAS object",
+                    )
             if (type(frames) is not int or frames <= 0 or type(rate) is not int or rate <= 0
                     or not math.isfinite(duration) or duration <= 0):
                 raise ValueError("invalid WAV duration")

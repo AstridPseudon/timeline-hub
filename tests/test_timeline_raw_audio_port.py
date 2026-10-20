@@ -56,13 +56,13 @@ class RawReadProvider:
         return port.accept(candidate)
 
 
-def _wav_bytes() -> bytes:
+def _wav_bytes(seconds: int = 1) -> bytes:
     output = io.BytesIO()
     with wave.open(output, "wb") as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
         wav.setframerate(8000)
-        wav.writeframes(b"\0\0" * 8000)
+        wav.writeframes(b"\0\0" * 8000 * seconds)
     return output.getvalue()
 
 
@@ -148,6 +148,44 @@ def test_raw_media_info_refuses_object_owned_by_another_project(tmp_path):
         with pytest.raises(NotFoundError):
             MediaReads(service).media_info(project, {"media_id": object_id, "content_digest": object_id})
     finally:
+        service.close()
+
+
+@pytest.mark.parametrize("race", ["rename", "inplace"])
+def test_raw_media_info_uses_verified_descriptor_under_storage_race(tmp_path, monkeypatch, race):
+    service, project, objects, _request = _seed(tmp_path)
+    object_id = objects[0]["object_id"]
+    path = service.cas.path_for(object_id[7:])
+    replacement = tmp_path / "replacement.wav"
+    original_path = tmp_path / "original.wav"
+    original_verify = RuntimeService._verify_open_file
+
+    def verify_then_race(file_fd, digest, expected_size, *, label):
+        result = original_verify(file_fd, digest, expected_size, label=label)
+        if race == "rename":
+            replacement.write_bytes(_wav_bytes(2))
+            path.replace(original_path)
+            replacement.replace(path)
+        else:
+            corrupted = bytearray(_wav_bytes())
+            corrupted[:4] = b"XXXX"
+            path.write_bytes(corrupted)
+        return result
+
+    monkeypatch.setattr(RuntimeService, "_verify_open_file", staticmethod(verify_then_race))
+    try:
+        pin = {"media_id": object_id, "content_digest": object_id}
+        if race == "rename":
+            assert MediaReads(service).media_info(project, pin)["duration_seconds"] == 1.0
+        else:
+            with pytest.raises(ConflictError, match="size does not match|hash or size"):
+                MediaReads(service).media_info(project, pin)
+    finally:
+        if race == "rename":
+            path.unlink(missing_ok=True)
+            original_path.replace(path)
+        else:
+            path.write_bytes(_wav_bytes())
         service.close()
 
 
