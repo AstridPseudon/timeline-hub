@@ -125,11 +125,19 @@ def test_bundle_keeps_bounded_installer_log_tail_and_excludes_service_and_chat_l
 
     runtime_logs = tmp_path / "runtime-logs"
     runtime_logs.mkdir()
-    (runtime_logs / "astrid-runtime.log").write_text("runtime current\n")
-    (runtime_logs / "astrid-runtime.log.1").write_text("runtime previous\n")
+    (runtime_logs / "runtime.log").write_bytes(
+        b"runtime-head-secret=" + b"x" * (doctor_bundle._MAX_LOG_BYTES + 10)
+        + b"\nruntime-tail-visible\naccess_token=runtime-secret\n"
+    )
+    (runtime_logs / "runtime-service.log").write_text(
+        "service current password=runtime-password /home/alice/private\n"
+    )
+    (runtime_logs / "astrid-runtime.log").write_text("obsolete runtime alias\n")
+    (runtime_logs / "astrid-runtime.log.1").write_text("obsolete rotated alias\n")
     (runtime_logs / "install.log").write_text("install current\n")
     (runtime_logs / "install.log.1").write_text("install previous\n")
-    (runtime_logs / "runtime-service.log").write_text("service current\n")
+    (runtime_logs / "service-chat.log").write_text("private service output\n")
+    (runtime_logs / "service-worker.log").write_text("private worker output\n")
     (runtime_logs / "chat.log").write_text("private conversation\n")
     (runtime_logs / "chat.log.1").write_text("previous private conversation\n")
     (runtime_logs / "private.txt").write_text("must not include\n")
@@ -141,13 +149,20 @@ def test_bundle_keeps_bounded_installer_log_tail_and_excludes_service_and_chat_l
     (support / "generic-host.log.1").write_text("host previous\n")
 
     discovered = doctor_bundle._logs(support)
-    assert discovered == [runtime_logs / "install.log", runtime_logs / "install.log.1", install_log]
+    assert discovered == [runtime_logs / "install.log", runtime_logs / "install.log.1",
+                          runtime_logs / "runtime-service.log", runtime_logs / "runtime.log", install_log]
     archive_path = doctor_bundle.write_bundle(tmp_path / "tail.zip", {"ok": True}, support)
     with zipfile.ZipFile(archive_path) as archive:
         text = "\n".join(archive.read(name).decode() for name in archive.namelist())
     assert "tail-visible" in text and "head-secret" not in text
-    for excluded in ("runtime current", "runtime previous", "service current", "private conversation", "host previous"):
+    for included in ("runtime-tail-visible", "service current", "tail-visible"):
+        assert included in text
+    for excluded in ("runtime-head-secret", "runtime-secret", "runtime-password", "/home/alice/private",
+                     "obsolete runtime alias", "obsolete rotated alias", "private service output",
+                     "private worker output", "private conversation", "host previous"):
         assert excluded not in text
+    with zipfile.ZipFile(archive_path) as archive:
+        assert sum(len(archive.read(name)) for name in archive.namelist() if name.startswith("logs/")) <= doctor_bundle._MAX_TOTAL_LOG_BYTES
     if os.name == "posix":
         assert (tmp_path / "tail.zip").stat().st_mode & 0o777 == 0o600
 

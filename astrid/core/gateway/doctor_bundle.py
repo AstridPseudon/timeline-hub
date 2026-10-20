@@ -199,8 +199,11 @@ def _logs(support_root: Path | None = None) -> list[Path]:
         try:
             for path in sorted(root.iterdir()):
                 # Service output can contain conversation text. Include only
-                # installer diagnostics, never chat or other service logs.
-                managed_log = re.fullmatch(r"install\.log(?:\.\d+)?", path.name) is not None
+                # installer diagnostics and Runtime-level logs, never service logs.
+                managed_log = (
+                    re.fullmatch(r"install\.log(?:\.\d+)?", path.name) is not None
+                    or path.name in {"runtime.log", "runtime-service.log"}
+                )
                 if managed_log and not path.is_symlink() and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode):
                     files.append(path)
         except OSError:
@@ -275,7 +278,9 @@ def write_bundle(destination: Path, report: dict, support_root: Path | None) -> 
                 manifest = _install_manifest(support_root) if support_root else {"available": False}
                 archive.writestr("install-manifest.json", json.dumps(_redact_identity_value(manifest), indent=2, sort_keys=True) + "\n")
                 included: set[str] = set()
-                for index, path in enumerate(_logs(support_root)):
+                logs = _logs(support_root)
+                logs.sort(key=lambda path: (path.name not in {"runtime.log", "runtime-service.log"}, path.name))
+                for index, path in enumerate(logs):
                     try:
                         if used >= _MAX_TOTAL_LOG_BYTES:
                             continue
