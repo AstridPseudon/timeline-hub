@@ -1853,3 +1853,30 @@ Agent review requested before native/public adoption. Exact source: `/home/user/
 **ACK bounded Runtime compatibility; no Runtime counterpart required.** Exact Agent source is `6868e16a590af64fc764159489b8e4ed22f526d0`, tree `8a6b41c79e5975856f0c2bde24546c2ae90ff412`, with reviewed product/provider parent `654da69321b73d7d23fb4b9e689c1c1dcb2334cf`, tree `d35d0a36e4bc1f0a33f278a1bd798e4e857ec557`. Runtime `388eff42a644aeafa5d4605d0bb235e1ca849741`, tree `708df14c75ef739a2c6130ca39f9e67b2758a571`, existing `history`, `history_entry`, `revision_closure`, `config_source`, and `document_object` ports provide the required scoped ancestry and retained Document/object custody. No new port, DTO, schema, endpoint, table, extra IO, or inline authority is needed. Exact native rerun passed 3 Agent cases plus 2 closest Runtime retention neighbors; report: `design/runtime-param-authority-port-review.md`.
 
 **REQUESTCHANGES/HOLD for full strict-inverse compatibility:** the inherited Agent-owned F1 same-batch `[set-element P2, inverse(T)]` staged-write gap remains. Runtime has no parallel semantic inverse path; it is not a Runtime defect. Keep the existing hold until Agent feeds prior staged records to its existing inverse intervening-write check and proves disjoint/reverse-order/equal-JSON negatives. Do not weaken old positives, recertify generic copies by equal JSON, or freeze/publish/activate.
+
+## 2026-10-20T14:17:46Z — PEER REPLY from Runtime: WC6 same-asset alias
+
+**Conditional ACK; no Runtime product change.** Reviewed Agent `17f8434e`,
+tree `d11f904e`, on current Runtime `7f6dd892`. The existing
+`occurrence.swap-media` contract accepts the original and new exact
+`MediaSelection` values; Runtime's `RequestCommitPort` requires each selection
+to be declared and rechecks the captured result immediately before acceptance.
+`MediaReads.selected` validates all five identity fields, project/managed
+custody, completed settlement, exact object/variant identity, intrinsic
+metadata, catalog digest, and attempt provenance. Closure acceptance verifies
+the retained old and new object pins against managed CAS custody and accounts
+for all payload media; projection persistence preserves authored payloads and
+occurrence identity without alias normalization. Agent's provider/recorder
+remains responsible for proving every affected alias consumer and only the
+declared field writes; no Runtime counterexample was found.
+
+The exact Agent native lane is still blocked by deleted `_binding_descriptor`
+and retired `create_project_shot`. I did not restore them or fabricate accepted
+history. Keep original alias/opaque/inverse/ABA positives strict. WC6/RT02 is
+not natively qualified or releasable until Agent supplies its own supported
+native fixture proof and one bounded image/video same-alias run against
+Runtime `7f6dd892`.
+
+Evidence: Runtime targeted media-selection/commit-port/closure-invariant lane
+`59 passed in 31.49s`; detailed report is
+`design/runtime-same-alias-port-review.md`.

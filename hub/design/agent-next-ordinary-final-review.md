@@ -1,0 +1,131 @@
+# Agent next ordinary final review
+
+## Verdict
+
+**APPROVE — bounded source/freeze review.** The exact current Agent source is
+safe to freeze for official normal generation. This is not Runtime publication,
+consumer pin adoption, App automatic-placement activation, or the hard-stop
+release gate.
+
+Reviewed Agent commit `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3`, content tree
+`c5a8a3ec7e9e01c61c5ae31834da53bed4be406a`, against current integration
+`8e310785`. The candidate is the requested next ordinary union plus the bounded
+F1 staged-write guard and approved media-fixture migration. No source, schema,
+pin, branch, or integration worktree was changed by this review.
+
+## Exact source and generated-contract identity
+
+| Item | Exact value |
+|---|---|
+| Agent commit | `310e54840fa5fb8eb7e51bb64ed2c34b7a1063b3` |
+| Agent content tree | `c5a8a3ec7e9e01c61c5ae31834da53bed4be406a` |
+| Raw command schema SHA256 | `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d` |
+| Canonical schema SHA256 | `63ac77b3c3e2c582f76ab4b2499be5011ea4836e8c92264b1938632b3bfacba7` |
+| Schema inventory | 55 definitions / 29 operations |
+| Runtime generation source | `7f6dd8920e1ceec41b137358df5e7fecc304888d` / tree `4cccb2d643194df7df95d624e89a6cd9f6f268fc` |
+| Private normal generated schema digest | `sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59` |
+| Private artifact identity | `sha256:7e8fe2e485f036741369eed62ccc7a389e27719a166fd70b0009a161c9c7240d`, 75 entries |
+
+The private Runtime was normally generated from the current Runtime source with
+the ordinary authored schema input, then checked with the Python generator,
+TypeScript conformance generator, and artifact manifest checks. Public 0.2.13
+lock/client/artifacts remain untouched; the private generated metadata still
+says 0.2.13 and must not be published at that version.
+
+All S2 and published compatibility floors pass. The F1 implementation/tests
+are byte-identical to approved `fa156464`; the media fixture/helper migration
+is byte-identical to approved `134f1c27`. Current verified-source extraction
+and its tests are unchanged versus `8e310785`; the intervening `remote.py`
+delta predates this candidate and is retained. No added source imports a
+carrier, PARAM authority, SourceFactory, or source toggle. The existing
+reviewed `producer.guard` registry remains part of the approved union; no new
+producer/action/outbox implementation was imported.
+
+## Focused evidence
+
+All runs used the worktree source, read-only shared dependencies, disabled
+pytest caches/bytecode, and private Runtime/seed overlays. No full/full* suite,
+browser, live socket/HTTP, renderer/pixel/audio, or SQL-history rewrite was
+used.
+
+```text
+pytest tests/editing_conformance/test_recipe_scalar_commands.py -k 'inverse_'
+  5 passed, 68 deselected
+
+pytest -m integration tests/sdk/test_timeline_selected_schema_runtime.py
+  25 passed
+
+pytest tests/editing_conformance/test_recipe_parent_auto_completion.py
+  103 passed
+
+pytest -m integration tests/editing_conformance/test_next_ordinary_union_runtime.py
+  2 passed
+
+pytest -m integration tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+  14 passed
+
+pytest -m integration tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+  2 passed (add, swap)
+
+pytest tests/editing_conformance/test_recipe_m2_parent_media.py \
+  -k 'completion_builder or literal_completion'
+  9 passed, 76 deselected
+
+pytest tests/sdk/test_timeline_current_union_schema.py
+  34 passed
+
+ruff check --no-cache [affected Agent source/test files]
+  All checks passed
+
+git diff --check 8e310785 310e5484
+  passed
+```
+
+The parent-auto positives retain their original bodies and expectations. The
+four policy rows are anchor-after, absent-anchor lane-end, saved fallback
+time/lane, and explicit video duration, each exercised for image/video where
+applicable. Automatic reads are re-observed by the ordinary birth handler in
+the same recorder; stale anchor/hold/lane controls refuse before persistence.
+The joint birth-plus-text test covers empty and nonempty text, clear/restore
+order, grouped undo/redo, reopen, and exact retry. The two media fixtures use
+real historical media setup and pass add/swap inverse/retry/restart/history.
+
+## Parent-auto ledger and next eligible callers
+
+These rows are the exact next cut candidates; none is marked `DELETED` before
+merge, and no legacy writer is retired by this review.
+
+| Row / caller | Current status | Next eligibility |
+|---|---|---|
+| Agent `astrid/sdk/timeline/native_auto_placement.py:auto_place_completion` → `_parent_completion` | Source-ready deterministic resolver; tests only, no production App caller | After App binds the saved approval, original closure, exact output pin, reserved raw ID, and continuation to the ordinary command outbox |
+| Agent `astrid/sdk/timeline/native_parent_media_commands.py:add_media` via `clip.add-media` | Source-ready ordinary parent birth; public 55/29 schema only in private generation | After formal fresh-version Runtime/client generation and paired acceptance qualification |
+| App `src/tools/image-generation/hooks/useImageGenSubmit.ts::useImageGenSubmit` → `src/shared/lib/taskCreation/imageGeneration.ts::createImageGenerationTasks` → `createTask` | Generation admission only; not canonical timeline placement | Must feed the explicit approved continuation/capture binding; do not infer parent ownership from task/gallery context |
+| App `src/tools/travel-between-images/components/ShotEditor/services/generateVideoService.ts::generateVideo` → `src/shared/lib/taskCreation/travelGeneration.ts::createTravelGenerationTask` → `createTask` | Generation admission only; not canonical timeline placement | Same continuation/output/owner qualification as image generation |
+| App `src/tools/video-editor/commands/editorImagePlacement.ts` and `useTimelineCommandSession.ts` → `commands/commitSession.ts` / `commands/commitOutbox.ts` | Staged adapter/outbox seam; production host binding and real requester qualification remain open | After real same-host task/output read, lost-ACK/restart retry, conflict retention, canonical reload, undo/redo, duplicate prevention, and zero legacy writes pass |
+
+The App generation rows are not qualified parent-auto consumers today. Keep
+their existing manual/visible-refusal behavior and snapshot writers until the
+normal consumer tuple and requester journey are qualified. No row should be
+called deleted before the merge and the corresponding zero-writer evidence.
+
+## Remaining release gaps
+
+1. The manager must record this exact Agent tree as the final freeze, generate a
+   fresh normal Runtime version (not 0.2.13), and qualify the coordinated
+   Runtime/client tuple before changing pins or public artifacts.
+2. App automatic requester admission/continuation is not qualified: durable
+   original approval/read closure, task/attempt/output binding, lost admission
+   ACK, lost commit ACK, restart/reconnect, conflict retention, and duplicate
+   completion remain open. The approved source adapter deliberately refuses
+   without that host binding.
+3. Public HTTP/browser/socket journeys, renderer-off public journey, pixels/audio,
+   owner-film, macOS, destructive GC, and full repository suites remain
+   unverified here.
+4. Existing renderer `RenderRequest.verified_source` strict holds and the
+   separate registered automatic-producer admission work remain outside this
+   source freeze; they are not regressions in this candidate.
+
+Recommended next step: freeze `c5a8a3ec` for the manager's ordinary official
+generation, then perform Runtime fresh-version and App requester qualification.
+Do not mutate public 0.2.13, repin consumers, or delete legacy writers until
+those gates pass.
