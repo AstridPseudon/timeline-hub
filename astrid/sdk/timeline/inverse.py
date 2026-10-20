@@ -255,11 +255,13 @@ def _asset_dependents(state, ref):
         if isinstance(value, dict):
             return ((local and any(value.get(key) == identity for key in ('asset', 'asset_id')))
                     or any(value.get(key) == ref for key in ('asset_ref', 'owner_ref'))
-                    or any(references(child, local) for child in value.values()))
+                    or any(references(value.get(key), local) for key in
+                           ('clips', 'children', 'audio', 'effects', 'audio_bindings')))
         return isinstance(value, list) and any(references(child, local) for child in value)
 
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
-    return (any(references(state.config(other), other == owner) for other in owners)
+    return (any(references({**state.config(other), 'clips': state.collection(other, 'clip')},
+                           other == owner) for other in owners)
             or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
 
 
@@ -399,7 +401,10 @@ def apply_inverse(ctx, records, intervening_records):
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            ctx.select(selected['key'], selected['owner'], selected['members'])
+            if selected['key'].endswith('.after'):
+                ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
+            else:
+                ctx.select(selected['key'], selected['owner'], selected['members'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         # An absent-to-absent edge still records authored intent, but restores

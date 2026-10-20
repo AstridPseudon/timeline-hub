@@ -36,9 +36,12 @@ def operations():
     from ._split_commands import clip_split
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
+    from .native_initialize import initialize
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_parent_media_commands import add_media as parent_add_media
+    from .native_parent_media_commands import assembled_target
     from .native_placement_commands import (
         PLACEMENT_INTENT,
         placement_create,
@@ -46,7 +49,11 @@ def operations():
         placement_unplace,
     )
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
-    return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+    from .native_word_anchor import declare
+    from .producer import producer_guard
+    return {'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
+            'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
+            'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
@@ -67,7 +74,10 @@ def operations():
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'shot.set': Operation(_SCHEMA['$defs']['ShotSetArgs'], shot_set, SHOT_INTENT, True),
-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
+            'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
+            'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {}),
+            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
 
 
 @dataclass
@@ -106,6 +116,11 @@ def validate_command(command):
         if command.get('intent', {}) != {}:
             raise CommandError("track.create has no intention overrides")
 
+    if command['op'] == 'producer.guard':
+        pin = command['args']['pin']
+        if any(type(pin[key]) is not int for key in ('fence', 'runtime_epoch')):
+            raise CommandError('producer fence and epoch must be positive integers')
+
 
 def _normalize(command):
     command = copy.deepcopy(command)
@@ -142,7 +157,8 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None):
+            closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None,
+            verified_producer=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -153,6 +169,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
 
     if not commands:
         raise CommandError("command batch must not be empty")
+    from .producer import guard_pin
+    guard_pin(commands)
     if id_map and any(key != value for key, value in id_map.items()):
         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
@@ -161,12 +179,16 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
         ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
-                        schema_inputs=schema_inputs, realm_id=realm_id)
+                        schema_inputs=schema_inputs, realm_id=realm_id,
+                        verified_producer=verified_producer)
         _verify_claims(ctx, command)
         if resolve_inputs is not None:
             ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:
+            from .native_word_anchor import guard_basis
+
+            guard_basis(ctx, command)
             from .capture import move_intent
             intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
             supplied_intent = {**intent, **command.get('intent', {})}
@@ -186,6 +208,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.record['command']['resolved'] = []
         if ordinal == len(commands) - 1:
             ctx.compile_inputs()
+            from .native_word_anchor import compile_recorded
+
+            compile_recorded(ctx, inverse_records=inverse_records)
         ctx.compile_mirrors()
         record = ctx.finish(capture=True)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):

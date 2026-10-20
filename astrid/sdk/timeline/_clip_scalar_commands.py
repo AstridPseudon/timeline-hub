@@ -7,7 +7,7 @@ import math
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
 from ._command_state import CommandError
-from ._scalar_commands import _capture, _changes, _clip_basis, _target
+from ._scalar_commands import _capture, _changes, _clip_basis, _selected_schema, _target
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
 
@@ -115,17 +115,26 @@ def clip_set_element(ctx, command):
     before = selected if selected is not None else alias
     if not isinstance(before, dict):
         raise CommandError('clip.set-element requires an existing element ref', ref=ref)
-    if any(before.get(key) != element[key] for key in ('id', 'kind')):
-        raise CommandError('clip.set-element must keep the element id and kind', ref=ref)
+    if (any(before.get(key) != element[key] for key in ('id', 'kind'))
+            or before.get('packId') is not None and before['packId'] != element.get('packId')):
+        raise CommandError('clip.set-element must keep the element id and kind and pack owner', ref=ref)
+    if element.get('packId'):
+        _selected_schema(ctx, command, ref, element)
+    elif 'schema_source' in command['args']:
+        raise CommandError('schema_source requires a selected project pack element', ref=ref)
     ctx.write(ref, ['elementRef'], element)
     if 'element_ref' in ctx.state.entity(ref):
         ctx.clear(ref, ['element_ref'])
 
 
-def capture_clip_set_element(bundle, select, *, element):
+def capture_clip_set_element(bundle, select, *, element, schema_source=None,
+                             schema_inputs=(), realm_id=None):
     """Capture a revision change of the clip's own element; the ref is never cleared."""
     from .commands import execute
 
+    args = {'elementRef': copy.deepcopy(element)}
+    if schema_source is not None:
+        args['schema_source'] = copy.deepcopy(schema_source)
     return execute(bundle, [{'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
-                             'select': select, 'args': {'elementRef': copy.deepcopy(element)}}]
-                   ).commands[0]
+                             'select': select, 'args': args}], schema_inputs=schema_inputs,
+                   realm_id=realm_id).commands[0]

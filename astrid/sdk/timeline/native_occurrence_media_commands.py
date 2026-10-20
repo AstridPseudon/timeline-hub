@@ -66,8 +66,20 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     identity = pin['asset'] if alias is None else alias
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
         raise CommandError('media requires a reserved raw asset alias')
-    # Containers must already exist. Never replace null/opaque registry state.
-    registry = ctx.state.config(owner).get('registry')
+    registry = ctx.state.registry(owner)
+    if owner == 'parent':
+        # Observe storage before creating containers, so capture and inverse
+        # guard the original presence. Validate main's authority before writes.
+        ctx.read(owner + '/collection:asset')
+        if create:
+            parent = ctx.state.bundle['parent']
+            path = (['registry'] if 'registry' in parent or 'registry' not in ctx.state.config(owner)
+                    else ['config', 'registry'])
+            ctx.object(owner, path)
+            ctx.object(owner, [*path, 'assets'])
+            registry = ctx.state.registry(owner)
+    # Occurrence edits still require authored containers. Never replace explicit
+    # null/malformed registry state, including either parent mirror.
     if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
         raise CommandError('media edit requires an authored asset registry')
     ref = owner + '/asset:' + identity
@@ -109,7 +121,7 @@ def _clip(ctx, owner, row, limit, kind, verified):
             raise CommandError('media edit requires literal child timing', kind='unsupported_timing')
     at = number(row.get('at'), 'clip.at')
     hold = number(row.get('hold'), 'clip.hold', positive=True)
-    speed = number(row.get('speed', 1), 'clip.speed', positive=True)
+    speed = number(1 if row.get('speed') is None else row['speed'], 'clip.speed', positive=True)
     if at < 0 or at + hold / speed > limit:
         raise CommandError('child interval exceeds occurrence', kind='occurrence_boundary')
     if kind == 'image':
