@@ -21,7 +21,12 @@ from astrid.sdk.timeline._recording import Recording
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import (
+    _digest,
+    _raw_audio_trim_pin,
+    bundle_from_document,
+    document_from_bundle,
+)
 from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline_checkout import Clip
 from tests.editing_conformance.fixture_loader import load_fixture
@@ -55,6 +60,17 @@ def bundle(**changes):
 
 def clip(value):
     return State(value).entity(REF)
+
+
+def raw_audio_bundle():
+    value = bundle()
+    pin = 'sha256:' + '3' * 64
+    for rows in (value['parent']['clips'], value['parent']['config']['clips']):
+        rows[0].update({'track': 'music', 'asset': 'voice', 'clipType': 'audio',
+                        'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
+    value['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
+    value['parent']['registry']['assets']['voice'] = {'media_id': pin, 'type': 'audio'}
+    return value, pin
 
 
 @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
@@ -92,6 +108,51 @@ def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatc
     assert clip_timeline_duration(clip(plan.bundle)) == pytest.approx(4 / speed)
     assert clip(plan.bundle)['from'] == 1
     assert clip(plan.bundle)['to'] == 5
+
+
+def test_raw_audio_trim_uses_request_metadata_without_persisting_a_duration():
+    original, pin = raw_audio_bundle()
+    metadata = {'object_id': pin, 'media_type': 'audio/wav', 'size': 1234,
+                'duration_seconds': 8}
+
+    command = capture_clip_trim(original, REF, in_s=1, out_s=5,
+                                verified_media=[metadata])
+    plan = execute(original, [command], verified_media=[metadata])
+    row = clip(plan.bundle)
+    assert (row['from'], row['to'], row['hold']) == (1, 5, 4)
+    assert 'duration' not in plan.bundle['parent']['registry']['assets']['voice']
+    assert command['args'] == {'in_s': 1, 'out_s': 5}
+    assert 'verified_media' not in command
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
+    original, pin = raw_audio_bundle()
+    document = original['source_mapping']['_runtime_document']
+    document['dependency_manifest']['media'].append({'media_id': pin, 'content_digest': pin})
+
+    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF}) == {
+        'media_id': pin, 'content_digest': pin,
+    }
+
+
+@pytest.mark.parametrize('metadata', [
+    None,
+    {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,
+     'duration_seconds': 8},
+    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 0,
+     'duration_seconds': 8},
+    {'object_id': 'sha256:' + '3' * 64, 'media_type': 'audio/wav', 'size': 1234,
+     'duration_seconds': None},
+])
+def test_raw_audio_trim_refuses_missing_or_foreign_metadata_without_writes(metadata):
+    original, _pin = raw_audio_bundle()
+    before = copy.deepcopy(original)
+    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '1', 'select': REF,
+               'args': {'in_s': 1, 'out_s': 5}, 'intent': {}}
+    with pytest.raises(CommandError):
+        execute(original, [command], verified_media=(() if metadata is None else [metadata]))
+    assert original == before
 
 
 def test_native_group_replaces_track_ripple_and_compiles_parent_extension():

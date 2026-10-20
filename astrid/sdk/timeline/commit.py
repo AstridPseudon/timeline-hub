@@ -404,6 +404,38 @@ def _load(port, context, revision):
     return bundle_from_document(document)
 
 
+def _raw_audio_trim_pin(bundle, call):
+    """Return the already-retained raw audio pin needed by a duration read."""
+    if call.get('op') != 'clip.trim' or not isinstance(call.get('select'), str):
+        return None
+    from ._command_state import CommandError, State
+
+    clip = State(bundle).entity(call['select'], optional=True)
+    if not isinstance(clip, Mapping):
+        return None
+    asset = clip.get('asset')
+    try:
+        source = State(bundle).registry('parent').get('assets', {}).get(asset)
+    except (CommandError, AttributeError):
+        return None
+    if not isinstance(source, Mapping) or source.get('duration') is not None:
+        return None
+    source_kind = source.get('type')
+    clip_kind = clip.get('clipType', clip.get('clip_type'))
+    if not (source_kind == 'audio' or clip_kind == 'audio'):
+        return None
+    media_id = source.get('media_id') or source.get('object_id')
+    content_digest = source.get('content_digest') or source.get('digest') or media_id
+    if not isinstance(media_id, str) or content_digest != media_id:
+        return None
+    manifest = bundle.get('source_mapping', {}).get('_runtime_document', {}) \
+        .get('dependency_manifest', {}).get('media', [])
+    pins = [pin for pin in manifest if isinstance(pin, Mapping)
+            and pin.get('media_id') == media_id
+            and pin.get('content_digest') == media_id]
+    return copy.deepcopy(pins[0]) if len(pins) == 1 else None
+
+
 def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
     captures, schema_inputs = [], []
     document = bundle["source_mapping"]["_runtime_document"]
@@ -916,6 +948,15 @@ class RuntimeCommitService:
                     raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
                                                   base, current))
             bundle = _load(port, context, base["revision_id"])
+            for call in calls:
+                pin = _raw_audio_trim_pin(bundle, call)
+                if pin is None:
+                    continue
+                media_info = getattr(port, 'media_info', None)
+                if not callable(media_info):
+                    raise CommandError('Runtime raw audio metadata is unavailable',
+                                       kind='dependency_unavailable')
+                verified_media.append(media_info(copy.deepcopy(pin)))
             current = port.head()
             base_entry = port.history_entry(base["publication_id"])
             if base_entry["revision_id"] != base["revision_id"]:
