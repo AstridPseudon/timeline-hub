@@ -199,7 +199,8 @@ class Recording:
         from astrid.core.timeline.authoring_bundle import _digest
         for capture in mapping.get('pinned_documents', []):
             pin = capture['pin']
-            if pin in retained:
+            # An inverse may reopen an exact pin from an accepted removed clip.
+            if pin in retained or self.record['command']['op'] == 'timeline.inverse':
                 kind = 'transcript' if capture['document']['kind'] == 'media.transcript' else 'source'
                 self.dependency('compile.document:' + _digest(pin), kind, pin)
 

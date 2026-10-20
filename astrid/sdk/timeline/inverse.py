@@ -15,7 +15,7 @@ from ._command_state import (
     root_identity,
 )
 from ._recording import Recording, guard, selection
-from ._root_inverse import arrange_restored, occurrence_orders, recover_source
+from ._root_inverse import arrange_restored, clip_cache_stages, occurrence_orders, recover_source
 
 
 def _patch(state, path, replacement):
@@ -356,6 +356,9 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
     check_intervening(records, intervening_records, state=ctx.state)
     changes = coalesce(records, ctx.state)
+    caches = clip_cache_stages(records)
+    guarded_changes = coalesce([
+        {'writes': [*record['writes'], *caches.get(id(record), [])]} for record in records], ctx.state)
     ctx.capture_input()
     root_orders = occurrence_orders(ctx.state, records, changes)
     orders = restoration_orders(records)
@@ -364,13 +367,16 @@ def apply_inverse(ctx, records, intervening_records):
         if actual != expected:
             raise CommandError('inverse collection membership/order changed',
                                kind='selection_changed', ref=owner)
-    for write in changes:
+    for write in guarded_changes:
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
     scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
     for record in reversed(records):
         staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
         scratch = staged.state
         staged_orders = restoration_orders(records, only=record)
+        for write in reversed(caches.get(id(record), [])):
+            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            scratch.set(write['ref'], write['path'], write['before'])
         for write in reversed(record['writes']):
             guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:

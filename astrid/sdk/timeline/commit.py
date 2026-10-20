@@ -218,6 +218,46 @@ def _inverse_media_removals(records, bundle):
     return removed
 
 
+def _inverse_clip_transcripts(records, bundle, *, pending=False):
+    """Release first-use pins owned by a created clip removed by this inverse."""
+    from ._collections import AcceptedRecords
+    from ._command_state import ABSENT, State, equal
+    from .inverse import coalesce
+
+    if not isinstance(records, AcceptedRecords):
+        return []
+    removed = {write['ref'] for write in coalesce(records) if not write['path']
+               and write['ref'].startswith('parent/clip:') and write['before'] == ABSENT
+               and (pending or State(bundle).get(write['ref'], []) == ABSENT)}
+    if not removed:
+        return []
+    parent = copy.deepcopy(bundle['parent'])
+    for container in (parent, parent.get('config', {})):
+        if isinstance(container.get('clips'), list):
+            container['clips'] = [row for row in container['clips']
+                                  if 'parent/clip:' + row['id'] not in removed]
+
+    def contains(value, pin):
+        if isinstance(value, dict):
+            return equal(value, pin) or any(contains(child, pin) for child in value.values())
+        return isinstance(value, list) and any(contains(child, pin) for child in value)
+
+    result = []
+    for entry in records.entries:
+        choices = [write['after'].get('value') for record in entry['records']['commands']
+                   for write in record['writes'] if write['ref'] in removed
+                   and write['path'][:3] == ['app', 'astrid', 'word_anchors']]
+        before, after = records.load_boundary(entry)
+        prior, accepted = (source['source_mapping']['_runtime_document']['dependency_manifest']['documents']
+                           for source in (before, after))
+        for pin in accepted:
+            if (pin not in prior and pin['document_id'].startswith('transcript:')
+                    and any(isinstance(choice, dict) and choice.get('document') == pin for choice in choices)
+                    and not contains([parent, bundle['shots']], pin)):
+                result.append(pin)
+    return result
+
+
 def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
     """Compile exact inputs; inverse pin removal requires provider-verified records.
 
@@ -286,6 +326,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         for capture in bundle['source_mapping'].get('pinned_documents', []):
             if capture['pin'] not in documents:
                 documents.append(copy.deepcopy(capture['pin']))
+        removals = _inverse_clip_transcripts(inverse_records, bundle)
+        documents = [pin for pin in documents if pin not in removals]
     # Retained inputs may include media consumed through a transcript or other
     # immutable binding rather than a selected clip. Keep those existing pins.
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
@@ -350,10 +392,23 @@ def _load(port, context, revision):
     return bundle_from_document(document)
 
 
-def _hydrate(port, bundle, calls=()):
+def _hydrate(port, bundle, calls=(), *, inverse_records=()):
     captures, schema_inputs = [], []
     document = bundle["source_mapping"]["_runtime_document"]
     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
+    removals = _inverse_clip_transcripts(inverse_records, bundle, pending=True)
+    pins = [pin for pin in pins if pin not in removals]
+    if inverse_records:
+        from .inverse import coalesce
+        from .native_word_anchor import _namespace
+
+        for write in coalesce(inverse_records):
+            if (write['ref'].startswith('parent/clip:') and not write['path']
+                    and write['before']['state'] == 'present'):
+                for choice in _namespace(write['before']['value']).get('word_anchors', {}).values():
+                    pin = _document_pin(choice['document'])
+                    if pin not in pins:
+                        pins.append(pin)
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
         if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
@@ -898,7 +953,7 @@ class RuntimeCommitService:
             for source in closures.values():
                 schema_inputs.extend(_hydrate(port, source))
             if not closures:
-                schema_inputs = _hydrate(port, bundle, calls)
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
@@ -921,7 +976,7 @@ class RuntimeCommitService:
                     entries = _history(port, current, base, CommitRejected, base)
                     head_bundle = _load(port, context, current["revision_id"])
                     if not closures:
-                        schema_inputs = _hydrate(port, head_bundle, calls)
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(

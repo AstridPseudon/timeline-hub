@@ -192,8 +192,8 @@ def retained(tmp_path, monkeypatch, request):
     case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())
     hydrate = agent._hydrate
 
-    def observed(port, bundle, calls=()):
-        result = hydrate(port, bundle, calls)
+    def observed(port, bundle, calls=(), **kwargs):
+        result = hydrate(port, bundle, calls, **kwargs)
         case.hydrated.append(copy.deepcopy(bundle))
         return result
 
@@ -254,8 +254,8 @@ try:
     service.register_timeline_commit_provider(agent.create_runtime_commit_service())
     captured = []
     hydrate = agent._hydrate
-    def observe(port, bundle, calls=()):
-        result = hydrate(port, bundle, calls)
+    def observe(port, bundle, calls=(), **kwargs):
+        result = hydrate(port, bundle, calls, **kwargs)
         captured.append(bundle)
         return result
     agent._hydrate = observe

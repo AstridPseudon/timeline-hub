@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 
 import pytest
 
@@ -89,8 +90,7 @@ def test_pristine_init_first_birth_reload_undo_and_missing_word_source(tmp_path,
         realm.close()
 
 
-@pytest.mark.parametrize('grouped_undo', [False, pytest.param(True, marks=pytest.mark.xfail(
-    strict=True, reason='Grouped birth/word inverse must reconcile derived cache guards'))])
+@pytest.mark.parametrize('grouped_undo', [False, True])
 def test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry(
         retained, monkeypatch, grouped_undo):
     runtime = use_runtime()
@@ -130,6 +130,7 @@ def test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_an
             'field': 'on', 'declaration': 'again', 'choice': choice}, 'parent/clip:born')])
         result = case.submit(request, 'joint-word-' + str(index))
         document = result['data']['canonical_document']
+        assert document['dependency_manifest']['documents'] == [case.pin]
         target = next(clip for clip in document['parent_revision']['payload']['clips'] if clip['id'] == 'born')
         assert target['app']['astrid']['word_anchors']['on'] == choice
         assert target['opaque'] == row['opaque']
@@ -164,9 +165,50 @@ def test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_an
             'publications': [result['receipt']['receipt_id']
                              for result in (born, *accepted, undone_b)]}, None)]), 'joint-undo-all')
         assert case.documents[case.head()['revision_id']] == baseline
+        assert json.dumps(case.documents[case.head()['revision_id']], sort_keys=True) == json.dumps(
+            baseline, sort_keys=True)
+        for document in documents:
+            image = document['parent_revision']
+            retained_revision = case.service.get_project_parent_composition_revision(
+                case.project, 'film', image['revision_id'])
+            assert json.dumps(retained_revision['payload'], sort_keys=True) == json.dumps(
+                image['payload'], sort_keys=True)
     else:
         redone_b = word.undo(case, undone_b, 'joint-redo-b')
         assert redone_b['data']['canonical_document'] == documents[1]
         case.restart()
         assert case.submit(requests[1], 'joint-word-1') == accepted[1]
     assert case.service.store.integrity_report()['ok']
+
+
+@pytest.mark.parametrize('retention', ['introduced', 'preexisting', 'surviving', 'opaque'])
+def test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins(retained, retention):
+    case = retained
+    if retention == 'preexisting':
+        case.submit(case.request([word.pick(case)]), 'pin-preexisting')
+    if retention == 'opaque':
+        case.submit(case.request([parent.call('clip.add', {'row': {
+            'id': 'opaque', 'clipType': 'am-type', 'track': 'picture', 'at': 0, 'hold': .5,
+            'opaque': case.pin}}, 'parent')]), 'pin-opaque')
+    baseline = copy.deepcopy(case.documents[case.head()['revision_id']])
+    born = case.submit(case.request([parent.call('clip.add', {'row': {
+        'id': 'born', 'clipType': 'am-type', 'track': 'picture', 'at': 0, 'hold': .5}}, 'parent')]), 'pin-birth')
+    choice = {'source': 'occurrence:occ/clip:voice', 'document': case.pin,
+              'word_ids': [case.source['content']['segments'][0]['words'][0]['id']]}
+    anchor = case.submit(case.request([parent.call('clip.anchor', {
+        'field': 'on', 'declaration': 'again', 'choice': choice}, 'parent/clip:born')]), 'pin-anchor')
+    if retention == 'surviving':
+        case.submit(case.request([word.pick(case)]), 'pin-surviving-anchor')
+    request = case.request([parent.call('timeline.inverse', {'publications': [
+        result['receipt']['receipt_id'] for result in (born, anchor)]}, None)])
+    undone = case.submit(request, 'pin-grouped-undo')
+    document = undone['data']['canonical_document']
+    assert document['dependency_manifest']['documents'] == ([] if retention == 'introduced' else [case.pin])
+    if retention in ('introduced', 'preexisting'):
+        assert json.dumps(document, sort_keys=True) == json.dumps(baseline, sort_keys=True)
+    redone = word.undo(case, undone, 'pin-grouped-redo')
+    assert redone['data']['canonical_document']['dependency_manifest']['documents'] == [case.pin]
+    if retention != 'surviving':
+        assert redone['data']['canonical_document'] == anchor['data']['canonical_document']
+    case.restart()
+    assert case.submit(request, 'pin-grouped-undo') == undone
