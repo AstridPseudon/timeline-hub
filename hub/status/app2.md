@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T21:00:11Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 7m -->
+<!-- app2 | 2026-10-20T21:05:56Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 21 | status age 13m -->
 # app2 — 2026-10-20 20:52 UTC
 Milestone: M2. Duplicate is qualified for its deletion merge. No app2 row is marked DELETED yet; milestone exit criteria are not met.
 Integrated: App HOME a11dd7a91. Parent preparation fences merged at 270d2437a; 971e62e1b is the later renderPipeline deletion. Inactive project-data helper merged at 32f1b0b21; a11dd7a91 is the later empty source-pin refusal. Earlier shared consumers and every donor assertion remain in 20ea14c26.
