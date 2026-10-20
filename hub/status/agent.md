@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T12:10:26Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-20T12:16:10Z | dispatcher heartbeat 12s -->
 # agent — 2026-10-20 11:46:20 UTC
 Milestone: M1 RECORDED; M2 active. Gates1/6/7 OPEN. No M2 exit, all-writer retirement, current App/Agent qualification, pixel/MP4 parity or owner-film claim.
 Integrated: Agent tl/integration cf7448ed, clean. Since7970544b: normal PCM caller a2ba1bca (210 focused+22 central HTTP; independent26 physical HTTP incl4 phase probes), native Checkout/Sheet78d548cf (180+4 independent/56 real development941+5 known Stage1 failures), guarded video unplace60ddf8f0 (352+4 privateS2+39 overlay+28 probes), ordinary literal CLItrimcf7448ed (175+2 probes+12history+126sheet/396neighbors+5real941). History5430a971, raw-bound trim6a595224, capture73d8a237 with original verifier, extent86405964, facade7970544b retained. D05/D06/D07 physically deleted; no new whole-writer deletion claimed.

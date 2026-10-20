@@ -1,6 +1,6 @@
 # Visual compile contract
 
-Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency), the 03:59 decision (clip look) and the 04:44 correction (exact native fixture). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
+Status: settled MAIN image-cap reference for the Agent visual contract, from the 2026-10-20 popup/clip-look decisions, the exact native fixture, and the owner 11:59 reference. Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`. The settled pixel source is ORCH/design `viewing-main-image-cap-actual-reference.md`, operation `vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447`.
 
 Reference for "visible today": `origin/main` e51595c6. The compiler is `astrid/core/timeline/shot_composition_projection.py`, identical to main's file in this tree. The renderer is Composition 0.0.6 (`remotion/package.json:18` on main).
 
@@ -28,9 +28,9 @@ Other fields that the projection carries through:
 ### What main does with this closure
 
 - The projection is `project_runtime_parent_composition`, which calls the same `_project_clip` as the reference. The visible window is `[occurrence start + child at, min(child end, occurrence end))` (`shot_composition_projection.py:308-313`).
-- **The overhang clamp is not exercised by this closure.** No child extends past its occurrence end. Largest child ends: A 15 s against an end of 18 s; B 17 s against an end of 20 s. With the clamp on or off, the rows are the same. The 03:46 premise, that A's child runs into B without the clamp, came from the reconstruction and does not reproduce on the native fixture.
-- **Occurrence spans overlap.** A spans 8-18 s and B spans 10-20 s, an 8 s overlap on the lane. Main accepts this and does not reject it. The source-window children do not overlap: A's child ends at 11 s, where B's begins. Whether overlapping occurrence spans on one lane are intended is an open item for the orchestrator (section "Open").
-- The clamp decision itself is not settled by this fixture. The 03:46 "clamp is ON" decision in this document is a policy statement, not evidence from this closure. App's `clampToOccurrenceDuration: false` (`ShotTimelinePreview.tsx:99`, `shotTimelineDataProvider.ts:404`) makes no difference to these rows.
+- **The overhang clamp is not exercised by this closure.** No child extends past its occurrence end. Largest child ends: A 15 s against an end of 18 s; B 17 s against an end of 20 s. The rows are the same whatever the clamp setting. The clamp is exercised by vector 2 (section 1b), not by this native closure.
+- **Occurrence spans overlap.** A spans 8-18 s and B spans 10-20 s, an 8 s overlap on the lane. Main accepts this and does not reject it. The source-window children do not overlap: A's child ends at 11 s, where B's begins. This is App's real output and stays as vector 1. Whether it is intended on a shared lane is open (section "Open"; App confirms the spans through the hub).
+- The clamp decision is not settled by vector 1. The 03:46 "clamp is ON" decision in this document is a policy statement. App's `clampToOccurrenceDuration: false` (`ShotTimelinePreview.tsx:99`, `shotTimelineDataProvider.ts:404`) makes no difference to these rows.
 
 ### Rational clock
 
@@ -42,14 +42,28 @@ Frames are half-open, with JavaScript `Math.round` semantics (`duration.py:145-1
 
 The physical reference is the approved executable analog (04:40 decision, Viewing's inbox): tiny generated playable media with the exact durations, explicitly labelled as an analog of the native fixture, plus the real host dispatch. MAIN is fed its own numeric fps, `Fraction(30000, 1001)`, and its frames are the reference. This worktree generated no media and rendered no frames. The reference belongs to Viewing, and it is valid only after MAIN's rational path and managed bytes are supplied. The rows below are the compiler's expectation for that reference.
 
+Viewing's MAIN source probe (`handoff-vw-m3-shared-lane-main-vector-REPORT.md`) found that MAIN's own frame helpers return `NaN` for this fixture's rational fps, and that the fixture's `video/fixture` descriptors carry no playable bytes. So no MAIN frame value exists yet for either closure, and none is entered in the fixture.
+
+### 1b. Overhang closure (vector 2)
+
+Vector 2 is a labelled variant, not App output. It exists so that `clampToOccurrenceDuration` is actually exercised. The fixture is `overhang_closure`, and it is the native parent with only its occurrence list replaced.
+
+- occ-c is on the picture lane at 2 s, 1.5 s long (window `[2, 3.5)` s). It pins the native `shot-1` revision.
+- Its source-window child `clip-a` (at 1, hold 4, from 2, to 6, speed 2) is 2 s on the timeline, so absolute `[3, 5)` s. It overhangs the occurrence end by 1.5 s.
+- **Clamp on** (the one policy the compiler has): visible `[3, 3.5)` s. Frames at 30000/1001 are `start 90`, `end 105`, `duration 15`.
+- **Clamp off** (not a compiler mode): the unclamped child `[3, 5)` s. Frames would be `end 150`, `duration 60`. Decision (03:46, applied 06:18): there is no unclamped mode, so the two clamp-off rows are dropped from the fixture, not kept as xfails.
+- **Physical reference: pending** (`overhang_closure.physical_reference`). It comes from Viewing's executable analog, as in section 1. No values are recorded.
+
+Open against MAIN: Viewing's probe reports that MAIN's default projection (`clampToOccurrenceDuration` on) cuts the native closure's A children at 10 s, which is B's start, not at A's end (18 s). That is `occ-a:clip-a` `to 4` (1 s visible, end 10) against the compiler's `to 6` (end 11), and `reserved-child` `to 5.75` against `to 6`. The compiler clamps only to the occurrence end. Which of these is the intended clamp is open (section "Open", item 1). This document does not choose.
+
 ## 2. Element clips get the clip look (intended change from 0.0.6)
 
 This is a deliberate difference, not lost behaviour (03:59 decision).
 
 - **Main (Composition 0.0.6).** Effect clips are dispatched straight to the effect component and skip the wrapper. `docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx:121-132` returns `<EffectComponent/>` directly. Media clips go through `VisualClip`, which applies the fade (`VisualClip.tsx:57`, `lib/fade.ts:27-`).
-- **Composition 0.0.7** (`6bd784d`, "clip look (opacity, crop, fades, entrance/exit) on element clips"). `TimelineComposition.tsx:81` in `v0.0.7` wraps effect clips in `<ClipLook kind="element">`. `ClipLook.tsx:40-48` applies opacity and crop to element clips only. Media clips get no opacity or crop from ClipLook, because `VisualClip` already handles their fade. But `ClipLook` wraps media clips too (`TimelineComposition.tsx:99,104,119`), so entrance and exit animations apply to media clips as well. Full list of 0.0.7 differences: `design/owner-film-differences.md`.
+- **Composition 0.0.7** (`6bd784d`, "clip look (opacity, crop, fades, entrance/exit) on element clips"). `TimelineComposition.tsx:81` in `v0.0.7` wraps effect clips in `<ClipLook kind="element">`. `ClipLook.tsx:40-48` applies opacity and crop to element clips only. Media clips get no opacity or crop from ClipLook, because `VisualClip` already handles their fade. But `ClipLook` wraps media clips too (`TimelineComposition.tsx:99,104,119`), so entrance and exit animations apply to media clips as well. Full list of 0.0.7 differences: `docs/design/owner-film-differences.md`.
 - **Consequence.** Overlapping independent element clips with fades now DIP where main drew them opaque. The 16-30 DIP golden is approved as intended. Viewing lists the owner's films with overlapping element clips that use fades, opacity or entrance/exit (03:59 condition 3).
-- **This tree.** `remotion/package.json:18` pins `file:artifacts/banodoco-timeline-composition-0.0.8.tgz` on the integration tree, so the intended change is already in the pin. `test_render_pin_gives_element_clips_the_clip_look` asserts the pin is at least 0.0.7.
+- **This tree.** `remotion/package.json:18` pins `file:artifacts/banodoco-timeline-composition-0.0.12.tgz` on current integration, so the intended change is already in the pin. `test_render_pin_gives_element_clips_the_clip_look` asserts the pin is at least 0.0.7.
 
 ### Proof still owed (not in this contract)
 
@@ -57,9 +71,76 @@ This is a deliberate difference, not lost behaviour (03:59 decision).
 
 Also in the same 0.0.7 release, per-boundary transitions (dissolve vs dip) changed. The vectors here do not cover that.
 
+## 3. Authored fade clock and occurrence draw cap (vector 3; settled MAIN golden)
+
+`cap_fade_closure` retains the full, opaque App `shotComposition.fixture.json`
+from App commit `35ebae007d848ff22d8da89461bdb66efc93472f`, plus the explicit
+synthetic child replacement from the independent review: an image at 0 s,
+authored `hold: 5`, and `effects: {fade_out: 1}`. The existing
+`withOccurrenceRevision` shape replaces only occ-1's child clips. This is a
+synthetic counterexample, unlike vector 1's native ADD output; the original
+external test bytes were not retained.
+
+The authored occurrence still says 2000 ms. App derives the effective 4000 ms
+cap from occ-2's next start on the same lane, against 5000 ms of content. The
+corpus includes the actual default editor projection and the raw projection
+from that frozen source. Both retain `canonicalTiming.durationMs: 5000` and
+`canonicalTiming.occurrenceDurationMs: 4000`; their only clip difference is
+`hold` (4 versus 5). The raw projection was obtained with the existing App
+option as a diagnostic, not as a proposed per-call clamp policy.
+
+The Agent analog receives the already-derived cap explicitly; it does not
+reproduce App's lane-cap policy. The editor/read projection remains positively
+clamped to `hold: 4`, while the authored source remains `hold: 5`. The fixture
+preserves both complete projected objects and the original opaque fixture
+fields.
+
+| Input to public evaluation, 30 fps | Authored duration | Draw interval | Clip opacity at frame 105 (3.5 s) |
+|---|---|---|---|
+| Settled product/editor input: projected `hold: 4`, cap 4000 ms | 120 frames | [0, 120) | **0.5** |
+| Raw `hold: 5` public-evaluator observation | 150 frames | [0, 120) | 1 (diagnostic only) |
+
+The raw opacity `1` calculation is retained solely to document the pinned
+public evaluator's authored-clock observation; it is not a product golden.
+The product golden is the existing clamped projection with the MAIN-confirmed
+`0.5`. Both draw plans contain frame 119 and exclude frame 120. The
+`opacity` column is clip opacity, not a pixel/occlusion claim or the track
+plan's transition opacity.
+The contract tests extract this tree's pinned public package into a private
+temporary directory and execute its pure `prepareScene`, `clipOpacity` and
+`queryTrackFrame` exports with the incoming vector `[null]`. They use no local
+fade formula. The Agent editor test supplies the already-derived 4000 ms cap to
+the existing projector, preserves its positive clamp, and checks the authored
+source graph remains unchanged. It does not force a cap in a production proof
+or call the static playable-media analog an actual pipeline.
+
+### Product boundary and unresolved production expectation
+
+The reviewed App callers use the default clamped projector, and the Agent
+analog uses `project_shot_composition` with the already-derived 4000 ms cap.
+No global/native `renderConfig`, second compiler, per-call timing policy, or
+clamp-default change follows from this vector.
+
+Agent also shortens `hold`/`to` in `_project_clip` in
+`astrid/core/timeline/shot_composition_projection.py`. Its managed render
+closure in `astrid/packs/rendering/actions/render/managed_timeline.py` and
+provider projection in `astrid/sdk/timeline/commit.py` consume that projector.
+Any correction needs review at those source boundaries; no product change is
+made by this contract addition.
+
+The original MAIN result is settled in ORCH/design
+`viewing-main-image-cap-actual-reference.md`: frame 90 is RGB 240 control,
+frame 105 is RGB `[122, 124, 130]` over background `[5, 8, 20]`, supporting
+opacity `0.5`. The frame-105 PNG SHA256 is
+`c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b`.
+The production render join remains unresolved and is retained as a strict
+xfail in `test_cap_fade_production_render_expectation_remains_unresolved`.
+This MAIN visual golden does not certify App preview/export parity, audio,
+Runtime acceptance, or unified Gate 6.
+
 ## Vectors
 
-The six render-facing rows are the source-window child of each occurrence. Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`).
+The original frame rows are the source-window child of each occurrence. Vector 1 is the six native rows (section 1). Vector 2 is the overhang closure (section 1b). Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`). A row with `closure` = `overhang` is vector 2. Vector 3 is stored separately as `cap_fade_closure` and checks the raw authored fade clock against the bounded draw interval (section 3).
 
 | id | Occurrence / child | Field | Expect | Status |
 |---|---|---|---|---|
@@ -73,18 +154,37 @@ The six render-facing rows are the source-window child of each occurrence. Each 
 | `test_popup_closure_source_windows_are_half_open_on_the_shared_lane` | A's child end <= B's child start | order | 330 <= 330 | pass |
 | `test_native_child_keeps_its_opaque_and_null_params_fields` | occ-a / reserved-child | `opaque`, `params` | `[null, false, {}]`, `null` | pass |
 | `test_render_pin_gives_element_clips_the_clip_look` | pin >= 0.0.7 | pin | >= 0.0.7 | pass |
+| overhang-clamp-on-start-frame | vector 2, occ-c / clip-a (3 s) | start_frame | 90 | pass |
+| overhang-clamp-on-end-frame | vector 2, occ-c / clip-a (visible end 3.5 s) | end_frame | 105 | pass |
+| overhang-clamp-on-duration-frames | vector 2, occ-c / clip-a | duration_frames | 15 | pass |
+| `test_overhang_child_is_clamped_to_its_occurrence_end` | vector 2, occ-c / clip-a | at, visible duration | 3.0 s, 0.5 s | pass |
+| `test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source` | vector 3, occ-1 / overlong-child | projected hold / authored hold | 4 s / 5 s | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[product]` | vector 3, settled product/editor input | 0.5 / 120 / 120; frame 119 present, frame 120 absent | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[editor]` | vector 3, editor projection | 0.5 / 120 / 120; frame 119 present, frame 120 absent | pass |
+| `test_cap_fade_public_source_clock_and_half_open_draw_cap[raw-diagnostic]` | vector 3, raw authored input | 1 / 150 / 120; diagnostic only | pass |
+| `test_cap_fade_production_render_expectation_remains_unresolved` | vector 3, unresolved production join | settled 0.5 / 120 / 120 | strict xfail |
 
-These are not xfails. Every row the compiler must emit is produced on this branch, and the clip look is already in this tree.
+The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. No rows were added or kept as xfails for clamp off: the compiler has no unclamped mode, and the decision does not add one.
 
-Measured on this branch with `/home/user/work/venv-agent/bin/python -m pytest`: 22 passed, 2 xfailed (the two audio vectors 10-11). No visual row needs an xfail.
+The settled focused run is recorded in the worker report. Its two pre-existing
+strict xfails are audio vectors 10–11; the additional strict xfail is the
+explicitly unresolved production render expectation above.
 
 ## Open
 
-1. **Clamp decision.** This native closure does not exercise the clamp. The "clamp ON" policy stays as the 03:46 decision says, but it needs another closure to be evidence. Orchestrator call.
-2. **Overlapping occurrence spans on the picture lane.** A (8-18 s) and B (10-20 s) overlap by 8 s. Main accepts it, and the source-window children do not overlap. Orchestrator to confirm this is intended for a shared lane.
-3. **Physical reference.** Viewing produces it (analog, MAIN at `Fraction(30000, 1001)`) and checks these six rows against it. Not done here.
+1. **Clamp: which clamp is intended.** Two items, both for the orchestrator.
+   - Whether an unclamped mode is wanted at all. Decided 06:18: the 03:46 decision holds, so the clamp-off rows are dropped rather than kept as xfails.
+   - MAIN's default clamp (Viewing's probe) does not match the compiler on vector 1. MAIN cuts A's children at B's start (10 s); the compiler cuts at A's end (18 s). Viewing's evidence says the MAIN clamp for the native closure ends at 10 s, not 18 s. Not verified from source here.
+2. **Overlapping occurrence spans on the picture lane.** A (8-18 s) and B (10-20 s) overlap by 8 s. Main accepts it, and the source-window children do not overlap. App confirms the spans through the hub (orchestrator asked, 04:57). Vector 1 stays as native until then.
+3. **Production render join.** The MAIN image reference is settled, but the
+   Agent production render path still needs a real managed source/materializer
+   qualification. The existing projector/public-evaluator analog is labelled
+   as such and remains a strict unresolved expectation.
 
 ## Not verified
 
-- No media was generated, no frames were rendered and no pixels were compared. The vectors test the compiler's output fields only.
+- The Agent worker did not rerun MAIN capture; the settled pixel values and
+  hashes are imported from the ORCH/design reference named above. The vectors
+  test the Agent projector and pinned public evaluator; the strict production
+  xfail records the remaining boundary.
 - App's tests were not run from this worktree. App's own clamp replica (`src/tools/video-editor/data/shotCompositionProjection.ts:437-449`) and its `clampToOccurrenceDuration: false` callers were not changed here.

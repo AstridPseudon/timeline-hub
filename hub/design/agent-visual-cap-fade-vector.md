@@ -1,6 +1,6 @@
-HOLD — owner 11:08 decision supersedes the proposed raw-clock render expectation. This is diagnostic source/public-evaluation evidence only. MAIN source predicts projected opacity 0.5; real MAIN pixels must settle the reference. Do not merge 27e3b3b1, promote raw opacity 1 as a product golden, or activate renderConfig meanwhile.
+SETTLED — owner 11:59 decision publishes the original MAIN image-cap golden. The clamped product result is opacity 0.5 at frame 105/30 (RGB 122/124/130 over background 5/8/20, with frame 90 RGB 240/240/240 control). The raw authored hold:5 opacity 1 observation remains diagnostic only. Do not activate the withdrawn native/global renderConfig or flip clamp defaults.
 
-Agent INBOX 10:35 diagnostic vector is ready for Viewing confirmation. Product source is unchanged. No MAIN visible result is claimed.
+Viewing's actual reference is `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-main-image-cap-actual-reference.md`, operation `vw-m3-main-cap-locked-theme-stage-e2e-viewing-main6-locked-theme-image-cap-three-stills-1020115023-5447`. Product source remains unchanged; this is a visual golden, not unified preview/export parity, audio, Runtime acceptance, or Gate 6 proof.
 
 The corpus is `tests/editing_conformance/fixtures/visual_compile_contract.json`, key `cap_fade_closure` (schema 4), with contract section 3 in `docs/design/visual-compile-contract.md`. It includes the verbatim frozen App fixture, its provenance/blob, the explicit 5 s image + 1 s fade-out mutation, and the complete actual raw/default projected clip objects. Existing editor clamp positives remain passing.
 
@@ -8,32 +8,33 @@ Expanded handoff: [agent-visual-cap-fade-vector.json](agent-visual-cap-fade-vect
 
 Source frozen at App `35ebae007d848ff22d8da89461bdb66efc93472f`, `src/tools/video-editor/data/shotComposition.fixture.json`; mutation matches the existing test helper `withOccurrenceRevision`: replace only prepared occ-1's child clips. The authored occurrence duration remains 2000 ms. App's actual projector derives 4000 ms from next same-lane occ-2 at 4000 ms, against 5000 ms content. The Agent editor analog takes this effective cap explicitly; it does not copy App's cap derivation.
 
-| Source/public evaluation at 30 fps | Raw render input | Default editor projection |
+| Source/public evaluation at 30 fps | Raw authored diagnostic | Settled product/editor projection |
 |---|---:|---:|
 | hold (s) | 5 | 4 |
 | canonicalTiming.durationMs | 5000 | 5000 |
 | occurrenceDurationMs | 4000 | 4000 |
-| ownDuration (frames) | 150 | 120 |
+| ownDuration (frames) | 150 (diagnostic) | 120 |
 | drawDuration (frames) | 120 | 120 |
-| clipOpacity at frame 105 | 1 | 0.5 |
+| clipOpacity at frame 105 | 1 (diagnostic only) | **0.5 product golden** |
 | frame 119 layer count | 1 | 1 |
 | frame 120 layers | [] | [] |
 
-The clips differ ONLY in hold. Public pure `prepareScene` receives the no-transition incoming vector `[null]`, so it applies the existing occurrence cap. Public `clipOpacity` receives the authored content clock; `queryTrackFrame` verifies half-open drawing. No private fade formula, local compiler or threshold change is introduced. This tests clip opacity, not pixel alpha or decoded output. The existing per-call App option was used ONLY to observe raw bytes in the diagnostic; it is not a proposed product policy.
+The clips differ ONLY in hold. Public pure `prepareScene` receives the no-transition incoming vector `[null]`, so it applies the existing occurrence cap. Public `clipOpacity` and `queryTrackFrame` are exercised from the actual pinned public package; no private fade formula or threshold change is introduced. The raw opacity 1 result is an observation only, never a product golden. The original MAIN pixel reference supports product opacity 0.5 and is recorded with exact PNG hashes in the actual-reference document and fixture.
 
 Exact product seams for owners:
 
-- Frozen App `hooks/useTimelineCommandSession.ts:82` and `data/canonicalCompositionState.ts:61` call the default clamped projector. `data/shotCompositionProjection.ts:440–449` shortens source hold/to. `compositions/playerEvaluation.ts:20–23` retains that shortened duration and `compositions/VisualClip.tsx:301` evaluates its fade. The rendering/preview boundary needs raw authored source plus the existing cap while the editor/read representation retains its clamped positive. No global default flip or additional caller policy is authorized here.
+- Frozen App `hooks/useTimelineCommandSession.ts:82` and `data/canonicalCompositionState.ts:61` call the default clamped projector. `data/shotCompositionProjection.ts:440–449` shortens source hold/to. `compositions/playerEvaluation.ts:20–23` retains that shortened duration and `compositions/VisualClip.tsx:301` evaluates its fade. The editor/read representation retains its clamped positive. No global/default `renderConfig` activation or additional caller policy is authorized here.
 - Agent `astrid/core/timeline/shot_composition_projection.py:_project_clip` also shortens hold/to. Both `astrid/packs/rendering/actions/render/managed_timeline.py:963` and `astrid/sdk/timeline/commit.py:730` consume that projector. The public native-scene join is `remotion/src/host-scene.ts:25`. This worker does not change any of these product paths.
-- MAIN `e51595c6` has the same source-shortening branch, and main pins Composition 0.0.6. Its retained `docs/reference/timeline-composition-v0.0.6/lib/fade.ts:29–47` uses the supplied duration. Source therefore suggests that feeding a clamped 4 s image to that helper would give 0.5, not 1. That is a reference discrepancy to resolve explicitly, not evidence that MAIN visibly rendered 1. No settled decision was changed.
+- MAIN `e51595c6` has the same source-shortening branch. The actual MAIN render reference settles the visible result at 0.5; the frame-105 PNG SHA256 is `c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b`, and the frame-90 control SHA256 is `7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a`.
+- Only the existing Agent projector analog and pinned public evaluator are exercised in this lane. The managed production render join remains an unresolved strict expectation; this handoff does not claim one-compiler completion or force a cap in a production proof.
 
 Actual tests/evidence:
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m3-visual-cap-fade-vector /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_compile_contracts.py tests/timeline/test_shot_composition_projection.py tests/core/timeline/test_shot_composition_projection_volume.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-m3-cap-fade-main-reference /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_compile_contracts.py tests/timeline/test_shot_composition_projection.py tests/core/timeline/test_shot_composition_projection_volume.py
 ```
 
-PASS: 51 passed, 2 xfailed in 4.07 s. The two strict xfails are unchanged audio vectors 10–11; no markers added/removed. The new cases are `test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source` and the two `test_cap_fade_public_source_clock_and_half_open_draw_cap` parameterizations. The latter extract the actual pinned Agent public12 archive into a private pytest temp directory and execute its pure runtime exports with Node v22.22.0; this is not admitted/pinned Remotion render evidence. Python is the read-only shared venv's 3.13.16.
+PASS: 52 passed, 3 xfailed in 2.62 s. The two pre-existing strict xfails are unchanged audio vectors 10–11; the third is the explicit unresolved production render expectation. The new passing cases cover the clamped Agent projector analog, settled product/editor public evaluation at 0.5, raw authored-clock diagnostic at 1, and half-open frame 119/120 drawing. The cases extract the current pinned Agent public12 archive into a private pytest temp directory and execute its pure runtime exports with Node; this is not admitted/pinned Remotion render evidence. Python is the read-only shared venv's 3.13.16.
 
 The actual frozen App source probe also passes preservation, hold-only-difference, opacity, own/draw-duration and frame-119/120 assertions. It bundles actual App source (no product substitution) with read-only esbuild and public12 evaluation. Reproduce using:
 
@@ -50,4 +51,4 @@ PASS, exit 0. The first bundler attempt lacked the frozen vendored browser sourc
 
 Existing tests located for the subsequent owner fix (source inspected, not executed by this worker): App `data/shotCompositionProjection.test.ts` overlong-child clamp positive, `compositions/TimelineRenderer.sequence.test.tsx` compiled-cap renderer dispatch (starts with manually supplied input), and Composition `typescript/tests/scene-evaluation.test.ts` incoming-vector cap test. They do not replace a production projector-to-renderer regression. Agent projection neighbours ran above. No Runtime acceptance suite ran.
 
-Next: Viewing replays MAIN's actual render on this input/explicitly labelled playable-media analog, confirms the reference or reports the discrepancy to the orchestrator, then source owners qualify the raw-source/cap boundary through actual production callers. Keep editor clamp tests unchanged. No full suite, browser/socket test, render, pixels, PCM, Runtime acceptance, MAIN replay or release qualification was run/requested. The requested fixture/test/document/handoff work is complete; physical confirmation and product correction remain with the respective owners.
+Next: source owners qualify the managed production raw-source/cap boundary through actual production callers. Keep editor clamp tests unchanged. No full suite, browser/socket test, PCM, Runtime acceptance, unified Gate 6, or release qualification was run/requested here. The requested fixture/test/document/handoff work is complete; the MAIN visual golden is settled, while the production join remains explicitly unresolved.
