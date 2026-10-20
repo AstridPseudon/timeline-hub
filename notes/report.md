@@ -117,4 +117,44 @@ Recommended next step: orchestrator review and integrate this single composed
 unit, then coordinate Runtime/App consumers with these expanded vectors under
 their existing qualification gates. No commit/merge/rebase/checkout/push was
 performed. Commit message and DONE are supplied for the harness; test temp files
-and worktree bytecode were removed.
+
+## M2 video unplace handoff (blocked)
+
+Source under test: `ba5f2756f50a84f570aa9699ef621873f7521abc`.
+
+The requested builder-only port cannot be implemented on this source without
+changing an existing command handler. Shared video placement creates the raw
+child `occurrence:occ-a/clip:placed` with `clipType=video`, `asset=reserved-new`,
+`from=0`, `to=4`, `hold=4`, and `speed=1`. `unplace_shared` currently routes
+every target through `placement.unplace`, whose existing handler accepts only
+`clipType` `media`/`image`. The existing guarded `clip.delete` command is also
+not a usable substitute: `_delete_commands.py` requires the selector to match
+`parent/clip:<raw-id>` and `capture_clip_delete` documents/captures that parent
+scope. The exact occurrence/raw-child selector is therefore refused before any
+write. No existing occurrence-child delete command is registered.
+
+The direct probe used the real shared auto-placement fixture and observed:
+
+```text
+video row: {'id': 'placed', 'clipType': 'video', 'asset': 'reserved-new',
+            'at': 9.017, 'hold': 4, 'from': 0, 'to': 4, 'speed': 1}
+unplace: CommandError: unplace requires one placed media clip
+clip.delete occurrence:occ-a/clip:placed =>
+  CommandError: clip.delete v1 requires one parent clip identity
+```
+
+The requested `keepAsPooled` batch would need that occurrence-child delete
+first, followed by the already-existing `shot.pool add` with the exact selected
+media pin. Adding a new op/alias, reconstructing the same child identity,
+deleting the registry binding, or mutating low-level inverse/schema code would
+violate the brief. See `docs/design/agent-video-unplace-native.md` for the
+flat command/case handoff.
+
+Targeted neighbors passed unchanged: **200 passed in 23.05s**.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-video-unplace-native/pytest-neighbors tests/editing_conformance/test_recipe_m2_shared_auto_placement.py tests/editing_conformance/test_recipe_m2_shot_pool.py tests/editing_conformance/test_recipe_clip_delete.py tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+```
+
+No product source, schema, fixture, or golden was changed in this blocked
+handoff. No full suite was requested.
