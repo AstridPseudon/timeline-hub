@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipTrimCapturePort } from '@/tools/video-editor/commands/clipTrimGesture.ts';
 import { ClipPanelBody, type ClipPanelBodyProps } from './ClipPanelBody.tsx';
 
 vi.mock('./ClipEffectsTab.tsx', () => ({
@@ -94,6 +97,31 @@ describe('ClipPanelBody timing value commits', () => {
 
     expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('activates the labelled source ScrubField and edits its native input', async () => {
+    const user = userEvent.setup();
+    const clip = {
+      id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1,
+    } as const;
+    const capture = vi.fn(() => ({}));
+    const clipTrimPort = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ClipTrimCapturePort;
+    const current = { config: {}, resolvedConfig: { clips: [clip] } } as unknown as TimelineData;
+    render(<ClipPanelBody {...bodyProps()} clip={clip} current={current} clipTrimPort={clipTrimPort} activeTab="timing" />);
+
+    const scrubField = screen.getByLabelText('Source In');
+    expect(scrubField.tagName).toBe('DIV');
+    const input = scrubField.querySelector('input:not([aria-hidden="true"])');
+    expect(input).toBeInstanceOf(HTMLInputElement);
+
+    await user.click(input!);
+    await user.clear(input!);
+    await user.type(input!, '1');
+    await user.keyboard('{Enter}');
+    await user.tab();
+
+    expect(capture).toHaveBeenCalledWith({ clipId: 'clip-1', current });
+    expect(input).toHaveValue('1');
   });
 });
 

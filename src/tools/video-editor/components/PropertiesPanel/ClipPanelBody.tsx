@@ -1,4 +1,5 @@
 import type { CapturedClipScalarEdit } from '../../commands/clipScalarGesture.ts';
+import type { ClipTrimCapturePort } from '../../commands/clipTrimGesture.ts';
 import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -20,7 +21,7 @@ import {
 import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineClipType.ts';
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
@@ -36,6 +37,7 @@ import { getEffectDisplayLabel } from './clip-effect-helpers.tsx';
 import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
+import { ClipSourceWindowFields } from './ClipSourceWindowFields.tsx';
 
 /** The shortest a media clip can be made from its Duration field. */
 const MIN_MEDIA_DURATION_SECONDS = 0.05;
@@ -47,6 +49,8 @@ export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-
 
 export interface ClipPanelProps {
   readOnly?: boolean;
+  current?: TimelineData;
+  clipTrimPort?: ClipTrimCapturePort;
   clip: ResolvedTimelineClip | null;
   track: TrackDefinition | null;
   deviceClass: TimelineDeviceClass;
@@ -92,6 +96,8 @@ export interface ClipPanelBodyProps extends ClipPanelProps {
 
 export function ClipPanelBody({
   readOnly = false,
+  current,
+  clipTrimPort,
   effectResources,
   VariantPicker,
   EffectCreator,
@@ -377,26 +383,32 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('to', mediaSourceOutFor(value))}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source In</FieldLabel>
-                    <NumberInput
-                      value={clip.from ?? 0}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('from', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source Out</FieldLabel>
-                    <NumberInput
-                      value={clip.to ?? clip.assetEntry?.duration ?? 5}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('to', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
-                    />
-                  </div>
+                  {current || clipTrimPort ? (
+                    <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <FieldLabel>Source In</FieldLabel>
+                        <NumberInput
+                          value={clip.from ?? 0}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('from', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel>Source Out</FieldLabel>
+                        <NumberInput
+                          value={clip.to ?? clip.assetEntry?.duration ?? 5}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('to', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="space-y-2">
                     <FieldLabel>Speed</FieldLabel>
                     <NumberInput
