@@ -217,7 +217,8 @@ export class SharedAcpSessions {
     for (const session of this.sessions.values()) {
       if (!session.subscribers.delete(client)) continue;
       session.journalCursor.delete(client);
-      if (session.writer === client) session.writer = null;
+      // The bridge is the authority: promote exactly one surviving subscriber.
+      if (session.writer === client) session.writer = session.subscribers.values().next().value ?? null;
       this.broadcastControl(session);
     }
   }
@@ -260,6 +261,7 @@ export class SharedAcpSessions {
     const cacheHit = session.loaded && session.loading === null;
     this.assertAttachAllowed(client, session);
     session.subscribers.add(client);
+    if (!session.writer) session.writer = client;
     if (cacheHit) {
       this.beforeReplay?.(client, id);
       session.journalCursor.set(client, 0);

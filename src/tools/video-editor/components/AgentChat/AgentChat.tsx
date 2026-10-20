@@ -348,6 +348,14 @@ function AvailableAgentChatPanel({
   const lightboxRequestIdRef = useRef(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const hasProject = Boolean(projectId);
+  const wasStartingRef = useRef(false);
+  useEffect(() => {
+    const wasStarting = wasStartingRef.current;
+    wasStartingRef.current = startingAgent !== null;
+    // Focus after the disabled composer has been committed as editable again.
+    if (wasStarting && !startingAgent) inputRef.current?.focus({ preventScroll: true });
+  }, [startingAgent]);
+
 
   useEffect(() => {
     if (!pendingComposerPrompt) return;
@@ -515,7 +523,7 @@ function AvailableAgentChatPanel({
     setDraftSaveError(null);
     await flushDraftRef.current();
   }, [projectChat]);
-  const activeSessionData = readAgentSession(activeSession.data);
+  const activeSessionData = startingAgent ? undefined : readAgentSession(activeSession.data);
   const handleSetMainSession = useCallback(async (sessionId: string) => {
     if (!projectChat.data) return;
     await setMainSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId });
@@ -556,17 +564,19 @@ function AvailableAgentChatPanel({
   const isCancelled = activeStatus === 'cancelled';
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
   const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
-  const isFollowerRef = useRef(isFollower);
-  isFollowerRef.current = isFollower;
+  const composerLockedRef = useRef(false);
+  composerLockedRef.current = isFollower || startingAgent !== null;
   useEffect(() => {
-    if (isFollower) voiceRef.current.cancelRecording();
-  }, [isFollower]);
+    if (isFollower || startingAgent) voiceRef.current.cancelRecording();
+  }, [isFollower, startingAgent]);
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
-  const activeQueue = queue.filter((item) => item.sessionId === activeSessionId);
+  const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
-  const inputPlaceholder = showNoProjectState
+  const inputPlaceholder = startingAgent
+    ? `Starting ${agentNames[startingAgent]}…`
+    : showNoProjectState
     ? 'Select a project to start chatting...'
     : voice.isRecording
       ? 'Recording...'
@@ -578,7 +588,7 @@ function AvailableAgentChatPanel({
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
   // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
-  const showEmptyState = !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
+  const showEmptyState = !startingAgent && !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
   const turnFailure = chatFailures.find(Boolean);
   const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
@@ -710,7 +720,7 @@ function AvailableAgentChatPanel({
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
         event.preventDefault();
-        if (!hasProject || isFollower) {
+        if (!hasProject || isFollower || startingAgent) {
           return;
         }
         if (voice.isRecording) {
@@ -723,7 +733,7 @@ function AvailableAgentChatPanel({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasProject, isFollower, voice]);
+  }, [hasProject, isFollower, startingAgent, voice]);
 
   useEffect(() => {
     sendingRef.current = false;
@@ -788,7 +798,7 @@ function AvailableAgentChatPanel({
   const currentContextRef = useRef(editorContext);
   currentContextRef.current = editorContext;
   const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false, checkSaved = false) => {
-    if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId || isFollower || sessionControl?.active) {
+    if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId || composerLockedRef.current || sessionControl?.active) {
       return;
     }
 
@@ -845,11 +855,11 @@ function AvailableAgentChatPanel({
     } finally {
       if (isCurrent()) sendingRef.current = false;
     }
-  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, isFollower, sessionControl?.active]);
+  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, sessionControl?.active]);
 
   const handleSend = useCallback(async (rawText?: string) => {
     const text = (rawText ?? draft).trim();
-    if (!text || !activeSessionId || !hasProject || isFollower) return;
+    if (!text || !activeSessionId || !hasProject || composerLockedRef.current) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
       clipId: clip.clipId,
@@ -898,6 +908,7 @@ function AvailableAgentChatPanel({
   useEffect(() => {
     if (
       sendingRef.current
+      || startingAgent !== null
       || isFollower
       || isProcessing
       || sendMessage.isPending
@@ -922,7 +933,7 @@ function AvailableAgentChatPanel({
         // Leave the failed head in place; pausedQueueHeadId will prevent further drains.
       }
     })();
-  }, [queue, pausedQueueHeadId, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
+  }, [queue, pausedQueueHeadId, startingAgent, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async (): Promise<string | null> => {
     if (!projectId) return null;
@@ -938,9 +949,6 @@ function AvailableAgentChatPanel({
       setOptimisticMessage(null);
       setActiveSessionId(sessionId);
       setIsTasksPaneOpen?.(true);
-      requestAnimationFrame(() => {
-        if (isPanelMountedRef.current && currentContextRef.current?.projectId === operation.projectId) inputRef.current?.focus();
-      });
     }
     return sessionId ?? null;
   }, [createNewSession, projectId, setIsTasksPaneOpen]);
@@ -982,7 +990,7 @@ function AvailableAgentChatPanel({
   const actionsRegistry = useAgentChatActionsRegistry();
   const stableHandlers = useMemo<AgentChatActionsHandlers>(() => ({
     toggleRecording: () => {
-      if (isFollowerRef.current) return;
+      if (composerLockedRef.current) return;
       const v = voiceRef.current;
       if (v.isRecording) {
         v.stopRecording();
@@ -1032,11 +1040,11 @@ function AvailableAgentChatPanel({
       <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
         <div className="flex shrink-0 items-center gap-2">
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <AgentIcon agent={chatAgent} className="h-3.5 w-3.5 shrink-0" />
+            <AgentIcon agent={startingAgent ?? chatAgent} className="h-3.5 w-3.5 shrink-0" />
             <span data-testid="agent-chat-identity" className="truncate text-xs normal-case">
-              {agentNames[chatAgent]}
+              {agentNames[startingAgent ?? chatAgent]}
             </span>
-            {chatModelName && (
+            {!startingAgent && chatModelName && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button type="button" aria-label="Chat model information" className="-m-1 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -1056,6 +1064,7 @@ function AvailableAgentChatPanel({
           {showSessionSelector && projectChat.data && (
             <AgentChatSessionSelector
               sessions={sessionOptions}
+              disabled={startingAgent !== null}
               activeSessionId={activeSessionId}
               mainSessionId={projectChat.data.main_session_id ?? null}
               onOpenChange={onSessionSelectorOpenChange}
@@ -1105,7 +1114,6 @@ function AvailableAgentChatPanel({
           />
         </div>
       </div>
-      {startingAgent && startingAgent !== 'astrid' && <p role="status" className="border-b border-border/70 px-3 py-1.5 text-xs text-muted-foreground">Getting {agentNames[startingAgent]} ready…</p>}
       {startFailure && (
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <p>{agentNames[startFailure.agent]} didn't start.</p>
@@ -1167,7 +1175,13 @@ function AvailableAgentChatPanel({
             </div>
           </div>
         )}
-        {activeSession.isLoading && (
+        {startingAgent && (
+          <div role="status" className="flex min-h-full items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Starting {agentNames[startingAgent]}…
+          </div>
+        )}
+        {!startingAgent && activeSession.isLoading && (
           <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading...
@@ -1222,7 +1236,7 @@ function AvailableAgentChatPanel({
             ),
           )}
 
-          {optimisticMessage && !optimisticTurnAlreadyMaterialized && (
+          {!startingAgent && optimisticMessage && !optimisticTurnAlreadyMaterialized && (
             <div className="flex w-full justify-end">
               <div className="max-w-[85%] rounded-2xl bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground shadow-sm">
                 <div>{optimisticMessage.text}</div>
@@ -1236,7 +1250,7 @@ function AvailableAgentChatPanel({
             </div>
           )}
 
-          {agentWorking && (
+          {!startingAgent && agentWorking && (
             <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Thinking...
@@ -1405,12 +1419,12 @@ function AvailableAgentChatPanel({
                 short screen (a phone on its side), so the conversation keeps the height. */}
             <textarea
               ref={inputRef}
-              value={draft}
+              value={startingAgent ? '' : draft}
               onChange={(event) => setDraft(event.target.value)}
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
               className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
-              disabled={isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              disabled={startingAgent !== null || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
@@ -1429,7 +1443,7 @@ function AvailableAgentChatPanel({
                     ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
                     : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
                   onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
-                  disabled={isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
+                  disabled={startingAgent !== null || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
                   title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
                 >
                   {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
@@ -1455,7 +1469,7 @@ function AvailableAgentChatPanel({
                   variant="default"
                   className="h-full w-full rounded-xl"
                   onClick={() => void handleSend()}
-                  disabled={isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+                  disabled={startingAgent !== null || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
                   title="Send"
                 >
                   <Send className="h-4 w-4" />
