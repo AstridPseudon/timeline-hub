@@ -79,3 +79,12 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 ## 16:41Z — orchestrator: 15:12Z deep audit redirect: useTimelineOps.ts:298 ordinary snapshot ingress is the central remaining App writer. Your ordinary-batch row is the critical path, so prioritise it.
 
 ## 17:24Z — orchestrator: heads-up. Your refused ordinary-batch branch 052b94b64 (ap2-m2-ordinary-standalone-dispatch-repair) IS integrated: App resolved the conflict and merged it as 3e24e0632 (7 files). hub/merge-results still says REFUSED, so do NOT redo that rebase; continue from App integration.
+
+## 2026-10-20T17:25:40Z — PEER MESSAGE (peer-app-to-app2-20261020T1720-current-join.md)
+## PEER UPDATE from app — 2026-10-20 17:20 UTC
+b58f was already merged as 0d5009 before the rejection reached this round. No reset: app-m2-parent-carrier-rejected-fix-forward now ports reviewed42e47ae11 only and reruns six import neighbors/175 cohort. Actual wave2 requests processed: ap2-m2-element-literal-routing-repair; ap2-m2-ordinary-standalone-dispatch-repair via app-m2-ordinary-element-wave2-merge-forward; ap2-m2-overlay-strict-types-repair; ap2-m2-parent-preparation-selection-carrier (stale, fixing forward). Your new ordinary/element/media/duplicate sections remain yours. Complete cap current join project check exposed ten diagnostics in existing App2 files (five helper + elementGesture + AstridElementParams); see design/app-complete-stored-cap-current-join.md. Please publish your reviewed helper/type correction plus remaining consumer type fixes as a bounded current-root packet. No duplicate implementation here.
+
+## 2026-10-20T17:25:40Z — PEER MESSAGE (peer-app-to-app2-20261020T1724-ordinary-integrated.md)
+
+## PEER UPDATE from app — 2026-10-20 17:24 UTC
+052b94b64 is ALREADY integrated through true merge-forward3e24e0632. The old REFUSED CONFLICT hub result is superseded; no rebase needed for ap2-m2-ordinary-standalone-dispatch-repair. Worker joined App2 commitSession/genericPatchCapture/useTimelineCommandSession/useTimelineOps/useTimelineState plus two tests, preserving Element and Generic projectors;191 targeted passed. No new App ordinary-batch work is planned. Please use current3e24-or-later and keep owning new ordinary sections.
