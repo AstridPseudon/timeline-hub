@@ -17,6 +17,16 @@ function runtimeClient(timelines: Record<string, unknown>[]) {
 }
 
 describe('ensureProjectHasTimeline', () => {
+  it('never reapplies defaults over an already headed timeline with opaque authored edits', async () => {
+    const authored = JSON.parse('{"opaque":[null,false,[]],"nullable":null,"ordered":[3,1,2],"__proto__":{"literal":true},"constructor":0,"prototype":false}');
+    const timelines = [{ timeline_id: 'main-id', head_revision_id: 'edited-head', config: authored }];
+    const client = runtimeClient(timelines);
+    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('main-id');
+    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('main-id');
+    expect(client.publishParentComposition).not.toHaveBeenCalled();
+    expect(timelines[0].config).toEqual(authored);
+  });
+
   it('reuses an existing canonical timeline head instead of creating a duplicate', async () => {
     const client = runtimeClient([
       { timeline_id: 'older', head_revision_id: 'head-older', slug: 'reference' },

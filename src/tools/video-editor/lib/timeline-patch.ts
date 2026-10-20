@@ -1956,7 +1956,7 @@ export function compileTimelinePatch(
     clipOrder,
     tracks,
     data.config.pinnedShotGroups,
-    { theme: data.config.theme, theme_overrides: data.config.theme_overrides, generation_defaults: data.config.generation_defaults },
+    { ...data.config, app: undefined },
   );
 
   // Attach config.app

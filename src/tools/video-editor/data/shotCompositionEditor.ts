@@ -1,3 +1,5 @@
+import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import { remapItems } from '../commands/authoringBundle.ts';
 import {
   stableOccurrenceDeepLink,
   stableOutputIdentity,
@@ -124,25 +126,6 @@ function internalTimelinePayload(internal: JsonObject): JsonObject {
     'content_digest',
     'publish',
   ].includes(key)));
-}
-
-function remapOwnedItemReferences(value: unknown, itemIds: Map<string, string>): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => remapOwnedItemReferences(item, itemIds));
-  }
-  if (value === null || typeof value !== 'object') return value;
-  const row = value as JsonObject;
-  const next: JsonObject = {};
-  for (const [childKey, child] of Object.entries(row)) {
-    if ((childKey === 'item_id' || childKey.endsWith('_item_id')) && typeof child === 'string') {
-      next[childKey] = itemIds.get(child) ?? child;
-    } else if ((childKey === 'item_ids' || childKey.endsWith('_item_ids')) && Array.isArray(child)) {
-      next[childKey] = child.map((item) => typeof item === 'string' ? (itemIds.get(item) ?? item) : item);
-    } else {
-      next[childKey] = remapOwnedItemReferences(child, itemIds);
-    }
-  }
-  return next;
 }
 
 function remapIndependentInternalTimeline(value: unknown, prefix: string): JsonObject {
@@ -282,10 +265,12 @@ export async function updateCanonicalShotRevision(
         ...sourceInternal,
         revision_id: newIdentity(`timeline-${String(sourceOccurrence.shot_id)}`, patch.identitySeed ? `${patch.identitySeed}-timeline` : undefined),
         publish: true,
-        timeline: clone(patch.timeline),
+        // The popup edits a projection. Keep roots owned by the raw child
+        // timeline rather than replacing them with the projected field set.
+        timeline: { ...record(sourceInternal.timeline), ...clone(patch.timeline) },
       }
     : undefined;
-  const updatedRevision: JsonObject = {
+  let updatedRevision: JsonObject = {
     ...sourceRevision,
     shot_id: targetShotId,
     revision_id: revisionId,
@@ -303,7 +288,9 @@ export async function updateCanonicalShotRevision(
     const itemIds = new Map<string, string>();
     for (const item of sourceItems) {
       const row = record(item);
-      if (row && typeof row.item_id === 'string') itemIds.set(row.item_id, `${targetShotId}:${row.item_id}`);
+      if (!row) continue;
+      const identity = 'item_id' in row ? row.item_id : row.id;
+      if (typeof identity === 'string') itemIds.set(identity, `${targetShotId}:${identity}`);
     }
     if (updatedRevision.internal_timeline_revision) {
       updatedRevision.internal_timeline_revision = remapIndependentInternalTimeline(
@@ -311,10 +298,7 @@ export async function updateCanonicalShotRevision(
         targetShotId,
       );
     }
-    const remapped = remapOwnedItemReferences(updatedRevision, itemIds);
-    if (remapped && typeof remapped === 'object') {
-      Object.assign(updatedRevision, remapped as JsonObject);
-    }
+    updatedRevision = remapItems(updatedRevision as Record<string, JSON>, itemIds);
   }
   const finalInternal = record(updatedRevision.internal_timeline_revision);
   if (finalInternal && (updatedInternal || sharedSource)) {

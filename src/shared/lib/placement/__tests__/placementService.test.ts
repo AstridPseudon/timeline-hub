@@ -113,6 +113,30 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps every raw root at the provider boundary across placement, frame update, pooling and removal', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    const generationId = firstSeededGenerationId(router);
+    const roots = JSON.parse('{"opaque":{"nested":[null,false,[]]},"nullable":null,"ordered":[3,1,2],"__proto__":{"literal":true},"constructor":{"prototype":0},"prototype":false}');
+    runtime.config = { ...createDefaultTimelineConfig(), ...roots };
+    const assertRoots = () => {
+      for (const [key, value] of Object.entries(roots)) {
+        expect(Object.hasOwn(runtime.config as object, key), key).toBe(true);
+        expect(Reflect.get(runtime.config as object, key), key).toEqual(value);
+      }
+      expect(Object.hasOwn(runtime.config as object, 'absent')).toBe(false);
+    };
+    const placed = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId });
+    assertRoots();
+    await batchUpdatePlacementFrames({ projectSlug: PROJECT, shotId: SHOT, updates: [{ entryId: placed.entryId, timelineFrame: 30 }] });
+    assertRoots();
+    await unplaceGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId, entryId: placed.entryId, keepAsPooled: true });
+    assertRoots();
+    await unplaceGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId, entryId: placed.entryId });
+    assertRoots();
+    expect(runtime.publishes).toHaveLength(4);
+  });
+
   it('places a completed generation into the document and the placement survives a fresh read', async () => {
     const router = createFakeRuntimeRouter();
     const calls = installRuntime(router);

@@ -1,8 +1,77 @@
 import { describe, expect, it } from 'vitest';
-import { repairConfig } from '@/tools/video-editor/lib/migrate';
-import { canonicalizeTimelineConfigSnapshot, canonicalizeTimelinePair } from '@/tools/video-editor/lib/timeline-domain';
+import { migrateToFlatTracks, repairConfig } from '@/tools/video-editor/lib/migrate';
+import { canonicalizeTimelineConfigSnapshot, canonicalizeTimelinePair, serializeTimelineConfigSnapshot, serializeTimelinePair } from '@/tools/video-editor/lib/timeline-domain';
 import { configToRows, rowsToConfig } from '@/tools/video-editor/lib/timeline-data';
 import type { TimelineConfig } from '@/tools/video-editor/types';
+
+describe('opaque timeline roots', () => {
+  const extras = () => JSON.parse(`{
+    "opaque": {"retained": [null, false, []]},
+    "notes": ["last", 0, {"clear": null}, "first"],
+    "nullable": null, "enabled": false, "count": 0, "label": "", "empty": [],
+    "__proto__": {"polluted": true, "__proto__": null},
+    "constructor": {"prototype": [false, null]}, "prototype": "authored"
+  }`) as Record<string, unknown>;
+
+  it.each([
+    ['repair', repairConfig],
+    ['migration', migrateToFlatTracks],
+    ['config normalization', (config: TimelineConfig) => canonicalizeTimelineConfigSnapshot(config).config],
+    ['pair normalization', (config: TimelineConfig) => canonicalizeTimelinePair(config, { assets: {} }).config],
+    ['config snapshot', (config: TimelineConfig) => serializeTimelineConfigSnapshot(config).config],
+    ['pair snapshot', (config: TimelineConfig) => serializeTimelinePair(config, { assets: {} }).config],
+  ] as const)('preserves every own JSON root through %s while repairing known fields', (_name, normalize) => {
+    const opaque = extras();
+    const config: TimelineConfig = {
+      ...opaque,
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }, { id: 'V1', kind: 'visual' }],
+      clips: [{ id: 'clip', at: 0, track: 'V1', hold: 1 }, { id: 'clip', at: 0, track: 'V1', hold: 1 }],
+      pinnedShotGroups: [{ shotId: 'shot', trackId: 'V1', clipIds: ['clip'], mode: 'images',
+        ...{ start: 0, children: [{ clipId: 'clip' }] } }],
+    };
+    const before = JSON.stringify(config);
+    const result = normalize(config);
+    expect(JSON.stringify(Object.fromEntries(Object.entries(result).filter(([key]) => Object.hasOwn(opaque, key))))).toBe(JSON.stringify(opaque));
+    expect(Object.hasOwn(result, 'absent')).toBe(false);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf((result as unknown as Record<string, unknown>).__proto__)).toBe(Object.prototype);
+    expect(result.output).toEqual(config.output);
+    expect(result.tracks).toHaveLength(_name === 'migration' ? 2 : 1);
+    expect(result.clips).toHaveLength(_name === 'migration' ? 2 : 1);
+    if (_name !== 'migration') expect(result.pinnedShotGroups?.[0]).not.toHaveProperty('children');
+    expect(JSON.stringify(config)).toBe(before);
+    if (_name !== 'repair') {
+      ((result as unknown as Record<string, unknown>).opaque as { retained: unknown[] }).retained.push('local');
+      expect(JSON.stringify(config)).toBe(before);
+    }
+  });
+
+  it('preserves unknown roots during legacy track migration without materializing absent extras', () => {
+    const opaque = extras();
+    const config: TimelineConfig = { ...opaque,
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      clips: [{ id: 'clip', at: 0, track: 'video', hold: 1 }],
+    };
+    const result = migrateToFlatTracks(config);
+    expect(result).toMatchObject(opaque);
+    expect(result.clips.find((clip) => clip.id === 'clip')?.track).toBe('V2');
+    expect(Object.hasOwn(result, 'app')).toBe(false);
+    expect(Object.hasOwn(result, 'theme')).toBe(false);
+    expect(Object.hasOwn(result, 'generation_defaults')).toBe(false);
+  });
+
+  it('does not copy inherited roots or treat prototype-looking keys as inherited containers', () => {
+    const config: TimelineConfig = Object.assign(Object.create({ app: { inherited: true }, theme: 'inherited', opaque: null }), {
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }], clips: [],
+    });
+    const result = canonicalizeTimelineConfigSnapshot(config).config;
+    for (const key of ['app', 'theme', 'opaque', '__proto__', 'constructor', 'prototype']) {
+      expect(Object.hasOwn(result, key)).toBe(false);
+    }
+  });
+});
 
 describe('repairConfig — legacy pinnedShotGroups migration', () => {
   const buildLegacyConfig = (): TimelineConfig => ({
