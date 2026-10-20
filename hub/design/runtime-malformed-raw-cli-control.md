@@ -13,7 +13,9 @@ or create a sibling timeline/publication.
 
 - Agent: `27e823a5ddeb4f8995c436b44c8d42f728350919`, tree
   `7f43878c1f37abf1a8bef6d79b44df51d1ced50a`.
-- Runtime candidate: the task base `8455378325dd3593cc84d489e79859ed4d58ca9d`,
+- Runtime candidate: task base commit
+  `f76617aa4de0927e86ec293cde250a0a446dde50`, tree
+  `e5db9539d2076575a857e88140fbade8580ca87f` (the central-test snapshot),
   carrying Runtime `7d1cfa6b` behavior.
 - Normal Runtime/client source: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`,
   artifact `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0`.
@@ -37,3 +39,23 @@ used.
 
 The test is integration-marked and must run once through the central exact-source
 integration lane; no full, browser, or duplicate control suite is requested.
+
+## Qualification result
+
+- Central result ID:
+  `rt-m2-malformed-raw-runner-recover-raw27-server7d-integration-1020184232-21908`.
+- Suite: `raw27-server7d-integration`; requested file:
+  `tests/test_raw_cli_malformed_source.py`.
+- Exact source preflight: PASS — immutable Agent `27e823a5ddeb4f8995c436b44c8d42f728350919`
+  (tree `7f43878c1f37abf1a8bef6d79b44df51d1ced50a`), Runtime snapshot
+  `f76617aa4de0927e86ec293cde250a0a446dde50` (tree above), and normal Runtime
+  `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` with artifact
+  `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0`.
+- Test result: PASS, `1 passed in 2.68s`; central result exit `0`.
+- Result log also reported the exact preflight line:
+  `exact raw27 / Runtime7d product / ordinary014 a0-f021 source preflight PASS`.
+
+The refusal occurs before command capture/HTTP submission. Accordingly, this
+qualification proves no stored command or draft durability; it proves the
+visible refusal and the asserted unchanged outbox, history, receipt, closure,
+database, CAS, head, and source state.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:45:07Z | dispatcher heartbeat 15s | live 5 (sol 1, luna 4, other 0) | busy30 23 | status age 8m -->
+<!-- main | 2026-10-20T18:51:05Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 1m -->
 # agent — 2026-10-20T18:36:30Z
 Milestone: M1 recorded. M2 active; Gates 1, 6 and 7 remain open.
 Integrated: Agent0b2f662e, public Runtime client0.2.13, Composition0.0.13. True upstream a9 merge141ea8b5 has parents6f0cdc7d+a9a3550c; ancestry verified,174 focused+63 central checks. Both Main stored-form duplicate/narration fixes and Agent reload/inverse guards are preserved. Public13 pin merged6f0cdc7d with130 bounded tests, exact9412 archive/all77/lockc4d7030b; App-first satisfied. Sprite fixture fix merged 3f770a45 (32 tests, global collection clean). Numeric parent CLI --on consumer now uses clip.move instead of Checkout.save (29 tests + 3 real HTTP lost-ACK/restart/retry/undo cases). The whole AG02 row remains open because other consumers remain.
@@ -24,3 +24,13 @@ Private952: Agent counterpart ACK147+71+216 and75 byte identities; normal PRIVAT
 Sweeper dispatched WC6 current native file cut (251 units+1 exact7d HTTP), WC3 current body cut24 exact7d HTTP, recover correction, speech proper014/ad97 pair, Scene managed proof and current cache unit. WC3/WC6 integration waits normal014 App/owner adoption; full parent rows remain open. D10 source wrappers routed to Viewing, its rendering-pack owner, for consumer-first normal provenance refresh.
 Resources/process: six workers requested/running, including recover/WC5 and D13 ledger work. Explicit-file service scopes only; stop-test tool used for wrong default scopes. Owner asked to provision a NEW exact0b2 installed child for ONE post-merge full with the already-built immutable13 runtime. No duplicate full or completed-run relabel.
 Inbox: ACK through18:33 cache unit,18:32 raw result/fixture-scope ownership and18:22 private952 handoff, plus18:21 Main merge and18:18 D10 source request. Main refresh is now merged.
+
+Latest outcome (dead inspector deletion sweeper): current tree `490c10ac`
+received the reviewed Viewing unit `3c5eefb6c` exactly: five files and 353
+deletions, with public `inspector_navigation` and filmstrip execution intact.
+No remaining code caller references `inspector_viewer`, `render_inspector`, or
+`inspector_assets`; the historical plan references are documentation only.
+Agent-side bounded qualification passed 125 public navigation/filmstrip/pack
+tests and 58 pack-layout/visualize-pack/inspection-contract tests. Viewing owns
+the `VW-DEAD-INSPECTOR` ledger row and will mark it deleted after the harness
+merge SHA; this worker made no change to that row.

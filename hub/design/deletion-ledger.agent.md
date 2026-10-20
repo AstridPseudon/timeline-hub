@@ -84,3 +84,37 @@ Old metadata-only certification was retired by approved d93b4ff6/3e556cec (merge
 Equivalent genuine positives and forgeries: test_live_source_label_native.py,18centralPASS including two retained-source->exact-final-Root cases; exact source/callback and no-certificate negatives retained. Current114+59neighborsPASS. This retires only the metadata-authority inference; D09 source/cache/physical parity remains OPEN.
 
 | AG-RECOVER | Agent CLI/SDK legacy flat old-version recover forwarding | one accepted film writer | visible legacy refusal naming timeline.restore; explicit revision uses existing guarded restore | agent+runtime | M2 | DELETED (qualified; pending merge) | Owner18:11 lifecycle/version decision. OLD test: `tests/v10/test_domain_cli_projects_timelines.py::test_timelines_list_and_recover_are_one_sdk_call`; refusal/retirement tests: `tests/v10/test_domain_cli_projects_timelines.py::test_timelines_list_and_recover_are_one_sdk_call`, `tests/sdk/test_native_timeline_facades.py::test_legacy_timeline_recover_refuses_without_reading_or_forwarding`; equivalent restore positives: `tests/sdk/test_timeline_sync.py::test_restore_sends_exact_revision_and_digest_through_native_commit`, `tests/sdk/test_timeline_sync.py::test_restore_lost_ack_retries_exact_request_after_reload`, `tests/sdk/test_timeline_checkout_history_runtime.py::test_retained_restore_does_not_reopen_consumed_draft_steps`, `tests/sdk/test_timeline_commit_provider_runtime.py::test_restore_inverse_redo_and_exact_retry_survive_runtime_restart`. Physical Agent forwarding/compat mapping removed; project catalog archive/unarchive untouched. Local targeted: 187 passed, 1 skipped. Central `commit-integration` (public Runtime HTTP): 12 passed. |
+
+## Viewing-owned dead inspector handoff
+
+`VW-DEAD-INSPECTOR` is a Viewing-owned row; this Agent entry records only the
+Agent-side qualification on current `490c10ac`. The reviewed `3c5eefb6c` unit
+was ported exactly: five files, 353 deletions, no generated changes beyond the
+rendering pack resource manifest. A repository-wide caller check found no
+remaining `inspector_viewer`, `render_inspector`, or `inspector_assets` caller;
+the live surface remains `inspector_navigation` plus filmstrip cards/execution.
+
+Removed-test mapping reviewed before deletion:
+
+- `test_viewer_state_keeps_audio_selection_playback_loop_and_text_input_safe`
+  -> public frame/audio target and exact-focus coverage in
+  `tests/packs/rendering/test_inspector_navigation.py` and
+  `tests/packs/rendering/test_timeline_filmstrip_cards.py`.
+- `test_rendered_viewer_contains_audio_controls_and_media_clock_fallback`
+  -> `test_pack_keeps_audio_navigation_in_rich_result_index` and
+  `test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache`.
+- `test_card_helpers_surface_only_declared_audio_and_frozen_speech_metadata`
+  -> `test_frame_captions_use_only_explicit_timed_speech` and the rich audio
+  navigation test in `test_timeline_filmstrip_cards.py`.
+- `test_rendered_viewer_contains_filmstrip_hierarchy_and_truthful_card_cues`
+  -> `test_pack_uses_rendered_frames_without_html_artifact` and
+  `test_paired_surface_omits_empty_lanes_but_preserves_canonical_track_metadata`.
+- `test_browser_viewer_seeks_frame_target_from_frame_number_and_shot_filter`
+  -> `test_frame_focus_command_preserves_exact_integer_frame`,
+  `test_managed_coverage_keeps_exact_frame_in_frozen_range`, and
+  `test_input_navigation_keeps_track_occurrences_distinct_and_copyable`.
+
+Bounded qualification on the current tree: public navigation/filmstrip/pack
+files `125 passed`; pack layout, visualize-pack, and inspection-contract files
+`58 passed`. No pixel, active geometry, private crop/statistics, or
+`_timing_evaluators.py` behavior was changed.
