@@ -422,7 +422,8 @@ describe('uploads', () => {
     const posts = publications(fixture);
     expect(posts).toHaveLength(1);
     expect((posts[0].body as { parent_composition: { registry: AssetRegistry } }).parent_composition.registry.assets[result.assetId])
-      .toMatchObject({ media_id: MANAGED_OBJECT_ID, file: objectUrl(MANAGED_OBJECT_ID), type: 'video/mp4' });
+      // The wire carries the object's route, never the absolute URL it was first seen at: the Runtime refuses any other locator when it freezes a render.
+      .toMatchObject({ media_id: MANAGED_OBJECT_ID, file: `/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`, type: 'video/mp4' });
   });
 
   it('leaves the registry and the timeline untouched when the media import is refused', async () => {

@@ -671,12 +671,16 @@ export function decideRenderRoute(
 const MANAGED_RENDER_CAPABILITY_ID = 'rendering.render';
 const LIVE_SCENE_CLIP_TYPE = 'haus.astrid.liveScene';
 
-/** Choose the existing scene composition only for its supported clip subset. */
-function managedRenderSelector(timeline: unknown): string {
-  if (!timeline || typeof timeline !== 'object') return 'rendering.remotion';
+/**
+ * The renderer the App names, or none. An ordinary timeline names no renderer: the host that claims the task chooses one it
+ * can run (Remotion where it is provisioned, else ffmpeg for what ffmpeg supports). Only the live-scene composition is the
+ * App's own choice, and only for its supported clip subset.
+ */
+function managedRenderSelector(timeline: unknown): string | undefined {
+  if (!timeline || typeof timeline !== 'object') return undefined;
   const config = timeline as { clips?: unknown; tracks?: unknown };
   if (!Array.isArray(config.clips)
-    || !config.clips.some((clip) => clip?.clipType === LIVE_SCENE_CLIP_TYPE)) return 'rendering.remotion';
+    || !config.clips.some((clip) => clip?.clipType === LIVE_SCENE_CLIP_TYPE)) return undefined;
   const tracks = Array.isArray(config.tracks) ? config.tracks : [];
   const audioTracks = new Set(tracks.filter((track) => track?.kind === 'audio').map((track) => track.id));
   for (const clip of config.clips) {
@@ -945,6 +949,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
     const client = options.client ?? new AstridLocalClient({ projectSlug: payload.project_id });
     const capability = await client.catalog.get(MANAGED_RENDER_CAPABILITY_ID);
     const destination = options.destination ?? 'download';
+    const selector = managedRenderSelector(payload.timeline);
     const request: BridgeTaskAdmissionRequest = {
       project: payload.project_id,
       capability_id: capability.capability_id,
@@ -959,7 +964,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
         family: MANAGED_RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: payload.timeline_id,
-          selector: managedRenderSelector(payload.timeline),
+          ...(selector === undefined ? {} : { selector }),
           output_name: payload.output_filename,
           ...canonicalAdmissionMetadata(payload.timeline),
         },

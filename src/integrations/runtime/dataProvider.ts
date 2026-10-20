@@ -673,7 +673,7 @@ export class RuntimeDataProvider implements DataProvider {
   }
 
   async loadAssetRegistry(timelineId: string, options?: { poll?: boolean }): Promise<AssetRegistry> {
-    const registry = normalizeRegistry((await this.readTimeline(timelineId, options?.poll)).registry);
+    const registry = normalizeRegistry((await this.readTimeline(timelineId, options?.poll)).registry, this.client);
     this.activeRegistry = registry;
     return registry;
   }
@@ -694,8 +694,8 @@ export class RuntimeDataProvider implements DataProvider {
         head: this.timelineHead(timelineId, record.head_revision_id as string | null),
         ...(bundle === null ? { bundle: null } : bundle === undefined ? {} : { bundle: bundle as TimelineBundleEnvelope }),
       },
-      registry: normalizeRegistry(record.registry),
-      resolveAssetUrl: async (file: string) => this.resolveAssetUrlFromRegistry(file, normalizeRegistry(record.registry)),
+      registry: normalizeRegistry(record.registry, this.client),
+      resolveAssetUrl: async (file: string) => this.resolveAssetUrlFromRegistry(file, normalizeRegistry(record.registry, this.client)),
     };
   }
 
@@ -782,7 +782,7 @@ export class RuntimeDataProvider implements DataProvider {
             assertRevisionIdentity(record, base.headRevisionId!, 'parent composition revision');
             return requiredRecord(record.payload, 'parent composition revision.payload');
           });
-    const nextRegistry = registry ?? normalizeRegistry(baseComposition.registry);
+    const nextRegistry = normalizeRegistry(registry ?? baseComposition.registry, this.client);
     const { output: _derivedOutput, ...configWithoutOutput } = config;
     const baseConfig = asRecord(baseComposition.config);
     const { output: _baseDerivedOutput, ...baseConfigWithoutOutput } = baseConfig ?? {};
@@ -876,7 +876,7 @@ export class RuntimeDataProvider implements DataProvider {
           expectedVersion, current.version,
         );
       }
-      const savedRegistry = normalizeRegistry(parentComposition.registry);
+      const savedRegistry = normalizeRegistry(parentComposition.registry, this.client);
       const nextVersion = current.headRevisionId === committedHead ? current.version : current.version + 1;
       this.canonicalTimelineState.set(timelineId, {
         headRevisionId: committedHead,
@@ -985,7 +985,7 @@ export class RuntimeDataProvider implements DataProvider {
         withDefaultTimelineOutput(configRecord as Partial<TimelineConfig>),
         this.timelineHead(timelineId, record.head_revision_id as string | null),
         {
-          assets: { ...normalizeRegistry(record.registry).assets, [assetId]: entry },
+          assets: { ...normalizeRegistry(record.registry, this.client).assets, [assetId]: entry },
         },
       );
     });
@@ -1166,6 +1166,9 @@ export class RuntimeDataProvider implements DataProvider {
     const candidate = file.trim();
     if (!candidate) throw new Error('Cannot resolve a Runtime asset URL for an empty file path');
     if (/^https?:\/\//i.test(candidate)) return candidate;
+    // A managed object route names its object itself: it resolves with no registry readback.
+    const routed = managedObjectIdOf(candidate);
+    if (routed !== null) return this.client.objectContentUrl(routed);
     return this.client.objectContentUrl(this.findManagedAsset(candidate, false, registry).objectId);
   }
 
@@ -1223,7 +1226,35 @@ function asRecord(value: unknown): RuntimeRecord | null {
     : null;
 }
 
-function normalizeRegistry(value: unknown): AssetRegistry {
+/**
+ * The Runtime's route to a managed object, with no origin: a relative locator, optionally under the door prefix. A registry
+ * entry may carry one as its `file`: it names the entry's own media, and it is the only locator the Runtime accepts there when
+ * it freezes a render. An absolute URL is never a route, whatever its path: the Runtime refuses a foreign origin's
+ * `/v1/objects/<id>` as an unmanaged locator, and so must nothing here make it look managed.
+ */
+const MANAGED_OBJECT_ROUTE = /^\/(?:api\/(?:runtime|astrid)\/)?v1\/objects\/([^/?#]+)$/;
+
+function managedObjectRoute(objectId: string): string {
+  return `/v1/objects/${encodeURIComponent(objectId)}`;
+}
+
+/** The object id a relative route names, or null when `locator` is not a managed object route. */
+function managedObjectIdOf(locator: string): string | null {
+  const match = MANAGED_OBJECT_ROUTE.exec(locator.trim());
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
+}
+
+/**
+ * An entry whose `file` is this Runtime's own URL for its own object keeps the route instead. Any other `file` is left as it is,
+ * for the Runtime to accept or refuse: a URL of another origin is never rewritten, even when its path has the route's shape.
+ */
+function withManagedFileRoute(entry: AssetRegistryEntry, client: Pick<AstridRuntimeClient, 'objectContentUrl'>): AssetRegistryEntry {
+  if (typeof entry.file !== 'string' || typeof entry.media_id !== 'string') return entry;
+  return entry.file === client.objectContentUrl(entry.media_id) ? { ...entry, file: managedObjectRoute(entry.media_id) } : entry;
+}
+
+function normalizeRegistry(value: unknown, client: Pick<AstridRuntimeClient, 'objectContentUrl'>): AssetRegistry {
   const record = asRecord(value);
   const assets = asRecord(record?.assets);
   if (!assets) return { assets: {} };
@@ -1231,12 +1262,11 @@ function normalizeRegistry(value: unknown): AssetRegistry {
     ...record,
     assets: Object.fromEntries(Object.entries(assets).map(([assetKey, rawEntry]) => {
       const entry = asRecord(rawEntry) as AssetRegistryEntry | null;
-      if (!entry || entry.media_id || typeof entry.content_sha256 !== 'string') {
-        return [assetKey, rawEntry];
-      }
+      if (!entry) return [assetKey, rawEntry];
+      if (entry.media_id || typeof entry.content_sha256 !== 'string') return [assetKey, withManagedFileRoute(entry, client)];
       const digest = entry.content_sha256.replace(/^sha256:/, '').trim();
       return /^[0-9a-f]{64}$/.test(digest)
-        ? [assetKey, { ...entry, media_id: `sha256:${digest}` }]
+        ? [assetKey, withManagedFileRoute({ ...entry, media_id: `sha256:${digest}` }, client)]
         : [assetKey, rawEntry];
     })) as Record<string, AssetRegistryEntry>,
   };

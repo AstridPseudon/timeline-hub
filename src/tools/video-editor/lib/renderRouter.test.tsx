@@ -1431,7 +1431,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'render.mp4',
         },
         output_policy: {
@@ -1448,6 +1447,8 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     });
     expect(body).not.toHaveProperty('family');
     expect(body).not.toHaveProperty('input');
+    // An ordinary timeline names no renderer: the host that claims the task chooses the one it can run.
+    expect(body.spec.params).not.toHaveProperty('selector');
     vi.unstubAllGlobals();
   });
 
@@ -1688,7 +1689,6 @@ describe('Sprint 8 router → enqueue integration', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'timeline-t.mp4',
         },
       },
@@ -1932,7 +1932,6 @@ describe('Sprint 8 render pipeline middleware', () => {
         params: {
           timeline_ref: 'timeline-fixture-worker',
           output_name: 'timeline-timeline-fixture-worker.mp4',
-          selector: 'rendering.remotion',
         },
       },
     });

@@ -14,6 +14,8 @@ import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
+/** What a published registry entry's `file` is: the object's route, the only locator the Runtime accepts when it freezes a render. */
+const MANAGED_OBJECT_ROUTE = `/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
 
 function packageBodyBytes(
@@ -1016,7 +1018,7 @@ describe('RuntimeDataProvider', () => {
     expect(persistedRegistry.assets[MANAGED_OBJECT_ID]).toMatchObject({
       media_id: MANAGED_OBJECT_ID,
       content_sha256: MANAGED_OBJECT_DIGEST,
-      file: MANAGED_OBJECT_URL,
+      file: MANAGED_OBJECT_ROUTE,
       metadata: {
         provenance: {
           sourceProvider: 'workspace-runtime',
@@ -1030,6 +1032,32 @@ describe('RuntimeDataProvider', () => {
     expect(fixture.requests.filter((request) => (
       request.method === 'POST' && /^\/v1\/projects\/[^/]+\/objects$/.test(request.path)
     ))).toHaveLength(0);
+  });
+
+  it('publishes an uploaded object by its route, not by the URL the editor first saw it at, and still plays it', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const uploaded = await provider.uploadAsset(new File(['managed creative'], 'managed-creative.mp4', { type: 'video/mp4' }), { timelineId: TIMELINE_ID, userId: 'owner-r3' });
+    // The editor holds the absolute URL (a playable locator before any readback); the Runtime refuses that as an unmanaged locator when it freezes a render.
+    expect(uploaded.entry.file).toBe(MANAGED_OBJECT_URL);
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const foreign = { type: 'image/png', file: 'https://cdn.example.test/elsewhere.png', media_id: 'sha256:' + 'b'.repeat(64) };
+    // Another origin's `/v1/objects/<media_id>` has the route's shape and names the entry's own media, and is still not this Runtime's object.
+    const foreignRoute = { type: 'image/png', file: `https://cdn.example.test/v1/objects/${'c'.repeat(64)}`, media_id: 'c'.repeat(64) };
+    const foreignLoopback = { type: 'image/png', file: `http://127.0.0.1:1234/v1/objects/${'d'.repeat(64)}`, media_id: 'd'.repeat(64) };
+    await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, {
+      assets: { [uploaded.assetId]: uploaded.entry, foreign, foreignRoute, foreignLoopback },
+    });
+
+    const published = fixture.read().parentComposition.registry as { assets: Record<string, { file?: string }> };
+    expect(published.assets[uploaded.assetId].file).toBe(MANAGED_OBJECT_ROUTE);
+    // A locator that is not this entry's own object is left alone for the Runtime to refuse, never rewritten to look managed.
+    expect(published.assets.foreign.file).toBe('https://cdn.example.test/elsewhere.png');
+    expect(published.assets.foreignRoute.file).toBe(foreignRoute.file);
+    expect(published.assets.foreignLoopback.file).toBe(foreignLoopback.file);
+    // The route names its object by itself: it plays, with or without a registry readback.
+    expect(await provider.resolveAssetUrl(MANAGED_OBJECT_ROUTE)).toBe(MANAGED_OBJECT_URL);
+    expect(await new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport }).resolveAssetUrl(MANAGED_OBJECT_ROUTE)).toBe(MANAGED_OBJECT_URL);
   });
 
   it('round-trips package and entry identities through Runtime reload with stale-write rejection', async () => {
