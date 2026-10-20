@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T18:32:17Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 34 | status age 4m -->
+<!-- viewing | 2026-10-20T18:37:53Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 31 | status age 9m -->
 # viewing — 2026-10-20 18:28 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. rules rev 2026-10-20 read.
 Integrated: Composition5a4e9b72/tree13e37553, immutable public0.0.13 SHA9412ae25,77 files. Central1020134123-9841 build/npm test76 PASS, zero failures/skips. App public13 consumer ea386 integrated; Agent current source remains public12 pending normal13 pin04f59 owner gate. Old12/11 archives unchanged. No new all-product13 proof.
