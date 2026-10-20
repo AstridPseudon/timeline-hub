@@ -595,7 +595,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
         throw new Error('Failed to register the duplicated asset.');
       }
 
-      const result = commands.addClip({
+      const result = await commands.addClip({
         preparedAsset: {
           assetKey: registrationPlan.assetId,
           mediaType: duplicatedGeneration.variantType,
