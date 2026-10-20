@@ -109,7 +109,7 @@ export interface ClaimedOutbox {
   reservePlacementAdmission(id: string, input: OutboxPlacementInput): Promise<OutboxPlacementContinuation>;
   recordPlacementTask(id: string, request: OutboxRequest, taskLocator: NonNullable<OutboxPlacementContinuation['taskLocator']>): Promise<OutboxPlacementContinuation>;
   recordPlacementConflict(id: string, error: OutboxJson): Promise<OutboxPlacementContinuation>;
-  capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture): Promise<OutboxPlacementContinuation>;
+  capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture, check?: () => Promise<void>): Promise<OutboxPlacementContinuation>;
   dispatch(
     build: OutboxRequestBuilder,
     transmit: (request: OutboxRequest) => Promise<OutboxOutcome>,
@@ -402,7 +402,7 @@ export function createCommitOutbox(options: {
             return detached(continuation);
           });
         },
-        async capturePlacement(id, mediaPinInput, capture) {
+        async capturePlacement(id, mediaPinInput, capture, check) {
           const mediaPin = detached(mediaPinInput);
           if (mediaPin === null) throw new Error('Placement capture requires an immutable media pin');
           if (capturing.has(id)) throw new Error('Placement capture is already running');
@@ -419,6 +419,7 @@ export function createCommitOutbox(options: {
             });
             if (original.placement || original.conflict !== undefined) return original;
             if (!active) throw new Error('Stale outbox claim');
+            await check?.();
             let payload: OutboxJson | undefined;
             let conflict: OutboxJson | undefined;
             try {
@@ -426,6 +427,8 @@ export function createCommitOutbox(options: {
             } catch (error) {
               conflict = { reason: 'placement_capture_failed', message: error instanceof Error ? error.message : String(error) };
             }
+            // Lifecycle interruption must escape without linking a payload or a semantic refusal.
+            await check?.();
             return await access('readwrite', (record) => {
               const continuation = placementFor(record, id);
               if (continuation.placement || continuation.conflict !== undefined) return detached(continuation);

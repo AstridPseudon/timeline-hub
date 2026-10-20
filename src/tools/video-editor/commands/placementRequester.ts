@@ -123,13 +123,17 @@ export function createPlacementRequester(options: {
   transmit(request: OutboxRequest, scope: OutboxScope): Promise<OutboxOutcome>;
 }) {
   const storage = options.outboxes ?? createCommitOutbox();
-  async function authorize(scope: OutboxScope) {
-    const identity = await options.getRecoverableIdentity();
+  async function authorize(scope: OutboxScope, box?: ClaimedOutbox) {
+    let identity: Identity;
+    try { identity = await options.getRecoverableIdentity(); }
+    catch { throw new Error('Authenticated requester identity is unavailable'); }
     if (!identity.realmId || !identity.actorId || identity.realmId !== scope.realmId || identity.actorId !== scope.actorId) {
       throw new Error('Authenticated requester identity changed');
     }
+    // Read through the live claim after identity work; a saved generation is not authority.
+    if (box) await box.read();
   }
-  async function selectedMedia(task: Task, original: OutboxPlacementContinuation, scope: OutboxScope): Promise<MediaSelection> {
+  async function selectedMedia(task: Task, original: OutboxPlacementContinuation, scope: OutboxScope, box: ClaimedOutbox): Promise<MediaSelection> {
     if (!task.attempt_id) throw new PlacementRefusal('Completed task has no settled attempt');
     const selected = output(original.input.output);
     const variant = publishedVariant(task, selected);
@@ -137,7 +141,7 @@ export function createPlacementRequester(options: {
     let cursor: string | undefined;
     const seen = new Set<string>();
     for (let count = 0; count < 100; count += 1) {
-      await authorize(scope);
+      await authorize(scope, box);
       const page = await options.client.listManagedOutputs(task.task_id, cursor);
       candidates.push(...page.items.filter((v) => matches(v, selected)));
       if (page.next_cursor === null) {
@@ -151,7 +155,7 @@ export function createPlacementRequester(options: {
           || !Number.isSafeInteger(lifecycle.version) || (lifecycle.version as number) < 1) {
           throw new PlacementRefusal('Managed output differs from the completed task/publication');
         }
-        await authorize(scope);
+        await authorize(scope, box);
         return selectionPin(await options.client.getProjectMediaSelection(scope.projectId, {
           association_id: managed.association_id, object_id: managed.object_id, version: lifecycle.version as number,
         }), variant);
@@ -173,35 +177,35 @@ export function createPlacementRequester(options: {
       scope, ownerId, id, status, continuation: original, ...(message ? { message } : {}),
     });
     try {
+      await box.read();
       if (original.conflict !== undefined) return progress('conflict');
       if (!original.placement) {
         const prepared = admission(original.input, scope);
         if (!original.taskLocator) {
-          await authorize(scope);
+          await authorize(scope, box);
           const task = await options.client.admitTask(prepared, original.input.request.key);
           validateTask(task, original, scope);
-          await authorize(scope);
+          await authorize(scope, box);
           original = await box.recordPlacementTask(id, original.input.request, {
             projectId: scope.projectId, taskId: task.task_id, runId: task.run_id,
           });
         }
-        await authorize(scope);
+        await authorize(scope, box);
         const task = await options.client.getTask(original.taskLocator!.taskId);
+        await authorize(scope, box);
         validateTask(task, original, scope);
         if (task.state === 'failed' || task.state === 'cancelled' || task.state === 'cancel_requested') {
           throw new PlacementRefusal(`Task ${task.state}; placement requires manual review`);
         }
         if (task.state !== 'succeeded') return progress('waiting');
         if (!options.capture) return progress('manual', 'Authoritative Agent automatic placement capture is unavailable');
-        const pin = await selectedMedia(task, original, scope);
+        const pin = await selectedMedia(task, original, scope, box);
         if (original.mediaPin !== undefined && JSON.stringify(original.mediaPin) !== JSON.stringify(pin)) {
           throw new PlacementRefusal('Saved immutable media selection changed');
         }
-        await authorize(scope);
-        original = await box.capturePlacement(id, pin, async (saved) => {
-          await authorize(scope);
-          return options.capture!(saved, scope);
-        });
+        await authorize(scope, box);
+        original = await box.capturePlacement(id, pin, (saved) => options.capture!(saved, scope),
+          () => authorize(scope, box));
         if (original.conflict !== undefined) return progress('conflict');
       }
       if (original.placement?.accepted) return progress('accepted');
@@ -210,18 +214,24 @@ export function createPlacementRequester(options: {
       const intent = record.intents.find((v) => v.id === original!.placement?.intentId);
       if (intent?.conflict !== undefined) return progress('conflict');
       if (record.intents[0]?.id !== intent?.id || !intent) return progress('queued');
-      await authorize(scope);
+      await authorize(scope, box);
       record = await box.dispatch((intent, head) => options.build(intent, head, scope), async (request) => {
-        await authorize(scope);
-        return options.transmit(request, scope);
+        await authorize(scope, box);
+        try { return await options.transmit(request, scope); }
+        finally { await authorize(scope, box); }
       });
       original = record.placementContinuations!.find((v) => v.id === id)!;
       return progress(original.placement?.accepted ? 'accepted'
         : record.pending?.outcome?.kind === 'rejected' ? 'conflict' : 'retry');
     } catch (error) {
-      if (error instanceof PlacementRefusal || (error instanceof ApiError && error.status < 500 && ![408, 429].includes(error.status))) {
-        original = await box.recordPlacementConflict(id, { reason: 'placement_refused', message: error.message });
-        return progress('conflict', error.message);
+      try {
+        await authorize(scope, box);
+        if (error instanceof PlacementRefusal || (error instanceof ApiError && error.status < 500 && ![408, 429].includes(error.status))) {
+          original = await box.recordPlacementConflict(id, { reason: 'placement_refused', message: error.message });
+          return progress('conflict', error.message);
+        }
+      } catch (interrupted) {
+        return progress('retry', interrupted instanceof Error ? interrupted.message : String(interrupted));
       }
       return progress('retry', error instanceof Error ? error.message : String(error));
     }
@@ -229,7 +239,7 @@ export function createPlacementRequester(options: {
   return {
     async request(box: ClaimedOutbox, id: string, input: PlacementRequest) {
       const { scope } = await box.read();
-      await authorize(scope);
+      await authorize(scope, box);
       admission(input, scope);
       // No task POST may run until this strict-durability transaction completes.
       await box.reservePlacementAdmission(id, input);
@@ -237,7 +247,7 @@ export function createPlacementRequester(options: {
     },
     async resume(box: ClaimedOutbox) {
       const record = await box.read();
-      await authorize(record.scope);
+      await authorize(record.scope, box);
       const results: PlacementProgress[] = [];
       for (const continuation of record.placementContinuations ?? []) results.push(await advance(box, continuation.id));
       return results;
