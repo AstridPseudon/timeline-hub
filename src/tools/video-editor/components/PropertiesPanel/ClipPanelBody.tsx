@@ -20,6 +20,7 @@ import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineCl
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipTrimCapturePort } from '@/tools/video-editor/commands/clipTrimGesture.ts';
 import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
@@ -36,6 +37,7 @@ import { getEffectDisplayLabel } from './clip-effect-helpers.tsx';
 import { ClipEffectsTab } from './ClipEffectsTab.tsx';
 import { ClipExtensionInspectorSection } from './ClipExtensionInspectorSection.tsx';
 import { ClipInspectorActions } from './ClipInspectorActions.tsx';
+import { ClipSourceWindowFields } from './ClipSourceWindowFields.tsx';
 
 export { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 export { FieldLabel, NO_EFFECT, NO_TRANSITION, TAB_COLUMNS_CLASS } from './clip-panel-primitives.tsx';
@@ -50,6 +52,7 @@ export interface ClipPanelProps {
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
   clipParamsPort?: ClipParamsCapturePort;
+  clipTrimPort?: ClipTrimCapturePort;
   current?: TimelineData;
   onResetPosition: () => void;
   onClose: () => void;
@@ -100,6 +103,7 @@ export function ClipPanelBody({
   precisionEnabled,
   onChange,
   clipParamsPort,
+  clipTrimPort,
   current,
   onResetPosition,
   onClose,
@@ -358,26 +362,32 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source In</FieldLabel>
-                    <NumberInput
-                      value={clip.from ?? 0}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('from', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Source Out</FieldLabel>
-                    <NumberInput
-                      value={clip.to ?? clip.assetEntry?.duration ?? 5}
-                      min={0}
-                      step={0.1}
-                      onChange={(value) => handleTimingValueChange('to', value)}
-                      onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
-                    />
-                  </div>
+                  {current || clipTrimPort ? (
+                    <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <FieldLabel>Source In</FieldLabel>
+                        <NumberInput
+                          value={clip.from ?? 0}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('from', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <FieldLabel>Source Out</FieldLabel>
+                        <NumberInput
+                          value={clip.to ?? clip.assetEntry?.duration ?? 5}
+                          min={0}
+                          step={0.1}
+                          onChange={(value) => handleTimingValueChange('to', value)}
+                          onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

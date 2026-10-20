@@ -136,6 +136,7 @@ function useTimelineEditorContextValue({
   trackManagement,
   trackLabelPort,
   clipParamsPort,
+  clipTrimPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -181,6 +182,7 @@ function useTimelineEditorContextValue({
   trackManagement: TimelineTrackManagementHook;
   trackLabelPort?: TrackLabelCapturePort;
   clipParamsPort?: import('@/tools/video-editor/commands/clipParamsGesture.ts').ClipParamsCapturePort;
+  clipTrimPort?: import('@/tools/video-editor/commands/clipTrimGesture.ts').ClipTrimCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -208,6 +210,7 @@ function useTimelineEditorContextValue({
   return useMemo<TimelineEditorContextValue>(() => ({
     trackLabel: trackLabelPort,
     clipParams: clipParamsPort,
+    clipTrim: clipTrimPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -390,6 +393,7 @@ function useTimelineEditorContextValue({
     trackScaleMap,
     trackLabelPort,
     clipParamsPort,
+    clipTrimPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -1090,6 +1094,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackManagement,
     trackLabelPort: save.commands.trackLabelPort,
     clipParamsPort: save.commands.clipParamsPort,
+    clipTrimPort: save.commands.clipTrimPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1180,6 +1185,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipMove: save.commands.port,
     trackLabel: save.commands.trackLabelPort,
     clipParams: save.commands.clipParamsPort,
+    clipTrim: save.commands.clipTrimPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1239,7 +1245,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipParamsPort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipParamsPort, save.commands.clipTrimPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

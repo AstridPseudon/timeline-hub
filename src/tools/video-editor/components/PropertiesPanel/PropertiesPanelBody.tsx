@@ -233,6 +233,7 @@ function PropertiesPanelComponent({
     setSelectedTrackId,
     applyEdit,
     clipParams,
+    clipTrim,
   } = useTimelineEditorOps();
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
@@ -553,6 +554,7 @@ function PropertiesPanelComponent({
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
             clipParamsPort={clipParams}
+            clipTrimPort={clipTrim}
             current={data ?? undefined}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
