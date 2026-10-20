@@ -1,5 +1,19 @@
 # Agent supported-env baseline: 109-node cut list
 
+## Inventory-read count follow-up (2026-10-20)
+
+The bootstrap identity regression retains exact counts, conditional on the
+supported launch environment: one `active_source_inventory()` read per
+`ensure_pack_host()` launch without Remotion, and two with the current12
+Remotion environment. The first is the explicit bootstrap admission read in
+`astrid/sdk/host_bootstrap.py:1355`. The second is intentional launch-time
+registry-context projection: `_prepare_render_validation()` calls the
+Remotion validation transaction, whose worker-context/registry settling path
+normalizes managed pack roots through `active_source_inventory(verify=False)`
+(`astrid/core/rendering/remotion_runtime.py:526-528`). This is a bounded,
+precise extra read, not an unbounded inventory scan; the identity sequence is
+still asserted for every read, including restart and empty-inventory cases.
+
 Worker: agt-baseline-109-cutlist (read-only analysis; no product or test changes; no suite requested).
 Set analysed: the 109 non-passing nodes of `agent full-remotion-integration` (79 FAILED, 30 ERROR) from `tests/agent-full-remotion-integration-1020031037-28578/log.txt`, identical to the f6 baseline (1020030741-1883) and to the M1 a610 run (`full-a610-classification.json`).
 Code read at: worktree `/home/user/work/wt/agt-baseline-109-cutlist` (HEAD `ef6eec55`). File:line references are into that tree. The traces were produced on the 8f046 / 4a75f68f trees; a610 recorded identical blobs for the pixel, host-bootstrap, worker-process, stage1, host-recovery and runpod-staging files, but I did not diff every cited file against 8f046.

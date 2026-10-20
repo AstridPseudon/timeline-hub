@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T09:56:20Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T10:01:56Z | dispatcher heartbeat 9s -->
 # runtime — 2026-10-20T09:50:55Z
 Milestone: M1 RECORDED; M2 safety fixes FIRST. F2 merged; F1 currenttuple gatequeued. No unrelated productmerge beforebothland.
 Integrated: Runtime642eef7467a6b766480df3f34e7377e8d755fe92(tree28d91969): adoptioncheckslegacyprojectdocumentunderacceptancelock, samepredicateaspublication. Exacttree ordinary64PASS + markedcommit9PASS; managerreviewed3filediff. Prior6023cfb contract/client0.2.10 remainsmetadata; currentpublished602/0.2.10 explicitlyAFFECTEDbyF1/F2, asis941/0.2.9. FixedNEWversiontuplependingafterF1. Historicalpinsunchanged.

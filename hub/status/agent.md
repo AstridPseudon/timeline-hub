@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T09:56:20Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T10:01:56Z | dispatcher heartbeat 9s -->
 # agent — 2026-10-20 09:37 UTC
 Milestone: M1 RECORDED. M2 open; no current-tuple release claim (Runtime P1 findings09:34). M3 public12 adoption landed, normal PCM inactive.
 Integrated: Agent tl/integration5c3f0c99 (check newer refresh-main when merging). Composition0.0.12 source5f6c8130 viaed60bf15: exact0a7b6152…/58444B, reviewed/shared lock identical, real BUILTIN_DEFAULT_THEME equality, central47owner+292readinessPASS. Runtime94114269/0.2.9 pin unchanged. Identity-only fixturec7e54a4b merged5c3f0c99: three original occupied-slot/retry tests pass on pinned AND current Runtime; no assertion/behavior conversion.
@@ -39,3 +39,5 @@ Resources: 17G free/home/user; seven live/requested target5–7. Shared dependen
 2026-10-20 09:52 UTC: D07 DELETED physically76737ca2, replacement tests named. auto-pool80f51496 mergeQUEUED (5product readlines,348tests/36redbefore), Appheld. Elementretain98c38a7c emptyparams no phantomwrite287unit/9direct/34centralPASS; source-only, schemac520 needsfullunion+normalpair; agt-review-element-retain dispatched. agt-m2-history-boundary-finish owns P2fences/recovery beforelocal-historylanding. Parentoldorder finished3908pass/3fail(2equalstate nowfixedroot+1providerorder), superseded byparent-media-unify.
 
 2026-10-20 09:55 UTC: pool+legacy correction MERGEDdf2739f9 (348PASS/36newconflicts redbefore). Fixturetrimcbe34d1c shrinks6491lines/176160bytes,549PASS/10semanticreconstructions, but needs currentpoolrecord port and context-awareloader/externalexpandedexports; agt-m2-fixture-trim-current owns that. agt-m2-auto-narrow-reads addresses safe-but-false unrelatedclip conflicts withoutschemachange. Seven requested/live.
+
+2026-10-20 09:57 UTC: inactivePCMportb85eb057 DONE103unit/19Node, centralproof pending NEW pcm-current-helper-integration requested (stages3snapshot-owned helpers in privateTemporaryDirectory, readonly12peers; no sharedruntimewrites). Viewingcurrentcaller reports preservingMAINserializedRootrounding/nativeWAVidentity, so no broad for_renderprecision change is assumed/authorized; sourcepair+actualcurrentHTTPjoin still required.

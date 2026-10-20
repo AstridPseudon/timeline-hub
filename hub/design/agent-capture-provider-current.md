@@ -1,6 +1,6 @@
 # Current Agent capture provider
 
-Source ready on worker `agt-m3-capture-provider-current`; central qualification pending.
+Source ready on worker `agt-m3-capture-provider-current`; current capture corpus centrally green, broad named lane red only at the required development-pin/current-Runtime handshake. Renderer propagation and Runtime independent 20-case pairing remain unqualified.
 Base commit: `efb96034fc7c80a6e73900bfc57dac53260beb3c`.
 Final source tree SHA: `525bdabe863a42bc177f5ff331560133f77ce634` (both central requests snapshot this tree).
 Branch: `tl/agt-m3-capture-provider-current`. The harness assigns its commit on worker exit; resolve that branch and verify its tree equals the SHA above before freezing the Runtime pair.
@@ -55,8 +55,8 @@ Full repository lint baseline check exits 1 because 2212 findings is eight BELOW
 
 ## Central requests and remaining pair
 
-- `agt-m3-capture-provider-current-commit-integration-1020095215-3997`: existing named commit-integration plus tests/sdk/test_capture_source_runtime.py. Current Agent snapshot + actual current Runtime; four new host-only genuine saved/working-copy inline/ref positives, whole saved expansion equality, original twelve config/registry/shot-digest forgery cases, uncertified/native and duplicate-reference controls. Queued; do not resubmit.
-- `agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088`: tests/packs/rendering/test_scene_source_carry.py + tests/sdk/test_timeline_filmstrip_invocation.py, pinned public12 environment. Queued; do not resubmit.
+- `agt-m3-capture-provider-current-commit-integration-1020095215-3997`: existing named commit-integration plus tests/sdk/test_capture_source_runtime.py. Current Agent snapshot + actual current Runtime; four new host-only genuine saved/working-copy inline/ref positives, whole saved expansion equality, original twelve config/registry/shot-digest forgery cases, uncertified/native and duplicate-reference controls. **23 passed / 4 existing xfailed capture cases; 2 default M1 failures**, total 24.01s (service28s), exit1. Both default M1 nodes fail health contract negotiation before edits: current Runtime reports schema `3e5e78d0…`, task-required Agent94114269 client expects `8d7f2987…`. No repin attempted (explicit task constraint). Service external Runtime was `c0dcd3871d78c405184506eb6735565592498c77` when launched; its queue metadata also records earlier `642eef74` attempts. Current capture cases use actual RuntimeService and passed; this is not a whole transport/current-release qualification.
+- `agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088`: tests/packs/rendering/test_scene_source_carry.py + tests/sdk/test_timeline_filmstrip_invocation.py, pinned public12 environment. **53 passed / 19 setup errors** in30.11s, service46s, exit1. Every error is missing provisioned React peer: the fixture reads ASTRID_TEST_NODE_MODULES or checkout remotion/node_modules, whereas this lane only sets ASTRID_REMOTION_PROJECT_DIR. No assertion failure. A direct targeted rerun supplies the fixture's existing ASTRID_TEST_NODE_MODULES override, pointing read-only at agent-remotion-0012/node_modules; all links/builds stay in its private tmp_path fixture.
 - Earlier two remotion-0012-nodes requests `1020094959-19766` / `1020095013-22509` were rejected before running because the service disallows `-m=integration` in --files. No result claimed. No standalone golden lane is needed now that the in-process fixture has been inspected and run directly.
 
 Runtime manager must pair the independent 20-case candidate comparisons against this exact Agent tree after harness commit; it is not this worker's Runtime edit. Keep the Agent duplicate verifier until paired green. No current-tuple release claim: task preserves Runtime94114269 development pin and the separate F1/F2 republish hold.
@@ -67,4 +67,25 @@ Runtime manager must pair the independent 20-case candidate comparisons against 
 - The existing three SDK invocation reserved-key negatives retain strict xfail and their original assertions. Reviewed d977 had a seven-line early reject_source_keys/error-mapping block in sdk/invocation.py after request_inputs; current invocation lacks it. Direct host and prepare_filmstrip guards are green; invocation currently raises raw ValueError for two keys and the older unsupported-product-input error for timeline_source. No invocation.py edit was made because the task allowed a narrow host port. Manager can authorize that exact guard port separately.
 - Existing two SDK publication-double xfails stay: the double has no Runtime admission publisher. No assertion was weakened, skipped, deleted, or rewritten to bless missing behavior.
 
-Initial diagnostic (superseded): three-file direct run produced 4 failures/88 pass/9 skipped/2 xfail. One was this worker's new equality test omitting the already-contractual parent_content_digest augmentation; corrected to compare the whole expected mapping. The other three exposed the pre-existing SDK invocation requirement above and its original strict-xfail markers were retained. The final closure file rerun is pending below.
+Initial diagnostic (superseded): three-file direct run produced 4 failures/88 pass/9 skipped/2 xfail. One was this worker's new equality test omitting the already-contractual parent_content_digest augmentation; corrected to compare the whole expected mapping. The other three exposed the pre-existing SDK invocation requirement above and its original strict-xfail markers were retained. Final closure file rerun: **23 passed / 5 retained strict xfailed in248.30s**, command `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_capture_closure_source.py`. Entire saved expansion and direct reserved-key guards pass. The two publication-double and three early-invocation requirements remain explicit strict xfails.
+
+Exact central commands:
+
+```bash
+$ORCH/bin/request-test agt-m3-capture-provider-current commit-integration --files 'tests/sdk/test_capture_source_runtime.py'
+$ORCH/bin/wait-test agt-m3-capture-provider-current-commit-integration-1020095215-3997 1
+# Exit1: 2 default M1 contract-handshake failures, 23 capture passes, 4 retained renderer xfails.
+
+$ORCH/bin/request-test agt-m3-capture-provider-current remotion-0012-nodes --files 'tests/packs/rendering/test_scene_source_carry.py tests/sdk/test_timeline_filmstrip_invocation.py'
+$ORCH/bin/wait-test agt-m3-capture-provider-current-remotion-0012-nodes-1020095251-15088 1
+# Initial waits exit124 while queued/running; do not resubmit.
+```
+
+Final scene-source verification (no renderer, browser or sockets; fixture builds and peer links are private):
+
+```bash
+ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0012/node_modules ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0012 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py
+# 59 passed in 48.99s, including every native node that the central lane could not set up.
+```
+
+The approved source unit is complete. Harness commit message and DONE are written; no Git/index/branch mutation or integration/shared-dependency write by this worker. Next: resolve the harness commit/tree, pair Runtime's independent 20-case comparison suite, and only then consider deleting the Agent duplicate verifier. Renderer carry, early SDK invocation guard and safe coordinated client repin remain separate owner work; none is claimed here.
