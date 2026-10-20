@@ -403,6 +403,50 @@ async function ingestPackage(
   };
 }
 
+/** Ingest a prepared package and return the scene envelope without placing it. */
+export async function ingestPreparedPackage(
+  storage: ProjectObjectStorage,
+  input: LiveScenePackageInput,
+): Promise<{ package: ProjectObjectMetadata; liveScene: Record<string, unknown> }> {
+  const ingested = await ingestPackage(storage, input);
+  return { package: ingested.package, liveScene: ingested.liveScene };
+}
+
+/** Load and verify an already-ingested canonical package and its HTML entry. */
+export async function loadLiveSceneSource(
+  storage: ProjectObjectStorage,
+  objectId: string,
+  revision: string,
+): Promise<{ liveScene: Record<string, unknown>; manifest: SceneManifest }> {
+  const bytes = await storage.read(objectId);
+  if (await digestBytes(bytes) !== revision) fail('Stored world failed integrity verification');
+  let packageBody: string;
+  try {
+    packageBody = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return fail('Stored world package is not valid UTF-8');
+  }
+  let body: unknown;
+  try { body = JSON.parse(packageBody); }
+  catch { return fail('Stored world package is not valid JSON'); }
+  if (!isRecord(body)) fail('Stored world package must be an object');
+  const manifest = validateManifest(body.manifest);
+  const entry = persistedMetadata(body.entry, 'entry');
+  if (entry.media_type !== 'text/html' || entry.filename !== manifest.entry) {
+    fail('Stored world entry does not match the manifest');
+  }
+  const html = new TextDecoder('utf-8', { fatal: true }).decode(await readVerified(storage, entry));
+  return {
+    liveScene: {
+      revision,
+      source: { objectId, revision },
+      packageBody,
+      html,
+    },
+    manifest,
+  };
+}
+
 type CapturedSceneSource = {
   readonly objectId: string;
   readonly packageBody: string;
@@ -601,6 +645,35 @@ function liveScenePatch(
   return { version, operations, source };
 }
 
+export function placementOperations(
+  snapshot: TimelineSnapshot,
+  placements: readonly PreparedScenePlacement[],
+  liveScene: Record<string, unknown>,
+): TimelinePatchOperation[] {
+  const operations: TimelinePatchOperation[] = [];
+  let order = 0;
+  const tracks = new Set(snapshot.tracks.map((track) => track.id));
+  for (const placement of placements) {
+    if (!tracks.has(placement.track)) {
+      operations.push({ op: 'track.add', target: placement.track, payload: { kind: 'visual', label: placement.track }, order: order++ });
+      tracks.add(placement.track);
+    }
+    operations.push({
+      op: 'clip.add',
+      target: placement.id,
+      payload: { track: placement.track, at: placement.at, clipType: LIVE_SCENE_CLIP_TYPE_ID },
+      order: order++,
+    });
+    operations.push({
+      op: 'clip.update',
+      target: placement.id,
+      payload: { mode: 'merge', from: placement.from, to: placement.to, speed: placement.rate, app: { liveScene } },
+      order: order++,
+    });
+  }
+  return operations;
+}
+
 export async function importPreparedScene(
   ctx: AuthoringContext,
   prepared: LiveScenePackageInput,
@@ -625,28 +698,7 @@ export async function importPreparedScene(
   const current = reader.snapshot();
   assertCaptureMatchesSnapshot(capture, current);
   validatePlacements(current, placements, manifest.duration);
-  const liveScene = ingested.liveScene;
-  const operations: TimelinePatchOperation[] = [];
-  let order = 0;
-  const tracks = new Set(current.tracks.map((track) => track.id));
-  for (const placement of placements) {
-    if (!tracks.has(placement.track)) {
-      operations.push({ op: 'track.add', target: placement.track, payload: { kind: 'visual', label: placement.track }, order: order++ });
-      tracks.add(placement.track);
-    }
-    operations.push({
-      op: 'clip.add',
-      target: placement.id,
-      payload: { track: placement.track, at: placement.at, clipType: LIVE_SCENE_CLIP_TYPE_ID },
-      order: order++,
-    });
-    operations.push({
-      op: 'clip.update',
-      target: placement.id,
-      payload: { mode: 'merge', from: placement.from, to: placement.to, speed: placement.rate, app: { liveScene } },
-      order: order++,
-    });
-  }
+  const operations = placementOperations(current, placements, ingested.liveScene);
   const patch = liveScenePatch(capture.capturedTimelineVersion, operations);
   const validation = timeline.validate(patch);
   if (!validation.valid) fail(`Prepared scene timeline patch rejected: ${validation.diagnostics.map((item) => item.message).join('; ')}`);
@@ -686,6 +738,70 @@ export async function importPreparedMapleScene(
     fail('Prepared Maple acceptance requires exactly two placements');
   }
   return importPreparedScene(ctx, prepared, placements);
+}
+
+/** Place an already-ingested live scene as new clips on the timeline. */
+export async function placeLiveScene(
+  ctx: AuthoringContext,
+  liveScene: Record<string, unknown>,
+  duration: number,
+  placements: readonly PreparedScenePlacement[],
+): Promise<{ affectedPlacements: string[]; acknowledgedTimelineVersion: number }> {
+  const { timeline, reader } = ensurePublicContext(ctx);
+  const snapshot = reader.snapshot();
+  if (!snapshot.projectId || !snapshot.timelineId) fail('Live-scene timeline scope unavailable');
+  validatePlacements(snapshot, placements, duration);
+  const operations = placementOperations(snapshot, placements, liveScene);
+  const patch = liveScenePatch(snapshot.baseVersion, operations);
+  const validation = timeline.validate(patch);
+  if (!validation.valid) fail(`Prepared scene timeline patch rejected: ${validation.diagnostics.map((item) => item.message).join('; ')}`);
+  const diff = timeline.apply(patch);
+  const affectedPlacements = placements.map((placement) => placement.id);
+  if (!affectedPlacements.every((id) => diff.affectedObjectIds.includes(id))) {
+    fail('Prepared scene timeline patch did not affect every placement');
+  }
+  let flushReceipt: { readonly version: number };
+  try {
+    flushReceipt = await timeline.flush();
+  } catch (error) {
+    throw new Error(`durable timeline persistence unavailable: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return { affectedPlacements, acknowledgedTimelineVersion: flushReceipt.version };
+}
+
+/** Change the from/to source range and speed of one existing live-scene clip. */
+export async function updateLiveSceneClip(
+  ctx: AuthoringContext,
+  clipId: string,
+  stretch: { from: number; to: number; speed: number },
+): Promise<{ acknowledgedTimelineVersion: number }> {
+  const { timeline, reader } = ensurePublicContext(ctx);
+  const snapshot = reader.snapshot();
+  if (!snapshot.projectId || !snapshot.timelineId) fail('Live-scene timeline scope unavailable');
+  const clip = snapshot.clips.find((candidate) => candidate.id === clipId);
+  if (!clip) fail(`Live-scene clip ${clipId} does not exist`);
+  if (clip.clipType !== LIVE_SCENE_CLIP_TYPE_ID) fail(`Clip ${clipId} is not a live-scene clip`);
+  const { from, to, speed } = stretch;
+  if (!Number.isFinite(from) || !Number.isFinite(to) || !Number.isFinite(speed)
+    || from < 0 || to <= from || speed <= 0) {
+    fail(`Invalid live-scene stretch for ${clipId}`);
+  }
+  const patch = liveScenePatch(snapshot.baseVersion, [{
+    op: 'clip.update',
+    target: clipId,
+    payload: { mode: 'merge', from, to, speed },
+    order: 0,
+  }]);
+  const validation = timeline.validate(patch);
+  if (!validation.valid) fail(`Live-scene clip update rejected: ${validation.diagnostics.map((item) => item.message).join('; ')}`);
+  timeline.apply(patch);
+  let flushReceipt: { readonly version: number };
+  try {
+    flushReceipt = await timeline.flush();
+  } catch (error) {
+    throw new Error(`durable timeline persistence unavailable: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return { acknowledgedTimelineVersion: flushReceipt.version };
 }
 
 export async function publishLiveSceneEdit(
