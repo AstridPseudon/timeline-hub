@@ -28,6 +28,32 @@ def draft(document):
     return bundle
 
 
+@pytest.mark.parametrize("changed", [False, True])
+def test_capture_candidate_inputs_exact_pure_detached_golden(monkeypatch, changed):
+    document = document_fixture()
+    candidate = draft(document) if changed else bundle_from_document(document)
+    before = copy.deepcopy((document, candidate))
+    expected = {"base": bundle_from_document(document),
+                "preview": preview_authoring_candidate(candidate)}
+    provider = RuntimeCommitService("unused-by-pure-capture")
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("pure capture inputs attempted IO")
+
+    with monkeypatch.context() as no_io:
+        for target, name in ((builtins, "open"), (io, "open"), (Path, "open"),
+                             (socket, "socket"), (socket, "create_connection"),
+                             (subprocess, "Popen"), (subprocess, "run")):
+            no_io.setattr(target, name, forbidden)
+        result = provider.capture_candidate_inputs(document, candidate=candidate)
+        assert json.dumps(result, sort_keys=True, allow_nan=False) == json.dumps(
+            expected, sort_keys=True, allow_nan=False)
+        result["base"]["parent"]["config"]["opaque"]["v"].append("caller change")
+        result["preview"]["candidate"]["parent"]["config"]["opaque"]["v"].append("caller change")
+        assert provider.capture_candidate_inputs(document, candidate=candidate) == expected
+    assert (document, candidate) == before
+
+
 @pytest.mark.parametrize("candidate", [False, True])
 def test_projection_is_detached_json_deterministic_without_io(monkeypatch, candidate):
     document = document_fixture()
@@ -167,6 +193,8 @@ from astrid.core.timeline.authoring_bundle import preview_authoring_candidate
 document = document_fixture()
 assert project(document)['expansion']['canonical'] is True
 assert project(document, preview_authoring_candidate(draft(document)))['expansion']['working_copy']
+from astrid.sdk.timeline.commit import RuntimeCommitService
+assert set(RuntimeCommitService('pure').capture_candidate_inputs(document, candidate=draft(document))) == {'base', 'preview'}
 '''
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
                             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})

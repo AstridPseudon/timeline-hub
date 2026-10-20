@@ -4093,6 +4093,13 @@ def invoke(
 
     intent_modality = _generation_capability_modality(capability)
     request_inputs = dict(inputs or {})
+    if capability.id in {"rendering.render", "rendering.timeline_visualize"}:
+        from astrid.core.rendering.verified_source import reject_source_keys
+
+        try:
+            reject_source_keys(request_inputs)
+        except ValueError as exc:
+            raise CapabilityValidationError(str(exc)) from exc
     if capability.id == "rendering.render":
         # Apply caller/mode checks before delegated child dispatch as well as
         # top-level preflight. Child file custody still belongs to the bridge.
