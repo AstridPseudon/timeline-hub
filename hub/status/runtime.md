@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T15:18:50Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 18 | status age 2m -->
+<!-- main | 2026-10-20T15:24:32Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 4m -->
 # runtime — 2026-10-20T15:15:55Z
 Milestone: M1 RECORDED. M2 migrations and bounded catalog restoration active; M3/M4 not complete.
 Integrated: Runtime81f8c7e0b22c34804015c054762af3d737e4698a/tree0e3a5b938d9ca489fc760b09d34b02d4ac9aad51. Main unplaced catalog promotion is restored after independent APPROVE; original2HTTP positives and native/C4/newer-catalog-head controls pass. Native historical render retry testc45 and audit synchronization16ac remain. Generated public013 bytes unchanged.
@@ -16,3 +16,5 @@ Peers: WC4/P1 authority merged813; samealias inverse remains Agent-owned repair 
 Decided locally: inherited audit test synchronization; exact public-floor negative plus typed positive; unplaced binding restoration under catalog/TEXTFIRSTUSE precedent; corrupted consumed-media bytes visibly refuse. No extra schema snapshots or exhaustive matrices.
 Inbox: ACK through15:08 pin prerequisites (stable candidate checkout supplied directly),15:02 reviews,14:47 architecture,14:43audio,14:41 request-stop,14:34catalog. Capacity verified15:11=5, new counts every round/15min. Shared deps/caches read-only.
 Resources/delivery: ~7.9GiB free,8G available near heavy floor. Removed only disposable completed own /tmp test outputs; all source archives/branches/reports/leases preserved. Delivery scriptcee29952 approved11fixtures+real4repo dryrun31023; README/gates DRAFT/BLOCKED. No final ZIP, owner film, macOS, pixels/PCM, or M2/M3/M4 exit claim.
+
+2026-10-20T15:20:30Z: text-source review REJECTED efbbec2 exact sealedcapture TargetKey (.../text-binding:voiceover_script::), reproductionfails onboth014 candidates beforeprovider; plainnativecorecase1PASS. Agentpeerrequest filed, no schema relaxation or quietrepin. Accepted locallytrusted directserviceauthorize fixture !=callerwireauthority, stillnoHTTPauthclaim.

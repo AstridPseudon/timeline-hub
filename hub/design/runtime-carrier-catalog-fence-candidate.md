@@ -89,8 +89,9 @@ schema fixture, xfail, skip, or test expectation weakening was added.
 ## Verification
 
 Working directory for all commands: `/home/user/work/wt/rt-m2-carrier-catalog-fence-compose`.
-Shared dependencies were read-only. Pytest used `-B`, disabled bytecode and
-cacheprovider, and private `/tmp` basetemps; Ruff used `--no-cache`.
+Shared dependencies were read-only. Direct pytest used `-B`, disabled bytecode and
+cacheprovider, and private `/tmp` basetemps; Ruff used `--no-cache`. The central
+service uses its own runner settings, shown in its result summary.
 No full suite or comprehensive native pair was requested.
 
 Neutral offline controls:
@@ -98,6 +99,7 @@ Neutral offline controls:
 ```sh
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/rt-carrier-fence-offline tests/test_timeline_projection_ownership.py tests/test_timeline_materialization_join.py tests/test_timeline_materialization_authority_review.py tests/test_timeline_projection_occupancy.py tests/test_shot_candidate_promotion.py::test_catalog_promotion_checks_bytes_and_rolls_back_before_receipt
 # 213 passed, 3 deselected, 102.22s; includes strict old-public negative/current typed positive.
+# Ran before adding the integration-only regression; final product source is identical.
 
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-runtime/bin/python -B -m pytest -q -p no:cacheprovider --basetemp=/tmp/rt-carrier-fence-generators tests/test_command_schema_compatibility.py tests/test_timeline_commit_type_generator.py tests/test_artifact_manifest.py
 # 172 passed, 104.91s.
@@ -143,7 +145,10 @@ $O/bin/request-test rt-m2-carrier-catalog-fence-compose targeted --files "tests/
 $O/bin/wait-test rt-m2-carrier-catalog-fence-compose-targeted-1020151404-11145 1
 ```
 
-CENTRAL_RESULT_PENDING
+**PASS: 209 passed, 3 deselected in 171.29s**, exit 0. The central snapshot
+is exact candidate tree `d20b745c26a33c2ea4e20863f846335c8cf33e1e`.
+Result directory: `tests/rt-m2-carrier-catalog-fence-compose-targeted-1020151404-11145/`.
+No source changed after this snapshot request.
 
 The central neutral lane does not import Agent for integration tests; those
 are deselected. Actual-provider results above exclusively use the frozen 3730
