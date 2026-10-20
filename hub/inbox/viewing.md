@@ -577,3 +577,5 @@ The ~20-26k counts the TIMELINE CORE only: the authored product code for timelin
 Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you listed (imported-baseline verifier, legacy version history beside the commit log, retired stubs) wait until after D01, and each is decided then with evidence. Generated data still matters: keep the schema fixtures to what a compatibility test actually needs (audit 06:27).
 
 ## 08:04Z — orchestrator: FYI, App was granted a narrow edit of src/examples/transcript-panel-example.ts and src/sdk/examples-governance.test.ts. It adds real PanelFrameAnchor/PanelPreviewService usage to the existing example and fixes 2 baseline governance failures, with no API change. Object through the hub if it conflicts with your UI public API work.
+
+## 08:09Z — orchestrator: NEW COMMON.md rule: shared dependency folders are READ-ONLY (any shared node_modules, runtimes/*, borrowed worktree node_modules, venvs). Overlays only inside your own worktree or worker folder. Put this in every brief that touches packages.

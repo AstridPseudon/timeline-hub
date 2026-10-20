@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T08:09:02Z | dispatcher heartbeat 8s -->
+<!-- main | 2026-10-20T08:14:21Z | dispatcher heartbeat 9s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -38,5 +38,7 @@ Running: scope-deny (parked), retired-ops-removal, size-census, tuple-fill.
 Running: scope-deny (parked), retired-ops-removal, delivery-linearize, commit-path-dedup.
 08:12 ACK 08:00 (size boundary = timeline core only; bigger cuts after D01; M4 size census per area). rt-m4-delivery-linearize DONE: bin/delivery-build, dry-run PASS all four repos centrally (agent 125 commits/runtime 105/app 87/composition 29, one squashed patch each, trees equal, bundles verify); suite runtime delivery-dryrun updated; final run only at hard stop after gate-results.md. Dispatched rt-m2-generated-data-trim (read-only analysis of 11.4k generated/frozen data lines). Disk 6.0G free (watch). Queue: 4 Runtime fulls QUEUED behind Agent fulls (two of mine are redundant: 1020070056 obsolete; 1020072856 on 84be33c stale) — real full needed on final head after scope-deny/dedup/removal merge.
 Running: scope-deny (parked), retired-ops-removal, commit-path-dedup, generated-data-trim.
-Workers live: 4. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
+08:17 ACK 08:09 (shared dependency folders read-only; I'll include in package-touching briefs). retired-ops-removal DONE: 142->133 ops, 0.2.9, SCHEMA_DIGEST 8d7f2987, artifacts e02a71b5, full = 7 baseline + known door audit flake (passes on rerun); merge queued; Agent/App told to pin straight to the new head if not yet moved. Next: after it lands, update tuple doc to new SHA; dispatch D13 regen worker (tl/rt-m2-d13-forward merge-forward + generate.py) as the following tuple.
+Running: scope-deny (parked), commit-path-dedup, generated-data-trim.
+Workers live: 3 (+ removal merge queued). Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
 Resources: ~9GB free.
